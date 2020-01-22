@@ -1,0 +1,50 @@
+from rest_framework import generics
+from rest_framework.response import Response
+from rest_framework.views import status
+
+from fyle_qbo_api.utils import assert_valid
+
+from .models import TaskLog
+from .serializers import TaskLogSerializer
+
+
+class TasksView(generics.ListAPIView):
+    """
+    Tasks view
+    """
+    serializer_class = TaskLogSerializer
+
+    def get_queryset(self):
+        """
+        Return task logs in workspace
+        """
+        task_status = self.request.query_params.getlist('status')
+
+        if not task_status:
+            task_status = ['IN_PROGRESS', 'FAILED', 'COMPLETED']
+
+        task_logs = TaskLog.objects.filter(workspace_id=self.kwargs['workspace_id'],
+                                           status__in=task_status).all()
+        return task_logs
+
+
+class TasksByIdView(generics.RetrieveAPIView):
+    """
+    Get Task by Ids
+    """
+    serializer_class = TaskLogSerializer
+
+    def get(self, request, *args, **kwargs):
+        """
+        Get task logs by ids
+        """
+        task_log_ids = self.request.query_params.getlist('task_log_ids', [])
+
+        assert_valid(task_log_ids != [], 'task log ids not found')
+
+        task_logs = TaskLog.objects.filter(id__in=task_log_ids).all()
+
+        return Response(
+            data=self.serializer_class(task_logs, many=True).data,
+            status=status.HTTP_200_OK
+        )
