@@ -21,6 +21,14 @@ class FyleConnector:
             refresh_token=refresh_token
         )
 
+    def get_employee_profile(self):
+        """
+        Get expenses from fyle
+        """
+        employee_profile = self.connection.Employees.get_my_profile()
+
+        return employee_profile['data']
+
     def get_expenses(self, state: List[str], export_non_reimbursable: bool):
         """
         Get expenses from fyle

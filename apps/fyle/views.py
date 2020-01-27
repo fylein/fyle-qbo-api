@@ -190,3 +190,26 @@ class ProjectView(viewsets.ViewSet):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+
+class UserProfileView(generics.RetrieveAPIView):
+
+    def get(self, request, *args, **kwargs):
+        try:
+            fyle_credentials = FyleCredential.objects.get(workspace_id=kwargs.get('workspace_id'))
+
+            fyle_connector = FyleConnector(fyle_credentials.refresh_token)
+
+            employee_profile = fyle_connector.get_employee_profile()
+
+            return Response(
+                data=employee_profile,
+                status=status.HTTP_200_OK
+            )
+        except FyleCredential.DoesNotExist:
+            return Response(
+                data={
+                    'message': 'Fyle credentials not found in workspace'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
