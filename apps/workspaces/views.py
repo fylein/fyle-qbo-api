@@ -137,6 +137,16 @@ class ConnectFyleView(viewsets.ViewSet):
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
+    def delete(self, request, **kwargs):
+        """Delete credentials"""
+        workspace_id = kwargs['workspace_id']
+        FyleCredential.objects.filter(workspace_id=workspace_id).delete()
+
+        return Response(data={
+            'workspace_id': workspace_id,
+            'message': 'Fyle credentials deleted'
+        })
+
     def get(self, request, **kwargs):
         """
         Get Fyle Credentials in Workspace
@@ -217,6 +227,16 @@ class ConnectQBOView(viewsets.ViewSet):
                 },
                 status=status.HTTP_401_UNAUTHORIZED
             )
+
+    def delete(self, request, **kwargs):
+        """Delete credentials"""
+        workspace_id = kwargs['workspace_id']
+        QBOCredential.objects.filter(workspace_id=workspace_id).delete()
+
+        return Response(data={
+            'workspace_id': workspace_id,
+            'message': 'QBO credentials deleted'
+        })
 
     def get(self, request, **kwargs):
         """
