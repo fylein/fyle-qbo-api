@@ -29,11 +29,11 @@ class FyleConnector:
 
         return employee_profile['data']
 
-    def get_expenses(self, state: List[str], export_non_reimbursable: bool):
+    def get_expenses(self, state: List[str], export_non_reimbursable: bool, updated_at: List[str]):
         """
         Get expenses from fyle
         """
-        expenses = self.connection.Expenses.get_all(state=state)
+        expenses = self.connection.Expenses.get_all(state=state, updated_at=updated_at)
 
         if not export_non_reimbursable:
             expenses = list(filter(lambda expense: expense['reimbursable'], expenses))

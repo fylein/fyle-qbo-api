@@ -1,8 +1,9 @@
 from typing import List
+from datetime import datetime
 
 from django.db import transaction
 
-from apps.workspaces.models import FyleCredential
+from apps.workspaces.models import FyleCredential, Workspace
 from apps.tasks.models import TaskLog
 
 from .models import Expense, ExpenseGroup
@@ -21,12 +22,25 @@ def create_expense_groups(workspace_id: int, state: List[str], export_non_reimbu
     """
     try:
         with transaction.atomic():
+            workspace = Workspace.objects.get(pk=workspace_id)
+
+            last_synced_at = workspace.last_synced_at
+
+            updated_at = []
+
+            if last_synced_at:
+                updated_at.append('gte:{0}'.format(datetime.strftime(last_synced_at, '%Y-%m-%dT%H:%M:%S.000Z')))
+
+            workspace.last_synced_at = datetime.now()
+            workspace.save()
+
             fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
 
             fyle_connector = FyleConnector(fyle_credentials.refresh_token)
 
             expenses = fyle_connector.get_expenses(
-                state=state, export_non_reimbursable=export_non_reimbursable)
+                state=state, export_non_reimbursable=export_non_reimbursable, updated_at=updated_at
+            )
 
             expense_objects = Expense.create_expense_objects(expenses)
 
