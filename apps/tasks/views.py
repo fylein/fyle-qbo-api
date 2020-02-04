@@ -21,7 +21,7 @@ class TasksView(generics.ListAPIView):
         task_status = self.request.query_params.getlist('status')
 
         if not task_status:
-            task_status = ['IN_PROGRESS', 'FAILED', 'COMPLETED']
+            task_status = ['IN_PROGRESS', 'FAILED', 'COMPLETE']
 
         task_logs = TaskLog.objects.filter(workspace_id=self.kwargs['workspace_id'],
                                            status__in=task_status).all()

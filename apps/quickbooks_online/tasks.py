@@ -36,7 +36,7 @@ def create_bill(expense_group: ExpenseGroup, task_log: TaskLog):
 
             task_log.detail = created_bill
             task_log.bill = bill_object
-            task_log.status = 'COMPLETED'
+            task_log.status = 'COMPLETE'
 
             task_log.save(update_fields=['detail', 'bill', 'status'])
 

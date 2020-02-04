@@ -50,7 +50,7 @@ def create_expense_groups(workspace_id: int, state: List[str], export_non_reimbu
 
             task_log.detail = ExpenseGroupSerializer(expense_group_objects, many=True).data
 
-            task_log.status = 'COMPLETED'
+            task_log.status = 'COMPLETE'
 
             task_log.save(update_fields=['detail', 'status'])
 

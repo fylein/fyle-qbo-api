@@ -22,7 +22,13 @@ class ExpenseGroupView(generics.ListCreateAPIView):
     serializer_class = ExpenseGroupSerializer
 
     def get_queryset(self):
-        return ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'])
+        state = self.request.query_params.get('state', 'ALL')
+        if state == 'ALL':
+            return ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'])
+        elif state == 'COMPLETE':
+            return ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'], bill__id__isnull=False)
+        elif state == 'READY':
+            return ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'], bill__id__isnull=True)
 
     def post(self, request, *args, **kwargs):
         """
