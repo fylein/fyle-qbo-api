@@ -8,7 +8,7 @@ from fyle_qbo_api.exceptions import BulkError
 
 from apps.fyle.models import ExpenseGroup
 from apps.tasks.models import TaskLog
-from apps.mappings.models import EmployeeMapping
+from apps.mappings.models import EmployeeMapping, GeneralMapping
 from apps.workspaces.models import QBOCredential
 
 from .models import Bill, BillLineitem
@@ -45,6 +45,26 @@ def create_bill(expense_group: ExpenseGroup, task_log: TaskLog):
             'expense_group_id': expense_group.id,
             'employee_email': expense_group.description.get('employee_email'),
             'message': 'Mappings not found'
+        }
+        task_log.status = 'FAILED'
+        task_log.detail = detail
+
+        task_log.save(update_fields=['detail', 'status'])
+
+    except QBOCredential.DoesNotExist:
+        detail = {
+            'expense_group_id': expense_group.id,
+            'message': 'QBO Account not connected'
+        }
+        task_log.status = 'FAILED'
+        task_log.detail = detail
+
+        task_log.save(update_fields=['detail', 'status'])
+
+    except GeneralMapping.DoesNotExist:
+        detail = {
+            'expense_group_id': expense_group.id,
+            'message': 'General mappings not found in the workspace'
         }
         task_log.status = 'FAILED'
         task_log.detail = detail
