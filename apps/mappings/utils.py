@@ -19,18 +19,18 @@ class MappingUtils:
                      'employee email field is blank')
         assert_valid('bank_account_id' in general_mapping and general_mapping['bank_account_id'],
                      'vendor name field is blank')
-        assert_valid('default_ccc_account_name' in general_mapping and general_mapping['default_ccc_account_name'],
-                     'vendor id field is blank')
-        assert_valid('default_ccc_account_id' in general_mapping and general_mapping['default_ccc_account_id'],
-                     'vendor id field is blank')
+        # assert_valid('default_ccc_account_name' in general_mapping and general_mapping['default_ccc_account_name'],
+        #              'default ccc account name field is blank')
+        # assert_valid('default_ccc_account_id' in general_mapping and general_mapping['default_ccc_account_id'],
+        #              'default ccc account id field is blank')
 
         general_mapping, _ = GeneralMapping.objects.update_or_create(
             workspace_id=self.__workspace_id,
             defaults={
-                'bank_account_name': general_mapping['bank_account_name'],
-                'bank_account_id': general_mapping['bank_account_id'],
-                'default_ccc_account_name': general_mapping['default_ccc_account_name'],
-                'default_ccc_account_id': general_mapping['default_ccc_account_id']
+                'bank_account_name': general_mapping.get('bank_account_name'),
+                'bank_account_id': general_mapping.get('bank_account_id'),
+                'default_ccc_account_name': general_mapping.get('default_ccc_account_name', ''),
+                'default_ccc_account_id': general_mapping.get('default_ccc_account_id', '')
             }
         )
         return general_mapping
