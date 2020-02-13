@@ -60,7 +60,7 @@ class EmployeeMappingView(generics.ListCreateAPIView):
     serializer_class = EmployeeMappingSerializer
 
     def get_queryset(self):
-        return EmployeeMapping.objects.filter(workspace_id=self.kwargs['workspace_id']).all()
+        return EmployeeMapping.objects.filter(workspace_id=self.kwargs['workspace_id']).order_by('-updated_at').all()
 
     def post(self, request, *args, **kwargs):
         """
@@ -86,7 +86,7 @@ class CategoryMappingView(generics.ListCreateAPIView):
     serializer_class = CategoryMappingSerializer
 
     def get_queryset(self):
-        return CategoryMapping.objects.filter(workspace_id=self.kwargs['workspace_id']).all()
+        return CategoryMapping.objects.filter(workspace_id=self.kwargs['workspace_id']).order_by('-updated_at').all()
 
     def post(self, request, *args, **kwargs):
         """
@@ -112,7 +112,7 @@ class CostCenterMappingView(generics.ListCreateAPIView):
     serializer_class = CostCenterMappingSerializer
 
     def get_queryset(self):
-        return CostCenterMapping.objects.filter(workspace_id=self.kwargs['workspace_id']).all()
+        return CostCenterMapping.objects.filter(workspace_id=self.kwargs['workspace_id']).order_by('-updated_at').all()
 
     def post(self, request, *args, **kwargs):
         """
@@ -138,7 +138,7 @@ class ProjectMappingView(generics.ListCreateAPIView):
     serializer_class = ProjectMappingSerializer
 
     def get_queryset(self):
-        return ProjectMapping.objects.filter(workspace_id=self.kwargs['workspace_id']).all()
+        return ProjectMapping.objects.filter(workspace_id=self.kwargs['workspace_id']).order_by('-updated_at').all()
 
     def post(self, request, *args, **kwargs):
         """

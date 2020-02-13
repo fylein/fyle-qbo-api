@@ -24,7 +24,7 @@ class TasksView(generics.ListAPIView):
             task_status = ['IN_PROGRESS', 'FAILED', 'COMPLETE']
 
         task_logs = TaskLog.objects.filter(workspace_id=self.kwargs['workspace_id'],
-                                           status__in=task_status).all()
+                                           status__in=task_status).order_by('-updated_at').all()
         return task_logs
 
 

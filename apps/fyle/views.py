@@ -24,11 +24,13 @@ class ExpenseGroupView(generics.ListCreateAPIView):
     def get_queryset(self):
         state = self.request.query_params.get('state', 'ALL')
         if state == 'ALL':
-            return ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'])
+            return ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id']).order_by('-updated_at')
         elif state == 'COMPLETE':
-            return ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'], bill__id__isnull=False)
+            return ExpenseGroup.objects.filter(
+                workspace_id=self.kwargs['workspace_id'], bill__id__isnull=False).order_by('-updated_at')
         elif state == 'READY':
-            return ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'], bill__id__isnull=True)
+            return ExpenseGroup.objects.filter(
+                workspace_id=self.kwargs['workspace_id'], bill__id__isnull=True).order_by('-updated_at')
 
     def post(self, request, *args, **kwargs):
         """
@@ -68,7 +70,8 @@ class ExpenseView(generics.RetrieveAPIView):
             expense_group = ExpenseGroup.objects.get(
                 workspace_id=kwargs['workspace_id'], pk=kwargs['expense_group_id']
             )
-            expenses = Expense.objects.filter(id__in=expense_group.expenses.values_list('id', flat=True))
+            expenses = Expense.objects.filter(
+                id__in=expense_group.expenses.values_list('id', flat=True)).order_by('-updated_at')
             return Response(
                 data=ExpenseSerializer(expenses, many=True).data,
                 status=status.HTTP_200_OK
