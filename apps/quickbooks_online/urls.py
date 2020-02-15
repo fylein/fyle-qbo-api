@@ -15,12 +15,13 @@ Including another URLconf
 """
 from django.urls import path
 
-from .views import VendorView, AccountView, ClassView, DepartmentView, BillView
+from .views import VendorView, AccountView, ClassView, DepartmentView, BillView, CustomerView
 
 urlpatterns = [
     path('vendors/', VendorView.as_view({'get': 'get_vendors'})),
     path('accounts/', AccountView.as_view({'get': 'get_accounts'})),
     path('classes/', ClassView.as_view({'get': 'get_classes'})),
     path('departments/', DepartmentView.as_view({'get': 'get_departments'})),
+    path('customers/', CustomerView.as_view({'get': 'get_customers'})),
     path('bills/', BillView.as_view())
 ]

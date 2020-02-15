@@ -130,6 +130,34 @@ class DepartmentView(viewsets.ViewSet):
             )
 
 
+class CustomerView(viewsets.ViewSet):
+    """
+    Department view
+    """
+    def get_customers(self, request, **kwargs):
+        """
+        Get departments from QBO
+        """
+        try:
+            qbo_credentials = QBOCredential.objects.get(workspace_id=kwargs['workspace_id'])
+
+            qbo_connector = QBOConnector(qbo_credentials)
+
+            customers = qbo_connector.get_customers()
+
+            return Response(
+                data=customers,
+                status=status.HTTP_200_OK
+            )
+        except QBOCredential.DoesNotExist:
+            return Response(
+                data={
+                    'message': 'QBO credentials not found in workspace'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
 class BillView(generics.ListCreateAPIView):
     """
     Create Bill

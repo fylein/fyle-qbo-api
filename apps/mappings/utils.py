@@ -118,17 +118,17 @@ class MappingUtils:
         """
         assert_valid('project' in project_mapping and project_mapping['project'],
                      'project field is blank')
-        assert_valid('department_name' in project_mapping and project_mapping['department_name'],
-                     'department name field is blank')
-        assert_valid('department_id' in project_mapping and project_mapping['department_id'],
-                     'department id field is blank')
+        assert_valid('customer_display_name' in project_mapping and project_mapping['customer_display_name'],
+                     'customer name field is blank')
+        assert_valid('department_id' in project_mapping and project_mapping['customer_id'],
+                     'customer id field is blank')
 
         project_mapping_object, _ = ProjectMapping.objects.update_or_create(
             project=project_mapping['project'],
             workspace_id=self.__workspace_id,
             defaults={
-                'department_name': project_mapping['department_name'],
-                'department_id': project_mapping['department_id']
+                'customer_display_name': project_mapping['customer_display_name'],
+                'customer_id': project_mapping['customer_display_name']
             }
         )
 

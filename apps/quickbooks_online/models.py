@@ -5,10 +5,8 @@ from datetime import datetime
 
 from django.db import models
 
-from fyle_qbo_api.exceptions import BulkError
-
 from apps.fyle.models import ExpenseGroup, Expense
-from apps.mappings.models import GeneralMapping, EmployeeMapping, CategoryMapping, CostCenterMapping
+from apps.mappings.models import GeneralMapping, EmployeeMapping, CategoryMapping, CostCenterMapping, ProjectMapping
 
 
 class Bill(models.Model):
@@ -47,7 +45,7 @@ class Bill(models.Model):
                 'department_id': None,
                 'transaction_date': datetime.now().strftime("%Y-%m-%d"),
                 'currency': expense.currency,
-                'private_note': 'Report {0} / {1} approved on {2}'.format(
+                'private_note': 'Report {0} / {1} exported on {2}'.format(
                     expense.claim_number, expense.report_id, datetime.now().strftime("%Y-%m-%d")
                 ),
                 'bill_number': expense_group.fyle_group_id
@@ -65,6 +63,7 @@ class BillLineitem(models.Model):
     expense = models.OneToOneField(Expense, on_delete=models.PROTECT, help_text='Reference to Expense')
     account_id = models.CharField(max_length=255, help_text='QBO account id')
     class_id = models.CharField(max_length=255, help_text='QBO class id', null=True)
+    customer_id = models.CharField(max_length=255, help_text='QBO customer id', null=True)
     amount = models.FloatField(help_text='Bill amount')
     description = models.CharField(max_length=255, help_text='QBO bill lineitem description', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
@@ -80,27 +79,21 @@ class BillLineitem(models.Model):
         expenses = expense_group.expenses.all()
         bill = Bill.objects.get(expense_group=expense_group)
 
-        bulk_errors = []
-        row = 0
-
         bill_lineitem_objects = []
 
         for lineitem in expenses:
             account = CategoryMapping.objects.filter(category=lineitem.category,
                                                      sub_category=lineitem.sub_category).first()
-            if not account:
-                bulk_errors.append({
-                    'row': row,
-                    'value': '{0} / {1}'.format(lineitem.category, lineitem.sub_category),
-                    'message': 'Category Mapping not found'
-                })
-
-                continue
 
             cost_center_mapping = CostCenterMapping.objects.filter(
                 cost_center=lineitem.cost_center, workspace_id=expense_group.workspace_id).first()
 
+            project_mapping = ProjectMapping.objects.filter(
+                project=lineitem.project, workspace_id=expense_group.workspace_id).first()
+
             class_id = cost_center_mapping.class_id if cost_center_mapping else None
+
+            customer_id = project_mapping.customer_id if project_mapping else None
 
             bill_lineitem_object, _ = BillLineitem.objects.update_or_create(
                 bill=bill,
@@ -108,15 +101,12 @@ class BillLineitem(models.Model):
                 defaults={
                     'account_id': account.account_id if account else None,
                     'class_id': class_id,
+                    'customer_id': customer_id,
                     'amount': lineitem.amount,
                     'description': lineitem.purpose
                 }
             )
 
             bill_lineitem_objects.append(bill_lineitem_object)
-            row = row + 1
-
-        if bulk_errors:
-            raise BulkError('Mappings are missing', bulk_errors)
 
         return bill_lineitem_objects

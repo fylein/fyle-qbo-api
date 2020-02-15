@@ -53,6 +53,12 @@ class QBOConnector:
         """
         return self.connection.classes.get()
 
+    def get_customers(self):
+        """
+        Get classes
+        """
+        return self.connection.customers.get()
+
     @staticmethod
     def __construct_bill_lineitems(bill_lineitems: List[BillLineitem]) -> List[Dict]:
         """
@@ -70,6 +76,9 @@ class QBOConnector:
                 'AccountBasedExpenseLineDetail': {
                     'AccountRef': {
                         'value': line.account_id
+                    },
+                    'CustomerRef': {
+                        'value': line.customer_id
                     },
                     'ClassRef': {
                         'value': line.class_id

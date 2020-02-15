@@ -59,8 +59,8 @@ class ProjectMapping(models.Model):
     """
     id = models.AutoField(primary_key=True)
     project = models.CharField(max_length=255, help_text='Fyle project')
-    department_name = models.CharField(max_length=255, help_text='QBO department name')
-    department_id = models.CharField(max_length=255, help_text='QBO department id')
+    customer_display_name = models.CharField(max_length=255, help_text='QBO customer name')
+    customer_id = models.CharField(max_length=255, help_text='QBO customer id')
     workspace = models.ForeignKey(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')
