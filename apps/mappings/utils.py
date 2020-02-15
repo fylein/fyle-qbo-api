@@ -128,7 +128,7 @@ class MappingUtils:
             workspace_id=self.__workspace_id,
             defaults={
                 'customer_display_name': project_mapping['customer_display_name'],
-                'customer_id': project_mapping['customer_display_name']
+                'customer_id': project_mapping['customer_id']
             }
         )
 
