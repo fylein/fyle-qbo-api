@@ -110,14 +110,13 @@ LOGGING = {
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'stream': sys.stderr
         },
     },
     'loggers': {
         'django.request': {
             'handlers': ['console'],
             'level': 'ERROR',
-            'propagate': True,
+            'propagate': False,
         },
     },
 }

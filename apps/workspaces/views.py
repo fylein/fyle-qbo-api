@@ -12,6 +12,8 @@ from qbosdk import exceptions as qbo_exc
 from fyle_rest_auth.utils import AuthUtils
 from fyle_rest_auth.models import AuthToken
 
+from fyle_qbo_api.utils import assert_valid
+
 from .models import Workspace, FyleCredential, QBOCredential
 from .utils import generate_qbo_refresh_token
 from .serializers import WorkspaceSerializer, FyleCredentialSerializer, QBOCredentialSerializer
@@ -40,6 +42,15 @@ class WorkspaceView(viewsets.ViewSet):
 
         if all_workspaces_count == 0:
             auth_tokens = AuthToken.objects.get(user__email=request.user)
+
+            fyle_user = auth_utils.get_fyle_user(auth_tokens.refresh_token)
+            org_name = fyle_user['org_name']
+            org_id = fyle_user['org_id']
+
+            workspace.name = org_name
+            workspace.fyle_org_id = org_id
+
+            workspace.save(update_fields=['name', 'fyle_org_id'])
 
             FyleCredential.objects.create(
                 refresh_token=auth_tokens.refresh_token,
@@ -95,12 +106,24 @@ class ConnectFyleView(viewsets.ViewSet):
         try:
             authorization_code = request.data.get('code')
 
+            workspace = Workspace.objects.get(id=kwargs['workspace_id'])
+
             refresh_token = auth_utils.generate_fyle_refresh_token(authorization_code)['refresh_token']
+            fyle_user = auth_utils.get_fyle_user(refresh_token)
+            org_id = fyle_user['org_id']
+            org_name = fyle_user['org_name']
+
+            assert_valid(workspace.fyle_org_id and workspace.fyle_org_id == org_id,
+                         'Please select the correct Fyle account - {0}'.format(workspace.name))
+
+            workspace.name = org_name
+            workspace.fyle_org_id = org_id
+            workspace.save(update_fields=['name', 'fyle_org_id'])
 
             fyle_credentials, _ = FyleCredential.objects.update_or_create(
                 workspace_id=kwargs['workspace_id'],
                 defaults={
-                    'refresh_token': refresh_token
+                    'refresh_token': refresh_token,
                 }
             )
 
@@ -113,7 +136,7 @@ class ConnectFyleView(viewsets.ViewSet):
                 {
                     'message': 'Invalid Authorization Code'
                 },
-                status=status.HTTP_401_UNAUTHORIZED
+                status=status.HTTP_403_FORBIDDEN
             )
         except fyle_exc.NotFoundClientError:
             return Response(
@@ -188,12 +211,19 @@ class ConnectQBOView(viewsets.ViewSet):
             qbo_credentials = QBOCredential.objects.filter(workspace=workspace).first()
 
             if not qbo_credentials:
+                if workspace.qbo_realm_id:
+                    assert_valid(realm_id == workspace.qbo_realm_id,
+                                 'Please choose the correct Quickbooks online account')
                 qbo_credentials = QBOCredential.objects.create(
                     refresh_token=refresh_token,
                     realm_id=realm_id,
                     workspace=workspace
                 )
+                workspace.qbo_realm_id = realm_id
+                workspace.save(update_fields=['qbo_realm_id'])
             else:
+                assert_valid(realm_id == qbo_credentials.realm_id,
+                             'Please choose the correct aaaaa Quickbooks online account')
                 qbo_credentials.refresh_token = refresh_token
                 qbo_credentials.save()
 

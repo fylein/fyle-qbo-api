@@ -14,6 +14,8 @@ class Workspace(models.Model):
     id = models.AutoField(primary_key=True, help_text='Unique Id to identify a workspace')
     name = models.CharField(max_length=255, help_text='Name of the workspace')
     user = models.ForeignKey(User, on_delete=models.PROTECT, help_text='Reference to users table')
+    fyle_org_id = models.CharField(max_length=255, help_text='org id')
+    qbo_realm_id = models.CharField(max_length=255, help_text='qbo realm id')
     last_synced_at = models.DateTimeField(help_text='Datetime when expenses were pulled last', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')
