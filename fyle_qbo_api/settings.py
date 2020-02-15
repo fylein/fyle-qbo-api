@@ -110,6 +110,7 @@ LOGGING = {
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'stream': sys.stderr
         },
     },
     'loggers': {
