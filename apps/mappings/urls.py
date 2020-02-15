@@ -22,6 +22,6 @@ urlpatterns = [
     path('general/', GeneralMappingView.as_view()),
     path('employees/', EmployeeMappingView.as_view()),
     path('categories/', CategoryMappingView.as_view()),
-    path('cost_canters/', CostCenterMappingView.as_view()),
+    path('cost_centers/', CostCenterMappingView.as_view()),
     path('projects/', ProjectMappingView.as_view())
 ]
