@@ -58,6 +58,33 @@ class ExpenseGroupView(generics.ListCreateAPIView):
         )
 
 
+class ExpenseGroupByIdView(generics.RetrieveAPIView):
+    """
+    Expense Group by Id view
+    """
+    def get(self, request, *args, **kwargs):
+        """
+        Get expenses
+        """
+        try:
+            expense_group = ExpenseGroup.objects.get(
+                workspace_id=kwargs['workspace_id'], pk=kwargs['expense_group_id']
+            )
+
+            return Response(
+                data=ExpenseGroupSerializer(expense_group).data,
+                status=status.HTTP_200_OK
+            )
+
+        except ExpenseGroup.DoesNotExist:
+            return Response(
+                data={
+                    'message': 'Expense group not found'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
 class ExpenseView(generics.RetrieveAPIView):
     """
     Expense view

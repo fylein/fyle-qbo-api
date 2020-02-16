@@ -15,12 +15,13 @@ Including another URLconf
 """
 from django.urls import path
 
-from .views import ExpenseGroupView, ExpenseView, EmployeeView, CategoryView, CostCenterView, \
-    ProjectView, UserProfileView
+from .views import ExpenseGroupView, ExpenseGroupByIdView, ExpenseView, EmployeeView, CategoryView, \
+    CostCenterView, ProjectView, UserProfileView
 
 urlpatterns = [
     path('user/', UserProfileView.as_view()),
     path('expense_groups/', ExpenseGroupView.as_view()),
+    path('expense_groups/<int:expense_group_id>/', ExpenseGroupByIdView.as_view()),
     path('expense_groups/<int:expense_group_id>/expenses/', ExpenseView.as_view()),
     path('employees/', EmployeeView.as_view({'get': 'get_employees'})),
     path('categories/', CategoryView.as_view({'get': 'get_categories'})),

@@ -48,3 +48,21 @@ class TasksByIdView(generics.RetrieveAPIView):
             data=self.serializer_class(task_logs, many=True).data,
             status=status.HTTP_200_OK
         )
+
+
+class TasksByExpenseGroupIdView(generics.RetrieveAPIView):
+    """
+    Get Task by Ids
+    """
+    serializer_class = TaskLogSerializer
+
+    def get(self, request, *args, **kwargs):
+        """
+        Get task logs by ids
+        """
+        task_logs = TaskLog.objects.filter(expense_group_id=kwargs['expense_group_id']).all()
+
+        return Response(
+            data=self.serializer_class(task_logs, many=True).data,
+            status=status.HTTP_200_OK
+        )
