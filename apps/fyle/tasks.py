@@ -1,3 +1,4 @@
+from time import sleep
 from typing import List
 from datetime import datetime
 
@@ -22,6 +23,7 @@ def create_expense_groups(workspace_id: int, state: List[str], export_non_reimbu
     """
     try:
         with transaction.atomic():
+            sleep(5)
             workspace = Workspace.objects.get(pk=workspace_id)
 
             last_synced_at = workspace.last_synced_at
