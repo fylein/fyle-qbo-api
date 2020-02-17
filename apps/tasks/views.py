@@ -38,7 +38,7 @@ class TasksByIdView(generics.RetrieveAPIView):
         """
         Get task logs by ids
         """
-        task_log_ids = self.request.query_params.getlist('task_log_ids', [])
+        task_log_ids = self.request.query_params.getlist('id', [])
 
         assert_valid(task_log_ids != [], 'task log ids not found')
 

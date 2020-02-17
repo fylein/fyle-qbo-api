@@ -77,7 +77,8 @@ def __validate_expense_group(expense_group: ExpenseGroup):
             'row': None,
             'expense_group_id': expense_group.id,
             'value': 'bank account',
-            'message': 'Employee mappings not found'
+            'type': 'General Mapping',
+            'message': 'General mapping not found'
         })
 
     try:
@@ -87,7 +88,8 @@ def __validate_expense_group(expense_group: ExpenseGroup):
             'row': None,
             'expense_group_id': expense_group.id,
             'value': expense_group.description.get('employee_email'),
-            'message': 'Employee mappings not found'
+            'type': 'Employee Mapping',
+            'message': 'Employee mapping not found'
         })
 
     expenses = expense_group.expenses.all()
@@ -100,6 +102,7 @@ def __validate_expense_group(expense_group: ExpenseGroup):
                 'row': row,
                 'expense_group_id': expense_group.id,
                 'value': '{0} / {1}'.format(lineitem.category, lineitem.sub_category),
+                'type': 'Category Mapping',
                 'message': 'Category Mapping not found'
             })
 
