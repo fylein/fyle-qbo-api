@@ -6,14 +6,15 @@ from apps.tasks.models import TaskLog
 def run_sync_schedule(workspace_id):
     """
     Run schedule
-    :param workspace_id: 
-    :return: 
+    :param workspace_id: workspace id
+    :return: None
     """
     task_log: TaskLog = create_expense_groups(
         workspace_id=workspace_id, state=['PAYMENT_PROCESSING'],
         export_non_reimbursable=False
     )
-    while task_log.status != 'COMPLETE':
+    while task_log.status != 'COMPLETE' or task_log.status != 'FATAL':
         task_log = TaskLog.objects.get(id=task_log.id)
         continue
-    create_bills(workspace_id=workspace_id)
+    if task_log.status == 'COMPLETE':
+        create_bills(workspace_id=workspace_id)

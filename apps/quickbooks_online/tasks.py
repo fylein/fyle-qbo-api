@@ -1,6 +1,5 @@
 import json
-from typing import List
-
+import traceback
 from django.db import transaction
 from django_q.tasks import async_task
 
@@ -92,6 +91,14 @@ def create_bill(expense_group, task_log):
         task_log.status = 'FAILED'
         task_log.detail = detail
 
+        task_log.save(update_fields=['detail', 'status'])
+
+    except Exception:
+        error = traceback.format_exc()
+        task_log.detail = {
+            'error': error
+        }
+        task_log.status = 'FATAL'
         task_log.save(update_fields=['detail', 'status'])
 
 

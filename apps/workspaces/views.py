@@ -342,4 +342,3 @@ class SettingsView(viewsets.ViewSet):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
-

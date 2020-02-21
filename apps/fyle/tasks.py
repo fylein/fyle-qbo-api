@@ -1,5 +1,5 @@
-from time import sleep
 from typing import List
+import traceback
 from datetime import datetime
 
 from django.db import transaction
@@ -79,4 +79,12 @@ def async_create_expense_groups(workspace_id: int, state: List[str], export_non_
             'message': 'Fyle credentials do not exist in workspace'
         }
         task_log.status = 'FAILED'
+        task_log.save(update_fields=['detail', 'status'])
+
+    except Exception:
+        error = traceback.format_exc()
+        task_log.detail = {
+            'error': error
+        }
+        task_log.status = 'FATAL'
         task_log.save(update_fields=['detail', 'status'])
