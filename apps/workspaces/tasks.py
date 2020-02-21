@@ -13,7 +13,7 @@ def run_sync_schedule(workspace_id):
         workspace_id=workspace_id, state=['PAYMENT_PROCESSING'],
         export_non_reimbursable=False
     )
-    while task_log.status != 'COMPLETE' or task_log.status != 'FATAL':
+    while task_log.status != 'COMPLETE':
         task_log = TaskLog.objects.get(id=task_log.id)
         continue
     if task_log.status == 'COMPLETE':

@@ -117,7 +117,10 @@ def __validate_expense_group(expense_group: ExpenseGroup):
         })
 
     try:
-        EmployeeMapping.objects.get(employee_email=expense_group.description.get('employee_email'))
+        EmployeeMapping.objects.get(
+            employee_email=expense_group.description.get('employee_email'),
+            workspace_id=expense_group.workspace_id
+        )
     except EmployeeMapping.DoesNotExist:
         bulk_errors.append({
             'row': None,
@@ -131,7 +134,8 @@ def __validate_expense_group(expense_group: ExpenseGroup):
 
     for lineitem in expenses:
         account = CategoryMapping.objects.filter(category=lineitem.category,
-                                                 sub_category=lineitem.sub_category).first()
+                                                 sub_category=lineitem.sub_category,
+                                                 workspace_id=expense_group.workspace_id).first()
         if not account:
             bulk_errors.append({
                 'row': row,

@@ -36,10 +36,9 @@ class WorkspaceView(viewsets.ViewSet):
 
         all_workspaces_count = Workspace.objects.filter(user__email=request.user).count()
 
-        workspace = Workspace.objects.create(
-            name='Workspace {0}'.format(all_workspaces_count + 1),
-            user=User.objects.get(email=request.user)
-        )
+        workspace = Workspace.objects.create(name='Workspace {0}'.format(all_workspaces_count + 1))
+
+        workspace.user.add(User.objects.get(email=request.user))
 
         if all_workspaces_count == 0:
             auth_tokens = AuthToken.objects.get(user__email=request.user)
@@ -68,7 +67,7 @@ class WorkspaceView(viewsets.ViewSet):
         Get all workspaces
         """
         user = User.objects.get(email=request.user)
-        workspaces = Workspace.objects.filter(user=user).all()
+        workspaces = Workspace.objects.filter(user__in=[user]).all()
 
         return Response(
             data=WorkspaceSerializer(workspaces, many=True).data,

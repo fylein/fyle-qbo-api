@@ -44,7 +44,6 @@ class Bill(models.Model):
                 'vendor_id': EmployeeMapping.objects.get(employee_email=description.get('employee_email')).vendor_id,
                 'department_id': None,
                 'transaction_date': datetime.now().strftime("%Y-%m-%d"),
-                'currency': expense.currency,
                 'private_note': 'Report {0} / {1} exported on {2}'.format(
                     expense.claim_number, expense.report_id, datetime.now().strftime("%Y-%m-%d")
                 ),
