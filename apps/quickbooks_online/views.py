@@ -2,18 +2,12 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.views import status
 from rest_framework import generics
-
-from django_q.tasks import async_task
-
 from fyle_qbo_api.utils import assert_valid
 
 from apps.workspaces.models import QBOCredential
-from apps.fyle.models import ExpenseGroup
-from apps.tasks.models import TaskLog
-from apps.tasks.serializers import TaskLogSerializer
 
 from .utils import QBOConnector
-from .tasks import create_bill
+from .tasks import create_bills
 from .models import Bill
 from .serializers import BillSerializer
 
@@ -175,41 +169,9 @@ class BillView(generics.ListCreateAPIView):
 
         assert_valid(expense_group_ids != [], 'Expense ids not found')
 
-        expense_groups = ExpenseGroup.objects.filter(
-            workspace_id=kwargs['workspace_id'], id__in=expense_group_ids, bill__id__isnull=True
-        ).all()
-
-        task_logs = []
-
-        completed_expense_groups = ExpenseGroup.objects.filter(
-            workspace_id=kwargs['workspace_id'], id__in=expense_group_ids, bill__id__isnull=False
-        ).all()
-
-        for expense_group in completed_expense_groups:
-            task_log = TaskLog.objects.get(expense_group=expense_group)
-            task_logs.append(task_log)
-
-        for expense_group in expense_groups:
-            task_log, _ = TaskLog.objects.update_or_create(
-                workspace_id=expense_group.workspace_id,
-                expense_group=expense_group,
-                defaults={
-                    'status': 'IN_PROGRESS',
-                    'type': 'CREATING_BILL'
-                }
-            )
-            task_id = async_task(create_bill, expense_group, task_log)
-
-            detail = {
-                'message': 'Creating bill for expense group {0}'.format(expense_group.id)
-            }
-            task_log.detail = detail
-            task_log.task_id = task_id
-            task_log.save(update_fields=['task_id', 'detail'])
-
-            task_logs.append(task_log)
+        create_bills(kwargs['workspace_id'], expense_group_ids)
 
         return Response(
-            data=TaskLogSerializer(task_logs, many=True).data,
+            data={},
             status=status.HTTP_200_OK
         )

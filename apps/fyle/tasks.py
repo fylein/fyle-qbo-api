@@ -3,6 +3,7 @@ from typing import List
 from datetime import datetime
 
 from django.db import transaction
+from django_q.tasks import async_task
 
 from apps.workspaces.models import FyleCredential, Workspace
 from apps.tasks.models import TaskLog
@@ -12,18 +13,35 @@ from .utils import FyleConnector
 from .serializers import ExpenseGroupSerializer
 
 
-def create_expense_groups(workspace_id: int, state: List[str], export_non_reimbursable: bool, task_log: TaskLog):
+def create_expense_groups(workspace_id: int, state: List[str], export_non_reimbursable: bool):
     """
     Create expense groups
     :param workspace_id: workspace id
     :param state: expense state
     :param export_non_reimbursable: true / false
-    :param task_log: Task log object
-    :return:
+    :return: task log
     """
+    task_log = TaskLog.objects.create(
+        workspace_id=workspace_id,
+        type='FETCHING_EXPENSES',
+        status='IN_PROGRESS'
+    )
+    task_id = async_task(async_create_expense_groups, workspace_id, state, export_non_reimbursable,
+                         task_log)
+
+    task_log.task_id = task_id
+    task_log.detail = {
+        'message': 'Creating expense groups'
+    }
+    task_log.save(update_fields=['task_id', 'detail'])
+
+    return task_log
+
+
+def async_create_expense_groups(workspace_id: int, state: List[str], export_non_reimbursable: bool, task_log: TaskLog):
     try:
         with transaction.atomic():
-            sleep(5)
+
             workspace = Workspace.objects.get(pk=workspace_id)
 
             last_synced_at = workspace.last_synced_at

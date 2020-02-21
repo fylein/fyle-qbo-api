@@ -39,21 +39,12 @@ class ExpenseGroupView(generics.ListCreateAPIView):
         export_non_reimbursable = request.data.get('export_non_reimbursable', False)
         state = request.data.get('state', ['PAYMENT_PROCESSING'])
 
-        task_log = TaskLog.objects.create(
-            workspace_id=self.kwargs['workspace_id'],
-            type='FETCHING_EXPENSES',
-            status='IN_PROGRESS'
+        create_expense_groups(
+            workspace_id=kwargs['workspace_id'],
+            state=state, export_non_reimbursable=export_non_reimbursable
         )
-        task_id = async_task(create_expense_groups, kwargs['workspace_id'], state, export_non_reimbursable, task_log)
-
-        task_log.task_id = task_id
-        task_log.detail = {
-            'message': 'Creating expense groups'
-        }
-        task_log.save(update_fields=['task_id', 'detail'])
 
         return Response(
-            data=TaskLogSerializer(task_log).data,
             status=status.HTTP_200_OK
         )
 

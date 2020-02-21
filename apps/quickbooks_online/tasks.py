@@ -1,6 +1,8 @@
 import json
+from typing import List
 
 from django.db import transaction
+from django_q.tasks import async_task
 
 from qbosdk.exceptions import WrongParamsError
 
@@ -15,13 +17,39 @@ from .models import Bill, BillLineitem
 from .utils import QBOConnector
 
 
-def create_bill(expense_group: ExpenseGroup, task_log: TaskLog):
+def create_bills(workspace_id, expense_group_ids=None):
     """
-    Create bill
-    :param task_log: Task log
-    :param expense_group: expense group
+    Create bills
     """
+    if expense_group_ids:
+        expense_groups = ExpenseGroup.objects.filter(
+            workspace_id=workspace_id, id__in=expense_group_ids, bill__id__isnull=True
+        ).all()
+    else:
+        expense_groups = ExpenseGroup.objects.filter(
+            workspace_id=workspace_id, bill__id__isnull=True
+        ).all()
 
+    for expense_group in expense_groups:
+        task_log, _ = TaskLog.objects.update_or_create(
+            workspace_id=expense_group.workspace_id,
+            expense_group=expense_group,
+            defaults={
+                'status': 'IN_PROGRESS',
+                'type': 'CREATING_BILL'
+            }
+        )
+        task_id = async_task(create_bill, expense_group, task_log)
+
+        detail = {
+            'message': 'Creating bill for expense group {0}'.format(expense_group.id)
+        }
+        task_log.detail = detail
+        task_log.task_id = task_id
+        task_log.save(update_fields=['task_id', 'detail'])
+
+
+def create_bill(expense_group, task_log):
     try:
         with transaction.atomic():
             __validate_expense_group(expense_group)

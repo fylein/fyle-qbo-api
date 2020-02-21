@@ -1,9 +1,12 @@
 import json
 import base64
+from datetime import datetime
+
 import requests
 
 from django.conf import settings
 
+from django_q.models import Schedule
 from future.moves.urllib.parse import urlencode
 
 from qbosdk import UnauthorizedClientError, NotFoundClientError, WrongParamsError, InternalServerError
@@ -47,3 +50,30 @@ def generate_qbo_refresh_token(authorization_code: str) -> str:
 
     elif response.status_code == 500:
         raise InternalServerError('Internal server error', response.text)
+
+
+def create_schedule(name, workspace_settings, schedule_enabled, next_run, minutes):
+    """Create Schedule"""
+    next_run = datetime.strptime(next_run, '%Y-%m-%dT%H:%M:00.000Z')
+
+    if schedule_enabled:
+        if not workspace_settings.schedule:
+            schedule = Schedule.objects.create(
+                name=name, func='apps.workspaces.tasks.run_sync_schedule', schedule_type=Schedule.MINUTES,
+                args='{}'.format(workspace_settings.workspace_id), minutes=minutes, next_run=next_run
+            )
+            workspace_settings.schedule = schedule
+            workspace_settings.save()
+        else:
+            schedule = workspace_settings.schedule
+            schedule.minutes = minutes
+            schedule.name = name
+            schedule.next_run = next_run
+
+            schedule.save()
+    else:
+        if workspace_settings.schedule:
+            schedule = workspace_settings.schedule
+            workspace_settings.schedule = None
+            workspace_settings.save()
+            schedule.delete()

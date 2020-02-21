@@ -4,6 +4,8 @@ Workspace Models
 from django.db import models
 from django.contrib.auth import get_user_model
 
+from django_q.tasks import Schedule
+
 User = get_user_model()
 
 
@@ -19,6 +21,18 @@ class Workspace(models.Model):
     last_synced_at = models.DateTimeField(help_text='Datetime when expenses were pulled last', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')
+
+
+class WorkspaceSettings(models.Model):
+    """
+    Workspace Settings
+    """
+    id = models.AutoField(primary_key=True, help_text='Unique Id to identify a workspace settings')
+    schedule_enabled = models.BooleanField(default=False)
+    schedule = models.OneToOneField(Schedule, on_delete=models.PROTECT, null=True)
+    workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
+    created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
+    updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
 
 class QBOCredential(models.Model):

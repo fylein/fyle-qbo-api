@@ -9,15 +9,16 @@ from rest_framework import viewsets
 from fylesdk import exceptions as fyle_exc
 from qbosdk import exceptions as qbo_exc
 
+
 from fyle_rest_auth.utils import AuthUtils
 from fyle_rest_auth.models import AuthToken
 
 from fyle_qbo_api.utils import assert_valid
 
-from .models import Workspace, FyleCredential, QBOCredential
-from .utils import generate_qbo_refresh_token
-from .serializers import WorkspaceSerializer, FyleCredentialSerializer, QBOCredentialSerializer
-
+from .models import Workspace, FyleCredential, QBOCredential, WorkspaceSettings
+from .utils import generate_qbo_refresh_token, create_schedule
+from .serializers import WorkspaceSerializer, FyleCredentialSerializer, QBOCredentialSerializer, \
+    WorkspaceSettingsSerializer
 
 User = get_user_model()
 auth_utils = AuthUtils()
@@ -287,3 +288,58 @@ class ConnectQBOView(viewsets.ViewSet):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+
+class SettingsView(viewsets.ViewSet):
+    """
+    Settings View
+    """
+    def post(self, request, **kwargs):
+        """
+        Post Settings
+        """
+        schedule_enabled = request.data.get('schedule_enabled')
+        assert_valid(schedule_enabled is not None, 'Schedule enabled cannot be null')
+
+        hours = request.data.get('hours')
+        assert_valid(hours is not None, 'Hours cannot be left empty')
+
+        next_run = request.data.get('next_run')
+        assert_valid(next_run is not None, 'next_run value cannot be empty')
+
+        settings, _ = WorkspaceSettings.objects.update_or_create(
+            workspace_id=kwargs['workspace_id'],
+            defaults={
+                'schedule_enabled': schedule_enabled
+            }
+        )
+
+        create_schedule(
+            name='Sync Fyle <> QBO',
+            workspace_settings=settings,
+            schedule_enabled=schedule_enabled,
+            next_run=next_run,
+            minutes=int(hours * 60)
+        )
+
+        return Response(
+            data=WorkspaceSettingsSerializer(settings).data,
+            status=status.HTTP_200_OK
+        )
+
+    def get(self, *args, **kwargs):
+        try:
+            qbo_credentials = WorkspaceSettings.objects.get(workspace_id=kwargs['workspace_id'])
+
+            return Response(
+                data=WorkspaceSettingsSerializer(qbo_credentials).data,
+                status=status.HTTP_200_OK
+            )
+        except WorkspaceSettings.DoesNotExist:
+            return Response(
+                data={
+                    'message': 'Workspace setting does not exist in workspace'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
