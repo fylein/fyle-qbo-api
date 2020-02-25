@@ -1,11 +1,14 @@
 from fyle_rest_auth.models import AuthToken
 from rest_framework import generics, status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from apps.fyle.utils import FyleConnector
 
 
 class UserProfileView(generics.RetrieveAPIView):
+
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         """

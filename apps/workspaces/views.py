@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.response import Response
 from rest_framework.views import status
 from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
 
 from fylesdk import exceptions as fyle_exc
 from qbosdk import exceptions as qbo_exc
@@ -28,6 +29,8 @@ class WorkspaceView(viewsets.ViewSet):
     """
     QBO Workspace
     """
+
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         """
