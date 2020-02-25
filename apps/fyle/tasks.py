@@ -1,9 +1,9 @@
+import logging
 from typing import List
 import traceback
 from datetime import datetime
 
 from django.db import transaction
-from django_q.tasks import async_task
 
 from apps.workspaces.models import FyleCredential, Workspace
 from apps.tasks.models import TaskLog
@@ -11,6 +11,8 @@ from apps.tasks.models import TaskLog
 from .models import Expense, ExpenseGroup
 from .utils import FyleConnector
 from .serializers import ExpenseGroupSerializer
+
+logger = logging.getLogger(__name__)
 
 
 def create_expense_groups(workspace_id: int, state: List[str], export_non_reimbursable: bool):
@@ -26,10 +28,8 @@ def create_expense_groups(workspace_id: int, state: List[str], export_non_reimbu
         type='FETCHING_EXPENSES',
         status='IN_PROGRESS'
     )
-    task_id = async_task(async_create_expense_groups, workspace_id, state, export_non_reimbursable,
-                         task_log)
+    async_create_expense_groups(workspace_id, state, export_non_reimbursable, task_log)
 
-    task_log.task_id = task_id
     task_log.detail = {
         'message': 'Creating expense groups'
     }
@@ -75,6 +75,7 @@ def async_create_expense_groups(workspace_id: int, state: List[str], export_non_
             task_log.save(update_fields=['detail', 'status'])
 
     except FyleCredential.DoesNotExist:
+        logger.exception('Fyle credentials not found %s', workspace_id)
         task_log.detail = {
             'message': 'Fyle credentials do not exist in workspace'
         }
@@ -82,6 +83,7 @@ def async_create_expense_groups(workspace_id: int, state: List[str], export_non_
         task_log.save(update_fields=['detail', 'status'])
 
     except Exception:
+        logger.exception('Something unexpected happened %s', workspace_id)
         error = traceback.format_exc()
         task_log.detail = {
             'error': error

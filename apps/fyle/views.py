@@ -3,6 +3,8 @@ from rest_framework import generics
 from rest_framework import viewsets
 from rest_framework.response import Response
 
+from django_q.tasks import async_task
+
 from apps.workspaces.models import FyleCredential
 
 from .tasks import create_expense_groups
@@ -35,9 +37,8 @@ class ExpenseGroupView(generics.ListCreateAPIView):
         export_non_reimbursable = request.data.get('export_non_reimbursable', False)
         state = request.data.get('state', ['PAYMENT_PROCESSING'])
 
-        create_expense_groups(
-            workspace_id=kwargs['workspace_id'],
-            state=state, export_non_reimbursable=export_non_reimbursable
+        async_task(
+            create_expense_groups, kwargs['workspace_id'], state=state, export_non_reimbursable=export_non_reimbursable
         )
 
         return Response(

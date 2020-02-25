@@ -1,3 +1,4 @@
+import logging
 import json
 import traceback
 from django.db import transaction
@@ -14,6 +15,8 @@ from apps.workspaces.models import QBOCredential
 
 from .models import Bill, BillLineitem
 from .utils import QBOConnector
+
+logger = logging.getLogger(__name__)
 
 
 def create_bills(workspace_id, expense_group_ids=None):
@@ -70,6 +73,11 @@ def create_bill(expense_group, task_log):
             task_log.save(update_fields=['detail', 'bill', 'status'])
 
     except QBOCredential.DoesNotExist:
+        logger.exception(
+            'QBO Credentials not found for workspace_id %s / expense group %s',
+            expense_group.id,
+            expense_group.workspace_id
+        )
         detail = {
             'expense_group_id': expense_group.id,
             'message': 'QBO Account not connected'
@@ -79,21 +87,24 @@ def create_bill(expense_group, task_log):
 
         task_log.save(update_fields=['detail', 'status'])
 
-    except BulkError as e:
-        detail = e.response
+    except BulkError as exception:
+        logger.error(exception.response)
+        detail = exception.response
         task_log.status = 'FAILED'
         task_log.detail = detail
 
         task_log.save(update_fields=['detail', 'status'])
 
-    except WrongParamsError as e:
-        detail = json.loads(e.response)
+    except WrongParamsError as exception:
+        logger.error(exception.response)
+        detail = json.loads(exception.response)
         task_log.status = 'FAILED'
         task_log.detail = detail
 
         task_log.save(update_fields=['detail', 'status'])
 
     except Exception:
+        logger.exception()
         error = traceback.format_exc()
         task_log.detail = {
             'error': error
