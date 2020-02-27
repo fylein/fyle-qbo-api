@@ -31,5 +31,5 @@ urlpatterns = [
     path('<int:workspace_id>/qbo/', include('apps.quickbooks_online.urls')),
     path('<int:workspace_id>/mappings/', include('apps.mappings.urls')),
     path('<int:workspace_id>/tasks/', include('apps.tasks.urls')),
-    path('ready', ReadyView.as_view({'get': 'get'}))
+    path('ready/', ReadyView.as_view({'get': 'get'}))
 ]
