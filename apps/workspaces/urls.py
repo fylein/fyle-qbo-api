@@ -15,7 +15,7 @@ Including another URLconf
 """
 from django.urls import path, include
 
-from .views import WorkspaceView, ConnectFyleView, ConnectQBOView, SettingsView
+from .views import WorkspaceView, ReadyView, ConnectFyleView, ConnectQBOView, SettingsView
 
 urlpatterns = [
     path('', WorkspaceView.as_view({'get': 'get_all', 'post': 'post'})),
@@ -30,5 +30,6 @@ urlpatterns = [
     path('<int:workspace_id>/fyle/', include('apps.fyle.urls')),
     path('<int:workspace_id>/qbo/', include('apps.quickbooks_online.urls')),
     path('<int:workspace_id>/mappings/', include('apps.mappings.urls')),
-    path('<int:workspace_id>/tasks/', include('apps.tasks.urls'))
+    path('<int:workspace_id>/tasks/', include('apps.tasks.urls')),
+    path('ready', ReadyView.as_view({'get': 'get'}))
 ]

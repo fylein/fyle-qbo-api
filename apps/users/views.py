@@ -1,7 +1,8 @@
-from fyle_rest_auth.models import AuthToken
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
+from fyle_rest_auth.models import AuthToken
 
 from apps.fyle.utils import FyleConnector
 

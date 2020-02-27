@@ -97,6 +97,27 @@ class WorkspaceView(viewsets.ViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+class ReadyView(viewsets.ViewSet):
+    """
+    Ready call
+    """
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request):
+        """
+        Ready call
+        """
+
+        Workspace.objects.raw('Select 1 from workspaces_workspace')
+
+        return Response(
+            data={
+                'message': 'Ready'
+            },
+            status=status.HTTP_200_OK
+        )
+
 
 class ConnectFyleView(viewsets.ViewSet):
     """
