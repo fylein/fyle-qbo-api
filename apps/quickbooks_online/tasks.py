@@ -104,13 +104,13 @@ def create_bill(expense_group, task_log):
         task_log.save(update_fields=['detail', 'status'])
 
     except Exception:
-        logger.exception()
         error = traceback.format_exc()
         task_log.detail = {
             'error': error
         }
         task_log.status = 'FATAL'
         task_log.save(update_fields=['detail', 'status'])
+        logger.exception('Something unexpected happened workspace_id: %s\n%s', task_log.workspace_id, error)
 
 
 def __validate_expense_group(expense_group: ExpenseGroup):

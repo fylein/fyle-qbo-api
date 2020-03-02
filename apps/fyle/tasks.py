@@ -83,10 +83,10 @@ def async_create_expense_groups(workspace_id: int, state: List[str], export_non_
         task_log.save(update_fields=['detail', 'status'])
 
     except Exception:
-        logger.exception('Something unexpected happened %s', workspace_id)
         error = traceback.format_exc()
         task_log.detail = {
             'error': error
         }
         task_log.status = 'FATAL'
         task_log.save(update_fields=['detail', 'status'])
+        logger.exception('Something unexpected happened workspace_id: %s\n%s', task_log.workspace_id, error)
