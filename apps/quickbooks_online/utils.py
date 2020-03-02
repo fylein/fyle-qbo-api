@@ -99,6 +99,9 @@ class QBOConnector:
             'VendorRef': {
                 'value': bill.vendor_id
             },
+            'APAccountRef': {
+                'value': bill.accounts_payable_id
+            },
             'DepartmentRef': {
                 'value': bill.department_id
             },

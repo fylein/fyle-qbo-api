@@ -15,7 +15,7 @@ class Bill(models.Model):
     """
     id = models.AutoField(primary_key=True)
     expense_group = models.OneToOneField(ExpenseGroup, on_delete=models.PROTECT, help_text='Expense group reference')
-    bank_account_id = models.CharField(max_length=255, help_text='QBO bank account id')
+    accounts_payable_id = models.CharField(max_length=255, help_text='QBO Accounts Payable account id')
     vendor_id = models.CharField(max_length=255, help_text='QBO vendor id')
     department_id = models.CharField(max_length=255, help_text='QBO department id', null=True)
     transaction_date = models.DateField(help_text='Bill transaction date')
@@ -40,7 +40,7 @@ class Bill(models.Model):
         bill_object, _ = Bill.objects.update_or_create(
             expense_group=expense_group,
             defaults={
-                'bank_account_id': general_mappings.bank_account_id,
+                'accounts_payable_id': general_mappings.bank_account_id,
                 'vendor_id': EmployeeMapping.objects.get(employee_email=description.get('employee_email')).vendor_id,
                 'department_id': None,
                 'transaction_date': datetime.now().strftime("%Y-%m-%d"),
