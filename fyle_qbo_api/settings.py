@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 import sys
 import os
 
+import dj_database_url
+import dj_redis_url
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -124,33 +127,42 @@ LOGGING = {
 }
 
 # Django-Q settings
-Q_CLUSTER = {
-    'redis': {
-        'host': os.environ.get('REDIS_HOST'),
-        'port': os.environ.get('REDIS_PORT'),
-        'db': os.environ.get('REDIS_DB'),
-        'password': os.environ.get('REDIS_PASSWORD'),
-        'socket_timeout': None,
-        'charset': 'utf-8',
-        'errors': 'strict',
-        'unix_socket_path': None
+if os.environ.get('REDIS_URL', ''):
+    Q_CLUSTER = {
+        'redis': dj_redis_url.config()
     }
-}
+else:
+    Q_CLUSTER = {
+        'redis': {
+            'host': os.environ.get('REDIS_HOST'),
+            'port': os.environ.get('REDIS_PORT'),
+            'db': os.environ.get('REDIS_DB'),
+            'password': os.environ.get('REDIS_PASSWORD'),
+            'socket_timeout': None,
+            'charset': 'utf-8',
+            'errors': 'strict',
+            'unix_socket_path': None
+        }
+    }
 
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': os.environ.get('DB_NAME'),
-        'USER': os.environ.get('DB_USER'),
-        'PASSWORD': os.environ.get('DB_PASSWORD'),
-        'HOST': os.environ.get('DB_HOST'),
-        'PORT': os.environ.get('DB_PORT'),
+if os.environ.get('DATABASE_URL', ''):
+    DATABASES = {
+        'default': dj_database_url.config()
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': os.environ.get('DB_NAME'),
+            'USER': os.environ.get('DB_USER'),
+            'PASSWORD': os.environ.get('DB_PASSWORD'),
+            'HOST': os.environ.get('DB_HOST'),
+            'PORT': os.environ.get('DB_PORT'),
+        }
+    }
 
 
 # Password validation
