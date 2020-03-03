@@ -128,8 +128,18 @@ LOGGING = {
 
 # Django-Q settings
 if os.environ.get('REDIS_URL', ''):
+    config = dj_redis_url.config()
     Q_CLUSTER = {
-        'redis': dj_redis_url.config()
+        'redis': {
+            'host': config['HOST'],
+            'port': config['PORT'],
+            'db': config['DB'],
+            'password': config['PASSWORD'],
+            'socket_timeout': None,
+            'charset': 'utf-8',
+            'errors': 'strict',
+            'unix_socket_path': None
+        }
     }
 else:
     Q_CLUSTER = {
