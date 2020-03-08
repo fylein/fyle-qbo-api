@@ -3,10 +3,12 @@ from typing import List
 import traceback
 from datetime import datetime
 
+from django.conf import settings
 from django.db import transaction
 
 from apps.workspaces.models import FyleCredential, Workspace
 from apps.tasks.models import TaskLog
+from fyle_jobs import FyleJobsSDK
 
 from .models import Expense, ExpenseGroup
 from .utils import FyleConnector
@@ -15,19 +17,54 @@ from .serializers import ExpenseGroupSerializer
 logger = logging.getLogger(__name__)
 
 
-def create_expense_groups(workspace_id: int, state: List[str], export_non_reimbursable: bool):
+def schedule_expense_group_creation(workspace_id: int, user: str):
     """
-    Create expense groups
-    :param workspace_id: workspace id
-    :param state: expense state
-    :param export_non_reimbursable: true / false
-    :return: task log
+    Schedule Expense group creation
+    :param workspace_id: Workspace id
+    :param user: User email
+    :return: None
     """
+    fyle_credentials = FyleCredential.objects.get(
+        workspace_id=workspace_id)
+    fyle_connector = FyleConnector(fyle_credentials.refresh_token)
+    fyle_sdk_connection = fyle_connector.connection
+
+    jobs = FyleJobsSDK(settings.FYLE_JOBS_URL, fyle_sdk_connection)
+
     task_log = TaskLog.objects.create(
         workspace_id=workspace_id,
         type='FETCHING_EXPENSES',
         status='IN_PROGRESS'
     )
+
+    created_job = jobs.trigger_now(
+        callback_url='{0}{1}'.format(
+            settings.API_URL,
+            '/workspaces/{0}/fyle/expense_groups/'.format(workspace_id)
+        ),
+        callback_method='POST',
+        object_id=task_log.id,
+        payload={
+            'task_log_id': task_log.id
+        },
+        job_description='Fetch expenses: Workspace id - {0}, user - {1}'.format(
+            workspace_id, user
+        )
+    )
+    task_log.task_id = created_job['id']
+    task_log.save()
+
+
+def create_expense_groups(workspace_id: int, state: List[str], export_non_reimbursable: bool, task_log: TaskLog):
+    """
+    Create expense groups
+    :param task_log: Task log object
+    :param workspace_id: workspace id
+    :param state: expense state
+    :param export_non_reimbursable: true / false
+    :return: task log
+    """
+
     async_create_expense_groups(workspace_id, state, export_non_reimbursable, task_log)
 
     task_log.detail = {

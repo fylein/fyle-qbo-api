@@ -15,7 +15,7 @@ Including another URLconf
 """
 from django.urls import path
 
-from .views import VendorView, AccountView, ClassView, DepartmentView, BillView, CustomerView
+from .views import VendorView, AccountView, ClassView, DepartmentView, BillView, BillScheduleView, CustomerView
 
 urlpatterns = [
     path('vendors/', VendorView.as_view({'get': 'get_vendors'})),
@@ -23,5 +23,6 @@ urlpatterns = [
     path('classes/', ClassView.as_view({'get': 'get_classes'})),
     path('departments/', DepartmentView.as_view({'get': 'get_departments'})),
     path('customers/', CustomerView.as_view({'get': 'get_customers'})),
-    path('bills/', BillView.as_view())
+    path('bills/', BillView.as_view()),
+    path('bills/trigger/', BillScheduleView.as_view())
 ]

@@ -3,11 +3,10 @@ from rest_framework import generics
 from rest_framework import viewsets
 from rest_framework.response import Response
 
-from django_q.tasks import async_task
-
+from apps.tasks.models import TaskLog
 from apps.workspaces.models import FyleCredential
 
-from .tasks import create_expense_groups
+from .tasks import create_expense_groups, schedule_expense_group_creation
 from .utils import FyleConnector
 from .models import Expense, ExpenseGroup
 from .serializers import ExpenseGroupSerializer, ExpenseSerializer
@@ -34,12 +33,33 @@ class ExpenseGroupView(generics.ListCreateAPIView):
         """
         Create expense groups
         """
-        export_non_reimbursable = request.data.get('export_non_reimbursable', False)
+        export_non_reimbursable = request.data.get(
+            'export_non_reimbursable', False)
         state = request.data.get('state', ['PAYMENT_PROCESSING'])
+        task_log = TaskLog.objects.get(pk=request.data.get('task_log_id'))
 
-        async_task(
-            create_expense_groups, kwargs['workspace_id'], state=state, export_non_reimbursable=export_non_reimbursable
+        create_expense_groups(
+            kwargs['workspace_id'],
+            state=state,
+            export_non_reimbursable=export_non_reimbursable,
+            task_log=task_log
         )
+
+        return Response(
+            status=status.HTTP_200_OK
+        )
+
+
+class ExpenseGroupScheduleView(generics.CreateAPIView):
+    """
+    Create expense group schedule
+    """
+
+    def post(self, request, *args, **kwargs):
+        """
+        Post expense schedule
+        """
+        schedule_expense_group_creation(kwargs['workspace_id'], request.user)
 
         return Response(
             status=status.HTTP_200_OK
@@ -50,6 +70,7 @@ class ExpenseGroupByIdView(generics.RetrieveAPIView):
     """
     Expense Group by Id view
     """
+
     def get(self, request, *args, **kwargs):
         """
         Get expenses
@@ -77,6 +98,7 @@ class ExpenseView(generics.RetrieveAPIView):
     """
     Expense view
     """
+
     def get(self, request, *args, **kwargs):
         """
         Get expenses
@@ -105,12 +127,14 @@ class EmployeeView(viewsets.ViewSet):
     """
     Employee view
     """
+
     def get_employees(self, request, **kwargs):
         """
         Get employees from Fyle
         """
         try:
-            fyle_credentials = FyleCredential.objects.get(workspace_id=kwargs['workspace_id'])
+            fyle_credentials = FyleCredential.objects.get(
+                workspace_id=kwargs['workspace_id'])
 
             fyle_connector = FyleConnector(fyle_credentials.refresh_token)
 
@@ -133,13 +157,15 @@ class CategoryView(viewsets.ViewSet):
     """
     Category view
     """
+
     def get_categories(self, request, **kwargs):
         """
         Get categories from Fyle
         """
         try:
             active_only = request.GET.get('active_only', False)
-            fyle_credentials = FyleCredential.objects.get(workspace_id=kwargs['workspace_id'])
+            fyle_credentials = FyleCredential.objects.get(
+                workspace_id=kwargs['workspace_id'])
 
             fyle_connector = FyleConnector(fyle_credentials.refresh_token)
 
@@ -162,17 +188,20 @@ class CostCenterView(viewsets.ViewSet):
     """
     Cost center view
     """
+
     def get_cost_centers(self, request, **kwargs):
         """
         Get cost centers from Fyle
         """
         try:
             active_only = request.GET.get('active_only', False)
-            fyle_credentials = FyleCredential.objects.get(workspace_id=kwargs['workspace_id'])
+            fyle_credentials = FyleCredential.objects.get(
+                workspace_id=kwargs['workspace_id'])
 
             fyle_connector = FyleConnector(fyle_credentials.refresh_token)
 
-            cost_centers = fyle_connector.get_cost_centers(active_only=active_only)
+            cost_centers = fyle_connector.get_cost_centers(
+                active_only=active_only)
 
             return Response(
                 data=cost_centers,
@@ -191,13 +220,15 @@ class ProjectView(viewsets.ViewSet):
     """
     Project view
     """
+
     def get_projects(self, request, **kwargs):
         """
         Get projects from Fyle
         """
         try:
             active_only = request.GET.get('active_only', False)
-            fyle_credentials = FyleCredential.objects.get(workspace_id=kwargs['workspace_id'])
+            fyle_credentials = FyleCredential.objects.get(
+                workspace_id=kwargs['workspace_id'])
 
             fyle_connector = FyleConnector(fyle_credentials.refresh_token)
 
@@ -220,7 +251,8 @@ class UserProfileView(generics.RetrieveAPIView):
 
     def get(self, request, *args, **kwargs):
         try:
-            fyle_credentials = FyleCredential.objects.get(workspace_id=kwargs.get('workspace_id'))
+            fyle_credentials = FyleCredential.objects.get(
+                workspace_id=kwargs.get('workspace_id'))
 
             fyle_connector = FyleConnector(fyle_credentials.refresh_token)
 
