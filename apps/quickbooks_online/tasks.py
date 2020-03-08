@@ -1,17 +1,21 @@
 import logging
 import json
 import traceback
+from typing import List
+
+from django.conf import settings
 from django.db import transaction
-from django_q.tasks import async_task
 
 from qbosdk.exceptions import WrongParamsError
 
+from fyle_jobs import FyleJobsSDK
 from fyle_qbo_api.exceptions import BulkError
 
+from apps.fyle.utils import FyleConnector
 from apps.fyle.models import ExpenseGroup
 from apps.tasks.models import TaskLog
 from apps.mappings.models import EmployeeMapping, GeneralMapping, CategoryMapping
-from apps.workspaces.models import QBOCredential
+from apps.workspaces.models import QBOCredential, FyleCredential
 
 from .models import Bill, BillLineitem
 from .utils import QBOConnector
@@ -19,9 +23,13 @@ from .utils import QBOConnector
 logger = logging.getLogger(__name__)
 
 
-def create_bills(workspace_id, expense_group_ids=None):
+def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], user: str):
     """
-    Create bills
+    Schedule bills creation
+    :param expense_group_ids: List of expense group ids
+    :param workspace_id: workspace id
+    :param user: user email
+    :return: None
     """
     if expense_group_ids:
         expense_groups = ExpenseGroup.objects.filter(
@@ -32,6 +40,12 @@ def create_bills(workspace_id, expense_group_ids=None):
             workspace_id=workspace_id, bill__id__isnull=True
         ).all()
 
+    fyle_credentials = FyleCredential.objects.get(
+        workspace_id=workspace_id)
+    fyle_connector = FyleConnector(fyle_credentials.refresh_token)
+    fyle_sdk_connection = fyle_connector.connection
+    jobs = FyleJobsSDK(settings.FYLE_JOBS_URL, fyle_sdk_connection)
+
     for expense_group in expense_groups:
         task_log, _ = TaskLog.objects.update_or_create(
             workspace_id=expense_group.workspace_id,
@@ -41,14 +55,17 @@ def create_bills(workspace_id, expense_group_ids=None):
                 'type': 'CREATING_BILL'
             }
         )
-        task_id = async_task(create_bill, expense_group, task_log)
-
-        detail = {
-            'message': 'Creating bill for expense group {0}'.format(expense_group.id)
-        }
-        task_log.detail = detail
-        task_log.task_id = task_id
-        task_log.save(update_fields=['task_id', 'detail'])
+        created_job = jobs.trigger_now(
+            callback_url='{0}{1}'.format(settings.API_URL, '/workspaces/{0}/qbo/bills/'.format(workspace_id)),
+            callback_method='POST', object_id=task_log.id, payload={
+                'expense_group_id': expense_group.id,
+                'task_log_id': task_log.id
+            }, job_description='Create Bill: Workspace id - {0}, user - {1}, expense group id - {2}'.format(
+                workspace_id, user, expense_group.id
+            )
+        )
+        task_log.task_id = created_job['id']
+        task_log.save()
 
 
 def create_bill(expense_group, task_log):

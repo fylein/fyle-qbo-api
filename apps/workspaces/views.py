@@ -17,7 +17,8 @@ from fyle_rest_auth.models import AuthToken
 from fyle_qbo_api.utils import assert_valid
 
 from .models import Workspace, FyleCredential, QBOCredential, WorkspaceSettings
-from .utils import generate_qbo_refresh_token, create_schedule
+from .utils import generate_qbo_refresh_token
+from .tasks import schedule_sync, run_sync_schedule
 from .serializers import WorkspaceSerializer, FyleCredentialSerializer, QBOCredentialSerializer, \
     WorkspaceSettingsSerializer
 
@@ -313,6 +314,20 @@ class ConnectQBOView(viewsets.ViewSet):
             )
 
 
+class ScheduledSyncView(viewsets.ViewSet):
+    """
+    Scheduled Sync
+    """
+    def post(self, request, **kwargs):
+        """
+        Scheduled sync
+        """
+        run_sync_schedule(kwargs['workspace_id'], request.user)
+        return Response(
+            status=status.HTTP_200_OK
+        )
+
+
 class SettingsView(viewsets.ViewSet):
     """
     Settings View
@@ -330,19 +345,12 @@ class SettingsView(viewsets.ViewSet):
         next_run = request.data.get('next_run')
         assert_valid(next_run is not None, 'next_run value cannot be empty')
 
-        settings, _ = WorkspaceSettings.objects.update_or_create(
+        settings = schedule_sync(
             workspace_id=kwargs['workspace_id'],
-            defaults={
-                'schedule_enabled': schedule_enabled
-            }
-        )
-
-        create_schedule(
-            name='Sync Fyle <> QBO',
-            workspace_settings=settings,
             schedule_enabled=schedule_enabled,
+            hours=hours,
             next_run=next_run,
-            minutes=int(hours * 60)
+            user=request.user
         )
 
         return Response(

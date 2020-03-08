@@ -13,7 +13,6 @@ import sys
 import os
 
 import dj_database_url
-import dj_redis_url
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -126,36 +125,6 @@ LOGGING = {
     },
 }
 
-# Django-Q settings
-if os.environ.get('REDIS_URL', ''):
-    config = dj_redis_url.config()
-    Q_CLUSTER = {
-        'redis': {
-            'host': config['HOST'],
-            'port': config['PORT'],
-            'db': config['DB'],
-            'password': config['PASSWORD'],
-            'socket_timeout': None,
-            'charset': 'utf-8',
-            'errors': 'strict',
-            'unix_socket_path': None
-        }
-    }
-else:
-    Q_CLUSTER = {
-        'redis': {
-            'host': os.environ.get('REDIS_HOST'),
-            'port': os.environ.get('REDIS_PORT'),
-            'db': os.environ.get('REDIS_DB'),
-            'password': os.environ.get('REDIS_PASSWORD'),
-            'socket_timeout': None,
-            'charset': 'utf-8',
-            'errors': 'strict',
-            'unix_socket_path': None
-        }
-    }
-
-
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 if os.environ.get('DATABASE_URL', ''):
@@ -214,10 +183,12 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 # Fyle Settings
+API_URL = os.environ.get('API_URL')
 FYLE_TOKEN_URI = os.environ.get('FYLE_TOKEN_URI')
 FYLE_CLIENT_ID = os.environ.get('FYLE_CLIENT_ID')
 FYLE_CLIENT_SECRET = os.environ.get('FYLE_CLIENT_SECRET')
 FYLE_BASE_URL = os.environ.get('FYLE_BASE_URL')
+FYLE_JOBS_URL = os.environ.get('FYLE_JOBS_URL')
 
 # QBO Settings
 QBO_CLIENT_ID = os.environ.get('QBO_CLIENT_ID')
