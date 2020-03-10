@@ -13,8 +13,8 @@ class WorkspacePermissions(permissions.BasePermission):
 
     def has_permission(self, request, view):
         workspace_id = view.kwargs.get('workspace_id')
-        user_email = request.user
-        user = User.objects.get(email=user_email)
+        user_id = request.user
+        user = User.objects.get(user_id=user_id)
         workspaces = Workspace.objects.filter(user__in=[user], pk=workspace_id).all()
         if not workspaces:
             return False

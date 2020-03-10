@@ -15,7 +15,8 @@ class UserProfileView(generics.RetrieveAPIView):
         """
         Get User Details
         """
-        fyle_credentials = AuthToken.objects.get(user__email=request.user)
+        print(request.user)
+        fyle_credentials = AuthToken.objects.get(user__user_id=request.user)
 
         fyle_connector = FyleConnector(fyle_credentials.refresh_token)
 

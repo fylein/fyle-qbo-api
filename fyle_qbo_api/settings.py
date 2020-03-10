@@ -42,7 +42,6 @@ INSTALLED_APPS = [
     # Installed Apps
     'rest_framework',
     'corsheaders',
-    'django_q',
 
     # User Created Apps
     'apps.users',

@@ -38,14 +38,14 @@ class WorkspaceView(viewsets.ViewSet):
         Create a Workspace
         """
 
-        all_workspaces_count = Workspace.objects.filter(user__email=request.user).count()
+        all_workspaces_count = Workspace.objects.filter(user__user_id=request.user).count()
 
         workspace = Workspace.objects.create(name='Workspace {0}'.format(all_workspaces_count + 1))
 
-        workspace.user.add(User.objects.get(email=request.user))
+        workspace.user.add(User.objects.get(user_id=request.user))
 
         if all_workspaces_count == 0:
-            auth_tokens = AuthToken.objects.get(user__email=request.user)
+            auth_tokens = AuthToken.objects.get(user__user_id=request.user)
 
             fyle_user = auth_utils.get_fyle_user(auth_tokens.refresh_token)
             org_name = fyle_user['org_name']
@@ -70,7 +70,7 @@ class WorkspaceView(viewsets.ViewSet):
         """
         Get all workspaces
         """
-        user = User.objects.get(email=request.user)
+        user = User.objects.get(user_id=request.user)
         workspaces = Workspace.objects.filter(user__in=[user]).all()
 
         return Response(
@@ -83,7 +83,7 @@ class WorkspaceView(viewsets.ViewSet):
         Get Workspace by id
         """
         try:
-            user = User.objects.get(email=request.user)
+            user = User.objects.get(user_id=request.user)
             workspace = Workspace.objects.get(pk=kwargs['workspace_id'], user=user)
 
             return Response(

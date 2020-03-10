@@ -23,7 +23,7 @@ from .utils import QBOConnector
 logger = logging.getLogger(__name__)
 
 
-def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], user: str):
+def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], user):
     """
     Schedule bills creation
     :param expense_group_ids: List of expense group ids
