@@ -41,7 +41,10 @@ class Bill(models.Model):
             expense_group=expense_group,
             defaults={
                 'accounts_payable_id': general_mappings.bank_account_id,
-                'vendor_id': EmployeeMapping.objects.get(employee_email=description.get('employee_email')).vendor_id,
+                'vendor_id': EmployeeMapping.objects.get(
+                    employee_email=description.get('employee_email'),
+                    workspace_id=expense_group.workspace_id
+                ).vendor_id,
                 'department_id': None,
                 'transaction_date': datetime.now().strftime("%Y-%m-%d"),
                 'private_note': 'Report {0} / {1} exported on {2}'.format(
@@ -82,7 +85,8 @@ class BillLineitem(models.Model):
 
         for lineitem in expenses:
             account = CategoryMapping.objects.filter(category=lineitem.category,
-                                                     sub_category=lineitem.sub_category).first()
+                                                     sub_category=lineitem.sub_category,
+                                                     workspace_id=expense_group.workspace_id).first()
 
             cost_center_mapping = CostCenterMapping.objects.filter(
                 cost_center=lineitem.cost_center, workspace_id=expense_group.workspace_id).first()
