@@ -16,11 +16,11 @@ from fyle_rest_auth.models import AuthToken
 
 from fyle_qbo_api.utils import assert_valid
 
-from .models import Workspace, FyleCredential, QBOCredential, WorkspaceSettings
-from .utils import generate_qbo_refresh_token
+from .models import Workspace, FyleCredential, QBOCredential, WorkspaceSettings, WorkspaceGeneralSettings
+from .utils import generate_qbo_refresh_token, GeneralSettingsUtils
 from .tasks import schedule_sync, run_sync_schedule
 from .serializers import WorkspaceSerializer, FyleCredentialSerializer, QBOCredentialSerializer, \
-    WorkspaceSettingsSerializer
+    WorkspaceSettingsSerializer, WorkSpaceGeneralSettingsSerializer
 
 User = get_user_model()
 auth_utils = AuthUtils()
@@ -370,6 +370,49 @@ class SettingsView(viewsets.ViewSet):
             return Response(
                 data={
                     'message': 'Workspace setting does not exist in workspace'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class GeneralSettingsView(viewsets.ViewSet):
+    """
+    General Settings
+    """
+    serializer_class = WorkSpaceGeneralSettingsSerializer
+    queryset = WorkspaceGeneralSettings.objects.all()
+
+    def post(self, request, *args, **kwargs):
+        """
+        Create general settings
+        """
+        general_settings_payload = request.data
+
+        assert_valid(general_settings_payload is not None, 'Request body is empty')
+
+        general_settings_utils = GeneralSettingsUtils(kwargs['workspace_id'])
+
+        general_settings = general_settings_utils.create_or_update_general_settings(general_settings_payload)
+
+        return Response(
+            data=self.serializer_class(general_settings).data,
+            status=status.HTTP_200_OK
+        )
+
+    def get(self, request, *args, **kwargs):
+        """
+        Get general settings
+        """
+        try:
+            general_settings = self.queryset.get(workspace_id=kwargs['workspace_id'])
+            return Response(
+                data=self.serializer_class(general_settings).data,
+                status=status.HTTP_200_OK
+            )
+        except WorkspaceGeneralSettings.DoesNotExist:
+            return Response(
+                {
+                    'message': 'General Settings do not exist for the workspace'
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )

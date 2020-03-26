@@ -1,5 +1,6 @@
 import json
 import base64
+from typing import Dict
 
 import requests
 
@@ -8,6 +9,9 @@ from django.conf import settings
 from future.moves.urllib.parse import urlencode
 
 from qbosdk import UnauthorizedClientError, NotFoundClientError, WrongParamsError, InternalServerError
+
+from apps.workspaces.models import WorkspaceGeneralSettings
+from fyle_qbo_api.utils import assert_valid
 
 
 def generate_qbo_refresh_token(authorization_code: str) -> str:
@@ -48,3 +52,31 @@ def generate_qbo_refresh_token(authorization_code: str) -> str:
 
     elif response.status_code == 500:
         raise InternalServerError('Internal server error', response.text)
+
+
+class GeneralSettingsUtils:
+    def __init__(self, workspace_id):
+        self.__workspace_id = workspace_id
+
+    def create_or_update_general_settings(self, general_settings_payload: Dict):
+        """
+        Create or update general settings
+        :param general_settings_payload: general settings payload
+        :return:
+        """
+        assert_valid(
+            'reimbursable_expenses_object' in general_settings_payload and general_settings_payload[
+                'reimbursable_expenses_object'],
+            'reimbursable_expenses_object field is blank')
+        assert_valid('non_reimbursable_expenses_object' in general_settings_payload and general_settings_payload[
+            'non_reimbursable_expenses_object'],
+                     'non_reimbursable_expenses_object field is blank')
+
+        general_settings, _ = WorkspaceGeneralSettings.objects.update_or_create(
+            workspace_id=self.__workspace_id,
+            defaults={
+                'reimbursable_expenses_object': general_settings_payload['reimbursable_expenses_object'],
+                'non_reimbursable_expenses_object': general_settings_payload['non_reimbursable_expenses_object']
+            }
+        )
+        return general_settings

@@ -3,6 +3,7 @@ Workspace Models
 """
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.utils.translation import gettext_lazy as _
 
 User = get_user_model()
 
@@ -39,6 +40,43 @@ class WorkspaceSettings(models.Model):
     id = models.AutoField(primary_key=True, help_text='Unique Id to identify a workspace settings')
     schedule = models.OneToOneField(WorkspaceSchedule, on_delete=models.PROTECT, null=True)
     workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
+    created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
+    updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
+
+
+class ReimbursableExpensesObject(models.TextChoices):
+    """
+    ReimbursableExpensesObject
+    """
+    BILL = 'BILL', _('BILL')
+    CHECK = 'CHECK', _('CHECK')
+    JOURNAL_ENTRY = 'JOURNAL_ENTRY', _('JOURNAL_ENTRY')
+
+
+class NonReimbursableExpensesObject(models.TextChoices):
+    """
+    NonReimbursableExpensesObject
+    """
+    JOURNAL_ENTRY = 'JOURNAL_ENTRY', _('JOURNAL_ENTRY')
+    CREDIT_CARD_PURCHASE = 'CREDIT_CARD_PURCHASE', _('CREDIT_CARD_PURCHASE')
+
+
+class WorkspaceGeneralSettings(models.Model):
+    """
+    Workspace General Settings
+    """
+    id = models.AutoField(primary_key=True, help_text='Unique Id to identify a workspace')
+    workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
+    reimbursable_expenses_object = models.CharField(
+        max_length=255,
+        choices=ReimbursableExpensesObject.choices,
+        default=ReimbursableExpensesObject.BILL,
+    )
+    non_reimbursable_expenses_object = models.CharField(
+        max_length=255,
+        choices=NonReimbursableExpensesObject.choices,
+        default=NonReimbursableExpensesObject.JOURNAL_ENTRY,
+    )
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
