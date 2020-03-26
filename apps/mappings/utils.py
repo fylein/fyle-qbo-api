@@ -25,12 +25,13 @@ class MappingUtils:
             defaults={
                 'account_payable_bank_account_name': general_mapping.get(
                     'account_payable_bank_account_name') if general_mapping.get(
-                    'account_payable_bank_account_name') else general_mapping.get('account_payable_bank_account_name',
-                                                                                  ''),
+                        'account_payable_bank_account_name') else general_mapping.get(
+                            'account_payable_bank_account_name', ''),
 
                 'account_payable_bank_account_id': general_mapping.get(
                     'account_payable_bank_account_id') if general_mapping.get(
-                    'account_payable_bank_account_id') else general_mapping.get('account_payable_bank_account_id', ''),
+                        'account_payable_bank_account_id') else general_mapping.get(
+                            'account_payable_bank_account_id', ''),
 
                 'bank_account_name': general_mapping.get('bank_account_name') if general_mapping.get(
                     'bank_account_name') else general_mapping.get('bank_account_name', ''),
