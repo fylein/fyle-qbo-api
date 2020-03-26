@@ -58,6 +58,10 @@ class GeneralSettingsUtils:
     def __init__(self, workspace_id):
         self.__workspace_id = workspace_id
 
+    # pylint throwing this error: 57:0: R0903: Too few public methods(1 / 2)(too - few - public - methods)
+    def __str__(self):
+        return self.__class__.__name__
+
     def create_or_update_general_settings(self, general_settings_payload: Dict):
         """
         Create or update general settings

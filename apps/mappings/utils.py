@@ -23,12 +23,25 @@ class MappingUtils:
         general_mapping, _ = GeneralMapping.objects.update_or_create(
             workspace_id=self.__workspace_id,
             defaults={
-                'account_payable_bank_account_name': general_mapping.get('account_payable_bank_account_name') if general_mapping.get('account_payable_bank_account_name') else general_mapping.get('account_payable_bank_account_name', ''),
-                'account_payable_bank_account_id': general_mapping.get('account_payable_bank_account_id') if general_mapping.get('account_payable_bank_account_id') else general_mapping.get('account_payable_bank_account_id', ''),
-                'bank_account_name': general_mapping.get('bank_account_name') if general_mapping.get('bank_account_name') else general_mapping.get('bank_account_name', ''),
-                'bank_account_id': general_mapping.get('bank_account_id') if general_mapping.get('bank_account_id') else general_mapping.get('bank_account_id', ''),
-                'ccc_account_name': general_mapping.get('ccc_account_name') if general_mapping.get('ccc_account_name') else general_mapping.get('ccc_account_name', ''),
-                'ccc_account_id': general_mapping.get('ccc_account_id') if general_mapping.get('ccc_account_id') else general_mapping.get('ccc_account_id', '')
+                'account_payable_bank_account_name': general_mapping.get('account_payable_bank_account_name') if
+                general_mapping.get('account_payable_bank_account_name') else
+                general_mapping.get('account_payable_bank_account_name', ''),
+
+                'account_payable_bank_account_id': general_mapping.get(
+                    'account_payable_bank_account_id') if general_mapping.get(
+                    'account_payable_bank_account_id') else general_mapping.get('account_payable_bank_account_id', ''),
+
+                'bank_account_name': general_mapping.get('bank_account_name') if general_mapping.get(
+                    'bank_account_name') else general_mapping.get('bank_account_name', ''),
+
+                'bank_account_id': general_mapping.get('bank_account_id') if general_mapping.get(
+                    'bank_account_id') else general_mapping.get('bank_account_id', ''),
+
+                'ccc_account_name': general_mapping.get('ccc_account_name') if general_mapping.get(
+                    'ccc_account_name') else general_mapping.get('ccc_account_name', ''),
+
+                'ccc_account_id': general_mapping.get('ccc_account_id') if general_mapping.get(
+                    'ccc_account_id') else general_mapping.get('ccc_account_id', '')
             }
         )
         return general_mapping
@@ -46,12 +59,18 @@ class MappingUtils:
             employee_email=employee_mapping['employee_email'].lower(),
             workspace_id=self.__workspace_id,
             defaults={
-                'vendor_display_name': employee_mapping['vendor_display_name'] if employee_mapping.get('vendor_display_name') else employee_mapping.get('vendor_name', ''),
-                'vendor_id': employee_mapping['vendor_id'] if employee_mapping.get('vendor_id') else employee_mapping.get('vendor_id', ''),
-                'employee_display_name': employee_mapping['employee_display_name'] if employee_mapping.get('employee_display_name') else employee_mapping.get('employee_display_name', ''),
-                'employee_id': employee_mapping['employee_id'] if employee_mapping.get('employee_id') else employee_mapping.get('employee_id', ''),
-                'ccc_account_name': employee_mapping['ccc_account_name'] if employee_mapping.get('ccc_account_name') else employee_mapping.get('ccc_account_name', ''),
-                'ccc_account_id': employee_mapping['ccc_account_id'] if employee_mapping.get('ccc_account_id') else employee_mapping.get('ccc_account_id', '')
+                'vendor_display_name': employee_mapping['vendor_display_name'] if employee_mapping.get(
+                    'vendor_display_name') else employee_mapping.get('vendor_name', ''),
+                'vendor_id': employee_mapping['vendor_id'] if employee_mapping.get(
+                    'vendor_id') else employee_mapping.get('vendor_id', ''),
+                'employee_display_name': employee_mapping['employee_display_name'] if employee_mapping.get(
+                    'employee_display_name') else employee_mapping.get('employee_display_name', ''),
+                'employee_id': employee_mapping['employee_id'] if employee_mapping.get(
+                    'employee_id') else employee_mapping.get('employee_id', ''),
+                'ccc_account_name': employee_mapping['ccc_account_name'] if employee_mapping.get(
+                    'ccc_account_name') else employee_mapping.get('ccc_account_name', ''),
+                'ccc_account_id': employee_mapping['ccc_account_id'] if employee_mapping.get(
+                    'ccc_account_id') else employee_mapping.get('ccc_account_id', '')
             }
         )
 

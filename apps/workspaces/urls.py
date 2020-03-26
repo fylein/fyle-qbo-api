@@ -15,7 +15,8 @@ Including another URLconf
 """
 from django.urls import path, include
 
-from .views import WorkspaceView, ReadyView, ConnectFyleView, ConnectQBOView, SettingsView, GeneralSettingsView, ScheduledSyncView
+from .views import WorkspaceView, ReadyView, ConnectFyleView, ConnectQBOView, SettingsView, GeneralSettingsView, \
+    ScheduledSyncView
 
 urlpatterns = [
     path('', WorkspaceView.as_view({'get': 'get_all', 'post': 'post'})),

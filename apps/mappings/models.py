@@ -11,7 +11,8 @@ class GeneralMapping(models.Model):
     General Mappings
     """
     id = models.AutoField(primary_key=True)
-    account_payable_bank_account_name = models.CharField(max_length=255, help_text='Name of the accounts payable bank account')
+    account_payable_bank_account_name = models.CharField(max_length=255, help_text='Name of the accounts payable bank '
+                                                                                   'account')
     account_payable_bank_account_id = models.CharField(max_length=40, help_text='QBO accounts payable bank account id')
     bank_account_name = models.CharField(max_length=255, help_text='Name of the bank account')
     bank_account_id = models.CharField(max_length=40, help_text='QBO bank account id')
