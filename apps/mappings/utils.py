@@ -52,7 +52,7 @@ class MappingUtils:
             workspace_id=self.__workspace_id,
             defaults={
                 'accounts_payable_name': general_mapping.get('accounts_payable_name')
-                if 'BILL' in reimbursable_expenses else '',
+                                         if 'BILL' in reimbursable_expenses else '',
 
                 'accounts_payable_id': general_mapping.get(
                     'accounts_payable_id') if 'BILL' in reimbursable_expenses else '',
@@ -65,11 +65,11 @@ class MappingUtils:
 
                 'ccc_account_name': general_mapping.get(
                     'ccc_account_name') if ('JE' or 'CCP' in non_reimbursable_expenses)
-                                           and employee_account_mapping else '',
+                                    and employee_account_mapping else '',
 
                 'ccc_account_id': general_mapping.get(
                     'ccc_account_id') if ('JE' or 'CCP' in non_reimbursable_expenses)
-                                         and employee_account_mapping else '',
+                                  and employee_account_mapping else '',
 
                 'default_ccc_account_name': general_mapping.get(
                     'default_ccc_account_name') if not employee_account_mapping else '',

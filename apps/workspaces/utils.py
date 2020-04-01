@@ -10,8 +10,8 @@ from future.moves.urllib.parse import urlencode
 
 from qbosdk import UnauthorizedClientError, NotFoundClientError, WrongParamsError, InternalServerError
 
-from .models import WorkspaceGeneralSettings
 from fyle_qbo_api.utils import assert_valid
+from .models import WorkspaceGeneralSettings
 
 
 def generate_qbo_refresh_token(authorization_code: str) -> str:
@@ -69,10 +69,10 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
         'non_reimbursable_expenses'], 'non_reimbursable_expenses field is blank')
 
     assert_valid('vendor_mapping' in general_settings_payload and general_settings_payload[
-            'vendor_mapping'], 'vendor_mapping field is blank')
+        'vendor_mapping'], 'vendor_mapping field is blank')
 
     assert_valid('employee_account_mapping' in general_settings_payload and general_settings_payload[
-            'employee_account_mapping'], 'employee_account_mapping field is blank')
+        'employee_account_mapping'], 'employee_account_mapping field is blank')
 
     general_settings, _ = WorkspaceGeneralSettings.objects.update_or_create(
         workspace_id=workspace_id,
