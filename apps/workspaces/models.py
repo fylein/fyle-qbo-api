@@ -3,7 +3,6 @@ Workspace Models
 """
 from django.db import models
 from django.contrib.auth import get_user_model
-from django.utils.translation import gettext_lazy as _
 
 User = get_user_model()
 
@@ -44,21 +43,21 @@ class WorkspaceSettings(models.Model):
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
 
-class ReimbursableExpensesObject(models.TextChoices):
+class ReimbursableExpensesChoices(models.TextChoices):
     """
-    ReimbursableExpensesObject
+    ReimbursableExpensesChoices
     """
-    BILL = 'BILL', _('BILL')
-    CHECK = 'CHECK', _('CHECK')
-    JOURNAL_ENTRY = 'JOURNAL_ENTRY', _('JOURNAL_ENTRY')
+    BILL = 'BILL', 'BILL'
+    CHECK = 'CHECK', 'CHECK'
+    JOURNAL_ENTRY = 'JE', 'JOURNAL_ENTRY'
 
 
-class NonReimbursableExpensesObject(models.TextChoices):
+class NonReimbursableExpensesChoices(models.TextChoices):
     """
-    NonReimbursableExpensesObject
+    NonReimbursableExpensesChoices
     """
-    JOURNAL_ENTRY = 'JOURNAL_ENTRY', _('JOURNAL_ENTRY')
-    CREDIT_CARD_PURCHASE = 'CREDIT_CARD_PURCHASE', _('CREDIT_CARD_PURCHASE')
+    JOURNAL_ENTRY = 'JE', 'JOURNAL_ENTRY'
+    CREDIT_CARD_PURCHASE = 'CCP', 'CREDIT_CARD_PURCHASE'
 
 
 class WorkspaceGeneralSettings(models.Model):
@@ -67,16 +66,12 @@ class WorkspaceGeneralSettings(models.Model):
     """
     id = models.AutoField(primary_key=True, help_text='Unique Id to identify a workspace')
     workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
-    reimbursable_expenses_object = models.CharField(
-        max_length=255,
-        choices=ReimbursableExpensesObject.choices,
-        default=ReimbursableExpensesObject.BILL,
-    )
-    non_reimbursable_expenses_object = models.CharField(
-        max_length=255,
-        choices=NonReimbursableExpensesObject.choices,
-        default=NonReimbursableExpensesObject.JOURNAL_ENTRY,
-    )
+    reimbursable_expenses = models.CharField(max_length=12, choices=ReimbursableExpensesChoices.choices,
+                                             default=ReimbursableExpensesChoices.BILL)
+    non_reimbursable_expenses = models.CharField(max_length=12, choices=NonReimbursableExpensesChoices.choices,
+                                                 default=NonReimbursableExpensesChoices.JOURNAL_ENTRY)
+    vendor_mapping = models.BooleanField(max_length=255, default=True)
+    employee_account_mapping = models.BooleanField(max_length=255, default=False)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 

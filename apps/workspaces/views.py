@@ -17,7 +17,7 @@ from fyle_rest_auth.models import AuthToken
 from fyle_qbo_api.utils import assert_valid
 
 from .models import Workspace, FyleCredential, QBOCredential, WorkspaceSettings, WorkspaceGeneralSettings
-from .utils import generate_qbo_refresh_token, GeneralSettingsUtils
+from .utils import generate_qbo_refresh_token, create_or_update_general_settings
 from .tasks import schedule_sync, run_sync_schedule
 from .serializers import WorkspaceSerializer, FyleCredentialSerializer, QBOCredentialSerializer, \
     WorkspaceSettingsSerializer, WorkSpaceGeneralSettingsSerializer
@@ -390,10 +390,9 @@ class GeneralSettingsView(viewsets.ViewSet):
 
         assert_valid(general_settings_payload is not None, 'Request body is empty')
 
-        general_settings_utils = GeneralSettingsUtils(kwargs['workspace_id'])
+        workspace_id = kwargs['workspace_id']
 
-        general_settings = general_settings_utils.create_or_update_general_settings(general_settings_payload)
-
+        general_settings = create_or_update_general_settings(general_settings_payload, workspace_id)
         return Response(
             data=self.serializer_class(general_settings).data,
             status=status.HTTP_200_OK

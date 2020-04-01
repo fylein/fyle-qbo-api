@@ -1,5 +1,6 @@
 from typing import Dict
 
+from apps.workspaces.models import WorkspaceGeneralSettings
 from fyle_qbo_api.utils import assert_valid
 
 from .models import GeneralMapping, EmployeeMapping, CategoryMapping, CostCenterMapping, ProjectMapping
@@ -15,35 +16,66 @@ class MappingUtils:
         :param general_mapping: general mapping payload
         :return:
         """
-        # assert_valid('default_ccc_account_name' in general_mapping and general_mapping['default_ccc_account_name'],
-        #              'default ccc account name field is blank')
-        # assert_valid('default_ccc_account_id' in general_mapping and general_mapping['default_ccc_account_id'],
-        #              'default ccc account id field is blank')
+        queryset = WorkspaceGeneralSettings.objects.all()
+        general_settings = queryset.get(workspace_id=self.__workspace_id)
+        non_reimbursable_expenses = general_settings.non_reimbursable_expenses
+        reimbursable_expenses = general_settings.reimbursable_expenses
+        employee_account_mapping = general_settings.employee_account_mapping
+
+        if 'BILL' in reimbursable_expenses:
+            assert_valid('accounts_payable_name' in general_mapping and general_mapping[
+                'accounts_payable_name'],
+                         'account payable account name field is blank')
+            assert_valid(
+                'accounts_payable_id' in general_mapping and general_mapping['accounts_payable_id'],
+                'account payable account id field is blank')
+
+        if 'CHECK' or 'JE' in reimbursable_expenses:
+            assert_valid('bank_account_name' in general_mapping and general_mapping['bank_account_name'],
+                         'bank account name field is blank')
+            assert_valid('bank_account_id' in general_mapping and general_mapping['bank_account_id'],
+                         'bank account id field is blank')
+
+        if ('JE' or 'CCP' in non_reimbursable_expenses) and employee_account_mapping:
+            assert_valid('ccc_account_name' in general_mapping and general_mapping['ccc_account_name'],
+                         'ccc account name field is blank')
+            assert_valid('ccc_account_id' in general_mapping and general_mapping['ccc_account_id'],
+                         'ccc account id field is blank')
+
+        if not employee_account_mapping:
+            assert_valid('default_ccc_account_name' in general_mapping and general_mapping['default_ccc_account_name'],
+                         'default ccc account name field is blank')
+            assert_valid('default_ccc_account_id' in general_mapping and general_mapping['default_ccc_account_id'],
+                         'default ccc account id field is blank')
 
         general_mapping, _ = GeneralMapping.objects.update_or_create(
             workspace_id=self.__workspace_id,
             defaults={
-                'account_payable_bank_account_name': general_mapping.get(
-                    'account_payable_bank_account_name') if general_mapping.get(
-                        'account_payable_bank_account_name') else general_mapping.get(
-                            'account_payable_bank_account_name', ''),
+                'accounts_payable_name': general_mapping.get('accounts_payable_name')
+                if 'BILL' in reimbursable_expenses else '',
 
-                'account_payable_bank_account_id': general_mapping.get(
-                    'account_payable_bank_account_id') if general_mapping.get(
-                        'account_payable_bank_account_id') else general_mapping.get(
-                            'account_payable_bank_account_id', ''),
+                'accounts_payable_id': general_mapping.get(
+                    'accounts_payable_id') if 'BILL' in reimbursable_expenses else '',
 
-                'bank_account_name': general_mapping.get('bank_account_name') if general_mapping.get(
-                    'bank_account_name') else general_mapping.get('bank_account_name', ''),
+                'bank_account_name': general_mapping.get(
+                    'bank_account_name') if 'CHECK' or 'JE' in reimbursable_expenses else '',
 
-                'bank_account_id': general_mapping.get('bank_account_id') if general_mapping.get(
-                    'bank_account_id') else general_mapping.get('bank_account_id', ''),
+                'bank_account_id': general_mapping.get(
+                    'bank_account_id') if 'CHECK' or 'JE' in reimbursable_expenses else '',
 
-                'ccc_account_name': general_mapping.get('ccc_account_name') if general_mapping.get(
-                    'ccc_account_name') else general_mapping.get('ccc_account_name', ''),
+                'ccc_account_name': general_mapping.get(
+                    'ccc_account_name') if ('JE' or 'CCP' in non_reimbursable_expenses)
+                                           and employee_account_mapping else '',
 
-                'ccc_account_id': general_mapping.get('ccc_account_id') if general_mapping.get(
-                    'ccc_account_id') else general_mapping.get('ccc_account_id', '')
+                'ccc_account_id': general_mapping.get(
+                    'ccc_account_id') if ('JE' or 'CCP' in non_reimbursable_expenses)
+                                         and employee_account_mapping else '',
+
+                'default_ccc_account_name': general_mapping.get(
+                    'default_ccc_account_name') if not employee_account_mapping else '',
+
+                'default_ccc_account_id': general_mapping.get(
+                    'default_ccc_account_id') if not employee_account_mapping else ''
             }
         )
         return general_mapping
@@ -54,25 +86,54 @@ class MappingUtils:
         :param employee_mapping: employee mapping payload
         :return: employee mappings objects
         """
+        general_settings_queryset = WorkspaceGeneralSettings.objects.all()
+        general_settings = general_settings_queryset.get(workspace_id=self.__workspace_id)
+        vendor_mapping = general_settings.vendor_mapping
+        employee_account_mapping = general_settings.employee_account_mapping
+
+        general_mappings_queryset = GeneralMapping.objects.all()
+        general_mappings = general_mappings_queryset.get(workspace_id=self.__workspace_id)
+        default_ccc_account_name = general_mappings.default_ccc_account_name
+        default_ccc_account_id = general_mappings.default_ccc_account_id
+
         assert_valid('employee_email' in employee_mapping and employee_mapping['employee_email'],
                      'employee email field is blank')
+
+        if vendor_mapping:
+            assert_valid('vendor_id' in employee_mapping and employee_mapping['vendor_id'],
+                         'vendor id field is blank')
+        if vendor_mapping:
+            assert_valid('vendor_name' in employee_mapping and employee_mapping['vendor_name'],
+                         'vendor name is missing')
+
+        if employee_account_mapping:
+            assert_valid('employee_display_name' in employee_mapping and employee_mapping['employee_display_name'],
+                         'employee_display_name field is blank')
+
+        if employee_account_mapping:
+            assert_valid('employee_id' in employee_mapping and employee_mapping['employee_id'],
+                         'employee_id field is blank')
+
+        if employee_account_mapping:
+            assert_valid('ccc_account_name' in employee_mapping and employee_mapping['ccc_account_name'],
+                         'ccc account name field is blank')
+
+        if employee_account_mapping:
+            assert_valid('ccc_account_id' in employee_mapping and employee_mapping['ccc_account_id'],
+                         'ccc account id field is blank')
 
         employee_mapping_object, _ = EmployeeMapping.objects.update_or_create(
             employee_email=employee_mapping['employee_email'].lower(),
             workspace_id=self.__workspace_id,
             defaults={
-                'vendor_display_name': employee_mapping['vendor_display_name'] if employee_mapping.get(
-                    'vendor_display_name') else employee_mapping.get('vendor_name', ''),
-                'vendor_id': employee_mapping['vendor_id'] if employee_mapping.get(
-                    'vendor_id') else employee_mapping.get('vendor_id', ''),
-                'employee_display_name': employee_mapping['employee_display_name'] if employee_mapping.get(
-                    'employee_display_name') else employee_mapping.get('employee_display_name', ''),
-                'employee_id': employee_mapping['employee_id'] if employee_mapping.get(
-                    'employee_id') else employee_mapping.get('employee_id', ''),
-                'ccc_account_name': employee_mapping['ccc_account_name'] if employee_mapping.get(
-                    'ccc_account_name') else employee_mapping.get('ccc_account_name', ''),
-                'ccc_account_id': employee_mapping['ccc_account_id'] if employee_mapping.get(
-                    'ccc_account_id') else employee_mapping.get('ccc_account_id', '')
+                'vendor_display_name': employee_mapping['vendor_name'] if vendor_mapping else '',
+                'vendor_id': employee_mapping['vendor_id'] if vendor_mapping else '',
+                'employee_display_name': employee_mapping['employee_display_name'] if employee_account_mapping else '',
+                'employee_id': employee_mapping['employee_id'] if employee_account_mapping else '',
+                'ccc_account_name': employee_mapping[
+                    'ccc_account_name'] if employee_account_mapping else default_ccc_account_name,
+                'ccc_account_id': employee_mapping[
+                    'ccc_account_id'] if employee_account_mapping else default_ccc_account_id
             }
         )
 

@@ -11,11 +11,12 @@ class GeneralMapping(models.Model):
     General Mappings
     """
     id = models.AutoField(primary_key=True)
-    account_payable_bank_account_name = models.CharField(max_length=255, help_text='Name of the accounts payable bank '
-                                                                                   'account')
-    account_payable_bank_account_id = models.CharField(max_length=40, help_text='QBO accounts payable bank account id')
+    accounts_payable_name = models.CharField(max_length=255, help_text='Name of the accounts payable bank account')
+    accounts_payable_id = models.CharField(max_length=40, help_text='QBO accounts payable bank account id')
     bank_account_name = models.CharField(max_length=255, help_text='Name of the bank account')
     bank_account_id = models.CharField(max_length=40, help_text='QBO bank account id')
+    default_ccc_account_name = models.CharField(max_length=255, help_text='Name of the default ccc account')
+    default_ccc_account_id = models.CharField(max_length=40, help_text='QBO default ccc account id')
     ccc_account_name = models.CharField(max_length=255, help_text='Name of the ccc account')
     ccc_account_id = models.CharField(max_length=40, help_text='QBO ccc account id')
     workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
