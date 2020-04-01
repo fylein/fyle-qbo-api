@@ -102,23 +102,17 @@ class MappingUtils:
         if vendor_mapping:
             assert_valid('vendor_id' in employee_mapping and employee_mapping['vendor_id'],
                          'vendor id field is blank')
-        if vendor_mapping:
             assert_valid('vendor_name' in employee_mapping and employee_mapping['vendor_name'],
                          'vendor name is missing')
 
         if employee_account_mapping:
             assert_valid('employee_display_name' in employee_mapping and employee_mapping['employee_display_name'],
                          'employee_display_name field is blank')
-
-        if employee_account_mapping:
             assert_valid('employee_id' in employee_mapping and employee_mapping['employee_id'],
                          'employee_id field is blank')
 
-        if employee_account_mapping:
             assert_valid('ccc_account_name' in employee_mapping and employee_mapping['ccc_account_name'],
                          'ccc account name field is blank')
-
-        if employee_account_mapping:
             assert_valid('ccc_account_id' in employee_mapping and employee_mapping['ccc_account_id'],
                          'ccc account id field is blank')
 
