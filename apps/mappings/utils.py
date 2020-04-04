@@ -58,14 +58,14 @@ class MappingUtils:
                     'bank_account_id') if 'CHECK' in reimbursable_expenses else '',
 
                 'default_ccc_account_name': general_mapping.get('default_ccc_account_name')
-                                           if ('JOURNAL_ENTRY' in reimbursable_expenses) or
+                                            if ('JOURNAL_ENTRY' in reimbursable_expenses) or
                                             ('JOURNAL_ENTRY' or 'CREDIT_CARD_CREDIT' in non_reimbursable_expenses)
-                                           else '',
+                                            else '',
 
                 'default_ccc_account_id': general_mapping.get('default_ccc_account_id')
-                                         if ('JOURNAL_ENTRY' in reimbursable_expenses) or
+                                          if ('JOURNAL_ENTRY' in reimbursable_expenses) or
                                           ('JOURNAL_ENTRY' or 'CREDIT_CARD_CREDIT' in non_reimbursable_expenses)
-                                         else '',
+                                          else '',
             }
         )
         return general_mapping
