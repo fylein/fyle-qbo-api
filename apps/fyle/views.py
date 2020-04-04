@@ -34,7 +34,7 @@ class ExpenseGroupView(generics.ListCreateAPIView):
         Create expense groups
         """
         export_non_reimbursable = request.data.get(
-            'export_non_reimbursable', False)
+            'export_non_reimbursable', True)
         state = request.data.get('state', ['PAYMENT_PROCESSING'])
         task_log = TaskLog.objects.get(pk=request.data.get('task_log_id'))
 

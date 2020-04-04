@@ -40,6 +40,7 @@ class Expense(models.Model):
     expense_updated_at = models.DateTimeField(help_text='Expense created at')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
+    fund_source = models.CharField(max_length=255, help_text='Expense fund source')
 
     @staticmethod
     def create_expense_objects(expenses: List[Dict]):
@@ -73,7 +74,8 @@ class Expense(models.Model):
                     'spent_at': expense['spent_at'],
                     'approved_at': expense['approved_at'],
                     'expense_created_at': expense['created_at'],
-                    'expense_updated_at': expense['updated_at']
+                    'expense_updated_at': expense['updated_at'],
+                    'fund_source': expense['fund_source']
                 }
             )
             expense_objects.append(expense_object)
@@ -95,12 +97,13 @@ class ExpenseGroup(models.Model):
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
     @staticmethod
-    def create_expense_groups_by_report_id(expense_objects: List[Expense], workspace_id):
+    def create_expense_groups_by_report_id_fund_source(expense_objects: List[Expense], workspace_id):
         """
-        Group expense by report_id
+        Group expense by report_id and fund_source
         """
         expense_groups = groupby(
-            expense_objects, lambda expense: (expense.report_id, expense.employee_email, expense.claim_number)
+            expense_objects, lambda expense: (expense.report_id, expense.employee_email, expense.claim_number,
+                                              expense.fund_source)
         )
 
         expense_group_objects = []
@@ -109,16 +112,20 @@ class ExpenseGroup(models.Model):
             report_id = expense_group[0]
             employee_email = expense_group[1]
             claim_number = expense_group[2]
+            fund_source = expense_group[3]
 
-            expense_ids = Expense.objects.filter(report_id=report_id).values_list('id', flat=True)
+            expense_ids = Expense.objects.filter(report_id=report_id, fund_source=fund_source).values_list(
+                'id', flat=True
+            )
 
             expense_group_object, _ = ExpenseGroup.objects.update_or_create(
-                fyle_group_id=report_id,
+                fyle_group_id=report_id + ' - ' + fund_source,
                 workspace_id=workspace_id,
                 defaults={
                     'description': {
                         'employee_email': employee_email,
-                        'claim_number': claim_number
+                        'claim_number': claim_number,
+                        'fund_source': fund_source
                     }
                 }
             )

@@ -17,8 +17,6 @@ class GeneralMapping(models.Model):
     bank_account_id = models.CharField(max_length=40, help_text='QBO bank account id')
     default_ccc_account_name = models.CharField(max_length=255, help_text='Name of the default ccc account')
     default_ccc_account_id = models.CharField(max_length=40, help_text='QBO default ccc account id')
-    ccc_account_name = models.CharField(max_length=255, help_text='Name of the ccc account')
-    ccc_account_id = models.CharField(max_length=40, help_text='QBO ccc account id')
     workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')

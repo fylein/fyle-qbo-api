@@ -68,19 +68,15 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
     assert_valid('non_reimbursable_expenses' in general_settings_payload and general_settings_payload[
         'non_reimbursable_expenses'], 'non_reimbursable_expenses field is blank')
 
-    assert_valid('vendor_mapping' in general_settings_payload and general_settings_payload[
-        'vendor_mapping'], 'vendor_mapping field is blank')
-
-    assert_valid('employee_account_mapping' in general_settings_payload and general_settings_payload[
-        'employee_account_mapping'], 'employee_account_mapping field is blank')
+    assert_valid('mapping_settings' in general_settings_payload and general_settings_payload[
+        'mapping_settings'], 'mapping_settings field is blank')
 
     general_settings, _ = WorkspaceGeneralSettings.objects.update_or_create(
         workspace_id=workspace_id,
         defaults={
             'reimbursable_expenses': general_settings_payload['reimbursable_expenses'],
             'non_reimbursable_expenses': general_settings_payload['non_reimbursable_expenses'],
-            'vendor_mapping': general_settings_payload['vendor_mapping'],
-            'employee_account_mapping': general_settings_payload['employee_account_mapping']
+            'mapping_settings': general_settings_payload['mapping_settings']
         }
     )
     return general_settings

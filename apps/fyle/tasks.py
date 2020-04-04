@@ -101,7 +101,7 @@ def async_create_expense_groups(workspace_id: int, state: List[str], export_non_
 
             expense_objects = Expense.create_expense_objects(expenses)
 
-            expense_group_objects = ExpenseGroup.create_expense_groups_by_report_id(
+            expense_group_objects = ExpenseGroup.create_expense_groups_by_report_id_fund_source(
                 expense_objects, workspace_id
             )
 
