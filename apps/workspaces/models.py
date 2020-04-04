@@ -43,23 +43,6 @@ class WorkspaceSettings(models.Model):
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
 
-class ReimbursableExpensesChoices(models.TextChoices):
-    """
-    ReimbursableExpensesChoices
-    """
-    BILL = 'BILL', 'BILL'
-    CHECK = 'CHECK', 'CHECK'
-    JOURNAL_ENTRY = 'JE', 'JOURNAL_ENTRY'
-
-
-class NonReimbursableExpensesChoices(models.TextChoices):
-    """
-    NonReimbursableExpensesChoices
-    """
-    JOURNAL_ENTRY = 'JE', 'JOURNAL_ENTRY'
-    CREDIT_CARD_PURCHASE = 'CCP', 'CREDIT_CARD_PURCHASE'
-
-
 class WorkspaceGeneralSettings(models.Model):
     """
     Workspace General Settings
