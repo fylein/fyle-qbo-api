@@ -58,12 +58,14 @@ class MappingUtils:
                     'bank_account_id') if 'CHECK' in reimbursable_expenses else '',
 
                 'default_ccc_account_name': general_mapping.get('default_ccc_account_name')
-                     if ('JOURNAL_ENTRY' in reimbursable_expenses) or
-                        ('JOURNAL_ENTRY' or 'CREDIT_CARD_CREDIT' in non_reimbursable_expenses) else '',
+                                           if ('JOURNAL_ENTRY' in reimbursable_expenses) or
+                                            ('JOURNAL_ENTRY' or 'CREDIT_CARD_CREDIT' in non_reimbursable_expenses)
+                                           else '',
 
                 'default_ccc_account_id': general_mapping.get('default_ccc_account_id')
-                     if ('JOURNAL_ENTRY' in reimbursable_expenses) or
-                        ('JOURNAL_ENTRY' or 'CREDIT_CARD_CREDIT' in non_reimbursable_expenses) else '',
+                                         if ('JOURNAL_ENTRY' in reimbursable_expenses) or
+                                          ('JOURNAL_ENTRY' or 'CREDIT_CARD_CREDIT' in non_reimbursable_expenses)
+                                         else '',
             }
         )
         return general_mapping
@@ -105,7 +107,7 @@ class MappingUtils:
                 'vendor_display_name': employee_mapping['vendor_name'] if 'VENDOR' in mapping_settings else '',
                 'vendor_id': employee_mapping['vendor_id'] if 'VENDOR' in mapping_settings else '',
                 'employee_display_name': employee_mapping['employee_display_name'] if 'EMPLOYEE' in mapping_settings
-                    else '',
+                                         else '',
                 'employee_id': employee_mapping['employee_id'] if 'EMPLOYEE' in mapping_settings else '',
                 'ccc_account_name': employee_mapping['ccc_account_name'] if 'EMPLOYEE' in mapping_settings else '',
                 'ccc_account_id': employee_mapping['ccc_account_id'] if 'EMPLOYEE' in mapping_settings else ''
