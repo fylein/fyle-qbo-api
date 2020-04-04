@@ -26,7 +26,7 @@ def schedule_expense_group_creation(workspace_id: int, user: str):
     """
     fyle_credentials = FyleCredential.objects.get(
         workspace_id=workspace_id)
-    fyle_connector = FyleConnector(fyle_credentials.refresh_token)
+    fyle_connector = FyleConnector(fyle_credentials.refresh_token, workspace_id)
     fyle_sdk_connection = fyle_connector.connection
 
     jobs = FyleJobsSDK(settings.FYLE_JOBS_URL, fyle_sdk_connection)
@@ -93,7 +93,7 @@ def async_create_expense_groups(workspace_id: int, state: List[str], export_non_
 
             fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
 
-            fyle_connector = FyleConnector(fyle_credentials.refresh_token)
+            fyle_connector = FyleConnector(fyle_credentials.refresh_token, workspace_id)
 
             expenses = fyle_connector.get_expenses(
                 state=state, export_non_reimbursable=export_non_reimbursable, updated_at=updated_at

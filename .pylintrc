@@ -230,7 +230,7 @@ spelling-store-unknown-words=no
 
 [MISCELLANEOUS]
 
-# List of note tags to take in consideration, separated by a comma.
+# List of note attributes to take in consideration, separated by a comma.
 notes=FIXME,
       XXX,
       TODO
@@ -331,7 +331,7 @@ indent-after-paren=4
 
 # String used as indentation unit. This is usually "    " (4 spaces) or "\t" (1
 # tab).
-indent-string='    '
+indent-string=\t
 
 # Maximum number of characters on a single line.
 max-line-length=120
