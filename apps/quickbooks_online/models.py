@@ -143,7 +143,9 @@ class QuickbooksCheck(models.Model):
             expense_group=expense_group,
             defaults={
                 'bank_account_id': general_mappings.bank_account_id,
-                'employee_id': EmployeeMapping.objects.get(employee_email=description.get('employee_email')).employee_id,
+                'employee_id': EmployeeMapping.objects.get(
+                    employee_email=description.get('employee_email')
+                ).employee_id,
                 'department_id': None,
                 'transaction_date': datetime.now().strftime("%Y-%m-%d"),
                 'private_note': 'Report {0} / {1} exported on {2}'.format(

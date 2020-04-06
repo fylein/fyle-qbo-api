@@ -115,4 +115,3 @@ def run_sync_schedule(workspace_id, user: str):
     if task_log.status == 'COMPLETE':
         schedule_bills_creation(workspace_id=workspace_id, expense_group_ids=[], user=user)
         schedule_checks_creation(workspace_id=workspace_id, expense_group_ids=[], user=user)
-

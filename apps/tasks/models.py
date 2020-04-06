@@ -23,7 +23,8 @@ class TaskLog(models.Model):
     expense_group = models.ForeignKey(ExpenseGroup, on_delete=models.PROTECT,
                                       null=True, help_text='Reference to Expense group')
     bill = models.ForeignKey(Bill, on_delete=models.PROTECT, help_text='Reference to Bill', null=True)
-    quickbooks_check = models.ForeignKey(QuickbooksCheck, on_delete=models.PROTECT, help_text='Reference to Check', null=True)
+    quickbooks_check = models.ForeignKey(QuickbooksCheck, on_delete=models.PROTECT, help_text='Reference to Check',
+                                         null=True)
     status = models.CharField(max_length=255, help_text='Task Status')
     detail = JSONField(help_text='Task response', null=True, default=get_default)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
