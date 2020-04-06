@@ -10,9 +10,9 @@ from apps.tasks.models import TaskLog
 from apps.workspaces.models import QBOCredential
 
 from .utils import QBOConnector
-from .tasks import create_bill, schedule_bills_creation
-from .models import Bill
-from .serializers import BillSerializer
+from .tasks import create_bill, schedule_bills_creation, create_check, schedule_checks_creation
+from .models import Bill, QuickbooksCheck
+from .serializers import BillSerializer, CheckSerializer
 
 
 class VendorView(viewsets.ViewSet):
@@ -34,6 +34,36 @@ class VendorView(viewsets.ViewSet):
 
             return Response(
                 data=vendors,
+                status=status.HTTP_200_OK
+            )
+        except QBOCredential.DoesNotExist:
+            return Response(
+                data={
+                    'message': 'QBO credentials not found in workspace'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class EmployeeView(viewsets.ViewSet):
+    """
+    Employee view
+    """
+
+    def get_employees(self, request, **kwargs):
+        """
+        Get employees from QBO
+        """
+        try:
+            qbo_credentials = QBOCredential.objects.get(
+                workspace_id=kwargs['workspace_id'])
+
+            qbo_connector = QBOConnector(qbo_credentials)
+
+            employees = qbo_connector.get_employees()
+
+            return Response(
+                data=employees,
                 status=status.HTTP_200_OK
             )
         except QBOCredential.DoesNotExist:
@@ -204,6 +234,52 @@ class BillScheduleView(generics.CreateAPIView):
         expense_group_ids = request.data.get('expense_group_ids', [])
 
         schedule_bills_creation(
+            kwargs['workspace_id'], expense_group_ids, request.user)
+
+        return Response(
+            status=status.HTTP_200_OK
+        )
+
+
+class CheckView(generics.ListCreateAPIView):
+    """
+    Create Check
+    """
+    serializer_class = CheckSerializer
+
+    def get_queryset(self):
+        return QuickbooksCheck.objects.filter(expense_group__workspace_id=self.kwargs['workspace_id']).order_by('-updated_at')
+
+    def post(self, request, *args, **kwargs):
+        """
+        Create check from expense group
+        """
+        expense_group_id = request.data.get('expense_group_id')
+        task_log_id = request.data.get('task_log_id')
+
+        assert_valid(expense_group_id is not None, 'Expense ids not found')
+        assert_valid(task_log_id is not None, 'Task Log id not found')
+
+        expense_group = ExpenseGroup.objects.get(pk=expense_group_id)
+        task_log = TaskLog.objects.get(pk=task_log_id)
+
+        create_check(expense_group, task_log)
+
+        return Response(
+            data={},
+            status=status.HTTP_200_OK
+        )
+
+
+class CheckScheduleView(generics.CreateAPIView):
+    """
+    Schedule checks creation
+    """
+
+    def post(self, request, *args, **kwargs):
+        expense_group_ids = request.data.get('expense_group_ids', [])
+
+        schedule_checks_creation(
             kwargs['workspace_id'], expense_group_ids, request.user)
 
         return Response(

@@ -6,7 +6,7 @@ from qbosdk import QuickbooksOnlineSDK
 
 from apps.workspaces.models import QBOCredential
 
-from .models import BillLineitem, Bill
+from .models import BillLineitem, Bill, CheckLineitem, QuickbooksCheck
 
 
 class QBOConnector:
@@ -46,6 +46,12 @@ class QBOConnector:
         Get vendors
         """
         return self.connection.vendors.get()
+
+    def get_employees(self):
+        """
+        Get employees
+        """
+        return self.connection.employees.get()
 
     def get_classes(self):
         """
@@ -123,3 +129,67 @@ class QBOConnector:
         bills_payload = self.__construct_bill(bill, bill_lineitems)
         created_bill = self.connection.bills.post(bills_payload)
         return created_bill
+
+
+    @staticmethod
+    def __construct_check_line_items(check_line_items: List[CheckLineitem]) -> List[Dict]:
+        """
+        Create check line items
+        :param check_line_items: list of check line items extracted from database
+        :return: constructed line items
+        """
+        lines = []
+
+        for line in check_line_items:
+            line = {
+                'Description': line.description,
+                'DetailType': 'AccountBasedExpenseLineDetail',
+                'Amount': line.amount,
+                'AccountBasedExpenseLineDetail': {
+                    'AccountRef': {
+                        'value': line.account_id
+                    },
+                    'ClassRef': {
+                        'value': line.class_id
+                    }
+                }
+            }
+            lines.append(line)
+
+        return lines
+
+    def __construct_check(self, check: QuickbooksCheck, check_line_items: List[CheckLineitem]) -> Dict:
+        """
+        Create a check
+        :param check: check object extracted from database
+        :return: constructed check
+        """
+        check_payload = {
+            'PaymentType': 'Check',
+            'AccountRef': {
+                'value': check.bank_account_id
+            },
+            'EntityRef': {
+                'value': check.employee_id
+            },
+            'DepartmentRef': {
+                'value': check.department_id
+            },
+            'TxnDate': check.transaction_date,
+            "CurrencyRef": {
+                "value": check.currency
+            },
+            'PrivateNote': check.private_note,
+            'Line': self.__construct_check_line_items(check_line_items),
+            'DocNumber': check.check_number
+        }
+
+        return check_payload
+
+    def post_check(self, check: QuickbooksCheck, check_lineitems: List[CheckLineitem]):
+        """
+        Post checks to QBO
+        """
+        checks_payload = self.__construct_check(check, check_lineitems)
+        created_check = self.connection.purchases.post(checks_payload)
+        return created_check

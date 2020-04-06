@@ -4,7 +4,7 @@ from django.conf import settings
 
 from apps.fyle.tasks import create_expense_groups
 from apps.fyle.utils import FyleConnector
-from apps.quickbooks_online.tasks import schedule_bills_creation
+from apps.quickbooks_online.tasks import schedule_bills_creation, schedule_checks_creation
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import WorkspaceSettings, WorkspaceSchedule, FyleCredential
 from fyle_jobs import FyleJobsSDK
@@ -108,9 +108,11 @@ def run_sync_schedule(workspace_id, user: str):
 
     task_log: TaskLog = create_expense_groups(
         workspace_id=workspace_id, state=['PAYMENT_PROCESSING'],
-        export_non_reimbursable=False,
+        export_non_reimbursable=True,
         task_log=task_log
     )
 
     if task_log.status == 'COMPLETE':
         schedule_bills_creation(workspace_id=workspace_id, expense_group_ids=[], user=user)
+        schedule_checks_creation(workspace_id=workspace_id, expense_group_ids=[], user=user)
+
