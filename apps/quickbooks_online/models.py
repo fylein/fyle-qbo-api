@@ -7,7 +7,6 @@ from django.db import models
 
 from apps.fyle.models import ExpenseGroup, Expense
 from apps.mappings.models import GeneralMapping, EmployeeMapping, CategoryMapping, CostCenterMapping, ProjectMapping
-from apps.workspaces.models import WorkspaceGeneralSettings
 
 class Bill(models.Model):
     """
@@ -139,7 +138,6 @@ class QuickbooksCheck(models.Model):
         expense = expense_group.expenses.first()
 
         general_mappings = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
-        workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
         check_object, _ = QuickbooksCheck.objects.update_or_create(
             expense_group=expense_group,
             defaults={

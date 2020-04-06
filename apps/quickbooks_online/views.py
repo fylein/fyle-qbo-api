@@ -248,7 +248,9 @@ class CheckView(generics.ListCreateAPIView):
     serializer_class = CheckSerializer
 
     def get_queryset(self):
-        return QuickbooksCheck.objects.filter(expense_group__workspace_id=self.kwargs['workspace_id']).order_by('-updated_at')
+        return QuickbooksCheck.objects.filter(expense_group__workspace_id=self.kwargs['workspace_id']).order_by(
+            '-updated_at'
+        )
 
     def post(self, request, *args, **kwargs):
         """
