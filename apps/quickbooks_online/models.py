@@ -8,6 +8,7 @@ from django.db import models
 from apps.fyle.models import ExpenseGroup, Expense
 from apps.mappings.models import GeneralMapping, EmployeeMapping, CategoryMapping, CostCenterMapping, ProjectMapping
 
+
 class Bill(models.Model):
     """
     QBO Bill

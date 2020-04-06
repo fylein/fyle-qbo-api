@@ -23,7 +23,7 @@ from .utils import QBOConnector
 logger = logging.getLogger(__name__)
 
 
-def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], user):
+def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], user: str):
     """
     Schedule bills creation
     :param expense_group_ids: List of expense group ids
@@ -179,7 +179,7 @@ def __validate_expense_group(expense_group: ExpenseGroup):
         raise BulkError('Mappings are missing', bulk_errors)
 
 
-def schedule_checks_creation(workspace_id: int, expense_group_ids: List[str], user):
+def schedule_checks_creation(workspace_id: int, expense_group_ids: List[str], user: str):
     """
     Schedule checks creation
     :param expense_group_ids: List of expense group ids
