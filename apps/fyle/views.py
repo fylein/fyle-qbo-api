@@ -4,7 +4,7 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 
 from apps.tasks.models import TaskLog
-from apps.workspaces.models import FyleCredential
+from apps.workspaces.models import FyleCredential, WorkspaceGeneralSettings
 
 from .tasks import create_expense_groups, schedule_expense_group_creation
 from .utils import FyleConnector
@@ -17,8 +17,6 @@ class ExpenseGroupView(generics.ListCreateAPIView):
     List Fyle Expenses
     """
     serializer_class = ExpenseGroupSerializer
-    authentication_classes = []
-    permission_classes = []
 
     def get_queryset(self):
         state = self.request.query_params.get('state', 'ALL')
@@ -35,17 +33,28 @@ class ExpenseGroupView(generics.ListCreateAPIView):
         """
         Create expense groups
         """
-        export_non_reimbursable = request.data.get(
-            'export_non_reimbursable', True)
         state = request.data.get('state', ['PAYMENT_PROCESSING'])
         task_log = TaskLog.objects.get(pk=request.data.get('task_log_id'))
 
-        create_expense_groups(
-            kwargs['workspace_id'],
-            state=state,
-            export_non_reimbursable=export_non_reimbursable,
-            task_log=task_log
-        )
+        queryset = WorkspaceGeneralSettings.objects.all()
+        general_settings = queryset.get(workspace_id=kwargs['workspace_id'])
+
+        if general_settings.reimbursable_expenses_object:
+            create_expense_groups(
+                kwargs['workspace_id'],
+                state=state,
+                export_non_reimbursable=request.data.get('export_non_reimbursable', False),
+                fund_source=request.data.get('fund_source', ['PERSONAL']),
+                task_log=task_log
+            )
+        if general_settings.corporate_credit_card_expenses_object:
+            create_expense_groups(
+                kwargs['workspace_id'],
+                state=state,
+                export_non_reimbursable=request.data.get('export_non_reimbursable', True),
+                fund_source=request.data.get('fund_source', ['PERSONAL', 'CCC']),
+                task_log=task_log
+            )
 
         return Response(
             status=status.HTTP_200_OK

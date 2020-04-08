@@ -10,7 +10,6 @@ from future.moves.urllib.parse import urlencode
 
 from qbosdk import UnauthorizedClientError, NotFoundClientError, WrongParamsError, InternalServerError
 
-from fyle_qbo_api.utils import assert_valid
 from .models import WorkspaceGeneralSettings
 
 
@@ -61,22 +60,15 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
     :param general_settings_payload: general settings payload
     :return:
     """
-    assert_valid(
-        'reimbursable_expenses_object' in general_settings_payload and general_settings_payload[
-            'reimbursable_expenses_object'], 'reimbursable_expenses_object field is blank')
-
-    assert_valid('corporate_credit_card_expenses_object' in general_settings_payload and general_settings_payload[
-        'corporate_credit_card_expenses_object'], 'corporate_credit_card_expenses_object field is blank')
-
-    assert_valid('employee_field_mapping' in general_settings_payload and general_settings_payload[
-        'employee_field_mapping'], 'employee_field_mapping field is blank')
-
     general_settings, _ = WorkspaceGeneralSettings.objects.update_or_create(
         workspace_id=workspace_id,
         defaults={
-            'reimbursable_expenses_object': general_settings_payload['reimbursable_expenses_object'],
-            'corporate_credit_card_expenses_object': general_settings_payload['corporate_credit_card_expenses_object'],
+            'reimbursable_expenses_object': general_settings_payload['reimbursable_expenses_object']
+            if general_settings_payload['reimbursable_expenses_object'] else None,
+            'corporate_credit_card_expenses_object': general_settings_payload['corporate_credit_card_expenses_object']
+            if general_settings_payload['corporate_credit_card_expenses_object'] else None,
             'employee_field_mapping': general_settings_payload['employee_field_mapping']
+            if general_settings_payload['employee_field_mapping'] else None
         }
     )
     return general_settings
