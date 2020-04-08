@@ -49,11 +49,9 @@ class WorkspaceGeneralSettings(models.Model):
     """
     id = models.AutoField(primary_key=True, help_text='Unique Id to identify a workspace')
     workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
-    reimbursable_expenses = models.CharField(max_length=50, help_text='Reimbursable Expenses type (CHECK / BILL / '
-                                                                      'JOURNAL_ENTRY)')
-    non_reimbursable_expenses = models.CharField(max_length=50, help_text='Non Reimbursable Expenses type ( '
-                                                                          'JOURNAL_ENTRY / CREDIT_CARD_CREDIT)')
-    mapping_settings = models.CharField(max_length=50, help_text='Mapping Settings ( VENDORS / EMPLOYEES )')
+    reimbursable_expenses_object = models.CharField(max_length=50, help_text='Reimbursable Expenses type')
+    corporate_credit_card_expenses_object = models.CharField(max_length=50, help_text='Non Reimbursable Expenses type')
+    employee_field_mapping = models.CharField(max_length=50, help_text='Mapping Settings ( VENDORS / EMPLOYEES )')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 

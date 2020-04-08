@@ -119,7 +119,7 @@ class ExpenseGroup(models.Model):
             )
 
             expense_group_object, _ = ExpenseGroup.objects.update_or_create(
-                fyle_group_id=report_id + ' - ' + fund_source,
+                fyle_group_id=report_id+'-'+fund_source,
                 workspace_id=workspace_id,
                 defaults={
                     'description': {

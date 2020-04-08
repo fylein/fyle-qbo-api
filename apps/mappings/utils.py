@@ -18,8 +18,8 @@ class MappingUtils:
         """
         queryset = WorkspaceGeneralSettings.objects.all()
         general_settings = queryset.get(workspace_id=self.__workspace_id)
-        non_reimbursable_expenses = general_settings.non_reimbursable_expenses
-        reimbursable_expenses = general_settings.reimbursable_expenses
+        non_reimbursable_expenses = general_settings.corporate_credit_card_expenses_object
+        reimbursable_expenses = general_settings.reimbursable_expenses_object
 
         if 'BILL' in reimbursable_expenses:
             assert_valid('accounts_payable_name' in general_mapping and general_mapping[
@@ -46,26 +46,19 @@ class MappingUtils:
             workspace_id=self.__workspace_id,
             defaults={
                 'accounts_payable_name': general_mapping.get('accounts_payable_name')
-                                         if 'BILL' in reimbursable_expenses else '',
+                                         if reimbursable_expenses == 'BILL' else None,
 
                 'accounts_payable_id': general_mapping.get(
-                    'accounts_payable_id') if 'BILL' in reimbursable_expenses else '',
+                    'accounts_payable_id') if reimbursable_expenses == 'BILL' else None,
 
                 'bank_account_name': general_mapping.get(
-                    'bank_account_name') if 'CHECK' in reimbursable_expenses else '',
+                    'bank_account_name') if reimbursable_expenses == 'CHECK' else '',
 
                 'bank_account_id': general_mapping.get(
-                    'bank_account_id') if 'CHECK' in reimbursable_expenses else '',
+                    'bank_account_id') if reimbursable_expenses == 'CHECK' else '',
 
-                'default_ccc_account_name': general_mapping.get('default_ccc_account_name')
-                                            if ('JOURNAL_ENTRY' in reimbursable_expenses) or
-                                            ('JOURNAL_ENTRY' or 'CREDIT_CARD_CREDIT' in non_reimbursable_expenses)
-                                            else '',
-
+                'default_ccc_account_name': general_mapping.get('default_ccc_account_name'),
                 'default_ccc_account_id': general_mapping.get('default_ccc_account_id')
-                                          if ('JOURNAL_ENTRY' in reimbursable_expenses) or
-                                          ('JOURNAL_ENTRY' or 'CREDIT_CARD_CREDIT' in non_reimbursable_expenses)
-                                          else '',
             }
         )
         return general_mapping
@@ -95,22 +88,22 @@ class MappingUtils:
             assert_valid('employee_id' in employee_mapping and employee_mapping['employee_id'],
                          'employee_id field is blank')
 
-            assert_valid('ccc_account_name' in employee_mapping and employee_mapping['ccc_account_name'],
-                         'ccc account name field is blank')
-            assert_valid('ccc_account_id' in employee_mapping and employee_mapping['ccc_account_id'],
-                         'ccc account id field is blank')
+        assert_valid('ccc_account_name' in employee_mapping and employee_mapping['ccc_account_name'],
+                     'ccc account name field is blank')
+        assert_valid('ccc_account_id' in employee_mapping and employee_mapping['ccc_account_id'],
+                     'ccc account id field is blank')
 
         employee_mapping_object, _ = EmployeeMapping.objects.update_or_create(
             employee_email=employee_mapping['employee_email'].lower(),
             workspace_id=self.__workspace_id,
             defaults={
-                'vendor_display_name': employee_mapping['vendor_name'] if 'VENDOR' in mapping_settings else '',
-                'vendor_id': employee_mapping['vendor_id'] if 'VENDOR' in mapping_settings else '',
-                'employee_display_name': employee_mapping['employee_display_name'] if 'EMPLOYEE' in mapping_settings
-                                         else '',
-                'employee_id': employee_mapping['employee_id'] if 'EMPLOYEE' in mapping_settings else '',
-                'ccc_account_name': employee_mapping['ccc_account_name'] if 'EMPLOYEE' in mapping_settings else '',
-                'ccc_account_id': employee_mapping['ccc_account_id'] if 'EMPLOYEE' in mapping_settings else ''
+                'vendor_display_name': employee_mapping['vendor_name'] if mapping_settings == 'VENDOR' else None,
+                'vendor_id': employee_mapping['vendor_id'] if mapping_settings == 'VENDOR' else None,
+                'employee_display_name': employee_mapping['employee_display_name'] if mapping_settings == 'EMPLOYEE'
+                                         else None,
+                'employee_id': employee_mapping['employee_id'] if mapping_settings == 'EMPLOYEE' else None,
+                'ccc_account_name': employee_mapping['ccc_account_name'],
+                'ccc_account_id': employee_mapping['ccc_account_id']
             }
         )
 
