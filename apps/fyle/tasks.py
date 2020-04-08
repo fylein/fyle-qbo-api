@@ -86,7 +86,7 @@ def async_create_expense_groups(workspace_id: int, state: List[str], export_non_
 
             last_synced_at = workspace.last_synced_at
 
-            updated_at = ['gte:2020-04-02T10:03:47.000Z']
+            updated_at = []
 
             if last_synced_at:
                 updated_at.append('gte:{0}'.format(datetime.strftime(last_synced_at, '%Y-%m-%dT%H:%M:%S.000Z')))
