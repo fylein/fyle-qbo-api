@@ -6,7 +6,7 @@ from apps.fyle.tasks import create_expense_groups
 from apps.fyle.utils import FyleConnector
 from apps.quickbooks_online.tasks import schedule_bills_creation
 from apps.tasks.models import TaskLog
-from apps.workspaces.models import WorkspaceSettings, WorkspaceSchedule, FyleCredential
+from apps.workspaces.models import WorkspaceSettings, WorkspaceSchedule, FyleCredential, WorkspaceGeneralSettings
 from fyle_jobs import FyleJobsSDK
 
 
@@ -106,11 +106,24 @@ def run_sync_schedule(workspace_id, user: str):
         status='IN_PROGRESS'
     )
 
-    task_log: TaskLog = create_expense_groups(
-        workspace_id=workspace_id, state=['PAYMENT_PROCESSING'],
-        export_non_reimbursable=False,
-        task_log=task_log
-    )
+    queryset = WorkspaceGeneralSettings.objects.all()
+    general_settings = queryset.get(workspace_id)
+
+    if general_settings.reimbursable_expenses_object:
+        task_log: TaskLog = create_expense_groups(
+            workspace_id=workspace_id, state=['PAYMENT_PROCESSING'],
+            export_non_reimbursable=False,
+            fund_source=['PERSONAL'],
+            task_log=task_log
+        )
+
+    if general_settings.corporate_credit_card_expenses_object:
+        task_log: TaskLog = create_expense_groups(
+            workspace_id=workspace_id, state=['PAYMENT_PROCESSING'],
+            export_non_reimbursable=True,
+            fund_source=['PERSONAL', 'CCC'],
+            task_log=task_log
+        )
 
     if task_log.status == 'COMPLETE':
         schedule_bills_creation(workspace_id=workspace_id, expense_group_ids=[], user=user)
