@@ -28,24 +28,23 @@ class MappingUtils:
             'default_ccc_account_id': None
         }
 
-        if general_settings.reimbursable_expenses_object:
-            if general_settings.employee_field_mapping == 'VENDOR':
-                assert_valid('accounts_payable_name' in general_mapping and general_mapping['accounts_payable_name'],
-                             'account payable account name field is blank')
-                assert_valid('accounts_payable_id' in general_mapping and general_mapping['accounts_payable_id'],
-                             'account payable account id field is blank')
+        if general_settings.employee_field_mapping == 'VENDOR':
+            assert_valid('accounts_payable_name' in general_mapping and general_mapping['accounts_payable_name'],
+                         'account payable account name field is blank')
+            assert_valid('accounts_payable_id' in general_mapping and general_mapping['accounts_payable_id'],
+                         'account payable account id field is blank')
 
-                params['accounts_payable_name'] = general_mapping.get('accounts_payable_name')
-                params['accounts_payable_id'] = general_mapping.get('accounts_payable_id')
+            params['accounts_payable_name'] = general_mapping.get('accounts_payable_name')
+            params['accounts_payable_id'] = general_mapping.get('accounts_payable_id')
 
-            elif general_settings.employee_field_mapping == 'EMPLOYEE':
-                assert_valid('bank_account_name' in general_mapping and general_mapping['bank_account_name'],
-                             'bank account name field is blank')
-                assert_valid('bank_account_id' in general_mapping and general_mapping['bank_account_id'],
-                             'bank account id field is blank')
+        if general_settings.employee_field_mapping == 'EMPLOYEE':
+            assert_valid('bank_account_name' in general_mapping and general_mapping['bank_account_name'],
+                         'bank account name field is blank')
+            assert_valid('bank_account_id' in general_mapping and general_mapping['bank_account_id'],
+                         'bank account id field is blank')
 
-                params['bank_account_name'] = general_mapping.get('bank_account_name')
-                params['bank_account_id'] = general_mapping.get('bank_account_id')
+            params['bank_account_name'] = general_mapping.get('bank_account_name')
+            params['bank_account_id'] = general_mapping.get('bank_account_id')
 
         if general_settings.corporate_credit_card_expenses_object:
             assert_valid('default_ccc_account_name' in general_mapping and general_mapping['default_ccc_account_name'],
@@ -86,13 +85,13 @@ class MappingUtils:
         if general_settings.employee_field_mapping == 'VENDOR':
             assert_valid('vendor_id' in employee_mapping and employee_mapping['vendor_id'],
                          'vendor id field is blank')
-            assert_valid('vendor_name' in employee_mapping and employee_mapping['vendor_name'],
-                         'vendor name is missing')
+            assert_valid('vendor_display_name' in employee_mapping and employee_mapping['vendor_display_name'],
+                         'vendor display name is missing')
 
-            params['vendor_display_name'] = employee_mapping.get('vendor_name')
+            params['vendor_display_name'] = employee_mapping.get('vendor_display_name')
             params['vendor_id'] = employee_mapping.get('vendor_id')
 
-        if general_settings.employee_field_mapping == 'EMPLOYEE':
+        elif general_settings.employee_field_mapping == 'EMPLOYEE':
             assert_valid('employee_display_name' in employee_mapping and employee_mapping['employee_display_name'],
                          'employee_display_name field is blank')
             assert_valid('employee_id' in employee_mapping and employee_mapping['employee_id'],
@@ -101,7 +100,7 @@ class MappingUtils:
             params['employee_display_name'] = employee_mapping.get('employee_display_name')
             params['employee_id'] = employee_mapping.get('employee_id')
 
-        if general_settings.employee_field_mapping == 'VENDOR' or 'EMPLOYEE':
+        if general_settings.corporate_credit_card_expenses_object:
             assert_valid('ccc_account_name' in employee_mapping and employee_mapping['ccc_account_name'],
                          'ccc account name field is blank')
             assert_valid('ccc_account_id' in employee_mapping and employee_mapping['ccc_account_id'],

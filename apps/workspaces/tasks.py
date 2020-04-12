@@ -109,20 +109,12 @@ def run_sync_schedule(workspace_id, user: str):
     queryset = WorkspaceGeneralSettings.objects.all()
     general_settings = queryset.get(workspace_id)
 
+    fund_source = ['PERSONAL']
+    if general_settings.corporate_credit_card_expenses_object:
+        fund_source.append('CCC')
     if general_settings.reimbursable_expenses_object:
         task_log: TaskLog = create_expense_groups(
-            workspace_id=workspace_id, state=['PAYMENT_PROCESSING'],
-            export_non_reimbursable=False,
-            fund_source=['PERSONAL'],
-            task_log=task_log
-        )
-
-    if general_settings.corporate_credit_card_expenses_object:
-        task_log: TaskLog = create_expense_groups(
-            workspace_id=workspace_id, state=['PAYMENT_PROCESSING'],
-            export_non_reimbursable=True,
-            fund_source=['PERSONAL', 'CCC'],
-            task_log=task_log
+            workspace_id=workspace_id, state=['PAYMENT_PROCESSING'], fund_source=fund_source, task_log=task_log
         )
 
     if task_log.status == 'COMPLETE':

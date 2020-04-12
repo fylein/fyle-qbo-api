@@ -55,19 +55,17 @@ def schedule_expense_group_creation(workspace_id: int, user: str):
     task_log.save()
 
 
-def create_expense_groups(workspace_id: int, state: List[str], export_non_reimbursable: bool,
-                          fund_source: List[str], task_log: TaskLog):
+def create_expense_groups(workspace_id: int, state: List[str], fund_source: List[str], task_log: TaskLog):
     """
     Create expense groups
     :param task_log: Task log object
     :param workspace_id: workspace id
     :param state: expense state
-    :param export_non_reimbursable: true / false
     :param fund_source: expense fund source
     :return: task log
     """
 
-    async_create_expense_groups(workspace_id, state, export_non_reimbursable, fund_source, task_log)
+    async_create_expense_groups(workspace_id, state, fund_source, task_log)
 
     task_log.detail = {
         'message': 'Creating expense groups'
@@ -77,8 +75,7 @@ def create_expense_groups(workspace_id: int, state: List[str], export_non_reimbu
     return task_log
 
 
-def async_create_expense_groups(workspace_id: int, state: List[str], export_non_reimbursable: bool,
-                                fund_source: List[str], task_log: TaskLog):
+def async_create_expense_groups(workspace_id: int, state: List[str], fund_source: List[str], task_log: TaskLog):
     try:
         with transaction.atomic():
 
@@ -100,8 +97,7 @@ def async_create_expense_groups(workspace_id: int, state: List[str], export_non_
 
             expenses = fyle_connector.get_expenses(
                 state=state,
-                export_non_reimbursable=export_non_reimbursable,
-                updated_at=updated_at,
+                updated_at=['gte:2020-04-01T00:00:00.000Z'],
                 fund_source=fund_source
             )
 

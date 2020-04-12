@@ -29,15 +29,20 @@ class FyleConnector:
 
         return employee_profile['data']
 
-    def get_expenses(self, state: List[str], export_non_reimbursable: bool, updated_at: List[str],
-                     fund_source: List[str]):
+    def get_expenses(self, state: List[str], updated_at: List[str], fund_source: List[str]):
         """
         Get expenses from fyle
         """
         expenses = self.connection.Expenses.get_all(state=state, updated_at=updated_at, fund_source=fund_source)
 
-        if not export_non_reimbursable:
+        if fund_source == ['PERSONAL']:
             expenses = list(filter(lambda expense: expense['reimbursable'], expenses))
+
+        if fund_source == ['PERSONAL', 'CCC']:
+            ccc_expenses = list(
+                filter(lambda expense: expense['reimbursable'] is False and expense['fund_source'] == 'CCC', expenses))
+            reimbursable_expenses = list(filter(lambda expense: expense['reimbursable'], expenses))
+            expenses = ccc_expenses + reimbursable_expenses
 
         return expenses
 
