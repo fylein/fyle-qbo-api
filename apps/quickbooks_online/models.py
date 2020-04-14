@@ -251,8 +251,8 @@ class CreditCardPurchase(models.Model):
                 'ccc_account_id': EmployeeMapping.objects.get(
                     employee_email=description.get('employee_email')).ccc_account_id,
                 'entity_id': EmployeeMapping.objects.get(employee_email=description.get('employee_email')).employee_id
-                if general_settings.employee_field_mapping == 'EMPLOYEE' else
-                EmployeeMapping.objects.get(employee_email=description.get('employee_email')).vendor_id,
+                             if general_settings.employee_field_mapping == 'EMPLOYEE' else
+                             EmployeeMapping.objects.get(employee_email=description.get('employee_email')).vendor_id,
                 'transaction_date': datetime.now().strftime("%Y-%m-%d"),
                 'private_note': 'Report {0} / {1} exported on {2}'.format(
                     expense.claim_number, expense.report_id, datetime.now().strftime("%Y-%m-%d")
@@ -354,8 +354,8 @@ class JournalEntry(models.Model):
             expense_group=expense_group,
             defaults={
                 'ccc_account_id': GeneralMapping.objects.get().bank_account_id if
-                general_settings.reimbursable_expenses_object == 'JOURNAL_ENTRY' else EmployeeMapping.objects.get(
-                    employee_email=description.get('employee_email')).ccc_account_id,
+                                  general_settings.reimbursable_expenses_object == 'JOURNAL_ENTRY' else EmployeeMapping.
+                                  objects.get(employee_email=description.get('employee_email')).ccc_account_id,
                 'transaction_date': datetime.now().strftime("%Y-%m-%d"),
                 'private_note': 'Report {0} / {1} exported on {2}'.format(
                     expense.claim_number, expense.report_id, datetime.now().strftime("%Y-%m-%d")
