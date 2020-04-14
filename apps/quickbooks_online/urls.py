@@ -15,7 +15,7 @@ Including another URLconf
 from django.urls import path
 
 from .views import VendorView, EmployeeView, AccountView, ClassView, DepartmentView, BillView, BillScheduleView, \
-    CustomerView, CheckScheduleView, CheckView, CreditCardPurchaseView, CreditCardPurchaseScheduleView,\
+    CustomerView, ChequeScheduleView, ChequeView, CreditCardPurchaseView, CreditCardPurchaseScheduleView,\
     JournalEntryView, JournalEntryScheduleView
 
 urlpatterns = [
@@ -27,8 +27,8 @@ urlpatterns = [
     path('customers/', CustomerView.as_view({'get': 'get_customers'})),
     path('bills/', BillView.as_view()),
     path('bills/trigger/', BillScheduleView.as_view()),
-    path('checks/', CheckView.as_view()),
-    path('checks/trigger/', CheckScheduleView.as_view()),
+    path('checks/', ChequeView.as_view()),
+    path('checks/trigger/', ChequeScheduleView.as_view()),
     path('creditcardpurchases/', CreditCardPurchaseView.as_view()),
     path('creditcardpurchases/trigger/', CreditCardPurchaseScheduleView.as_view()),
     path('journalentries/', JournalEntryView.as_view()),

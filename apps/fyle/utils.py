@@ -34,16 +34,9 @@ class FyleConnector:
         Get expenses from fyle
         """
         expenses = self.connection.Expenses.get_all(state=state, updated_at=updated_at, fund_source=fund_source)
-
-        if fund_source == ['PERSONAL']:
-            expenses = list(filter(lambda expense: expense['reimbursable'], expenses))
-
-        if fund_source == ['PERSONAL', 'CCC']:
-            ccc_expenses = list(
-                filter(lambda expense: expense['reimbursable'] is False and expense['fund_source'] == 'CCC', expenses))
-            reimbursable_expenses = list(filter(lambda expense: expense['reimbursable'], expenses))
-            expenses = ccc_expenses + reimbursable_expenses
-
+        expenses = list(
+            filter(lambda expense: not (not expense['reimbursable'] and expense['fund_source'] == 'PERSONAL'),
+                   expenses))
         return expenses
 
     def get_employees(self):

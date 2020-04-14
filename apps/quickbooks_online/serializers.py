@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Bill, BillLineitem, Cheque, CheckLineitem, CreditCardPurchase, CreditCardPurchaseLineitem,\
+from .models import Bill, BillLineitem, Cheque, ChequeLineitem, CreditCardPurchase, CreditCardPurchaseLineitem,\
     JournalEntry, JournalEntryLineitem
 
 
@@ -22,21 +22,21 @@ class BillLineitemsSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class CheckSerializer(serializers.ModelSerializer):
+class ChequeSerializer(serializers.ModelSerializer):
     """
-    QBO Check serializer
+    QBO Cheque serializer
     """
     class Meta:
         model = Cheque
         fields = '__all__'
 
 
-class CheckLineitemsSerializer(serializers.ModelSerializer):
+class ChequeLineitemsSerializer(serializers.ModelSerializer):
     """
-    QBO Check Lineitems serializer
+    QBO Cheque Lineitems serializer
     """
     class Meta:
-        model = CheckLineitem
+        model = ChequeLineitem
         fields = '__all__'
 
 

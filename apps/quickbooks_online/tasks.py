@@ -17,7 +17,7 @@ from apps.tasks.models import TaskLog
 from apps.mappings.models import EmployeeMapping, GeneralMapping, CategoryMapping
 from apps.workspaces.models import QBOCredential, FyleCredential
 
-from .models import Bill, BillLineitem, Cheque, CheckLineitem, CreditCardPurchase, CreditCardPurchaseLineitem,\
+from .models import Bill, BillLineitem, Cheque, ChequeLineitem, CreditCardPurchase, CreditCardPurchaseLineitem,\
     JournalEntry, JournalEntryLineitem
 from .utils import QBOConnector
 
@@ -180,9 +180,9 @@ def __validate_expense_group(expense_group: ExpenseGroup):
         raise BulkError('Mappings are missing', bulk_errors)
 
 
-def schedule_checks_creation(workspace_id: int, expense_group_ids: List[str], user: str):
+def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], user: str):
     """
-    Schedule checks creation
+    Schedule cheque creation
     :param expense_group_ids: List of expense group ids
     :param workspace_id: workspace id
     :param user: user email
@@ -192,56 +192,52 @@ def schedule_checks_creation(workspace_id: int, expense_group_ids: List[str], us
         expense_groups = ExpenseGroup.objects.filter(
             workspace_id=workspace_id, id__in=expense_group_ids, cheque__id__isnull=True
         ).all()
-    else:
-        expense_groups = ExpenseGroup.objects.filter(
-            workspace_id=workspace_id, cheque__id__isnull=True
-        ).all()
 
-    fyle_credentials = FyleCredential.objects.get(
-        workspace_id=workspace_id)
-    fyle_connector = FyleConnector(fyle_credentials.refresh_token)
-    fyle_sdk_connection = fyle_connector.connection
-    jobs = FyleJobsSDK(settings.FYLE_JOBS_URL, fyle_sdk_connection)
+        fyle_credentials = FyleCredential.objects.get(
+            workspace_id=workspace_id)
+        fyle_connector = FyleConnector(fyle_credentials.refresh_token)
+        fyle_sdk_connection = fyle_connector.connection
+        jobs = FyleJobsSDK(settings.FYLE_JOBS_URL, fyle_sdk_connection)
 
-    for expense_group in expense_groups:
-        task_log, _ = TaskLog.objects.update_or_create(
-            workspace_id=expense_group.workspace_id,
-            expense_group=expense_group,
-            defaults={
-                'status': 'IN_PROGRESS',
-                'type': 'CREATING_CHECK'
-            }
-        )
-        created_job = jobs.trigger_now(
-            callback_url='{0}{1}'.format(settings.API_URL, '/workspaces/{0}/qbo/checks/'.format(workspace_id)),
-            callback_method='POST', object_id=task_log.id, payload={
-                'expense_group_id': expense_group.id,
-                'task_log_id': task_log.id
-            }, job_description='Create Check: Workspace id - {0}, user - {1}, expense group id - {2}'.format(
-                workspace_id, user, expense_group.id
+        for expense_group in expense_groups:
+            task_log, _ = TaskLog.objects.update_or_create(
+                workspace_id=expense_group.workspace_id,
+                expense_group=expense_group,
+                defaults={
+                    'status': 'IN_PROGRESS',
+                    'type': 'CREATING_CHECK'
+                }
             )
-        )
-        task_log.task_id = created_job['id']
-        task_log.save()
+            created_job = jobs.trigger_now(
+                callback_url='{0}{1}'.format(settings.API_URL, '/workspaces/{0}/qbo/checks/'.format(workspace_id)),
+                callback_method='POST', object_id=task_log.id, payload={
+                    'expense_group_id': expense_group.id,
+                    'task_log_id': task_log.id
+                }, job_description='Create Check: Workspace id - {0}, user - {1}, expense group id - {2}'.format(
+                    workspace_id, user, expense_group.id
+                )
+            )
+            task_log.task_id = created_job['id']
+            task_log.save()
 
 
-def create_check(expense_group, task_log):
+def create_cheque(expense_group, task_log):
     try:
         with transaction.atomic():
             __validate_expense_group(expense_group)
 
-            check_object = Cheque.create_check(expense_group)
+            cheque_object = Cheque.create_cheque(expense_group)
 
-            check_line_item_objects = CheckLineitem.create_check_lineitems(expense_group)
+            cheque_line_item_objects = ChequeLineitem.create_cheque_lineitems(expense_group)
 
             qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
 
             qbo_connection = QBOConnector(qbo_credentials)
 
-            created_check = qbo_connection.post_check(check_object, check_line_item_objects)
+            created_cheque = qbo_connection.post_cheque(cheque_object, cheque_line_item_objects)
 
-            task_log.detail = created_check
-            task_log.cheque = check_object
+            task_log.detail = created_cheque
+            task_log.cheque = cheque_object
             task_log.status = 'COMPLETE'
 
             task_log.save(update_fields=['detail', 'cheque', 'status'])
@@ -299,40 +295,36 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
         expense_groups = ExpenseGroup.objects.filter(
             workspace_id=workspace_id, id__in=expense_group_ids, creditcardpurchase__id__isnull=True
         ).all()
-    else:
-        expense_groups = ExpenseGroup.objects.filter(
-            workspace_id=workspace_id, creditcardpurchase__id__isnull=True
-        ).all()
 
-    fyle_credentials = FyleCredential.objects.get(
-        workspace_id=workspace_id)
-    fyle_connector = FyleConnector(fyle_credentials.refresh_token)
-    fyle_sdk_connection = fyle_connector.connection
-    jobs = FyleJobsSDK(settings.FYLE_JOBS_URL, fyle_sdk_connection)
+        fyle_credentials = FyleCredential.objects.get(
+            workspace_id=workspace_id)
+        fyle_connector = FyleConnector(fyle_credentials.refresh_token)
+        fyle_sdk_connection = fyle_connector.connection
+        jobs = FyleJobsSDK(settings.FYLE_JOBS_URL, fyle_sdk_connection)
 
-    for expense_group in expense_groups:
-        task_log, _ = TaskLog.objects.update_or_create(
-            workspace_id=expense_group.workspace_id,
-            expense_group=expense_group,
-            defaults={
-                'status': 'IN_PROGRESS',
-                'type': 'CREATING_CREDIT_CARD_PURCHASE'
-            }
-        )
-        created_job = jobs.trigger_now(
-            callback_url='{0}{1}'.format(settings.API_URL, '/workspaces/{0}/qbo/creditcardpurchases/'.format(
-                workspace_id
-            )),
-            callback_method='POST', object_id=task_log.id, payload={
-                'expense_group_id': expense_group.id,
-                'task_log_id': task_log.id
-            }, job_description=
-            'Create Credit Card Purchase: Workspace id - {0}, user - {1}, expense group id - {2}'.format(
-                workspace_id, user, expense_group.id
+        for expense_group in expense_groups:
+            task_log, _ = TaskLog.objects.update_or_create(
+                workspace_id=expense_group.workspace_id,
+                expense_group=expense_group,
+                defaults={
+                    'status': 'IN_PROGRESS',
+                    'type': 'CREATING_CREDIT_CARD_PURCHASE'
+                }
             )
-        )
-        task_log.task_id = created_job['id']
-        task_log.save()
+            created_job = jobs.trigger_now(
+                callback_url='{0}{1}'.format(settings.API_URL, '/workspaces/{0}/qbo/creditcardpurchases/'.format(
+                    workspace_id
+                )),
+                callback_method='POST', object_id=task_log.id, payload={
+                    'expense_group_id': expense_group.id,
+                    'task_log_id': task_log.id
+                }, job_description=
+                'Create Credit Card Purchase: Workspace id - {0}, user - {1}, expense group id - {2}'.format(
+                    workspace_id, user, expense_group.id
+                )
+            )
+            task_log.task_id = created_job['id']
+            task_log.save()
 
 
 def create_credit_card_purchase(expense_group, task_log):
@@ -412,37 +404,35 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
         expense_groups = ExpenseGroup.objects.filter(
             workspace_id=workspace_id, id__in=expense_group_ids, journalentry__id__isnull=True
         ).all()
-    else:
-        expense_groups = ExpenseGroup.objects.filter(
-            workspace_id=workspace_id, journalentry__id__isnull=True
-        ).all()
 
-    fyle_credentials = FyleCredential.objects.get(
-        workspace_id=workspace_id)
-    fyle_connector = FyleConnector(fyle_credentials.refresh_token)
-    fyle_sdk_connection = fyle_connector.connection
-    jobs = FyleJobsSDK(settings.FYLE_JOBS_URL, fyle_sdk_connection)
+        fyle_credentials = FyleCredential.objects.get(
+            workspace_id=workspace_id)
+        fyle_connector = FyleConnector(fyle_credentials.refresh_token)
+        fyle_sdk_connection = fyle_connector.connection
+        jobs = FyleJobsSDK(settings.FYLE_JOBS_URL, fyle_sdk_connection)
 
-    for expense_group in expense_groups:
-        task_log, _ = TaskLog.objects.update_or_create(
-            workspace_id=expense_group.workspace_id,
-            expense_group=expense_group,
-            defaults={
-                'status': 'IN_PROGRESS',
-                'type': 'CREATING_JOURNAL_ENTRY'
-            }
-        )
-        created_job = jobs.trigger_now(
-            callback_url='{0}{1}'.format(settings.API_URL, '/workspaces/{0}/qbo/journalentries/'.format(workspace_id)),
-            callback_method='POST', object_id=task_log.id, payload={
-                'expense_group_id': expense_group.id,
-                'task_log_id': task_log.id
-            }, job_description='Create Journal Entry: Workspace id - {0}, user - {1}, expense group id - {2}'.format(
-                workspace_id, user, expense_group.id
+        for expense_group in expense_groups:
+            task_log, _ = TaskLog.objects.update_or_create(
+                workspace_id=expense_group.workspace_id,
+                expense_group=expense_group,
+                defaults={
+                    'status': 'IN_PROGRESS',
+                    'type': 'CREATING_JOURNAL_ENTRY'
+                }
             )
-        )
-        task_log.task_id = created_job['id']
-        task_log.save()
+            created_job = jobs.trigger_now(
+                callback_url='{0}{1}'.format(settings.API_URL, '/workspaces/{0}/qbo/journalentries/'.format(
+                    workspace_id)),
+                callback_method='POST', object_id=task_log.id, payload={
+                    'expense_group_id': expense_group.id,
+                    'task_log_id': task_log.id
+                },
+                job_description='Create Journal Entry: Workspace id - {0}, user - {1}, expense group id - {2}'.format(
+                    workspace_id, user, expense_group.id
+                )
+            )
+            task_log.task_id = created_job['id']
+            task_log.save()
 
 
 def create_journal_entry(expense_group, task_log):

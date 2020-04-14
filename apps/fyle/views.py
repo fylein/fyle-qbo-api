@@ -20,12 +20,22 @@ class ExpenseGroupView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         state = self.request.query_params.get('state', 'ALL')
+        general_settings_queryset = WorkspaceGeneralSettings.objects.all()
+        general_settings = general_settings_queryset.get(workspace_id=self.kwargs['workspace_id'])
+
         if state == 'ALL':
             return ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id']).order_by('-updated_at')
-        elif state == 'COMPLETE':
+
+        elif state == 'COMPLETE' and general_settings.employee_field_mapping == 'VENDOR':
             return ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'],
                                                bill__id__isnull=False).order_by('-updated_at') | \
                    ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'],
+                                               journalentry__id__isnull=False).order_by('-updated_at') | \
+                   ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'],
+                                               creditcardpurchase__id__isnull=False).order_by('-updated_at')
+
+        elif state == 'COMPLETE' and general_settings.employee_field_mapping == 'EMPLOYEE':
+            return ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'],
                                                cheque__id__isnull=False).order_by('-updated_at') | \
                    ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'],
                                                journalentry__id__isnull=False).order_by('-updated_at') | \

@@ -23,7 +23,7 @@ class TaskLog(models.Model):
     expense_group = models.ForeignKey(ExpenseGroup, on_delete=models.PROTECT,
                                       null=True, help_text='Reference to Expense group')
     bill = models.ForeignKey(Bill, on_delete=models.PROTECT, help_text='Reference to Bill', null=True)
-    cheque = models.ForeignKey(Cheque, on_delete=models.PROTECT, help_text='Reference to Check', null=True)
+    cheque = models.ForeignKey(Cheque, on_delete=models.PROTECT, help_text='Reference to Cheque', null=True)
     journal_entry = models.ForeignKey(JournalEntry, on_delete=models.PROTECT,
                                       help_text='Reference to journal_entry', null=True)
     credit_card_purchase = models.ForeignKey(CreditCardPurchase, on_delete=models.PROTECT,

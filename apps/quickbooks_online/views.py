@@ -10,11 +10,11 @@ from apps.tasks.models import TaskLog
 from apps.workspaces.models import QBOCredential
 
 from .utils import QBOConnector
-from .tasks import create_bill, schedule_bills_creation, create_check, schedule_checks_creation, \
+from .tasks import create_bill, schedule_bills_creation, create_cheque, schedule_cheques_creation, \
     create_credit_card_purchase, schedule_credit_card_purchase_creation, create_journal_entry,\
     schedule_journal_entry_creation
 from .models import Bill, Cheque, CreditCardPurchase, JournalEntry
-from .serializers import BillSerializer, CheckSerializer, CreditCardPurchaseSerializer, JournalEntrySerializer
+from .serializers import BillSerializer, ChequeSerializer, CreditCardPurchaseSerializer, JournalEntrySerializer
 
 
 class VendorView(viewsets.ViewSet):
@@ -243,11 +243,11 @@ class BillScheduleView(generics.CreateAPIView):
         )
 
 
-class CheckView(generics.ListCreateAPIView):
+class ChequeView(generics.ListCreateAPIView):
     """
-    Create Check
+    Create Cheque
     """
-    serializer_class = CheckSerializer
+    serializer_class = ChequeSerializer
     authentication_classes = []
     permission_classes = []
 
@@ -258,7 +258,7 @@ class CheckView(generics.ListCreateAPIView):
 
     def post(self, request, *args, **kwargs):
         """
-        Create check from expense group
+        Create cheque from expense group
         """
         expense_group_id = request.data.get('expense_group_id')
         task_log_id = request.data.get('task_log_id')
@@ -269,7 +269,7 @@ class CheckView(generics.ListCreateAPIView):
         expense_group = ExpenseGroup.objects.get(pk=expense_group_id)
         task_log = TaskLog.objects.get(pk=task_log_id)
 
-        create_check(expense_group, task_log)
+        create_cheque(expense_group, task_log)
 
         return Response(
             data={},
@@ -277,15 +277,15 @@ class CheckView(generics.ListCreateAPIView):
         )
 
 
-class CheckScheduleView(generics.CreateAPIView):
+class ChequeScheduleView(generics.CreateAPIView):
     """
-    Schedule checks creation
+    Schedule cheques creation
     """
 
     def post(self, request, *args, **kwargs):
         expense_group_ids = request.data.get('expense_group_ids', [])
 
-        schedule_checks_creation(
+        schedule_cheques_creation(
             kwargs['workspace_id'], expense_group_ids, request.user)
 
         return Response(

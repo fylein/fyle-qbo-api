@@ -6,7 +6,7 @@ from qbosdk import QuickbooksOnlineSDK
 
 from apps.workspaces.models import QBOCredential
 
-from .models import BillLineitem, Bill, CheckLineitem, Cheque, CreditCardPurchase, CreditCardPurchaseLineitem,\
+from .models import BillLineitem, Bill, ChequeLineitem, Cheque, CreditCardPurchase, CreditCardPurchaseLineitem,\
     JournalEntry, JournalEntryLineitem
 
 
@@ -77,7 +77,7 @@ class QBOConnector:
                 'value': account_ref
             },
             'EntityRef': {
-                'value': purchase_object.employee_id
+                'value': purchase_object.entity_id
             },
             'DepartmentRef': {
                 'value': purchase_object.department_id
@@ -158,14 +158,14 @@ class QBOConnector:
         return created_bill
 
     @staticmethod
-    def __construct_check_line_items(check_line_items: List[CheckLineitem]) -> List[Dict]:
+    def __construct_cheque_line_items(cheque_line_items: List[ChequeLineitem]) -> List[Dict]:
         """
-        Create check line items
-        :param check_line_items: list of check line items extracted from database
+        Create cheque line items
+        :param cheque_line_items: list of cheque line items extracted from database
         :return: constructed line items
         """
         lines = []
-        for line in check_line_items:
+        for line in cheque_line_items:
             line = {
                 'Description': line.description,
                 'DetailType': 'AccountBasedExpenseLineDetail',
@@ -183,25 +183,25 @@ class QBOConnector:
 
         return lines
 
-    def __construct_check(self, check: Cheque, check_line_items: List[CheckLineitem]) -> Dict:
+    def __construct_cheque(self, cheque: Cheque, cheque_line_items: List[ChequeLineitem]) -> Dict:
         """
-        Create a check
-        :param check: check object extracted from database
-        :return: constructed check
+        Create a cheque
+        :param cheque: cheque object extracted from database
+        :return: constructed cheque
         """
-        line = self.__construct_check_line_items(check_line_items)
-        check_payload = self.purchase_object_payload(
-            check, line, account_ref=check.bank_account_id, payment_type='Check', doc_number=check.check_number
+        line = self.__construct_cheque_line_items(cheque_line_items)
+        cheque_payload = self.purchase_object_payload(
+            cheque, line, account_ref=cheque.bank_account_id, payment_type='Check', doc_number=cheque.cheque_number
         )
-        return check_payload
+        return cheque_payload
 
-    def post_check(self, check: Cheque, check_lineitems: List[CheckLineitem]):
+    def post_cheque(self, cheque: Cheque, cheque_lineitems: List[ChequeLineitem]):
         """
-        Post checks to QBO
+        Post cheque to QBO
         """
-        checks_payload = self.__construct_check(check, check_lineitems)
-        created_check = self.connection.purchases.post(checks_payload)
-        return created_check
+        cheques_payload = self.__construct_cheque(cheque, cheque_lineitems)
+        created_cheque = self.connection.purchases.post(cheques_payload)
+        return created_cheque
 
     @staticmethod
     def __construct_credit_card_purchase_lineitems(
@@ -287,7 +287,7 @@ class QBOConnector:
                     },
                     'Entity': {
                         'EntityRef': {
-                            'value': line.employee_id
+                            'value': line.entity_id
                         }
                     }
                 }

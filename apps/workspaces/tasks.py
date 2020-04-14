@@ -2,9 +2,10 @@ from datetime import datetime
 
 from django.conf import settings
 
+from apps.fyle.models import ExpenseGroup
 from apps.fyle.tasks import create_expense_groups
 from apps.fyle.utils import FyleConnector
-from apps.quickbooks_online.tasks import schedule_bills_creation, schedule_checks_creation,\
+from apps.quickbooks_online.tasks import schedule_bills_creation, schedule_cheques_creation,\
     schedule_journal_entry_creation, schedule_credit_card_purchase_creation
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import WorkspaceSettings, WorkspaceSchedule, FyleCredential, WorkspaceGeneralSettings
@@ -119,15 +120,25 @@ def run_sync_schedule(workspace_id, user: str):
         )
 
     if task_log.status == 'COMPLETE':
+
         if general_settings.reimbursable_expenses_object == 'BILL':
-            schedule_bills_creation(workspace_id=workspace_id, expense_group_ids=[], user=user)
+            expense_group_ids = ExpenseGroup.objects.filter(fund_source='PERSONAL').values_list('id', flat=True)
+            schedule_bills_creation(workspace_id=workspace_id, expense_group_ids=expense_group_ids, user=user)
 
         if general_settings.reimbursable_expenses_object == 'CHECK':
-            schedule_checks_creation(workspace_id=workspace_id, expense_group_ids=[], user=user)
+            expense_group_ids = ExpenseGroup.objects.filter(fund_source='PERSONAL').values_list('id', flat=True)
+            schedule_cheques_creation(workspace_id=workspace_id, expense_group_ids=expense_group_ids, user=user)
 
-        if general_settings.reimbursable_expenses_object == 'JOURNAL_ENTRY' or\
-                general_settings.corporate_credit_card_expenses_object == 'JOURNAL_ENTRY':
-            schedule_journal_entry_creation(workspace_id=workspace_id, expense_group_ids=[], user=user)
+        if general_settings.reimbursable_expenses_object == 'JOURNAL_ENTRY':
+            expense_group_ids = ExpenseGroup.objects.filter(fund_source='PERSONAL').values_list('id', flat=True)
+            schedule_journal_entry_creation(workspace_id=workspace_id, expense_group_ids=expense_group_ids, user=user)
+
+        if general_settings.corporate_credit_card_expenses_object == 'JOURNAL_ENTRY':
+            expense_group_ids = ExpenseGroup.objects.filter(fund_source='CCC').values_list('id', flat=True)
+            schedule_journal_entry_creation(workspace_id=workspace_id, expense_group_ids=expense_group_ids, user=user)
 
         if general_settings.corporate_credit_card_expenses_object == 'CREDIT_CARD_CREDIT':
-            schedule_credit_card_purchase_creation(workspace_id=workspace_id, expense_group_ids=[], user=user)
+            expense_group_ids = ExpenseGroup.objects.filter(fund_source='CCC').values_list('id', flat=True)
+            schedule_credit_card_purchase_creation(
+                workspace_id=workspace_id, expense_group_ids=expense_group_ids, user=user
+            )
