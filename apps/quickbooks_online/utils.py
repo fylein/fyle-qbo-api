@@ -243,7 +243,7 @@ class QBOConnector:
         """
         line = self.__construct_credit_card_purchase_lineitems(credit_card_purchase_lineitems)
         credit_card_purchase_payload = self.purchase_object_payload(
-            credit_card_purchase, line, account_ref=credit_card_purchase.ccc_account_id,  payment_type='CreditCard',
+            credit_card_purchase, line, account_ref=credit_card_purchase.ccc_account_id, payment_type='CreditCard',
             doc_number=credit_card_purchase.credit_card_purchase_number
         )
 
