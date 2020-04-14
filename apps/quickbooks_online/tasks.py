@@ -17,7 +17,8 @@ from apps.tasks.models import TaskLog
 from apps.mappings.models import EmployeeMapping, GeneralMapping, CategoryMapping
 from apps.workspaces.models import QBOCredential, FyleCredential
 
-from .models import Bill, BillLineitem
+from .models import Bill, BillLineitem, Cheque, CheckLineitem, CreditCardPurchase, CreditCardPurchaseLineitem,\
+    JournalEntry, JournalEntryLineitem
 from .utils import QBOConnector
 
 logger = logging.getLogger(__name__)
@@ -177,3 +178,333 @@ def __validate_expense_group(expense_group: ExpenseGroup):
 
     if bulk_errors:
         raise BulkError('Mappings are missing', bulk_errors)
+
+
+def schedule_checks_creation(workspace_id: int, expense_group_ids: List[str], user: str):
+    """
+    Schedule checks creation
+    :param expense_group_ids: List of expense group ids
+    :param workspace_id: workspace id
+    :param user: user email
+    :return: None
+    """
+    if expense_group_ids:
+        expense_groups = ExpenseGroup.objects.filter(
+            workspace_id=workspace_id, id__in=expense_group_ids, cheque__id__isnull=True
+        ).all()
+    else:
+        expense_groups = ExpenseGroup.objects.filter(
+            workspace_id=workspace_id, cheque__id__isnull=True
+        ).all()
+
+    fyle_credentials = FyleCredential.objects.get(
+        workspace_id=workspace_id)
+    fyle_connector = FyleConnector(fyle_credentials.refresh_token)
+    fyle_sdk_connection = fyle_connector.connection
+    jobs = FyleJobsSDK(settings.FYLE_JOBS_URL, fyle_sdk_connection)
+
+    for expense_group in expense_groups:
+        task_log, _ = TaskLog.objects.update_or_create(
+            workspace_id=expense_group.workspace_id,
+            expense_group=expense_group,
+            defaults={
+                'status': 'IN_PROGRESS',
+                'type': 'CREATING_CHECK'
+            }
+        )
+        created_job = jobs.trigger_now(
+            callback_url='{0}{1}'.format(settings.API_URL, '/workspaces/{0}/qbo/checks/'.format(workspace_id)),
+            callback_method='POST', object_id=task_log.id, payload={
+                'expense_group_id': expense_group.id,
+                'task_log_id': task_log.id
+            }, job_description='Create Check: Workspace id - {0}, user - {1}, expense group id - {2}'.format(
+                workspace_id, user, expense_group.id
+            )
+        )
+        task_log.task_id = created_job['id']
+        task_log.save()
+
+
+def create_check(expense_group, task_log):
+    try:
+        with transaction.atomic():
+            __validate_expense_group(expense_group)
+
+            check_object = Cheque.create_check(expense_group)
+
+            check_line_item_objects = CheckLineitem.create_check_lineitems(expense_group)
+
+            qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
+
+            qbo_connection = QBOConnector(qbo_credentials)
+
+            created_check = qbo_connection.post_check(check_object, check_line_item_objects)
+
+            task_log.detail = created_check
+            task_log.cheque = check_object
+            task_log.status = 'COMPLETE'
+
+            task_log.save(update_fields=['detail', 'cheque', 'status'])
+
+    except QBOCredential.DoesNotExist:
+        logger.exception(
+            'QBO Credentials not found for workspace_id %s / expense group %s',
+            expense_group.id,
+            expense_group.workspace_id
+        )
+        detail = {
+            'expense_group_id': expense_group.id,
+            'message': 'QBO Account not connected'
+        }
+        task_log.status = 'FAILED'
+        task_log.detail = detail
+
+        task_log.save(update_fields=['detail', 'status'])
+
+    except BulkError as exception:
+        logger.error(exception.response)
+        detail = exception.response
+        task_log.status = 'FAILED'
+        task_log.detail = detail
+
+        task_log.save(update_fields=['detail', 'status'])
+
+    except WrongParamsError as exception:
+        logger.error(exception.response)
+        detail = json.loads(exception.response)
+        task_log.status = 'FAILED'
+        task_log.detail = detail
+
+        task_log.save(update_fields=['detail', 'status'])
+
+    except Exception:
+        error = traceback.format_exc()
+        task_log.detail = {
+            'error': error
+        }
+        task_log.status = 'FATAL'
+        task_log.save(update_fields=['detail', 'status'])
+        logger.exception('Something unexpected happened workspace_id: %s\n%s', task_log.workspace_id, error)
+
+
+def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids: List[str], user: str):
+    """
+    Schedule credit card purchase creation
+    :param expense_group_ids: List of expense group ids
+    :param workspace_id: workspace id
+    :param user: user email
+    :return: None
+    """
+    if expense_group_ids:
+        expense_groups = ExpenseGroup.objects.filter(
+            workspace_id=workspace_id, id__in=expense_group_ids, creditcardpurchase__id__isnull=True
+        ).all()
+    else:
+        expense_groups = ExpenseGroup.objects.filter(
+            workspace_id=workspace_id, creditcardpurchase__id__isnull=True
+        ).all()
+
+    fyle_credentials = FyleCredential.objects.get(
+        workspace_id=workspace_id)
+    fyle_connector = FyleConnector(fyle_credentials.refresh_token)
+    fyle_sdk_connection = fyle_connector.connection
+    jobs = FyleJobsSDK(settings.FYLE_JOBS_URL, fyle_sdk_connection)
+
+    for expense_group in expense_groups:
+        task_log, _ = TaskLog.objects.update_or_create(
+            workspace_id=expense_group.workspace_id,
+            expense_group=expense_group,
+            defaults={
+                'status': 'IN_PROGRESS',
+                'type': 'CREATING_CREDIT_CARD_PURCHASE'
+            }
+        )
+        created_job = jobs.trigger_now(
+            callback_url='{0}{1}'.format(settings.API_URL, '/workspaces/{0}/qbo/creditcardpurchases/'.format(
+                workspace_id
+            )),
+            callback_method='POST', object_id=task_log.id, payload={
+                'expense_group_id': expense_group.id,
+                'task_log_id': task_log.id
+            }, job_description=
+            'Create Credit Card Purchase: Workspace id - {0}, user - {1}, expense group id - {2}'.format(
+                workspace_id, user, expense_group.id
+            )
+        )
+        task_log.task_id = created_job['id']
+        task_log.save()
+
+
+def create_credit_card_purchase(expense_group, task_log):
+    try:
+        with transaction.atomic():
+            __validate_expense_group(expense_group)
+
+            credit_card_purchase_object = CreditCardPurchase.create_credit_card_purchase(expense_group)
+
+            credit_card_purchase_lineitems_objects = CreditCardPurchaseLineitem.create_credit_card_purchase_lineitems(
+                expense_group
+            )
+            qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
+
+            qbo_connection = QBOConnector(qbo_credentials)
+
+            created_credit_card_purchase = qbo_connection.post_credit_card_purchase(
+                credit_card_purchase_object, credit_card_purchase_lineitems_objects
+            )
+
+            task_log.detail = created_credit_card_purchase
+            task_log.credit_card_purchase = credit_card_purchase_object
+            task_log.status = 'COMPLETE'
+
+            task_log.save(update_fields=['detail', 'credit_card_purchase', 'status'])
+
+    except QBOCredential.DoesNotExist:
+        logger.exception(
+            'QBO Credentials not found for workspace_id %s / expense group %s',
+            expense_group.id,
+            expense_group.workspace_id
+        )
+        detail = {
+            'expense_group_id': expense_group.id,
+            'message': 'QBO Account not connected'
+        }
+        task_log.status = 'FAILED'
+        task_log.detail = detail
+
+        task_log.save(update_fields=['detail', 'status'])
+
+    except BulkError as exception:
+        logger.error(exception.response)
+        detail = exception.response
+        task_log.status = 'FAILED'
+        task_log.detail = detail
+
+        task_log.save(update_fields=['detail', 'status'])
+
+    except WrongParamsError as exception:
+        logger.error(exception.response)
+        detail = json.loads(exception.response)
+        task_log.status = 'FAILED'
+        task_log.detail = detail
+
+        task_log.save(update_fields=['detail', 'status'])
+
+    except Exception:
+        error = traceback.format_exc()
+        task_log.detail = {
+            'error': error
+        }
+        task_log.status = 'FATAL'
+        task_log.save(update_fields=['detail', 'status'])
+        logger.exception('Something unexpected happened workspace_id: %s\n%s', task_log.workspace_id, error)
+
+
+def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[str], user: str):
+    """
+    Schedule journal_entry creation
+    :param expense_group_ids: List of expense group ids
+    :param workspace_id: workspace id
+    :param user: user email
+    :return: None
+    """
+    if expense_group_ids:
+        expense_groups = ExpenseGroup.objects.filter(
+            workspace_id=workspace_id, id__in=expense_group_ids, journalentry__id__isnull=True
+        ).all()
+    else:
+        expense_groups = ExpenseGroup.objects.filter(
+            workspace_id=workspace_id, journalentry__id__isnull=True
+        ).all()
+
+    fyle_credentials = FyleCredential.objects.get(
+        workspace_id=workspace_id)
+    fyle_connector = FyleConnector(fyle_credentials.refresh_token)
+    fyle_sdk_connection = fyle_connector.connection
+    jobs = FyleJobsSDK(settings.FYLE_JOBS_URL, fyle_sdk_connection)
+
+    for expense_group in expense_groups:
+        task_log, _ = TaskLog.objects.update_or_create(
+            workspace_id=expense_group.workspace_id,
+            expense_group=expense_group,
+            defaults={
+                'status': 'IN_PROGRESS',
+                'type': 'CREATING_JOURNAL_ENTRY'
+            }
+        )
+        created_job = jobs.trigger_now(
+            callback_url='{0}{1}'.format(settings.API_URL, '/workspaces/{0}/qbo/journalentries/'.format(workspace_id)),
+            callback_method='POST', object_id=task_log.id, payload={
+                'expense_group_id': expense_group.id,
+                'task_log_id': task_log.id
+            }, job_description='Create Journal Entry: Workspace id - {0}, user - {1}, expense group id - {2}'.format(
+                workspace_id, user, expense_group.id
+            )
+        )
+        task_log.task_id = created_job['id']
+        task_log.save()
+
+
+def create_journal_entry(expense_group, task_log):
+    try:
+        with transaction.atomic():
+            __validate_expense_group(expense_group)
+
+            journal_entry_object = JournalEntry.create_journal_entry(expense_group)
+
+            journal_entry_lineitems_objects = JournalEntryLineitem.create_journal_entry_lineitems(
+                expense_group
+            )
+
+            qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
+
+            qbo_connection = QBOConnector(qbo_credentials)
+
+            created_journal_entry = qbo_connection.post_journal_entry(journal_entry_object,
+                                                                      journal_entry_lineitems_objects)
+
+            task_log.detail = created_journal_entry
+            task_log.journal_entry = journal_entry_object
+            task_log.status = 'COMPLETE'
+
+            task_log.save(update_fields=['detail', 'journal_entry', 'status'])
+
+    except QBOCredential.DoesNotExist:
+        logger.exception(
+            'QBO Credentials not found for workspace_id %s / expense group %s',
+            expense_group.id,
+            expense_group.workspace_id
+        )
+        detail = {
+            'expense_group_id': expense_group.id,
+            'message': 'QBO Account not connected'
+        }
+        task_log.status = 'FAILED'
+        task_log.detail = detail
+
+        task_log.save(update_fields=['detail', 'status'])
+
+    except BulkError as exception:
+        logger.error(exception.response)
+        detail = exception.response
+        task_log.status = 'FAILED'
+        task_log.detail = detail
+
+        task_log.save(update_fields=['detail', 'status'])
+
+    except WrongParamsError as exception:
+        logger.error(exception.response)
+        detail = json.loads(exception.response)
+        task_log.status = 'FAILED'
+        task_log.detail = detail
+
+        task_log.save(update_fields=['detail', 'status'])
+
+    except Exception:
+        error = traceback.format_exc()
+        task_log.detail = {
+            'error': error
+        }
+        task_log.status = 'FATAL'
+        task_log.save(update_fields=['detail', 'status'])
+        logger.exception('Something unexpected happened workspace_id: %s\n%s', task_log.workspace_id, error)

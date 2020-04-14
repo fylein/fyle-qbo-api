@@ -91,6 +91,7 @@ class ExpenseGroup(models.Model):
     fyle_group_id = models.CharField(max_length=255, unique=True, help_text='fyle expense group id report id, etc')
     workspace = models.ForeignKey(Workspace, on_delete=models.PROTECT,
                                   help_text='To which workspace this expense group belongs to')
+    fund_source = models.CharField(max_length=255, help_text='Expense fund source')
     expenses = models.ManyToManyField(Expense, help_text="Expenses under this Expense Group")
     description = JSONField(max_length=255, help_text='Description', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
@@ -121,6 +122,7 @@ class ExpenseGroup(models.Model):
             expense_group_object, _ = ExpenseGroup.objects.update_or_create(
                 fyle_group_id=report_id + '-' + fund_source.lower(),
                 workspace_id=workspace_id,
+                fund_source=fund_source,
                 defaults={
                     'description': {
                         'employee_email': employee_email,
