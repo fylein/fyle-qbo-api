@@ -248,8 +248,6 @@ class ChequeView(generics.ListCreateAPIView):
     Create Cheque
     """
     serializer_class = ChequeSerializer
-    authentication_classes = []
-    permission_classes = []
 
     def get_queryset(self):
         return Cheque.objects.filter(expense_group__workspace_id=self.kwargs['workspace_id']).order_by(
@@ -298,8 +296,6 @@ class CreditCardPurchaseView(generics.ListCreateAPIView):
     Create CreditCardPurchase
     """
     serializer_class = CreditCardPurchaseSerializer
-    authentication_classes = []
-    permission_classes = []
 
     def get_queryset(self):
         return CreditCardPurchase.objects.filter(
@@ -348,8 +344,6 @@ class JournalEntryView(generics.ListCreateAPIView):
     Create JournalEntry
     """
     serializer_class = JournalEntrySerializer
-    authentication_classes = []
-    permission_classes = []
 
     def get_queryset(self):
         return JournalEntry.objects.filter(
