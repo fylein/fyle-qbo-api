@@ -40,11 +40,11 @@ class ExpenseGroupView(generics.ListCreateAPIView):
             if general_settings.corporate_credit_card_expenses_object == 'JOURNAL_ENTRY':
                 expense_groups.extend(ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'],
                                                                   journalentry__id__isnull=False).order_by(
-                                                                  '-updated_at'))
+                                                                      '-updated_at'))
             elif general_settings.corporate_credit_card_expenses_object == 'CREDIT_CARD_PURCHASE':
                 expense_groups.extend(ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'],
                                                                   creditcardpurchase__id__isnull=False).order_by(
-                                                                  '-updated_at'))
+                                                                      '-updated_at'))
             return expense_groups
 
         elif state == 'READY':
