@@ -6,7 +6,7 @@ from qbosdk import QuickbooksOnlineSDK
 
 from apps.workspaces.models import QBOCredential
 
-from .models import BillLineitem, Bill, ChequeLineitem, Cheque, CreditCardPurchase, CreditCardPurchaseLineitem,\
+from .models import BillLineitem, Bill, ChequeLineitem, Cheque, CreditCardPurchase, CreditCardPurchaseLineitem, \
     JournalEntry, JournalEntryLineitem
 
 
@@ -158,14 +158,14 @@ class QBOConnector:
         return created_bill
 
     @staticmethod
-    def __construct_cheque_line_items(cheque_line_items: List[ChequeLineitem]) -> List[Dict]:
+    def __construct_cheque_lineitems(cheque_lineitems: List[ChequeLineitem]) -> List[Dict]:
         """
-        Create cheque line items
-        :param cheque_line_items: list of cheque line items extracted from database
+        Create cheque lineitems
+        :param cheque_lineitems: list of cheque line items extracted from database
         :return: constructed line items
         """
         lines = []
-        for line in cheque_line_items:
+        for line in cheque_lineitems:
             line = {
                 'Description': line.description,
                 'DetailType': 'AccountBasedExpenseLineDetail',
@@ -183,13 +183,13 @@ class QBOConnector:
 
         return lines
 
-    def __construct_cheque(self, cheque: Cheque, cheque_line_items: List[ChequeLineitem]) -> Dict:
+    def __construct_cheque(self, cheque: Cheque, cheque_lineitems: List[ChequeLineitem]) -> Dict:
         """
         Create a cheque
         :param cheque: cheque object extracted from database
         :return: constructed cheque
         """
-        line = self.__construct_cheque_line_items(cheque_line_items)
+        line = self.__construct_cheque_lineitems(cheque_lineitems)
         cheque_payload = self.purchase_object_payload(
             cheque, line, account_ref=cheque.bank_account_id, payment_type='Check', doc_number=cheque.cheque_number
         )
@@ -260,16 +260,23 @@ class QBOConnector:
         return created_credit_card_purchase
 
     @staticmethod
-    def __construct_journal_entry_line_items(journal_entry_line_items: List[JournalEntryLineitem],
-                                             posting_type) -> List[Dict]:
+    def __construct_journal_entry_lineitems(journal_entry_lineitems: List[JournalEntryLineitem],
+                                            posting_type) -> List[Dict]:
         """
         Create journal_entry line items
-        :param journal_entry_line_items: list of journal entry line items extracted from database
+        :param journal_entry_lineitems: list of journal entry line items extracted from database
         :return: constructed line items
         """
         lines = []
 
-        for line in journal_entry_line_items:
+        for line in journal_entry_lineitems:
+
+            account_ref = None
+            if posting_type == 'Debit':
+                account_ref = line.debit_account_id
+            elif posting_type == 'Credit':
+                account_ref = line.account_id
+
             line = {
                 'DetailType': 'JournalEntryLineDetail',
                 'Description': line.description,
@@ -277,7 +284,7 @@ class QBOConnector:
                 'JournalEntryLineDetail': {
                     'PostingType': posting_type,
                     'AccountRef': {
-                        'value': line.account_id
+                        'value': account_ref
                     },
                     'DepartmentRef': {
                         'value': line.department_id
@@ -297,15 +304,17 @@ class QBOConnector:
         return lines
 
     def __construct_journal_entry(self, journal_entry: JournalEntry,
-                                  journal_entry_line_items: List[JournalEntryLineitem]) -> Dict:
+                                  journal_entry_lineitems: List[JournalEntryLineitem]) -> Dict:
         """
         Create a journal_entry
         :param journal_entry: journal_entry object extracted from database
         :return: constructed journal_entry
         """
-        credit_line = self.__construct_journal_entry_line_items(journal_entry_line_items, 'Credit')
-        debit_line = self.__construct_journal_entry_line_items(journal_entry_line_items, 'Debit')
-        lines = credit_line + debit_line
+        credit_line = self.__construct_journal_entry_lineitems(journal_entry_lineitems, 'Credit')
+        debit_line = self.__construct_journal_entry_lineitems(journal_entry_lineitems, 'Debit')
+        lines = []
+        lines.extend(credit_line)
+        lines.extend(debit_line)
 
         journal_entry_payload = {
             'TxnDate': journal_entry.transaction_date,

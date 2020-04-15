@@ -144,7 +144,7 @@ class Cheque(models.Model):
             expense_group=expense_group,
             defaults={
                 'bank_account_id': general_mappings.bank_account_id,
-                'employee_id': EmployeeMapping.objects.get(
+                'entity_id': EmployeeMapping.objects.get(
                     employee_email=description.get('employee_email')
                 ).employee_id,
                 'department_id': None,
@@ -328,7 +328,6 @@ class JournalEntry(models.Model):
     """
     id = models.AutoField(primary_key=True)
     expense_group = models.OneToOneField(ExpenseGroup, on_delete=models.PROTECT, help_text='Expense group reference')
-    ccc_account_id = models.CharField(max_length=255, help_text='QBO CCC account id')
     transaction_date = models.DateField(help_text='JournalEntry transaction date')
     currency = models.CharField(max_length=5, help_text='JournalEntry Currency')
     private_note = models.TextField(help_text='JournalEntry Description')
@@ -343,19 +342,11 @@ class JournalEntry(models.Model):
         :param expense_group: expense group
         :return: JournalEntry object
         """
-        description = expense_group.description
-
         expense = expense_group.expenses.first()
-
-        general_settings_queryset = WorkspaceGeneralSettings.objects.all()
-        general_settings = general_settings_queryset.get(workspace_id=expense_group.workspace_id)
 
         journal_entry_object, _ = JournalEntry.objects.update_or_create(
             expense_group=expense_group,
             defaults={
-                'ccc_account_id': GeneralMapping.objects.get().bank_account_id if
-                                  general_settings.reimbursable_expenses_object == 'JOURNAL_ENTRY' else EmployeeMapping.
-                                  objects.get(employee_email=description.get('employee_email')).ccc_account_id,
                 'transaction_date': datetime.now().strftime("%Y-%m-%d"),
                 'private_note': 'Report {0} / {1} exported on {2}'.format(
                     expense.claim_number, expense.report_id, datetime.now().strftime("%Y-%m-%d")
@@ -373,6 +364,7 @@ class JournalEntryLineitem(models.Model):
     id = models.AutoField(primary_key=True)
     journal_entry = models.ForeignKey(JournalEntry, on_delete=models.PROTECT, help_text='Reference to JournalEntry')
     expense = models.OneToOneField(Expense, on_delete=models.PROTECT, help_text='Reference to Expense')
+    debit_account_id = models.CharField(max_length=255, help_text='QBO Debit account id')
     account_id = models.CharField(max_length=255, help_text='QBO account id')
     class_id = models.CharField(max_length=255, help_text='QBO class id', null=True)
     entity_id = models.CharField(max_length=255, help_text='QBO entity id')
@@ -394,8 +386,25 @@ class JournalEntryLineitem(models.Model):
         expenses = expense_group.expenses.all()
         qbo_journal_entry = JournalEntry.objects.get(expense_group=expense_group)
 
+        description = expense_group.description
+
         general_settings_queryset = WorkspaceGeneralSettings.objects.all()
         general_settings = general_settings_queryset.get(workspace_id=expense_group.workspace_id)
+
+        params = {
+            'debit_account_id': None
+        }
+
+        if expense_group.fund_source == 'PERSONAL':
+            if general_settings.employee_filed_mapping == 'VENDOR':
+                params['debit_account_id'] = GeneralMapping.objects.get(
+                    workspace_id=expense_group.workspace_id).accounts_payable_id
+            elif general_settings.employee_filed_mapping == 'EMPLOYEE':
+                params['debit_account_id'] = GeneralMapping.objects.get(
+                    workspace_id=expense_group.workspace_id).bank_account_id
+        elif expense_group.fund_source == 'CCC':
+            params['debit_account_id'] = EmployeeMapping.objects.get(
+                employee_email=description.get('employee_email')).ccc_account_id
 
         journal_entry_lineitem_objects = []
 
@@ -420,6 +429,7 @@ class JournalEntryLineitem(models.Model):
                 journal_entry=qbo_journal_entry,
                 expense_id=lineitem.id,
                 defaults={
+                    'debit_account_id': params['debit_account_id'],
                     'account_id': account.account_id if account else None,
                     'class_id': class_id,
                     'entity_id': entity_id,
