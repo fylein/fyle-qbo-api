@@ -29,8 +29,8 @@ urlpatterns = [
     path('bills/trigger/', BillScheduleView.as_view()),
     path('checks/', ChequeView.as_view()),
     path('checks/trigger/', ChequeScheduleView.as_view()),
-    path('creditcardpurchases/', CreditCardPurchaseView.as_view()),
-    path('creditcardpurchases/trigger/', CreditCardPurchaseScheduleView.as_view()),
-    path('journalentries/', JournalEntryView.as_view()),
-    path('journalentries/trigger/', JournalEntryScheduleView.as_view())
+    path('credit_card_purchases/', CreditCardPurchaseView.as_view()),
+    path('credit_card_purchases/trigger/', CreditCardPurchaseScheduleView.as_view()),
+    path('journal_entries/', JournalEntryView.as_view()),
+    path('journal_entries/trigger/', JournalEntryScheduleView.as_view())
 ]

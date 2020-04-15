@@ -295,7 +295,8 @@ class QBOConnector:
                     'Entity': {
                         'EntityRef': {
                             'value': line.entity_id
-                        }
+                        },
+                        'Type': line.entity_type,
                     }
                 }
             }

@@ -152,7 +152,7 @@ class Cheque(models.Model):
                 'private_note': 'Report {0} / {1} exported on {2}'.format(
                     expense.claim_number, expense.report_id, datetime.now().strftime("%Y-%m-%d")
                 ),
-                'cheque_number':  expense_group.fyle_group_id
+                'cheque_number': expense_group.fyle_group_id
             }
         )
         return cheque_object
@@ -368,6 +368,7 @@ class JournalEntryLineitem(models.Model):
     account_id = models.CharField(max_length=255, help_text='QBO account id')
     class_id = models.CharField(max_length=255, help_text='QBO class id', null=True)
     entity_id = models.CharField(max_length=255, help_text='QBO entity id')
+    entity_type = models.CharField(max_length=255, help_text='QBO Entity Type ( Vendor / Employee )')
     customer_id = models.CharField(max_length=255, help_text='QBO customer id', null=True)
     department_id = models.CharField(max_length=255, help_text='QBO department id', null=True)
     posting_type = models.CharField(max_length=255, help_text='QBO posting type', null=True)
@@ -391,20 +392,24 @@ class JournalEntryLineitem(models.Model):
         general_settings_queryset = WorkspaceGeneralSettings.objects.all()
         general_settings = general_settings_queryset.get(workspace_id=expense_group.workspace_id)
 
-        params = {
-            'debit_account_id': None
-        }
+        debit_account_id = None
+        entity_type = None
 
         if expense_group.fund_source == 'PERSONAL':
             if general_settings.employee_filed_mapping == 'VENDOR':
-                params['debit_account_id'] = GeneralMapping.objects.get(
+                debit_account_id = GeneralMapping.objects.get(
                     workspace_id=expense_group.workspace_id).accounts_payable_id
             elif general_settings.employee_filed_mapping == 'EMPLOYEE':
-                params['debit_account_id'] = GeneralMapping.objects.get(
+                debit_account_id = GeneralMapping.objects.get(
                     workspace_id=expense_group.workspace_id).bank_account_id
         elif expense_group.fund_source == 'CCC':
-            params['debit_account_id'] = EmployeeMapping.objects.get(
+            debit_account_id = EmployeeMapping.objects.get(
                 employee_email=description.get('employee_email')).ccc_account_id
+
+        if general_settings.employee_field_mapping == 'EMPLOYEE':
+            entity_type = 'Employee'
+        elif general_settings.employee_field_mapping == 'VENDOR':
+            entity_type = 'Vendor'
 
         journal_entry_lineitem_objects = []
 
@@ -429,10 +434,11 @@ class JournalEntryLineitem(models.Model):
                 journal_entry=qbo_journal_entry,
                 expense_id=lineitem.id,
                 defaults={
-                    'debit_account_id': params['debit_account_id'],
+                    'debit_account_id': debit_account_id,
                     'account_id': account.account_id if account else None,
                     'class_id': class_id,
                     'entity_id': entity_id,
+                    'entity_type': entity_type,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
                     'description': lineitem.purpose

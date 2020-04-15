@@ -312,7 +312,7 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
                 }
             )
             created_job = jobs.trigger_now(
-                callback_url='{0}{1}'.format(settings.API_URL, '/workspaces/{0}/qbo/creditcardpurchases/'.format(
+                callback_url='{0}{1}'.format(settings.API_URL, '/workspaces/{0}/qbo/credit_card_purchases/'.format(
                     workspace_id
                 )),
                 callback_method='POST', object_id=task_log.id, payload={
@@ -421,7 +421,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
                 }
             )
             created_job = jobs.trigger_now(
-                callback_url='{0}{1}'.format(settings.API_URL, '/workspaces/{0}/qbo/journalentries/'.format(
+                callback_url='{0}{1}'.format(settings.API_URL, '/workspaces/{0}/qbo/journal_entries/'.format(
                     workspace_id)),
                 callback_method='POST', object_id=task_log.id, payload={
                     'expense_group_id': expense_group.id,

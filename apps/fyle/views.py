@@ -27,24 +27,25 @@ class ExpenseGroupView(generics.ListCreateAPIView):
             return ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id']).order_by('-updated_at')
 
         elif state == 'COMPLETE':
-            expense_group = []
+            expense_groups = []
             if general_settings.reimbursable_expenses_object == 'CHECK':
-                expense_group = ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'],
-                                                            cheque__id__isnull=False).order_by('-updated_at')
+                expense_groups = ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'],
+                                                             cheque__id__isnull=False).order_by('-updated_at')
             elif general_settings.reimbursable_expenses_object == 'JOURNAL_ENTRY':
-                expense_group = ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'],
-                                                            journalentry__id__isnull=False).order_by('-updated_at')
+                expense_groups = ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'],
+                                                             journalentry__id__isnull=False).order_by('-updated_at')
             elif general_settings.reimbursable_expenses_object == 'BILL':
-                expense_group = ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'],
-                                                            bill__id__isnull=False).order_by('-updated_at')
+                expense_groups = ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'],
+                                                             bill__id__isnull=False).order_by('-updated_at')
             if general_settings.corporate_credit_card_expenses_object == 'JOURNAL_ENTRY':
-                expense_group = ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'],
-                                                            journalentry__id__isnull=False).order_by('-updated_at')
+                expense_groups.extend(ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'],
+                                                                  journalentry__id__isnull=False).order_by(
+                                                                  '-updated_at'))
             elif general_settings.corporate_credit_card_expenses_object == 'CREDIT_CARD_PURCHASE':
-                expense_group = ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'],
-                                                            creditcardpurchase__id__isnull=False
-                                                            ).order_by('-updated_at')
-            return expense_group
+                expense_groups.extend(ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'],
+                                                                  creditcardpurchase__id__isnull=False).order_by(
+                                                                  '-updated_at'))
+            return expense_groups
 
         elif state == 'READY':
             return ExpenseGroup.objects.filter(
