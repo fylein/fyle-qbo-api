@@ -135,7 +135,7 @@ def run_sync_schedule(workspace_id, user: str):
                     workspace_id=workspace_id, expense_group_ids=expense_group_ids, user=user
                 )
 
-            elif general_settings.reimbursable_expenses_object == 'JOURNAL_ENTRY':
+            elif general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY':
                 schedule_journal_entry_creation(
                     workspace_id=workspace_id, expense_group_ids=expense_group_ids, user=user
                 )
@@ -143,12 +143,12 @@ def run_sync_schedule(workspace_id, user: str):
         if general_settings.corporate_credit_card_expenses_object:
             expense_group_ids = ExpenseGroup.objects.filter(fund_source='CCC').values_list('id', flat=True)
 
-            if general_settings.corporate_credit_card_expenses_object == 'JOURNAL_ENTRY':
+            if general_settings.corporate_credit_card_expenses_object == 'JOURNAL ENTRY':
                 schedule_journal_entry_creation(
                     workspace_id=workspace_id, expense_group_ids=expense_group_ids, user=user
                 )
 
-            elif general_settings.corporate_credit_card_expenses_object == 'CREDIT_CARD_PURCHASE':
+            elif general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE':
                 schedule_credit_card_purchase_creation(
                     workspace_id=workspace_id, expense_group_ids=expense_group_ids, user=user
                 )

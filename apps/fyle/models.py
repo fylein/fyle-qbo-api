@@ -97,6 +97,9 @@ class ExpenseGroup(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
+    class Meta:
+        unique_together = ('fyle_group_id', 'workspace')
+
     @staticmethod
     def create_expense_groups_by_report_id_fund_source(expense_objects: List[Expense], workspace_id):
         """

@@ -273,9 +273,9 @@ class QBOConnector:
 
             account_ref = None
             if posting_type == 'Debit':
-                account_ref = line.debit_account_id
-            elif posting_type == 'Credit':
                 account_ref = line.account_id
+            elif posting_type == 'Credit':
+                account_ref = line.debit_account_id
 
             line = {
                 'DetailType': 'JournalEntryLineDetail',
