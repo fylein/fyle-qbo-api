@@ -436,10 +436,9 @@ class JournalEntryLineitem(models.Model):
 
             entity_id = EmployeeMapping.objects.get(employee_email=description.get('employee_email'),
                                                     workspace_id=expense_group.workspace_id).employee_id \
-                if general_settings.employee_field_mapping == 'EMPLOYEE' else EmployeeMapping.objects.get(
-                employee_email=description.get('employee_email'),
-                workspace_id=expense_group.workspace_id
-            ).vendor_id
+                if general_settings.employee_field_mapping == 'EMPLOYEE' \
+                else EmployeeMapping.objects.get(employee_email=description.get('employee_email'),
+                                                 workspace_id=expense_group.workspace_id).vendor_id
 
             class_id = cost_center_mapping.class_id if cost_center_mapping else None
 
