@@ -10,9 +10,11 @@ from apps.tasks.models import TaskLog
 from apps.workspaces.models import QBOCredential
 
 from .utils import QBOConnector
-from .tasks import create_bill, schedule_bills_creation
-from .models import Bill
-from .serializers import BillSerializer
+from .tasks import create_bill, schedule_bills_creation, create_cheque, schedule_cheques_creation, \
+    create_credit_card_purchase, schedule_credit_card_purchase_creation, create_journal_entry,\
+    schedule_journal_entry_creation
+from .models import Bill, Cheque, CreditCardPurchase, JournalEntry
+from .serializers import BillSerializer, ChequeSerializer, CreditCardPurchaseSerializer, JournalEntrySerializer
 
 
 class VendorView(viewsets.ViewSet):
@@ -34,6 +36,36 @@ class VendorView(viewsets.ViewSet):
 
             return Response(
                 data=vendors,
+                status=status.HTTP_200_OK
+            )
+        except QBOCredential.DoesNotExist:
+            return Response(
+                data={
+                    'message': 'QBO credentials not found in workspace'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class EmployeeView(viewsets.ViewSet):
+    """
+    Employee view
+    """
+
+    def get_employees(self, request, **kwargs):
+        """
+        Get employees from QBO
+        """
+        try:
+            qbo_credentials = QBOCredential.objects.get(
+                workspace_id=kwargs['workspace_id'])
+
+            qbo_connector = QBOConnector(qbo_credentials)
+
+            employees = qbo_connector.get_employees()
+
+            return Response(
+                data=employees,
                 status=status.HTTP_200_OK
             )
         except QBOCredential.DoesNotExist:
@@ -181,7 +213,7 @@ class BillView(generics.ListCreateAPIView):
         expense_group_id = request.data.get('expense_group_id')
         task_log_id = request.data.get('task_log_id')
 
-        assert_valid(expense_group_id is not None, 'Expense ids not found')
+        assert_valid(expense_group_id is not None, 'expense group id not found')
         assert_valid(task_log_id is not None, 'Task Log id not found')
 
         expense_group = ExpenseGroup.objects.get(pk=expense_group_id)
@@ -204,6 +236,150 @@ class BillScheduleView(generics.CreateAPIView):
         expense_group_ids = request.data.get('expense_group_ids', [])
 
         schedule_bills_creation(
+            kwargs['workspace_id'], expense_group_ids, request.user)
+
+        return Response(
+            status=status.HTTP_200_OK
+        )
+
+
+class ChequeView(generics.ListCreateAPIView):
+    """
+    Create Cheque
+    """
+    serializer_class = ChequeSerializer
+
+    def get_queryset(self):
+        return Cheque.objects.filter(expense_group__workspace_id=self.kwargs['workspace_id']).order_by(
+            '-updated_at'
+        )
+
+    def post(self, request, *args, **kwargs):
+        """
+        Create cheque from expense group
+        """
+        expense_group_id = request.data.get('expense_group_id')
+        task_log_id = request.data.get('task_log_id')
+
+        assert_valid(expense_group_id is not None, 'expense group id not found')
+        assert_valid(task_log_id is not None, 'Task Log id not found')
+
+        expense_group = ExpenseGroup.objects.get(pk=expense_group_id)
+        task_log = TaskLog.objects.get(pk=task_log_id)
+
+        create_cheque(expense_group, task_log)
+
+        return Response(
+            data={},
+            status=status.HTTP_200_OK
+        )
+
+
+class ChequeScheduleView(generics.CreateAPIView):
+    """
+    Schedule cheques creation
+    """
+
+    def post(self, request, *args, **kwargs):
+        expense_group_ids = request.data.get('expense_group_ids', [])
+
+        schedule_cheques_creation(
+            kwargs['workspace_id'], expense_group_ids, request.user)
+
+        return Response(
+            status=status.HTTP_200_OK
+        )
+
+
+class CreditCardPurchaseView(generics.ListCreateAPIView):
+    """
+    Create CreditCardPurchase
+    """
+    serializer_class = CreditCardPurchaseSerializer
+
+    def get_queryset(self):
+        return CreditCardPurchase.objects.filter(
+            expense_group__workspace_id=self.kwargs['workspace_id']
+        ).order_by('-updated_at')
+
+    def post(self, request, *args, **kwargs):
+        """
+        Create credit_card_purchase from expense group
+        """
+        expense_group_id = request.data.get('expense_group_id')
+        task_log_id = request.data.get('task_log_id')
+
+        assert_valid(expense_group_id is not None, 'Expense ids not found')
+        assert_valid(task_log_id is not None, 'Task Log id not found')
+
+        expense_group = ExpenseGroup.objects.get(pk=expense_group_id)
+        task_log = TaskLog.objects.get(pk=task_log_id)
+
+        create_credit_card_purchase(expense_group, task_log)
+
+        return Response(
+            data={},
+            status=status.HTTP_200_OK
+        )
+
+
+class CreditCardPurchaseScheduleView(generics.CreateAPIView):
+    """
+    Schedule credit_card_purchase create
+    """
+
+    def post(self, request, *args, **kwargs):
+        expense_group_ids = request.data.get('expense_group_ids', [])
+
+        schedule_credit_card_purchase_creation(
+            kwargs['workspace_id'], expense_group_ids, request.user)
+
+        return Response(
+            status=status.HTTP_200_OK
+        )
+
+
+class JournalEntryView(generics.ListCreateAPIView):
+    """
+    Create JournalEntry
+    """
+    serializer_class = JournalEntrySerializer
+
+    def get_queryset(self):
+        return JournalEntry.objects.filter(
+            expense_group__workspace_id=self.kwargs['workspace_id']
+        ).order_by('-updated_at')
+
+    def post(self, request, *args, **kwargs):
+        """
+        Create JournalEntry from expense group
+        """
+        expense_group_id = request.data.get('expense_group_id')
+        task_log_id = request.data.get('task_log_id')
+
+        assert_valid(expense_group_id is not None, 'Expense ids not found')
+        assert_valid(task_log_id is not None, 'Task Log id not found')
+
+        expense_group = ExpenseGroup.objects.get(pk=expense_group_id)
+        task_log = TaskLog.objects.get(pk=task_log_id)
+
+        create_journal_entry(expense_group, task_log)
+
+        return Response(
+            data={},
+            status=status.HTTP_200_OK
+        )
+
+
+class JournalEntryScheduleView(generics.CreateAPIView):
+    """
+    Schedule JournalEntry creation
+    """
+
+    def post(self, request, *args, **kwargs):
+        expense_group_ids = request.data.get('expense_group_ids', [])
+
+        schedule_journal_entry_creation(
             kwargs['workspace_id'], expense_group_ids, request.user)
 
         return Response(

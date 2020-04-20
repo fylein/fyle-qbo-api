@@ -4,7 +4,7 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 
 from apps.tasks.models import TaskLog
-from apps.workspaces.models import FyleCredential
+from apps.workspaces.models import FyleCredential, WorkspaceGeneralSettings
 
 from .tasks import create_expense_groups, schedule_expense_group_creation
 from .utils import FyleConnector
@@ -20,31 +20,66 @@ class ExpenseGroupView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         state = self.request.query_params.get('state', 'ALL')
+        general_settings_queryset = WorkspaceGeneralSettings.objects.all()
+        general_settings = general_settings_queryset.get(workspace_id=self.kwargs['workspace_id'])
+
         if state == 'ALL':
             return ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id']).order_by('-updated_at')
+
         elif state == 'COMPLETE':
-            return ExpenseGroup.objects.filter(
-                workspace_id=self.kwargs['workspace_id'], bill__id__isnull=False).order_by('-updated_at')
+            expense_groups = []
+            if general_settings.reimbursable_expenses_object == 'CHECK':
+                expense_groups = ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'],
+                                                             cheque__id__isnull=False).order_by('-updated_at')
+            elif general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY':
+                expense_groups = ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'],
+                                                             journalentry__id__isnull=False).order_by('-updated_at')
+            elif general_settings.reimbursable_expenses_object == 'BILL':
+                expense_groups = ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'],
+                                                             bill__id__isnull=False).order_by('-updated_at')
+            if general_settings.corporate_credit_card_expenses_object == 'JOURNAL ENTRY':
+                ccc_expense_groups = ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'],
+                                                                 journalentry__id__isnull=False).order_by(
+                                                                     '-updated_at')
+                expense_groups = expense_groups | ccc_expense_groups
+
+            elif general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE':
+                ccc_expense_groups = ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'],
+                                                                 creditcardpurchase__id__isnull=False).order_by(
+                                                                     '-updated_at')
+                expense_groups = expense_groups | ccc_expense_groups
+
+            return expense_groups
+
         elif state == 'READY':
             return ExpenseGroup.objects.filter(
-                workspace_id=self.kwargs['workspace_id'], bill__id__isnull=True).order_by('-updated_at')
+                workspace_id=self.kwargs['workspace_id'],
+                bill__id__isnull=True,
+                cheque__id__isnull=True,
+                creditcardpurchase__id__isnull=True,
+                journalentry__id__isnull=True
+            ).order_by('-updated_at')
 
     def post(self, request, *args, **kwargs):
         """
         Create expense groups
         """
-        export_non_reimbursable = request.data.get(
-            'export_non_reimbursable', False)
         state = request.data.get('state', ['PAYMENT_PROCESSING'])
         task_log = TaskLog.objects.get(pk=request.data.get('task_log_id'))
+
+        queryset = WorkspaceGeneralSettings.objects.all()
+        general_settings = queryset.get(workspace_id=kwargs['workspace_id'])
+
+        fund_source = ['PERSONAL']
+        if general_settings.corporate_credit_card_expenses_object is not None:
+            fund_source.append('CCC')
 
         create_expense_groups(
             kwargs['workspace_id'],
             state=state,
-            export_non_reimbursable=export_non_reimbursable,
-            task_log=task_log
+            fund_source=fund_source,
+            task_log=task_log,
         )
-
         return Response(
             status=status.HTTP_200_OK
         )
