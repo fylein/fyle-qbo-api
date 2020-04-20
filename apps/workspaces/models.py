@@ -52,7 +52,7 @@ class WorkspaceGeneralSettings(models.Model):
     reimbursable_expenses_object = models.CharField(max_length=50, help_text='Reimbursable Expenses type')
     corporate_credit_card_expenses_object = models.CharField(max_length=50,
                                                              help_text='Non Reimbursable Expenses type', null=True)
-    employee_field_mapping = models.CharField(max_length=50, help_text='Mapping Settings ( VENDORS / EMPLOYEES )')
+    employee_field_mapping = models.CharField(max_length=50, help_text='Mapping Settings ( VENDOR / EMPLOYEE )')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 

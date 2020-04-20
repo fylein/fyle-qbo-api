@@ -427,7 +427,7 @@ class JournalEntryLineitem(models.Model):
             project_mapping = ProjectMapping.objects.filter(
                 project=lineitem.project, workspace_id=expense_group.workspace_id).first()
 
-            entity_id = EmployeeMapping.objects.get().employee_id\
+            entity_id = EmployeeMapping.objects.get(employee_email=description.get('employee_email')).employee_id \
                 if general_settings.employee_field_mapping == 'EMPLOYEE' else EmployeeMapping.objects.get().vendor_id
 
             class_id = cost_center_mapping.class_id if cost_center_mapping else None
