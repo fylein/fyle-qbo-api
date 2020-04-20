@@ -1,5 +1,6 @@
 from typing import Dict
 
+from apps.workspaces.models import WorkspaceGeneralSettings
 from fyle_qbo_api.utils import assert_valid
 
 from .models import GeneralMapping, EmployeeMapping, CategoryMapping, CostCenterMapping, ProjectMapping
@@ -15,23 +16,48 @@ class MappingUtils:
         :param general_mapping: general mapping payload
         :return:
         """
-        assert_valid('bank_account_name' in general_mapping and general_mapping['bank_account_name'],
-                     'employee email field is blank')
-        assert_valid('bank_account_id' in general_mapping and general_mapping['bank_account_id'],
-                     'vendor name field is blank')
-        # assert_valid('default_ccc_account_name' in general_mapping and general_mapping['default_ccc_account_name'],
-        #              'default ccc account name field is blank')
-        # assert_valid('default_ccc_account_id' in general_mapping and general_mapping['default_ccc_account_id'],
-        #              'default ccc account id field is blank')
+        queryset = WorkspaceGeneralSettings.objects.all()
+        general_settings = queryset.get(workspace_id=self.__workspace_id)
+
+        params = {
+            'accounts_payable_name': None,
+            'accounts_payable_id': None,
+            'bank_account_name': None,
+            'bank_account_id': None,
+            'default_ccc_account_name': None,
+            'default_ccc_account_id': None
+        }
+
+        if general_settings.employee_field_mapping == 'VENDOR':
+            assert_valid('accounts_payable_name' in general_mapping and general_mapping['accounts_payable_name'],
+                         'account payable account name field is blank')
+            assert_valid('accounts_payable_id' in general_mapping and general_mapping['accounts_payable_id'],
+                         'account payable account id field is blank')
+
+            params['accounts_payable_name'] = general_mapping.get('accounts_payable_name')
+            params['accounts_payable_id'] = general_mapping.get('accounts_payable_id')
+
+        if general_settings.employee_field_mapping == 'EMPLOYEE':
+            assert_valid('bank_account_name' in general_mapping and general_mapping['bank_account_name'],
+                         'bank account name field is blank')
+            assert_valid('bank_account_id' in general_mapping and general_mapping['bank_account_id'],
+                         'bank account id field is blank')
+
+            params['bank_account_name'] = general_mapping.get('bank_account_name')
+            params['bank_account_id'] = general_mapping.get('bank_account_id')
+
+        if general_settings.corporate_credit_card_expenses_object:
+            assert_valid('default_ccc_account_name' in general_mapping and general_mapping['default_ccc_account_name'],
+                         'default ccc account name field is blank')
+            assert_valid('default_ccc_account_id' in general_mapping and general_mapping['default_ccc_account_id'],
+                         'default ccc account id field is blank')
+
+            params['default_ccc_account_name'] = general_mapping.get('default_ccc_account_name')
+            params['default_ccc_account_id'] = general_mapping.get('default_ccc_account_id')
 
         general_mapping, _ = GeneralMapping.objects.update_or_create(
             workspace_id=self.__workspace_id,
-            defaults={
-                'bank_account_name': general_mapping.get('bank_account_name'),
-                'bank_account_id': general_mapping.get('bank_account_id'),
-                'default_ccc_account_name': general_mapping.get('default_ccc_account_name', ''),
-                'default_ccc_account_id': general_mapping.get('default_ccc_account_id', '')
-            }
+            defaults=params
         )
         return general_mapping
 
@@ -41,20 +67,52 @@ class MappingUtils:
         :param employee_mapping: employee mapping payload
         :return: employee mappings objects
         """
+        params = {
+            'vendor_display_name': None,
+            'vendor_id': None,
+            'employee_display_name': None,
+            'employee_id': None,
+            'ccc_account_name': None,
+            'ccc_account_id': None
+        }
+
+        general_settings_queryset = WorkspaceGeneralSettings.objects.all()
+        general_settings = general_settings_queryset.get(workspace_id=self.__workspace_id)
+
         assert_valid('employee_email' in employee_mapping and employee_mapping['employee_email'],
                      'employee email field is blank')
-        assert_valid('vendor_name' in employee_mapping and employee_mapping['vendor_name'],
-                     'vendor name field is blank')
-        assert_valid('vendor_id' in employee_mapping and employee_mapping['vendor_id'],
-                     'vendor id field is blank')
+
+        if general_settings.employee_field_mapping == 'VENDOR':
+            assert_valid('vendor_id' in employee_mapping and employee_mapping['vendor_id'],
+                         'vendor id field is blank')
+            assert_valid('vendor_display_name' in employee_mapping and employee_mapping['vendor_display_name'],
+                         'vendor display name is missing')
+
+            params['vendor_display_name'] = employee_mapping.get('vendor_display_name')
+            params['vendor_id'] = employee_mapping.get('vendor_id')
+
+        elif general_settings.employee_field_mapping == 'EMPLOYEE':
+            assert_valid('employee_display_name' in employee_mapping and employee_mapping['employee_display_name'],
+                         'employee_display_name field is blank')
+            assert_valid('employee_id' in employee_mapping and employee_mapping['employee_id'],
+                         'employee_id field is blank')
+
+            params['employee_display_name'] = employee_mapping.get('employee_display_name')
+            params['employee_id'] = employee_mapping.get('employee_id')
+
+        if general_settings.corporate_credit_card_expenses_object:
+            assert_valid('ccc_account_name' in employee_mapping and employee_mapping['ccc_account_name'],
+                         'ccc account name field is blank')
+            assert_valid('ccc_account_id' in employee_mapping and employee_mapping['ccc_account_id'],
+                         'ccc account id field is blank')
+
+            params['ccc_account_name'] = employee_mapping.get('ccc_account_name')
+            params['ccc_account_id'] = employee_mapping.get('ccc_account_id')
 
         employee_mapping_object, _ = EmployeeMapping.objects.update_or_create(
             employee_email=employee_mapping['employee_email'].lower(),
             workspace_id=self.__workspace_id,
-            defaults={
-                'vendor_display_name': employee_mapping['vendor_name'],
-                'vendor_id': employee_mapping['vendor_id']
-            }
+            defaults=params
         )
 
         return employee_mapping_object
