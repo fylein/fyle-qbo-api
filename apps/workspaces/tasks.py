@@ -108,8 +108,7 @@ def run_sync_schedule(workspace_id, user: str):
         status='IN_PROGRESS'
     )
 
-    queryset = WorkspaceGeneralSettings.objects.all()
-    general_settings = queryset.get(workspace_id)
+    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
 
     fund_source = ['PERSONAL']
     if general_settings.corporate_credit_card_expenses_object:

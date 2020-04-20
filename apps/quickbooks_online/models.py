@@ -149,7 +149,8 @@ class Cheque(models.Model):
             defaults={
                 'bank_account_id': general_mappings.bank_account_id,
                 'entity_id': EmployeeMapping.objects.get(
-                    employee_email=description.get('employee_email')
+                    employee_email=description.get('employee_email'),
+                    workspace_id=expense_group.workspace_id
                 ).employee_id,
                 'department_id': None,
                 'transaction_date': datetime.now().strftime("%Y-%m-%d"),
@@ -253,10 +254,14 @@ class CreditCardPurchase(models.Model):
             expense_group=expense_group,
             defaults={
                 'ccc_account_id': EmployeeMapping.objects.get(
-                    employee_email=description.get('employee_email')).ccc_account_id,
-                'entity_id': EmployeeMapping.objects.get(employee_email=description.get('employee_email')).employee_id
+                    employee_email=description.get('employee_email'),
+                    workspace_id=expense_group.workspace_id
+                ).ccc_account_id,
+                'entity_id': EmployeeMapping.objects.get(employee_email=description.get('employee_email'),
+                                                         workspace_id=expense_group.workspace_id).employee_id
                              if general_settings.employee_field_mapping == 'EMPLOYEE' else
-                             EmployeeMapping.objects.get(employee_email=description.get('employee_email')).vendor_id,
+                             EmployeeMapping.objects.get(employee_email=description.get('employee_email'),
+                                                         workspace_id=expense_group.workspace_id).vendor_id,
                 'transaction_date': datetime.now().strftime("%Y-%m-%d"),
                 'private_note': 'Report {0} / {1} exported on {2}'.format(
                     expense.claim_number, expense.report_id, datetime.now().strftime("%Y-%m-%d")
@@ -408,7 +413,9 @@ class JournalEntryLineitem(models.Model):
                     workspace_id=expense_group.workspace_id).bank_account_id
         elif expense_group.fund_source == 'CCC':
             debit_account_id = EmployeeMapping.objects.get(
-                employee_email=description.get('employee_email')).ccc_account_id
+                employee_email=description.get('employee_email'),
+                workspace_id=expense_group.workspace_id
+            ).ccc_account_id
 
         if general_settings.employee_field_mapping == 'EMPLOYEE':
             entity_type = 'Employee'
@@ -427,8 +434,12 @@ class JournalEntryLineitem(models.Model):
             project_mapping = ProjectMapping.objects.filter(
                 project=lineitem.project, workspace_id=expense_group.workspace_id).first()
 
-            entity_id = EmployeeMapping.objects.get(employee_email=description.get('employee_email')).employee_id \
-                if general_settings.employee_field_mapping == 'EMPLOYEE' else EmployeeMapping.objects.get().vendor_id
+            entity_id = EmployeeMapping.objects.get(employee_email=description.get('employee_email'),
+                                                    workspace_id=expense_group.workspace_id).employee_id \
+                if general_settings.employee_field_mapping == 'EMPLOYEE' else EmployeeMapping.objects.get(
+                employee_email=description.get('employee_email'),
+                workspace_id=expense_group.workspace_id
+            ).vendor_id
 
             class_id = cost_center_mapping.class_id if cost_center_mapping else None
 
