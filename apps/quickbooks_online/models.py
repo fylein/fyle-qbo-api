@@ -41,7 +41,7 @@ class Bill(models.Model):
         bill_object, _ = Bill.objects.update_or_create(
             expense_group=expense_group,
             defaults={
-                'accounts_payable_id': general_mappings.bank_account_id,
+                'accounts_payable_id': general_mappings.accounts_payable_id,
                 'vendor_id': EmployeeMapping.objects.get(
                     employee_email=description.get('employee_email'),
                     workspace_id=expense_group.workspace_id
