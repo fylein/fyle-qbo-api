@@ -22,7 +22,7 @@ class Bill(models.Model):
     transaction_date = models.DateField(help_text='Bill transaction date')
     currency = models.CharField(max_length=5, help_text='Bill Currency')
     private_note = models.TextField(help_text='Bill Description')
-    bill_number = models.CharField(max_length=15, unique=True)
+    bill_number = models.CharField(max_length=55, unique=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
