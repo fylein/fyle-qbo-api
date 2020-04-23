@@ -405,10 +405,10 @@ class JournalEntryLineitem(models.Model):
         entity_type = None
 
         if expense_group.fund_source == 'PERSONAL':
-            if general_settings.employee_filed_mapping == 'VENDOR':
+            if general_settings.employee_field_mapping == 'VENDOR':
                 debit_account_id = GeneralMapping.objects.get(
                     workspace_id=expense_group.workspace_id).accounts_payable_id
-            elif general_settings.employee_filed_mapping == 'EMPLOYEE':
+            elif general_settings.employee_field_mapping == 'EMPLOYEE':
                 debit_account_id = GeneralMapping.objects.get(
                     workspace_id=expense_group.workspace_id).bank_account_id
         elif expense_group.fund_source == 'CCC':
