@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     # Installed Apps
     'rest_framework',
     'corsheaders',
+    'fyle_rest_auth',
+    'fyle_accounting_mappings',
 
     # User Created Apps
     'apps.users',
@@ -49,8 +51,7 @@ INSTALLED_APPS = [
     'apps.mappings',
     'apps.fyle',
     'apps.quickbooks_online',
-    'apps.tasks',
-    'fyle_rest_auth'
+    'apps.tasks'
 ]
 
 MIDDLEWARE = [
@@ -134,6 +135,9 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'OPTIONS': {
+                'options': '-c search_path={0}'.format(os.environ.get('DB_SCHEMA'))
+            },
             'NAME': os.environ.get('DB_NAME'),
             'USER': os.environ.get('DB_USER'),
             'PASSWORD': os.environ.get('DB_PASSWORD'),

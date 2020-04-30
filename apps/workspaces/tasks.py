@@ -2,11 +2,13 @@ from datetime import datetime
 
 from django.conf import settings
 
+from apps.fyle.models import ExpenseGroup
 from apps.fyle.tasks import create_expense_groups
 from apps.fyle.utils import FyleConnector
-from apps.quickbooks_online.tasks import schedule_bills_creation
+from apps.quickbooks_online.tasks import schedule_bills_creation, schedule_cheques_creation,\
+    schedule_journal_entry_creation, schedule_credit_card_purchase_creation
 from apps.tasks.models import TaskLog
-from apps.workspaces.models import WorkspaceSettings, WorkspaceSchedule, FyleCredential
+from apps.workspaces.models import WorkspaceSettings, WorkspaceSchedule, FyleCredential, WorkspaceGeneralSettings
 from fyle_jobs import FyleJobsSDK
 
 
@@ -44,7 +46,7 @@ def schedule_sync(workspace_id: int, schedule_enabled: bool, hours: int, next_ru
 
         fyle_credentials = FyleCredential.objects.get(
             workspace_id=workspace_id)
-        fyle_connector = FyleConnector(fyle_credentials.refresh_token)
+        fyle_connector = FyleConnector(fyle_credentials.refresh_token, workspace_id)
         fyle_sdk_connection = fyle_connector.connection
 
         jobs = FyleJobsSDK(settings.FYLE_JOBS_URL, fyle_sdk_connection)
@@ -70,9 +72,8 @@ def schedule_sync(workspace_id: int, schedule_enabled: bool, hours: int, next_ru
 
 def create_schedule_job(workspace_id: int, schedule: WorkspaceSchedule, user: str,
                         start_datetime: datetime, hours: int):
-    fyle_credentials = FyleCredential.objects.get(
-        workspace_id=workspace_id)
-    fyle_connector = FyleConnector(fyle_credentials.refresh_token)
+    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+    fyle_connector = FyleConnector(fyle_credentials.refresh_token, workspace_id)
     fyle_sdk_connection = fyle_connector.connection
 
     jobs = FyleJobsSDK(settings.FYLE_JOBS_URL, fyle_sdk_connection)
@@ -106,11 +107,46 @@ def run_sync_schedule(workspace_id, user: str):
         status='IN_PROGRESS'
     )
 
-    task_log: TaskLog = create_expense_groups(
-        workspace_id=workspace_id, state=['PAYMENT_PROCESSING'],
-        export_non_reimbursable=False,
-        task_log=task_log
-    )
+    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+
+    fund_source = ['PERSONAL']
+    if general_settings.corporate_credit_card_expenses_object:
+        fund_source.append('CCC')
+    if general_settings.reimbursable_expenses_object:
+        task_log: TaskLog = create_expense_groups(
+            workspace_id=workspace_id, state=['PAYMENT_PROCESSING'], fund_source=fund_source, task_log=task_log
+        )
 
     if task_log.status == 'COMPLETE':
-        schedule_bills_creation(workspace_id=workspace_id, expense_group_ids=[], user=user)
+
+        if general_settings.reimbursable_expenses_object:
+
+            expense_group_ids = ExpenseGroup.objects.filter(fund_source='PERSONAL').values_list('id', flat=True)
+
+            if general_settings.reimbursable_expenses_object == 'BILL':
+                schedule_bills_creation(
+                    workspace_id=workspace_id, expense_group_ids=expense_group_ids, user=user
+                )
+
+            elif general_settings.reimbursable_expenses_object == 'CHECK':
+                schedule_cheques_creation(
+                    workspace_id=workspace_id, expense_group_ids=expense_group_ids, user=user
+                )
+
+            elif general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY':
+                schedule_journal_entry_creation(
+                    workspace_id=workspace_id, expense_group_ids=expense_group_ids, user=user
+                )
+
+        if general_settings.corporate_credit_card_expenses_object:
+            expense_group_ids = ExpenseGroup.objects.filter(fund_source='CCC').values_list('id', flat=True)
+
+            if general_settings.corporate_credit_card_expenses_object == 'JOURNAL ENTRY':
+                schedule_journal_entry_creation(
+                    workspace_id=workspace_id, expense_group_ids=expense_group_ids, user=user
+                )
+
+            elif general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE':
+                schedule_credit_card_purchase_creation(
+                    workspace_id=workspace_id, expense_group_ids=expense_group_ids, user=user
+                )

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
-from .models import Bill, BillLineitem
+from .models import Bill, BillLineitem, Cheque, ChequeLineitem, CreditCardPurchase, CreditCardPurchaseLineitem,\
+    JournalEntry, JournalEntryLineitem
 
 
 class BillSerializer(serializers.ModelSerializer):
@@ -18,4 +19,58 @@ class BillLineitemsSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = BillLineitem
+        fields = '__all__'
+
+
+class ChequeSerializer(serializers.ModelSerializer):
+    """
+    QBO Cheque serializer
+    """
+    class Meta:
+        model = Cheque
+        fields = '__all__'
+
+
+class ChequeLineitemsSerializer(serializers.ModelSerializer):
+    """
+    QBO Cheque Lineitems serializer
+    """
+    class Meta:
+        model = ChequeLineitem
+        fields = '__all__'
+
+
+class CreditCardPurchaseSerializer(serializers.ModelSerializer):
+    """
+    QBO CreditCardPurchase serializer
+    """
+    class Meta:
+        model = CreditCardPurchase
+        fields = '__all__'
+
+
+class CreditCardPurchaseLineitemsSerializer(serializers.ModelSerializer):
+    """
+    QBO CreditCardPurchaseS Lineitems serializer
+    """
+    class Meta:
+        model = CreditCardPurchaseLineitem
+        fields = '__all__'
+
+
+class JournalEntrySerializer(serializers.ModelSerializer):
+    """
+    QBO JournalEntry serializer
+    """
+    class Meta:
+        model = JournalEntry
+        fields = '__all__'
+
+
+class JournalEntryLineitemsSerializer(serializers.ModelSerializer):
+    """
+    QBO CreditCardPurchaseS Lineitems serializer
+    """
+    class Meta:
+        model = JournalEntryLineitem
         fields = '__all__'
