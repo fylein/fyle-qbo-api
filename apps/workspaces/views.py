@@ -40,23 +40,29 @@ class WorkspaceView(viewsets.ViewSet):
 
         all_workspaces_count = Workspace.objects.filter(user__user_id=request.user).count()
 
-        workspace = Workspace.objects.create(name='Workspace {0}'.format(all_workspaces_count + 1))
+        auth_tokens = AuthToken.objects.get(user__user_id=request.user)
+        fyle_user = auth_utils.get_fyle_user(auth_tokens.refresh_token)
+        org_name = fyle_user['org_name']
+        org_id = fyle_user['org_id']
 
-        workspace.user.add(User.objects.get(user_id=request.user))
+        workspace = Workspace.objects.filter(fyle_org_id=org_id).first()
+        workspace_exists = False
 
-        if all_workspaces_count == 0:
-            auth_tokens = AuthToken.objects.get(user__user_id=request.user)
+        if workspace:
+            workspace.user.add(User.objects.get(user_id=request.user))
+            workspace_exists = True
+        else:
+            workspace = Workspace.objects.create(name='Workspace {0}'.format(all_workspaces_count + 1))
 
-            fyle_user = auth_utils.get_fyle_user(auth_tokens.refresh_token)
-            org_name = fyle_user['org_name']
-            org_id = fyle_user['org_id']
+            workspace.user.add(User.objects.get(user_id=request.user))
 
+        if all_workspaces_count == 0 and not workspace_exists:
             workspace.name = org_name
             workspace.fyle_org_id = org_id
 
             workspace.save(update_fields=['name', 'fyle_org_id'])
 
-            FyleCredential.objects.create(
+            FyleCredential.objects.update_or_create(
                 refresh_token=auth_tokens.refresh_token,
                 workspace_id=workspace.id
             )
