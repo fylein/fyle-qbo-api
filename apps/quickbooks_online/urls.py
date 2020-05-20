@@ -14,17 +14,21 @@ Including another URLconf
 """
 from django.urls import path
 
-from .views import VendorView, EmployeeView, AccountView, ClassView, DepartmentView, BillView, BillScheduleView, \
-    CustomerView, ChequeScheduleView, ChequeView, CreditCardPurchaseView, CreditCardPurchaseScheduleView,\
-    JournalEntryView, JournalEntryScheduleView
+from .views import VendorView, EmployeeView, AccountView, CreditCardAccountView, ClassView, DepartmentView, BillView, \
+    BillScheduleView, CustomerView, ChequeScheduleView, ChequeView, CreditCardPurchaseView, \
+    CreditCardPurchaseScheduleView, JournalEntryView, JournalEntryScheduleView, BankAccountView, AccountsPayableView
+
 
 urlpatterns = [
-    path('vendors/', VendorView.as_view({'get': 'get_vendors'})),
-    path('employees/', EmployeeView.as_view({'get': 'get_employees'})),
-    path('accounts/', AccountView.as_view({'get': 'get_accounts'})),
-    path('classes/', ClassView.as_view({'get': 'get_classes'})),
-    path('departments/', DepartmentView.as_view({'get': 'get_departments'})),
-    path('customers/', CustomerView.as_view({'get': 'get_customers'})),
+    path('vendors/', VendorView.as_view()),
+    path('employees/', EmployeeView.as_view()),
+    path('accounts/', AccountView.as_view()),
+    path('credit_card_accounts/', CreditCardAccountView.as_view()),
+    path('bank_accounts/', BankAccountView.as_view()),
+    path('accounts_payables/', AccountsPayableView.as_view()),
+    path('classes/', ClassView.as_view()),
+    path('departments/', DepartmentView.as_view()),
+    path('customers/', CustomerView.as_view()),
     path('bills/', BillView.as_view()),
     path('bills/trigger/', BillScheduleView.as_view()),
     path('checks/', ChequeView.as_view()),

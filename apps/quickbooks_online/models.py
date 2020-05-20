@@ -4,10 +4,99 @@ QBO models
 from datetime import datetime
 
 from django.db import models
+from django.db.models import Q
+
+from fyle_accounting_mappings.models import Mapping, MappingSetting
 
 from apps.fyle.models import ExpenseGroup, Expense
-from apps.mappings.models import GeneralMapping, EmployeeMapping, CategoryMapping, CostCenterMapping, ProjectMapping
-from apps.workspaces.models import WorkspaceGeneralSettings
+from apps.mappings.models import GeneralMapping
+
+
+def get_class_id_or_none(expense_group: ExpenseGroup, lineitem: Expense):
+    class_setting: MappingSetting = MappingSetting.objects.filter(
+        workspace_id=expense_group.workspace_id,
+        destination_field='CLASS'
+    ).first()
+
+    class_id = None
+
+    if class_setting:
+        source_value = None
+
+        if class_setting.source_field == 'PROJECT':
+            source_value = lineitem.project
+        elif class_setting.source_field == 'COST_CENTER':
+            source_value = lineitem.cost_center
+
+        mapping: Mapping = Mapping.objects.filter(
+            source_type=class_setting.source_field,
+            destination_type='CLASS',
+            source__value=source_value,
+            workspace_id=expense_group.workspace_id
+        ).first()
+
+        if mapping:
+            class_id = mapping.destination.destination_id
+    return class_id
+
+
+def get_customer_id_or_none(expense_group: ExpenseGroup, lineitem: Expense):
+    customer_setting: MappingSetting = MappingSetting.objects.filter(
+        workspace_id=expense_group.workspace_id,
+        destination_field='CUSTOMER'
+    ).first()
+
+    customer_id = None
+
+    if customer_setting:
+        source_value = None
+
+        if customer_setting.source_field == 'PROJECT':
+            source_value = lineitem.project
+        elif customer_setting.source_field == 'COST_CENTER':
+            source_value = lineitem.cost_center
+
+        mapping: Mapping = Mapping.objects.filter(
+            source_type=customer_setting.source_field,
+            destination_type='CUSTOMER',
+            source__value=source_value,
+            workspace_id=expense_group.workspace_id
+        ).first()
+
+        if mapping:
+            customer_id = mapping.destination.destination_id
+    return customer_id
+
+
+def get_department_id_or_none(expense_group: ExpenseGroup, lineitem: Expense = None):
+    department_setting: MappingSetting = MappingSetting.objects.filter(
+        workspace_id=expense_group.workspace_id,
+        destination_field='DEPARTMENT'
+    ).first()
+
+    department_id = None
+
+    if department_setting:
+        source_value = None
+
+        if lineitem:
+            if department_setting.source_field == 'PROJECT':
+                source_value = lineitem.project
+            elif department_setting.source_field == 'COST_CENTER':
+                source_value = lineitem.cost_center
+        else:
+            source_value = expense_group.description[department_setting.source_field.lower()]
+
+        mapping: Mapping = Mapping.objects.filter(
+            source_type=department_setting.source_field,
+            destination_type='DEPARTMENT',
+            source__value=source_value,
+            workspace_id=expense_group.workspace_id
+        ).first()
+
+        if mapping:
+            department_id = mapping.destination.destination_id
+    return department_id
 
 
 class Bill(models.Model):
@@ -37,16 +126,20 @@ class Bill(models.Model):
 
         expense = expense_group.expenses.first()
 
+        department_id = get_department_id_or_none(expense_group)
+
         general_mappings = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
         bill_object, _ = Bill.objects.update_or_create(
             expense_group=expense_group,
             defaults={
                 'accounts_payable_id': general_mappings.accounts_payable_id,
-                'vendor_id': EmployeeMapping.objects.get(
-                    employee_email=description.get('employee_email'),
+                'vendor_id': Mapping.objects.get(
+                    source_type='EMPLOYEE',
+                    destination_type='VENDOR',
+                    source__value=description.get('employee_email'),
                     workspace_id=expense_group.workspace_id
-                ).vendor_id,
-                'department_id': None,
+                ).destination.destination_id,
+                'department_id': department_id,
                 'transaction_date': datetime.now().strftime("%Y-%m-%d"),
                 'private_note': 'Report {0} / {1} exported on {2}'.format(
                     expense.claim_number, expense.report_id, datetime.now().strftime("%Y-%m-%d")
@@ -85,25 +178,25 @@ class BillLineitem(models.Model):
         bill_lineitem_objects = []
 
         for lineitem in expenses:
-            account = CategoryMapping.objects.filter(category=lineitem.category,
-                                                     sub_category=lineitem.sub_category,
-                                                     workspace_id=expense_group.workspace_id).first()
+            category = lineitem.category if lineitem.category == lineitem.sub_category else '{0} / {1}'.format(
+                lineitem.category, lineitem.sub_category)
 
-            cost_center_mapping = CostCenterMapping.objects.filter(
-                cost_center=lineitem.cost_center, workspace_id=expense_group.workspace_id).first()
+            account: Mapping = Mapping.objects.filter(
+                source_type='CATEGORY',
+                destination_type='ACCOUNT',
+                source__value=category,
+                workspace_id=expense_group.workspace_id
+            ).first()
 
-            project_mapping = ProjectMapping.objects.filter(
-                project=lineitem.project, workspace_id=expense_group.workspace_id).first()
+            class_id = get_class_id_or_none(expense_group, lineitem)
 
-            class_id = cost_center_mapping.class_id if cost_center_mapping else None
-
-            customer_id = project_mapping.customer_id if project_mapping else None
+            customer_id = get_customer_id_or_none(expense_group, lineitem)
 
             bill_lineitem_object, _ = BillLineitem.objects.update_or_create(
                 bill=bill,
                 expense_id=lineitem.id,
                 defaults={
-                    'account_id': account.account_id if account else None,
+                    'account_id': account.destination.destination_id if account else None,
                     'class_id': class_id,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
@@ -144,15 +237,20 @@ class Cheque(models.Model):
         expense = expense_group.expenses.first()
 
         general_mappings = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
+
+        department_id = get_department_id_or_none(expense_group)
+
         cheque_object, _ = Cheque.objects.update_or_create(
             expense_group=expense_group,
             defaults={
                 'bank_account_id': general_mappings.bank_account_id,
-                'entity_id': EmployeeMapping.objects.get(
-                    employee_email=description.get('employee_email'),
+                'entity_id': Mapping.objects.get(
+                    source_type='EMPLOYEE',
+                    destination_type='EMPLOYEE',
+                    source__value=description.get('employee_email'),
                     workspace_id=expense_group.workspace_id
-                ).employee_id,
-                'department_id': None,
+                ).destination.destination_id,
+                'department_id': department_id,
                 'transaction_date': datetime.now().strftime("%Y-%m-%d"),
                 'private_note': 'Report {0} / {1} exported on {2}'.format(
                     expense.claim_number, expense.report_id, datetime.now().strftime("%Y-%m-%d")
@@ -191,24 +289,25 @@ class ChequeLineitem(models.Model):
         cheque_lineitem_objects = []
 
         for lineitem in expenses:
-            account = CategoryMapping.objects.filter(category=lineitem.category,
-                                                     sub_category=lineitem.sub_category).first()
+            category = lineitem.category if lineitem.category == lineitem.sub_category else '{0} / {1}'.format(
+                lineitem.category, lineitem.sub_category)
 
-            cost_center_mapping = CostCenterMapping.objects.filter(
-                cost_center=lineitem.cost_center, workspace_id=expense_group.workspace_id).first()
+            account: Mapping = Mapping.objects.filter(
+                source_type='CATEGORY',
+                destination_type='ACCOUNT',
+                source__value=category,
+                workspace_id=expense_group.workspace_id
+            ).first()
 
-            project_mapping = ProjectMapping.objects.filter(
-                project=lineitem.project, workspace_id=expense_group.workspace_id).first()
+            class_id = get_class_id_or_none(expense_group, lineitem)
 
-            class_id = cost_center_mapping.class_id if cost_center_mapping else None
-
-            customer_id = project_mapping.customer_id if project_mapping else None
+            customer_id = get_customer_id_or_none(expense_group, lineitem)
 
             cheque_lineitem_object, _ = ChequeLineitem.objects.update_or_create(
                 cheque=cheque,
                 expense_id=lineitem.id,
                 defaults={
-                    'account_id': account.account_id if account else None,
+                    'account_id': account.destination.destination_id if account else None,
                     'class_id': class_id,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
@@ -247,21 +346,24 @@ class CreditCardPurchase(models.Model):
         description = expense_group.description
         expense = expense_group.expenses.first()
 
-        general_settings_queryset = WorkspaceGeneralSettings.objects.all()
-        general_settings = general_settings_queryset.get(workspace_id=expense_group.workspace_id)
+        department_id = get_department_id_or_none(expense_group)
 
         credit_card_purchase_object, _ = CreditCardPurchase.objects.update_or_create(
             expense_group=expense_group,
             defaults={
-                'ccc_account_id': EmployeeMapping.objects.get(
-                    employee_email=description.get('employee_email'),
+                'ccc_account_id': Mapping.objects.get(
+                    destination_type='CREDIT_CARD_ACCOUNT',
+                    source_type='EMPLOYEE',
+                    source__value=description.get('employee_email'),
                     workspace_id=expense_group.workspace_id
-                ).ccc_account_id,
-                'entity_id': EmployeeMapping.objects.get(employee_email=description.get('employee_email'),
-                                                         workspace_id=expense_group.workspace_id).employee_id
-                             if general_settings.employee_field_mapping == 'EMPLOYEE' else
-                             EmployeeMapping.objects.get(employee_email=description.get('employee_email'),
-                                                         workspace_id=expense_group.workspace_id).vendor_id,
+                ).destination.destination_id,
+                'department_id': department_id,
+                'entity_id': Mapping.objects.get(
+                    Q(destination_type='EMPLOYEE') | Q(destination_type='VENDOR'),
+                    source_type='EMPLOYEE',
+                    source__value=description.get('employee_email'),
+                    workspace_id=expense_group.workspace_id
+                ).destination.destination_id,
                 'transaction_date': datetime.now().strftime("%Y-%m-%d"),
                 'private_note': 'Report {0} / {1} exported on {2}'.format(
                     expense.claim_number, expense.report_id, datetime.now().strftime("%Y-%m-%d")
@@ -301,24 +403,25 @@ class CreditCardPurchaseLineitem(models.Model):
         credit_card_purchase_lineitem_objects = []
 
         for lineitem in expenses:
-            account = CategoryMapping.objects.filter(category=lineitem.category,
-                                                     sub_category=lineitem.sub_category).first()
+            category = lineitem.category if lineitem.category == lineitem.sub_category else '{0} / {1}'.format(
+                lineitem.category, lineitem.sub_category)
 
-            cost_center_mapping = CostCenterMapping.objects.filter(
-                cost_center=lineitem.cost_center, workspace_id=expense_group.workspace_id).first()
+            account: Mapping = Mapping.objects.filter(
+                source_type='CATEGORY',
+                destination_type='ACCOUNT',
+                source__value=category,
+                workspace_id=expense_group.workspace_id
+            ).first()
 
-            project_mapping = ProjectMapping.objects.filter(
-                project=lineitem.project, workspace_id=expense_group.workspace_id).first()
+            class_id = get_class_id_or_none(expense_group, lineitem)
 
-            class_id = cost_center_mapping.class_id if cost_center_mapping else None
-
-            customer_id = project_mapping.customer_id if project_mapping else None
+            customer_id = get_customer_id_or_none(expense_group, lineitem)
 
             credit_card_purchase_lineitem_object, _ = CreditCardPurchaseLineitem.objects.update_or_create(
                 credit_card_purchase=credit_card_purchase,
                 expense_id=lineitem.id,
                 defaults={
-                    'account_id': account.account_id if account else None,
+                    'account_id': account.destination.destination_id if account else None,
                     'class_id': class_id,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
@@ -398,63 +501,67 @@ class JournalEntryLineitem(models.Model):
 
         description = expense_group.description
 
-        general_settings_queryset = WorkspaceGeneralSettings.objects.all()
-        general_settings = general_settings_queryset.get(workspace_id=expense_group.workspace_id)
-
         debit_account_id = None
         entity_type = None
 
+        entity = Mapping.objects.get(
+            Q(destination_type='EMPLOYEE') | Q(destination_type='VENDOR'),
+            source_type='EMPLOYEE',
+            source__value=description.get('employee_email'),
+            workspace_id=expense_group.workspace_id
+        )
+
         if expense_group.fund_source == 'PERSONAL':
-            if general_settings.employee_field_mapping == 'VENDOR':
+            if entity.destination_type == 'VENDOR':
                 debit_account_id = GeneralMapping.objects.get(
                     workspace_id=expense_group.workspace_id).accounts_payable_id
-            elif general_settings.employee_field_mapping == 'EMPLOYEE':
+            elif entity.destination_type == 'EMPLOYEE':
                 debit_account_id = GeneralMapping.objects.get(
                     workspace_id=expense_group.workspace_id).bank_account_id
         elif expense_group.fund_source == 'CCC':
-            debit_account_id = EmployeeMapping.objects.get(
-                employee_email=description.get('employee_email'),
+            debit_account_id = Mapping.objects.get(
+                source_type='EMPLOYEE',
+                destination_type='CREDIT_CARD_ACCOUNT',
+                source__value=description.get('employee_email'),
                 workspace_id=expense_group.workspace_id
-            ).ccc_account_id
+            ).destination.destination_id
 
-        if general_settings.employee_field_mapping == 'EMPLOYEE':
+        if entity.destination_type == 'EMPLOYEE':
             entity_type = 'Employee'
-        elif general_settings.employee_field_mapping == 'VENDOR':
+        elif entity.destination_type == 'VENDOR':
             entity_type = 'Vendor'
 
         journal_entry_lineitem_objects = []
 
         for lineitem in expenses:
-            account = CategoryMapping.objects.filter(category=lineitem.category,
-                                                     sub_category=lineitem.sub_category).first()
+            category = lineitem.category if lineitem.category == lineitem.sub_category else '{0} / {1}'.format(
+                lineitem.category, lineitem.sub_category)
 
-            cost_center_mapping = CostCenterMapping.objects.filter(
-                cost_center=lineitem.cost_center, workspace_id=expense_group.workspace_id).first()
+            account: Mapping = Mapping.objects.filter(
+                source_type='CATEGORY',
+                destination_type='ACCOUNT',
+                source__value=category,
+                workspace_id=expense_group.workspace_id
+            ).first()
 
-            project_mapping = ProjectMapping.objects.filter(
-                project=lineitem.project, workspace_id=expense_group.workspace_id).first()
+            class_id = get_class_id_or_none(expense_group, lineitem)
 
-            entity_id = EmployeeMapping.objects.get(employee_email=description.get('employee_email'),
-                                                    workspace_id=expense_group.workspace_id).employee_id \
-                if general_settings.employee_field_mapping == 'EMPLOYEE' \
-                else EmployeeMapping.objects.get(employee_email=description.get('employee_email'),
-                                                 workspace_id=expense_group.workspace_id).vendor_id
+            customer_id = get_customer_id_or_none(expense_group, lineitem)
 
-            class_id = cost_center_mapping.class_id if cost_center_mapping else None
-
-            customer_id = project_mapping.customer_id if project_mapping else None
+            department_id = get_department_id_or_none(expense_group)
 
             journal_entry_lineitem_object, _ = JournalEntryLineitem.objects.update_or_create(
                 journal_entry=qbo_journal_entry,
                 expense_id=lineitem.id,
                 defaults={
                     'debit_account_id': debit_account_id,
-                    'account_id': account.account_id if account else None,
+                    'account_id': account.destination.destination_id if account else None,
                     'class_id': class_id,
-                    'entity_id': entity_id,
+                    'entity_id': entity.destination.destination_id,
                     'entity_type': entity_type,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
+                    'department_id': department_id,
                     'description': lineitem.purpose
                 }
             )

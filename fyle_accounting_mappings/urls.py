@@ -1,4 +1,4 @@
-"""fyle_qbo URL Configuration
+"""fyle_accounting_mappings URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/3.0/topics/http/urls/
@@ -13,16 +13,11 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.urls import path, include
+from django.urls import path
 
-from .views import GeneralMappingView, EmployeeMappingView, CategoryMappingView, \
-    CostCenterMappingView, ProjectMappingView
+from .views import MappingSettingsView, MappingsView
 
 urlpatterns = [
-    path('general/', GeneralMappingView.as_view()),
-    path('employees/', EmployeeMappingView.as_view()),
-    path('categories/', CategoryMappingView.as_view()),
-    path('cost_centers/', CostCenterMappingView.as_view()),
-    path('projects/', ProjectMappingView.as_view()),
-    path('', include('fyle_accounting_mappings.urls'))
+    path('settings/', MappingSettingsView.as_view()),
+    path('', MappingsView.as_view())
 ]

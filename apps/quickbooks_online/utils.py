@@ -5,6 +5,7 @@ from django.conf import settings
 from qbosdk import QuickbooksOnlineSDK
 
 from apps.workspaces.models import QBOCredential
+from fyle_accounting_mappings.models import DestinationAttribute
 
 from .models import BillLineitem, Bill, ChequeLineitem, Cheque, CreditCardPurchase, CreditCardPurchaseLineitem, \
     JournalEntry, JournalEntryLineitem
@@ -14,7 +15,7 @@ class QBOConnector:
     """
     QBO utility functions
     """
-    def __init__(self, credentials_object: QBOCredential):
+    def __init__(self, credentials_object: QBOCredential, workspace_id: int):
         client_id = settings.QBO_CLIENT_ID
         client_secret = settings.QBO_CLIENT_SECRET
         environment = settings.QBO_ENVIRONMENT
@@ -27,44 +28,145 @@ class QBOConnector:
             environment=environment
         )
 
+        self.workspace_id = workspace_id
+
         credentials_object.refresh_token = self.connection.refresh_token
         credentials_object.save()
 
-    def get_accounts(self):
+    def sync_accounts(self, account_type: str):
         """
         Get accounts
         """
-        return self.connection.accounts.get()
+        accounts = self.connection.accounts.get()
 
-    def get_departments(self):
+        accounts = list(filter(lambda current_account: current_account['AccountType'] == account_type, accounts))
+
+        account_attributes = []
+
+        if account_type == 'Expense':
+            attribute_type = 'ACCOUNT'
+            display_name = 'Account'
+        elif account_type == 'Credit Card':
+            attribute_type = 'CREDIT_CARD_ACCOUNT'
+            display_name = 'Credit Card Account'
+        elif account_type == 'Bank':
+            attribute_type = 'BANK_ACCOUNT'
+            display_name = 'Bank Account'
+        else:
+            attribute_type = 'ACCOUNTS_PAYABLE'
+            display_name = 'Accounts Payable'
+
+        for account in accounts:
+            account_attributes.append({
+                'attribute_type': attribute_type,
+                'display_name': display_name,
+                'value': account['Name'],
+                'destination_id': account['Id']
+            })
+
+        account_attributes = DestinationAttribute.bulk_upsert_destination_attributes(
+            account_attributes, self.workspace_id)
+        return account_attributes
+
+    def sync_departments(self):
         """
         Get departments
         """
-        return self.connection.departments.get()
+        departments = self.connection.departments.get()
 
-    def get_vendors(self):
+        department_attributes = []
+
+        for department in departments:
+            department_attributes.append({
+                'attribute_type': 'DEPARTMENT',
+                'display_name': 'Department',
+                'value': department['Name'],
+                'destination_id': department['Id']
+            })
+
+        account_attributes = DestinationAttribute.bulk_upsert_destination_attributes(
+            department_attributes, self.workspace_id)
+        return account_attributes
+
+    def sync_vendors(self):
         """
         Get vendors
         """
-        return self.connection.vendors.get()
+        vendors = self.connection.vendors.get()
 
-    def get_employees(self):
+        vendor_attributes = []
+
+        for vendor in vendors:
+            vendor_attributes.append({
+                'attribute_type': 'VENDOR',
+                'display_name': 'vendor',
+                'value': vendor['DisplayName'],
+                'destination_id': vendor['Id']
+            })
+
+        account_attributes = DestinationAttribute.bulk_upsert_destination_attributes(
+            vendor_attributes, self.workspace_id)
+        return account_attributes
+
+    def sync_employees(self):
         """
         Get employees
         """
-        return self.connection.employees.get()
+        employees = self.connection.employees.get()
 
-    def get_classes(self):
+        employee_attributes = []
+
+        for employee in employees:
+            employee_attributes.append({
+                'attribute_type': 'EMPLOYEE',
+                'display_name': 'employee',
+                'value': employee['DisplayName'],
+                'destination_id': employee['Id']
+            })
+
+        account_attributes = DestinationAttribute.bulk_upsert_destination_attributes(
+            employee_attributes, self.workspace_id)
+        return account_attributes
+
+    def sync_classes(self):
         """
         Get classes
         """
-        return self.connection.classes.get()
+        classes = self.connection.classes.get()
 
-    def get_customers(self):
+        class_attributes = []
+
+        for qbo_class in classes:
+            class_attributes.append({
+                'attribute_type': 'CLASS',
+                'display_name': 'class',
+                'value': qbo_class['Name'],
+                'destination_id': qbo_class['Id']
+            })
+
+        account_attributes = DestinationAttribute.bulk_upsert_destination_attributes(
+            class_attributes, self.workspace_id)
+        return account_attributes
+
+    def sync_customers(self):
         """
-        Get classes
+        Get customers
         """
-        return self.connection.customers.get()
+        customers = self.connection.customers.get()
+
+        customer_attributes = []
+
+        for customer in customers:
+            customer_attributes.append({
+                'attribute_type': 'CUSTOMER',
+                'display_name': 'customer',
+                'value': customer['DisplayName'],
+                'destination_id': customer['Id']
+            })
+
+        account_attributes = DestinationAttribute.bulk_upsert_destination_attributes(
+            customer_attributes, self.workspace_id)
+        return account_attributes
 
     @staticmethod
     def purchase_object_payload(purchase_object, line, payment_type, account_ref, doc_number):
@@ -88,7 +190,7 @@ class QBOConnector:
             },
             'PrivateNote': purchase_object.private_note,
             'Line': line,
-            'DocNumber': doc_number
+            'DocNumber': doc_number[0:21]
         }
         return purchase_object_payload
 
@@ -144,7 +246,7 @@ class QBOConnector:
             },
             'PrivateNote': bill.private_note,
             'Line': self.__construct_bill_lineitems(bill_lineitems),
-            'DocNumber': bill.bill_number
+            'DocNumber': bill.bill_number[0:21]
         }
 
         return bill_payload
@@ -176,7 +278,10 @@ class QBOConnector:
                     },
                     'ClassRef': {
                         'value': line.class_id
-                    }
+                    },
+                    'CustomerRef': {
+                        'value': line.customer_id
+                    },
                 }
             }
             lines.append(line)
@@ -324,7 +429,7 @@ class QBOConnector:
             'CurrencyRef': {
                 "value": journal_entry.currency
             },
-            'DocNumber': journal_entry.journal_entry_number
+            'DocNumber': journal_entry.journal_entry_number[0:21]
         }
         return journal_entry_payload
 

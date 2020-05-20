@@ -5,17 +5,20 @@ from typing import List
 
 from django.conf import settings
 from django.db import transaction
+from django.db.models import Q
 
 from qbosdk.exceptions import WrongParamsError
+
+from fyle_accounting_mappings.models import Mapping
 
 from fyle_jobs import FyleJobsSDK
 from fyle_qbo_api.exceptions import BulkError
 
-from apps.fyle.utils import FyleConnector
 from apps.fyle.models import ExpenseGroup
 from apps.tasks.models import TaskLog
-from apps.mappings.models import EmployeeMapping, GeneralMapping, CategoryMapping
+from apps.mappings.models import GeneralMapping
 from apps.workspaces.models import QBOCredential, FyleCredential
+from apps.fyle.utils import FyleConnector
 
 from .models import Bill, BillLineitem, Cheque, ChequeLineitem, CreditCardPurchase, CreditCardPurchaseLineitem,\
     JournalEntry, JournalEntryLineitem
@@ -43,7 +46,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], use
 
     fyle_credentials = FyleCredential.objects.get(
         workspace_id=workspace_id)
-    fyle_connector = FyleConnector(fyle_credentials.refresh_token)
+    fyle_connector = FyleConnector(fyle_credentials.refresh_token, workspace_id)
     fyle_sdk_connection = fyle_connector.connection
     jobs = FyleJobsSDK(settings.FYLE_JOBS_URL, fyle_sdk_connection)
 
@@ -57,7 +60,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], use
             }
         )
         created_job = jobs.trigger_now(
-            callback_url='{0}{1}'.format(settings.API_URL, '/workspaces/{0}/qbo/bills/'.format(workspace_id)),
+            callback_url='{0}{1}'.format(settings.API_URL, '/workspaces/{0}/f/bills/'.format(workspace_id)),
             callback_method='POST', object_id=task_log.id, payload={
                 'expense_group_id': expense_group.id,
                 'task_log_id': task_log.id
@@ -80,7 +83,7 @@ def create_bill(expense_group, task_log):
 
             qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
 
-            qbo_connection = QBOConnector(qbo_credentials)
+            qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
             created_bill = qbo_connection.post_bill(bill_object, bill_lineitems_objects)
 
@@ -134,6 +137,7 @@ def create_bill(expense_group, task_log):
 def __validate_expense_group(expense_group: ExpenseGroup):
     bulk_errors = []
     row = 0
+
     try:
         GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
     except GeneralMapping.DoesNotExist:
@@ -146,11 +150,13 @@ def __validate_expense_group(expense_group: ExpenseGroup):
         })
 
     try:
-        EmployeeMapping.objects.get(
-            employee_email=expense_group.description.get('employee_email'),
+        Mapping.objects.get(
+            Q(destination_type='VENDOR') | Q(destination_type='EMPLOYEE'),
+            source_type='EMPLOYEE',
+            source__value=expense_group.description.get('employee_email'),
             workspace_id=expense_group.workspace_id
         )
-    except EmployeeMapping.DoesNotExist:
+    except Mapping.DoesNotExist:
         bulk_errors.append({
             'row': None,
             'expense_group_id': expense_group.id,
@@ -162,14 +168,19 @@ def __validate_expense_group(expense_group: ExpenseGroup):
     expenses = expense_group.expenses.all()
 
     for lineitem in expenses:
-        account = CategoryMapping.objects.filter(category=lineitem.category,
-                                                 sub_category=lineitem.sub_category,
-                                                 workspace_id=expense_group.workspace_id).first()
+        category = lineitem.category if lineitem.category == lineitem.sub_category else '{0} / {1}'.format(
+            lineitem.category, lineitem.sub_category)
+
+        account = Mapping.objects.filter(
+            source_type='CATEGORY',
+            source__value=category,
+            workspace_id=expense_group.workspace_id
+        ).first()
         if not account:
             bulk_errors.append({
                 'row': row,
                 'expense_group_id': expense_group.id,
-                'value': '{0} / {1}'.format(lineitem.category, lineitem.sub_category),
+                'value': category,
                 'type': 'Category Mapping',
                 'message': 'Category Mapping not found'
             })
@@ -232,7 +243,7 @@ def create_cheque(expense_group, task_log):
 
             qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
 
-            qbo_connection = QBOConnector(qbo_credentials)
+            qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
             created_cheque = qbo_connection.post_cheque(cheque_object, cheque_line_item_objects)
 
@@ -339,7 +350,7 @@ def create_credit_card_purchase(expense_group, task_log):
             )
             qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
 
-            qbo_connection = QBOConnector(qbo_credentials)
+            qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
             created_credit_card_purchase = qbo_connection.post_credit_card_purchase(
                 credit_card_purchase_object, credit_card_purchase_lineitems_objects
@@ -448,7 +459,7 @@ def create_journal_entry(expense_group, task_log):
 
             qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
 
-            qbo_connection = QBOConnector(qbo_credentials)
+            qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
             created_journal_entry = qbo_connection.post_journal_entry(journal_entry_object,
                                                                       journal_entry_lineitems_objects)

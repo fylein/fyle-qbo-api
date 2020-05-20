@@ -46,7 +46,7 @@ def schedule_sync(workspace_id: int, schedule_enabled: bool, hours: int, next_ru
 
         fyle_credentials = FyleCredential.objects.get(
             workspace_id=workspace_id)
-        fyle_connector = FyleConnector(fyle_credentials.refresh_token)
+        fyle_connector = FyleConnector(fyle_credentials.refresh_token, workspace_id)
         fyle_sdk_connection = fyle_connector.connection
 
         jobs = FyleJobsSDK(settings.FYLE_JOBS_URL, fyle_sdk_connection)
@@ -72,9 +72,8 @@ def schedule_sync(workspace_id: int, schedule_enabled: bool, hours: int, next_ru
 
 def create_schedule_job(workspace_id: int, schedule: WorkspaceSchedule, user: str,
                         start_datetime: datetime, hours: int):
-    fyle_credentials = FyleCredential.objects.get(
-        workspace_id=workspace_id)
-    fyle_connector = FyleConnector(fyle_credentials.refresh_token)
+    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+    fyle_connector = FyleConnector(fyle_credentials.refresh_token, workspace_id)
     fyle_sdk_connection = fyle_connector.connection
 
     jobs = FyleJobsSDK(settings.FYLE_JOBS_URL, fyle_sdk_connection)
