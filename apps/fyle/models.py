@@ -111,13 +111,13 @@ class ExpenseGroup(models.Model):
             destination_field='DEPARTMENT'
         ).first()
 
-        general_setting = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+        general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
 
         reimbursable_expenses = list(filter(lambda expense: expense.fund_source == 'PERSONAL', expense_objects))
 
         ccc_expenses = list(filter(lambda expense: expense.fund_source == 'CCC', expense_objects))
 
-        if department_setting and general_setting.reimbursable_expenses_object != 'JOURNAL_ENTRY':
+        if department_setting and general_settings.reimbursable_expenses_object != 'JOURNAL_ENTRY':
             reimbursable_expense_groups = groupby(
                 reimbursable_expenses, lambda expense: (
                     expense.report_id, expense.employee_email,
@@ -135,8 +135,8 @@ class ExpenseGroup(models.Model):
 
         group_types = [reimbursable_expense_groups]
 
-        if general_setting.corporate_credit_card_expenses_object and ccc_expenses:
-            if department_setting and general_setting.corporate_credit_card_expenses_object != 'JOURNAL_ENTRY':
+        if general_settings.corporate_credit_card_expenses_object and ccc_expenses:
+            if department_setting and general_settings.corporate_credit_card_expenses_object != 'JOURNAL_ENTRY':
                 ccc_expense_groups = groupby(
                     ccc_expenses, lambda expense: (
                         expense.report_id, expense.employee_email,
