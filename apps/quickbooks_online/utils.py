@@ -440,3 +440,10 @@ class QBOConnector:
         journal_entry_payload = self.__construct_journal_entry(journal_entry, journal_entry_lineitems)
         created_journal_entry = self.connection.journal_entries.post(journal_entry_payload)
         return created_journal_entry
+
+    def get_company_preference(self):
+        """
+        Get QBO company preferences
+        :return:
+        """
+        return self.connection.preferences.get()

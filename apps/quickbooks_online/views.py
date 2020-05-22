@@ -2,6 +2,8 @@ from rest_framework.response import Response
 from rest_framework.views import status
 from rest_framework import generics
 
+from qbosdk.exceptions import WrongParamsError
+
 from fyle_accounting_mappings.models import DestinationAttribute
 from fyle_accounting_mappings.serializers import DestinationAttributeSerializer
 
@@ -260,6 +262,38 @@ class ClassView(generics.ListCreateAPIView):
             return Response(
                 data={
                     'message': 'QBO credentials not found in workspace'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class PreferencesView(generics.RetrieveAPIView):
+    """
+    Preferences View
+    """
+    def get(self, request, *args, **kwargs):
+        try:
+            qbo_credentials = QBOCredential.objects.get(workspace_id=kwargs['workspace_id'])
+
+            qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
+
+            preferences = qbo_connector.get_company_preference()
+
+            return Response(
+                data=preferences,
+                status=status.HTTP_200_OK
+            )
+        except QBOCredential.DoesNotExist:
+            return Response(
+                data={
+                    'message': 'QBO credentials not found in workspace'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except WrongParamsError:
+            return Response(
+                data={
+                    'message': 'Quickbooks Online connection expired'
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )

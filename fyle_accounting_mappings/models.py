@@ -58,12 +58,14 @@ class ExpenseAttribute(models.Model):
 
         with transaction.atomic():
             for attribute in attributes:
-                expense_attribute, _ = ExpenseAttribute.objects.get_or_create(
+                expense_attribute, _ = ExpenseAttribute.objects.update_or_create(
                     attribute_type=attribute['attribute_type'],
-                    display_name=attribute['display_name'],
                     value=attribute['value'],
-                    source_id=attribute['source_id'],
-                    workspace_id=workspace_id
+                    workspace_id=workspace_id,
+                    defaults={
+                        'source_id': attribute['source_id'],
+                        'display_name': attribute['display_name'],
+                    }
                 )
                 expense_attributes.append(expense_attribute)
             return expense_attributes
@@ -90,12 +92,14 @@ class DestinationAttribute(models.Model):
         destination_attributes = []
         with transaction.atomic():
             for attribute in attributes:
-                destination_attribute, _ = DestinationAttribute.objects.get_or_create(
+                destination_attribute, _ = DestinationAttribute.objects.update_or_create(
                     attribute_type=attribute['attribute_type'],
-                    display_name=attribute['display_name'],
                     value=attribute['value'],
-                    destination_id=attribute['destination_id'],
-                    workspace_id=workspace_id
+                    workspace_id=workspace_id,
+                    defaults={
+                        'display_name': attribute['display_name'],
+                        'destination_id': attribute['destination_id']
+                    }
                 )
                 destination_attributes.append(destination_attribute)
             return destination_attributes
