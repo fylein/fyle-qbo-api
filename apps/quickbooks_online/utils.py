@@ -189,8 +189,7 @@ class QBOConnector:
                 "value": purchase_object.currency
             },
             'PrivateNote': purchase_object.private_note,
-            'Line': line,
-            'DocNumber': doc_number[0:21]
+            'Line': line
         }
         return purchase_object_payload
 
@@ -245,8 +244,7 @@ class QBOConnector:
                 "value": bill.currency
             },
             'PrivateNote': bill.private_note,
-            'Line': self.__construct_bill_lineitems(bill_lineitems),
-            'DocNumber': bill.bill_number[0:21]
+            'Line': self.__construct_bill_lineitems(bill_lineitems)
         }
 
         return bill_payload
@@ -428,8 +426,7 @@ class QBOConnector:
             'Line': lines,
             'CurrencyRef': {
                 "value": journal_entry.currency
-            },
-            'DocNumber': journal_entry.journal_entry_number[0:21]
+            }
         }
         return journal_entry_payload
 
