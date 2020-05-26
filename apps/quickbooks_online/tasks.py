@@ -90,7 +90,7 @@ def create_bill(expense_group, task_log):
             try:
                 expense_ids = expense_group.expenses.values_list('expense_id', flat=True)
                 attachments = FyleConnector.get_attachments(expense_ids)
-                QBOConnector.post_attachments(created_bill["Bill"]["Id"], "Purchase", attachments)
+                QBOConnector.post_attachments(created_bill['Bill']['Id'], 'Purchase', attachments)
             except Exception as e:
                 logger.error('Attachment failed for expense group id {0} / workspace id {1} '.format(expense_group.id, expense_group.workspace_id)
 
@@ -257,7 +257,7 @@ def create_cheque(expense_group, task_log):
             try:
                 expense_ids = expense_group.expenses.values_list('expense_id', flat=True)
                 attachments = FyleConnector.get_attachments(expense_ids)    
-                QBOConnector.post_attachments(created_cheque["Purchase"]["Id"], "Purchase", attachments)
+                QBOConnector.post_attachments(created_cheque['Purchase']['Id'], 'Purchase', attachments)
             except Exception as e:
                 logger.error('Attachment failed for expense group id {0} / workspace id {1} '.format(expense_group.id, expense_group.workspace_id)            
 
@@ -373,7 +373,7 @@ def create_credit_card_purchase(expense_group, task_log):
             try:
                 expense_ids = expense_group.expenses.values_list('expense_id', flat=True)
                 attachments = FyleConnector.get_attachments(expense_ids)
-                QBOConnector.post_attachments(created_credit_card_purchase["Purchase"]["Id"], "Purchase", attachments)
+                QBOConnector.post_attachments(created_credit_card_purchase['Purchase']['Id'], 'Purchase', attachments)
             except Exception as e:
                 logger.error('Attachment failed for expense group id {0} / workspace id {1} '.format(expense_group.id, expense_group.workspace_id)            
 
@@ -492,7 +492,7 @@ def create_journal_entry(expense_group, task_log):
             try:
                 expense_ids = expense_group.expenses.values_list('expense_id', flat=True)
                 attachments = FyleConnector.get_attachments(expense_ids)
-                QBOConnector.post_attachments(created_journal_entry["JournalEntry"]["Id"], "JournalEntry", attachments)
+                QBOConnector.post_attachments(created_journal_entry['JournalEntry']['Id'], 'JournalEntry', attachments)
 
             except Exception as e:
                 logger.error('Attachment failed for expense group id {0} / workspace id {1} '.format(expense_group.id, expense_group.workspace_id)            
