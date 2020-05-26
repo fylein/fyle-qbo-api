@@ -335,3 +335,27 @@ class QBOConnector:
         journal_entry_payload = self.__construct_journal_entry(journal_entry, journal_entry_lineitems)
         created_journal_entry = self.connection.journal_entries.post(journal_entry_payload)
         return created_journal_entry
+
+    def load_attachments(self, ref_id: str, ref_type: str, attachments) -> List:
+        """
+        Link attachments to objects Quickbooks
+        :param prep_id: prep id for export
+        :param ref_id: object id
+        :param ref_type: type of object
+        :return: True for success, False for failure
+        """
+
+        logger.info('Loading attachments to QBO')
+
+        if len(attachments):
+            responses = []
+            for attachment in attachments:
+                response = self.attachments.post(
+                    ref_id=ref_id,
+                    ref_type=ref_type,
+                    content=attachment['content'],
+                    file_name=attachment['filename']
+                )
+                responses.append(response)
+            return responses
+        return []
