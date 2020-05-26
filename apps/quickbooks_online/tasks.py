@@ -24,6 +24,55 @@ from .utils import QBOConnector
 logger = logging.getLogger(__name__)
 
 
+def get_expense_id_attachments_group(workspace_id: int, expense_ids):
+    """
+    Extract attachments from Fyle
+    :param expense_ids: List of Expense Ids
+    :return: List of attachments keyed by their expense_ids
+    """
+    
+    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+    fyle_connector = FyleConnector(fyle_credentials.refresh_token)
+    fyle_sdk_connection = fyle_connector.connection
+
+    #self.logger.info('Extracting attachments from Fyle')
+
+    attachments = []
+    if expense_ids:
+        for expense_id in expense_ids:
+            attachment = fyle_sdk_connection.Expenses.get_attachments(expense_id)
+            if attachment['data']:
+                attachment = attachment['data'][0]
+                attachment['expense_id'] = expense_id
+                attachments.append(attachment)
+        return attachments
+
+    return []
+
+def load_attachments(connection, ref_id: str, ref_type: str, attachments) -> List:
+        """
+        Link attachments to objects Quickbooks
+        :param prep_id: prep id for export
+        :param ref_id: object id
+        :param ref_type: type of object
+        :return: True for success, False for failure
+        """
+
+        logger.info('Loading attachments to QBO')
+
+        if len(attachments):
+            responses = []
+            for attachment in attachments:
+                response = connection.attachments.post(
+                    ref_id=ref_id,
+                    ref_type=ref_type,
+                    content=attachment['content'],
+                    file_name=attachment['filename']
+                )
+                responses.append(response)
+            return responses
+        return []
+
 def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], user):
     """
     Schedule bills creation
@@ -83,6 +132,15 @@ def create_bill(expense_group, task_log):
             qbo_connection = QBOConnector(qbo_credentials)
 
             created_bill = qbo_connection.post_bill(bill_object, bill_lineitems_objects)
+
+            #Load Attachment
+            expense_ids = expense_group.expenses.values_list('expense_id', flat=True)
+
+            attachments = get_expense_id_attachments_group(expense_group.workspace_id, expense_ids)
+            print(created_bill)
+
+            load_attachments(qbo_connection.connection, created_bill["Bill"]["Id"], "Purchase", attachments)
+
 
             task_log.detail = created_bill
             task_log.bill = bill_object
@@ -236,6 +294,14 @@ def create_cheque(expense_group, task_log):
 
             created_cheque = qbo_connection.post_cheque(cheque_object, cheque_line_item_objects)
 
+
+            #Load Attachment
+            expense_ids = expense_group.expenses.values_list('expense_id', flat=True)
+
+            attachments = get_expense_id_attachments_group(expense_group.workspace_id, expense_ids)
+            
+            load_attachments(qbo_connection.connection, created_cheque["Purchase"]["Id"], "Purchase", attachments)
+
             task_log.detail = created_cheque
             task_log.cheque = cheque_object
             task_log.status = 'COMPLETE'
@@ -345,6 +411,14 @@ def create_credit_card_purchase(expense_group, task_log):
                 credit_card_purchase_object, credit_card_purchase_lineitems_objects
             )
 
+            #Load Attachment
+            expense_ids = expense_group.expenses.values_list('expense_id', flat=True)
+
+            attachments = get_expense_id_attachments_group(expense_group.workspace_id, expense_ids)
+            
+            load_attachments(qbo_connection.connection, created_credit_card_purchase["Purchase"]["Id"], "Purchase", attachments)
+            
+
             task_log.detail = created_credit_card_purchase
             task_log.credit_card_purchase = credit_card_purchase_object
             task_log.status = 'COMPLETE'
@@ -435,6 +509,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
             task_log.save()
 
 
+
 def create_journal_entry(expense_group, task_log):
     try:
         with transaction.atomic():
@@ -446,12 +521,22 @@ def create_journal_entry(expense_group, task_log):
                 expense_group
             )
 
+            
+
             qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
 
             qbo_connection = QBOConnector(qbo_credentials)
 
             created_journal_entry = qbo_connection.post_journal_entry(journal_entry_object,
                                                                       journal_entry_lineitems_objects)
+
+            #Load Attachment
+            expense_ids = expense_group.expenses.values_list('expense_id', flat=True)
+
+            attachments = get_expense_id_attachments_group(expense_group.workspace_id, expense_ids)
+            
+            load_attachments(qbo_connection.connection, created_journal_entry["JournalEntry"]["Id"], "JournalEntry", attachments)
+            
 
             task_log.detail = created_journal_entry
             task_log.journal_entry = journal_entry_object

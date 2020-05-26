@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Django Settings
-export SECRET_KEY=YOUR DJANGO SECRET KEY
+export SECRET_KEY=/home/kali/fyle/fyle-qbo-api/setup_template.sh
 export ALLOWED_HOSTS=HOSTS SEPARATED BY COMMAS
 export DEBUG=True
 

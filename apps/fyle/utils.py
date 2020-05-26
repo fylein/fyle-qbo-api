@@ -62,3 +62,19 @@ class FyleConnector:
         Get projects from fyle
         """
         return self.connection.Projects.get(active_only=active_only)['data']
+
+    def get_attachments(self, expense_ids: List[str]):
+        """
+        Get attachments against expense_ids
+        """
+        attachments = []
+        if expense_ids:
+            for expense_id in expense_ids:
+                attachment = self.Expenses.get_attachments(expense_id)
+                if attachment['data']:
+                    attachment = attachment['data'][0]
+                    attachment['expense_id'] = expense_id
+                    attachments.append(attachment)
+            return attachments
+
+        return []
