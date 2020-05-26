@@ -1,7 +1,11 @@
-from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.views import status
 from rest_framework import generics
+
+from qbosdk.exceptions import WrongParamsError
+
+from fyle_accounting_mappings.models import DestinationAttribute
+from fyle_accounting_mappings.serializers import DestinationAttributeSerializer
 
 from fyle_qbo_api.utils import assert_valid
 
@@ -17,25 +21,30 @@ from .models import Bill, Cheque, CreditCardPurchase, JournalEntry
 from .serializers import BillSerializer, ChequeSerializer, CreditCardPurchaseSerializer, JournalEntrySerializer
 
 
-class VendorView(viewsets.ViewSet):
+class VendorView(generics.ListCreateAPIView):
     """
     Vendor view
     """
+    serializer_class = DestinationAttributeSerializer
+    pagination_class = None
 
-    def get_vendors(self, request, **kwargs):
+    def get_queryset(self):
+        return DestinationAttribute.objects.filter(
+            attribute_type='VENDOR', workspace_id=self.kwargs['workspace_id']).order_by('value')
+
+    def post(self, request, *args, **kwargs):
         """
         Get vendors from QBO
         """
         try:
-            qbo_credentials = QBOCredential.objects.get(
-                workspace_id=kwargs['workspace_id'])
+            qbo_credentials = QBOCredential.objects.get(workspace_id=kwargs['workspace_id'])
 
-            qbo_connector = QBOConnector(qbo_credentials)
+            qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
-            vendors = qbo_connector.get_vendors()
+            vendors = qbo_connector.sync_vendors()
 
             return Response(
-                data=vendors,
+                data=self.serializer_class(vendors, many=True).data,
                 status=status.HTTP_200_OK
             )
         except QBOCredential.DoesNotExist:
@@ -47,25 +56,30 @@ class VendorView(viewsets.ViewSet):
             )
 
 
-class EmployeeView(viewsets.ViewSet):
+class EmployeeView(generics.ListCreateAPIView):
     """
     Employee view
     """
+    serializer_class = DestinationAttributeSerializer
+    pagination_class = None
 
-    def get_employees(self, request, **kwargs):
+    def get_queryset(self):
+        return DestinationAttribute.objects.filter(
+            attribute_type='EMPLOYEE', workspace_id=self.kwargs['workspace_id']).order_by('value')
+
+    def post(self, request, *args, **kwargs):
         """
         Get employees from QBO
         """
         try:
-            qbo_credentials = QBOCredential.objects.get(
-                workspace_id=kwargs['workspace_id'])
+            qbo_credentials = QBOCredential.objects.get(workspace_id=kwargs['workspace_id'])
 
-            qbo_connector = QBOConnector(qbo_credentials)
+            qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
-            employees = qbo_connector.get_employees()
+            employees = qbo_connector.sync_employees()
 
             return Response(
-                data=employees,
+                data=self.serializer_class(employees, many=True).data,
                 status=status.HTTP_200_OK
             )
         except QBOCredential.DoesNotExist:
@@ -77,25 +91,30 @@ class EmployeeView(viewsets.ViewSet):
             )
 
 
-class AccountView(viewsets.ViewSet):
+class AccountView(generics.ListCreateAPIView):
     """
     Account view
     """
+    serializer_class = DestinationAttributeSerializer
+    pagination_class = None
 
-    def get_accounts(self, request, **kwargs):
+    def get_queryset(self):
+        return DestinationAttribute.objects.filter(
+            attribute_type='ACCOUNT', workspace_id=self.kwargs['workspace_id']).order_by('value')
+
+    def post(self, request, *args, **kwargs):
         """
         Get accounts from QBO
         """
         try:
-            qbo_credentials = QBOCredential.objects.get(
-                workspace_id=kwargs['workspace_id'])
+            qbo_credentials = QBOCredential.objects.get(workspace_id=kwargs['workspace_id'])
 
-            qbo_connector = QBOConnector(qbo_credentials)
+            qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
-            accounts = qbo_connector.get_accounts()
+            accounts = qbo_connector.sync_accounts(account_type='Expense')
 
             return Response(
-                data=accounts,
+                data=self.serializer_class(accounts, many=True).data,
                 status=status.HTTP_200_OK
             )
         except QBOCredential.DoesNotExist:
@@ -107,25 +126,136 @@ class AccountView(viewsets.ViewSet):
             )
 
 
-class ClassView(viewsets.ViewSet):
+class CreditCardAccountView(generics.ListCreateAPIView):
+    """
+    Account view
+    """
+    serializer_class = DestinationAttributeSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return DestinationAttribute.objects.filter(
+            attribute_type='CREDIT_CARD_ACCOUNT', workspace_id=self.kwargs['workspace_id']).order_by('value')
+
+    def post(self, request, *args, **kwargs):
+        """
+        Get accounts from QBO
+        """
+        try:
+            qbo_credentials = QBOCredential.objects.get(workspace_id=kwargs['workspace_id'])
+
+            qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
+
+            accounts = qbo_connector.sync_accounts(account_type='Credit Card')
+
+            return Response(
+                data=self.serializer_class(accounts, many=True).data,
+                status=status.HTTP_200_OK
+            )
+        except QBOCredential.DoesNotExist:
+            return Response(
+                data={
+                    'message': 'QBO credentials not found in workspace'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class BankAccountView(generics.ListCreateAPIView):
+    """
+    Account view
+    """
+    serializer_class = DestinationAttributeSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return DestinationAttribute.objects.filter(
+            attribute_type='BANK_ACCOUNT', workspace_id=self.kwargs['workspace_id']).order_by('value')
+
+    def post(self, request, *args, **kwargs):
+        """
+        Get accounts from QBO
+        """
+        try:
+            qbo_credentials = QBOCredential.objects.get(workspace_id=kwargs['workspace_id'])
+
+            qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
+
+            accounts = qbo_connector.sync_accounts(account_type='Bank')
+
+            return Response(
+                data=self.serializer_class(accounts, many=True).data,
+                status=status.HTTP_200_OK
+            )
+        except QBOCredential.DoesNotExist:
+            return Response(
+                data={
+                    'message': 'QBO credentials not found in workspace'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class AccountsPayableView(generics.ListCreateAPIView):
+    """
+    Account view
+    """
+    serializer_class = DestinationAttributeSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return DestinationAttribute.objects.filter(
+            attribute_type='ACCOUNTS_PAYABLE', workspace_id=self.kwargs['workspace_id']).order_by('value')
+
+    def post(self, request, *args, **kwargs):
+        """
+        Get accounts from QBO
+        """
+        try:
+            qbo_credentials = QBOCredential.objects.get(workspace_id=kwargs['workspace_id'])
+
+            qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
+
+            accounts = qbo_connector.sync_accounts(account_type='Accounts Payable')
+
+            return Response(
+                data=self.serializer_class(accounts, many=True).data,
+                status=status.HTTP_200_OK
+            )
+        except QBOCredential.DoesNotExist:
+            return Response(
+                data={
+                    'message': 'QBO credentials not found in workspace'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class ClassView(generics.ListCreateAPIView):
     """
     Class view
     """
 
-    def get_classes(self, request, **kwargs):
+    serializer_class = DestinationAttributeSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return DestinationAttribute.objects.filter(
+            attribute_type='CLASS', workspace_id=self.kwargs['workspace_id']).order_by('value')
+
+    def post(self, request, *args, **kwargs):
         """
         Get classes from QBO
         """
         try:
-            qbo_credentials = QBOCredential.objects.get(
-                workspace_id=kwargs['workspace_id'])
+            qbo_credentials = QBOCredential.objects.get(workspace_id=kwargs['workspace_id'])
 
-            qbo_connector = QBOConnector(qbo_credentials)
+            qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
-            classes = qbo_connector.get_classes()
+            classes = qbo_connector.sync_classes()
 
             return Response(
-                data=classes,
+                data=self.serializer_class(classes, many=True).data,
                 status=status.HTTP_200_OK
             )
         except QBOCredential.DoesNotExist:
@@ -137,25 +267,62 @@ class ClassView(viewsets.ViewSet):
             )
 
 
-class DepartmentView(viewsets.ViewSet):
+class PreferencesView(generics.RetrieveAPIView):
+    """
+    Preferences View
+    """
+    def get(self, request, *args, **kwargs):
+        try:
+            qbo_credentials = QBOCredential.objects.get(workspace_id=kwargs['workspace_id'])
+
+            qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
+
+            preferences = qbo_connector.get_company_preference()
+
+            return Response(
+                data=preferences,
+                status=status.HTTP_200_OK
+            )
+        except QBOCredential.DoesNotExist:
+            return Response(
+                data={
+                    'message': 'QBO credentials not found in workspace'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except WrongParamsError:
+            return Response(
+                data={
+                    'message': 'Quickbooks Online connection expired'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class DepartmentView(generics.ListCreateAPIView):
     """
     Department view
     """
+    serializer_class = DestinationAttributeSerializer
+    pagination_class = None
 
-    def get_departments(self, request, **kwargs):
+    def get_queryset(self):
+        return DestinationAttribute.objects.filter(
+            attribute_type='DEPARTMENT', workspace_id=self.kwargs['workspace_id']).order_by('value')
+
+    def post(self, request, *args, **kwargs):
         """
         Get departments from QBO
         """
         try:
-            qbo_credentials = QBOCredential.objects.get(
-                workspace_id=kwargs['workspace_id'])
+            qbo_credentials = QBOCredential.objects.get(workspace_id=kwargs['workspace_id'])
 
-            qbo_connector = QBOConnector(qbo_credentials)
+            qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
-            departments = qbo_connector.get_departments()
+            departments = qbo_connector.sync_departments()
 
             return Response(
-                data=departments,
+                data=self.serializer_class(departments, many=True).data,
                 status=status.HTTP_200_OK
             )
         except QBOCredential.DoesNotExist:
@@ -167,25 +334,31 @@ class DepartmentView(viewsets.ViewSet):
             )
 
 
-class CustomerView(viewsets.ViewSet):
+class CustomerView(generics.ListCreateAPIView):
     """
     Department view
     """
 
-    def get_customers(self, request, **kwargs):
+    serializer_class = DestinationAttributeSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return DestinationAttribute.objects.filter(
+            attribute_type='CUSTOMER', workspace_id=self.kwargs['workspace_id']).order_by('value')
+
+    def post(self, request, *args, **kwargs):
         """
-        Get departments from QBO
+        Get customers from QBO
         """
         try:
-            qbo_credentials = QBOCredential.objects.get(
-                workspace_id=kwargs['workspace_id'])
+            qbo_credentials = QBOCredential.objects.get(workspace_id=kwargs['workspace_id'])
 
-            qbo_connector = QBOConnector(qbo_credentials)
+            qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
-            customers = qbo_connector.get_customers()
+            customers = qbo_connector.sync_customers()
 
             return Response(
-                data=customers,
+                data=self.serializer_class(customers, many=True).data,
                 status=status.HTTP_200_OK
             )
         except QBOCredential.DoesNotExist:
