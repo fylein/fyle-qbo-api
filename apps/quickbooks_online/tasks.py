@@ -86,8 +86,7 @@ def create_bill(expense_group, task_log):
             qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
             created_bill = qbo_connection.post_bill(bill_object, bill_lineitems_objects)
-
-            #Load Attachment
+            
             try:
                 expense_ids = expense_group.expenses.values_list('expense_id', flat=True)
                 attachments = FyleConnector.get_attachments(expense_ids)
@@ -255,8 +254,6 @@ def create_cheque(expense_group, task_log):
 
             created_cheque = qbo_connection.post_cheque(cheque_object, cheque_line_item_objects)
 
-
-            #Load Attachment
             try:
                 expense_ids = expense_group.expenses.values_list('expense_id', flat=True)
                 attachments = FyleConnector.get_attachments(expense_ids)    
@@ -372,8 +369,7 @@ def create_credit_card_purchase(expense_group, task_log):
             created_credit_card_purchase = qbo_connection.post_credit_card_purchase(
                 credit_card_purchase_object, credit_card_purchase_lineitems_objects
             )
-
-            #Load Attachment
+            
             try:
                 expense_ids = expense_group.expenses.values_list('expense_id', flat=True)
                 attachments = FyleConnector.get_attachments(expense_ids)
@@ -492,8 +488,7 @@ def create_journal_entry(expense_group, task_log):
 
             created_journal_entry = qbo_connection.post_journal_entry(journal_entry_object,
                                                                       journal_entry_lineitems_objects)
-
-            #Load Attachment
+            
             try:
                 expense_ids = expense_group.expenses.values_list('expense_id', flat=True)
                 attachments = FyleConnector.get_attachments(expense_ids)
