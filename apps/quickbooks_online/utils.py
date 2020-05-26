@@ -336,7 +336,14 @@ class QBOConnector:
         created_journal_entry = self.connection.journal_entries.post(journal_entry_payload)
         return created_journal_entry
 
-    def load_attachments(self, ref_id: str, ref_type: str, attachments) -> List:
+    def get_company_preference(self):
+        """
+        Get QBO company preferences
+        :return:
+        """
+        return self.connection.preferences.get()
+        
+    def post_attachments(self, ref_id: str, ref_type: str, attachments) -> List:
         """
         Link attachments to objects Quickbooks
         :param prep_id: prep id for export
@@ -345,12 +352,10 @@ class QBOConnector:
         :return: True for success, False for failure
         """
 
-        logger.info('Loading attachments to QBO')
-
         if len(attachments):
             responses = []
             for attachment in attachments:
-                response = self.attachments.post(
+                response = self.connection.attachments.post(
                     ref_id=ref_id,
                     ref_type=ref_type,
                     content=attachment['content'],
