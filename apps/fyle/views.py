@@ -19,7 +19,7 @@ class ExpenseGroupView(generics.ListCreateAPIView):
     List Fyle Expenses
     """
     serializer_class = ExpenseGroupSerializer
-    
+
     def get_queryset(self):
         state = self.request.query_params.get('state', 'ALL')
         general_settings_queryset = WorkspaceGeneralSettings.objects.all()

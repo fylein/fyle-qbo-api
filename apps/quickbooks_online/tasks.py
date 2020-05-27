@@ -473,6 +473,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
             task_log.task_id = created_job['id']
             task_log.save()
 
+
 def create_journal_entry(expense_group, task_log):
     try:
         with transaction.atomic():
