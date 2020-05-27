@@ -38,7 +38,7 @@ def load_attachments(qbo_connection: QBOConnector, ref_id: str, ref_type: str, e
     try:
         fyle_credentials = FyleCredential.objects.get(workspace_id=expense_group.workspace_id)
         expense_ids = expense_group.expenses.values_list('expense_id', flat=True)
-        fyle_connector = FyleConnector(fyle_credentials, expense_group.workspace_id)
+        fyle_connector = FyleConnector(fyle_credentials.refresh_token, expense_group.workspace_id)
         attachments = fyle_connector.get_attachments(expense_ids)
         qbo_connection.post_attachments(ref_id, ref_type, attachments)
     except Exception:
