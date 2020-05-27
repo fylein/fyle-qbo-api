@@ -134,7 +134,7 @@ class FyleConnector:
         attachments = []
         if expense_ids:
             for expense_id in expense_ids:
-                attachment = self.Expenses.get_attachments(expense_id)
+                attachment = self.connection.Expenses.get_attachments(expense_id)
                 if attachment['data']:
                     attachment = attachment['data'][0]
                     attachment['expense_id'] = expense_id
