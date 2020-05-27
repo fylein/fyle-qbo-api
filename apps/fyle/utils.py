@@ -126,3 +126,20 @@ class FyleConnector:
         project_attributes = ExpenseAttribute.bulk_upsert_expense_attributes(project_attributes, self.workspace_id)
 
         return project_attributes
+
+    def get_attachments(self, expense_ids: List[str]):
+        """
+        Get attachments against expense_ids
+        """
+        attachments = []
+        if expense_ids:
+            for expense_id in expense_ids:
+                attachment = self.connection.Expenses.get_attachments(expense_id)
+                if attachment['data']:
+                    attachment = attachment['data'][0]
+                    attachment['expense_id'] = expense_id
+                    attachments.append(attachment)
+            return attachments
+
+        return []
+

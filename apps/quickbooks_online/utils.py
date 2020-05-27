@@ -444,3 +444,26 @@ class QBOConnector:
         :return:
         """
         return self.connection.preferences.get()
+        
+    def post_attachments(self, ref_id: str, ref_type: str, attachments: List[Dict]) -> List:
+        """
+        Link attachments to objects Quickbooks
+        :param prep_id: prep id for export
+        :param ref_id: object id
+        :param ref_type: type of object
+        :param attachments: attachment[dict()]
+        :return: True for success, False for failure
+        """
+
+        if len(attachments):
+            responses = []
+            for attachment in attachments:
+                response = self.connection.attachments.post(
+                    ref_id=ref_id,
+                    ref_type=ref_type,
+                    content=attachment['content'],
+                    file_name=attachment['filename']
+                )
+                responses.append(response)
+            return responses
+        return []

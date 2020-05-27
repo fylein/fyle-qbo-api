@@ -27,6 +27,28 @@ from .utils import QBOConnector
 logger = logging.getLogger(__name__)
 
 
+def load_attachments(qbo_connection: QBOConnector, ref_id: str, ref_type: str, expense_group: ExpenseGroup):
+    """
+    Get attachments from fyle
+    :param qbo_connection: QBO Connection
+    :param ref_id: object id
+    :param ref_type: type of object
+    :param expense_group: Expense group
+    """
+    try:
+        fyle_credentials = FyleCredential.objects.get(workspace_id=expense_group.workspace_id)
+        expense_ids = expense_group.expenses.values_list('expense_id', flat=True)
+        fyle_connector = FyleConnector(fyle_credentials.refresh_token, expense_group.workspace_id)
+        attachments = fyle_connector.get_attachments(expense_ids)
+        qbo_connection.post_attachments(ref_id, ref_type, attachments)
+    except Exception:
+        error = traceback.format_exc()
+        logger.error(
+            'Attachment failed for expense group id %s / workspace id %s \n Error: %s',
+            expense_group.id, expense_group.workspace_id, error
+        )
+
+
 def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], user):
     """
     Schedule bills creation
@@ -86,6 +108,8 @@ def create_bill(expense_group, task_log):
             qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
             created_bill = qbo_connection.post_bill(bill_object, bill_lineitems_objects)
+
+            load_attachments(qbo_connection, created_bill['Bill']['Id'], 'Bill', expense_group)
 
             task_log.detail = created_bill
             task_log.bill = bill_object
@@ -247,6 +271,8 @@ def create_cheque(expense_group, task_log):
 
             created_cheque = qbo_connection.post_cheque(cheque_object, cheque_line_item_objects)
 
+            load_attachments(qbo_connection, created_cheque['Purchase']['Id'], 'Purchase', expense_group)
+
             task_log.detail = created_cheque
             task_log.cheque = cheque_object
             task_log.status = 'COMPLETE'
@@ -356,6 +382,8 @@ def create_credit_card_purchase(expense_group, task_log):
                 credit_card_purchase_object, credit_card_purchase_lineitems_objects
             )
 
+            load_attachments(qbo_connection, created_credit_card_purchase['Purchase']['Id'], 'Purchase', expense_group)
+
             task_log.detail = created_credit_card_purchase
             task_log.credit_card_purchase = credit_card_purchase_object
             task_log.status = 'COMPLETE'
@@ -463,6 +491,8 @@ def create_journal_entry(expense_group, task_log):
 
             created_journal_entry = qbo_connection.post_journal_entry(journal_entry_object,
                                                                       journal_entry_lineitems_objects)
+
+            load_attachments(qbo_connection, created_journal_entry['JournalEntry']['Id'], 'JournalEntry', expense_group)
 
             task_log.detail = created_journal_entry
             task_log.journal_entry = journal_entry_object
