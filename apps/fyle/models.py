@@ -179,6 +179,15 @@ class ExpenseGroup(models.Model):
                 ).values_list(
                     'id', flat=True
                 )
+                
+                description = {
+                    'employee_email': employee_email,
+                    'claim_number': claim_number,
+                    'fund_source': fund_source,
+                }
+
+                if department_setting:
+                    description[department_setting.source_field.lower()] = department
 
                 expense_group_object, _ = ExpenseGroup.objects.update_or_create(
                     fyle_group_id='{0}-{1}'.format(claim_number, fund_source) if not department
@@ -186,12 +195,7 @@ class ExpenseGroup(models.Model):
                     workspace_id=workspace_id,
                     fund_source=fund_source,
                     defaults={
-                        'description': {
-                            'employee_email': employee_email,
-                            'claim_number': claim_number,
-                            'fund_source': fund_source,
-                            department_setting.source_field.lower(): department
-                        }
+                        'description': description
                     }
                 )
 
