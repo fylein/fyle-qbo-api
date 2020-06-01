@@ -2,10 +2,11 @@ from typing import List
 
 from django.conf import settings
 
-from fylesdk import FyleSDK
+from fylesdk import FyleSDK, UnauthorizedClientError, NotFoundClientError, InternalServerError, WrongParamsError
 
 from fyle_accounting_mappings.models import ExpenseAttribute
 
+import requests
 
 class FyleConnector:
     """
@@ -32,6 +33,44 @@ class FyleConnector:
         employee_profile = self.connection.Employees.get_my_profile()
 
         return employee_profile['data']
+
+    def get_cluster_domain(self):
+        """
+        Get cluster domain name from fyle
+        """
+        access_token = self.connection.access_token
+        print('access_token', access_token)
+        api_headers = {
+            'content-type': 'application/json',
+            'Authorization': 'Bearer {0}'.format(access_token)
+        }
+        body = {
+
+        }
+
+        # response = requests.post(
+        #     'api url to get cluser domain',
+        #     headers=api_headers,
+        #     json=body
+        # )
+
+        if response.status_code == 200:
+            return json.loads(response.text)
+
+        elif response.status_code == 401:
+            raise UnauthorizedClientError('Wrong client secret or/and refresh token', response.text)
+
+        elif response.status_code == 404:
+            raise NotFoundClientError('Client ID doesn\'t exist', response.text)
+
+        elif response.status_code == 400:
+            raise WrongParamsError('Some of the parameters were wrong', response.text)
+
+        elif response.status_code == 500:
+            raise InternalServerError('Internal server error', response.text)
+
+        # return cluser_domain['data']
+        return 'https://staging.fyle.in'
 
     def get_expenses(self, state: List[str], updated_at: List[str], fund_source: List[str]):
         """

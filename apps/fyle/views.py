@@ -309,6 +309,33 @@ class ProjectView(generics.ListCreateAPIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+class CluserDomainView(generics.RetrieveAPIView):
+    """
+    Domain view
+    """
+
+    def get(self, request, *args, **kwargs):
+        """
+        Get cluster domain from Fyle
+        """
+        try:
+            fyle_credentials = FyleCredential.objects.get(
+                workspace_id=kwargs.get('workspace_id'))
+            fyle_connector = FyleConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
+            cluser_domain = fyle_connector.get_cluster_domain()['data']
+            print('cluser_domain', cluser_domain)
+
+            return Response(
+                data=cluser_domain,
+                status=status.HTTP_200_OK
+            )
+        except FyleCredential.DoesNotExist:
+            return Response(
+                data={
+                    'message': 'Fyle credentials not found in workspace'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 class UserProfileView(generics.RetrieveAPIView):
 
