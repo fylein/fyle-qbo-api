@@ -46,7 +46,7 @@ class FyleConnector:
             'Authorization': 'Bearer {0}'.format(access_token)
         }
         body = {}
-        api_url = settings.FYLE_BASE_URL + '/oauth/cluster/'
+        api_url = '{0}/oauth/cluster/'.format(settings.FYLE_BASE_URL)
 
         response = requests.post(
             api_url,
