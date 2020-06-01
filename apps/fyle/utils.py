@@ -69,7 +69,6 @@ class FyleConnector:
         elif response.status_code == 500:
             raise InternalServerError('Internal server error', response.text)
 
-
     def get_expenses(self, state: List[str], updated_at: List[str], fund_source: List[str]):
         """
         Get expenses from fyle
