@@ -311,7 +311,7 @@ class ProjectView(generics.ListCreateAPIView):
 
 class CluserDomainView(generics.RetrieveAPIView):
     """
-    Domain view
+    CluserDomain view
     """
 
     def get(self, request, *args, **kwargs):
@@ -322,8 +322,7 @@ class CluserDomainView(generics.RetrieveAPIView):
             fyle_credentials = FyleCredential.objects.get(
                 workspace_id=kwargs.get('workspace_id'))
             fyle_connector = FyleConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
-            cluser_domain = fyle_connector.get_cluster_domain()['data']
-            print('cluser_domain', cluser_domain)
+            cluser_domain = fyle_connector.get_cluster_domain()
 
             return Response(
                 data=cluser_domain,

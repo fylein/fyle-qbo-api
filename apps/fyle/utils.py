@@ -8,6 +8,8 @@ from fyle_accounting_mappings.models import ExpenseAttribute
 
 import requests
 
+import json
+
 class FyleConnector:
     """
     Fyle utility functions
@@ -39,20 +41,18 @@ class FyleConnector:
         Get cluster domain name from fyle
         """
         access_token = self.connection.access_token
-        print('access_token', access_token)
         api_headers = {
             'content-type': 'application/json',
             'Authorization': 'Bearer {0}'.format(access_token)
         }
-        body = {
+        body = {}
+        api_url = settings.FYLE_BASE_URL + '/oauth/cluster/'
 
-        }
-
-        # response = requests.post(
-        #     'api url to get cluser domain',
-        #     headers=api_headers,
-        #     json=body
-        # )
+        response = requests.post(
+            api_url,
+            headers=api_headers,
+            json=body
+        )
 
         if response.status_code == 200:
             return json.loads(response.text)
@@ -69,8 +69,6 @@ class FyleConnector:
         elif response.status_code == 500:
             raise InternalServerError('Internal server error', response.text)
 
-        # return cluser_domain['data']
-        return 'https://staging.fyle.in'
 
     def get_expenses(self, state: List[str], updated_at: List[str], fund_source: List[str]):
         """
