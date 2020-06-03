@@ -38,7 +38,7 @@ class WorkspaceView(viewsets.ViewSet):
         Create a Workspace
         """
 
-        all_workspaces_count = W2qhnhhorkspace.objects.filter(user__user_id=request.user).count()
+        all_workspaces_count = Workspace.objects.filter(user__user_id=request.user).count()
 
         auth_tokens = AuthToken.objects.get(user__user_id=request.user)
         fyle_user = auth_utils.get_fyle_user(auth_tokens.refresh_token)
