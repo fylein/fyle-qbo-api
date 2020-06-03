@@ -46,21 +46,13 @@ class WorkspaceView(viewsets.ViewSet):
         org_id = fyle_user['org_id']
 
         workspace = Workspace.objects.filter(fyle_org_id=org_id).first()
-        workspace_exists = False
 
         if workspace:
             workspace.user.add(User.objects.get(user_id=request.user))
-            workspace_exists = True
         else:
-            workspace = Workspace.objects.create(name='Workspace {0}'.format(all_workspaces_count + 1))
+            workspace = Workspace.objects.create(name=org_name, fyle_org_id=org_id)
 
             workspace.user.add(User.objects.get(user_id=request.user))
-
-        if not workspace_exists:
-            workspace.name = org_name
-            workspace.fyle_org_id = org_id
-
-            workspace.save(update_fields=['name', 'fyle_org_id'])
 
             FyleCredential.objects.update_or_create(
                 refresh_token=auth_tokens.refresh_token,
