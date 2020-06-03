@@ -77,7 +77,6 @@ class WorkspaceView(viewsets.ViewSet):
         Get all workspaces
         """
         user = User.objects.get(user_id=request.user)
-        print('userrrrrr', user)
         workspaces = Workspace.objects.filter(user__in=[user]).all()
 
         return Response(
