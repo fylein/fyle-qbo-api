@@ -104,6 +104,7 @@ class WorkspaceView(viewsets.ViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+
 class ReadyView(viewsets.ViewSet):
     """
     Ready call
