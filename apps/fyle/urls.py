@@ -28,6 +28,4 @@ urlpatterns = [
     path('categories/', CategoryView.as_view()),
     path('cost_centers/', CostCenterView.as_view()),
     path('projects/', ProjectView.as_view())
-    # path('domain/', CluserDomainView.as_view()),
-    # path('orgs/', FyleOrgsView.as_view())
 ]

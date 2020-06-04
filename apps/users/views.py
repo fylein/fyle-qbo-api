@@ -26,6 +26,7 @@ class UserProfileView(generics.RetrieveAPIView):
             data=employee_profile,
             status=status.HTTP_200_OK
         )
+
 class CluserDomainView(generics.RetrieveAPIView):
     """
     CluserDomain view
