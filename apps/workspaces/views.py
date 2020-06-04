@@ -68,10 +68,10 @@ class WorkspaceView(viewsets.ViewSet):
         """
         user = User.objects.get(user_id=request.user)
         org_id = request.query_params.get('org_id')
-        workspace = Workspace.objects.filter(user__in=[user], fyle_org_id=org_id).first()
+        workspace = Workspace.objects.filter(user__in=[user], fyle_org_id=org_id).all()
 
         return Response(
-            data=WorkspaceSerializer(workspace).data,
+            data=WorkspaceSerializer(workspace, many=True).data,
             status=status.HTTP_200_OK
         )
 
