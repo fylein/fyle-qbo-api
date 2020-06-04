@@ -62,15 +62,16 @@ class WorkspaceView(viewsets.ViewSet):
             status=status.HTTP_200_OK
         )
 
-    def get_all(self, request):
+    def get(self, request):
         """
-        Get all workspaces
+        Get workspace
         """
         user = User.objects.get(user_id=request.user)
-        workspaces = Workspace.objects.filter(user__in=[user]).all()
+        org_id = request.query_params.get('org_id')
+        workspace = Workspace.objects.filter(user__in=[user], fyle_org_id=org_id).first()
 
         return Response(
-            data=WorkspaceSerializer(workspaces, many=True).data,
+            data=WorkspaceSerializer(workspace).data,
             status=status.HTTP_200_OK
         )
 
