@@ -15,8 +15,10 @@ Including another URLconf
 """
 from django.urls import path
 
-from .views import UserProfileView
+from .views import UserProfileView, CluserDomainView, FyleOrgsView
 
 urlpatterns = [
-    path('profile/', UserProfileView.as_view())
+    path('profile/', UserProfileView.as_view()),
+    path('domain/', CluserDomainView.as_view()),
+    path('orgs/', FyleOrgsView.as_view())
 ]
