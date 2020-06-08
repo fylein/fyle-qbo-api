@@ -5,8 +5,6 @@ from typing import Dict
 
 from fylesdk import FyleSDK
 
-from .utils import post_request, delete_request
-
 
 class FyleJobsSDK:
     """
@@ -17,6 +15,7 @@ class FyleJobsSDK:
         self.user_profile = fyle_sdk_connection.Employees.get_my_profile()['data']
         self.jobs_url = jobs_url
         self.access_token = fyle_sdk_connection.access_token
+        self.fyle_sdk_connection = fyle_sdk_connection
 
     def trigger_now(self, callback_url: str, callback_method: str,
                     job_description: str, object_id: str, payload: any = None,
@@ -53,7 +52,13 @@ class FyleJobsSDK:
             'org_user_id': self.user_profile['id']
         }
 
-        response = post_request(self.jobs_url, self.access_token, body)
+        response = self.fyle_sdk_connection.Jobs.trigger_now(
+            callback_url=callback_url,
+            callback_method=callback_method, object_id=object_id, payload=body,
+            job_description=job_description,
+            org_user_id=self.user_profile['id']
+        )
+
         return response
 
     def trigger_interval(self, callback_url: str, callback_method: str,
@@ -98,7 +103,15 @@ class FyleJobsSDK:
             'org_user_id': self.user_profile['id']
         }
 
-        response = post_request(self.jobs_url, self.access_token, body)
+        response = self.fyle_sdk_connection.Jobs.trigger_interval(
+            callback_url=callback_url,
+            callback_method=callback_method, object_id=object_id, payload=body,
+            job_description=job_description,
+            org_user_id=self.user_profile['id'],
+            start_datetime=start_datetime,
+            hours=hours
+        )
+
         return response
 
     def delete_job(self, job_id):
@@ -107,5 +120,6 @@ class FyleJobsSDK:
         :param job_id: id of the job to delete
         :return:
         """
-        response = delete_request(self.jobs_url, self.access_token, job_id)
+
+        response = self.fyle_sdk_connection.Jobs.delete_job_request(job_id)
         return response
