@@ -15,8 +15,7 @@ def schedule_sync(workspace_id: int, schedule_enabled: bool, hours: int, next_ru
     ws_settings, _ = WorkspaceSettings.objects.get_or_create(
         workspace_id=workspace_id
     )
-
-    start_datetime = datetime.strptime(next_run, '%Y-%m-%dT%H:%M:00.000Z')
+    start_datetime = datetime.strptime(next_run, '%Y-%m-%dT%H:%M:%S.000Z')
 
     if not ws_settings.schedule and schedule_enabled:
         schedule = WorkspaceSchedule.objects.create(
