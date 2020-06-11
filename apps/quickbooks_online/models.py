@@ -85,7 +85,8 @@ def get_department_id_or_none(expense_group: ExpenseGroup, lineitem: Expense = N
             elif department_setting.source_field == 'COST_CENTER':
                 source_value = lineitem.cost_center
         else:
-            source_value = expense_group.description[department_setting.source_field.lower()]
+            source_value = expense_group.description[department_setting.source_field.lower()] if \
+                department_setting.source_field.lower() in expense_group.description else None
 
         mapping: Mapping = Mapping.objects.filter(
             source_type=department_setting.source_field,
