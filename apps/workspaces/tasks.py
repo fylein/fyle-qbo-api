@@ -9,15 +9,13 @@ from apps.quickbooks_online.tasks import schedule_bills_creation, schedule_chequ
     schedule_journal_entry_creation, schedule_credit_card_purchase_creation
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import WorkspaceSettings, WorkspaceSchedule, FyleCredential, WorkspaceGeneralSettings
-from fyle_jobs import FyleJobsSDK
 
 
 def schedule_sync(workspace_id: int, schedule_enabled: bool, hours: int, next_run: str, user: str):
     ws_settings, _ = WorkspaceSettings.objects.get_or_create(
         workspace_id=workspace_id
     )
-
-    start_datetime = datetime.strptime(next_run, '%Y-%m-%dT%H:%M:00.000Z')
+    start_datetime = datetime.strptime(next_run, '%Y-%m-%dT%H:%M:%S.000Z')
 
     if not ws_settings.schedule and schedule_enabled:
         schedule = WorkspaceSchedule.objects.create(
@@ -49,9 +47,9 @@ def schedule_sync(workspace_id: int, schedule_enabled: bool, hours: int, next_ru
         fyle_connector = FyleConnector(fyle_credentials.refresh_token, workspace_id)
         fyle_sdk_connection = fyle_connector.connection
 
-        jobs = FyleJobsSDK(settings.FYLE_JOBS_URL, fyle_sdk_connection)
+        jobs = fyle_sdk_connection.Jobs
         if ws_settings.schedule.fyle_job_id:
-            jobs.delete_job(ws_settings.schedule.fyle_job_id)
+            jobs.delete(ws_settings.schedule.fyle_job_id)
 
         if schedule_enabled:
             created_job = create_schedule_job(
@@ -76,7 +74,8 @@ def create_schedule_job(workspace_id: int, schedule: WorkspaceSchedule, user: st
     fyle_connector = FyleConnector(fyle_credentials.refresh_token, workspace_id)
     fyle_sdk_connection = fyle_connector.connection
 
-    jobs = FyleJobsSDK(settings.FYLE_JOBS_URL, fyle_sdk_connection)
+    jobs = fyle_sdk_connection.Jobs
+    user_profile = fyle_sdk_connection.Employees.get_my_profile()['data']
 
     created_job = jobs.trigger_interval(
         callback_url='{0}{1}'.format(
@@ -89,7 +88,9 @@ def create_schedule_job(workspace_id: int, schedule: WorkspaceSchedule, user: st
             workspace_id, user
         ),
         start_datetime=start_datetime.strftime('%Y-%m-%d %H:%M:00.00'),
-        hours=hours
+        hours=hours,
+        org_user_id=user_profile['id'],
+        payload={}
     )
     return created_job
 

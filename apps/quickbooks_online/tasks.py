@@ -11,7 +11,6 @@ from qbosdk.exceptions import WrongParamsError
 
 from fyle_accounting_mappings.models import Mapping
 
-from fyle_jobs import FyleJobsSDK
 from fyle_qbo_api.exceptions import BulkError
 
 from apps.fyle.models import ExpenseGroup
@@ -70,7 +69,8 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], use
         workspace_id=workspace_id)
     fyle_connector = FyleConnector(fyle_credentials.refresh_token, workspace_id)
     fyle_sdk_connection = fyle_connector.connection
-    jobs = FyleJobsSDK(settings.FYLE_JOBS_URL, fyle_sdk_connection)
+    jobs = fyle_sdk_connection.Jobs
+    user_profile = fyle_sdk_connection.Employees.get_my_profile()['data']
 
     for expense_group in expense_groups:
         task_log, _ = TaskLog.objects.update_or_create(
@@ -88,7 +88,8 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], use
                 'task_log_id': task_log.id
             }, job_description='Create Bill: Workspace id - {0}, user - {1}, expense group id - {2}'.format(
                 workspace_id, user, expense_group.id
-            )
+            ),
+            org_user_id=user_profile['id']
         )
         task_log.task_id = created_job['id']
         task_log.save()
@@ -232,7 +233,8 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], u
             workspace_id=workspace_id)
         fyle_connector = FyleConnector(fyle_credentials.refresh_token)
         fyle_sdk_connection = fyle_connector.connection
-        jobs = FyleJobsSDK(settings.FYLE_JOBS_URL, fyle_sdk_connection)
+        jobs = fyle_sdk_connection.Jobs
+        user_profile = fyle_sdk_connection.Employees.get_my_profile()['data']
 
         for expense_group in expense_groups:
             task_log, _ = TaskLog.objects.update_or_create(
@@ -250,7 +252,8 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], u
                     'task_log_id': task_log.id
                 }, job_description='Create Check: Workspace id - {0}, user - {1}, expense group id - {2}'.format(
                     workspace_id, user, expense_group.id
-                )
+                ),
+                org_user_id=user_profile['id']
             )
             task_log.task_id = created_job['id']
             task_log.save()
@@ -337,7 +340,8 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
             workspace_id=workspace_id)
         fyle_connector = FyleConnector(fyle_credentials.refresh_token)
         fyle_sdk_connection = fyle_connector.connection
-        jobs = FyleJobsSDK(settings.FYLE_JOBS_URL, fyle_sdk_connection)
+        jobs = fyle_sdk_connection.Jobs
+        user_profile = fyle_sdk_connection.Employees.get_my_profile()['data']
 
         for expense_group in expense_groups:
             task_log, _ = TaskLog.objects.update_or_create(
@@ -358,7 +362,8 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
                 }, job_description=
                 'Create Credit Card Purchase: Workspace id - {0}, user - {1}, expense group id - {2}'.format(
                     workspace_id, user, expense_group.id
-                )
+                ),
+                org_user_id=user_profile['id']
             )
             task_log.task_id = created_job['id']
             task_log.save()
@@ -448,7 +453,8 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
             workspace_id=workspace_id)
         fyle_connector = FyleConnector(fyle_credentials.refresh_token)
         fyle_sdk_connection = fyle_connector.connection
-        jobs = FyleJobsSDK(settings.FYLE_JOBS_URL, fyle_sdk_connection)
+        jobs = fyle_sdk_connection.Jobs
+        user_profile = fyle_sdk_connection.Employees.get_my_profile()['data']
 
         for expense_group in expense_groups:
             task_log, _ = TaskLog.objects.update_or_create(
@@ -468,7 +474,8 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
                 },
                 job_description='Create Journal Entry: Workspace id - {0}, user - {1}, expense group id - {2}'.format(
                     workspace_id, user, expense_group.id
-                )
+                ),
+                org_user_id=user_profile['id']
             )
             task_log.task_id = created_job['id']
             task_log.save()
