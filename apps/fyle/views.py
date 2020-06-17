@@ -28,8 +28,12 @@ class ExpenseGroupView(generics.ListCreateAPIView):
         if state == 'ALL':
             return ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id']).order_by('-updated_at')
 
+        if state == 'FAILED':
+            return ExpenseGroup.objects.filter(tasklog__status='FAILED').order_by('-updated_at')
+
         elif state == 'COMPLETE':
             expense_groups = []
+
             if general_settings.reimbursable_expenses_object == 'CHECK':
                 expense_groups = ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'],
                                                              cheque__id__isnull=False).order_by('-updated_at')
