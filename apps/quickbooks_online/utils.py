@@ -444,6 +444,13 @@ class QBOConnector:
         :return:
         """
         return self.connection.preferences.get()
+
+    def get_company_info(self):
+        """
+        Get QBO company preferences
+        :return:
+        """
+        return self.connection.company_info.get()
         
     def post_attachments(self, ref_id: str, ref_type: str, attachments: List[Dict]) -> List:
         """

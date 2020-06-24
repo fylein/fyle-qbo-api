@@ -299,6 +299,38 @@ class PreferencesView(generics.RetrieveAPIView):
             )
 
 
+class CompanyInfoView(generics.RetrieveAPIView):
+    """
+    Preferences View
+    """
+    def get(self, request, *args, **kwargs):
+        try:
+            qbo_credentials = QBOCredential.objects.get(workspace_id=kwargs['workspace_id'])
+
+            qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
+
+            company_info = qbo_connector.get_company_info()
+
+            return Response(
+                data=company_info,
+                status=status.HTTP_200_OK
+            )
+        except QBOCredential.DoesNotExist:
+            return Response(
+                data={
+                    'message': 'QBO credentials not found in workspace'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except WrongParamsError:
+            return Response(
+                data={
+                    'message': 'Quickbooks Online connection expired'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
 class DepartmentView(generics.ListCreateAPIView):
     """
     Department view

@@ -17,10 +17,11 @@ from django.urls import path
 from .views import VendorView, EmployeeView, AccountView, CreditCardAccountView, ClassView, DepartmentView, BillView, \
     BillScheduleView, CustomerView, ChequeScheduleView, ChequeView, CreditCardPurchaseView, \
     CreditCardPurchaseScheduleView, JournalEntryView, JournalEntryScheduleView, BankAccountView, AccountsPayableView, \
-    PreferencesView
+    PreferencesView, CompanyInfoView
 
 urlpatterns = [
     path('preferences/', PreferencesView.as_view()),
+    path('company_info/', CompanyInfoView.as_view()),
     path('vendors/', VendorView.as_view()),
     path('employees/', EmployeeView.as_view()),
     path('accounts/', AccountView.as_view()),

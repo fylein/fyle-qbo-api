@@ -22,8 +22,6 @@ class ExpenseGroupView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         state = self.request.query_params.get('state', 'ALL')
-        general_settings_queryset = WorkspaceGeneralSettings.objects.all()
-        general_settings = general_settings_queryset.get(workspace_id=self.kwargs['workspace_id'])
 
         if state == 'ALL':
             return ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id']).order_by('-updated_at')
