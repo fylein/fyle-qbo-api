@@ -29,33 +29,12 @@ class ExpenseGroupView(generics.ListCreateAPIView):
             return ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id']).order_by('-updated_at')
 
         if state == 'FAILED':
-            return ExpenseGroup.objects.filter(tasklog__status='FAILED').order_by('-updated_at')
+            return ExpenseGroup.objects.filter(tasklog__status='FAILED',
+                                               workspace_id=self.kwargs['workspace_id']).order_by('-updated_at')
 
         elif state == 'COMPLETE':
-            expense_groups = []
-
-            if general_settings.reimbursable_expenses_object == 'CHECK':
-                expense_groups = ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'],
-                                                             cheque__id__isnull=False).order_by('-updated_at')
-            elif general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY':
-                expense_groups = ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'],
-                                                             journalentry__id__isnull=False).order_by('-updated_at')
-            elif general_settings.reimbursable_expenses_object == 'BILL':
-                expense_groups = ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'],
-                                                             bill__id__isnull=False).order_by('-updated_at')
-            if general_settings.corporate_credit_card_expenses_object == 'JOURNAL ENTRY':
-                ccc_expense_groups = ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'],
-                                                                 journalentry__id__isnull=False).order_by(
-                                                                     '-updated_at')
-                expense_groups = expense_groups | ccc_expense_groups
-
-            elif general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE':
-                ccc_expense_groups = ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id'],
-                                                                 creditcardpurchase__id__isnull=False).order_by(
-                                                                     '-updated_at')
-                expense_groups = expense_groups | ccc_expense_groups
-
-            return expense_groups
+            return ExpenseGroup.objects.filter(tasklog__status='COMPLETE',
+                                               workspace_id=self.kwargs['workspace_id']).order_by('-updated_at')
 
         elif state == 'READY':
             return ExpenseGroup.objects.filter(
