@@ -89,7 +89,7 @@ class ExpenseGroup(models.Model):
     Expense Group
     """
     id = models.AutoField(primary_key=True)
-    fyle_group_id = models.CharField(max_length=255, unique=True, help_text='fyle expense group id report id, etc')
+    fyle_group_id = models.CharField(max_length=255, help_text='fyle expense group id report id, etc')
     workspace = models.ForeignKey(Workspace, on_delete=models.PROTECT,
                                   help_text='To which workspace this expense group belongs to')
     fund_source = models.CharField(max_length=255, help_text='Expense fund source')
