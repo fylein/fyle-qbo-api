@@ -1,8 +1,10 @@
+from django.db.models import Q
+
 from rest_framework.views import status
 from rest_framework import generics
 from rest_framework.response import Response
 
-from fyle_accounting_mappings.models import ExpenseAttribute
+from fyle_accounting_mappings.models import ExpenseAttribute, MappingSetting
 from fyle_accounting_mappings.serializers import ExpenseAttributeSerializer
 
 from apps.workspaces.models import FyleCredential, WorkspaceGeneralSettings
@@ -11,7 +13,7 @@ from apps.tasks.models import TaskLog
 from .tasks import create_expense_groups, schedule_expense_group_creation
 from .utils import FyleConnector
 from .models import Expense, ExpenseGroup
-from .serializers import ExpenseGroupSerializer, ExpenseSerializer
+from .serializers import ExpenseGroupSerializer, ExpenseSerializer, ExpenseFieldSerializer
 
 
 class ExpenseGroupView(generics.ListCreateAPIView):
@@ -289,6 +291,23 @@ class ProjectView(generics.ListCreateAPIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+
+class ExpenseFieldsView(generics.ListAPIView):
+    pagination_class = None
+    serializer_class = ExpenseFieldSerializer
+
+    def get_queryset(self):
+        source_fields = MappingSetting.objects.filter(
+            workspace_id=self.kwargs['workspace_id']).values_list('source_field', flat=True).distinct()
+
+        attributes = ExpenseAttribute.objects.filter(
+            ~Q(attribute_type='EMPLOYEE') & ~Q(attribute_type='CATEGORY') & ~Q(attribute_type__in=source_fields),
+            workspace_id=self.kwargs['workspace_id']
+        ).values('attribute_type', 'display_name').distinct()
+
+        return attributes
+
 
 class UserProfileView(generics.RetrieveAPIView):
 

@@ -1,10 +1,11 @@
+from django.db.models import Q
 from rest_framework.response import Response
 from rest_framework.views import status
 from rest_framework import generics
 
 from qbosdk.exceptions import WrongParamsError
 
-from fyle_accounting_mappings.models import DestinationAttribute
+from fyle_accounting_mappings.models import DestinationAttribute, MappingSetting
 from fyle_accounting_mappings.serializers import DestinationAttributeSerializer
 
 from fyle_qbo_api.utils import assert_valid
@@ -18,7 +19,8 @@ from .tasks import create_bill, schedule_bills_creation, create_cheque, schedule
     create_credit_card_purchase, schedule_credit_card_purchase_creation, create_journal_entry,\
     schedule_journal_entry_creation
 from .models import Bill, Cheque, CreditCardPurchase, JournalEntry
-from .serializers import BillSerializer, ChequeSerializer, CreditCardPurchaseSerializer, JournalEntrySerializer
+from .serializers import BillSerializer, ChequeSerializer, CreditCardPurchaseSerializer, JournalEntrySerializer, \
+    QuickbooksFieldSerializer
 
 
 class VendorView(generics.ListCreateAPIView):
@@ -590,3 +592,22 @@ class JournalEntryScheduleView(generics.CreateAPIView):
         return Response(
             status=status.HTTP_200_OK
         )
+
+
+class QuickbooksFieldsView(generics.ListAPIView):
+    pagination_class = None
+    serializer_class = QuickbooksFieldSerializer
+
+    def get_queryset(self):
+        destination_fields = MappingSetting.objects.filter(
+            workspace_id=self.kwargs['workspace_id']).values_list('destination_field', flat=True).distinct()
+
+        attributes = DestinationAttribute.objects.filter(
+            ~Q(attribute_type='EMPLOYEE') & ~Q(attribute_type='ACCOUNT') &
+            ~Q(attribute_type='VENDOR') & ~Q(attribute_type='ACCOUNTS_PAYABLE') &
+            ~Q(attribute_type='CREDIT_CARD_ACCOUNT') & ~Q(attribute_type='BANK_ACCOUNT') &
+            ~Q(attribute_type__in=destination_fields),
+            workspace_id=self.kwargs['workspace_id']
+        ).values('attribute_type', 'display_name').distinct()
+
+        return attributes
