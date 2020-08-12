@@ -599,14 +599,10 @@ class QuickbooksFieldsView(generics.ListAPIView):
     serializer_class = QuickbooksFieldSerializer
 
     def get_queryset(self):
-        destination_fields = MappingSetting.objects.filter(
-            workspace_id=self.kwargs['workspace_id']).values_list('destination_field', flat=True).distinct()
-
         attributes = DestinationAttribute.objects.filter(
             ~Q(attribute_type='EMPLOYEE') & ~Q(attribute_type='ACCOUNT') &
             ~Q(attribute_type='VENDOR') & ~Q(attribute_type='ACCOUNTS_PAYABLE') &
-            ~Q(attribute_type='CREDIT_CARD_ACCOUNT') & ~Q(attribute_type='BANK_ACCOUNT') &
-            ~Q(attribute_type__in=destination_fields),
+            ~Q(attribute_type='CREDIT_CARD_ACCOUNT') & ~Q(attribute_type='BANK_ACCOUNT'),
             workspace_id=self.kwargs['workspace_id']
         ).values('attribute_type', 'display_name').distinct()
 

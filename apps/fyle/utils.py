@@ -10,6 +10,7 @@ import requests
 
 import json
 
+
 class FyleConnector:
     """
     Fyle utility functions
@@ -185,6 +186,32 @@ class FyleConnector:
         category_attributes = ExpenseAttribute.bulk_upsert_expense_attributes(category_attributes, self.workspace_id)
 
         return category_attributes
+
+    def sync_expense_custom_fields(self, active_only: bool):
+        """
+        Get Expense Custom Fields from Fyle (Type = Select)
+        """
+        expense_custom_fields = self.connection.ExpensesCustomFields.get(active=active_only)['data']
+
+        expense_custom_fields = filter(lambda field: field['type'] == 'SELECT', expense_custom_fields)
+
+        expense_custom_field_attributes = []
+
+        for custom_field in expense_custom_fields:
+            count = 1
+            for option in custom_field['options']:
+                expense_custom_field_attributes.append({
+                    'attribute_type': custom_field['name'].upper(),
+                    'display_name': custom_field['name'],
+                    'value': option,
+                    'source_id': 'expense_custom_field.{}.{}'.format(custom_field['name'].lower(), count)
+                })
+                count = count + 1
+
+        expense_custom_field_attributes = ExpenseAttribute.bulk_upsert_expense_attributes(
+            expense_custom_field_attributes, self.workspace_id)
+
+        return expense_custom_field_attributes
 
     def sync_cost_centers(self, active_only: bool):
         """
