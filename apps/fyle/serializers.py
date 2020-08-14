@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from fyle_accounting_mappings.models import ExpenseAttribute
-from .models import Expense, ExpenseGroup
+from .models import Expense, ExpenseGroup, ExpenseGroupSettings
 
 
 class ExpenseGroupSerializer(serializers.ModelSerializer):
@@ -10,6 +10,15 @@ class ExpenseGroupSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = ExpenseGroup
+        fields = '__all__'
+
+
+class ExpenseGroupSettingsSerializer(serializers.ModelSerializer):
+    """
+    Expense group serializer
+    """
+    class Meta:
+        model = ExpenseGroupSettings
         fields = '__all__'
 
 
