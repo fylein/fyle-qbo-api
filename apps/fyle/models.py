@@ -119,6 +119,13 @@ class ExpenseGroupSettings(models.Model):
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
 
+def _group_expenses(expenses, group_fields):
+    expense_ids = list(map(lambda expense: expense.id, expenses))
+    expenses = Expense.objects.filter(id__in=expense_ids).all()
+    expense_groups = list(expenses.values(*group_fields).annotate(total=Count('*')))
+    return expense_groups
+
+
 class ExpenseGroup(models.Model):
     """
     Expense Group
@@ -137,13 +144,7 @@ class ExpenseGroup(models.Model):
         unique_together = ('fyle_group_id', 'workspace')
 
     @staticmethod
-    def __group_expenses(expenses, group_fields):
-        expense_ids = list(map(lambda expense: expense.id, expenses))
-        expenses = Expense.objects.filter(id__in=expense_ids).all()
-        expense_groups = list(expenses.values(*group_fields).annotate(total=Count('*')))
-        return expense_groups
-
-    def create_expense_groups_by_report_id_fund_source(self, expense_objects: List[Expense], workspace_id):
+    def create_expense_groups_by_report_id_fund_source(expense_objects: List[Expense], workspace_id):
         """
         Group expense by report_id and fund_source
         """
@@ -151,11 +152,11 @@ class ExpenseGroup(models.Model):
 
         reimbursable_expense_group_fields = expense_group_settings.reimbursable_expense_group_fields
         reimbursable_expenses = list(filter(lambda expense: expense.fund_source == 'PERSONAL', expense_objects))
-        expense_groups = self.__group_expenses(reimbursable_expenses, reimbursable_expense_group_fields)
+        expense_groups = _group_expenses(reimbursable_expenses, reimbursable_expense_group_fields)
 
         corporate_credit_card_expense_group_field = expense_group_settings.corporate_credit_card_expense_group_fields
         corporate_credit_card_expenses = list(filter(lambda expense: expense.fund_source == 'CCC', expense_objects))
-        corporate_credit_card_expense_groups = self.__group_expenses(
+        corporate_credit_card_expense_groups = _group_expenses(
             corporate_credit_card_expenses, corporate_credit_card_expense_group_field)
 
         expense_groups.extend(corporate_credit_card_expense_groups)
