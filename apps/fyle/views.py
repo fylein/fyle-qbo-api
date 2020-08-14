@@ -4,7 +4,7 @@ from rest_framework.views import status
 from rest_framework import generics
 from rest_framework.response import Response
 
-from fyle_accounting_mappings.models import ExpenseAttribute, MappingSetting
+from fyle_accounting_mappings.models import ExpenseAttribute
 from fyle_accounting_mappings.serializers import ExpenseAttributeSerializer
 
 from apps.workspaces.models import FyleCredential, WorkspaceGeneralSettings
