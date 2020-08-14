@@ -10,9 +10,9 @@ from fyle_accounting_mappings.serializers import DestinationAttributeSerializer
 
 from fyle_qbo_api.utils import assert_valid
 
-from apps.fyle.models import ExpenseGroup
+from apps.fyle.models import ExpenseGroup, ExpenseGroupSettings
 from apps.tasks.models import TaskLog
-from apps.workspaces.models import QBOCredential
+from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings
 
 from .utils import QBOConnector
 from .tasks import create_bill, schedule_bills_creation, create_cheque, schedule_cheques_creation, \
@@ -21,6 +21,7 @@ from .tasks import create_bill, schedule_bills_creation, create_cheque, schedule
 from .models import Bill, Cheque, CreditCardPurchase, JournalEntry
 from .serializers import BillSerializer, ChequeSerializer, CreditCardPurchaseSerializer, JournalEntrySerializer, \
     QuickbooksFieldSerializer
+from ..fyle.serializers import ExpenseGroupSettingsSerializer
 
 
 class VendorView(generics.ListCreateAPIView):
@@ -590,6 +591,39 @@ class JournalEntryScheduleView(generics.CreateAPIView):
             kwargs['workspace_id'], expense_group_ids, request.user)
 
         return Response(
+            status=status.HTTP_200_OK
+        )
+
+
+class DepartmentGroupUpdate(generics.CreateAPIView):
+    serializer_class = ExpenseGroupSettingsSerializer
+
+    def post(self, request, *args, **kwargs):
+        mapping_setting = MappingSetting.objects.filter(
+            destination_field='DEPARTMENT', workspace_id=kwargs['workspace_id']).first()
+        expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=kwargs['workspace_id'])
+
+        if mapping_setting:
+            general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=kwargs['workspace_id'])
+
+            if general_settings.reimbursable_expenses_object != 'JOURNAL_ENTRY':
+                expense_group_settings.reimbursable_expense_group_fields = list(
+                    set(expense_group_settings.reimbursable_expense_group_fields.append(mapping_setting.source_field))
+                )
+
+            if general_settings.corporate_credit_card_expenses_object != 'JOURNAL_ENTRY':
+                expense_group_settings.corporate_credit_card_expense_group_fields = list(
+                    set(expense_group_settings.corporate_credit_card_expense_group_fields.append(
+                        mapping_setting.source_field))
+                )
+
+            expense_group_settings.save(update_fields=[
+                'reimbursable_expense_group_fields',
+                'corporate_credit_card_expense_group_fields'
+            ])
+
+        return Response(
+            data=self.serializer_class(expense_group_settings).data,
             status=status.HTTP_200_OK
         )
 

@@ -2,6 +2,15 @@
 rollback;
 begin;
 
+update workspaces_workspacegeneralsettings
+set corporate_credit_card_expenses_object = 'JOURNAL ENTRY'
+where corporate_credit_card_expenses_object = 'JOURNAL_ENTRY';
+
+
+update workspaces_workspacegeneralsettings
+set reimbursable_expenses_object = 'JOURNAL ENTRY'
+where reimbursable_expenses_object = 'JOURNAL_ENTRY';
+
 insert into fyle_expensegroupsettings(
     reimbursable_expense_group_fields,
     corporate_credit_card_expense_group_fields,
