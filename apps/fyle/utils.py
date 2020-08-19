@@ -201,7 +201,7 @@ class FyleConnector:
             count = 1
             for option in custom_field['options']:
                 expense_custom_field_attributes.append({
-                    'attribute_type': custom_field['name'].upper(),
+                    'attribute_type': custom_field['name'].upper().replace(' ', '_'),
                     'display_name': custom_field['name'],
                     'value': option,
                     'source_id': 'expense_custom_field.{}.{}'.format(custom_field['name'].lower(), count)

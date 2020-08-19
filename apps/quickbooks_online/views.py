@@ -607,12 +607,12 @@ class DepartmentGroupUpdate(generics.CreateAPIView):
             general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=kwargs['workspace_id'])
 
             reimbursable_settings = expense_group_settings.reimbursable_expense_group_fields
-            if general_settings.reimbursable_expenses_object != 'JOURNAL_ENTRY':
+            if general_settings.reimbursable_expenses_object != 'JOURNAL ENTRY':
                 reimbursable_settings.append(mapping_setting.source_field)
                 expense_group_settings.reimbursable_expense_group_fields = list(set(reimbursable_settings))
 
             corporate_credit_card_settings = list(expense_group_settings.corporate_credit_card_expense_group_fields)
-            if general_settings.corporate_credit_card_expenses_object != 'JOURNAL_ENTRY':
+            if general_settings.corporate_credit_card_expenses_object != 'JOURNAL ENTRY':
                 corporate_credit_card_settings.append(mapping_setting.source_field)
                 expense_group_settings.corporate_credit_card_expense_group_fields = list(
                     set(corporate_credit_card_settings)

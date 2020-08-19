@@ -5,11 +5,20 @@ from typing import List, Dict
 
 from django.db import models
 from django.contrib.postgres.fields import JSONField, ArrayField
+from django.contrib.postgres.fields.jsonb import KeyTextTransform
+from django.contrib.postgres.aggregates import ArrayAgg
+
 from django.db.models import Count
 
-from fyle_accounting_mappings.models import MappingSetting
+from fyle_accounting_mappings.models import MappingSetting, ExpenseAttribute
 
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
+
+ALLOWED_FIELDS = [
+    'employee_email', 'report_id', 'claim_number',
+    'fund_source', 'vendor', 'category', 'project', 'cost_center',
+    'rp_created_at', 'approved_at', 'spent_at'
+]
 
 
 class Expense(models.Model):
@@ -43,15 +52,26 @@ class Expense(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
     fund_source = models.CharField(max_length=255, help_text='Expense fund source')
+    rp_created_at = models.DateTimeField(help_text='Report approved at', null=True)
+    custom_properties = JSONField(null=True)
 
     @staticmethod
-    def create_expense_objects(expenses: List[Dict]):
+    def create_expense_objects(expenses: List[Dict], custom_properties: List[ExpenseAttribute]):
         """
         Bulk create expense objects
         """
         expense_objects = []
 
+        custom_property_keys = list(set([prop.display_name.lower() for prop in custom_properties]))
+
         for expense in expenses:
+            expense_custom_properties = {}
+
+            if custom_property_keys and expense['custom_properties']:
+                for prop in expense['custom_properties']:
+                    if prop['name'].lower() in custom_property_keys:
+                        expense_custom_properties[prop['name']] = prop['value']
+
             expense_object, _ = Expense.objects.update_or_create(
                 expense_id=expense['id'],
                 defaults={
@@ -77,7 +97,9 @@ class Expense(models.Model):
                     'approved_at': expense['approved_at'],
                     'expense_created_at': expense['created_at'],
                     'expense_updated_at': expense['updated_at'],
-                    'fund_source': expense['fund_source']
+                    'fund_source': expense['fund_source'],
+                    'rp_created_at': expense['report_submitted_at'],
+                    'custom_properties': expense_custom_properties
                 }
             )
             expense_objects.append(expense_object)
@@ -97,6 +119,7 @@ class ExpenseGroupSettings(models.Model):
     """
     ExpenseGroupCustomizationSettings
     """
+    id = models.AutoField(primary_key=True)
     reimbursable_expense_group_fields = ArrayField(
         base_field=models.CharField(max_length=100), default=get_default_expense_group_fields,
         help_text='list of fields reimbursable expense grouped by'
@@ -119,10 +142,19 @@ class ExpenseGroupSettings(models.Model):
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
 
-def _group_expenses(expenses, group_fields):
+def _group_expenses(expenses, group_fields, workspace_id):
     expense_ids = list(map(lambda expense: expense.id, expenses))
     expenses = Expense.objects.filter(id__in=expense_ids).all()
-    expense_groups = list(expenses.values(*group_fields).annotate(total=Count('*')))
+
+    custom_fields = {}
+
+    for field in group_fields:
+        if field not in ALLOWED_FIELDS:
+            group_fields.pop(group_fields.index(field))
+            field = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type=field).first()
+            custom_fields[field.attribute_type.lower()] = KeyTextTransform(field.display_name, 'custom_properties')
+    expense_groups = list(expenses.values(*group_fields, **custom_fields).annotate(
+        total=Count('*'), expense_ids=ArrayAgg('id')))
     return expense_groups
 
 
@@ -152,26 +184,28 @@ class ExpenseGroup(models.Model):
 
         reimbursable_expense_group_fields = expense_group_settings.reimbursable_expense_group_fields
         reimbursable_expenses = list(filter(lambda expense: expense.fund_source == 'PERSONAL', expense_objects))
-        expense_groups = _group_expenses(reimbursable_expenses, reimbursable_expense_group_fields)
+        expense_groups = _group_expenses(reimbursable_expenses, reimbursable_expense_group_fields, workspace_id)
 
         corporate_credit_card_expense_group_field = expense_group_settings.corporate_credit_card_expense_group_fields
         corporate_credit_card_expenses = list(filter(lambda expense: expense.fund_source == 'CCC', expense_objects))
         corporate_credit_card_expense_groups = _group_expenses(
-            corporate_credit_card_expenses, corporate_credit_card_expense_group_field)
+            corporate_credit_card_expenses, corporate_credit_card_expense_group_field, workspace_id)
 
         expense_groups.extend(corporate_credit_card_expense_groups)
 
         expense_group_objects = []
 
         for expense_group in expense_groups:
-            expense_group.pop('total')
+            expense_ids = expense_group['expense_ids']
 
-            expense_ids = Expense.objects.filter(**expense_group).values_list('id', flat=True)
+            expense_group.pop('total')
+            expense_group.pop('expense_ids')
 
             group_id: str = ''
 
             for key in expense_group.keys():
-                group_id = group_id + expense_group[key]
+                if expense_group[key]:
+                    group_id = group_id + expense_group[key]
 
             expense_group_object, _ = ExpenseGroup.objects.update_or_create(
                 fyle_group_id=group_id,

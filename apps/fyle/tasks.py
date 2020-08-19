@@ -102,7 +102,9 @@ def async_create_expense_groups(workspace_id: int, state: List[str], fund_source
                 fund_source=fund_source
             )
 
-            expense_objects = Expense.create_expense_objects(expenses)
+            custom_fields = fyle_connector.sync_expense_custom_fields(active_only=True)
+
+            expense_objects = Expense.create_expense_objects(expenses, custom_fields)
 
             expense_group_objects = ExpenseGroup.create_expense_groups_by_report_id_fund_source(
                 expense_objects, workspace_id
