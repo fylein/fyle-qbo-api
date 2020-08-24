@@ -13,7 +13,7 @@ class BulkError(Exception):
     """
 
     def __init__(self, msg, response=None):
-        super(BulkError, self).__init__(msg)
+        super().__init__(msg)
         self.message = msg
         self.response = response
 
