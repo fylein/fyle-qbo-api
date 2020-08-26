@@ -1,18 +1,18 @@
 """
 Fyle Models
 """
+import dateutil.parser
+from datetime import datetime
 from typing import List, Dict
 
-from django.db import models
+from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.fields import JSONField, ArrayField
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
-from django.contrib.postgres.aggregates import ArrayAgg
-
+from django.db import models
 from django.db.models import Count
 
-from fyle_accounting_mappings.models import MappingSetting, ExpenseAttribute
-
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
+from fyle_accounting_mappings.models import MappingSetting, ExpenseAttribute
 
 ALLOWED_FIELDS = [
     'employee_email', 'report_id', 'claim_number',
@@ -26,6 +26,12 @@ ALLOWED_FORM_INPUT = {
     'expense_states': ['PAYMENT_PROCESSING', 'PAYMENT PENDING', 'PAID'],
     'export_date_type': ['current_date', 'approved_at', 'spent_at', 'rp_created_at']
 }
+
+
+def _format_date(date_string: str) -> str:
+    if date_string:
+        date_string = dateutil.parser.parse(date_string).strftime('%Y-%m-%dT00:00:00.000Z')
+    return date_string
 
 
 class Expense(models.Model):
@@ -100,12 +106,12 @@ class Expense(models.Model):
                     'cost_center': expense['cost_center_name'],
                     'purpose': expense['purpose'],
                     'report_id': expense['report_id'],
-                    'spent_at': expense['spent_at'],
-                    'approved_at': expense['approved_at'],
+                    'spent_at': _format_date(expense['spent_at']),
+                    'approved_at': _format_date(expense['approved_at']),
                     'expense_created_at': expense['created_at'],
                     'expense_updated_at': expense['updated_at'],
                     'fund_source': expense['fund_source'],
-                    'rp_created_at': expense['report_submitted_at'],
+                    'rp_created_at': _format_date(expense['report_submitted_at']),
                     'custom_properties': expense_custom_properties
                 }
             )
@@ -201,10 +207,6 @@ class ExpenseGroupSettings(models.Model):
         if expense_group_settings['export_date_type'] != 'current_date':
             corporate_credit_card_expenses_grouped_by.append(expense_group_settings['export_date_type'])
 
-        for field in ALLOWED_FORM_INPUT['export_date_type']:
-            if field in reimbursable_grouped_by:
-                reimbursable_grouped_by.remove(field)
-
         return ExpenseGroupSettings.objects.update_or_create(
             workspace_id=workspace_id,
             defaults={
@@ -279,8 +281,16 @@ class ExpenseGroup(models.Model):
             group_id: str = ''
 
             for key in expense_group.keys():
-                if expense_group[key]:
-                    group_id = group_id + expense_group[key]
+                if key not in ALLOWED_FORM_INPUT['export_date_type']:
+                    if expense_group[key]:
+                        group_id = group_id + expense_group[key]
+
+            for key in expense_group:
+                if key in ALLOWED_FORM_INPUT['export_date_type']:
+                    expense_group[key] = expense_group[key].strftime('%Y-%m-%d')
+
+            for key in expense_group:
+                group_id = '{0}-{1}'.format(group_id, expense_group[key])
 
             expense_group_object, _ = ExpenseGroup.objects.update_or_create(
                 fyle_group_id=group_id,
