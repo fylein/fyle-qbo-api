@@ -13,6 +13,7 @@ from fyle_qbo_api.utils import assert_valid
 from apps.fyle.models import ExpenseGroup, ExpenseGroupSettings
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings
+from apps.fyle.serializers import ExpenseGroupSettingsSerializer
 
 from .utils import QBOConnector
 from .tasks import create_bill, schedule_bills_creation, create_cheque, schedule_cheques_creation, \
@@ -21,7 +22,6 @@ from .tasks import create_bill, schedule_bills_creation, create_cheque, schedule
 from .models import Bill, Cheque, CreditCardPurchase, JournalEntry
 from .serializers import BillSerializer, ChequeSerializer, CreditCardPurchaseSerializer, JournalEntrySerializer, \
     QuickbooksFieldSerializer
-from ..fyle.serializers import ExpenseGroupSettingsSerializer
 
 
 class VendorView(generics.ListCreateAPIView):
@@ -410,6 +410,8 @@ class BillView(generics.ListCreateAPIView):
     Create Bill
     """
     serializer_class = BillSerializer
+    authentication_classes = []
+    permission_classes = []
 
     def get_queryset(self):
         return Bill.objects.filter(expense_group__workspace_id=self.kwargs['workspace_id']).order_by('-updated_at')
@@ -456,6 +458,8 @@ class ChequeView(generics.ListCreateAPIView):
     Create Cheque
     """
     serializer_class = ChequeSerializer
+    authentication_classes = []
+    permission_classes = []
 
     def get_queryset(self):
         return Cheque.objects.filter(expense_group__workspace_id=self.kwargs['workspace_id']).order_by(
@@ -504,6 +508,8 @@ class CreditCardPurchaseView(generics.ListCreateAPIView):
     Create CreditCardPurchase
     """
     serializer_class = CreditCardPurchaseSerializer
+    authentication_classes = []
+    permission_classes = []
 
     def get_queryset(self):
         return CreditCardPurchase.objects.filter(
@@ -552,6 +558,8 @@ class JournalEntryView(generics.ListCreateAPIView):
     Create JournalEntry
     """
     serializer_class = JournalEntrySerializer
+    authentication_classes = []
+    permission_classes = []
 
     def get_queryset(self):
         return JournalEntry.objects.filter(

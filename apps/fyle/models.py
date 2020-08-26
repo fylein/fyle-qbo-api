@@ -21,6 +21,13 @@ ALLOWED_FIELDS = [
 ]
 
 
+ALLOWED_FORM_INPUT = {
+    'group_expenses_by': ['settlement_id', 'claim_number', 'report_id', 'category', 'vendor'],
+    'expense_states': ['PAYMENT_PROCESSING', 'PAYMENT PENDING', 'PAID'],
+    'export_date_type': ['current_date', 'approved_at', 'spent_at', 'rp_created_at']
+}
+
+
 class Expense(models.Model):
     """
     Expense
@@ -102,7 +109,8 @@ class Expense(models.Model):
                     'custom_properties': expense_custom_properties
                 }
             )
-            expense_objects.append(expense_object)
+            if not ExpenseGroup.objects.filter(expenses__id=expense_object.id).first():
+                expense_objects.append(expense_object)
 
         return expense_objects
 
@@ -134,12 +142,78 @@ class ExpenseGroupSettings(models.Model):
         base_field=models.CharField(max_length=100), default=get_default_expense_states,
         help_text='list of states to fetch expenses'
     )
-    export_date = models.CharField(max_length=100, default='CURRENT_DATE', help_text='Export Date')
+    export_date_type = models.CharField(max_length=100, default='current_date', help_text='Export Date')
     workspace = models.OneToOneField(
         Workspace, on_delete=models.PROTECT, help_text='To which workspace this expense group setting belongs to'
     )
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
+
+    @staticmethod
+    def update_expense_group_settings(expense_group_settings: Dict, workspace_id: int):
+        settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
+        current_reimbursable_settings = list(settings.reimbursable_expense_group_fields)
+        current_ccc_settings = list(settings.corporate_credit_card_expense_group_fields)
+
+        reimbursable_grouped_by = []
+        corporate_credit_card_expenses_grouped_by = []
+
+        for field in current_reimbursable_settings:
+            if field in ALLOWED_FORM_INPUT['group_expenses_by']:
+                current_reimbursable_settings.remove(field)
+
+        for field in current_ccc_settings:
+            if field in ALLOWED_FORM_INPUT['group_expenses_by']:
+                current_ccc_settings.remove(field)
+
+        if 'report_id' not in current_reimbursable_settings:
+            if 'claim_number' in current_reimbursable_settings:
+                current_reimbursable_settings.remove('claim_number')
+        else:
+            current_reimbursable_settings.append('claim_number')
+
+        if 'report_id' not in current_ccc_settings:
+            if 'claim_number' in current_ccc_settings:
+                current_ccc_settings.remove('claim_number')
+        else:
+            current_ccc_settings.append('claim_number')
+
+        reimbursable_grouped_by.extend(current_reimbursable_settings)
+        corporate_credit_card_expenses_grouped_by.extend(current_ccc_settings)
+
+        reimbursable_grouped_by.extend(expense_group_settings['expenses_grouped_by'])
+        corporate_credit_card_expenses_grouped_by.extend(expense_group_settings['expenses_grouped_by'])
+
+        reimbursable_grouped_by = list(set(reimbursable_grouped_by))
+        corporate_credit_card_expenses_grouped_by = list(set(corporate_credit_card_expenses_grouped_by))
+
+        for field in ALLOWED_FORM_INPUT['export_date_type']:
+            if field in reimbursable_grouped_by:
+                reimbursable_grouped_by.remove(field)
+
+        for field in ALLOWED_FORM_INPUT['export_date_type']:
+            if field in corporate_credit_card_expenses_grouped_by:
+                corporate_credit_card_expenses_grouped_by.remove(field)
+
+        if expense_group_settings['export_date_type'] != 'current_date':
+            reimbursable_grouped_by.append(expense_group_settings['export_date_type'])
+
+        if expense_group_settings['export_date_type'] != 'current_date':
+            corporate_credit_card_expenses_grouped_by.append(expense_group_settings['export_date_type'])
+
+        for field in ALLOWED_FORM_INPUT['export_date_type']:
+            if field in reimbursable_grouped_by:
+                reimbursable_grouped_by.remove(field)
+
+        return ExpenseGroupSettings.objects.update_or_create(
+            workspace_id=workspace_id,
+            defaults={
+                'reimbursable_expense_group_fields': reimbursable_grouped_by,
+                'corporate_credit_card_expense_group_fields': corporate_credit_card_expenses_grouped_by,
+                'expense_states': expense_group_settings['expense_states'],
+                'export_date_type': expense_group_settings['export_date_type']
+            }
+        )
 
 
 def _group_expenses(expenses, group_fields, workspace_id):

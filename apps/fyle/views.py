@@ -12,8 +12,9 @@ from apps.tasks.models import TaskLog
 
 from .tasks import create_expense_groups, schedule_expense_group_creation
 from .utils import FyleConnector
-from .models import Expense, ExpenseGroup
-from .serializers import ExpenseGroupSerializer, ExpenseSerializer, ExpenseFieldSerializer
+from .models import Expense, ExpenseGroup, ExpenseGroupSettings
+from .serializers import ExpenseGroupSerializer, ExpenseSerializer, ExpenseFieldSerializer, \
+    ExpenseGroupSettingsSerializer
 
 
 class ExpenseGroupView(generics.ListCreateAPIView):
@@ -21,6 +22,8 @@ class ExpenseGroupView(generics.ListCreateAPIView):
     List Fyle Expenses
     """
     serializer_class = ExpenseGroupSerializer
+    authentication_classes = []
+    permission_classes = []
 
     def get_queryset(self):
         state = self.request.query_params.get('state', 'ALL')
@@ -49,7 +52,6 @@ class ExpenseGroupView(generics.ListCreateAPIView):
         """
         Create expense groups
         """
-        state = request.data.get('state', ['PAYMENT_PROCESSING'])
         task_log = TaskLog.objects.get(pk=request.data.get('task_log_id'))
 
         queryset = WorkspaceGeneralSettings.objects.all()
@@ -61,7 +63,6 @@ class ExpenseGroupView(generics.ListCreateAPIView):
 
         create_expense_groups(
             kwargs['workspace_id'],
-            state=state,
             fund_source=fund_source,
             task_log=task_log,
         )
@@ -112,6 +113,29 @@ class ExpenseGroupByIdView(generics.RetrieveAPIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+
+class ExpenseGroupSettingsView(generics.ListCreateAPIView):
+    """
+    Expense Group Settings View
+    """
+    serializer_class = ExpenseGroupSettingsSerializer
+
+    def get(self, request, *args, **kwargs):
+        expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=self.kwargs['workspace_id'])
+
+        return Response(
+            data=self.serializer_class(expense_group_settings).data,
+            status=status.HTTP_200_OK
+        )
+
+    def post(self, request, *args, **kwargs):
+        expense_group_settings, _ = ExpenseGroupSettings.update_expense_group_settings(
+            request.data, self.kwargs['workspace_id'])
+        return Response(
+            data=self.serializer_class(expense_group_settings).data,
+            status=status.HTTP_200_OK
+        )
 
 
 class ExpenseView(generics.RetrieveAPIView):

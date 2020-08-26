@@ -15,7 +15,7 @@ insert into fyle_expensegroupsettings(
     reimbursable_expense_group_fields,
     corporate_credit_card_expense_group_fields,
     expense_states,
-    export_date,
+    export_date_type,
     created_at,
     updated_at,
     workspace_id
@@ -35,7 +35,7 @@ insert into fyle_expensegroupsettings(
        '{"employee_email", "report_id", "claim_number", "fund_source"}'
    end as corporate_credit_card_expense_group_fields,
    '{"PAYMENT_PROCESSING"}' as expense_states,
-   'CURRENT_DATE' as export_date,
+   'current_date' as export_date_type,
    now() as created_at,
    now() as updated_at,
    w.id as workspace_id
