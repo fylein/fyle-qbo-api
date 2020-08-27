@@ -17,14 +17,14 @@ from fyle_accounting_mappings.models import MappingSetting, ExpenseAttribute
 ALLOWED_FIELDS = [
     'employee_email', 'report_id', 'claim_number',
     'fund_source', 'vendor', 'category', 'project', 'cost_center',
-    'rp_created_at', 'approved_at', 'spent_at'
+    'verified_at', 'approved_at', 'spent_at'
 ]
 
 
 ALLOWED_FORM_INPUT = {
     'group_expenses_by': ['settlement_id', 'claim_number', 'report_id', 'category', 'vendor'],
     'expense_states': ['PAYMENT_PROCESSING', 'PAYMENT PENDING', 'PAID'],
-    'export_date_type': ['current_date', 'approved_at', 'spent_at', 'rp_created_at']
+    'export_date_type': ['current_date', 'approved_at', 'spent_at', 'verified_at']
 }
 
 
@@ -65,7 +65,7 @@ class Expense(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
     fund_source = models.CharField(max_length=255, help_text='Expense fund source')
-    rp_created_at = models.DateTimeField(help_text='Report approved at', null=True)
+    verified_at = models.DateTimeField(help_text='Report verified at', null=True)
     custom_properties = JSONField(null=True)
 
     @staticmethod
@@ -111,7 +111,7 @@ class Expense(models.Model):
                     'expense_created_at': expense['created_at'],
                     'expense_updated_at': expense['updated_at'],
                     'fund_source': expense['fund_source'],
-                    'rp_created_at': _format_date(expense['report_submitted_at']),
+                    'verified_at': _format_date(expense['verified_at']),
                     'custom_properties': expense_custom_properties
                 }
             )
