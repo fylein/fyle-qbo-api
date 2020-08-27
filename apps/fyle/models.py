@@ -207,6 +207,12 @@ class ExpenseGroupSettings(models.Model):
         if expense_group_settings['export_date_type'] != 'current_date':
             corporate_credit_card_expenses_grouped_by.append(expense_group_settings['export_date_type'])
 
+        if 'claim_number' in reimbursable_grouped_by:
+            reimbursable_grouped_by.append('report_id')
+            
+        if 'claim_number' in corporate_credit_card_expenses_grouped_by:
+            corporate_credit_card_expenses_grouped_by.append('report_id')
+
         return ExpenseGroupSettings.objects.update_or_create(
             workspace_id=workspace_id,
             defaults={
