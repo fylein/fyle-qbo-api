@@ -2,7 +2,6 @@
 Fyle Models
 """
 import dateutil.parser
-from datetime import datetime
 from typing import List, Dict
 
 from django.contrib.postgres.aggregates import ArrayAgg
@@ -209,7 +208,7 @@ class ExpenseGroupSettings(models.Model):
 
         if 'claim_number' in reimbursable_grouped_by:
             reimbursable_grouped_by.append('report_id')
-            
+
         if 'claim_number' in corporate_credit_card_expenses_grouped_by:
             corporate_credit_card_expenses_grouped_by.append('report_id')
 
