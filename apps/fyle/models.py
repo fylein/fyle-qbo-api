@@ -14,7 +14,7 @@ from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from fyle_accounting_mappings.models import MappingSetting, ExpenseAttribute
 
 ALLOWED_FIELDS = [
-    'employee_email', 'report_id', 'claim_number',
+    'employee_email', 'report_id', 'claim_number', 'settlement_id',
     'fund_source', 'vendor', 'category', 'project', 'cost_center',
     'verified_at', 'approved_at', 'spent_at'
 ]
@@ -232,6 +232,7 @@ def _group_expenses(expenses, group_fields, workspace_id):
     for field in group_fields:
         if field.lower() not in ALLOWED_FIELDS:
             group_fields.pop(group_fields.index(field))
+            print(field.upper())
             field = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type=field.upper()).first()
             custom_fields[field.attribute_type.lower()] = KeyTextTransform(field.display_name, 'custom_properties')
 
