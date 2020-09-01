@@ -49,7 +49,7 @@ class Expense(models.Model):
     currency = models.CharField(max_length=5, help_text='Home Currency')
     foreign_amount = models.FloatField(null=True, help_text='Foreign Amount')
     foreign_currency = models.CharField(null=True, max_length=5, help_text='Foreign Currency')
-    settlement_id = models.CharField(max_length=255, help_text='Settlement ID')
+    settlement_id = models.CharField(max_length=255, null=True, help_text='Settlement ID')
     reimbursable = models.BooleanField(default=False, help_text='Expense reimbursable or not')
     exported = models.BooleanField(default=False, help_text='Expense exported or not')
     state = models.CharField(max_length=255, help_text='Expense state')
