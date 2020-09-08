@@ -38,7 +38,7 @@ def get_class_id_or_none(expense_group: ExpenseGroup, lineitem: Expense):
             source_value = lineitem.cost_center
         else:
             attribute = ExpenseAttribute.objects.filter(attribute_type=class_setting.source_field).first()
-            source_value = lineitem['custom_properties'][attribute.display_name]
+            source_value = lineitem.custom_properties[attribute.display_name]
 
         mapping: Mapping = Mapping.objects.filter(
             source_type=class_setting.source_field,
@@ -67,7 +67,7 @@ def get_customer_id_or_none(expense_group: ExpenseGroup, lineitem: Expense):
             source_value = lineitem.cost_center
         else:
             attribute = ExpenseAttribute.objects.filter(attribute_type=customer_setting.source_field).first()
-            source_value = lineitem['custom_properties'][attribute.display_name]
+            source_value = lineitem.custom_properties[attribute.display_name]
 
         mapping: Mapping = Mapping.objects.filter(
             source_type=customer_setting.source_field,
@@ -97,7 +97,7 @@ def get_department_id_or_none(expense_group: ExpenseGroup, lineitem: Expense = N
                 source_value = lineitem.cost_center
             else:
                 attribute = ExpenseAttribute.objects.filter(attribute_type=department_setting.source_field).first()
-                source_value = lineitem['custom_properties'][attribute.display_name]
+                source_value = lineitem.custom_properties[attribute.display_name]
         else:
             source_value = expense_group.description[department_setting.source_field.lower()] if \
                 department_setting.source_field.lower() in expense_group.description else None
