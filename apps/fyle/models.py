@@ -22,7 +22,6 @@ ALLOWED_FIELDS = [
 
 ALLOWED_FORM_INPUT = {
     'group_expenses_by': ['settlement_id', 'claim_number', 'report_id', 'category', 'vendor'],
-    'expense_states': ['PAYMENT_PROCESSING', 'PAYMENT PENDING', 'PAID'],
     'export_date_type': ['current_date', 'approved_at', 'spent_at', 'verified_at']
 }
 
@@ -202,8 +201,6 @@ class ExpenseGroupSettings(models.Model):
 
         if expense_group_settings['export_date_type'] != 'current_date':
             reimbursable_grouped_by.append(expense_group_settings['export_date_type'])
-
-        if expense_group_settings['export_date_type'] != 'current_date':
             corporate_credit_card_expenses_grouped_by.append(expense_group_settings['export_date_type'])
 
         if 'claim_number' in reimbursable_grouped_by:

@@ -17,8 +17,8 @@ def get_transaction_date(expense_group: ExpenseGroup) -> str:
         return expense_group.description['spent_at']
     elif 'approved_at' in expense_group.description and expense_group.description['approved_at']:
         return expense_group.description['approved_at']
-    elif 'verified_at' in expense_group.description and expense_group.description['approved_at']:
-        return expense_group.description['approved_at']
+    elif 'verified_at' in expense_group.description and expense_group.description['verified_at']:
+        return expense_group.description['verified_at']
 
     return datetime.now().strftime("%Y-%m-%d")
 
