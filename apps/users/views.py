@@ -8,6 +8,7 @@ from apps.fyle.utils import FyleConnector
 
 from apps.workspaces.models import FyleCredential
 
+
 class UserProfileView(generics.RetrieveAPIView):
 
     permission_classes = [IsAuthenticated]
@@ -26,6 +27,7 @@ class UserProfileView(generics.RetrieveAPIView):
             data=employee_profile,
             status=status.HTTP_200_OK
         )
+
 
 class CluserDomainView(generics.RetrieveAPIView):
     """
@@ -54,6 +56,7 @@ class CluserDomainView(generics.RetrieveAPIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
+
 
 class FyleOrgsView(generics.ListCreateAPIView):
     """

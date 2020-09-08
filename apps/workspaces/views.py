@@ -21,6 +21,7 @@ from .utils import generate_qbo_refresh_token, create_or_update_general_settings
 from .tasks import schedule_sync, run_sync_schedule
 from .serializers import WorkspaceSerializer, FyleCredentialSerializer, QBOCredentialSerializer, \
     WorkspaceSettingsSerializer, WorkSpaceGeneralSettingsSerializer
+from ..fyle.models import ExpenseGroupSettings
 
 User = get_user_model()
 auth_utils = AuthUtils()
@@ -49,6 +50,8 @@ class WorkspaceView(viewsets.ViewSet):
             workspace.user.add(User.objects.get(user_id=request.user))
         else:
             workspace = Workspace.objects.create(name=org_name, fyle_org_id=org_id)
+
+            ExpenseGroupSettings.objects.create(workspace_id=workspace.id)
 
             workspace.user.add(User.objects.get(user_id=request.user))
 

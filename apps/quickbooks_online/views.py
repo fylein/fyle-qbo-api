@@ -1,24 +1,27 @@
+from django.db.models import Q
 from rest_framework.response import Response
 from rest_framework.views import status
 from rest_framework import generics
 
 from qbosdk.exceptions import WrongParamsError
 
-from fyle_accounting_mappings.models import DestinationAttribute
+from fyle_accounting_mappings.models import DestinationAttribute, MappingSetting
 from fyle_accounting_mappings.serializers import DestinationAttributeSerializer
 
 from fyle_qbo_api.utils import assert_valid
 
-from apps.fyle.models import ExpenseGroup
+from apps.fyle.models import ExpenseGroup, ExpenseGroupSettings
 from apps.tasks.models import TaskLog
-from apps.workspaces.models import QBOCredential
+from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings
+from apps.fyle.serializers import ExpenseGroupSettingsSerializer
 
 from .utils import QBOConnector
 from .tasks import create_bill, schedule_bills_creation, create_cheque, schedule_cheques_creation, \
     create_credit_card_purchase, schedule_credit_card_purchase_creation, create_journal_entry,\
     schedule_journal_entry_creation
 from .models import Bill, Cheque, CreditCardPurchase, JournalEntry
-from .serializers import BillSerializer, ChequeSerializer, CreditCardPurchaseSerializer, JournalEntrySerializer
+from .serializers import BillSerializer, ChequeSerializer, CreditCardPurchaseSerializer, JournalEntrySerializer, \
+    QuickbooksFieldSerializer
 
 
 class VendorView(generics.ListCreateAPIView):
@@ -590,3 +593,55 @@ class JournalEntryScheduleView(generics.CreateAPIView):
         return Response(
             status=status.HTTP_200_OK
         )
+
+
+class DepartmentGroupUpdate(generics.CreateAPIView):
+    serializer_class = ExpenseGroupSettingsSerializer
+
+    def post(self, request, *args, **kwargs):
+        mapping_setting = MappingSetting.objects.filter(
+            destination_field='DEPARTMENT', workspace_id=kwargs['workspace_id']).first()
+        expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=kwargs['workspace_id'])
+
+        if mapping_setting:
+            general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=kwargs['workspace_id'])
+
+            reimbursable_settings = expense_group_settings.reimbursable_expense_group_fields
+            if general_settings.reimbursable_expenses_object != 'JOURNAL ENTRY':
+                reimbursable_settings.append(mapping_setting.source_field.lower())
+                expense_group_settings.reimbursable_expense_group_fields = list(set(reimbursable_settings))
+
+            corporate_credit_card_settings = list(expense_group_settings.corporate_credit_card_expense_group_fields)
+            if general_settings.corporate_credit_card_expenses_object != 'JOURNAL ENTRY':
+                corporate_credit_card_settings.append(mapping_setting.source_field.lower())
+                expense_group_settings.corporate_credit_card_expense_group_fields = list(
+                    set(corporate_credit_card_settings)
+                )
+
+            expense_group_settings.reimbursable_expense_group_fields = reimbursable_settings
+            expense_group_settings.corporate_credit_card_expense_group_fields = corporate_credit_card_settings
+
+            expense_group_settings.save(update_fields=[
+                'reimbursable_expense_group_fields',
+                'corporate_credit_card_expense_group_fields'
+            ])
+
+        return Response(
+            data=self.serializer_class(expense_group_settings).data,
+            status=status.HTTP_200_OK
+        )
+
+
+class QuickbooksFieldsView(generics.ListAPIView):
+    pagination_class = None
+    serializer_class = QuickbooksFieldSerializer
+
+    def get_queryset(self):
+        attributes = DestinationAttribute.objects.filter(
+            ~Q(attribute_type='EMPLOYEE') & ~Q(attribute_type='ACCOUNT') &
+            ~Q(attribute_type='VENDOR') & ~Q(attribute_type='ACCOUNTS_PAYABLE') &
+            ~Q(attribute_type='CREDIT_CARD_ACCOUNT') & ~Q(attribute_type='BANK_ACCOUNT'),
+            workspace_id=self.kwargs['workspace_id']
+        ).values('attribute_type', 'display_name').distinct()
+
+        return attributes

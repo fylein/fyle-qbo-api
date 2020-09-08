@@ -17,7 +17,7 @@ from django.urls import path
 from .views import VendorView, EmployeeView, AccountView, CreditCardAccountView, ClassView, DepartmentView, BillView, \
     BillScheduleView, CustomerView, ChequeScheduleView, ChequeView, CreditCardPurchaseView, \
     CreditCardPurchaseScheduleView, JournalEntryView, JournalEntryScheduleView, BankAccountView, AccountsPayableView, \
-    PreferencesView, CompanyInfoView
+    PreferencesView, CompanyInfoView, QuickbooksFieldsView, DepartmentGroupUpdate
 
 urlpatterns = [
     path('preferences/', PreferencesView.as_view()),
@@ -38,5 +38,7 @@ urlpatterns = [
     path('credit_card_purchases/', CreditCardPurchaseView.as_view()),
     path('credit_card_purchases/trigger/', CreditCardPurchaseScheduleView.as_view()),
     path('journal_entries/', JournalEntryView.as_view()),
-    path('journal_entries/trigger/', JournalEntryScheduleView.as_view())
+    path('journal_entries/trigger/', JournalEntryScheduleView.as_view()),
+    path('quickbooks_fields/', QuickbooksFieldsView.as_view()),
+    path('update_grouping_on_department/', DepartmentGroupUpdate.as_view())
 ]

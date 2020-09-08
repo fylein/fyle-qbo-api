@@ -8,6 +8,7 @@ from django.db import transaction
 from django.db.models import Q
 
 from qbosdk.exceptions import WrongParamsError
+from fylesdk.exceptions import FyleSDKError
 
 from fyle_accounting_mappings.models import Mapping
 
@@ -81,17 +82,22 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], use
                 'type': 'CREATING_BILL'
             }
         )
-        created_job = jobs.trigger_now(
-            callback_url='{0}{1}'.format(settings.API_URL, '/workspaces/{0}/qbo/bills/'.format(workspace_id)),
-            callback_method='POST', object_id=task_log.id, payload={
-                'expense_group_id': expense_group.id,
-                'task_log_id': task_log.id
-            }, job_description='Create Bill: Workspace id - {0}, user - {1}, expense group id - {2}'.format(
-                workspace_id, user, expense_group.id
-            ),
-            org_user_id=user_profile['id']
-        )
-        task_log.task_id = created_job['id']
+        try:
+            created_job = jobs.trigger_now(
+                callback_url='{0}{1}'.format(settings.API_URL, '/workspaces/{0}/qbo/bills/'.format(workspace_id)),
+                callback_method='POST', object_id=task_log.id, payload={
+                    'expense_group_id': expense_group.id,
+                    'task_log_id': task_log.id
+                }, job_description='Create Bill: Workspace id - {0}, user - {1}, expense group id - {2}'.format(
+                    workspace_id, user, expense_group.id
+                ),
+                org_user_id=user_profile['id']
+            )
+            task_log.task_id = created_job['id']
+        except FyleSDKError as e:
+            task_log.status = 'FATAL'
+            logger.error(e.response)
+            task_log.detail = e.response
         task_log.save()
 
 
@@ -245,17 +251,23 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], u
                     'type': 'CREATING_CHECK'
                 }
             )
-            created_job = jobs.trigger_now(
-                callback_url='{0}{1}'.format(settings.API_URL, '/workspaces/{0}/qbo/checks/'.format(workspace_id)),
-                callback_method='POST', object_id=task_log.id, payload={
-                    'expense_group_id': expense_group.id,
-                    'task_log_id': task_log.id
-                }, job_description='Create Check: Workspace id - {0}, user - {1}, expense group id - {2}'.format(
-                    workspace_id, user, expense_group.id
-                ),
-                org_user_id=user_profile['id']
-            )
-            task_log.task_id = created_job['id']
+            try:
+                created_job = jobs.trigger_now(
+                    callback_url='{0}{1}'.format(settings.API_URL, '/workspaces/{0}/qbo/checks/'.format(workspace_id)),
+                    callback_method='POST', object_id=task_log.id, payload={
+                        'expense_group_id': expense_group.id,
+                        'task_log_id': task_log.id
+                    }, job_description='Create Check: Workspace id - {0}, user - {1}, expense group id - {2}'.format(
+                        workspace_id, user, expense_group.id
+                    ),
+                    org_user_id=user_profile['id']
+                )
+                task_log.task_id = created_job['id']
+            except FyleSDKError as e:
+                task_log.status = 'FATAL'
+                logger.error(e.response)
+                task_log.detail = e.response
+
             task_log.save()
 
 
@@ -352,20 +364,27 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
                     'type': 'CREATING_CREDIT_CARD_PURCHASE'
                 }
             )
-            created_job = jobs.trigger_now(
-                callback_url='{0}{1}'.format(settings.API_URL, '/workspaces/{0}/qbo/credit_card_purchases/'.format(
-                    workspace_id
-                )),
-                callback_method='POST', object_id=task_log.id, payload={
-                    'expense_group_id': expense_group.id,
-                    'task_log_id': task_log.id
-                }, job_description=
-                'Create Credit Card Purchase: Workspace id - {0}, user - {1}, expense group id - {2}'.format(
-                    workspace_id, user, expense_group.id
-                ),
-                org_user_id=user_profile['id']
-            )
-            task_log.task_id = created_job['id']
+
+            try:
+                created_job = jobs.trigger_now(
+                    callback_url='{0}{1}'.format(settings.API_URL, '/workspaces/{0}/qbo/credit_card_purchases/'.format(
+                        workspace_id
+                    )),
+                    callback_method='POST', object_id=task_log.id, payload={
+                        'expense_group_id': expense_group.id,
+                        'task_log_id': task_log.id
+                    }, job_description=
+                    'Create Credit Card Purchase: Workspace id - {0}, user - {1}, expense group id - {2}'.format(
+                        workspace_id, user, expense_group.id
+                    ),
+                    org_user_id=user_profile['id']
+                )
+                task_log.task_id = created_job['id']
+            except FyleSDKError as e:
+                task_log.status = 'FATAL'
+                logger.error(e.response)
+                task_log.detail = e.response
+
             task_log.save()
 
 
@@ -465,19 +484,26 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
                     'type': 'CREATING_JOURNAL_ENTRY'
                 }
             )
-            created_job = jobs.trigger_now(
-                callback_url='{0}{1}'.format(settings.API_URL, '/workspaces/{0}/qbo/journal_entries/'.format(
-                    workspace_id)),
-                callback_method='POST', object_id=task_log.id, payload={
-                    'expense_group_id': expense_group.id,
-                    'task_log_id': task_log.id
-                },
-                job_description='Create Journal Entry: Workspace id - {0}, user - {1}, expense group id - {2}'.format(
-                    workspace_id, user, expense_group.id
-                ),
-                org_user_id=user_profile['id']
-            )
-            task_log.task_id = created_job['id']
+
+            try:
+                created_job = jobs.trigger_now(
+                    callback_url='{0}{1}'.format(settings.API_URL, '/workspaces/{0}/qbo/journal_entries/'.format(
+                        workspace_id)),
+                    callback_method='POST', object_id=task_log.id, payload={
+                        'expense_group_id': expense_group.id,
+                        'task_log_id': task_log.id
+                    },
+                    job_description='Create Journal Entry: Workspace id - {0}, user - {1}, expense group id - {2}'.format(
+                        workspace_id, user, expense_group.id
+                    ),
+                    org_user_id=user_profile['id']
+                )
+                task_log.task_id = created_job['id']
+            except FyleSDKError as e:
+                task_log.status = 'FATAL'
+                logger.error(e.response)
+                task_log.detail = e.response
+
             task_log.save()
 
 

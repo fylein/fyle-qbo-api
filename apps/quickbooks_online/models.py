@@ -8,8 +8,19 @@ from django.db.models import Q
 
 from fyle_accounting_mappings.models import Mapping, MappingSetting
 
-from apps.fyle.models import ExpenseGroup, Expense
+from apps.fyle.models import ExpenseGroup, Expense, ExpenseGroupSettings
 from apps.mappings.models import GeneralMapping
+
+
+def get_transaction_date(expense_group: ExpenseGroup) -> str:
+    if 'spent_at' in expense_group.description and expense_group.description['spent_at']:
+        return expense_group.description['spent_at']
+    elif 'approved_at' in expense_group.description and expense_group.description['approved_at']:
+        return expense_group.description['approved_at']
+    elif 'verified_at' in expense_group.description and expense_group.description['verified_at']:
+        return expense_group.description['verified_at']
+
+    return datetime.now().strftime("%Y-%m-%d")
 
 
 def get_class_id_or_none(expense_group: ExpenseGroup, lineitem: Expense):
@@ -141,7 +152,7 @@ class Bill(models.Model):
                     workspace_id=expense_group.workspace_id
                 ).destination.destination_id,
                 'department_id': department_id,
-                'transaction_date': datetime.now().strftime("%Y-%m-%d"),
+                'transaction_date': get_transaction_date(expense_group),
                 'private_note': 'Report {0} / {1} exported on {2}'.format(
                     expense.claim_number, expense.report_id, datetime.now().strftime("%Y-%m-%d")
                 ),
@@ -252,7 +263,7 @@ class Cheque(models.Model):
                     workspace_id=expense_group.workspace_id
                 ).destination.destination_id,
                 'department_id': department_id,
-                'transaction_date': datetime.now().strftime("%Y-%m-%d"),
+                'transaction_date': get_transaction_date(expense_group),
                 'private_note': 'Report {0} / {1} exported on {2}'.format(
                     expense.claim_number, expense.report_id, datetime.now().strftime("%Y-%m-%d")
                 ),
@@ -365,7 +376,7 @@ class CreditCardPurchase(models.Model):
                     source__value=description.get('employee_email'),
                     workspace_id=expense_group.workspace_id
                 ).destination.destination_id,
-                'transaction_date': datetime.now().strftime("%Y-%m-%d"),
+                'transaction_date': get_transaction_date(expense_group),
                 'private_note': 'Report {0} / {1} exported on {2}'.format(
                     expense.claim_number, expense.report_id, datetime.now().strftime("%Y-%m-%d")
                 ),
@@ -460,7 +471,7 @@ class JournalEntry(models.Model):
         journal_entry_object, _ = JournalEntry.objects.update_or_create(
             expense_group=expense_group,
             defaults={
-                'transaction_date': datetime.now().strftime("%Y-%m-%d"),
+                'transaction_date': get_transaction_date(expense_group),
                 'private_note': 'Report {0} / {1} exported on {2}'.format(
                     expense.claim_number, expense.report_id, datetime.now().strftime("%Y-%m-%d")
                 ),
