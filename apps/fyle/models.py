@@ -19,7 +19,6 @@ ALLOWED_FIELDS = [
     'verified_at', 'approved_at', 'spent_at'
 ]
 
-
 ALLOWED_FORM_INPUT = {
     'group_expenses_by': ['settlement_id', 'claim_number', 'report_id', 'category', 'vendor'],
     'export_date_type': ['current_date', 'approved_at', 'spent_at', 'verified_at']
@@ -123,8 +122,8 @@ def get_default_expense_group_fields():
     return ['employee_email', 'report_id', 'claim_number', 'fund_source']
 
 
-def get_default_expense_states():
-    return ['PAYMENT_PROCESSING']
+def get_default_expense_state():
+    return 'PAYMENT_PROCESSING'
 
 
 class ExpenseGroupSettings(models.Model):
@@ -142,10 +141,9 @@ class ExpenseGroupSettings(models.Model):
         help_text='list of fields ccc expenses grouped by'
     )
 
-    expense_states = ArrayField(
-        base_field=models.CharField(max_length=100), default=get_default_expense_states,
-        help_text='list of states to fetch expenses'
-    )
+    expense_state = models.CharField(max_length=100, default=get_default_expense_state,
+                                     help_text='state at which the expenses are fetched ( PAYMENT_PENDING / '
+                                               'PAYMENT_PROCESSING, PAID)')
     export_date_type = models.CharField(max_length=100, default='current_date', help_text='Export Date')
     workspace = models.OneToOneField(
         Workspace, on_delete=models.PROTECT, help_text='To which workspace this expense group setting belongs to'
@@ -214,7 +212,7 @@ class ExpenseGroupSettings(models.Model):
             defaults={
                 'reimbursable_expense_group_fields': reimbursable_grouped_by,
                 'corporate_credit_card_expense_group_fields': corporate_credit_card_expenses_grouped_by,
-                'expense_states': expense_group_settings['expense_states'],
+                'expense_state': expense_group_settings['expense_state'],
                 'export_date_type': expense_group_settings['export_date_type']
             }
         )
