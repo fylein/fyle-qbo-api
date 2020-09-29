@@ -146,6 +146,12 @@ else:
         }
     }
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'auth_cache',
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
@@ -199,5 +205,8 @@ QBO_CLIENT_SECRET = os.environ.get('QBO_CLIENT_SECRET')
 QBO_REDIRECT_URI = os.environ.get('QBO_REDIRECT_URI')
 QBO_TOKEN_URI = os.environ.get('QBO_TOKEN_URI')
 QBO_ENVIRONMENT = os.environ.get('QBO_ENVIRONMENT')
+
+# Cache Settings
+CACHE_EXPIRY = 900
 
 CORS_ORIGIN_ALLOW_ALL = True
