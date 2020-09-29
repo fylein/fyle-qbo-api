@@ -124,7 +124,7 @@ def get_default_expense_group_fields():
 
 
 def get_default_expense_states():
-    return ['PAYMENT_PROCESSING']
+    return 'PAYMENT_PROCESSING'
 
 
 class ExpenseGroupSettings(models.Model):
@@ -142,10 +142,8 @@ class ExpenseGroupSettings(models.Model):
         help_text='list of fields ccc expenses grouped by'
     )
 
-    expense_states = ArrayField(
-        base_field=models.CharField(max_length=100), default=get_default_expense_states,
-        help_text='list of states to fetch expenses'
-    )
+    expense_states = models.CharField(max_length=100, default=get_default_expense_states,
+                                      help_text='list of states to fetch expenses')
     export_date_type = models.CharField(max_length=100, default='current_date', help_text='Export Date')
     workspace = models.OneToOneField(
         Workspace, on_delete=models.PROTECT, help_text='To which workspace this expense group setting belongs to'
