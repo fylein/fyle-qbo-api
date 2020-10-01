@@ -144,22 +144,31 @@ class Bill(models.Model):
         department_id = get_department_id_or_none(expense_group)
 
         general_mappings = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
+
+        vendor_id = None
+        if expense_group.fund_source == 'PERSONAL':
+            vendor_id = Mapping.objects.get(
+                source_type='EMPLOYEE',
+                destination_type='VENDOR',
+                source__value=description.get('employee_email'),
+                workspace_id=expense_group.workspace_id
+            ).destination.destination_id
+        elif expense_group.fund_source == 'CCC':
+            vendor_id = general_mappings.default_ccc_vendor_id
+
+        general_mappings = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
         bill_object, _ = Bill.objects.update_or_create(
             expense_group=expense_group,
             defaults={
                 'accounts_payable_id': general_mappings.accounts_payable_id,
-                'vendor_id': Mapping.objects.get(
-                    source_type='EMPLOYEE',
-                    destination_type='VENDOR',
-                    source__value=description.get('employee_email'),
-                    workspace_id=expense_group.workspace_id
-                ).destination.destination_id,
+                'vendor_id': vendor_id,
                 'department_id': department_id,
                 'transaction_date': get_transaction_date(expense_group),
                 'private_note': 'Report {0} / {1} exported on {2}'.format(
                     expense.claim_number, expense.report_id, datetime.now().strftime("%Y-%m-%d")
                 ),
-                'bill_number': expense_group.fyle_group_id
+                'bill_number': expense_group.fyle_group_id,
+                'currency': expense.currency
             }
         )
         return bill_object
@@ -270,7 +279,8 @@ class Cheque(models.Model):
                 'private_note': 'Report {0} / {1} exported on {2}'.format(
                     expense.claim_number, expense.report_id, datetime.now().strftime("%Y-%m-%d")
                 ),
-                'cheque_number': expense_group.fyle_group_id
+                'cheque_number': expense_group.fyle_group_id,
+                'currency': expense.currency
             }
         )
         return cheque_object
@@ -383,7 +393,8 @@ class CreditCardPurchase(models.Model):
                 'private_note': 'Report {0} / {1} exported on {2}'.format(
                     expense.claim_number, expense.report_id, datetime.now().strftime("%Y-%m-%d")
                 ),
-                'credit_card_purchase_number': expense_group.fyle_group_id
+                'credit_card_purchase_number': expense_group.fyle_group_id,
+                'currency': expense.currency
             }
         )
         return credit_card_purchase_object
@@ -478,7 +489,8 @@ class JournalEntry(models.Model):
                 'private_note': 'Report {0} / {1} exported on {2}'.format(
                     expense.claim_number, expense.report_id, datetime.now().strftime("%Y-%m-%d")
                 ),
-                'journal_entry_number': expense_group.fyle_group_id
+                'journal_entry_number': expense_group.fyle_group_id,
+                'currency': expense.currency
             }
         )
         return journal_entry_object
