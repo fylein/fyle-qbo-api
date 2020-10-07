@@ -159,7 +159,7 @@ class Bill(models.Model):
                 'private_note': 'Report {0} / {1} exported on {2}'.format(
                     expense.claim_number, expense.report_id, datetime.now().strftime("%Y-%m-%d")
                 ),
-                'bill_number': expense_group.fyle_group_id
+                'bill_number': ''
             }
         )
         return bill_object
@@ -270,7 +270,7 @@ class Cheque(models.Model):
                 'private_note': 'Report {0} / {1} exported on {2}'.format(
                     expense.claim_number, expense.report_id, datetime.now().strftime("%Y-%m-%d")
                 ),
-                'cheque_number': expense_group.fyle_group_id
+                'cheque_number': ''
             }
         )
         return cheque_object
@@ -383,7 +383,7 @@ class CreditCardPurchase(models.Model):
                 'private_note': 'Report {0} / {1} exported on {2}'.format(
                     expense.claim_number, expense.report_id, datetime.now().strftime("%Y-%m-%d")
                 ),
-                'credit_card_purchase_number': expense_group.fyle_group_id
+                'credit_card_purchase_number': ''
             }
         )
         return credit_card_purchase_object
@@ -478,7 +478,7 @@ class JournalEntry(models.Model):
                 'private_note': 'Report {0} / {1} exported on {2}'.format(
                     expense.claim_number, expense.report_id, datetime.now().strftime("%Y-%m-%d")
                 ),
-                'journal_entry_number': expense_group.fyle_group_id
+                'journal_entry_number': ''
             }
         )
         return journal_entry_object

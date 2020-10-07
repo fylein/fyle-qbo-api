@@ -43,7 +43,7 @@ def load_attachments(qbo_connection: QBOConnector, ref_id: str, ref_type: str, e
         qbo_connection.post_attachments(ref_id, ref_type, attachments)
     except Exception:
         error = traceback.format_exc()
-        logger.error(
+        logger.exception(
             'Attachment failed for expense group id %s / workspace id %s \n Error: %s',
             expense_group.id, expense_group.workspace_id, error
         )
@@ -96,7 +96,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], use
             task_log.task_id = created_job['id']
         except FyleSDKError as e:
             task_log.status = 'FATAL'
-            logger.error(e.response)
+            logger.exception(e.response)
             task_log.detail = e.response
         task_log.save()
 
@@ -127,8 +127,8 @@ def create_bill(expense_group, task_log):
     except QBOCredential.DoesNotExist:
         logger.exception(
             'QBO Credentials not found for workspace_id %s / expense group %s',
-            expense_group.id,
-            expense_group.workspace_id
+            expense_group.workspace_id,
+            expense_group.id
         )
         detail = {
             'expense_group_id': expense_group.id,
@@ -140,7 +140,7 @@ def create_bill(expense_group, task_log):
         task_log.save(update_fields=['detail', 'status'])
 
     except BulkError as exception:
-        logger.error(exception.response)
+        logger.exception(exception.response)
         detail = exception.response
         task_log.status = 'FAILED'
         task_log.detail = detail
@@ -148,7 +148,7 @@ def create_bill(expense_group, task_log):
         task_log.save(update_fields=['detail', 'status'])
 
     except WrongParamsError as exception:
-        logger.error(exception.response)
+        logger.exception(exception.response)
         detail = json.loads(exception.response)
         task_log.status = 'FAILED'
         task_log.detail = detail
@@ -265,7 +265,7 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], u
                 task_log.task_id = created_job['id']
             except FyleSDKError as e:
                 task_log.status = 'FATAL'
-                logger.error(e.response)
+                logger.exception(e.response)
                 task_log.detail = e.response
 
             task_log.save()
@@ -310,7 +310,7 @@ def create_cheque(expense_group, task_log):
         task_log.save(update_fields=['detail', 'status'])
 
     except BulkError as exception:
-        logger.error(exception.response)
+        logger.exception(exception.response)
         detail = exception.response
         task_log.status = 'FAILED'
         task_log.detail = detail
@@ -318,7 +318,7 @@ def create_cheque(expense_group, task_log):
         task_log.save(update_fields=['detail', 'status'])
 
     except WrongParamsError as exception:
-        logger.error(exception.response)
+        logger.exception(exception.response)
         detail = json.loads(exception.response)
         task_log.status = 'FAILED'
         task_log.detail = detail
@@ -382,7 +382,7 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
                 task_log.task_id = created_job['id']
             except FyleSDKError as e:
                 task_log.status = 'FATAL'
-                logger.error(e.response)
+                logger.exception(e.response)
                 task_log.detail = e.response
 
             task_log.save()
@@ -430,7 +430,7 @@ def create_credit_card_purchase(expense_group, task_log):
         task_log.save(update_fields=['detail', 'status'])
 
     except BulkError as exception:
-        logger.error(exception.response)
+        logger.exception(exception.response)
         detail = exception.response
         task_log.status = 'FAILED'
         task_log.detail = detail
@@ -438,7 +438,7 @@ def create_credit_card_purchase(expense_group, task_log):
         task_log.save(update_fields=['detail', 'status'])
 
     except WrongParamsError as exception:
-        logger.error(exception.response)
+        logger.exception(exception.response)
         detail = json.loads(exception.response)
         task_log.status = 'FAILED'
         task_log.detail = detail
@@ -501,7 +501,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
                 task_log.task_id = created_job['id']
             except FyleSDKError as e:
                 task_log.status = 'FATAL'
-                logger.error(e.response)
+                logger.exception(e.response)
                 task_log.detail = e.response
 
             task_log.save()
@@ -549,7 +549,7 @@ def create_journal_entry(expense_group, task_log):
         task_log.save(update_fields=['detail', 'status'])
 
     except BulkError as exception:
-        logger.error(exception.response)
+        logger.exception(exception.response)
         detail = exception.response
         task_log.status = 'FAILED'
         task_log.detail = detail
@@ -557,7 +557,7 @@ def create_journal_entry(expense_group, task_log):
         task_log.save(update_fields=['detail', 'status'])
 
     except WrongParamsError as exception:
-        logger.error(exception.response)
+        logger.exception(exception.response)
         detail = json.loads(exception.response)
         task_log.status = 'FAILED'
         task_log.detail = detail
