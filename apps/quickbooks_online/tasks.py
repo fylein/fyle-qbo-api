@@ -162,7 +162,7 @@ def create_bill(expense_group, task_log):
         }
         task_log.status = 'FATAL'
         task_log.save(update_fields=['detail', 'status'])
-        logger.exception('Something unexpected happened workspace_id: %s\n%s', task_log.workspace_id, task_log.detail)
+        logger.exception('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
 
 
 def __validate_expense_group(expense_group: ExpenseGroup):
@@ -332,7 +332,7 @@ def create_cheque(expense_group, task_log):
         }
         task_log.status = 'FATAL'
         task_log.save(update_fields=['detail', 'status'])
-        logger.exception('Something unexpected happened workspace_id: %s\n%s', task_log.workspace_id, task_log.detail)
+        logger.exception('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
 
 
 def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids: List[str], user: str):
@@ -452,7 +452,7 @@ def create_credit_card_purchase(expense_group, task_log):
         }
         task_log.status = 'FATAL'
         task_log.save(update_fields=['detail', 'status'])
-        logger.exception('Something unexpected happened workspace_id: %s\n%s', task_log.workspace_id, task_log.detail)
+        logger.exception('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
 
 
 def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[str], user: str):
@@ -571,4 +571,4 @@ def create_journal_entry(expense_group, task_log):
         }
         task_log.status = 'FATAL'
         task_log.save(update_fields=['detail', 'status'])
-        logger.exception('Something unexpected happened workspace_id: %s\n%s', task_log.workspace_id, task_log.detail)
+        logger.exception('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
