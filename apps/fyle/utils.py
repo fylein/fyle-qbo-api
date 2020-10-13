@@ -134,7 +134,7 @@ class FyleConnector:
 
         return self._get_request(api_url, params)
 
-    def get_expenses(self, state: List[str], updated_at: List[str], fund_source: List[str]):
+    def get_expenses(self, state, updated_at: List[str], fund_source: List[str]):
         """
         Get expenses from fyle
         """
