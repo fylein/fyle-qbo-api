@@ -2,6 +2,7 @@ import logging
 import json
 import traceback
 from typing import List
+from datetime import datetime
 
 from django.conf import settings
 from django.db import transaction
@@ -123,6 +124,9 @@ def create_bill(expense_group, task_log):
             task_log.status = 'COMPLETE'
 
             task_log.save(update_fields=['detail', 'bill', 'status'])
+
+            expense_group.exported_at = datetime.now()
+            expense_group.save()
 
     except QBOCredential.DoesNotExist:
         logger.exception(
@@ -312,6 +316,9 @@ def create_cheque(expense_group, task_log):
 
             task_log.save(update_fields=['detail', 'cheque', 'status'])
 
+            expense_group.exported_at = datetime.now()
+            expense_group.save()
+
     except QBOCredential.DoesNotExist:
         logger.exception(
             'QBO Credentials not found for workspace_id %s / expense group %s',
@@ -432,6 +439,9 @@ def create_credit_card_purchase(expense_group, task_log):
 
             task_log.save(update_fields=['detail', 'credit_card_purchase', 'status'])
 
+            expense_group.exported_at = datetime.now()
+            expense_group.save()
+
     except QBOCredential.DoesNotExist:
         logger.exception(
             'QBO Credentials not found for workspace_id %s / expense group %s',
@@ -550,6 +560,9 @@ def create_journal_entry(expense_group, task_log):
             task_log.status = 'COMPLETE'
 
             task_log.save(update_fields=['detail', 'journal_entry', 'status'])
+
+            expense_group.exported_at = datetime.now()
+            expense_group.save()
 
     except QBOCredential.DoesNotExist:
         logger.exception(
