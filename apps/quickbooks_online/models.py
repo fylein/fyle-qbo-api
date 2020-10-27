@@ -23,6 +23,13 @@ def get_transaction_date(expense_group: ExpenseGroup) -> str:
     return datetime.now().strftime("%Y-%m-%d")
 
 
+def get_expense_purpose(lineitem, category) -> str:
+    expense_purpose = ', purpose - {0}'.format(lineitem.purpose) if lineitem.purpose else ''
+    spent_at = ' spent on {0} '.format(lineitem.spent_at.date()) if lineitem.spent_at else ''
+    return 'Expense by {0} against category {1}{2}with claim number - {3}{4}'.format(
+        lineitem.employee_email, category, spent_at, lineitem.claim_number, expense_purpose)
+
+
 def get_class_id_or_none(expense_group: ExpenseGroup, lineitem: Expense):
     class_setting: MappingSetting = MappingSetting.objects.filter(
         workspace_id=expense_group.workspace_id,
@@ -164,9 +171,9 @@ class Bill(models.Model):
                 'vendor_id': vendor_id,
                 'department_id': department_id,
                 'transaction_date': get_transaction_date(expense_group),
-                'private_note': 'Report {0} / {1} exported on {2}'.format(
-                    expense.claim_number, expense.report_id, datetime.now().strftime("%Y-%m-%d")
-                ),
+                'private_note': 'Reimbursable expenses by {0}'.format(description.get('employee_email')) if
+                expense_group.fund_source == 'PERSONAL' else
+                'Credit card expenses by {0}'.format(description.get('employee_email')),
                 'currency': expense.currency,
                 'bill_number': ''
             }
@@ -224,7 +231,7 @@ class BillLineitem(models.Model):
                     'class_id': class_id,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
-                    'description': lineitem.purpose
+                    'description': get_expense_purpose(lineitem, category)
                 }
             )
 
@@ -276,9 +283,9 @@ class Cheque(models.Model):
                 ).destination.destination_id,
                 'department_id': department_id,
                 'transaction_date': get_transaction_date(expense_group),
-                'private_note': 'Report {0} / {1} exported on {2}'.format(
-                    expense.claim_number, expense.report_id, datetime.now().strftime("%Y-%m-%d")
-                ),
+                'private_note': 'Reimbursable expenses by {0}'.format(description.get('employee_email')) if
+                expense_group.fund_source == 'PERSONAL' else
+                'Credit card expenses by {0}'.format(description.get('employee_email')),
                 'currency': expense.currency,
                 'cheque_number': ''
             }
@@ -336,7 +343,7 @@ class ChequeLineitem(models.Model):
                     'class_id': class_id,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
-                    'description': lineitem.purpose
+                    'description': get_expense_purpose(lineitem, category)
                 }
             )
 
@@ -390,9 +397,9 @@ class CreditCardPurchase(models.Model):
                     workspace_id=expense_group.workspace_id
                 ).destination.destination_id,
                 'transaction_date': get_transaction_date(expense_group),
-                'private_note': 'Report {0} / {1} exported on {2}'.format(
-                    expense.claim_number, expense.report_id, datetime.now().strftime("%Y-%m-%d")
-                ),
+                'private_note': 'Reimbursable expenses by {0}'.format(description.get('employee_email')) if
+                expense_group.fund_source == 'PERSONAL' else
+                'Credit card expenses by {0}'.format(description.get('employee_email')),
                 'currency': expense.currency,
                 'credit_card_purchase_number': ''
             }
@@ -451,7 +458,7 @@ class CreditCardPurchaseLineitem(models.Model):
                     'class_id': class_id,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
-                    'description': lineitem.purpose
+                    'description': get_expense_purpose(lineitem, category)
                 }
             )
 
@@ -481,14 +488,15 @@ class JournalEntry(models.Model):
         :return: JournalEntry object
         """
         expense = expense_group.expenses.first()
+        description = expense_group.description
 
         journal_entry_object, _ = JournalEntry.objects.update_or_create(
             expense_group=expense_group,
             defaults={
                 'transaction_date': get_transaction_date(expense_group),
-                'private_note': 'Report {0} / {1} exported on {2}'.format(
-                    expense.claim_number, expense.report_id, datetime.now().strftime("%Y-%m-%d")
-                ),
+                'private_note': 'Reimbursable expenses by {0}'.format(description.get('employee_email')) if
+                expense_group.fund_source == 'PERSONAL' else
+                'Credit card expenses by {0}'.format(description.get('employee_email')),
                 'currency': expense.currency,
                 'journal_entry_number': ''
             }
@@ -589,7 +597,7 @@ class JournalEntryLineitem(models.Model):
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
                     'department_id': department_id,
-                    'description': lineitem.purpose
+                    'description': get_expense_purpose(lineitem, category)
                 }
             )
 
