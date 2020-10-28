@@ -34,9 +34,9 @@ def get_expense_purpose(workspace_id, lineitem, category) -> str:
         cluster_domain['cluster_domain'], lineitem.expense_id
     )
 
-    expense_purpose = ', purpose - {0}'.format(lineitem.purpose) if lineitem.purpose else ''
-    spent_at = ' spent on {0} '.format(lineitem.spent_at.date()) if lineitem.spent_at else ''
-    return 'Expense by {0} against category {1}{2}with claim number - {3}{4} - {5}'.format(
+    expense_purpose = 'purpose - {0}'.format(lineitem.purpose) if lineitem.purpose else ''
+    spent_at = 'spent on {0} '.format(lineitem.spent_at.date()) if lineitem.spent_at else ''
+    return 'Expense by {0} against category {1} {2} with claim number - {3} - {4} - {5}'.format(
         lineitem.employee_email, category, spent_at, lineitem.claim_number, expense_purpose, expense_link)
 
 
