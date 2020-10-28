@@ -9,7 +9,9 @@ from django.db.models import Q
 from fyle_accounting_mappings.models import Mapping, MappingSetting, ExpenseAttribute
 
 from apps.fyle.models import ExpenseGroup, Expense, ExpenseGroupSettings
+from apps.fyle.utils import FyleConnector
 from apps.mappings.models import GeneralMapping
+from apps.workspaces.models import FyleCredential
 
 
 def get_transaction_date(expense_group: ExpenseGroup) -> str:
@@ -23,11 +25,19 @@ def get_transaction_date(expense_group: ExpenseGroup) -> str:
     return datetime.now().strftime("%Y-%m-%d")
 
 
-def get_expense_purpose(lineitem, category) -> str:
+def get_expense_purpose(workspace_id, lineitem, category) -> str:
+    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+    fyle_connector = FyleConnector(fyle_credentials.refresh_token, workspace_id)
+
+    cluster_domain = fyle_connector.get_cluster_domain()
+    expense_link = '{0}/app/main/#/enterprise/view_expense/{1}'.format(
+        cluster_domain['cluster_domain'], lineitem.expense_id
+    )
+
     expense_purpose = ', purpose - {0}'.format(lineitem.purpose) if lineitem.purpose else ''
     spent_at = ' spent on {0} '.format(lineitem.spent_at.date()) if lineitem.spent_at else ''
-    return 'Expense by {0} against category {1}{2}with claim number - {3}{4}'.format(
-        lineitem.employee_email, category, spent_at, lineitem.claim_number, expense_purpose)
+    return 'Expense by {0} against category {1}{2}with claim number - {3}{4} - {5}'.format(
+        lineitem.employee_email, category, spent_at, lineitem.claim_number, expense_purpose, expense_link)
 
 
 def get_class_id_or_none(expense_group: ExpenseGroup, lineitem: Expense):
@@ -231,7 +241,7 @@ class BillLineitem(models.Model):
                     'class_id': class_id,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
-                    'description': get_expense_purpose(lineitem, category)
+                    'description': get_expense_purpose(expense_group.workspace_id, lineitem, category)
                 }
             )
 
@@ -343,7 +353,7 @@ class ChequeLineitem(models.Model):
                     'class_id': class_id,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
-                    'description': get_expense_purpose(lineitem, category)
+                    'description': get_expense_purpose(expense_group.workspace_id, lineitem, category)
                 }
             )
 
@@ -458,7 +468,7 @@ class CreditCardPurchaseLineitem(models.Model):
                     'class_id': class_id,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
-                    'description': get_expense_purpose(lineitem, category)
+                    'description': get_expense_purpose(expense_group.workspace_id, lineitem, category)
                 }
             )
 
@@ -597,7 +607,7 @@ class JournalEntryLineitem(models.Model):
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
                     'department_id': department_id,
-                    'description': get_expense_purpose(lineitem, category)
+                    'description': get_expense_purpose(expense_group.workspace_id, lineitem, category)
                 }
             )
 
