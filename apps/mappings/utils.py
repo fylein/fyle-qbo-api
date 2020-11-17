@@ -5,9 +5,10 @@ from typing import Dict, List
 from django.db.models import Q
 
 from apps.fyle.utils import FyleConnector
+from apps.quickbooks_online.utils import QBOConnector
 from fyle_accounting_mappings.models import MappingSetting, DestinationAttribute, Mapping
 
-from apps.workspaces.models import WorkspaceGeneralSettings, FyleCredential
+from apps.workspaces.models import WorkspaceGeneralSettings, FyleCredential, QBOCredential
 from fyle_qbo_api.utils import assert_valid
 from fylesdk import WrongParamsError
 
@@ -110,21 +111,24 @@ class MappingUtils:
 
         return payload
 
-    def upload_projects_to_fyle(self, destination_attribute_type: str):
+    def upload_projects_to_fyle(self):
         """
         Upload projects to Fyle
         """
         fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=self.__workspace_id)
+        qbo_credentials: QBOCredential = QBOCredential.objects.get(workspace_id=self.__workspace_id)
 
         fyle_connection = FyleConnector(
             refresh_token=fyle_credentials.refresh_token,
             workspace_id=self.__workspace_id
         )
 
-        qbo_attributes: List[DestinationAttribute] = DestinationAttribute.objects.filter(
-            workspace_id=self.__workspace_id,
-            attribute_type=destination_attribute_type
-        ).all()
+        qbo_connection = QBOConnector(
+            credentials_object=qbo_credentials,
+            workspace_id=self.__workspace_id
+        )
+
+        qbo_attributes: List[DestinationAttribute] = qbo_connection.sync_customers()
 
         fyle_payload: List[Dict] = self.create_fyle_projects_payload(qbo_attributes)
 
@@ -142,7 +146,7 @@ class MappingUtils:
             'destination_field': 'CUSTOMER'
         }], workspace_id=self.__workspace_id)
 
-        fyle_projects = self.upload_projects_to_fyle('CUSTOMER')
+        fyle_projects = self.upload_projects_to_fyle()
 
         project_mappings = []
 

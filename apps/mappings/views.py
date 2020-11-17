@@ -26,8 +26,6 @@ class GeneralMappingView(generics.ListCreateAPIView):
 
         mapping_utils = MappingUtils(kwargs['workspace_id'])
 
-        mapping_utils.auto_create_project_mappings()
-
         general_mapping = mapping_utils.create_or_update_general_mapping(general_mapping_payload)
 
         return Response(

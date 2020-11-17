@@ -8,6 +8,7 @@ from django.conf import settings
 
 from future.moves.urllib.parse import urlencode
 
+from apps.mappings.utils import MappingUtils
 from qbosdk import UnauthorizedClientError, NotFoundClientError, WrongParamsError, InternalServerError
 
 from fyle_qbo_api.utils import assert_valid
@@ -68,6 +69,7 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
     general_settings, _ = WorkspaceGeneralSettings.objects.update_or_create(
         workspace_id=workspace_id,
         defaults={
+            'import_projects': general_settings_payload['import_projects'],
             'reimbursable_expenses_object': general_settings_payload['reimbursable_expenses_object'],
             'corporate_credit_card_expenses_object':
                 general_settings_payload['corporate_credit_card_expenses_object']
@@ -75,4 +77,8 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
                 and general_settings_payload['corporate_credit_card_expenses_object'] else None,
         }
     )
+    if general_settings.import_projects:
+        mapping_utils = MappingUtils(workspace_id)
+        mapping_utils.auto_create_project_mappings()
+
     return general_settings

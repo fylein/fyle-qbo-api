@@ -394,6 +394,7 @@ class GeneralSettingsView(viewsets.ViewSet):
         workspace_id = kwargs['workspace_id']
 
         general_settings = create_or_update_general_settings(general_settings_payload, workspace_id)
+
         return Response(
             data=self.serializer_class(general_settings).data,
             status=status.HTTP_200_OK
