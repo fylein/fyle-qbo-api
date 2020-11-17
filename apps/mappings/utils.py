@@ -128,24 +128,9 @@ class MappingUtils:
 
         fyle_payload: List[Dict] = self.create_fyle_projects_payload(qbo_attributes)
 
-        try:
-            fyle_projects = fyle_connection.connection.Projects.post(fyle_payload)
-            fyle_connection.sync_projects(fyle_projects)
-            return qbo_attributes
-        except WrongParamsError as exception:
-            logger.exception(
-                'Error while creating projects workspace_id - %s in Fyle %s %s',
-                self.__workspace_id, exception.message, {'error': exception.response}
-            )
-        except Exception:
-            error = traceback.format_exc()
-            error = {
-                'error': error
-            }
-            logger.exception(
-                'Error while creating projects workspace_id - %s error: %s',
-                self.__workspace_id, error
-            )
+        fyle_projects = fyle_connection.connection.Projects.post(fyle_payload)
+        fyle_connection.sync_projects(fyle_projects)
+        return qbo_attributes
 
     def auto_create_project_mappings(self):
         """
@@ -161,14 +146,29 @@ class MappingUtils:
 
         project_mappings = []
 
-        for project in fyle_projects:
-            mapping = Mapping.create_or_update_mapping(
-                source_type='PROJECT',
-                destination_type='CUSTOMER',
-                source_value=project.value,
-                destination_value=project.value,
-                workspace_id=self.__workspace_id
-            )
-            project_mappings.append(mapping)
+        try:
+            for project in fyle_projects:
+                mapping = Mapping.create_or_update_mapping(
+                    source_type='PROJECT',
+                    destination_type='CUSTOMER',
+                    source_value=project.value,
+                    destination_value=project.value,
+                    workspace_id=self.__workspace_id
+                )
+                project_mappings.append(mapping)
 
-        return project_mappings
+            return project_mappings
+        except WrongParamsError as exception:
+            logger.exception(
+                'Error while creating projects workspace_id - %s in Fyle %s %s',
+                self.__workspace_id, exception.message, {'error': exception.response}
+            )
+        except Exception:
+            error = traceback.format_exc()
+            error = {
+                'error': error
+            }
+            logger.exception(
+                'Error while creating projects workspace_id - %s error: %s',
+                self.__workspace_id, error
+            )
