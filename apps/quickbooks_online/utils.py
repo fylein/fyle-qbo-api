@@ -160,8 +160,9 @@ class QBOConnector:
             customer_attributes.append({
                 'attribute_type': 'CUSTOMER',
                 'display_name': 'customer',
-                'value': customer['DisplayName'],
-                'destination_id': customer['Id']
+                'value': customer['FullyQualifiedName'],
+                'destination_id': customer['Id'],
+                'active': customer['Active']
             })
 
         account_attributes = DestinationAttribute.bulk_upsert_destination_attributes(

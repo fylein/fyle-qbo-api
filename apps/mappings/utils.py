@@ -1,13 +1,19 @@
-from typing import Dict
+import logging
+import traceback
+from typing import Dict, List
 
 from django.db.models import Q
 
-from fyle_accounting_mappings.models import MappingSetting
+from apps.fyle.utils import FyleConnector
+from fyle_accounting_mappings.models import MappingSetting, DestinationAttribute
 
-from apps.workspaces.models import WorkspaceGeneralSettings
+from apps.workspaces.models import WorkspaceGeneralSettings, FyleCredential
 from fyle_qbo_api.utils import assert_valid
+from fylesdk import WrongParamsError
 
 from .models import GeneralMapping
+
+logger = logging.getLogger(__name__)
 
 
 class MappingUtils:
@@ -81,3 +87,58 @@ class MappingUtils:
             defaults=params
         )
         return general_mapping
+
+    @staticmethod
+    def create_fyle_projects_payload(projects: List[DestinationAttribute]):
+        """
+        Create Fyle Projects Payload from QBO Customer / Projects
+        :param projects: QBO Projects
+        :return: Fyle Projects Payload
+        """
+        payload = []
+
+        for project in projects:
+            payload.append({
+                'name': project.value,
+                'code': project.destination_id,
+                'description': 'Quickbooks Online Customer / Project - {0}, Id - {1}'.format(
+                    project.value,
+                    project.destination_id
+                ),
+                'active': True if project.active is None else project.active
+            })
+
+        return payload
+
+    def upload_projects_to_fyle(self, destination_attribute_type: str):
+        fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=self.__workspace_id)
+
+        fyle_connection = FyleConnector(
+            refresh_token=fyle_credentials.refresh_token,
+            workspace_id=self.__workspace_id
+        )
+
+        qbo_attributes: List[DestinationAttribute] = DestinationAttribute.objects.filter(
+            workspace_id=self.__workspace_id,
+            attribute_type=destination_attribute_type
+        ).all()
+
+        fyle_payload: List[Dict] = self.create_fyle_projects_payload(qbo_attributes)
+
+        try:
+            fyle_projects = fyle_connection.connection.Projects.post(fyle_payload)
+            fyle_connection.sync_projects(fyle_projects)
+        except WrongParamsError as exception:
+            logger.exception(
+                'Error while creating projects workspace_id - %s in Fyle %s %s',
+                self.__workspace_id, exception.message, {'error': exception.response}
+            )
+        except Exception:
+            error = traceback.format_exc()
+            error = {
+                'error': error
+            }
+            logger.exception(
+                'Error while creating projects workspace_id - %s error: %s',
+                self.__workspace_id, error
+            )

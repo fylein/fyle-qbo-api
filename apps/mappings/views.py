@@ -27,6 +27,8 @@ class GeneralMappingView(generics.ListCreateAPIView):
 
         mapping_utils = MappingUtils(kwargs['workspace_id'])
 
+        mapping_utils.upload_projects_to_fyle(destination_attribute_type='CUSTOMER')
+
         general_mapping = mapping_utils.create_or_update_general_mapping(general_mapping_payload)
 
         return Response(
