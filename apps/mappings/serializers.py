@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import GeneralMapping, EmployeeMapping, CategoryMapping, CostCenterMapping, ProjectMapping
+from .models import GeneralMapping
 
 
 class GeneralMappingSerializer(serializers.ModelSerializer):
@@ -9,40 +9,4 @@ class GeneralMappingSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = GeneralMapping
-        fields = '__all__'
-
-
-class EmployeeMappingSerializer(serializers.ModelSerializer):
-    """
-    Employee mappings group serializer
-    """
-    class Meta:
-        model = EmployeeMapping
-        fields = '__all__'
-
-
-class CategoryMappingSerializer(serializers.ModelSerializer):
-    """
-    Category mappings group serializer
-    """
-    class Meta:
-        model = CategoryMapping
-        fields = '__all__'
-
-
-class CostCenterMappingSerializer(serializers.ModelSerializer):
-    """
-    CostCenter mappings group serializer
-    """
-    class Meta:
-        model = CostCenterMapping
-        fields = '__all__'
-
-
-class ProjectMappingSerializer(serializers.ModelSerializer):
-    """
-    Project mappings group serializer
-    """
-    class Meta:
-        model = ProjectMapping
         fields = '__all__'

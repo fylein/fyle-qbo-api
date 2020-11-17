@@ -5,7 +5,7 @@ from typing import Dict, List
 from django.db.models import Q
 
 from apps.fyle.utils import FyleConnector
-from fyle_accounting_mappings.models import MappingSetting, DestinationAttribute
+from fyle_accounting_mappings.models import MappingSetting, DestinationAttribute, Mapping
 
 from apps.workspaces.models import WorkspaceGeneralSettings, FyleCredential
 from fyle_qbo_api.utils import assert_valid
@@ -111,6 +111,9 @@ class MappingUtils:
         return payload
 
     def upload_projects_to_fyle(self, destination_attribute_type: str):
+        """
+        Upload projects to Fyle
+        """
         fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=self.__workspace_id)
 
         fyle_connection = FyleConnector(
@@ -128,6 +131,7 @@ class MappingUtils:
         try:
             fyle_projects = fyle_connection.connection.Projects.post(fyle_payload)
             fyle_connection.sync_projects(fyle_projects)
+            return qbo_attributes
         except WrongParamsError as exception:
             logger.exception(
                 'Error while creating projects workspace_id - %s in Fyle %s %s',
@@ -142,3 +146,29 @@ class MappingUtils:
                 'Error while creating projects workspace_id - %s error: %s',
                 self.__workspace_id, error
             )
+
+    def auto_create_project_mappings(self):
+        """
+        Create Project Mappings
+        :return: mappings
+        """
+        MappingSetting.bulk_upsert_mapping_setting([{
+            'source_field': 'PROJECT',
+            'destination_field': 'CUSTOMER'
+        }], workspace_id=self.__workspace_id)
+
+        fyle_projects = self.upload_projects_to_fyle('CUSTOMER')
+
+        project_mappings = []
+
+        for project in fyle_projects:
+            mapping = Mapping.create_or_update_mapping(
+                source_type='PROJECT',
+                destination_type='CUSTOMER',
+                source_value=project.value,
+                destination_value=project.value,
+                workspace_id=self.__workspace_id
+            )
+            project_mappings.append(mapping)
+
+        return project_mappings
