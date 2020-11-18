@@ -15,14 +15,9 @@ Including another URLconf
 """
 from django.urls import path, include
 
-from .views import GeneralMappingView, EmployeeMappingView, CategoryMappingView, \
-    CostCenterMappingView, ProjectMappingView
+from .views import GeneralMappingView
 
 urlpatterns = [
     path('general/', GeneralMappingView.as_view()),
-    path('employees/', EmployeeMappingView.as_view()),
-    path('categories/', CategoryMappingView.as_view()),
-    path('cost_centers/', CostCenterMappingView.as_view()),
-    path('projects/', ProjectMappingView.as_view()),
     path('', include('fyle_accounting_mappings.urls'))
 ]

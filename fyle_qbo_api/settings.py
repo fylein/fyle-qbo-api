@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'fyle_rest_auth',
     'fyle_accounting_mappings',
+    'django_q',
 
     # User Created Apps
     'apps.users',
@@ -104,6 +105,14 @@ REST_FRAMEWORK = {
 }
 
 WSGI_APPLICATION = 'fyle_qbo_api.wsgi.application'
+
+Q_CLUSTER = {
+    'name': 'fyle_quickbooks_api',
+    'compress': True,
+    'save_limit': 0,
+    'orm': 'default',
+    'ack_failures': True
+}
 
 SERVICE_NAME = os.environ.get('SERVICE_NAME')
 
