@@ -8,6 +8,7 @@ from django.conf import settings
 
 from future.moves.urllib.parse import urlencode
 
+from apps.mappings.tasks import schedule_projects_creation
 from apps.mappings.utils import MappingUtils
 from qbosdk import UnauthorizedClientError, NotFoundClientError, WrongParamsError, InternalServerError
 
@@ -77,8 +78,6 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
                 and general_settings_payload['corporate_credit_card_expenses_object'] else None,
         }
     )
-    if general_settings.import_projects:
-        mapping_utils = MappingUtils(workspace_id)
-        mapping_utils.auto_create_project_mappings()
+    schedule_projects_creation(import_projects=general_settings.import_projects, workspace_id=workspace_id)
 
     return general_settings
