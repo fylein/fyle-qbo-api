@@ -73,7 +73,7 @@ def auto_create_project_mappings(workspace_id):
         'destination_field': 'CUSTOMER'
     }], workspace_id=workspace_id)
 
-    fyle_projects = upload_projects_to_fyle()
+    fyle_projects = upload_projects_to_fyle(workspace_id=workspace_id)
 
     project_mappings = []
 
@@ -109,7 +109,7 @@ def schedule_projects_creation(import_projects, workspace_id):
     if import_projects:
         start_datetime = datetime.now()
         schedule, _ = Schedule.objects.update_or_create(
-            func='apps.mappings.utils.auto_create_project_mappings',
+            func='apps.mappings.tasks.auto_create_project_mappings',
             args='{}'.format(workspace_id),
             defaults={
                 'schedule_type': Schedule.MINUTES,
@@ -119,7 +119,7 @@ def schedule_projects_creation(import_projects, workspace_id):
         )
     else:
         schedule: Schedule = Schedule.objects.filter(
-            func='apps.mappings.utils.auto_create_project_mappings',
+            func='apps.mappings.tasks.auto_create_project_mappings',
             args='{}'.format(workspace_id)
         ).first()
 
