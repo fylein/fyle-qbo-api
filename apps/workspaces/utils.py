@@ -9,7 +9,6 @@ from django.conf import settings
 from future.moves.urllib.parse import urlencode
 
 from apps.mappings.tasks import schedule_projects_creation
-from apps.mappings.utils import MappingUtils
 from qbosdk import UnauthorizedClientError, NotFoundClientError, WrongParamsError, InternalServerError
 
 from fyle_qbo_api.utils import assert_valid
