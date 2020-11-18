@@ -110,8 +110,7 @@ class ReadyView(viewsets.ViewSet):
         """
         Ready call
         """
-
-        Workspace.objects.raw('Select 1 from workspaces_workspace')
+        Workspace.objects.first()
 
         return Response(
             data={
