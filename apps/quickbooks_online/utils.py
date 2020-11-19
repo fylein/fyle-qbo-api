@@ -217,7 +217,8 @@ class QBOConnector:
                     },
                     'ClassRef': {
                         'value': line.class_id
-                    }
+                    },
+                    'Billable': 'Billable' if line.billable else 'NotBillable'
                 }
             }
             lines.append(line)
@@ -281,6 +282,7 @@ class QBOConnector:
                     'CustomerRef': {
                         'value': line.customer_id
                     },
+                    'Billable': 'Billable' if line.billable else 'NotBillable'
                 }
             }
             lines.append(line)
@@ -332,7 +334,8 @@ class QBOConnector:
                     'ClassRef': {
                         'value': line.class_id
                     }
-                }
+                },
+                'Billable': 'Billable' if line.billable else 'NotBillable'
             }
             lines.append(line)
 
