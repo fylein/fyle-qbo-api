@@ -5,6 +5,7 @@ from datetime import datetime
 
 from django.db import models
 from django.db.models import Q
+from typing import List
 
 from fyle_accounting_mappings.models import Mapping, MappingSetting, ExpenseAttribute
 
@@ -202,6 +203,7 @@ class BillLineitem(models.Model):
     class_id = models.CharField(max_length=255, help_text='QBO class id', null=True)
     customer_id = models.CharField(max_length=255, help_text='QBO customer id', null=True)
     amount = models.FloatField(help_text='Bill amount')
+    billable = models.BooleanField(null=True, help_text='Expense Billable or not')
     description = models.CharField(max_length=255, help_text='QBO bill lineitem description', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
@@ -241,6 +243,7 @@ class BillLineitem(models.Model):
                     'class_id': class_id,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
+                    'billable': lineitem.billable,
                     'description': get_expense_purpose(expense_group.workspace_id, lineitem, category)
                 }
             )
@@ -314,6 +317,7 @@ class ChequeLineitem(models.Model):
     class_id = models.CharField(max_length=255, help_text='QBO class id', null=True)
     customer_id = models.CharField(max_length=255, help_text='QBO customer id', null=True)
     amount = models.FloatField(help_text='Cheque amount')
+    billable = models.BooleanField(null=True, help_text='Expense Billable or not')
     description = models.CharField(max_length=255, help_text='QBO cheque lineitem description', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
@@ -325,7 +329,7 @@ class ChequeLineitem(models.Model):
         :param expense_group: expense group
         :return: lineitems objects
         """
-        expenses = expense_group.expenses.all()
+        expenses: List[Expense] = expense_group.expenses.all()
         cheque = Cheque.objects.get(expense_group=expense_group)
 
         cheque_lineitem_objects = []
@@ -353,6 +357,7 @@ class ChequeLineitem(models.Model):
                     'class_id': class_id,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
+                    'billable': lineitem.billable,
                     'description': get_expense_purpose(expense_group.workspace_id, lineitem, category)
                 }
             )
@@ -429,6 +434,7 @@ class CreditCardPurchaseLineitem(models.Model):
     class_id = models.CharField(max_length=255, help_text='QBO class id', null=True)
     customer_id = models.CharField(max_length=255, help_text='QBO customer id', null=True)
     amount = models.FloatField(help_text='credit card purchase amount')
+    billable = models.BooleanField(null=True, help_text='Expense Billable or not')
     description = models.CharField(max_length=255, help_text='QBO credit card purchase lineitem description', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
@@ -440,7 +446,7 @@ class CreditCardPurchaseLineitem(models.Model):
         :param expense_group: expense group
         :return: lineitems objects
         """
-        expenses = expense_group.expenses.all()
+        expenses: List[Expense] = expense_group.expenses.all()
         credit_card_purchase = CreditCardPurchase.objects.get(expense_group=expense_group)
 
         credit_card_purchase_lineitem_objects = []
@@ -468,6 +474,7 @@ class CreditCardPurchaseLineitem(models.Model):
                     'class_id': class_id,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
+                    'billable': lineitem.billable,
                     'description': get_expense_purpose(expense_group.workspace_id, lineitem, category)
                 }
             )
