@@ -218,7 +218,7 @@ class QBOConnector:
                     'ClassRef': {
                         'value': line.class_id
                     },
-                    'BillableStatus': 'Billable' if line.billable else 'NotBillable'
+                    'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
                 }
             }
             lines.append(line)
@@ -282,7 +282,7 @@ class QBOConnector:
                     'CustomerRef': {
                         'value': line.customer_id
                     },
-                    'BillableStatus': 'Billable' if line.billable else 'NotBillable'
+                    'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
                 }
             }
             lines.append(line)
@@ -335,7 +335,7 @@ class QBOConnector:
                         'value': line.class_id
                     }
                 },
-                'BillableStatus': 'Billable' if line.billable else 'NotBillable'
+                'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
             }
             lines.append(line)
 

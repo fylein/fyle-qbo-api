@@ -98,6 +98,7 @@ class Expense(models.Model):
                     'foreign_currency': expense['foreign_currency'],
                     'settlement_id': expense['settlement_id'],
                     'reimbursable': expense['reimbursable'],
+                    'billable': expense['billable'],
                     'exported': expense['exported'],
                     'state': expense['state'],
                     'vendor': expense['vendor'],
