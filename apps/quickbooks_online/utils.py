@@ -333,9 +333,9 @@ class QBOConnector:
                     },
                     'ClassRef': {
                         'value': line.class_id
-                    }
+                    },
+                    'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
                 },
-                'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
             }
             lines.append(line)
 
