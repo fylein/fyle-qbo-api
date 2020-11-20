@@ -204,7 +204,7 @@ class BillLineitem(models.Model):
     customer_id = models.CharField(max_length=255, help_text='QBO customer id', null=True)
     amount = models.FloatField(help_text='Bill amount')
     billable = models.BooleanField(null=True, help_text='Expense Billable or not')
-    description = models.CharField(max_length=255, help_text='QBO bill lineitem description', null=True)
+    description = models.TextField(help_text='QBO bill lineitem description', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
@@ -318,7 +318,7 @@ class ChequeLineitem(models.Model):
     customer_id = models.CharField(max_length=255, help_text='QBO customer id', null=True)
     amount = models.FloatField(help_text='Cheque amount')
     billable = models.BooleanField(null=True, help_text='Expense Billable or not')
-    description = models.CharField(max_length=255, help_text='QBO cheque lineitem description', null=True)
+    description = models.TextField(help_text='QBO cheque lineitem description', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
@@ -435,7 +435,7 @@ class CreditCardPurchaseLineitem(models.Model):
     customer_id = models.CharField(max_length=255, help_text='QBO customer id', null=True)
     amount = models.FloatField(help_text='credit card purchase amount')
     billable = models.BooleanField(null=True, help_text='Expense Billable or not')
-    description = models.CharField(max_length=255, help_text='QBO credit card purchase lineitem description', null=True)
+    description = models.TextField(help_text='QBO credit card purchase lineitem description', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
@@ -537,7 +537,7 @@ class JournalEntryLineitem(models.Model):
     department_id = models.CharField(max_length=255, help_text='QBO department id', null=True)
     posting_type = models.CharField(max_length=255, help_text='QBO posting type', null=True)
     amount = models.FloatField(help_text='JournalEntry amount')
-    description = models.CharField(max_length=255, help_text='QBO JournalEntry lineitem description', null=True)
+    description = models.TextField(help_text='QBO JournalEntry lineitem description', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
