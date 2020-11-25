@@ -65,8 +65,6 @@ def upload_projects_to_fyle(workspace_id):
 
     fyle_payload: List[Dict] = create_fyle_projects_payload(qbo_attributes, workspace_id)
 
-    print(fyle_payload)
-
     if fyle_payload:
         fyle_connection.connection.Projects.post(fyle_payload)
         fyle_connection.sync_projects(False)
@@ -181,8 +179,6 @@ def upload_categories_to_fyle(workspace_id):
     qbo_attributes: List[DestinationAttribute] = qbo_connection.sync_accounts(account_type='Expense')
 
     fyle_payload: List[Dict] = create_fyle_categories_payload(qbo_attributes, workspace_id)
-
-    print(fyle_payload)
 
     if fyle_payload:
         fyle_connection.connection.Categories.post(fyle_payload)
