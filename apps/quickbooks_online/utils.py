@@ -61,7 +61,8 @@ class QBOConnector:
                 'attribute_type': attribute_type,
                 'display_name': display_name,
                 'value': account['Name'],
-                'destination_id': account['Id']
+                'destination_id': account['Id'],
+                'active': account['Active']
             })
 
         account_attributes = DestinationAttribute.bulk_upsert_destination_attributes(
