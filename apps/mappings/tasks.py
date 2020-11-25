@@ -9,30 +9,35 @@ from django_q.models import Schedule
 from apps.fyle.utils import FyleConnector
 from apps.quickbooks_online.utils import QBOConnector
 from apps.workspaces.models import QBOCredential, FyleCredential
-from fyle_accounting_mappings.models import MappingSetting, Mapping, DestinationAttribute
+from fyle_accounting_mappings.models import MappingSetting, Mapping, DestinationAttribute, ExpenseAttribute
 from fylesdk import WrongParamsError
 
 logger = logging.getLogger(__name__)
 
 
-def create_fyle_projects_payload(projects: List[DestinationAttribute]):
+def create_fyle_projects_payload(projects: List[DestinationAttribute], workspace_id: int):
     """
     Create Fyle Projects Payload from QBO Customer / Projects
+    :param workspace_id: integer id of workspace
     :param projects: QBO Projects
     :return: Fyle Projects Payload
     """
     payload = []
 
+    existing_project_names = ExpenseAttribute.objects.filter(
+        attribute_type='PROJECT', workspace_id=workspace_id).values_list('value', flat=True)
+
     for project in projects:
-        payload.append({
-            'name': project.value,
-            'code': project.destination_id,
-            'description': 'Quickbooks Online Customer / Project - {0}, Id - {1}'.format(
-                project.value,
-                project.destination_id
-            ),
-            'active': True if project.active is None else project.active
-        })
+        if project.value not in existing_project_names:
+            payload.append({
+                'name': project.value,
+                'code': project.destination_id,
+                'description': 'Quickbooks Online Customer / Project - {0}, Id - {1}'.format(
+                    project.value,
+                    project.destination_id
+                ),
+                'active': True if project.active is None else project.active
+            })
 
     return payload
 
@@ -54,12 +59,18 @@ def upload_projects_to_fyle(workspace_id):
         workspace_id=workspace_id
     )
 
+    fyle_connection.sync_projects(False)
+
     qbo_attributes: List[DestinationAttribute] = qbo_connection.sync_customers()
 
-    fyle_payload: List[Dict] = create_fyle_projects_payload(qbo_attributes)
+    fyle_payload: List[Dict] = create_fyle_projects_payload(qbo_attributes, workspace_id)
 
-    fyle_projects = fyle_connection.connection.Projects.post(fyle_payload)
-    fyle_connection.sync_projects(fyle_projects)
+    print(fyle_payload)
+
+    if fyle_payload:
+        fyle_connection.connection.Projects.post(fyle_payload)
+        fyle_connection.sync_projects(False)
+
     return qbo_attributes
 
 
@@ -127,20 +138,25 @@ def schedule_projects_creation(import_projects, workspace_id):
             schedule.delete()
 
             
-def create_fyle_categories_payload(categories: List[DestinationAttribute]):
+def create_fyle_categories_payload(categories: List[DestinationAttribute], workspace_id: int):
     """
     Create Fyle Categories Payload from QBO Customer / Categories
+    :param workspace_id: Workspace integer id
     :param categories: QBO Categories
     :return: Fyle Categories Payload
     """
     payload = []
 
+    existing_category_names = ExpenseAttribute.objects.filter(
+        attribute_type='CATEGORY', workspace_id=workspace_id).values_list('value', flat=True)
+
     for category in categories:
-        payload.append({
-            'name': category.value,
-            'code': category.destination_id,
-            'enabled': category.active
-        })
+        if category.value not in existing_category_names:
+            payload.append({
+                'name': category.value,
+                'code': category.destination_id,
+                'enabled': category.active
+            })
 
     return payload
 
@@ -161,13 +177,17 @@ def upload_categories_to_fyle(workspace_id):
         credentials_object=qbo_credentials,
         workspace_id=workspace_id
     )
-
+    fyle_connection.sync_categories(False)
     qbo_attributes: List[DestinationAttribute] = qbo_connection.sync_accounts(account_type='Expense')
 
-    fyle_payload: List[Dict] = create_fyle_categories_payload(qbo_attributes)
+    fyle_payload: List[Dict] = create_fyle_categories_payload(qbo_attributes, workspace_id)
 
-    fyle_categories = fyle_connection.connection.Categories.post(fyle_payload)
-    fyle_connection.sync_categories(fyle_categories)
+    print(fyle_payload)
+
+    if fyle_payload:
+        fyle_connection.connection.Categories.post(fyle_payload)
+        fyle_connection.sync_categories(False)
+
     return qbo_attributes
 
 
