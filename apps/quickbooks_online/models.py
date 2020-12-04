@@ -9,7 +9,7 @@ from typing import List
 
 from fyle_accounting_mappings.models import Mapping, MappingSetting, ExpenseAttribute
 
-from apps.fyle.models import ExpenseGroup, Expense, ExpenseGroupSettings
+from apps.fyle.models import ExpenseGroup, Expense
 from apps.fyle.utils import FyleConnector
 from apps.mappings.models import GeneralMapping
 from apps.workspaces.models import FyleCredential
