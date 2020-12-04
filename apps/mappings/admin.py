@@ -3,11 +3,7 @@ Registering models in Django Admin
 """
 from django.contrib import admin
 
-from .models import GeneralMapping, EmployeeMapping, CategoryMapping, ProjectMapping, CostCenterMapping
+from .models import GeneralMapping
 
 
 admin.site.register(GeneralMapping)
-admin.site.register(EmployeeMapping)
-admin.site.register(CategoryMapping)
-admin.site.register(ProjectMapping)
-admin.site.register(CostCenterMapping)
