@@ -120,7 +120,7 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
             task_log.save(update_fields=['detail', 'status'])
 
     except FyleCredential.DoesNotExist:
-        logger.exception('Fyle credentials not found %s', workspace_id)
+        logger.error('Fyle credentials not found %s', workspace_id)
         task_log.detail = {
             'message': 'Fyle credentials do not exist in workspace'
         }
@@ -134,4 +134,4 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
         }
         task_log.status = 'FATAL'
         task_log.save(update_fields=['detail', 'status'])
-        logger.exception('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
+        logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)

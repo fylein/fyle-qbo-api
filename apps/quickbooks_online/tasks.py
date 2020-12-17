@@ -44,7 +44,7 @@ def load_attachments(qbo_connection: QBOConnector, ref_id: str, ref_type: str, e
         qbo_connection.post_attachments(ref_id, ref_type, attachments)
     except Exception:
         error = traceback.format_exc()
-        logger.exception(
+        logger.error(
             'Attachment failed for expense group id %s / workspace id %s \n Error: %s',
             expense_group.id, expense_group.workspace_id, {'error': error}
         )
@@ -97,7 +97,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], use
             task_log.task_id = created_job['id']
         except FyleSDKError as e:
             task_log.status = 'FATAL'
-            logger.exception(e.response)
+            logger.error(e.response)
             task_log.detail = e.response
         task_log.save()
 
@@ -129,7 +129,7 @@ def create_bill(expense_group, task_log):
             expense_group.save()
 
     except QBOCredential.DoesNotExist:
-        logger.exception(
+        logger.error(
             'QBO Credentials not found for workspace_id %s / expense group %s',
             expense_group.workspace_id,
             expense_group.id
@@ -144,7 +144,7 @@ def create_bill(expense_group, task_log):
         task_log.save(update_fields=['detail', 'status'])
 
     except BulkError as exception:
-        logger.exception(exception.response)
+        logger.error(exception.response)
         detail = exception.response
         task_log.status = 'FAILED'
         task_log.detail = detail
@@ -152,7 +152,7 @@ def create_bill(expense_group, task_log):
         task_log.save(update_fields=['detail', 'status'])
 
     except WrongParamsError as exception:
-        logger.exception(exception.response)
+        logger.error(exception.response)
         detail = json.loads(exception.response)
         task_log.status = 'FAILED'
         task_log.detail = detail
@@ -166,7 +166,7 @@ def create_bill(expense_group, task_log):
         }
         task_log.status = 'FATAL'
         task_log.save(update_fields=['detail', 'status'])
-        logger.exception('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
+        logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
 
 
 def __validate_expense_group(expense_group: ExpenseGroup):
@@ -287,7 +287,7 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], u
                 task_log.task_id = created_job['id']
             except FyleSDKError as e:
                 task_log.status = 'FATAL'
-                logger.exception(e.response)
+                logger.error(e.response)
                 task_log.detail = e.response
 
             task_log.save()
@@ -320,7 +320,7 @@ def create_cheque(expense_group, task_log):
             expense_group.save()
 
     except QBOCredential.DoesNotExist:
-        logger.exception(
+        logger.error(
             'QBO Credentials not found for workspace_id %s / expense group %s',
             expense_group.id,
             expense_group.workspace_id
@@ -335,7 +335,7 @@ def create_cheque(expense_group, task_log):
         task_log.save(update_fields=['detail', 'status'])
 
     except BulkError as exception:
-        logger.exception(exception.response)
+        logger.error(exception.response)
         detail = exception.response
         task_log.status = 'FAILED'
         task_log.detail = detail
@@ -343,7 +343,7 @@ def create_cheque(expense_group, task_log):
         task_log.save(update_fields=['detail', 'status'])
 
     except WrongParamsError as exception:
-        logger.exception(exception.response)
+        logger.error(exception.response)
         detail = json.loads(exception.response)
         task_log.status = 'FAILED'
         task_log.detail = detail
@@ -357,7 +357,7 @@ def create_cheque(expense_group, task_log):
         }
         task_log.status = 'FATAL'
         task_log.save(update_fields=['detail', 'status'])
-        logger.exception('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
+        logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
 
 
 def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids: List[str], user: str):
@@ -407,7 +407,7 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
                 task_log.task_id = created_job['id']
             except FyleSDKError as e:
                 task_log.status = 'FATAL'
-                logger.exception(e.response)
+                logger.error(e.response)
                 task_log.detail = e.response
 
             task_log.save()
@@ -443,7 +443,7 @@ def create_credit_card_purchase(expense_group, task_log):
             expense_group.save()
 
     except QBOCredential.DoesNotExist:
-        logger.exception(
+        logger.error(
             'QBO Credentials not found for workspace_id %s / expense group %s',
             expense_group.id,
             expense_group.workspace_id
@@ -458,7 +458,7 @@ def create_credit_card_purchase(expense_group, task_log):
         task_log.save(update_fields=['detail', 'status'])
 
     except BulkError as exception:
-        logger.exception(exception.response)
+        logger.error(exception.response)
         detail = exception.response
         task_log.status = 'FAILED'
         task_log.detail = detail
@@ -466,7 +466,7 @@ def create_credit_card_purchase(expense_group, task_log):
         task_log.save(update_fields=['detail', 'status'])
 
     except WrongParamsError as exception:
-        logger.exception(exception.response)
+        logger.error(exception.response)
         detail = json.loads(exception.response)
         task_log.status = 'FAILED'
         task_log.detail = detail
@@ -480,7 +480,7 @@ def create_credit_card_purchase(expense_group, task_log):
         }
         task_log.status = 'FATAL'
         task_log.save(update_fields=['detail', 'status'])
-        logger.exception('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
+        logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
 
 
 def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[str], user: str):
@@ -529,7 +529,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
                 task_log.task_id = created_job['id']
             except FyleSDKError as e:
                 task_log.status = 'FATAL'
-                logger.exception(e.response)
+                logger.error(e.response)
                 task_log.detail = e.response
 
             task_log.save()
@@ -565,7 +565,7 @@ def create_journal_entry(expense_group, task_log):
             expense_group.save()
 
     except QBOCredential.DoesNotExist:
-        logger.exception(
+        logger.error(
             'QBO Credentials not found for workspace_id %s / expense group %s',
             expense_group.id,
             expense_group.workspace_id
@@ -580,7 +580,7 @@ def create_journal_entry(expense_group, task_log):
         task_log.save(update_fields=['detail', 'status'])
 
     except BulkError as exception:
-        logger.exception(exception.response)
+        logger.error(exception.response)
         detail = exception.response
         task_log.status = 'FAILED'
         task_log.detail = detail
@@ -588,7 +588,7 @@ def create_journal_entry(expense_group, task_log):
         task_log.save(update_fields=['detail', 'status'])
 
     except WrongParamsError as exception:
-        logger.exception(exception.response)
+        logger.error(exception.response)
         detail = json.loads(exception.response)
         task_log.status = 'FAILED'
         task_log.detail = detail
@@ -602,4 +602,4 @@ def create_journal_entry(expense_group, task_log):
         }
         task_log.status = 'FATAL'
         task_log.save(update_fields=['detail', 'status'])
-        logger.exception('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
+        logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)

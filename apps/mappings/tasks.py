@@ -99,7 +99,7 @@ def auto_create_project_mappings(workspace_id):
 
         return project_mappings
     except WrongParamsError as exception:
-        logger.exception(
+        logger.error(
             'Error while creating projects workspace_id - %s in Fyle %s %s',
             workspace_id, exception.message, {'error': exception.response}
         )
@@ -108,7 +108,7 @@ def auto_create_project_mappings(workspace_id):
         error = {
             'error': error
         }
-        logger.exception(
+        logger.error(
             'Error while creating projects workspace_id - %s error: %s',
             workspace_id, error
         )
@@ -214,7 +214,7 @@ def auto_create_category_mappings(workspace_id):
 
         return category_mappings
     except WrongParamsError as exception:
-        logger.exception(
+        logger.error(
             'Error while creating categories workspace_id - %s in Fyle %s %s',
             workspace_id, exception.message, {'error': exception.response}
         )
@@ -223,7 +223,7 @@ def auto_create_category_mappings(workspace_id):
         error = {
             'error': error
         }
-        logger.exception(
+        logger.error(
             'Error while creating categories workspace_id - %s error: %s',
             workspace_id, error
         )
