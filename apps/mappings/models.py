@@ -23,6 +23,9 @@ class GeneralMapping(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')
 
+    class Meta:
+        db_table = 'general_mappings'
+
 
 class EmployeeMapping(models.Model):
     """
@@ -42,6 +45,7 @@ class EmployeeMapping(models.Model):
 
     class Meta:
         unique_together = ('employee_email', 'workspace')
+        db_table = 'employee_mappings'
 
 
 class CategoryMapping(models.Model):
@@ -59,6 +63,7 @@ class CategoryMapping(models.Model):
 
     class Meta:
         unique_together = ('category', 'sub_category', 'workspace')
+        db_table = 'category_mappings'
 
 
 class ProjectMapping(models.Model):
@@ -75,6 +80,7 @@ class ProjectMapping(models.Model):
 
     class Meta:
         unique_together = ('project', 'workspace')
+        db_table = 'project_mappings'
 
 
 class CostCenterMapping(models.Model):
@@ -91,3 +97,4 @@ class CostCenterMapping(models.Model):
 
     class Meta:
         unique_together = ('cost_center', 'workspace')
+        db_table = 'cost_center_mappings'

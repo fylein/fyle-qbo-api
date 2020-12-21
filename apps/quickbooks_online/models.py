@@ -148,6 +148,9 @@ class Bill(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
+    class Meta:
+        db_table = 'bills'
+
     @staticmethod
     def create_bill(expense_group: ExpenseGroup):
         """
@@ -207,6 +210,9 @@ class BillLineitem(models.Model):
     description = models.TextField(help_text='QBO bill lineitem description', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
+
+    class Meta:
+        db_table = 'bill_lineitems'
 
     @staticmethod
     def create_bill_lineitems(expense_group: ExpenseGroup):
@@ -269,6 +275,9 @@ class Cheque(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
+    class Meta:
+        db_table = 'cheques'
+
     @staticmethod
     def create_cheque(expense_group: ExpenseGroup):
         """
@@ -321,6 +330,9 @@ class ChequeLineitem(models.Model):
     description = models.TextField(help_text='QBO cheque lineitem description', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
+
+    class Meta:
+        db_table = 'cheque_lineitems'
 
     @staticmethod
     def create_cheque_lineitems(expense_group: ExpenseGroup):
@@ -383,6 +395,9 @@ class CreditCardPurchase(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
+    class Meta:
+        db_table = 'credit_card_purchases'
+
     @staticmethod
     def create_credit_card_purchase(expense_group: ExpenseGroup):
         """
@@ -438,6 +453,9 @@ class CreditCardPurchaseLineitem(models.Model):
     description = models.TextField(help_text='QBO credit card purchase lineitem description', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
+
+    class Meta:
+        db_table = 'credit_card_purchase_lineitems'
 
     @staticmethod
     def create_credit_card_purchase_lineitems(expense_group: ExpenseGroup):
@@ -497,6 +515,9 @@ class JournalEntry(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
+    class Meta:
+        db_table = 'journal_entries'
+
     @staticmethod
     def create_journal_entry(expense_group: ExpenseGroup):
         """
@@ -540,6 +561,9 @@ class JournalEntryLineitem(models.Model):
     description = models.TextField(help_text='QBO JournalEntry lineitem description', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
+
+    class Meta:
+        db_table = 'journal_entry_lineitems'
 
     @staticmethod
     def create_journal_entry_lineitems(expense_group: ExpenseGroup):

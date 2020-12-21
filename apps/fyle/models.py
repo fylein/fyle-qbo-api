@@ -66,6 +66,9 @@ class Expense(models.Model):
     verified_at = models.DateTimeField(help_text='Report verified at', null=True)
     custom_properties = JSONField(null=True)
 
+    class Meta:
+        db_table = 'expenses'
+
     @staticmethod
     def create_expense_objects(expenses: List[Dict], custom_properties: List[ExpenseAttribute]):
         """
@@ -152,6 +155,9 @@ class ExpenseGroupSettings(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
+
+    class Meta:
+        db_table = 'expense_group_settings'
 
     @staticmethod
     def update_expense_group_settings(expense_group_settings: Dict, workspace_id: int):
@@ -250,6 +256,9 @@ class ExpenseGroup(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     exported_at = models.DateTimeField(help_text='Exported at', null=True)
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
+
+    class Meta:
+        db_table = 'expense_groups'
 
     @staticmethod
     def create_expense_groups_by_report_id_fund_source(expense_objects: List[Expense], workspace_id):

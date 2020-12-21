@@ -20,6 +20,8 @@ class Workspace(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')
 
+    class Meta:
+        db_table = 'workspaces'
 
 class WorkspaceSchedule(models.Model):
     """
@@ -31,6 +33,8 @@ class WorkspaceSchedule(models.Model):
     interval_hours = models.IntegerField(null=True)
     fyle_job_id = models.CharField(unique=True, null=True, max_length=255)
 
+    class Meta:
+        db_table = 'workspace_schedules'
 
 class WorkspaceSettings(models.Model):
     """
@@ -42,6 +46,8 @@ class WorkspaceSettings(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
+    class Meta:
+        db_table = 'workspace_settings'
 
 class WorkspaceGeneralSettings(models.Model):
     """
@@ -58,6 +64,8 @@ class WorkspaceGeneralSettings(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
+    class Meta:
+        db_table = 'general_settings'
 
 class QBOCredential(models.Model):
     """
@@ -70,6 +78,8 @@ class QBOCredential(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')
 
+    class Meta:
+        db_table = 'qbo_credentials'
 
 class FyleCredential(models.Model):
     """
@@ -80,3 +90,6 @@ class FyleCredential(models.Model):
     workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')
+
+    class Meta:
+        db_table = 'fyle_credentials'
