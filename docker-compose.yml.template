@@ -24,6 +24,9 @@ services:
       FYLE_JOBS_URL:
       QBO_CLIENT_ID:
       QBO_CLIENT_SECRET:
+      QBO_REDIRECT_URI:
+      QBO_TOKEN_URI:
+      QBO_ENVIRONMENT:
 
 
   qcluster:
@@ -48,6 +51,9 @@ services:
       FYLE_JOBS_URL:
       QBO_CLIENT_ID:
       QBO_CLIENT_SECRET:
+      QBO_REDIRECT_URI:
+      QBO_TOKEN_URI:
+      QBO_ENVIRONMENT:
 
   db:
     image: "postgres:latest"

@@ -30,6 +30,9 @@ Django Rest Framework API for Fyle Quickbooks Online Integration
       FYLE_JOBS_URL:
       QBO_CLIENT_ID:
       QBO_CLIENT_SECRET:
+      QBO_REDIRECT_URI:
+      QBO_TOKEN_URI:
+      QBO_ENVIRONMENT:
    ```
   
 * Build docker images
