@@ -1,9 +1,6 @@
 #!/bin/bash
 
 
-# Setting environment variables
-source setup.sh
-
 # Run db migrations
 python manage.py migrate
 

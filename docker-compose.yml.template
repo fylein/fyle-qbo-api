@@ -1,0 +1,70 @@
+version: '3.7'
+
+services:
+  api:
+    build: ./
+    entrypoint: bash run.sh
+    restart: unless-stopped
+    volumes:
+    - ./:/fyle-qbo-api
+    ports:
+    - 8000:8000
+    depends_on:
+    - db
+    environment: 
+      SECRET_KEY: thisisthedjangosecretkey
+      ALLOWED_HOSTS: "*"
+      DEBUG: "False"
+      API_URL: http://localhost:8000/api
+      DATABASE_URL: postgres://postgres:postgres@db:5432/qbo_db
+      FYLE_BASE_URL:
+      FYLE_CLIENT_ID:
+      FYLE_CLIENT_SECRET:
+      FYLE_TOKEN_URI:
+      FYLE_JOBS_URL:
+      QBO_CLIENT_ID:
+      QBO_CLIENT_SECRET:
+      QBO_REDIRECT_URI:
+      QBO_TOKEN_URI:
+      QBO_ENVIRONMENT:
+      SERVICE_NAME:
+
+
+  qcluster:
+    build: ./
+    entrypoint: python manage.py qcluster
+    restart: unless-stopped
+    volumes:
+    - ./:/fyle-qbo-api
+    depends_on:
+    - db
+    - api
+    environment: 
+      SECRET_KEY: thisisthedjangosecretkey
+      ALLOWED_HOSTS: "*"
+      DEBUG: "False"
+      API_URL: http://localhost:8000/api
+      DATABASE_URL: postgres://postgres:postgres@db:5432/qbo_db
+      FYLE_BASE_URL:
+      FYLE_CLIENT_ID:
+      FYLE_CLIENT_SECRET:
+      FYLE_TOKEN_URI:
+      FYLE_JOBS_URL:
+      QBO_CLIENT_ID:
+      QBO_CLIENT_SECRET:
+      QBO_REDIRECT_URI:
+      QBO_TOKEN_URI:
+      QBO_ENVIRONMENT:
+      SERVICE_NAME:
+
+  db:
+    image: "postgres:latest"
+    environment: 
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - data:/var/lib/postgresql/data/
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  api:
+  data:
