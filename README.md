@@ -30,10 +30,6 @@ Django Rest Framework API for Fyle Quickbooks Online Integration
       FYLE_JOBS_URL:
       QBO_CLIENT_ID:
       QBO_CLIENT_SECRET:
-      QBO_REDIRECT_URI:
-      QBO_TOKEN_URI:
-      QBO_ENVIRONMENT:
-      SERVICE_NAME:
    ```
   
 * Build docker images
@@ -51,7 +47,7 @@ Django Rest Framework API for Fyle Quickbooks Online Integration
 * The database can be accessed by this command, on password prompt type `postgres`
 
     ```
-    docker-compose run db psql -h db -U postgres xero_db
+    docker-compose run db psql -h db -U postgres qbo_db
     ```
 
 * To tail the logs a service you can do
