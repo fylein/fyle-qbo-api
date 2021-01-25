@@ -19,26 +19,21 @@ class TasksView(generics.ListAPIView):
         Return task logs in workspace
         """
         task_status = self.request.query_params.getlist('status')
-        ids = self.request.query_params.get('ids').split(',')
-
+        ids = self.request.query_params.get('ids')
+        
+        if ids:
+            expense_group_ids = ids.split(',')
+        
         expense_group_ids = []
-        
-        try:
-            for i in range(0, len(ids)):
-                expense_group_ids.append(int(ids[i])) 
-        except:
-            expense_group_ids = []
             
-        
-
         if len(task_status) == 1 and task_status[0] == 'ALL':
-            task_status = ["IN_PROGRESS"]
-            task_type = 'FETCHING_EXPENSES'
+            task_status = ['IN_PROGRESS', 'FAILED', 'COMPLETE']
+            task_type = ['CREATE_BILL','CREATE_CHECK']
         else:
-            task_type = 'FAILED'
+            task_type =  ['CREATE_BILL','CREATE_CHECK','FETCH_EXPENSES']
             task_status = ['IN_PROGRESS', 'FAILED', 'COMPLETE']
 
-        task_logs = TaskLog.objects.filter(~Q(type=task_type),
+        task_logs = TaskLog.objects.filter(type__in=task_type,
                                            workspace_id=self.kwargs['workspace_id'],
                                            status__in=task_status,expense_group__in=expense_group_ids).order_by('-updated_at').all()
         return task_logs
