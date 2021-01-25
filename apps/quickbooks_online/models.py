@@ -145,6 +145,8 @@ class Bill(models.Model):
     currency = models.CharField(max_length=255, help_text='Bill Currency')
     private_note = models.TextField(help_text='Bill Description')
     bill_number = models.CharField(max_length=255)
+    payment_synced = models.BooleanField(help_text='Payment synced status', default=False)
+    paid_on_qbo = models.BooleanField(help_text='Payment status in NetSuite', default=False)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
@@ -644,3 +646,120 @@ class JournalEntryLineitem(models.Model):
 
             journal_entry_lineitem_objects.append(journal_entry_lineitem_object)
         return journal_entry_lineitem_objects
+
+
+class BillPayment(models.Model):
+    """
+    QBO BillPayment
+    """
+    id = models.AutoField(primary_key=True)
+    expense_group = models.OneToOneField(ExpenseGroup, on_delete=models.PROTECT, help_text='Expense group reference')
+    private_note = models.TextField(help_text='Bill Description')
+    vendor_id = models.CharField(max_length=255, help_text='QBO vendor id')
+    amount = models.FloatField(help_text='Bill amount')
+    currency = models.CharField(max_length=255, help_text='Bill Currency')
+    payment_account = models.CharField(max_length=255, help_text='Payment Account')
+    accounts_payable_id = models.CharField(max_length=255, help_text='QBO Accounts Payable account id')
+    department_id = models.CharField(max_length=255, help_text='QBO department id', null=True)
+    transaction_date = models.DateField(help_text='Bill transaction date')
+    bill_payment_number = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
+    updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
+
+    class Meta:
+        db_table = 'bill_payments'
+
+    @staticmethod
+    def create_bill_payment(expense_group: ExpenseGroup):
+        """
+        Create bill payments
+        :param expense_group: expense group
+        :return: bill payment object
+        """
+        description = expense_group.description
+
+        expense = expense_group.expenses.first()
+
+        expenses: List[Expense] = expense_group.expenses.all()
+
+        total_amount = 0
+        for expense in expenses:
+            total_amount = total_amount + expense.amount
+
+        department_id = get_department_id_or_none(expense_group)
+
+        general_mappings = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
+
+        vendor_id = None
+        if expense_group.fund_source == 'PERSONAL':
+            vendor_id = Mapping.objects.get(
+                source_type='EMPLOYEE',
+                destination_type='VENDOR',
+                source__value=description.get('employee_email'),
+                workspace_id=expense_group.workspace_id
+            ).destination.destination_id
+        elif expense_group.fund_source == 'CCC':
+            vendor_id = general_mappings.default_ccc_vendor_id
+
+        general_mappings = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
+        bill_payment_object, _ = BillPayment.objects.update_or_create(
+            expense_group=expense_group,
+            defaults={
+                'private_note': 'Reimbursable expenses by {0}'.format(description.get('employee_email')) if
+                expense_group.fund_source == 'PERSONAL' else
+                'Credit card expenses by {0}'.format(description.get('employee_email')),
+                'vendor_id': vendor_id,
+                'amount': total_amount,
+                'currency': expense.currency,
+                'payment_account': general_mappings.bill_payment_account_id,
+                'accounts_payable_id': general_mappings.accounts_payable_id,
+                'department_id': department_id,
+                'transaction_date': get_transaction_date(expense_group),
+                'bill_payment_number': ''
+            }
+        )
+
+        return bill_payment_object
+
+
+class BillPaymentLineitem(models.Model):
+    """
+    QBO Bill Payment Lineitem
+    """
+    id = models.AutoField(primary_key=True)
+    bill_payment = models.ForeignKey(BillPayment, on_delete=models.PROTECT, help_text='Reference to bill payment')
+    expense = models.OneToOneField(Expense, on_delete=models.PROTECT, help_text='Reference to Expense')
+    amount = models.FloatField(help_text='Bill amount')
+    linked_transaction_id = models.CharField(max_length=255, help_text='Linked Transaction ID ( Bill ID )')
+    created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
+    updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
+
+    class Meta:
+        db_table = 'bill_payment_lineitems'
+
+    @staticmethod
+    def create_bill_payment_lineitems(expense_group: ExpenseGroup, linked_transaction_id):
+        """
+        Create bill payment lineitems
+        :param linked_transaction_id:
+        :param expense_group: expense group
+        :return: lineitems objects
+        """
+        expenses = expense_group.expenses.all()
+        bill_payment = BillPayment.objects.get(expense_group=expense_group)
+
+        bill_payment_lineitem_objects = []
+
+        for lineitem in expenses:
+            bill_payment_lineitem_object, _ = BillPaymentLineitem.objects.update_or_create(
+                bill_payment=bill_payment,
+                expense_id=lineitem.id,
+                linked_transaction_id=linked_transaction_id,
+                defaults={
+                    'amount': lineitem.amount,
+                }
+            )
+
+            bill_payment_lineitem_objects.append(bill_payment_lineitem_object)
+
+        return bill_payment_lineitem_objects

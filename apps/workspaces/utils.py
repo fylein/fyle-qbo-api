@@ -9,6 +9,7 @@ from django.conf import settings
 from future.moves.urllib.parse import urlencode
 
 from apps.mappings.tasks import schedule_projects_creation, schedule_categories_creation
+from apps.quickbooks_online.tasks import schedule_bill_payment_creation
 from qbosdk import UnauthorizedClientError, NotFoundClientError, WrongParamsError, InternalServerError
 
 from fyle_qbo_api.utils import assert_valid
@@ -76,9 +77,13 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
                 general_settings_payload['corporate_credit_card_expenses_object']
                 if 'corporate_credit_card_expenses_object' in general_settings_payload
                 and general_settings_payload['corporate_credit_card_expenses_object'] else None,
+            'sync_fyle_to_qbo_payments': general_settings_payload['sync_fyle_to_qbo_payments'],
+            'sync_qbo_to_fyle_payments': general_settings_payload['sync_qbo_to_fyle_payments']
         }
     )
     schedule_projects_creation(import_projects=general_settings.import_projects, workspace_id=workspace_id)
     schedule_categories_creation(import_categories=general_settings.import_categories, workspace_id=workspace_id)
+
+    schedule_bill_payment_creation(general_settings.sync_fyle_to_qbo_payments, workspace_id)
 
     return general_settings

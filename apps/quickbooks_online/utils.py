@@ -8,7 +8,7 @@ from apps.workspaces.models import QBOCredential
 from fyle_accounting_mappings.models import DestinationAttribute
 
 from .models import BillLineitem, Bill, ChequeLineitem, Cheque, CreditCardPurchase, CreditCardPurchaseLineitem, \
-    JournalEntry, JournalEntryLineitem
+    JournalEntry, JournalEntryLineitem, BillPaymentLineitem, BillPayment
 
 
 class QBOConnector:
@@ -52,6 +52,9 @@ class QBOConnector:
         elif account_type == 'Bank':
             attribute_type = 'BANK_ACCOUNT'
             display_name = 'Bank Account'
+        elif account_type == 'Bank' or account_type == 'Credit Card':
+            attribute_type = 'BILL_PAYMENT_ACCOUNT'
+            display_name = 'Bill Payment Account'
         else:
             attribute_type = 'ACCOUNTS_PAYABLE'
             display_name = 'Accounts Payable'
@@ -259,6 +262,13 @@ class QBOConnector:
         bills_payload = self.__construct_bill(bill, bill_lineitems)
         created_bill = self.connection.bills.post(bills_payload)
         return created_bill
+
+    def get_bill(self, bill_id):
+        """
+        GET bill from QBO
+        """
+        bill = self.connection.bills.get_by_id(bill_id)
+        return bill
 
     @staticmethod
     def __construct_cheque_lineitems(cheque_lineitems: List[ChequeLineitem]) -> List[Dict]:
@@ -479,3 +489,68 @@ class QBOConnector:
                 responses.append(response)
             return responses
         return []
+
+    @staticmethod
+    def __construct_bill_payment_lineitems(bill_payment_lineitems: List[BillPaymentLineitem]) -> List[Dict]:
+        """
+        Create bill payment line items
+        :param bill_payment_lineitems: list of bill payment line items extracted from database
+        :return: constructed line items
+        """
+        lines = []
+
+        for line in bill_payment_lineitems:
+            line = {
+                'Amount': line.amount,
+                'LinkedTxn': [
+                    {
+                        "TxnId": line.linked_transaction_id,
+                        "TxnType": "Bill"
+                    }
+                ]
+            }
+            lines.append(line)
+
+        return lines
+
+    def __construct_bill_payment(self, bill_payment: BillPayment,
+                                 bill_payment_lineitems: List[BillPaymentLineitem]) -> Dict:
+        """
+        Create a bill payment
+        :param bill_payment: bill_payment object extracted from database
+        :return: constructed bill payment
+        """
+        bill_payment_payload = {
+            'VendorRef': {
+                'value': bill_payment.vendor_id
+            },
+            'APAccountRef': {
+                'value': bill_payment.accounts_payable_id
+            },
+            'DepartmentRef': {
+                'value': bill_payment.department_id
+            },
+            'TxnDate': bill_payment.transaction_date,
+            "CurrencyRef": {
+                "value": bill_payment.currency
+            },
+            'PrivateNote': bill_payment.private_note,
+            'TotalAmt': bill_payment.amount,
+            'PayType': 'Check',
+            'CheckPayment': {
+                "BankAccountRef": {
+                    "value": bill_payment.payment_account
+                }
+            },
+            'Line': self.__construct_bill_payment_lineitems(bill_payment_lineitems)
+        }
+
+        return bill_payment_payload
+
+    def post_bill_payment(self, bill_payment: BillPayment, bill_payment_lineitems: List[BillPaymentLineitem]):
+        """
+        Post bill payment to QBO
+        """
+        bill_payment_payload = self.__construct_bill_payment(bill_payment, bill_payment_lineitems)
+        created_bill_payment = self.connection.bill_payments.post(bill_payment_payload)
+        return created_bill_payment

@@ -10,6 +10,8 @@ import requests
 
 import json
 
+from apps.fyle.models import Reimbursement
+
 
 class FyleConnector:
     """
@@ -270,4 +272,32 @@ class FyleConnector:
             return attachments
 
         return []
+
+    def sync_reimbursements(self):
+        """
+        Get reimbursements from fyle
+        """
+        reimbursements = self.connection.Reimbursements.get()['data']
+
+        reimbursement_attributes = []
+
+        for reimbursement in reimbursements:
+            reimbursement_attributes.append({
+                'reimbursement_id': reimbursement['id'],
+                'settlement_id': reimbursement['settlement_id'],
+                'state': reimbursement['state']
+            })
+
+        reimbursement_attributes = Reimbursement.create_reimbursement_objects(
+            reimbursement_attributes, self.workspace_id
+        )
+
+        return reimbursement_attributes
+
+    def post_reimbursement(self, reimbursement_ids: list):
+        """
+        Process Reimbursements in bulk.
+        """
+        return self.connection.Reimbursements.post(reimbursement_ids)
+
 
