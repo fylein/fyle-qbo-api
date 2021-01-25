@@ -20,7 +20,7 @@ class TasksView(generics.ListAPIView):
         """
         task_status = self.request.query_params.getlist('status')
         
-        expense_group_ids = self.request.query_params.get('ids')
+        expense_group_ids = self.request.query_params.get('expense_group_ids')
 
         if len(task_status) == 1 and task_status[0] == 'ALL' and expense_group_ids:
             expense_group_ids = expense_group_ids.split(',')
