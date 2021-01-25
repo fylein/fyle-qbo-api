@@ -23,9 +23,9 @@ class TasksView(generics.ListAPIView):
 
         expense_group_ids = []
         
-        #if len(ids) >0:
-        #    for i in range(0, len(ids)):
-        #        expense_group_ids.append(int(ids[i])) 
+        if len(ids) >0:
+            for i in range(0, len(ids)):
+                expense_group_ids.append(int(ids[i])) 
         
 
         if len(task_status) == 1 and task_status[0] == 'ALL':
