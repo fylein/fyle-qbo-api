@@ -30,8 +30,7 @@ class TasksView(generics.ListAPIView):
                 status='IN_PROGRESS',
                 expense_group__in=expense_group_ids
             ).order_by('-updated_at').all()
-
-        print(task_status)    
+            
         return TaskLog.objects.filter(workspace_id=self.kwargs['workspace_id'],
                                            status__in=task_status).order_by('-updated_at').all()
 
