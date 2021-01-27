@@ -35,12 +35,19 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='bill',
             name='paid_on_qbo',
-            field=models.BooleanField(default=False, help_text='Payment status in NetSuite'),
+            field=models.BooleanField(default=False, help_text='Payment status in QBO'),
         ),
         migrations.AddField(
             model_name='bill',
             name='payment_synced',
             field=models.BooleanField(default=False, help_text='Payment synced status'),
+        ),
+        migrations.AddField(
+            model_name='billpayment',
+            name='expense_group',
+            field=models.OneToOneField(default=1, help_text='Expense group reference',
+                                       on_delete=django.db.models.deletion.PROTECT, to='fyle.ExpenseGroup'),
+            preserve_default=False,
         ),
         migrations.CreateModel(
             name='BillPaymentLineitem',

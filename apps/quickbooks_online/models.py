@@ -146,7 +146,7 @@ class Bill(models.Model):
     private_note = models.TextField(help_text='Bill Description')
     bill_number = models.CharField(max_length=255)
     payment_synced = models.BooleanField(help_text='Payment synced status', default=False)
-    paid_on_qbo = models.BooleanField(help_text='Payment status in NetSuite', default=False)
+    paid_on_qbo = models.BooleanField(help_text='Payment status in QBO', default=False)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
