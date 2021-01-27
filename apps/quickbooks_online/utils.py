@@ -161,7 +161,7 @@ class QBOConnector:
             customer_attributes.append({
                 'attribute_type': 'CUSTOMER',
                 'display_name': 'customer',
-                'value': customer['FullyQualifiedName'],
+                'value': customer['FullyQualifiedName'].replace('/', '-'),
                 'destination_id': customer['Id'],
                 'active': customer['Active']
             })
