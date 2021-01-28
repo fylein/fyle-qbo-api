@@ -688,26 +688,18 @@ class BillPayment(models.Model):
 
         department_id = get_department_id_or_none(expense_group)
 
-        general_mappings = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
-
-        vendor_id = None
-        if expense_group.fund_source == 'PERSONAL':
-            vendor_id = Mapping.objects.get(
+        vendor_id = Mapping.objects.get(
                 source_type='EMPLOYEE',
                 destination_type='VENDOR',
                 source__value=description.get('employee_email'),
                 workspace_id=expense_group.workspace_id
             ).destination.destination_id
-        elif expense_group.fund_source == 'CCC':
-            vendor_id = general_mappings.default_ccc_vendor_id
 
         general_mappings = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
         bill_payment_object, _ = BillPayment.objects.update_or_create(
             expense_group=expense_group,
             defaults={
-                'private_note': 'Reimbursable expenses by {0}'.format(description.get('employee_email')) if
-                expense_group.fund_source == 'PERSONAL' else
-                'Credit card expenses by {0}'.format(description.get('employee_email')),
+                'private_note': 'Payment for Bill by {0}'.format(description.get('employee_email')),
                 'vendor_id': vendor_id,
                 'amount': total_amount,
                 'currency': expense.currency,
