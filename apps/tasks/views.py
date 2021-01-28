@@ -19,13 +19,12 @@ class TasksView(generics.ListAPIView):
         Return task logs in workspace
         """
         task_status = self.request.query_params.getlist('status')
-        
         expense_group_ids = self.request.query_params.get('expense_group_ids')
 
         if len(task_status) == 1 and task_status[0] == 'ALL' and expense_group_ids:
             expense_group_ids = expense_group_ids.split(',')
             return TaskLog.objects.filter(
-                ~Q(type__in=['FETCHING_EXPENSES' ,'CREATING_VENDOR_PAYMENT']),
+                ~Q(type__in=['FETCHING_EXPENSES']),
                 workspace_id=self.kwargs['workspace_id'],
                 status='IN_PROGRESS',
                 expense_group__in=expense_group_ids
