@@ -26,7 +26,7 @@ class TasksView(generics.ListAPIView):
             filters = {
                 'workspace_id':self.kwargs['workspace_id'],
                 'status__in': ['IN_PROGRESS'],
-                'type__in':['CREATE_BILL','CREATE_CHECK'],
+                'type__in':['CREATE_BILL','CREATE_CHECK','CREATING_CREDIT_CARD_PURCHASE','CREATING_JOURNAL_ENTRY'],
                 'expense_group__in':expense_group_ids
             }
         else:
