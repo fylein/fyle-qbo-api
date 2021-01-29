@@ -25,6 +25,7 @@ class TasksView(generics.ListAPIView):
             expense_group_ids = expense_group_ids.split(',')
             filters = {
                 'workspace_id':self.kwargs['workspace_id'],
+                'status__in':task_status,
                 'type__in':['CREATE_BILL','CREATE_CHECK','CREATING_CREDIT_CARD_PURCHASE','CREATING_JOURNAL_ENTRY'],
                 'expense_group__in':expense_group_ids
             }
