@@ -22,7 +22,6 @@ class TasksView(generics.ListAPIView):
         expense_group_ids = self.request.query_params.get('expense_group_ids')
 
         if len(task_status) == 1 and task_status[0] == 'ALL' and expense_group_ids:
-            print(expense_group_ids)
             expense_group_ids = expense_group_ids.split(',')
             return TaskLog.objects.filter(
                 ~Q(type__in=['FETCHING_EXPENSES']),
