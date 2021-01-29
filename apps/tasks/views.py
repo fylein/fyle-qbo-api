@@ -23,15 +23,19 @@ class TasksView(generics.ListAPIView):
 
         if len(task_status) == 1 and task_status[0] == 'ALL' and expense_group_ids:
             expense_group_ids = expense_group_ids.split(',')
-            return TaskLog.objects.filter(
-                ~Q(type__in=['FETCHING_EXPENSES']),
-                workspace_id=self.kwargs['workspace_id'],
-                status=['IN_PROGRESS'],
-                expense_group__in=expense_group_ids
-            ).order_by('-updated_at').all()
-            
-        return TaskLog.objects.filter(workspace_id=self.kwargs['workspace_id'],
-                                           status__in=task_status).order_by('-updated_at').all()
+            filters = {
+                'workspace_id':self.kwargs['workspace_id'],
+                'status__in': ['IN_PROGRESS'],
+                'type__in':['CREATE_BILL','CREATE_CHECK'],
+                'expense_group__in':expense_group_ids
+            }
+        else:
+            filters = {
+                'workspace_id':self.kwargs['workspace_id'],
+                'status__in':task_status,
+            }
+
+        return TaskLog.objects.filter(**filters).order_by('-updated_at').all()
 
 
 class TasksByIdView(generics.RetrieveAPIView):
