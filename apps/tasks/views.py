@@ -20,13 +20,15 @@ class TasksView(generics.ListAPIView):
         """
         task_status = self.request.query_params.getlist('status')
         expense_group_ids = self.request.query_params.get('expense_group_ids')
+        task_type = self.request.query_params.get('task_type')
 
         if len(task_status) == 1 and task_status[0] == 'IN_PROGRESS' and expense_group_ids:
             expense_group_ids = expense_group_ids.split(',')
+            task_type = task_type.split(',')
             filters = {
                 'workspace_id':self.kwargs['workspace_id'],
                 'status__in':task_status,
-                'type__in':['CREATE_BILL','CREATE_CHECK','CREATING_CREDIT_CARD_PURCHASE','CREATING_JOURNAL_ENTRY'],
+                'type__in':task_type,
                 'expense_group__in':expense_group_ids
             }
         else:
