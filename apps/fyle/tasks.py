@@ -31,11 +31,11 @@ def schedule_expense_group_creation(workspace_id: int, user: str):
     jobs = fyle_sdk_connection.Jobs
     user_profile = fyle_sdk_connection.Employees.get_my_profile()['data']
 
-    task_log = TaskLog.objects.create(
+    task_log, created = TaskLog.objects.get_or_create(
         workspace_id=workspace_id,
         type='FETCHING_EXPENSES',
-        status='IN_PROGRESS'
     )
+    task_log.status = 'IN_PROGRESS'
 
     created_job = jobs.trigger_now(
         callback_url='{0}{1}'.format(
