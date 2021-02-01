@@ -1,7 +1,6 @@
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import status
-from django.db.models import Q
 from fyle_qbo_api.utils import assert_valid
 
 from .models import TaskLog
@@ -26,15 +25,15 @@ class TasksView(generics.ListAPIView):
             expense_group_ids = expense_group_ids.split(',')
             task_type = task_type.split(',')
             filters = {
-                'workspace_id':self.kwargs['workspace_id'],
-                'status__in':task_status,
-                'type__in':task_type,
-                'expense_group__in':expense_group_ids
+                'workspace_id': self.kwargs['workspace_id'],
+                'status__in': task_status,
+                'type__in': task_type,
+                'expense_group__in': expense_group_ids
             }
         else:
             filters = {
-                'workspace_id':self.kwargs['workspace_id'],
-                'status__in':task_status,
+                'workspace_id': self.kwargs['workspace_id'],
+                'status__in': task_status,
             }
 
         return TaskLog.objects.filter(**filters).order_by('-updated_at').all()
