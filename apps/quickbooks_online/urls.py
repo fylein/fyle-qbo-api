@@ -44,5 +44,5 @@ urlpatterns = [
     path('quickbooks_fields/', QuickbooksFieldsView.as_view()),
     path('update_grouping_on_department/', DepartmentGroupUpdate.as_view()),
     path('reimburse_payments/', ReimburseQuickbooksPaymentsView.as_view()),
-    path('bill_payments/', BillPaymentView.as_view()),
+    path('bill_payments/', BillPaymentView.as_view())
 ]
