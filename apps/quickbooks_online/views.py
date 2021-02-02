@@ -445,8 +445,6 @@ class BillView(generics.ListCreateAPIView):
     Create Bill
     """
     serializer_class = BillSerializer
-    authentication_classes = []
-    permission_classes = []
 
     def get_queryset(self):
         return Bill.objects.filter(expense_group__workspace_id=self.kwargs['workspace_id']).order_by('-updated_at')
