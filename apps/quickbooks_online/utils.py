@@ -4,6 +4,8 @@ from django.conf import settings
 
 from qbosdk import QuickbooksOnlineSDK
 
+import unidecode
+
 from apps.workspaces.models import QBOCredential
 from fyle_accounting_mappings.models import DestinationAttribute
 
@@ -60,7 +62,7 @@ class QBOConnector:
             account_attributes.append({
                 'attribute_type': attribute_type,
                 'display_name': display_name,
-                'value': account['Name'],
+                'value': unidecode.unidecode(u'{0}'.format(account['Name'])),
                 'destination_id': account['Id'],
                 'active': account['Active']
             })
@@ -161,7 +163,7 @@ class QBOConnector:
             customer_attributes.append({
                 'attribute_type': 'CUSTOMER',
                 'display_name': 'customer',
-                'value': customer['FullyQualifiedName'],
+                'value': unidecode.unidecode(u'{0}'.format(customer['FullyQualifiedName'])),
                 'destination_id': customer['Id'],
                 'active': customer['Active']
             })
