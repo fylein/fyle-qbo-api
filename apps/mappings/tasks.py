@@ -59,7 +59,7 @@ def upload_projects_to_fyle(workspace_id):
         workspace_id=workspace_id
     )
 
-    fyle_connection.sync_projects(False)
+    fyle_connection.sync_projects()
 
     qbo_attributes: List[DestinationAttribute] = qbo_connection.sync_customers()
 
@@ -67,7 +67,7 @@ def upload_projects_to_fyle(workspace_id):
 
     if fyle_payload:
         fyle_connection.connection.Projects.post(fyle_payload)
-        fyle_connection.sync_projects(False)
+        fyle_connection.sync_projects()
 
     return qbo_attributes
 

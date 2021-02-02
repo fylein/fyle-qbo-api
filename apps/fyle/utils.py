@@ -1,3 +1,4 @@
+import json
 from typing import List
 
 from django.conf import settings
@@ -8,7 +9,6 @@ from fyle_accounting_mappings.models import ExpenseAttribute
 
 import requests
 
-import json
 
 from apps.fyle.models import Reimbursement
 
@@ -237,15 +237,26 @@ class FyleConnector:
 
         return cost_center_attributes
 
-    def sync_projects(self, active_only: bool):
+    def sync_projects(self):
         """
         Get projects from fyle
         """
-        projects = self.connection.Projects.get(active_only=active_only)['data']
+        all_projects = []
+        limit = 1000
+        offset = 0
+
+        while True:
+            projects = self.connection.Projects.get(limit=str(limit), offset=str(offset))['data']
+
+            if len(projects) == 0:
+                break
+            else:
+                all_projects.extend(projects)
+                offset = offset + limit
 
         project_attributes = []
 
-        for project in projects:
+        for project in all_projects:
             project_attributes.append({
                 'attribute_type': 'PROJECT',
                 'display_name': 'Project',
