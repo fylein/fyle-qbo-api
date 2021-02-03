@@ -26,8 +26,7 @@ def schedule_sync(workspace_id: int, schedule_enabled: bool, hours: int, next_ru
             args='{}'.format(workspace_id),
             defaults={
                 'schedule_type': Schedule.MINUTES,
-                'minutes': hours,
-                # 'minutes': hours * 60,
+                'minutes': hours * 60,
                 'next_run': start_datetime
             }
         )
