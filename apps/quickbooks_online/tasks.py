@@ -344,7 +344,7 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
                 }
             )
 
-            chain.append('apps.quickbooks_online.create_credit_card_purchase', expense_group, task_log)
+            chain.append('apps.quickbooks_online.tasks.create_credit_card_purchase', expense_group, task_log)
 
         if chain.length():
             chain.run()
@@ -443,7 +443,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
                 }
             )
 
-            chain.append('apps.quickbooks_online.create_journal_entry', expense_group, task_log)
+            chain.append('apps.quickbooks_online.tasks.create_journal_entry', expense_group, task_log)
 
         if chain.length():
             chain.run()

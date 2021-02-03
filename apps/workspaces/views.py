@@ -349,8 +349,7 @@ class ScheduleView(viewsets.ViewSet):
             workspace_id=kwargs['workspace_id'],
             schedule_enabled=schedule_enabled,
             hours=hours,
-            next_run=next_run,
-            user=request.user
+            next_run=next_run
         )
 
         return Response(
@@ -360,13 +359,13 @@ class ScheduleView(viewsets.ViewSet):
 
     def get(self, *args, **kwargs):
         try:
-            qbo_credentials = WorkspaceSchedule.objects.get(workspace_id=kwargs['workspace_id'])
+            workspace_schedule = WorkspaceSchedule.objects.get(workspace_id=kwargs['workspace_id'])
 
             return Response(
-                data=WorkspaceScheduleSerializer(qbo_credentials).data,
+                data=WorkspaceScheduleSerializer(workspace_schedule).data,
                 status=status.HTTP_200_OK
             )
-        except WorkspaceScheduleSerializer.DoesNotExist:
+        except WorkspaceSchedule.DoesNotExist:
             return Response(
                 data={
                     'message': 'Workspace schedule does not exist in workspace'

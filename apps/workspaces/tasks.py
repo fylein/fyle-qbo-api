@@ -26,7 +26,8 @@ def schedule_sync(workspace_id: int, schedule_enabled: bool, hours: int, next_ru
             args='{}'.format(workspace_id),
             defaults={
                 'schedule_type': Schedule.MINUTES,
-                'minutes': hours * 60,
+                'minutes': hours,
+                # 'minutes': hours * 60,
                 'next_run': start_datetime
             }
         )
@@ -63,7 +64,7 @@ def run_sync_schedule(workspace_id):
     if general_settings.corporate_credit_card_expenses_object:
         fund_source.append('CCC')
     if general_settings.reimbursable_expenses_object:
-        task_log: TaskLog = async_create_expense_groups(
+        async_create_expense_groups(
             workspace_id=workspace_id, fund_source=fund_source, task_log=task_log
         )
 
@@ -98,5 +99,10 @@ def run_sync_schedule(workspace_id):
 
             elif general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE':
                 schedule_credit_card_purchase_creation(
+                    workspace_id=workspace_id, expense_group_ids=expense_group_ids
+                )
+
+            elif general_settings.corporate_credit_card_expenses_object == 'BILL':
+                schedule_bills_creation(
                     workspace_id=workspace_id, expense_group_ids=expense_group_ids
                 )

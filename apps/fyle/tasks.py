@@ -26,7 +26,9 @@ def schedule_expense_group_creation(workspace_id: int):
     task_log, _ = TaskLog.objects.update_or_create(
         workspace_id=workspace_id,
         type='FETCHING_EXPENSES',
-        status='IN_PROGRESS'
+        defaults={
+           'status': 'IN_PROGRESS'
+        }
     )
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
