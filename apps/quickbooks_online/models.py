@@ -720,7 +720,6 @@ class BillPaymentLineitem(models.Model):
     """
     id = models.AutoField(primary_key=True)
     bill_payment = models.ForeignKey(BillPayment, on_delete=models.PROTECT, help_text='Reference to bill payment')
-    expense = models.OneToOneField(Expense, on_delete=models.PROTECT, help_text='Reference to Expense')
     amount = models.FloatField(help_text='Bill amount')
     linked_transaction_id = models.CharField(max_length=255, help_text='Linked Transaction ID ( Bill ID )')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
@@ -742,16 +741,16 @@ class BillPaymentLineitem(models.Model):
 
         bill_payment_lineitem_objects = []
 
+        total_amount = 0
         for lineitem in expenses:
-            bill_payment_lineitem_object, _ = BillPaymentLineitem.objects.update_or_create(
-                bill_payment=bill_payment,
-                expense_id=lineitem.id,
-                linked_transaction_id=linked_transaction_id,
-                defaults={
-                    'amount': lineitem.amount,
-                }
-            )
-
-            bill_payment_lineitem_objects.append(bill_payment_lineitem_object)
+            total_amount = total_amount + lineitem.amount
+        bill_payment_lineitem_object, _ = BillPaymentLineitem.objects.update_or_create(
+            bill_payment=bill_payment,
+            linked_transaction_id=linked_transaction_id,
+            defaults={
+                'amount': total_amount,
+            }
+        )
+        bill_payment_lineitem_objects.append(bill_payment_lineitem_object)
 
         return bill_payment_lineitem_objects
