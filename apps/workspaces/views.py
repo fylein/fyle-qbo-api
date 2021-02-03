@@ -16,11 +16,11 @@ from fyle_rest_auth.models import AuthToken
 
 from fyle_qbo_api.utils import assert_valid
 
-from .models import Workspace, FyleCredential, QBOCredential, WorkspaceSettings, WorkspaceGeneralSettings
+from .models import Workspace, FyleCredential, QBOCredential, WorkspaceGeneralSettings, WorkspaceSchedule
 from .utils import generate_qbo_refresh_token, create_or_update_general_settings
 from .tasks import schedule_sync, run_sync_schedule
 from .serializers import WorkspaceSerializer, FyleCredentialSerializer, QBOCredentialSerializer, \
-    WorkspaceSettingsSerializer, WorkSpaceGeneralSettingsSerializer
+    WorkSpaceGeneralSettingsSerializer, WorkspaceScheduleSerializer
 from ..fyle.models import ExpenseGroupSettings
 
 User = get_user_model()
@@ -322,13 +322,13 @@ class ScheduledSyncView(viewsets.ViewSet):
         """
         Scheduled sync
         """
-        run_sync_schedule(kwargs['workspace_id'], request.user)
+        run_sync_schedule(kwargs['workspace_id'])
         return Response(
             status=status.HTTP_200_OK
         )
 
 
-class SettingsView(viewsets.ViewSet):
+class ScheduleView(viewsets.ViewSet):
     """
     Settings View
     """
@@ -345,7 +345,7 @@ class SettingsView(viewsets.ViewSet):
         next_run = request.data.get('next_run')
         assert_valid(next_run is not None, 'next_run value cannot be empty')
 
-        settings = schedule_sync(
+        workspace_schedule_settings = schedule_sync(
             workspace_id=kwargs['workspace_id'],
             schedule_enabled=schedule_enabled,
             hours=hours,
@@ -354,22 +354,22 @@ class SettingsView(viewsets.ViewSet):
         )
 
         return Response(
-            data=WorkspaceSettingsSerializer(settings).data,
+            data=WorkspaceScheduleSerializer(workspace_schedule_settings).data,
             status=status.HTTP_200_OK
         )
 
     def get(self, *args, **kwargs):
         try:
-            qbo_credentials = WorkspaceSettings.objects.get(workspace_id=kwargs['workspace_id'])
+            qbo_credentials = WorkspaceSchedule.objects.get(workspace_id=kwargs['workspace_id'])
 
             return Response(
-                data=WorkspaceSettingsSerializer(qbo_credentials).data,
+                data=WorkspaceScheduleSerializer(qbo_credentials).data,
                 status=status.HTTP_200_OK
             )
-        except WorkspaceSettings.DoesNotExist:
+        except WorkspaceScheduleSerializer.DoesNotExist:
             return Response(
                 data={
-                    'message': 'Workspace setting does not exist in workspace'
+                    'message': 'Workspace schedule does not exist in workspace'
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )

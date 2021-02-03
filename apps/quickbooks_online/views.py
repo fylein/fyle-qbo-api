@@ -444,7 +444,7 @@ class BillScheduleView(generics.CreateAPIView):
         expense_group_ids = request.data.get('expense_group_ids', [])
 
         schedule_bills_creation(
-            kwargs['workspace_id'], expense_group_ids, request.user)
+            kwargs['workspace_id'], expense_group_ids)
 
         return Response(
             status=status.HTTP_200_OK
@@ -492,7 +492,7 @@ class ChequeScheduleView(generics.CreateAPIView):
         expense_group_ids = request.data.get('expense_group_ids', [])
 
         schedule_cheques_creation(
-            kwargs['workspace_id'], expense_group_ids, request.user)
+            kwargs['workspace_id'], expense_group_ids)
 
         return Response(
             status=status.HTTP_200_OK
@@ -540,7 +540,7 @@ class CreditCardPurchaseScheduleView(generics.CreateAPIView):
         expense_group_ids = request.data.get('expense_group_ids', [])
 
         schedule_credit_card_purchase_creation(
-            kwargs['workspace_id'], expense_group_ids, request.user)
+            kwargs['workspace_id'], expense_group_ids)
 
         return Response(
             status=status.HTTP_200_OK
@@ -588,7 +588,7 @@ class JournalEntryScheduleView(generics.CreateAPIView):
         expense_group_ids = request.data.get('expense_group_ids', [])
 
         schedule_journal_entry_creation(
-            kwargs['workspace_id'], expense_group_ids, request.user)
+            kwargs['workspace_id'], expense_group_ids)
 
         return Response(
             status=status.HTTP_200_OK
