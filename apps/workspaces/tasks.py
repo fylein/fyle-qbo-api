@@ -149,6 +149,11 @@ def run_sync_schedule(workspace_id, user: str):
                     workspace_id=workspace_id, expense_group_ids=expense_group_ids, user=user
                 )
 
+            if general_settings.corporate_credit_card_expenses_object == 'BILL':
+                schedule_bills_creation(
+                    workspace_id=workspace_id, expense_group_ids=expense_group_ids, user=user
+                )
+
             elif general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE':
                 schedule_credit_card_purchase_creation(
                     workspace_id=workspace_id, expense_group_ids=expense_group_ids, user=user
