@@ -59,13 +59,19 @@ class QBOConnector:
             display_name = 'Accounts Payable'
 
         for account in accounts:
-            account_attributes.append({
+
+            attribute = {
                 'attribute_type': attribute_type,
                 'display_name': display_name,
                 'value': unidecode.unidecode(u'{0}'.format(account['Name'])),
                 'destination_id': account['Id'],
                 'active': account['Active']
-            })
+            }
+
+            if account_type == 'Expense':
+                attribute['value'] = attribute['value'].replace('/', '-')
+
+            account_attributes.append(attribute)
 
         account_attributes = DestinationAttribute.bulk_upsert_destination_attributes(
             account_attributes, self.workspace_id)
