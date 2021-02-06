@@ -98,11 +98,19 @@ def auto_create_project_mappings(workspace_id):
             project_mappings.append(mapping)
 
         return project_mappings
+
+    except ExpenseAttribute.DoesNotExist as exception:
+        logger.error(
+            'Error while creating categories auto mapping workspace_id - %s %s %s',
+            workspace_id, exception.message, {'error': exception.response}
+        )
+
     except WrongParamsError as exception:
         logger.error(
             'Error while creating projects workspace_id - %s in Fyle %s %s',
             workspace_id, exception.message, {'error': exception.response}
         )
+
     except Exception:
         error = traceback.format_exc()
         error = {
@@ -213,11 +221,19 @@ def auto_create_category_mappings(workspace_id):
             category_mappings.append(mapping)
 
         return category_mappings
+
+    except ExpenseAttribute.DoesNotExist as exception:
+        logger.error(
+            'Error while creating categories auto mapping workspace_id - %s %s %s',
+            workspace_id, exception.message, {'error': exception.response}
+        )
+
     except WrongParamsError as exception:
         logger.error(
             'Error while creating categories workspace_id - %s in Fyle %s %s',
             workspace_id, exception.message, {'error': exception.response}
         )
+
     except Exception:
         error = traceback.format_exc()
         error = {
