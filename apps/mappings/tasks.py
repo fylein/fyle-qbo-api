@@ -100,9 +100,13 @@ def auto_create_project_mappings(workspace_id):
         return project_mappings
 
     except ExpenseAttribute.DoesNotExist as exception:
+        detail = {
+            'source_value': project.value,
+            'destination_value': project.value
+        }
         logger.error(
-            'Error while creating projects auto mapping workspace_id - %s %s %s',
-            workspace_id, exception.message, {'error': exception.response}
+            'Error while creating projects auto mapping workspace_id - %s %s',
+            workspace_id, {'payload': detail}
         )
 
     except WrongParamsError as exception:
@@ -223,9 +227,13 @@ def auto_create_category_mappings(workspace_id):
         return category_mappings
 
     except ExpenseAttribute.DoesNotExist as exception:
+        detail = {
+            'source_value': category.value,
+            'destination_value': category.value
+        }
         logger.error(
-            'Error while creating categories auto mapping workspace_id - %s %s %s',
-            workspace_id, exception.message, {'error': exception.response}
+            'Error while creating categories auto mapping workspace_id - %s %s',
+            workspace_id, {'payload': detail}
         )
 
     except WrongParamsError as exception:
