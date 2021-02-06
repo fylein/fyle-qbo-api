@@ -101,7 +101,7 @@ def auto_create_project_mappings(workspace_id):
 
     except ExpenseAttribute.DoesNotExist as exception:
         logger.error(
-            'Error while creating categories auto mapping workspace_id - %s %s %s',
+            'Error while creating projects auto mapping workspace_id - %s %s %s',
             workspace_id, exception.message, {'error': exception.response}
         )
 
