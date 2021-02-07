@@ -88,21 +88,46 @@ def auto_create_project_mappings(workspace_id):
 
     try:
         for project in fyle_projects:
-            mapping = Mapping.create_or_update_mapping(
-                source_type='PROJECT',
-                destination_type='CUSTOMER',
-                source_value=project.value,
-                destination_value=project.value,
-                workspace_id=workspace_id
-            )
-            project_mappings.append(mapping)
+            try:
+                mapping = Mapping.create_or_update_mapping(
+                    source_type='PROJECT',
+                    destination_type='CUSTOMER',
+                    source_value=project.value,
+                    destination_value=project.value,
+                    workspace_id=workspace_id
+                )
+                project_mappings.append(mapping)
+            except ExpenseAttribute.DoesNotExist:
+                detail = {
+                    'source_value': project.value,
+                    'destination_value': project.value
+                }
+                logger.error(
+                    'Error while creating categories auto mapping workspace_id - %s %s',
+                    workspace_id, {'payload': detail}
+                )
+                raise ExpenseAttribute.DoesNotExist
+
+            return project_mappings
 
         return project_mappings
+
+    except ExpenseAttribute.DoesNotExist as exception:
+        detail = {
+            'source_value': project.value,
+            'destination_value': project.value
+        }
+        logger.error(
+            'Error while creating projects auto mapping workspace_id - %s %s',
+            workspace_id, {'payload': detail}
+        )
+
     except WrongParamsError as exception:
         logger.error(
             'Error while creating projects workspace_id - %s in Fyle %s %s',
             workspace_id, exception.message, {'error': exception.response}
         )
+
     except Exception:
         error = traceback.format_exc()
         error = {
@@ -203,21 +228,35 @@ def auto_create_category_mappings(workspace_id):
 
     try:
         for category in fyle_categories:
-            mapping = Mapping.create_or_update_mapping(
-                source_type='CATEGORY',
-                destination_type='ACCOUNT',
-                source_value=category.value,
-                destination_value=category.value,
-                workspace_id=workspace_id
-            )
-            category_mappings.append(mapping)
+            try:
+                mapping = Mapping.create_or_update_mapping(
+                    source_type='CATEGORY',
+                    destination_type='ACCOUNT',
+                    source_value=category.value,
+                    destination_value=category.value,
+                    workspace_id=workspace_id
+                )
+                category_mappings.append(mapping)
 
-        return category_mappings
+            except ExpenseAttribute.DoesNotExist:
+                detail = {
+                    'source_value': category.value,
+                    'destination_value': category.value
+                }
+                logger.error(
+                    'Error while creating categories auto mapping workspace_id - %s %s',
+                    workspace_id, {'payload': detail}
+                )
+                raise ExpenseAttribute.DoesNotExist
+
+            return category_mappings
+
     except WrongParamsError as exception:
         logger.error(
             'Error while creating categories workspace_id - %s in Fyle %s %s',
             workspace_id, exception.message, {'error': exception.response}
         )
+
     except Exception:
         error = traceback.format_exc()
         error = {
