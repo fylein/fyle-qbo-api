@@ -68,7 +68,10 @@ class QBOConnector:
                 'display_name': display_name,
                 'value': unidecode.unidecode(u'{0}'.format(account['Name'])),
                 'destination_id': account['Id'],
-                'active': account['Active']
+                'active': account['Active'],
+                'detail': {
+                    'fully_qualified_name': account['FullyQualifiedName']
+                }
             }
 
             if account_type == 'Expense':
