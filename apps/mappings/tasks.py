@@ -109,8 +109,6 @@ def auto_create_project_mappings(workspace_id):
                 )
                 raise ExpenseAttribute.DoesNotExist
 
-            return project_mappings
-
         return project_mappings
 
     except ExpenseAttribute.DoesNotExist as exception:
@@ -251,7 +249,7 @@ def auto_create_category_mappings(workspace_id):
                 )
                 raise ExpenseAttribute.DoesNotExist
 
-            return category_mappings
+        return category_mappings
 
     except WrongParamsError as exception:
         logger.error(
