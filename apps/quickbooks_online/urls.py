@@ -17,8 +17,7 @@ from django.urls import path
 from .views import VendorView, EmployeeView, AccountView, CreditCardAccountView, ClassView, DepartmentView, BillView, \
     BillScheduleView, CustomerView, ChequeScheduleView, ChequeView, CreditCardPurchaseView, \
     CreditCardPurchaseScheduleView, JournalEntryView, JournalEntryScheduleView, BankAccountView, AccountsPayableView, \
-    PreferencesView, CompanyInfoView, QuickbooksFieldsView, DepartmentGroupUpdate, ReimburseQuickbooksPaymentsView, \
-    BillPaymentView, BillPaymentAccountView
+    PreferencesView, CompanyInfoView, QuickbooksFieldsView, DepartmentGroupUpdate
 
 urlpatterns = [
     path('preferences/', PreferencesView.as_view()),
@@ -29,7 +28,6 @@ urlpatterns = [
     path('credit_card_accounts/', CreditCardAccountView.as_view()),
     path('bank_accounts/', BankAccountView.as_view()),
     path('accounts_payables/', AccountsPayableView.as_view()),
-    path('bill_payment_accounts/', BillPaymentAccountView.as_view()),
     path('classes/', ClassView.as_view()),
     path('departments/', DepartmentView.as_view()),
     path('customers/', CustomerView.as_view()),
@@ -42,7 +40,5 @@ urlpatterns = [
     path('journal_entries/', JournalEntryView.as_view()),
     path('journal_entries/trigger/', JournalEntryScheduleView.as_view()),
     path('quickbooks_fields/', QuickbooksFieldsView.as_view()),
-    path('update_grouping_on_department/', DepartmentGroupUpdate.as_view()),
-    path('reimburse_payments/', ReimburseQuickbooksPaymentsView.as_view()),
-    path('bill_payments/', BillPaymentView.as_view())
+    path('update_grouping_on_department/', DepartmentGroupUpdate.as_view())
 ]

@@ -2,12 +2,11 @@ import logging
 import json
 import traceback
 from typing import List
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
-from django_q.models import Schedule
 
 from qbosdk.exceptions import WrongParamsError
 from fylesdk.exceptions import FyleSDKError
@@ -16,14 +15,14 @@ from fyle_accounting_mappings.models import Mapping
 
 from fyle_qbo_api.exceptions import BulkError
 
-from apps.fyle.models import ExpenseGroup, Reimbursement, Expense
+from apps.fyle.models import ExpenseGroup
 from apps.tasks.models import TaskLog
 from apps.mappings.models import GeneralMapping
 from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGeneralSettings
 from apps.fyle.utils import FyleConnector
 
-from .models import Bill, BillLineitem, Cheque, ChequeLineitem, CreditCardPurchase, CreditCardPurchaseLineitem, \
-    JournalEntry, JournalEntryLineitem, BillPayment, BillPaymentLineitem
+from .models import Bill, BillLineitem, Cheque, ChequeLineitem, CreditCardPurchase, CreditCardPurchaseLineitem,\
+    JournalEntry, JournalEntryLineitem
 from .utils import QBOConnector
 
 logger = logging.getLogger(__name__)
@@ -604,251 +603,3 @@ def create_journal_entry(expense_group, task_log):
         task_log.status = 'FATAL'
         task_log.save(update_fields=['detail', 'status'])
         logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
-
-
-def check_expenses_reimbursement_status(expenses):
-    all_expenses_paid = True
-
-    for expense in expenses:
-        reimbursement = Reimbursement.objects.filter(settlement_id=expense.settlement_id).first()
-
-        if reimbursement.state != 'COMPLETE':
-            all_expenses_paid = False
-
-    return all_expenses_paid
-
-
-def create_bill_payment(workspace_id):
-    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-
-    fyle_connector = FyleConnector(fyle_credentials.refresh_token, workspace_id)
-
-    fyle_connector.sync_reimbursements()
-
-    bills = Bill.objects.filter(
-        payment_synced=False, expense_group__workspace_id=workspace_id,
-        expense_group__fund_source='PERSONAL'
-    ).all()
-
-    if bills:
-        for bill in bills:
-            expense_group_reimbursement_status = check_expenses_reimbursement_status(
-                bill.expense_group.expenses.all())
-            if expense_group_reimbursement_status:
-                task_log, _ = TaskLog.objects.update_or_create(
-                    workspace_id=workspace_id,
-                    task_id='PAYMENT_{}'.format(bill.expense_group.id),
-                    defaults={
-                        'status': 'IN_PROGRESS',
-                        'type': 'CREATING_BILL_PAYMENT'
-                    }
-                )
-                try:
-                    with transaction.atomic():
-
-                        bill_payment_object = BillPayment.create_bill_payment(bill.expense_group)
-
-                        qbo_object_task_log = TaskLog.objects.get(expense_group=bill.expense_group)
-
-                        linked_transaction_id = qbo_object_task_log.detail['Bill']['Id']
-
-                        bill_payment_lineitems_objects = BillPaymentLineitem.create_bill_payment_lineitems(
-                            bill_payment_object.expense_group, linked_transaction_id
-                        )
-
-                        qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
-
-                        qbo_connection = QBOConnector(qbo_credentials, workspace_id)
-
-                        created_bill_payment = qbo_connection.post_bill_payment(
-                            bill_payment_object, bill_payment_lineitems_objects
-                        )
-
-                        bill.payment_synced = True
-                        bill.paid_on_qbo = True
-                        bill.save(update_fields=['payment_synced', 'paid_on_qbo'])
-
-                        task_log.detail = created_bill_payment
-                        task_log.bill_payment = bill_payment_object
-                        task_log.status = 'COMPLETE'
-
-                        task_log.save(update_fields=['detail', 'bill_payment', 'status'])
-
-                except QBOCredential.DoesNotExist:
-                    logger.error(
-                        'QBO Credentials not found for workspace_id %s / expense group %s',
-                        workspace_id,
-                        bill.expense_group
-                    )
-                    detail = {
-                        'expense_group_id': bill.expense_group,
-                        'message': 'QBO Account not connected'
-                    }
-                    task_log.status = 'FAILED'
-                    task_log.detail = detail
-
-                    task_log.save(update_fields=['detail', 'status'])
-
-                except BulkError as exception:
-                    logger.error(exception.response)
-                    detail = exception.response
-                    task_log.status = 'FAILED'
-                    task_log.detail = detail
-
-                    task_log.save(update_fields=['detail', 'status'])
-
-                except WrongParamsError as exception:
-                    logger.error(exception.response)
-                    detail = json.loads(exception.response)
-                    task_log.status = 'FAILED'
-                    task_log.detail = detail
-
-                    task_log.save(update_fields=['detail', 'status'])
-
-                except Exception:
-                    error = traceback.format_exc()
-                    task_log.detail = {
-                        'error': error
-                    }
-                    task_log.status = 'FATAL'
-                    task_log.save(update_fields=['detail', 'status'])
-                    logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
-
-
-def schedule_bill_payment_creation(sync_fyle_to_qbo_payments, workspace_id):
-    general_mappings: GeneralMapping = GeneralMapping.objects.filter(workspace_id=workspace_id).first()
-    if general_mappings:
-        if sync_fyle_to_qbo_payments and general_mappings.bill_payment_account_id:
-            start_datetime = datetime.now()
-            schedule, _ = Schedule.objects.update_or_create(
-                func='apps.quickbooks_online.tasks.create_bill_payment',
-                args='{}'.format(workspace_id),
-                defaults={
-                    'schedule_type': Schedule.MINUTES,
-                    'minutes': 24 * 60,
-                    'next_run': start_datetime
-                }
-            )
-    if not sync_fyle_to_qbo_payments:
-        schedule: Schedule = Schedule.objects.filter(
-            func='apps.quickbooks_online.tasks.create_bill_payment',
-            args='{}'.format(workspace_id)
-        ).first()
-
-        if schedule:
-            schedule.delete()
-
-
-def get_all_qbo_object_ids(qbo_objects):
-    qbo_objects_details = {}
-
-    expense_group_ids = [qbo_object.expense_group_id for qbo_object in qbo_objects]
-
-    task_logs = TaskLog.objects.filter(expense_group_id__in=expense_group_ids).all()
-
-    for task_log in task_logs:
-        qbo_objects_details[task_log.expense_group.id] = {
-            'expense_group': task_log.expense_group,
-            'qbo_object_id': task_log.detail['Bill']['Id']
-        }
-
-    return qbo_objects_details
-
-
-def check_qbo_object_status(workspace_id):
-    qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
-
-    qbo_connection = QBOConnector(qbo_credentials, workspace_id)
-
-    bills = Bill.objects.filter(
-        expense_group__workspace_id=workspace_id, paid_on_qbo=False, expense_group__fund_source='PERSONAL'
-    ).all()
-
-    if bills:
-        bill_ids = get_all_qbo_object_ids(bills)
-
-        for bill in bills:
-            bill_object = qbo_connection.get_bill(bill_ids[bill.expense_group.id]['qbo_object_id'])
-
-            if bill_object['LinkedTxn']:
-                line_items = BillLineitem.objects.filter(bill_id=bill.id)
-                for line_item in line_items:
-                    expense = line_item.expense
-                    expense.paid_on_qbo = True
-                    expense.save(update_fields=['paid_on_qbo'])
-
-                bill.paid_on_qbo = True
-                bill.payment_synced = True
-                bill.save(update_fields=['paid_on_qbo', 'payment_synced'])
-
-
-def schedule_qbo_objects_status_sync(sync_qbo_to_fyle_payments, workspace_id):
-    if sync_qbo_to_fyle_payments:
-        start_datetime = datetime.now()
-        schedule, _ = Schedule.objects.update_or_create(
-            func='apps.quickbooks_online.tasks.check_qbo_object_status',
-            args='{}'.format(workspace_id),
-            defaults={
-                'schedule_type': Schedule.MINUTES,
-                'minutes': 24 * 60,
-                'next_run': start_datetime
-            }
-        )
-    else:
-        schedule: Schedule = Schedule.objects.filter(
-            func='apps.quickbooks_online.tasks.check_qbo_object_status',
-            args='{}'.format(workspace_id)
-        ).first()
-
-        if schedule:
-            schedule.delete()
-
-
-def process_reimbursements(workspace_id):
-    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-
-    fyle_connector = FyleConnector(fyle_credentials.refresh_token, workspace_id)
-
-    fyle_connector.sync_reimbursements()
-
-    reimbursements = Reimbursement.objects.filter(state='PENDING', workspace_id=workspace_id).all()
-
-    reimbursement_ids = []
-
-    if reimbursements:
-        for reimbursement in reimbursements:
-            expenses = Expense.objects.filter(settlement_id=reimbursement.settlement_id, fund_source='PERSONAL').all()
-            paid_expenses = expenses.filter(paid_on_qbo=True)
-
-            all_expense_paid = False
-            if len(expenses):
-                all_expense_paid = len(expenses) == len(paid_expenses)
-
-            if all_expense_paid:
-                reimbursement_ids.append(reimbursement.reimbursement_id)
-
-    if reimbursement_ids:
-        fyle_connector.post_reimbursement(reimbursement_ids)
-        fyle_connector.sync_reimbursements()
-
-
-def schedule_reimbursements_sync(sync_qbo_to_fyle_payments, workspace_id):
-    if sync_qbo_to_fyle_payments:
-        start_datetime = datetime.now() + timedelta(hours=12)
-        schedule, _ = Schedule.objects.update_or_create(
-            func='apps.quickbooks_online.tasks.process_reimbursements',
-            args='{}'.format(workspace_id),
-            defaults={
-                'schedule_type': Schedule.MINUTES,
-                'minutes': 24 * 60,
-                'next_run': start_datetime
-            }
-        )
-    else:
-        schedule: Schedule = Schedule.objects.filter(
-            func='apps.quickbooks_online.tasks.process_reimbursements',
-            args='{}'.format(workspace_id)
-        ).first()
-
-        if schedule:
-            schedule.delete()

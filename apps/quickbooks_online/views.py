@@ -17,8 +17,8 @@ from apps.fyle.serializers import ExpenseGroupSettingsSerializer
 
 from .utils import QBOConnector
 from .tasks import create_bill, schedule_bills_creation, create_cheque, schedule_cheques_creation, \
-    create_credit_card_purchase, schedule_credit_card_purchase_creation, create_journal_entry, \
-    schedule_journal_entry_creation, create_bill_payment, process_reimbursements, check_qbo_object_status
+    create_credit_card_purchase, schedule_credit_card_purchase_creation, create_journal_entry,\
+    schedule_journal_entry_creation
 from .models import Bill, Cheque, CreditCardPurchase, JournalEntry
 from .serializers import BillSerializer, ChequeSerializer, CreditCardPurchaseSerializer, JournalEntrySerializer, \
     QuickbooksFieldSerializer
@@ -220,41 +220,6 @@ class AccountsPayableView(generics.ListCreateAPIView):
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
             accounts = qbo_connector.sync_accounts(account_type='Accounts Payable')
-
-            return Response(
-                data=self.serializer_class(accounts, many=True).data,
-                status=status.HTTP_200_OK
-            )
-        except QBOCredential.DoesNotExist:
-            return Response(
-                data={
-                    'message': 'QBO credentials not found in workspace'
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-
-class BillPaymentAccountView(generics.ListCreateAPIView):
-    """
-    BillPaymentAccount view
-    """
-    serializer_class = DestinationAttributeSerializer
-    pagination_class = None
-
-    def get_queryset(self):
-        return DestinationAttribute.objects.filter(
-            attribute_type='BANK_ACCOUNT', workspace_id=self.kwargs['workspace_id']).order_by('value')
-
-    def post(self, request, *args, **kwargs):
-        """
-        Get bill payment accounts from QBO
-        """
-        try:
-            qbo_credentials = QBOCredential.objects.get(workspace_id=kwargs['workspace_id'])
-
-            qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
-
-            accounts = qbo_connector.sync_accounts(account_type='Bank')
 
             return Response(
                 data=self.serializer_class(accounts, many=True).data,
@@ -680,36 +645,3 @@ class QuickbooksFieldsView(generics.ListAPIView):
         ).values('attribute_type', 'display_name').distinct()
 
         return attributes
-
-
-class BillPaymentView(generics.CreateAPIView):
-    """
-    Create Bill Payment View
-    """
-    def post(self, request, *args, **kwargs):
-        """
-        Create bill payment
-        """
-        create_bill_payment(workspace_id=self.kwargs['workspace_id'])
-
-        return Response(
-            data={},
-            status=status.HTTP_200_OK
-        )
-
-
-class ReimburseQuickbooksPaymentsView(generics.ListCreateAPIView):
-    """
-    Reimburse Quickbooks Payments View
-    """
-    def post(self, request, *args, **kwargs):
-        """
-        Process Reimbursements in Fyle
-        """
-        check_qbo_object_status(workspace_id=self.kwargs['workspace_id'])
-        process_reimbursements(workspace_id=self.kwargs['workspace_id'])
-
-        return Response(
-            data={},
-            status=status.HTTP_200_OK
-        )

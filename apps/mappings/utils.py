@@ -4,7 +4,6 @@ from django.db.models import Q
 
 from fyle_accounting_mappings.models import MappingSetting
 
-from apps.quickbooks_online.tasks import schedule_bill_payment_creation
 from apps.workspaces.models import WorkspaceGeneralSettings
 from fyle_qbo_api.utils import assert_valid
 
@@ -77,24 +76,8 @@ class MappingUtils:
             params['default_ccc_vendor_name'] = general_mapping.get('default_ccc_vendor_name')
             params['default_ccc_vendor_id'] = general_mapping.get('default_ccc_vendor_id')
 
-        if general_settings.sync_fyle_to_qbo_payments:
-            assert_valid(
-                'bill_payment_account_name' in general_mapping and general_mapping['bill_payment_account_name'],
-                'bill payment account name field is blank')
-            assert_valid(
-                'bill_payment_account_id' in general_mapping and general_mapping['bill_payment_account_id'],
-                'bill payment account id field is blank')
-
-            params['bill_payment_account_name'] = general_mapping.get('bill_payment_account_name')
-            params['bill_payment_account_id'] = general_mapping.get('bill_payment_account_id')
-
         general_mapping, _ = GeneralMapping.objects.update_or_create(
             workspace_id=self.__workspace_id,
             defaults=params
-        )
-
-        schedule_bill_payment_creation(
-            sync_fyle_to_qbo_payments=general_settings.sync_fyle_to_qbo_payments,
-            workspace_id=self.__workspace_id
         )
         return general_mapping
