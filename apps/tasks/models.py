@@ -3,7 +3,7 @@ from django.contrib.postgres.fields import JSONField
 
 from apps.workspaces.models import Workspace
 from apps.fyle.models import ExpenseGroup
-from apps.quickbooks_online.models import Bill, Cheque, CreditCardPurchase, JournalEntry
+from apps.quickbooks_online.models import Bill, Cheque, CreditCardPurchase, JournalEntry, BillPayment
 
 
 def get_default():
@@ -28,6 +28,7 @@ class TaskLog(models.Model):
                                       help_text='Reference to journal_entry', null=True)
     credit_card_purchase = models.ForeignKey(CreditCardPurchase, on_delete=models.PROTECT,
                                              help_text='Reference to CreditCardPurchase', null=True)
+    bill_payment = models.ForeignKey(BillPayment, on_delete=models.PROTECT, help_text='Reference to BillPayment', null=True)
     status = models.CharField(max_length=255, help_text='Task Status')
     detail = JSONField(help_text='Task response', null=True, default=get_default)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')

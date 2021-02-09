@@ -24,6 +24,7 @@ class Workspace(models.Model):
     class Meta:
         db_table = 'workspaces'
 
+
 class WorkspaceSchedule(models.Model):
     """
     Workspace Schedule
@@ -51,11 +52,14 @@ class WorkspaceGeneralSettings(models.Model):
     employee_field_mapping = models.CharField(max_length=50, help_text='Mapping Settings ( VENDOR / EMPLOYEE )')
     import_categories = models.BooleanField(default=False, help_text='Auto import Categories to Fyle')
     import_projects = models.BooleanField(default=False, help_text='Auto import projects to Fyle')
+    sync_fyle_to_qbo_payments = models.BooleanField(default=False, help_text='Auto Sync Payments from Fyle to QBO')
+    sync_qbo_to_fyle_payments = models.BooleanField(default=False, help_text='Auto Sync Payments from QBO to Fyle')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
     class Meta:
         db_table = 'workspace_general_settings'
+
 
 class QBOCredential(models.Model):
     """
@@ -70,6 +74,7 @@ class QBOCredential(models.Model):
 
     class Meta:
         db_table = 'qbo_credentials'
+
 
 class FyleCredential(models.Model):
     """

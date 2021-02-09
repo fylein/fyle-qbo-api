@@ -1,7 +1,6 @@
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import status
-
 from fyle_qbo_api.utils import assert_valid
 
 from .models import TaskLog
@@ -19,13 +18,25 @@ class TasksView(generics.ListAPIView):
         Return task logs in workspace
         """
         task_status = self.request.query_params.getlist('status')
+        expense_group_ids = self.request.query_params.get('expense_group_ids')
+        task_type = self.request.query_params.get('task_type')
 
-        if len(task_status) == 1 and task_status[0] == 'ALL':
-            task_status = ['IN_PROGRESS', 'FAILED', 'COMPLETE']
+        if len(task_status) == 1 and task_status[0] == 'IN_PROGRESS' and expense_group_ids:
+            expense_group_ids = expense_group_ids.split(',')
+            task_type = task_type.split(',')
+            filters = {
+                'workspace_id': self.kwargs['workspace_id'],
+                'status__in': task_status,
+                'type__in': task_type,
+                'expense_group__in': expense_group_ids
+            }
+        else:
+            filters = {
+                'workspace_id': self.kwargs['workspace_id'],
+                'status__in': task_status,
+            }
 
-        task_logs = TaskLog.objects.filter(workspace_id=self.kwargs['workspace_id'],
-                                           status__in=task_status).order_by('-updated_at').all()
-        return task_logs
+        return TaskLog.objects.filter(**filters).order_by('-updated_at').all()
 
 
 class TasksByIdView(generics.RetrieveAPIView):
