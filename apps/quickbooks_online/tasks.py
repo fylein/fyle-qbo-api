@@ -770,7 +770,7 @@ def check_qbo_object_status(workspace_id):
         for bill in bills:
             bill_object = qbo_connection.get_bill(bill_ids[bill.expense_group.id]['qbo_object_id'])
 
-            if bill_object['LinkedTxn']:
+            if 'LinkedTxn' in bill_object:
                 line_items = BillLineitem.objects.filter(bill_id=bill.id)
                 for line_item in line_items:
                     expense = line_item.expense
