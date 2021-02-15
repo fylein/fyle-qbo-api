@@ -2,4 +2,5 @@
 rollback;
 begin;
 
+delete from workspace_settings;
 delete from workspace_schedules;
