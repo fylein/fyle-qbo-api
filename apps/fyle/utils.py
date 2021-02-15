@@ -273,13 +273,17 @@ class FyleConnector:
         Get attachments against expense_ids
         """
         attachments = []
+        attachment_name = []
         if expense_ids:
             for expense_id in expense_ids:
                 attachment = self.connection.Expenses.get_attachments(expense_id)
                 if attachment['data']:
-                    attachment = attachment['data'][0]
-                    attachment['expense_id'] = expense_id
-                    attachments.append(attachment)
+                    for attachment in attachment['data']:
+                        if attachment['filename'] not in attachment_name:
+                            attachment['expense_id'] = expense_id
+                            attachments.append(attachment)
+                            attachment_name.append(attachment['filename'])
+                        
             return attachments
 
         return []
