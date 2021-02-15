@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='workspaceschedule',
             name='workspace',
-            field=models.OneToOneField(default=None, help_text='Reference to Workspace model', on_delete=django.db.models.deletion.PROTECT, to='workspaces.Workspace'),
+            field=models.OneToOneField(default=1, help_text='Reference to Workspace model', on_delete=django.db.models.deletion.PROTECT, to='workspaces.Workspace'),
             preserve_default=False,
         ),
         migrations.DeleteModel(
