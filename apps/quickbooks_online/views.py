@@ -487,6 +487,8 @@ class BillScheduleView(generics.CreateAPIView):
 
 
 class ChequeView(generics.ListCreateAPIView):
+    authentication_classes = []
+    permission_classes = []
     """
     Create Cheque
     """
