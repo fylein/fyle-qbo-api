@@ -3,6 +3,7 @@ Workspace Models
 """
 from django.db import models
 from django.contrib.auth import get_user_model
+from django_q.models import Schedule
 
 User = get_user_model()
 
@@ -29,27 +30,14 @@ class WorkspaceSchedule(models.Model):
     Workspace Schedule
     """
     id = models.AutoField(primary_key=True, help_text='Unique Id to identify a schedule')
+    workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
     enabled = models.BooleanField(default=False)
     start_datetime = models.DateTimeField(help_text='Datetime for start of schedule', null=True)
     interval_hours = models.IntegerField(null=True)
-    fyle_job_id = models.CharField(unique=True, null=True, max_length=255)
+    schedule = models.OneToOneField(Schedule, on_delete=models.PROTECT, null=True)
 
     class Meta:
         db_table = 'workspace_schedules'
-
-
-class WorkspaceSettings(models.Model):
-    """
-    Workspace Settings
-    """
-    id = models.AutoField(primary_key=True, help_text='Unique Id to identify a workspace settings')
-    schedule = models.OneToOneField(WorkspaceSchedule, on_delete=models.PROTECT, null=True)
-    workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
-    created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
-    updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
-
-    class Meta:
-        db_table = 'workspace_settings'
 
 
 class WorkspaceGeneralSettings(models.Model):
