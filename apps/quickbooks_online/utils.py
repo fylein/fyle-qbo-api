@@ -112,11 +112,22 @@ class QBOConnector:
         vendor_attributes = []
 
         for vendor in vendors:
+            detail = {
+                'email': vendor['PrimaryEmailAddr']['Address']
+                if (
+                        'PrimaryEmailAddr' in vendor and
+                        vendor['PrimaryEmailAddr'] and
+                        'Address' in vendor['PrimaryEmailAddr'] and
+                        vendor['PrimaryEmailAddr']['Address']
+                ) else None
+            }
+            
             vendor_attributes.append({
                 'attribute_type': 'VENDOR',
                 'display_name': 'vendor',
                 'value': vendor['DisplayName'],
-                'destination_id': vendor['Id']
+                'destination_id': vendor['Id'],
+                'detail': detail
             })
 
         account_attributes = DestinationAttribute.bulk_upsert_destination_attributes(
@@ -132,11 +143,22 @@ class QBOConnector:
         employee_attributes = []
 
         for employee in employees:
+            detail = {
+                'email': employee['PrimaryEmailAddr']['Address']
+                if (
+                        'PrimaryEmailAddr' in employee and
+                        employee['PrimaryEmailAddr'] and
+                        'Address' in employee['PrimaryEmailAddr'] and
+                        employee['PrimaryEmailAddr']['Address']
+                ) else None
+            }
+
             employee_attributes.append({
                 'attribute_type': 'EMPLOYEE',
                 'display_name': 'employee',
                 'value': employee['DisplayName'],
-                'destination_id': employee['Id']
+                'destination_id': employee['Id'],
+                'detail': detail
             })
 
         account_attributes = DestinationAttribute.bulk_upsert_destination_attributes(
