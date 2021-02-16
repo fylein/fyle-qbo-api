@@ -8,6 +8,8 @@ from apps.quickbooks_online.tasks import schedule_bill_payment_creation
 from apps.workspaces.models import WorkspaceGeneralSettings
 from fyle_qbo_api.utils import assert_valid
 
+from .tasks import schedule_auto_map_ccc_employees
+
 from .models import GeneralMapping
 
 
@@ -88,7 +90,7 @@ class MappingUtils:
             params['bill_payment_account_name'] = general_mapping.get('bill_payment_account_name')
             params['bill_payment_account_id'] = general_mapping.get('bill_payment_account_id')
 
-        general_mapping, _ = GeneralMapping.objects.update_or_create(
+        general_mapping_object, _ = GeneralMapping.objects.update_or_create(
             workspace_id=self.__workspace_id,
             defaults=params
         )
@@ -97,4 +99,8 @@ class MappingUtils:
             sync_fyle_to_qbo_payments=general_settings.sync_fyle_to_qbo_payments,
             workspace_id=self.__workspace_id
         )
-        return general_mapping
+
+        if general_mapping_object.default_ccc_account_name:
+            schedule_auto_map_ccc_employees(general_mapping_object.default_ccc_account_name,
+                                            general_mapping_object.default_ccc_account_id, self.__workspace_id)
+        return general_mapping_object

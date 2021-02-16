@@ -8,7 +8,7 @@ from django.conf import settings
 
 from future.moves.urllib.parse import urlencode
 
-from apps.mappings.tasks import schedule_projects_creation, schedule_categories_creation
+from apps.mappings.tasks import schedule_projects_creation, schedule_categories_creation, schedule_auto_map_employees
 from apps.quickbooks_online.tasks import schedule_bill_payment_creation, schedule_qbo_objects_status_sync,\
     schedule_reimbursements_sync
 from qbosdk import UnauthorizedClientError, NotFoundClientError, WrongParamsError, InternalServerError
@@ -68,11 +68,16 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
         'reimbursable_expenses_object' in general_settings_payload and general_settings_payload[
             'reimbursable_expenses_object'], 'reimbursable_expenses_object field is blank')
 
+    if 'auto_map_employees' in general_settings_payload and general_settings_payload['auto_map_employees']:
+        assert_valid(general_settings_payload['auto_map_employees'] in ['EMAIL', 'NAME', 'EMPLOYEE_CODE'],
+                     'auto_map_employees can have only EMAIL / NAME / EMPLOYEE_CODE')
+
     general_settings, _ = WorkspaceGeneralSettings.objects.update_or_create(
         workspace_id=workspace_id,
         defaults={
             'import_projects': general_settings_payload['import_projects'],
             'import_categories': general_settings_payload['import_categories'],
+            'auto_map_employees': general_settings_payload['auto_map_employees'],
             'reimbursable_expenses_object': general_settings_payload['reimbursable_expenses_object'],
             'corporate_credit_card_expenses_object':
                 general_settings_payload['corporate_credit_card_expenses_object']
@@ -84,6 +89,9 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
     )
     schedule_projects_creation(import_projects=general_settings.import_projects, workspace_id=workspace_id)
     schedule_categories_creation(import_categories=general_settings.import_categories, workspace_id=workspace_id)
+
+    if general_settings_payload['auto_map_employees']:
+        schedule_auto_map_employees(general_settings_payload['auto_map_employees'], workspace_id)
 
     schedule_bill_payment_creation(general_settings.sync_fyle_to_qbo_payments, workspace_id)
 
