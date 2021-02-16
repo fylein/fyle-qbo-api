@@ -94,6 +94,7 @@ def auto_create_project_mappings(workspace_id):
                     destination_type='CUSTOMER',
                     source_value=project.value,
                     destination_value=project.value,
+                    destination_id=project.destination_id,
                     workspace_id=workspace_id
                 )
                 project_mappings.append(mapping)
@@ -107,8 +108,6 @@ def auto_create_project_mappings(workspace_id):
                     workspace_id, {'payload': detail}
                 )
                 raise ExpenseAttribute.DoesNotExist
-
-            return project_mappings
 
         return project_mappings
 
@@ -234,6 +233,7 @@ def auto_create_category_mappings(workspace_id):
                     destination_type='ACCOUNT',
                     source_value=category.value,
                     destination_value=category.value,
+                    destination_id=category.destination_id,
                     workspace_id=workspace_id
                 )
                 category_mappings.append(mapping)
@@ -249,7 +249,7 @@ def auto_create_category_mappings(workspace_id):
                 )
                 raise ExpenseAttribute.DoesNotExist
 
-            return category_mappings
+        return category_mappings
 
     except WrongParamsError as exception:
         logger.error(

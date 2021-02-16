@@ -110,10 +110,11 @@ Q_CLUSTER = {
     'name': 'fyle_quickbooks_api',
     'compress': True,
     'save_limit': 0,
-    'workers': 1,
+    'workers': 4,
     'queue_limit': 30,
     'orm': 'default',
-    'ack_failures': True
+    'ack_failures': True,
+    'poll': 1
 }
 
 SERVICE_NAME = os.environ.get('SERVICE_NAME')
@@ -235,7 +236,6 @@ FYLE_TOKEN_URI = os.environ.get('FYLE_TOKEN_URI')
 FYLE_CLIENT_ID = os.environ.get('FYLE_CLIENT_ID')
 FYLE_CLIENT_SECRET = os.environ.get('FYLE_CLIENT_SECRET')
 FYLE_BASE_URL = os.environ.get('FYLE_BASE_URL')
-FYLE_JOBS_URL = os.environ.get('FYLE_JOBS_URL')
 
 # QBO Settings
 QBO_CLIENT_ID = os.environ.get('QBO_CLIENT_ID')
