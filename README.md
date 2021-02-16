@@ -27,7 +27,6 @@ Django Rest Framework API for Fyle Quickbooks Online Integration
       FYLE_CLIENT_ID:
       FYLE_CLIENT_SECRET:
       FYLE_TOKEN_URI:
-      FYLE_JOBS_URL:
       QBO_CLIENT_ID:
       QBO_CLIENT_SECRET:
       QBO_REDIRECT_URI:

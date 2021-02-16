@@ -3,7 +3,7 @@ Workspace Serializers
 """
 from rest_framework import serializers
 
-from .models import Workspace, WorkspaceSettings, WorkspaceGeneralSettings, WorkspaceSchedule, FyleCredential,\
+from .models import Workspace, WorkspaceGeneralSettings, WorkspaceSchedule, FyleCredential,\
     QBOCredential
 
 
@@ -23,17 +23,6 @@ class WorkspaceScheduleSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkspaceSchedule
         fields = '__all__'
-
-
-class WorkspaceSettingsSerializer(serializers.ModelSerializer):
-    """
-    Workspace settings serializer
-    """
-    schedule = WorkspaceScheduleSerializer()
-
-    class Meta:
-        model = WorkspaceSettings
-        fields = ['id', 'workspace', 'schedule', 'created_at', 'updated_at']
 
 
 class WorkSpaceGeneralSettingsSerializer(serializers.ModelSerializer):
