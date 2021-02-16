@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='workspacegeneralsettings',
             name='auto_map_employees',
-            field=models.CharField(help_text='Auto Map Employees type from NetSuite to Fyle', max_length=50, null=True),
+            field=models.CharField(help_text='Auto Map Employees type from QBO to Fyle', max_length=50, null=True),
         ),
     ]
