@@ -304,7 +304,7 @@ def auto_create_employee_mappings(source_attributes: List[ExpenseAttribute], map
             workspace_id=mapping_attributes['workspace_id']
         ).first()
 
-        logger.error('line 307', mapping)
+        logger.error(mapping)
 
         if not mapping:
             Mapping.create_or_update_mapping(
@@ -385,7 +385,7 @@ def schedule_auto_map_employees(employee_mapping_preference: str, workspace_id: 
 def async_auto_map_ccc_account(default_ccc_account_name: str, default_ccc_account_id: str, workspace_id: str):
     source_attributes = filter_expense_attributes(workspace_id)
 
-    logger.error('line 388', source_attributes)
+    logger.error(source_attributes)
 
     mapping_attributes = {
         'destination_type': 'CREDIT_CARD_ACCOUNT',
