@@ -15,7 +15,7 @@ Including another URLconf
 """
 from django.urls import path, include
 
-from .views import GeneralMappingView
+from .views import GeneralMappingView, AutoMapEmployeeView
 
 urlpatterns = [
     path('general/', GeneralMappingView.as_view()),
