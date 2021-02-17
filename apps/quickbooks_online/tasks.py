@@ -83,6 +83,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
     if chain.length():
         chain.run()
 
+
 def create_bill(expense_group, task_log):
     try:
         with transaction.atomic():
@@ -254,6 +255,7 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
         if chain.length():
             chain.run()
 
+
 def create_cheque(expense_group, task_log):
     try:
         with transaction.atomic():
@@ -349,6 +351,7 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
 
         if chain.length():
             chain.run()
+
 
 def create_credit_card_purchase(expense_group, task_log):
     try:
@@ -448,6 +451,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
 
         if chain.length():
             chain.run()
+
 
 def create_journal_entry(expense_group, task_log):
     try:
