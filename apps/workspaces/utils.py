@@ -76,12 +76,14 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
         assert_valid(general_settings_payload['auto_map_employees'] in ['EMAIL', 'NAME', 'EMPLOYEE_CODE'],
                      'auto_map_employees can have only EMAIL / NAME / EMPLOYEE_CODE')
 
+    workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
+
     general_settings, _ = WorkspaceGeneralSettings.objects.update_or_create(
         workspace_id=workspace_id,
+        category_sync_version=workspace_general_settings.category_sync_version if workspace_general_settings else 'v2',
         defaults={
             'import_projects': general_settings_payload['import_projects'],
             'import_categories': general_settings_payload['import_categories'],
-            'category_sync_version': general_settings_payload['category_sync_version'],
             'auto_map_employees': general_settings_payload['auto_map_employees'],
             'reimbursable_expenses_object': general_settings_payload['reimbursable_expenses_object'],
             'corporate_credit_card_expenses_object':
