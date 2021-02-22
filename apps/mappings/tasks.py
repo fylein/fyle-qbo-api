@@ -246,12 +246,14 @@ def auto_create_category_mappings(workspace_id):
                     mapping = Mapping.create_or_update_mapping(
                         source_type='CATEGORY',
                         destination_type='ACCOUNT',
-                        source_value=category.value,
-                        destination_value=category.detail['fully_qualified_name'],
+                        source_value=category.detail['fully_qualified_name'],
+                        destination_value=category.value,
                         destination_id=category.destination_id,
                         workspace_id=workspace_id
                     )
 
+                mapping.source.auto_mapped = True
+                mapping.source.save(update_fields=['auto_mapped'])
                 category_mappings.append(mapping)
 
             except ExpenseAttribute.DoesNotExist:
