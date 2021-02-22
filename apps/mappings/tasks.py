@@ -9,7 +9,7 @@ from django_q.models import Schedule
 
 from apps.fyle.utils import FyleConnector
 from apps.quickbooks_online.utils import QBOConnector
-from apps.workspaces.models import QBOCredential, FyleCredential
+from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGeneralSettings
 from fyle_accounting_mappings.models import MappingSetting, Mapping, DestinationAttribute, ExpenseAttribute
 from fylesdk import WrongParamsError
 
@@ -161,7 +161,7 @@ def schedule_projects_creation(import_projects, workspace_id):
             schedule.delete()
 
             
-def create_fyle_categories_payload(categories: List[DestinationAttribute], workspace_id: int):
+def create_fyle_categories_payload(categories: List[DestinationAttribute], category_sync_version: str, workspace_id: int):
     """
     Create Fyle Categories Payload from QBO Customer / Categories
     :param workspace_id: Workspace integer id
@@ -174,17 +174,25 @@ def create_fyle_categories_payload(categories: List[DestinationAttribute], works
         attribute_type='CATEGORY', workspace_id=workspace_id).values_list('value', flat=True)
 
     for category in categories:
-        if category.value not in existing_category_names:
-            payload.append({
-                'name': category.value,
-                'code': category.destination_id,
-                'enabled': category.active
-            })
+        if category_sync_version == 'v1':
+            if category.value not in existing_category_names:
+                payload.append({
+                    'name': category.value,
+                    'code': category.destination_id,
+                    'enabled': category.active
+                })
+        else:
+            if category.detail['fully_qualified_name'] not in existing_category_names:
+                payload.append({
+                    'name': category.detail['fully_qualified_name'],
+                    'code': category.destination_id,
+                    'enabled': category.active
+                })
 
     return payload
 
 
-def upload_categories_to_fyle(workspace_id):
+def upload_categories_to_fyle(category_sync_version: str, workspace_id):
     """
     Upload categories to Fyle
     """
@@ -203,7 +211,7 @@ def upload_categories_to_fyle(workspace_id):
     fyle_connection.sync_categories(False)
     qbo_attributes: List[DestinationAttribute] = qbo_connection.sync_accounts(account_type='Expense')
 
-    fyle_payload: List[Dict] = create_fyle_categories_payload(qbo_attributes, workspace_id)
+    fyle_payload: List[Dict] = create_fyle_categories_payload(qbo_attributes, category_sync_version, workspace_id)
 
     if fyle_payload:
         fyle_connection.connection.Categories.post(fyle_payload)
@@ -217,26 +225,33 @@ def auto_create_category_mappings(workspace_id):
     Create Category Mappings
     :return: mappings
     """
-    MappingSetting.bulk_upsert_mapping_setting([{
-        'source_field': 'CATEGORY',
-        'destination_field': 'ACCOUNT'
-    }], workspace_id=workspace_id)
-
-    fyle_categories = upload_categories_to_fyle(workspace_id=workspace_id)
-
     category_mappings = []
+    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
 
     try:
+        fyle_categories = upload_categories_to_fyle(general_settings.category_sync_version, workspace_id=workspace_id)
+
         for category in fyle_categories:
             try:
-                mapping = Mapping.create_or_update_mapping(
-                    source_type='CATEGORY',
-                    destination_type='ACCOUNT',
-                    source_value=category.value,
-                    destination_value=category.value,
-                    destination_id=category.destination_id,
-                    workspace_id=workspace_id
-                )
+                if general_settings.category_sync_version == 'v1':
+                    mapping = Mapping.create_or_update_mapping(
+                        source_type='CATEGORY',
+                        destination_type='ACCOUNT',
+                        source_value=category.value,
+                        destination_value=category.value,
+                        destination_id=category.destination_id,
+                        workspace_id=workspace_id
+                    )
+                else:
+                    mapping = Mapping.create_or_update_mapping(
+                        source_type='CATEGORY',
+                        destination_type='ACCOUNT',
+                        source_value=category.value,
+                        destination_value=category.detail['fully_qualified_name'],
+                        destination_id=category.destination_id,
+                        workspace_id=workspace_id
+                    )
+
                 category_mappings.append(mapping)
 
             except ExpenseAttribute.DoesNotExist:
