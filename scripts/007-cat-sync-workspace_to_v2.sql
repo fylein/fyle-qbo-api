@@ -46,5 +46,5 @@ where
             w.id,
             gs.import_categories
         having count(m.id) <= 10
-        order by count(m.id) limit 26
+        order by count(m.id)
     );
