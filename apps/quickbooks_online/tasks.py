@@ -98,12 +98,13 @@ def create_or_update_employee_mapping(
 
             error_response = json.loads(exception.response)['Fault']['Error'][0]
 
+            # This error code comes up when the vendor or employee already exists
             if error_response['code'] == '6240':
-                qbo_entity = DestinationAttribute.objects.get(
+                qbo_entity = DestinationAttribute.objects.filter(
                     value=source_employee.detail['full_name'],
                     workspace_id=expense_group.workspace_id,
                     attribute_type=employee_mapping_setting
-                )
+                ).first()
 
                 Mapping.create_or_update_mapping(
                     source_type='EMPLOYEE',
