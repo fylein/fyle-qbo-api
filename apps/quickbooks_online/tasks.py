@@ -708,7 +708,8 @@ def create_bill_payment(workspace_id):
                     }
                     task_log.status = 'FATAL'
                     task_log.save(update_fields=['detail', 'status'])
-                    logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
+                    logger.error(
+                        'Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
 
 
 def schedule_bill_payment_creation(sync_fyle_to_qbo_payments, workspace_id):
