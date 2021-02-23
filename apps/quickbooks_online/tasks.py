@@ -160,7 +160,8 @@ def create_bill(expense_group, task_log):
 
         qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
-        if expense_group.fund_source == 'PERSONAL' and general_settings.auto_map_employees:
+        if expense_group.fund_source == 'PERSONAL' and general_settings.auto_map_employees \
+                and general_settings.auto_create_detination_entity:
             create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
 
         with transaction.atomic():
@@ -333,7 +334,8 @@ def create_cheque(expense_group, task_log):
 
         qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
-        create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
+        if general_settings.auto_map_employees and general_settings.auto_create_detination_entity:
+            create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
 
         with transaction.atomic():
             __validate_expense_group(expense_group, general_settings)
@@ -434,7 +436,8 @@ def create_credit_card_purchase(expense_group, task_log):
 
         qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
-        create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
+        if general_settings.auto_map_employees and general_settings.auto_create_detination_entity:
+            create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
 
         with transaction.atomic():
             __validate_expense_group(expense_group, general_settings)
@@ -539,7 +542,8 @@ def create_journal_entry(expense_group, task_log):
 
         qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
-        create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
+        if general_settings.auto_map_employees and general_settings.auto_create_detination_entity:
+            create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
 
         with transaction.atomic():
             __validate_expense_group(expense_group, general_settings)
