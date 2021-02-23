@@ -50,8 +50,8 @@ def load_attachments(qbo_connection: QBOConnector, ref_id: str, ref_type: str, e
         )
 
 
-def create_or_update_employee_mapping(
-        expense_group: ExpenseGroup, qbo_connection: QBOConnector, auto_map_employees_preference: str):
+def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connection: QBOConnector,
+                                      auto_map_employees_preference: str):
     try:
         Mapping.objects.get(
             Q(destination_type='VENDOR') | Q(destination_type='EMPLOYEE'),
@@ -80,7 +80,7 @@ def create_or_update_employee_mapping(
                 created_entity: DestinationAttribute = qbo_connection.post_vendor(
                     source_employee, auto_map_employees_preference)
 
-            Mapping.create_or_update_mapping(
+            mapping = Mapping.create_or_update_mapping(
                 source_type='EMPLOYEE',
                 source_value=expense_group.description.get('employee_email'),
                 destination_type=employee_mapping_setting,
@@ -88,13 +88,11 @@ def create_or_update_employee_mapping(
                 destination_value=created_entity.value,
                 workspace_id=int(expense_group.workspace_id)
             )
+
+            mapping.source.auto_mapped = True
+            mapping.source.save(updated_fields=['auto_mapped'])
         except WrongParamsError as exception:
             logger.error(exception.response)
-
-            if employee_mapping_setting == 'EMPLOYEE':
-                qbo_connection.sync_employees()
-            else:
-                qbo_connection.sync_vendors()
 
             error_response = json.loads(exception.response)['Fault']['Error'][0]
 
@@ -106,14 +104,18 @@ def create_or_update_employee_mapping(
                     attribute_type=employee_mapping_setting
                 ).first()
 
-                Mapping.create_or_update_mapping(
-                    source_type='EMPLOYEE',
-                    source_value=expense_group.description.get('employee_email'),
-                    destination_type=employee_mapping_setting,
-                    destination_id=qbo_entity.destination_id,
-                    destination_value=qbo_entity.value,
-                    workspace_id=int(expense_group.workspace_id)
-                )
+                if qbo_entity:
+                    mapping = Mapping.create_or_update_mapping(
+                        source_type='EMPLOYEE',
+                        source_value=expense_group.description.get('employee_email'),
+                        destination_type=employee_mapping_setting,
+                        destination_id=qbo_entity.destination_id,
+                        destination_value=qbo_entity.value,
+                        workspace_id=int(expense_group.workspace_id)
+                    )
+
+                    mapping.source.auto_mapped = True
+                    mapping.source.save(updated_fields=['auto_mapped'])
 
 
 def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
