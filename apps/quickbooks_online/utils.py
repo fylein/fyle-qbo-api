@@ -61,7 +61,10 @@ class QBOConnector:
             attribute_type = 'ACCOUNTS_PAYABLE'
             display_name = 'Accounts Payable'
 
-        category_sync_version = WorkspaceGeneralSettings.objects.get(workspace_id=self.workspace_id).category_sync_version
+        category_sync_version = 'v2'
+        general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+        if general_settings:
+            category_sync_version = general_settings.category_sync_version
 
         for account in accounts:
             attribute = {
@@ -73,7 +76,7 @@ class QBOConnector:
                 'active': account['Active'],
                 'detail': {
                     'fully_qualified_name': account['FullyQualifiedName']
-                } if category_sync_version == 'v1' else None
+                }
             }
 
             if account_type == 'Expense':
