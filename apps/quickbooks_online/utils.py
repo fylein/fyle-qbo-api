@@ -6,7 +6,7 @@ from qbosdk import QuickbooksOnlineSDK
 
 import unidecode
 
-from apps.workspaces.models import QBOCredential
+from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings
 from fyle_accounting_mappings.models import DestinationAttribute
 
 from .models import BillLineitem, Bill, ChequeLineitem, Cheque, CreditCardPurchase, CreditCardPurchaseLineitem, \
@@ -61,12 +61,17 @@ class QBOConnector:
             attribute_type = 'ACCOUNTS_PAYABLE'
             display_name = 'Accounts Payable'
 
-        for account in accounts:
+        category_sync_version = 'v2'
+        general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+        if general_settings:
+            category_sync_version = general_settings.category_sync_version
 
+        for account in accounts:
             attribute = {
                 'attribute_type': attribute_type,
                 'display_name': display_name,
-                'value': unidecode.unidecode(u'{0}'.format(account['Name'])),
+                'value': unidecode.unidecode(u'{0}'.format(
+                    account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])),
                 'destination_id': account['Id'],
                 'active': account['Active'],
                 'detail': {
