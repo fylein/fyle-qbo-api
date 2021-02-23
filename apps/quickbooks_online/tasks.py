@@ -161,7 +161,7 @@ def create_bill(expense_group, task_log):
         qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
         if expense_group.fund_source == 'PERSONAL' and general_settings.auto_map_employees \
-                and general_settings.auto_create_detination_entity:
+                and general_settings.auto_create_destination_entity:
             create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
 
         with transaction.atomic():
@@ -334,7 +334,7 @@ def create_cheque(expense_group, task_log):
 
         qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
-        if general_settings.auto_map_employees and general_settings.auto_create_detination_entity:
+        if general_settings.auto_map_employees and general_settings.auto_create_destination_entity:
             create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
 
         with transaction.atomic():
@@ -436,7 +436,7 @@ def create_credit_card_purchase(expense_group, task_log):
 
         qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
-        if general_settings.auto_map_employees and general_settings.auto_create_detination_entity:
+        if general_settings.auto_map_employees and general_settings.auto_create_destination_entity:
             create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
 
         with transaction.atomic():
@@ -542,7 +542,7 @@ def create_journal_entry(expense_group, task_log):
 
         qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
-        if general_settings.auto_map_employees and general_settings.auto_create_detination_entity:
+        if general_settings.auto_map_employees and general_settings.auto_create_destination_entity:
             create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
 
         with transaction.atomic():
