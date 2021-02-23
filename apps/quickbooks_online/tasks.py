@@ -50,7 +50,8 @@ def load_attachments(qbo_connection: QBOConnector, ref_id: str, ref_type: str, e
         )
 
 
-def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connection: QBOConnector):
+def create_or_update_employee_mapping(
+        expense_group: ExpenseGroup, qbo_connection: QBOConnector, auto_map_employees_preference: str):
     try:
         Mapping.objects.get(
             Q(destination_type='VENDOR') | Q(destination_type='EMPLOYEE'),
@@ -73,9 +74,11 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
 
         try:
             if employee_mapping_setting == 'EMPLOYEE':
-                created_entity: DestinationAttribute = qbo_connection.post_employee(source_employee)
+                created_entity: DestinationAttribute = qbo_connection.post_employee(
+                    source_employee, auto_map_employees_preference)
             else:
-                created_entity: DestinationAttribute = qbo_connection.post_vendor(source_employee)
+                created_entity: DestinationAttribute = qbo_connection.post_vendor(
+                    source_employee, auto_map_employees_preference)
 
             Mapping.create_or_update_mapping(
                 source_type='EMPLOYEE',
@@ -147,16 +150,18 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
 
 
 def create_bill(expense_group, task_log):
+    general_settings = WorkspaceGeneralSettings.objects.get(worspace_id=expense_group.workspace_id)
+
     try:
         qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
 
         qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
-        if expense_group.fund_source == 'PERSONAL':
-            create_or_update_employee_mapping(expense_group, qbo_connection)
+        if expense_group.fund_source == 'PERSONAL' and general_settings.auto_map_employees:
+            create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
 
         with transaction.atomic():
-            __validate_expense_group(expense_group)
+            __validate_expense_group(expense_group, general_settings)
 
             bill_object = Bill.create_bill(expense_group)
 
@@ -216,7 +221,7 @@ def create_bill(expense_group, task_log):
         logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
 
 
-def __validate_expense_group(expense_group: ExpenseGroup):
+def __validate_expense_group(expense_group: ExpenseGroup, general_settings: WorkspaceGeneralSettings):
     bulk_errors = []
     row = 0
 
@@ -232,9 +237,6 @@ def __validate_expense_group(expense_group: ExpenseGroup):
             'type': 'General Mapping',
             'message': 'General mapping not found'
         })
-
-    general_settings: WorkspaceGeneralSettings = WorkspaceGeneralSettings.objects.get(
-        workspace_id=expense_group.workspace_id)
 
     if general_settings.corporate_credit_card_expenses_object and \
             general_settings.corporate_credit_card_expenses_object == 'BILL' and \
@@ -322,17 +324,20 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
 
 
 def create_cheque(expense_group, task_log):
+    general_settings = WorkspaceGeneralSettings.objects.get(worspace_id=expense_group.workspace_id)
     try:
+        qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
+
+        qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
+
+        create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
+
         with transaction.atomic():
-            __validate_expense_group(expense_group)
+            __validate_expense_group(expense_group, general_settings)
 
             cheque_object = Cheque.create_cheque(expense_group)
 
             cheque_line_item_objects = ChequeLineitem.create_cheque_lineitems(expense_group)
-
-            qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
-
-            qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
             created_cheque = qbo_connection.post_cheque(cheque_object, cheque_line_item_objects)
 
@@ -419,18 +424,23 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
 
 
 def create_credit_card_purchase(expense_group, task_log):
+    general_settings = WorkspaceGeneralSettings.objects.get(worspace_id=expense_group.workspace_id)
+
     try:
+        qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
+
+        qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
+
+        create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
+
         with transaction.atomic():
-            __validate_expense_group(expense_group)
+            __validate_expense_group(expense_group, general_settings)
 
             credit_card_purchase_object = CreditCardPurchase.create_credit_card_purchase(expense_group)
 
             credit_card_purchase_lineitems_objects = CreditCardPurchaseLineitem.create_credit_card_purchase_lineitems(
                 expense_group
             )
-            qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
-
-            qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
             created_credit_card_purchase = qbo_connection.post_credit_card_purchase(
                 credit_card_purchase_object, credit_card_purchase_lineitems_objects
@@ -519,19 +529,23 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
 
 
 def create_journal_entry(expense_group, task_log):
+    general_settings = WorkspaceGeneralSettings.objects.get(worspace_id=expense_group.workspace_id)
+
     try:
+        qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
+
+        qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
+
+        create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
+
         with transaction.atomic():
-            __validate_expense_group(expense_group)
+            __validate_expense_group(expense_group, general_settings)
 
             journal_entry_object = JournalEntry.create_journal_entry(expense_group)
 
             journal_entry_lineitems_objects = JournalEntryLineitem.create_journal_entry_lineitems(
                 expense_group
             )
-
-            qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
-
-            qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
             created_journal_entry = qbo_connection.post_journal_entry(journal_entry_object,
                                                                       journal_entry_lineitems_objects)

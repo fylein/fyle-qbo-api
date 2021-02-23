@@ -140,17 +140,22 @@ class QBOConnector:
             vendor_attributes, self.workspace_id)
         return account_attributes
 
-    def post_vendor(self, vendor: ExpenseAttribute):
+    def post_vendor(self, vendor: ExpenseAttribute, auto_map_employee_preference: str):
         """
         Create an Vendor on Quickbooks online
+        :param auto_map_employee_preference: Preference while doing automap of employees
         :param vendor: vendor attribute to be created
         :return: Vendor Desination Atribute
         """
+        quickbooks_display_name = vendor.detail['employee_code'] if (
+                auto_map_employee_preference == 'EMPLOYEE_CODE' and vendor.detail['employee_code']
+        ) else vendor.detail['full_name']
+
         vendor = {
             'GivenName': vendor.detail['full_name'].split(' ')[0],
             'FamilyName': vendor.detail['full_name'].split(' ')[0]
             if len(vendor.detail['full_name'].split(' ')) > 1 else '',
-            'DisplayName': vendor.detail['full_name'],
+            'DisplayName': quickbooks_display_name,
             'PrimaryEmailAddr': {
                 'Address': vendor.value
             }
@@ -200,17 +205,22 @@ class QBOConnector:
             employee_attributes, self.workspace_id)
         return account_attributes
 
-    def post_employee(self, employee: ExpenseAttribute):
+    def post_employee(self, employee: ExpenseAttribute, auto_map_employee_preference: str):
         """
         Create an Employee on Quickbooks online
+        :param auto_map_employee_preference: Auto map employee preference chosen
         :param employee: employee attribute to be created
         :return: Employee Desination Atribute
         """
+        quickbooks_display_name = employee.detail['employee_code'] if (
+                auto_map_employee_preference == 'EMPLOYEE_CODE' and employee.detail['employee_code']
+        ) else employee.detail['full_name']
+
         employee = {
             'GivenName': employee.detail['full_name'].split(' ')[0],
             'FamilyName': employee.detail['full_name'].split(' ')[0]
             if len(employee.detail['full_name'].split(' ')) > 1 else '',
-            'DisplayName': employee.detail['full_name'],
+            'DisplayName': quickbooks_display_name,
             'PrimaryEmailAddr': {
                 'Address': employee.value
             }
