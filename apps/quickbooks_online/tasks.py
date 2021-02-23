@@ -11,7 +11,7 @@ from django_q.models import Schedule
 
 from qbosdk.exceptions import WrongParamsError
 
-from fyle_accounting_mappings.models import Mapping
+from fyle_accounting_mappings.models import Mapping, ExpenseAttribute, MappingSetting, DestinationAttribute
 
 from fyle_qbo_api.exceptions import BulkError
 
@@ -50,6 +50,68 @@ def load_attachments(qbo_connection: QBOConnector, ref_id: str, ref_type: str, e
         )
 
 
+def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connection: QBOConnector):
+    try:
+        Mapping.objects.get(
+            Q(destination_type='VENDOR') | Q(destination_type='EMPLOYEE'),
+            source_type='EMPLOYEE',
+            source__value=expense_group.description.get('employee_email'),
+            workspace_id=expense_group.workspace_id
+        )
+    except Mapping.DoesNotExist:
+        employee_mapping_setting = MappingSetting.objects.filter(
+            Q(destination_field='VENDOR') | Q(destination_field='EMPLOYEE'),
+            source_field='EMPLOYEE',
+            workspace_id=expense_group.workspace_id
+        ).first().destination_field
+
+        source_employee = ExpenseAttribute.objects.get(
+            workspace_id=expense_group.workspace_id,
+            attribute_type='EMPLOYEE',
+            value=expense_group.description.get('employee_email')
+        )
+
+        try:
+            if employee_mapping_setting == 'EMPLOYEE':
+                created_entity: DestinationAttribute = qbo_connection.post_employee(source_employee)
+            else:
+                created_entity: DestinationAttribute = qbo_connection.post_vendor(source_employee)
+
+            Mapping.create_or_update_mapping(
+                source_type='EMPLOYEE',
+                source_value=expense_group.description.get('employee_email'),
+                destination_type=employee_mapping_setting,
+                destination_id=created_entity.destination_id,
+                destination_value=created_entity.value,
+                workspace_id=int(expense_group.workspace_id)
+            )
+        except WrongParamsError as exception:
+            logger.error(exception.response)
+
+            if employee_mapping_setting == 'EMPLOYEE':
+                qbo_connection.sync_employees()
+            else:
+                qbo_connection.sync_vendors()
+
+            error_response = json.loads(exception.response)['Fault']['Error'][0]
+
+            if error_response['code'] == '6240':
+                qbo_entity = DestinationAttribute.objects.get(
+                    value=source_employee.detail['full_name'],
+                    workspace_id=expense_group.workspace_id,
+                    attribute_type=employee_mapping_setting
+                )
+
+                Mapping.create_or_update_mapping(
+                    source_type='EMPLOYEE',
+                    source_value=expense_group.description.get('employee_email'),
+                    destination_type=employee_mapping_setting,
+                    destination_id=qbo_entity.destination_id,
+                    destination_value=qbo_entity.value,
+                    workspace_id=int(expense_group.workspace_id)
+                )
+
+
 def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
     """
     Schedule bills creation
@@ -86,16 +148,19 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
 
 def create_bill(expense_group, task_log):
     try:
+        qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
+
+        qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
+
+        if expense_group.fund_source == 'PERSONAL':
+            create_or_update_employee_mapping(expense_group, qbo_connection)
+
         with transaction.atomic():
             __validate_expense_group(expense_group)
 
             bill_object = Bill.create_bill(expense_group)
 
             bill_lineitems_objects = BillLineitem.create_bill_lineitems(expense_group)
-
-            qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
-
-            qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
             created_bill = qbo_connection.post_bill(bill_object, bill_lineitems_objects)
 
