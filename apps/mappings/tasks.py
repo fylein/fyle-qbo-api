@@ -83,11 +83,11 @@ def auto_create_project_mappings(workspace_id):
         'destination_field': 'CUSTOMER'
     }], workspace_id=workspace_id)
 
-    fyle_projects = upload_projects_to_fyle(workspace_id=workspace_id)
-
     project_mappings = []
 
     try:
+        fyle_projects = upload_projects_to_fyle(workspace_id=workspace_id)
+
         for project in fyle_projects:
             try:
                 mapping = Mapping.create_or_update_mapping(
@@ -98,6 +98,8 @@ def auto_create_project_mappings(workspace_id):
                     destination_id=project.destination_id,
                     workspace_id=workspace_id
                 )
+                mapping.source.auto_mapped = True
+                mapping.source.save(update_fields=['auto_mapped'])
                 project_mappings.append(mapping)
             except ExpenseAttribute.DoesNotExist:
                 detail = {
