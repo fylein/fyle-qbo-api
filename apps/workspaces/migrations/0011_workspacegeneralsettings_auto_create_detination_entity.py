@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='workspacegeneralsettings',
-            name='auto_create_detination_entity',
+            name='auto_create_destination_entity',
             field=models.BooleanField(default=False, help_text='Auto create vendor / employee'),
         ),
     ]

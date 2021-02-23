@@ -81,7 +81,7 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
             'import_projects': general_settings_payload['import_projects'],
             'import_categories': general_settings_payload['import_categories'],
             'auto_map_employees': general_settings_payload['auto_map_employees'],
-            'auto_create_detination_entity': general_settings_payload['auto_create_detination_entity'],
+            'auto_create_destination_entity': general_settings_payload['auto_create_destination_entity'],
             'reimbursable_expenses_object': general_settings_payload['reimbursable_expenses_object'],
             'corporate_credit_card_expenses_object':
                 general_settings_payload['corporate_credit_card_expenses_object']
