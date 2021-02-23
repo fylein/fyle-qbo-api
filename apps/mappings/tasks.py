@@ -83,11 +83,11 @@ def auto_create_project_mappings(workspace_id):
         'destination_field': 'CUSTOMER'
     }], workspace_id=workspace_id)
 
-    fyle_projects = upload_projects_to_fyle(workspace_id=workspace_id)
-
     project_mappings = []
 
     try:
+        fyle_projects = upload_projects_to_fyle(workspace_id=workspace_id)
+
         for project in fyle_projects:
             try:
                 mapping = Mapping.create_or_update_mapping(
@@ -98,6 +98,8 @@ def auto_create_project_mappings(workspace_id):
                     destination_id=project.destination_id,
                     workspace_id=workspace_id
                 )
+                mapping.source.auto_mapped = True
+                mapping.source.save(update_fields=['auto_mapped'])
                 project_mappings.append(mapping)
             except ExpenseAttribute.DoesNotExist:
                 detail = {
@@ -217,16 +219,11 @@ def auto_create_category_mappings(workspace_id):
     Create Category Mappings
     :return: mappings
     """
-    MappingSetting.bulk_upsert_mapping_setting([{
-        'source_field': 'CATEGORY',
-        'destination_field': 'ACCOUNT'
-    }], workspace_id=workspace_id)
-
-    fyle_categories = upload_categories_to_fyle(workspace_id=workspace_id)
-
     category_mappings = []
 
     try:
+        fyle_categories = upload_categories_to_fyle(workspace_id=workspace_id)
+
         for category in fyle_categories:
             try:
                 mapping = Mapping.create_or_update_mapping(
@@ -237,6 +234,8 @@ def auto_create_category_mappings(workspace_id):
                     destination_id=category.destination_id,
                     workspace_id=workspace_id
                 )
+                mapping.source.auto_mapped = True
+                mapping.source.save(update_fields=['auto_mapped'])
                 category_mappings.append(mapping)
 
             except ExpenseAttribute.DoesNotExist:
