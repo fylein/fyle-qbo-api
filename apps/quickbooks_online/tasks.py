@@ -90,7 +90,7 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
             )
 
             mapping.source.auto_mapped = True
-            mapping.source.save(updated_fields=['auto_mapped'])
+            mapping.source.save(update_fields=['auto_mapped'])
         except WrongParamsError as exception:
             logger.error(exception.response)
 
@@ -115,7 +115,7 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
                     )
 
                     mapping.source.auto_mapped = True
-                    mapping.source.save(updated_fields=['auto_mapped'])
+                    mapping.source.save(update_fields=['auto_mapped'])
 
 
 def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
@@ -153,7 +153,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
 
 
 def create_bill(expense_group, task_log):
-    general_settings = WorkspaceGeneralSettings.objects.get(worspace_id=expense_group.workspace_id)
+    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
     try:
         qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
@@ -327,7 +327,7 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
 
 
 def create_cheque(expense_group, task_log):
-    general_settings = WorkspaceGeneralSettings.objects.get(worspace_id=expense_group.workspace_id)
+    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
     try:
         qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
 
@@ -427,7 +427,7 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
 
 
 def create_credit_card_purchase(expense_group, task_log):
-    general_settings = WorkspaceGeneralSettings.objects.get(worspace_id=expense_group.workspace_id)
+    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
     try:
         qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
@@ -532,7 +532,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
 
 
 def create_journal_entry(expense_group, task_log):
-    general_settings = WorkspaceGeneralSettings.objects.get(worspace_id=expense_group.workspace_id)
+    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
     try:
         qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
