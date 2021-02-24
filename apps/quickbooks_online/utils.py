@@ -153,7 +153,7 @@ class QBOConnector:
 
         vendor = {
             'GivenName': vendor.detail['full_name'].split(' ')[0],
-            'FamilyName': vendor.detail['full_name'].split(' ')[0]
+            'FamilyName': vendor.detail['full_name'].split(' ')[-1]
             if len(vendor.detail['full_name'].split(' ')) > 1 else '',
             'DisplayName': quickbooks_display_name,
             'PrimaryEmailAddr': {
@@ -218,7 +218,7 @@ class QBOConnector:
 
         employee = {
             'GivenName': employee.detail['full_name'].split(' ')[0],
-            'FamilyName': employee.detail['full_name'].split(' ')[0]
+            'FamilyName': employee.detail['full_name'].split(' ')[-1]
             if len(employee.detail['full_name'].split(' ')) > 1 else '',
             'DisplayName': quickbooks_display_name,
             'PrimaryEmailAddr': {
