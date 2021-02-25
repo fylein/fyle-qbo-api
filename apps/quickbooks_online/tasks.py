@@ -59,11 +59,11 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
     """
     if expense_group_ids:
         expense_groups = ExpenseGroup.objects.filter(
-            workspace_id=workspace_id, id__in=expense_group_ids, bill__id__isnull=True
+            workspace_id=workspace_id, id__in=expense_group_ids, bill__id__isnull=True, exported_at__isnull=True
         ).all()
     else:
         expense_groups = ExpenseGroup.objects.filter(
-            workspace_id=workspace_id, bill__id__isnull=True
+            workspace_id=workspace_id, bill__id__isnull=True, exported_at__isnull=True
         ).all()
 
     chain = Chain(cached=True)
@@ -235,7 +235,11 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
     """
     if expense_group_ids:
         expense_groups = ExpenseGroup.objects.filter(
-            workspace_id=workspace_id, id__in=expense_group_ids, cheque__id__isnull=True
+            workspace_id=workspace_id, id__in=expense_group_ids, cheque__id__isnull=True, exported_at__isnull=True
+        ).all()
+    else:
+        expense_groups = ExpenseGroup.objects.filter(
+            workspace_id=workspace_id, cheque__id__isnull=True, exported_at__isnull=True
         ).all()
 
         chain = Chain(cached=True)
@@ -332,7 +336,11 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
     """
     if expense_group_ids:
         expense_groups = ExpenseGroup.objects.filter(
-            workspace_id=workspace_id, id__in=expense_group_ids, creditcardpurchase__id__isnull=True
+            workspace_id=workspace_id, id__in=expense_group_ids, creditcardpurchase__id__isnull=True, exported_at__isnull=True
+        ).all()
+    else:
+        expense_groups = ExpenseGroup.objects.filter(
+            workspace_id=workspace_id, creditcardpurchase__id__isnull=True, exported_at__isnull=True
         ).all()
 
         chain = Chain(cached=True)
@@ -432,7 +440,11 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
     """
     if expense_group_ids:
         expense_groups = ExpenseGroup.objects.filter(
-            workspace_id=workspace_id, id__in=expense_group_ids, journalentry__id__isnull=True
+            workspace_id=workspace_id, id__in=expense_group_ids, journalentry__id__isnull=True, exported_at__isnull=True
+        ).all()
+    else:
+        expense_groups = ExpenseGroup.objects.filter(
+            workspace_id=workspace_id, journalentry__id__isnull=True, exported_at__isnull=True
         ).all()
 
         chain = Chain(cached=True)
