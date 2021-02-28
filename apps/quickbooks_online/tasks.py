@@ -99,7 +99,7 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
             # This error code comes up when the vendor or employee already exists
             if error_response['code'] == '6240':
                 qbo_entity = DestinationAttribute.objects.filter(
-                    value=source_employee.detail['full_name'],
+                    value__iexact=source_employee.detail['full_name'],
                     workspace_id=expense_group.workspace_id,
                     attribute_type=employee_mapping_setting
                 ).first()
@@ -116,6 +116,12 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
 
                     mapping.source.auto_mapped = True
                     mapping.source.save(update_fields=['auto_mapped'])
+                else:
+                    logger.error(
+                        'Destination Attribute with value %s not found in workspace %s',
+                        source_employee.detail['full_name'],
+                        expense_group.workspace_id
+                    )
 
 
 def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):

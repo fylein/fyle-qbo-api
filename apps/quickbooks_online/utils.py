@@ -225,6 +225,7 @@ class QBOConnector:
                 'Address': employee.value
             }
         }
+
         created_employee = self.connection.employees.post(employee)['Employee']
 
         created_employee = DestinationAttribute.bulk_upsert_destination_attributes([{
