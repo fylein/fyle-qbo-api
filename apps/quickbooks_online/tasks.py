@@ -61,27 +61,23 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
         expense_groups = ExpenseGroup.objects.filter(
             workspace_id=workspace_id, id__in=expense_group_ids, bill__id__isnull=True, exported_at__isnull=True
         ).all()
-    else:
-        expense_groups = ExpenseGroup.objects.filter(
-            workspace_id=workspace_id, bill__id__isnull=True, exported_at__isnull=True
-        ).all()
 
-    chain = Chain(cached=True)
+        chain = Chain(cached=True)
 
-    for expense_group in expense_groups:
-        task_log, _ = TaskLog.objects.update_or_create(
-            workspace_id=expense_group.workspace_id,
-            expense_group=expense_group,
-            defaults={
-                'status': 'IN_PROGRESS',
-                'type': 'CREATING_BILL'
-            }
-        )
+        for expense_group in expense_groups:
+            task_log, _ = TaskLog.objects.update_or_create(
+                workspace_id=expense_group.workspace_id,
+                expense_group=expense_group,
+                defaults={
+                    'status': 'IN_PROGRESS',
+                    'type': 'CREATING_BILL'
+                }
+            )
 
-        chain.append('apps.quickbooks_online.tasks.create_bill', expense_group, task_log)
+            chain.append('apps.quickbooks_online.tasks.create_bill', expense_group, task_log)
 
-    if chain.length():
-        chain.run()
+        if chain.length():
+            chain.run()
 
 
 def create_bill(expense_group, task_log):
@@ -237,27 +233,23 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
         expense_groups = ExpenseGroup.objects.filter(
             workspace_id=workspace_id, id__in=expense_group_ids, cheque__id__isnull=True, exported_at__isnull=True
         ).all()
-    else:
-        expense_groups = ExpenseGroup.objects.filter(
-            workspace_id=workspace_id, cheque__id__isnull=True, exported_at__isnull=True
-        ).all()
 
-    chain = Chain(cached=True)
+        chain = Chain(cached=True)
 
-    for expense_group in expense_groups:
-        task_log, _ = TaskLog.objects.update_or_create(
-            workspace_id=expense_group.workspace_id,
-            expense_group=expense_group,
-            defaults={
-                'status': 'IN_PROGRESS',
-                'type': 'CREATING_CHECK'
-            }
-        )
+        for expense_group in expense_groups:
+            task_log, _ = TaskLog.objects.update_or_create(
+                workspace_id=expense_group.workspace_id,
+                expense_group=expense_group,
+                defaults={
+                    'status': 'IN_PROGRESS',
+                    'type': 'CREATING_CHECK'
+                }
+            )
 
-        chain.append('apps.quickbooks_online.tasks.create_cheque', expense_group, task_log)
+            chain.append('apps.quickbooks_online.tasks.create_cheque', expense_group, task_log)
 
-    if chain.length():
-        chain.run()
+        if chain.length():
+            chain.run()
 
 
 def create_cheque(expense_group, task_log):
@@ -338,27 +330,23 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
         expense_groups = ExpenseGroup.objects.filter(
             workspace_id=workspace_id, id__in=expense_group_ids, creditcardpurchase__id__isnull=True, exported_at__isnull=True
         ).all()
-    else:
-        expense_groups = ExpenseGroup.objects.filter(
-            workspace_id=workspace_id, creditcardpurchase__id__isnull=True, exported_at__isnull=True
-        ).all()
 
-    chain = Chain(cached=True)
+        chain = Chain(cached=True)
 
-    for expense_group in expense_groups:
-        task_log, _ = TaskLog.objects.update_or_create(
-            workspace_id=expense_group.workspace_id,
-            expense_group=expense_group,
-            defaults={
-                'status': 'IN_PROGRESS',
-                'type': 'CREATING_CREDIT_CARD_PURCHASE'
-            }
-        )
+        for expense_group in expense_groups:
+            task_log, _ = TaskLog.objects.update_or_create(
+                workspace_id=expense_group.workspace_id,
+                expense_group=expense_group,
+                defaults={
+                    'status': 'IN_PROGRESS',
+                    'type': 'CREATING_CREDIT_CARD_PURCHASE'
+                }
+            )
 
-        chain.append('apps.quickbooks_online.tasks.create_credit_card_purchase', expense_group, task_log)
+            chain.append('apps.quickbooks_online.tasks.create_credit_card_purchase', expense_group, task_log)
 
-    if chain.length():
-        chain.run()
+        if chain.length():
+            chain.run()
 
 
 def create_credit_card_purchase(expense_group, task_log):
@@ -442,27 +430,23 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
         expense_groups = ExpenseGroup.objects.filter(
             workspace_id=workspace_id, id__in=expense_group_ids, journalentry__id__isnull=True, exported_at__isnull=True
         ).all()
-    else:
-        expense_groups = ExpenseGroup.objects.filter(
-            workspace_id=workspace_id, journalentry__id__isnull=True, exported_at__isnull=True
-        ).all()
 
-    chain = Chain(cached=True)
+        chain = Chain(cached=True)
 
-    for expense_group in expense_groups:
-        task_log, _ = TaskLog.objects.update_or_create(
-            workspace_id=expense_group.workspace_id,
-            expense_group=expense_group,
-            defaults={
-                'status': 'IN_PROGRESS',
-                'type': 'CREATING_JOURNAL_ENTRY'
-            }
-        )
+        for expense_group in expense_groups:
+            task_log, _ = TaskLog.objects.update_or_create(
+                workspace_id=expense_group.workspace_id,
+                expense_group=expense_group,
+                defaults={
+                    'status': 'IN_PROGRESS',
+                    'type': 'CREATING_JOURNAL_ENTRY'
+                }
+            )
 
-        chain.append('apps.quickbooks_online.tasks.create_journal_entry', expense_group, task_log)
+            chain.append('apps.quickbooks_online.tasks.create_journal_entry', expense_group, task_log)
 
-    if chain.length():
-        chain.run()
+        if chain.length():
+            chain.run()
 
 
 def create_journal_entry(expense_group, task_log):
