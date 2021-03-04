@@ -11,6 +11,7 @@ from fyle_qbo_api.utils import assert_valid
 from .tasks import schedule_auto_map_ccc_employees
 
 from .models import GeneralMapping
+from ..fyle.models import ExpenseGroupSettings
 
 
 class MappingUtils:
@@ -33,7 +34,8 @@ class MappingUtils:
             'default_ccc_account_name': None,
             'default_ccc_account_id': None,
             'default_ccc_vendor_name': None,
-            'default_ccc_vendor_id': None
+            'default_ccc_vendor_id': None,
+            'map_merchant_to_vendor': False
         }
 
         mapping_setting = MappingSetting.objects.filter(
@@ -70,7 +72,19 @@ class MappingUtils:
             params['default_ccc_account_name'] = general_mapping.get('default_ccc_account_name')
             params['default_ccc_account_id'] = general_mapping.get('default_ccc_account_id')
 
-        if general_settings.corporate_credit_card_expenses_object == 'BILL':
+        if general_mapping['map_merchant_to_vendor']:
+            expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=self.__workspace_id)
+
+            ccc_expense_group_fields = expense_group_settings.corporate_credit_card_expense_group_fields
+            ccc_expense_group_fields.append('expense_id')
+            expense_group_settings.corporate_credit_card_expense_group_fields = ccc_expense_group_fields
+
+            expense_group_settings.save(update_fields=['corporate_credit_card_expense_group_fields'])
+
+            params['map_merchant_to_vendor'] = general_mapping['map_merchant_to_vendor']
+
+        if general_settings.corporate_credit_card_expenses_object == 'BILL' \
+                or general_mapping['map_merchant_to_vendor']:
             assert_valid('default_ccc_vendor_name' in general_mapping and general_mapping['default_ccc_vendor_name'],
                          'default ccc vendor name field is blank')
             assert_valid('default_ccc_vendor_id' in general_mapping and general_mapping['default_ccc_vendor_id'],
