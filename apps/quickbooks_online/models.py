@@ -7,7 +7,7 @@ from django.db import models
 from django.db.models import Q
 from typing import List
 
-from fyle_accounting_mappings.models import Mapping, MappingSetting, ExpenseAttribute
+from fyle_accounting_mappings.models import Mapping, MappingSetting, ExpenseAttribute, DestinationAttribute
 
 from apps.fyle.models import ExpenseGroup, Expense, ExpenseGroupSettings
 from apps.fyle.utils import FyleConnector
@@ -411,8 +411,26 @@ class CreditCardPurchase(models.Model):
         """
         description = expense_group.description
         expense = expense_group.expenses.first()
+        general_mappings: GeneralMapping = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
 
         department_id = get_department_id_or_none(expense_group)
+
+        if general_mappings.map_merchant_to_vendor:
+            merchant = expense.vendor if expense.vendor else ''
+
+            entity = DestinationAttribute.objects.filter(
+                value__ieaxct=merchant, workspace_id=expense_group.workspace_id).first()
+
+            if not entity:
+                entity = general_mappings.default_ccc_vendor_id
+
+        else:
+            entity = Mapping.objects.get(
+                Q(destination_type='EMPLOYEE') | Q(destination_type='VENDOR'),
+                source_type='EMPLOYEE',
+                source__value=description.get('employee_email'),
+                workspace_id=expense_group.workspace_id
+            ).destination.destination_id
 
         credit_card_purchase_object, _ = CreditCardPurchase.objects.update_or_create(
             expense_group=expense_group,
@@ -424,12 +442,7 @@ class CreditCardPurchase(models.Model):
                     workspace_id=expense_group.workspace_id
                 ).destination.destination_id,
                 'department_id': department_id,
-                'entity_id': Mapping.objects.get(
-                    Q(destination_type='EMPLOYEE') | Q(destination_type='VENDOR'),
-                    source_type='EMPLOYEE',
-                    source__value=description.get('employee_email'),
-                    workspace_id=expense_group.workspace_id
-                ).destination.destination_id,
+                'entity_id': entity,
                 'transaction_date': get_transaction_date(expense_group),
                 'private_note': 'Reimbursable expenses by {0}'.format(description.get('employee_email')) if
                 expense_group.fund_source == 'PERSONAL' else

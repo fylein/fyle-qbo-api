@@ -432,14 +432,16 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
 
 def create_credit_card_purchase(expense_group, task_log):
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
+    general_mappings: GeneralMapping = GeneralMapping.objects.filter(workspace_id=expense_group.workspace_id).first()
 
     try:
         qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
 
         qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
-        if general_settings.auto_map_employees and general_settings.auto_create_destination_entity:
-            create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
+        if not general_mappings or not general_mappings.map_merchant_to_vendor:
+            if general_settings.auto_map_employees and general_settings.auto_create_destination_entity:
+                create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
 
         with transaction.atomic():
             __validate_expense_group(expense_group, general_settings)
