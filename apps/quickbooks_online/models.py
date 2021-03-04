@@ -419,10 +419,9 @@ class CreditCardPurchase(models.Model):
             merchant = expense.vendor if expense.vendor else ''
 
             entity = DestinationAttribute.objects.filter(
-                value__ieaxct=merchant, attribute_type='VENDOR', workspace_id=expense_group.workspace_id).first()
+                value__iexact=merchant, attribute_type='VENDOR', workspace_id=expense_group.workspace_id).first()
 
-            if not entity:
-                entity = general_mappings.default_ccc_vendor_id
+            entity = general_mappings.default_ccc_vendor_id if not entity else entity.destination_id
 
         else:
             entity = Mapping.objects.get(
