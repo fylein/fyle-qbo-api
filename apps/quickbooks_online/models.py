@@ -35,13 +35,25 @@ def get_expense_purpose(workspace_id, lineitem, category) -> str:
         cluster_domain['cluster_domain'], lineitem.expense_id
     )
 
-    expense_purpose = 'purpose - {0}'.format(lineitem.purpose) if lineitem.purpose else ''
-    spent_at = 'spent on {0} '.format(lineitem.spent_at.date()) if lineitem.spent_at else ''
-    merchant = 'spent on merchant {0}'.format(lineitem.vendor) if lineitem.vendor else ''
-    return 'Expense by {0} {1} against category {2} {3} with claim number - {4} - {5} - {6}'.format(
+    expense_purpose = ' purpose - {0}'.format(lineitem.purpose) if lineitem.purpose else ''
+    spent_at = ' spent on {0} '.format(lineitem.spent_at.date()) if lineitem.spent_at else ''
+    merchant = ' spent on merchant {0}'.format(lineitem.vendor) if lineitem.vendor else ''
+    return 'Expense by {0}{1} against category {2}{3} with claim number - {4} -{5} - {6}'.format(
         lineitem.employee_email, merchant, category, spent_at, lineitem.claim_number, expense_purpose,
         expense_link)
 
+
+def construct_private_note(expense_group: ExpenseGroup):
+    expense = expense_group.expenses.first()
+    expense_type = 'Reimbursable' if expense_group.fund_source == 'PERSONAL' else 'Credit card'
+    merchant = ' spent on merchant {0}'.format(expense.vendor) if expense.vendor else ''
+    spent_at = ' on {0} '.format(expense.spent_at.date()) if expense.spent_at else ''
+
+    private_note = '{0} expense by {1}'.format(expense_type, expense.employee_email)
+    if expense_group.expenses.count() == 1:
+        private_note = '{0}{1}{2}'.format(private_note, merchant, spent_at)
+
+    return private_note
 
 def get_class_id_or_none(expense_group: ExpenseGroup, lineitem: Expense):
     class_setting: MappingSetting = MappingSetting.objects.filter(
@@ -182,6 +194,9 @@ class Bill(models.Model):
             vendor_id = general_mappings.default_ccc_vendor_id
 
         general_mappings = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
+
+        private_note = construct_private_note(expense_group)
+
         bill_object, _ = Bill.objects.update_or_create(
             expense_group=expense_group,
             defaults={
@@ -189,9 +204,7 @@ class Bill(models.Model):
                 'vendor_id': vendor_id,
                 'department_id': department_id,
                 'transaction_date': get_transaction_date(expense_group),
-                'private_note': 'Reimbursable expenses by {0}'.format(description.get('employee_email')) if
-                expense_group.fund_source == 'PERSONAL' else
-                'Credit card expenses by {0}'.format(description.get('employee_email')),
+                'private_note': private_note,
                 'currency': expense.currency,
                 'bill_number': ''
             }
@@ -295,6 +308,8 @@ class Cheque(models.Model):
 
         general_mappings = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
 
+        private_note = construct_private_note(expense_group)
+
         department_id = get_department_id_or_none(expense_group)
 
         cheque_object, _ = Cheque.objects.update_or_create(
@@ -309,9 +324,7 @@ class Cheque(models.Model):
                 ).destination.destination_id,
                 'department_id': department_id,
                 'transaction_date': get_transaction_date(expense_group),
-                'private_note': 'Reimbursable expenses by {0}'.format(description.get('employee_email')) if
-                expense_group.fund_source == 'PERSONAL' else
-                'Credit card expenses by {0}'.format(description.get('employee_email')),
+                'private_note': private_note,
                 'currency': expense.currency,
                 'cheque_number': ''
             }
@@ -414,6 +427,8 @@ class CreditCardPurchase(models.Model):
 
         department_id = get_department_id_or_none(expense_group)
 
+        private_note = construct_private_note(expense_group)
+
         credit_card_purchase_object, _ = CreditCardPurchase.objects.update_or_create(
             expense_group=expense_group,
             defaults={
@@ -431,9 +446,7 @@ class CreditCardPurchase(models.Model):
                     workspace_id=expense_group.workspace_id
                 ).destination.destination_id,
                 'transaction_date': get_transaction_date(expense_group),
-                'private_note': 'Reimbursable expenses by {0}'.format(description.get('employee_email')) if
-                expense_group.fund_source == 'PERSONAL' else
-                'Credit card expenses by {0}'.format(description.get('employee_email')),
+                'private_note': private_note,
                 'currency': expense.currency,
                 'credit_card_purchase_number': ''
             }
@@ -530,15 +543,14 @@ class JournalEntry(models.Model):
         :return: JournalEntry object
         """
         expense = expense_group.expenses.first()
-        description = expense_group.description
+
+        private_note = construct_private_note(expense_group)
 
         journal_entry_object, _ = JournalEntry.objects.update_or_create(
             expense_group=expense_group,
             defaults={
                 'transaction_date': get_transaction_date(expense_group),
-                'private_note': 'Reimbursable expenses by {0}'.format(description.get('employee_email')) if
-                expense_group.fund_source == 'PERSONAL' else
-                'Credit card expenses by {0}'.format(description.get('employee_email')),
+                'private_note': private_note,
                 'currency': expense.currency,
                 'journal_entry_number': ''
             }
