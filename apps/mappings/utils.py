@@ -100,6 +100,5 @@ class MappingUtils:
             workspace_id=self.__workspace_id
         )
 
-        if general_mapping_object.default_ccc_account_name:
-            schedule_auto_map_ccc_employees(self.__workspace_id)
+        schedule_auto_map_ccc_employees(self.__workspace_id)
         return general_mapping_object
