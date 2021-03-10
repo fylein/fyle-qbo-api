@@ -147,14 +147,12 @@ class QBOConnector:
         :param vendor: vendor attribute to be created
         :return: Vendor Desination Atribute
         """
-        quickbooks_display_name = vendor.detail['employee_code'] if (
-                auto_map_employee_preference == 'EMPLOYEE_CODE' and vendor.detail['employee_code']
-        ) else vendor.detail['full_name']
+        quickbooks_display_name = vendor.detail['full_name']
 
         vendor = {
-            'GivenName': vendor.detail['full_name'].split(' ')[0],
-            'FamilyName': vendor.detail['full_name'].split(' ')[-1]
-            if len(vendor.detail['full_name'].split(' ')) > 1 else '',
+            'GivenName': quickbooks_display_name.split(' ')[0],
+            'FamilyName': quickbooks_display_name.split(' ')[-1]
+            if len(quickbooks_display_name.split(' ')) > 1 else '',
             'DisplayName': quickbooks_display_name,
             'PrimaryEmailAddr': {
                 'Address': vendor.value
@@ -212,14 +210,12 @@ class QBOConnector:
         :param employee: employee attribute to be created
         :return: Employee Desination Atribute
         """
-        quickbooks_display_name = employee.detail['employee_code'] if (
-                auto_map_employee_preference == 'EMPLOYEE_CODE' and employee.detail['employee_code']
-        ) else employee.detail['full_name']
+        quickbooks_display_name = employee.detail['full_name']
 
         employee = {
-            'GivenName': employee.detail['full_name'].split(' ')[0],
-            'FamilyName': employee.detail['full_name'].split(' ')[-1]
-            if len(employee.detail['full_name'].split(' ')) > 1 else '',
+            'GivenName': quickbooks_display_name.split(' ')[0],
+            'FamilyName': quickbooks_display_name.split(' ')[-1]
+            if len(quickbooks_display_name.split(' ')) > 1 else '',
             'DisplayName': quickbooks_display_name,
             'PrimaryEmailAddr': {
                 'Address': employee.value
