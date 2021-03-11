@@ -73,13 +73,13 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
         )
 
         try:
-            if auto_map_employees_preference == "EMAIL":
+            if auto_map_employees_preference == 'EMAIL':
                 filters = {
                     'detail__email__iexact': source_employee.value,
                     'attribute_type': employee_mapping_setting
                 }
 
-            elif auto_map_employees_preference == "NAME":
+            elif auto_map_employees_preference == 'NAME':
                 filters = {
                     'value__iexact': source_employee.detail['full_name'],
                     'attribute_type': employee_mapping_setting
