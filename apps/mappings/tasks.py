@@ -1,6 +1,6 @@
 import logging
 import traceback
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from typing import List, Dict
 
@@ -395,7 +395,7 @@ def schedule_auto_map_employees(employee_mapping_preference: str, workspace_id: 
             defaults={
                 'schedule_type': Schedule.MINUTES,
                 'minutes': 24 * 60,
-                'next_run': start_datetime + timedelta(minutes=5)
+                'next_run': start_datetime
             }
         )
     else:
@@ -440,7 +440,7 @@ def schedule_auto_map_ccc_employees(workspace_id: str):
             defaults={
                 'schedule_type': Schedule.MINUTES,
                 'minutes': 24 * 60,
-                'next_run': start_datetime + timedelta(minutes=5)
+                'next_run': start_datetime
             }
         )
     else:
