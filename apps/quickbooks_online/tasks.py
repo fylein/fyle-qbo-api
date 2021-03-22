@@ -152,7 +152,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
     """
     if expense_group_ids:
         expense_groups = ExpenseGroup.objects.filter(
-            Q(tasklog__id__isnull=True) | ~Q(tasklog__status='IN_PROGRESS'),
+            Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']),
             workspace_id=workspace_id, id__in=expense_group_ids, bill__id__isnull=True, exported_at__isnull=True
             # filter task by !enqueue
             # task log does not exist
