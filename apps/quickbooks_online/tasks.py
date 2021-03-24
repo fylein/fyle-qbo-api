@@ -151,6 +151,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
     :return: None
     """
     if expense_group_ids:
+        print('got these ids for creating task', expense_group_ids)
         expense_groups = ExpenseGroup.objects.filter(
             Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']),
             workspace_id=workspace_id, id__in=expense_group_ids, bill__id__isnull=True, exported_at__isnull=True
@@ -161,7 +162,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
         chain = Chain(cached=True)
 
         for expense_group in expense_groups:
-            print('expense_group',expense_group)
+            print('adding to chain ',expense_group)
             task_log, _ = TaskLog.objects.get_or_create(
                 workspace_id=expense_group.workspace_id,
                 expense_group=expense_group,
@@ -171,6 +172,9 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
                     'type': 'CREATING_BILL'
                 }
             )
+            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
+                task_log.status = 'ENQUEUED'
+                task_log.save(update_fields=['status'])
 
             chain.append('apps.quickbooks_online.tasks.create_bill', expense_group, task_log.id)
 
@@ -182,14 +186,15 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
 def create_bill(expense_group, task_log_id):
     # check task_log status, set it to in progress
     task_log = TaskLog.objects.get(id=task_log_id)
-    print('task_log',task_log.status)
-    if task_log.status != 'IN_PROGRESS':
+    print('received task for processing',expense_group.id)
+    if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
         task_log.status = 'IN_PROGRESS'
         task_log.save(update_fields=['status'])
+        print('finally processing',expense_group.id)
     else:
-        print('returning\nreturning\nreturning\nreturning\nreturning\n')
+        print('blocking', expense_group.id)
         return
-    print('starting export', task_log.status)
+
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
     sleep(2)
 
@@ -238,7 +243,7 @@ def create_bill(expense_group, task_log_id):
         task_log.save(update_fields=['detail', 'status'])
 
     except BulkError as exception:
-        print('bulk\n\nbulk\n\nbulk\n\nbulk\n\n')
+        print('bulk error caught', expense_group.id)
         logger.error(exception.response)
         detail = exception.response
         task_log.status = 'FAILED'
