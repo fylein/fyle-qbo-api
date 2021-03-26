@@ -168,7 +168,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
             )
             if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
                 task_log.status = 'ENQUEUED'
-                task_log.save(update_fields=['status'])
+                task_log.save()
 
             chain.append('apps.quickbooks_online.tasks.create_bill', expense_group, task_log.id)
 
@@ -180,7 +180,7 @@ def create_bill(expense_group, task_log_id):
     task_log = TaskLog.objects.get(id=task_log_id)
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
         task_log.status = 'IN_PROGRESS'
-        task_log.save(update_fields=['status'])
+        task_log.save()
     else:
         return
 
@@ -210,7 +210,7 @@ def create_bill(expense_group, task_log_id):
             task_log.bill = bill_object
             task_log.status = 'COMPLETE'
 
-            task_log.save(update_fields=['detail', 'bill', 'status'])
+            task_log.save()
 
             expense_group.exported_at = datetime.now()
             expense_group.save()
@@ -228,7 +228,7 @@ def create_bill(expense_group, task_log_id):
         task_log.status = 'FAILED'
         task_log.detail = detail
 
-        task_log.save(update_fields=['detail', 'status'])
+        task_log.save()
 
     except BulkError as exception:
         logger.error(exception.response)
@@ -236,7 +236,7 @@ def create_bill(expense_group, task_log_id):
         task_log.status = 'FAILED'
         task_log.detail = detail
 
-        task_log.save(update_fields=['detail', 'status'])
+        task_log.save()
 
     except WrongParamsError as exception:
         logger.error(exception.response)
@@ -244,7 +244,7 @@ def create_bill(expense_group, task_log_id):
         task_log.status = 'FAILED'
         task_log.detail = detail
 
-        task_log.save(update_fields=['detail', 'status'])
+        task_log.save()
 
     except Exception:
         error = traceback.format_exc()
@@ -252,7 +252,7 @@ def create_bill(expense_group, task_log_id):
             'error': error
         }
         task_log.status = 'FATAL'
-        task_log.save(update_fields=['detail', 'status'])
+        task_log.save()
         logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
 
 
@@ -354,7 +354,7 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
             )
             if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
                 task_log.status = 'ENQUEUED'
-                task_log.save(update_fields=['status'])
+                task_log.save()
 
             chain.append('apps.quickbooks_online.tasks.create_cheque', expense_group, task_log.id)
 
@@ -366,7 +366,7 @@ def create_cheque(expense_group, task_log_id):
     task_log = TaskLog.objects.get(id=task_log_id)
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
         task_log.status = 'IN_PROGRESS'
-        task_log.save(update_fields=['status'])
+        task_log.save()
     else:
         return
 
@@ -394,7 +394,7 @@ def create_cheque(expense_group, task_log_id):
             task_log.cheque = cheque_object
             task_log.status = 'COMPLETE'
 
-            task_log.save(update_fields=['detail', 'cheque', 'status'])
+            task_log.save()
 
             expense_group.exported_at = datetime.now()
             expense_group.save()
@@ -412,7 +412,7 @@ def create_cheque(expense_group, task_log_id):
         task_log.status = 'FAILED'
         task_log.detail = detail
 
-        task_log.save(update_fields=['detail', 'status'])
+        task_log.save()
 
     except BulkError as exception:
         logger.error(exception.response)
@@ -420,7 +420,7 @@ def create_cheque(expense_group, task_log_id):
         task_log.status = 'FAILED'
         task_log.detail = detail
 
-        task_log.save(update_fields=['detail', 'status'])
+        task_log.save()
 
     except WrongParamsError as exception:
         logger.error(exception.response)
@@ -428,7 +428,7 @@ def create_cheque(expense_group, task_log_id):
         task_log.status = 'FAILED'
         task_log.detail = detail
 
-        task_log.save(update_fields=['detail', 'status'])
+        task_log.save()
 
     except Exception:
         error = traceback.format_exc()
@@ -436,7 +436,7 @@ def create_cheque(expense_group, task_log_id):
             'error': error
         }
         task_log.status = 'FATAL'
-        task_log.save(update_fields=['detail', 'status'])
+        task_log.save()
         logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
 
 
@@ -466,7 +466,7 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
             )
             if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
                 task_log.status = 'ENQUEUED'
-                task_log.save(update_fields=['status'])
+                task_log.save()
 
             chain.append('apps.quickbooks_online.tasks.create_credit_card_purchase', expense_group, task_log.id)
 
@@ -478,7 +478,7 @@ def create_credit_card_purchase(expense_group, task_log_id):
     task_log = TaskLog.objects.get(id=task_log_id)
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
         task_log.status = 'IN_PROGRESS'
-        task_log.save(update_fields=['status'])
+        task_log.save()
     else:
         return
 
@@ -511,7 +511,7 @@ def create_credit_card_purchase(expense_group, task_log_id):
             task_log.credit_card_purchase = credit_card_purchase_object
             task_log.status = 'COMPLETE'
 
-            task_log.save(update_fields=['detail', 'credit_card_purchase', 'status'])
+            task_log.save()
 
             expense_group.exported_at = datetime.now()
             expense_group.save()
@@ -529,7 +529,7 @@ def create_credit_card_purchase(expense_group, task_log_id):
         task_log.status = 'FAILED'
         task_log.detail = detail
 
-        task_log.save(update_fields=['detail', 'status'])
+        task_log.save()
 
     except BulkError as exception:
         logger.error(exception.response)
@@ -537,7 +537,7 @@ def create_credit_card_purchase(expense_group, task_log_id):
         task_log.status = 'FAILED'
         task_log.detail = detail
 
-        task_log.save(update_fields=['detail', 'status'])
+        task_log.save()
 
     except WrongParamsError as exception:
         logger.error(exception.response)
@@ -545,7 +545,7 @@ def create_credit_card_purchase(expense_group, task_log_id):
         task_log.status = 'FAILED'
         task_log.detail = detail
 
-        task_log.save(update_fields=['detail', 'status'])
+        task_log.save()
 
     except Exception:
         error = traceback.format_exc()
@@ -553,7 +553,7 @@ def create_credit_card_purchase(expense_group, task_log_id):
             'error': error
         }
         task_log.status = 'FATAL'
-        task_log.save(update_fields=['detail', 'status'])
+        task_log.save()
         logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
 
 
@@ -583,7 +583,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
             )
             if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
                 task_log.status = 'ENQUEUED'
-                task_log.save(update_fields=['status'])
+                task_log.save()
 
             chain.append('apps.quickbooks_online.tasks.create_journal_entry', expense_group, task_log.id)
 
@@ -595,7 +595,7 @@ def create_journal_entry(expense_group, task_log_id):
     task_log = TaskLog.objects.get(id=task_log_id)
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
         task_log.status = 'IN_PROGRESS'
-        task_log.save(update_fields=['status'])
+        task_log.save()
     else:
         return
 
@@ -627,7 +627,7 @@ def create_journal_entry(expense_group, task_log_id):
             task_log.journal_entry = journal_entry_object
             task_log.status = 'COMPLETE'
 
-            task_log.save(update_fields=['detail', 'journal_entry', 'status'])
+            task_log.save()
 
             expense_group.exported_at = datetime.now()
             expense_group.save()
@@ -645,7 +645,7 @@ def create_journal_entry(expense_group, task_log_id):
         task_log.status = 'FAILED'
         task_log.detail = detail
 
-        task_log.save(update_fields=['detail', 'status'])
+        task_log.save()
 
     except BulkError as exception:
         logger.error(exception.response)
@@ -653,7 +653,7 @@ def create_journal_entry(expense_group, task_log_id):
         task_log.status = 'FAILED'
         task_log.detail = detail
 
-        task_log.save(update_fields=['detail', 'status'])
+        task_log.save()
 
     except WrongParamsError as exception:
         logger.error(exception.response)
@@ -661,7 +661,7 @@ def create_journal_entry(expense_group, task_log_id):
         task_log.status = 'FAILED'
         task_log.detail = detail
 
-        task_log.save(update_fields=['detail', 'status'])
+        task_log.save()
 
     except Exception:
         error = traceback.format_exc()
@@ -669,7 +669,7 @@ def create_journal_entry(expense_group, task_log_id):
             'error': error
         }
         task_log.status = 'FATAL'
-        task_log.save(update_fields=['detail', 'status'])
+        task_log.save()
         logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
 
 
