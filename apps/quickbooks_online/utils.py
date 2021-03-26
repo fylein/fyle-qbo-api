@@ -18,6 +18,7 @@ class QBOConnector:
     """
     QBO utility functions
     """
+
     def __init__(self, credentials_object: QBOCredential, workspace_id: int):
         client_id = settings.QBO_CLIENT_ID
         client_secret = settings.QBO_CLIENT_SECRET
@@ -127,7 +128,7 @@ class QBOConnector:
                         vendor['PrimaryEmailAddr']['Address']
                 ) else None
             }
-            
+
             vendor_attributes.append({
                 'attribute_type': 'VENDOR',
                 'display_name': 'vendor',
@@ -140,22 +141,26 @@ class QBOConnector:
             vendor_attributes, self.workspace_id)
         return account_attributes
 
-    def post_vendor(self, vendor: ExpenseAttribute, auto_map_employee_preference: str):
+    def post_vendor(self, vendor: ExpenseAttribute = None, credit_card_merchant: str = None):
         """
         Create an Vendor on Quickbooks online
-        :param auto_map_employee_preference: Preference while doing automap of employees
+        :param credit_card_merchant: Credit Card Misc
         :param vendor: vendor attribute to be created
         :return: Vendor Desination Atribute
         """
-        quickbooks_display_name = vendor.detail['full_name']
+        if not credit_card_merchant:
+            quickbooks_display_name = vendor.detail['full_name']
+        else:
+            quickbooks_display_name = 'Credit Card Misc'
 
         vendor = {
-            'GivenName': quickbooks_display_name.split(' ')[0],
-            'FamilyName': quickbooks_display_name.split(' ')[-1]
-            if len(quickbooks_display_name.split(' ')) > 1 else '',
+            'GivenName': quickbooks_display_name.split(' ')[0] if not credit_card_merchant else None,
+            'FamilyName': (
+                quickbooks_display_name.split(' ')[-1]if len(quickbooks_display_name.split(' ')) > 1 else ''
+            ) if not credit_card_merchant else 'None',
             'DisplayName': quickbooks_display_name,
             'PrimaryEmailAddr': {
-                'Address': vendor.value
+                'Address': vendor.value if not credit_card_merchant else None
             }
         }
         created_vendor = self.connection.vendors.post(vendor)['Vendor']
@@ -233,7 +238,7 @@ class QBOConnector:
                 'email': created_employee['PrimaryEmailAddr']['Address']
             }
         }], self.workspace_id)[0]
-        
+
         return created_employee
 
     def sync_classes(self):
@@ -570,7 +575,7 @@ class QBOConnector:
         :return:
         """
         return self.connection.company_info.get()
-        
+
     def post_attachments(self, ref_id: str, ref_type: str, attachments: List[Dict]) -> List:
         """
         Link attachments to objects Quickbooks

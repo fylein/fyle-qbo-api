@@ -28,6 +28,22 @@ from .utils import QBOConnector
 logger = logging.getLogger(__name__)
 
 
+def get_or_create_credit_card_vendor(workspace_id):
+    entity = DestinationAttribute.objects.filter(value='Credit Card Misc', workspace_id=workspace_id).first()
+
+    logger.info('This is awesome')
+
+    if not entity:
+        logger.info('here it is')
+        qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
+        qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
+        entity = qbo_connection.post_vendor(credit_card_merchant='Credit Card Misc')
+
+    logger.info(entity.destination_id)
+
+    return entity
+
+
 def load_attachments(qbo_connection: QBOConnector, ref_id: str, ref_type: str, expense_group: ExpenseGroup):
     """
     Get attachments from fyle
@@ -95,8 +111,7 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
                     created_entity: DestinationAttribute = qbo_connection.post_employee(
                         source_employee, auto_map_employees_preference)
                 else:
-                    created_entity: DestinationAttribute = qbo_connection.post_vendor(
-                        source_employee, auto_map_employees_preference)
+                    created_entity: DestinationAttribute = qbo_connection.post_vendor(vendor=source_employee)
 
             mapping = Mapping.create_or_update_mapping(
                 source_type='EMPLOYEE',
@@ -275,21 +290,23 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                     'message': 'Default Credit Card Vendor not found'
                 })
     else:
-        try:
-            Mapping.objects.get(
-                Q(destination_type='VENDOR') | Q(destination_type='EMPLOYEE'),
-                source_type='EMPLOYEE',
-                source__value=expense_group.description.get('employee_email'),
-                workspace_id=expense_group.workspace_id
-            )
-        except Mapping.DoesNotExist:
-            bulk_errors.append({
-                'row': None,
-                'expense_group_id': expense_group.id,
-                'value': expense_group.description.get('employee_email'),
-                'type': 'Employee Mapping',
-                'message': 'Employee mapping not found'
-            })
+        if not (general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE'\
+                and general_settings.map_merchant_to_vendor and expense_group.fund_source == 'CCC'):
+            try:
+                Mapping.objects.get(
+                    Q(destination_type='VENDOR') | Q(destination_type='EMPLOYEE'),
+                    source_type='EMPLOYEE',
+                    source__value=expense_group.description.get('employee_email'),
+                    workspace_id=expense_group.workspace_id
+                )
+            except Mapping.DoesNotExist:
+                bulk_errors.append({
+                    'row': None,
+                    'expense_group_id': expense_group.id,
+                    'value': expense_group.description.get('employee_email'),
+                    'type': 'Employee Mapping',
+                    'message': 'Employee mapping not found'
+                })
 
     expenses = expense_group.expenses.all()
 
@@ -456,13 +473,17 @@ def create_credit_card_purchase(expense_group, task_log):
 
         qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
-        if general_settings.auto_map_employees and general_settings.auto_create_destination_entity:
-            create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
+        if not general_settings.map_merchant_to_vendor:
+            if general_settings.auto_map_employees and general_settings.auto_create_destination_entity:
+                create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
+        else:
+            get_or_create_credit_card_vendor(expense_group.workspace_id)
 
         with transaction.atomic():
             __validate_expense_group(expense_group, general_settings)
 
-            credit_card_purchase_object = CreditCardPurchase.create_credit_card_purchase(expense_group)
+            credit_card_purchase_object = CreditCardPurchase.create_credit_card_purchase(
+                expense_group, general_settings.map_merchant_to_vendor)
 
             credit_card_purchase_lineitems_objects = CreditCardPurchaseLineitem.create_credit_card_purchase_lineitems(
                 expense_group
