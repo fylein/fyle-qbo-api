@@ -20,7 +20,7 @@ class TaskLog(models.Model):
     workspace = models.ForeignKey(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
     type = models.CharField(max_length=50, help_text='Task type (FETCH_EXPENSES / CREATE_BILL / CREATE_CHECK)')
     task_id = models.CharField(max_length=255, null=True, help_text='Django Q task reference')
-    expense_group = models.ForeignKey(ExpenseGroup, on_delete=models.PROTECT, unique=True,
+    expense_group = models.ForeignKey(ExpenseGroup, on_delete=models.PROTECT,
                                       null=True, help_text='Reference to Expense group')
     bill = models.ForeignKey(Bill, on_delete=models.PROTECT, help_text='Reference to Bill', null=True)
     cheque = models.ForeignKey(Cheque, on_delete=models.PROTECT, help_text='Reference to Cheque', null=True)
