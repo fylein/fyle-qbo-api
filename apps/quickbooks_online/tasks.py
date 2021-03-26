@@ -173,7 +173,6 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
             chain.append('apps.quickbooks_online.tasks.create_bill', expense_group, task_log.id)
 
         if chain.length():
-            # enqueued
             chain.run()
 
 
