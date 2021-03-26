@@ -3,7 +3,6 @@ import json
 import traceback
 from typing import List
 from datetime import datetime, timedelta
-from time import sleep
 
 from django.db import transaction
 from django.db.models import Q
@@ -151,22 +150,17 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
     :return: None
     """
     if expense_group_ids:
-        print('got these ids for creating task', expense_group_ids)
         expense_groups = ExpenseGroup.objects.filter(
             Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']),
             workspace_id=workspace_id, id__in=expense_group_ids, bill__id__isnull=True, exported_at__isnull=True
-            # filter task by !enqueue
-            # task log does not exist
         ).all()
 
         chain = Chain(cached=True)
 
         for expense_group in expense_groups:
-            print('adding to chain ',expense_group)
             task_log, _ = TaskLog.objects.get_or_create(
                 workspace_id=expense_group.workspace_id,
                 expense_group=expense_group,
-                # add enqueue
                 defaults={
                     'status': 'ENQUEUED',
                     'type': 'CREATING_BILL'
@@ -184,19 +178,14 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
 
 
 def create_bill(expense_group, task_log_id):
-    # check task_log status, set it to in progress
     task_log = TaskLog.objects.get(id=task_log_id)
-    print('received task for processing',expense_group.id)
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
         task_log.status = 'IN_PROGRESS'
         task_log.save(update_fields=['status'])
-        print('finally processing',expense_group.id)
     else:
-        print('blocking', expense_group.id)
         return
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
-    sleep(2)
 
     try:
         qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
@@ -243,7 +232,6 @@ def create_bill(expense_group, task_log_id):
         task_log.save(update_fields=['detail', 'status'])
 
     except BulkError as exception:
-        print('bulk error caught', expense_group.id)
         logger.error(exception.response)
         detail = exception.response
         task_log.status = 'FAILED'
@@ -350,28 +338,39 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
     """
     if expense_group_ids:
         expense_groups = ExpenseGroup.objects.filter(
+            Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']),
             workspace_id=workspace_id, id__in=expense_group_ids, cheque__id__isnull=True, exported_at__isnull=True
         ).all()
 
         chain = Chain(cached=True)
 
         for expense_group in expense_groups:
-            task_log, _ = TaskLog.objects.update_or_create(
+            task_log, _ = TaskLog.objects.get_or_create(
                 workspace_id=expense_group.workspace_id,
                 expense_group=expense_group,
                 defaults={
-                    'status': 'IN_PROGRESS',
+                    'status': 'ENQUEUED',
                     'type': 'CREATING_CHECK'
                 }
             )
+            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
+                task_log.status = 'ENQUEUED'
+                task_log.save(update_fields=['status'])
 
-            chain.append('apps.quickbooks_online.tasks.create_cheque', expense_group, task_log)
+            chain.append('apps.quickbooks_online.tasks.create_cheque', expense_group, task_log.id)
 
         if chain.length():
             chain.run()
 
 
-def create_cheque(expense_group, task_log):
+def create_cheque(expense_group, task_log_id):
+    task_log = TaskLog.objects.get(id=task_log_id)
+    if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
+        task_log.status = 'IN_PROGRESS'
+        task_log.save(update_fields=['status'])
+    else:
+        return
+
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
     try:
         qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
@@ -451,28 +450,39 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
     """
     if expense_group_ids:
         expense_groups = ExpenseGroup.objects.filter(
+            Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']),
             workspace_id=workspace_id, id__in=expense_group_ids, creditcardpurchase__id__isnull=True, exported_at__isnull=True
         ).all()
 
         chain = Chain(cached=True)
 
         for expense_group in expense_groups:
-            task_log, _ = TaskLog.objects.update_or_create(
+            task_log, _ = TaskLog.objects.get_or_create(
                 workspace_id=expense_group.workspace_id,
                 expense_group=expense_group,
                 defaults={
-                    'status': 'IN_PROGRESS',
+                    'status': 'ENQUEUED',
                     'type': 'CREATING_CREDIT_CARD_PURCHASE'
                 }
             )
+            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
+                task_log.status = 'ENQUEUED'
+                task_log.save(update_fields=['status'])
 
-            chain.append('apps.quickbooks_online.tasks.create_credit_card_purchase', expense_group, task_log)
+            chain.append('apps.quickbooks_online.tasks.create_credit_card_purchase', expense_group, task_log.id)
 
         if chain.length():
             chain.run()
 
 
-def create_credit_card_purchase(expense_group, task_log):
+def create_credit_card_purchase(expense_group, task_log_id):
+    task_log = TaskLog.objects.get(id=task_log_id)
+    if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
+        task_log.status = 'IN_PROGRESS'
+        task_log.save(update_fields=['status'])
+    else:
+        return
+
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
     try:
@@ -557,28 +567,39 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
     """
     if expense_group_ids:
         expense_groups = ExpenseGroup.objects.filter(
+            Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']),
             workspace_id=workspace_id, id__in=expense_group_ids, journalentry__id__isnull=True, exported_at__isnull=True
         ).all()
 
         chain = Chain(cached=True)
 
         for expense_group in expense_groups:
-            task_log, _ = TaskLog.objects.update_or_create(
+            task_log, _ = TaskLog.objects.get_or_create(
                 workspace_id=expense_group.workspace_id,
                 expense_group=expense_group,
                 defaults={
-                    'status': 'IN_PROGRESS',
+                    'status': 'ENQUEUED',
                     'type': 'CREATING_JOURNAL_ENTRY'
                 }
             )
+            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
+                task_log.status = 'ENQUEUED'
+                task_log.save(update_fields=['status'])
 
-            chain.append('apps.quickbooks_online.tasks.create_journal_entry', expense_group, task_log)
+            chain.append('apps.quickbooks_online.tasks.create_journal_entry', expense_group, task_log.id)
 
         if chain.length():
             chain.run()
 
 
-def create_journal_entry(expense_group, task_log):
+def create_journal_entry(expense_group, task_log_id):
+    task_log = TaskLog.objects.get(id=task_log_id)
+    if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
+        task_log.status = 'IN_PROGRESS'
+        task_log.save(update_fields=['status'])
+    else:
+        return
+
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
     try:
