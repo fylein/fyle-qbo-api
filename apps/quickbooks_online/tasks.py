@@ -108,7 +108,7 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
             )
 
             mapping.source.auto_mapped = True
-            mapping.source.save(update_fields=['auto_mapped'])
+            mapping.source.save()
         except WrongParamsError as exception:
             logger.error(exception.response)
 
@@ -133,7 +133,7 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
                     )
 
                     mapping.source.auto_mapped = True
-                    mapping.source.save(update_fields=['auto_mapped'])
+                    mapping.source.save()
                 else:
                     logger.error(
                         'Destination Attribute with value %s not found in workspace %s',
@@ -733,13 +733,13 @@ def create_bill_payment(workspace_id):
 
                         bill.payment_synced = True
                         bill.paid_on_qbo = True
-                        bill.save(update_fields=['payment_synced', 'paid_on_qbo'])
+                        bill.save()
 
                         task_log.detail = created_bill_payment
                         task_log.bill_payment = bill_payment_object
                         task_log.status = 'COMPLETE'
 
-                        task_log.save(update_fields=['detail', 'bill_payment', 'status'])
+                        task_log.save()
 
                 except QBOCredential.DoesNotExist:
                     logger.error(
@@ -754,7 +754,7 @@ def create_bill_payment(workspace_id):
                     task_log.status = 'FAILED'
                     task_log.detail = detail
 
-                    task_log.save(update_fields=['detail', 'status'])
+                    task_log.save()
 
                 except BulkError as exception:
                     logger.error(exception.response)
@@ -762,7 +762,7 @@ def create_bill_payment(workspace_id):
                     task_log.status = 'FAILED'
                     task_log.detail = detail
 
-                    task_log.save(update_fields=['detail', 'status'])
+                    task_log.save()
 
                 except WrongParamsError as exception:
                     logger.error(exception.response)
@@ -770,7 +770,7 @@ def create_bill_payment(workspace_id):
                     task_log.status = 'FAILED'
                     task_log.detail = detail
 
-                    task_log.save(update_fields=['detail', 'status'])
+                    task_log.save()
 
                 except Exception:
                     error = traceback.format_exc()
@@ -778,7 +778,7 @@ def create_bill_payment(workspace_id):
                         'error': error
                     }
                     task_log.status = 'FATAL'
-                    task_log.save(update_fields=['detail', 'status'])
+                    task_log.save()
                     logger.error(
                         'Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
 
@@ -843,11 +843,11 @@ def check_qbo_object_status(workspace_id):
                 for line_item in line_items:
                     expense = line_item.expense
                     expense.paid_on_qbo = True
-                    expense.save(update_fields=['paid_on_qbo'])
+                    expense.save()
 
                 bill.paid_on_qbo = True
                 bill.payment_synced = True
-                bill.save(update_fields=['paid_on_qbo', 'payment_synced'])
+                bill.save()
 
 
 def schedule_qbo_objects_status_sync(sync_qbo_to_fyle_payments, workspace_id):
