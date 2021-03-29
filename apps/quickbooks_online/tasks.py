@@ -84,7 +84,7 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
                     'value__iexact': source_employee.detail['full_name'],
                     'attribute_type': employee_mapping_setting
                 }
-            
+
             created_entity = DestinationAttribute.objects.filter(
                 workspace_id=expense_group.workspace_id,
                 **filters
@@ -274,6 +274,16 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                     'type': 'General Mapping',
                     'message': 'Default Credit Card Vendor not found'
                 })
+
+    if general_settings.corporate_credit_card_expenses_object and expense_group.fund_source == 'CCC':
+        if not (general_mapping.default_ccc_account_id or general_mapping.default_ccc_account_name):
+            bulk_errors.append({
+                'row': None,
+                'expense_group_id': expense_group.id,
+                'value': 'Default Credit Card Account',
+                'type': 'General Mapping',
+                'message': 'Default Credit Card Account not found'
+            })
     else:
         try:
             Mapping.objects.get(
@@ -427,7 +437,8 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
     """
     if expense_group_ids:
         expense_groups = ExpenseGroup.objects.filter(
-            workspace_id=workspace_id, id__in=expense_group_ids, creditcardpurchase__id__isnull=True, exported_at__isnull=True
+            workspace_id=workspace_id, id__in=expense_group_ids, creditcardpurchase__id__isnull=True,
+            exported_at__isnull=True
         ).all()
 
         chain = Chain(cached=True)
