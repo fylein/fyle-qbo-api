@@ -12,7 +12,7 @@ from fyle_accounting_mappings.models import Mapping, MappingSetting, ExpenseAttr
 from apps.fyle.models import ExpenseGroup, Expense
 from apps.fyle.utils import FyleConnector
 from apps.mappings.models import GeneralMapping
-from apps.workspaces.models import FyleCredential, QBOCredential
+from apps.workspaces.models import FyleCredential
 
 
 def get_transaction_date(expense_group: ExpenseGroup) -> str:

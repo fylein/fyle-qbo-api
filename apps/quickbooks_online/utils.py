@@ -167,7 +167,7 @@ class QBOConnector:
             'value': vendor['DisplayName'],
             'destination_id': vendor['Id'],
             'detail': {
-                'email': vendor['PrimaryEmailAddr']['Address']
+                'email': vendor['PrimaryEmailAddr']['Address'] if 'PrimaryEmailAddr' in vendor else None
             }
         }], self.workspace_id)[0]
 

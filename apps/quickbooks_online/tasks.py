@@ -489,7 +489,7 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log):
                     and general_settings.auto_map_employees != 'EMPLOYEE_CODE':
                 create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
         else:
-            merchant = expense_group.expenses.first().merchant
+            merchant = expense_group.expenses.first().vendor
             get_or_create_credit_card_vendor(expense_group.workspace_id, merchant)
 
         with transaction.atomic():
