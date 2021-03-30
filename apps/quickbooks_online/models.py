@@ -12,7 +12,7 @@ from fyle_accounting_mappings.models import Mapping, MappingSetting, ExpenseAttr
 from apps.fyle.models import ExpenseGroup, Expense, ExpenseGroupSettings
 from apps.fyle.utils import FyleConnector
 from apps.mappings.models import GeneralMapping
-from apps.workspaces.models import FyleCredential
+from apps.workspaces.models import FyleCredential, Workspace
 
 
 def get_transaction_date(expense_group: ExpenseGroup) -> str:
@@ -34,8 +34,10 @@ def get_expense_purpose(workspace_id, lineitem, category) -> str:
     fyle_connector = FyleConnector(fyle_credentials.refresh_token, workspace_id)
 
     cluster_domain = fyle_connector.get_cluster_domain()
-    expense_link = '{0}/app/main/#/enterprise/view_expense/{1}'.format(
-        cluster_domain['cluster_domain'], lineitem.expense_id
+    org_id = Workspace.objects.get(id=workspace_id).fyle_org_id
+
+    expense_link = '{0}/app/main/#/enterprise/view_expense/{1}?org_id={2}'.format(
+        cluster_domain['cluster_domain'], lineitem.expense_id, org_id
     )
 
     expense_purpose = ' purpose - {0}'.format(lineitem.purpose) if lineitem.purpose else ''
