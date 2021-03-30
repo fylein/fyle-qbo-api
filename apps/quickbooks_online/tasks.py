@@ -45,8 +45,6 @@ def get_or_create_credit_card_vendor(workspace_id, merchant):
     if not vendor:
         vendor = qbo_connection.get_or_create_vendor('Credit Card Misc', create=True)
 
-    logger.info(vendor.destination_id)
-
     return vendor
 
 
