@@ -28,20 +28,26 @@ from .utils import QBOConnector
 logger = logging.getLogger(__name__)
 
 
-def get_or_create_credit_card_vendor(workspace_id):
-    entity = DestinationAttribute.objects.filter(value='Credit Card Misc', workspace_id=workspace_id).first()
+def get_or_create_credit_card_vendor(workspace_id, merchant):
+    """
+    Get or create car default vendor
+    :param workspace_id: Workspace Id
+    :param merchant: Fyle Expense Merchant
+    :return:
+    """
+    qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
+    vendor = None
 
-    logger.info('This is awesome')
+    if merchant:
+        vendor = qbo_connection.get_or_create_vendor(merchant, create=False)
 
-    if not entity:
-        logger.info('here it is')
-        qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
-        qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
-        entity = qbo_connection.post_vendor(credit_card_merchant='Credit Card Misc')
+    if not vendor:
+        vendor = qbo_connection.get_or_create_vendor('Credit Card Misc', create=True)
 
-    logger.info(entity.destination_id)
+    logger.info(vendor.destination_id)
 
-    return entity
+    return vendor
 
 
 def load_attachments(qbo_connection: QBOConnector, ref_id: str, ref_type: str, expense_group: ExpenseGroup):
@@ -95,7 +101,7 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
                     'attribute_type': employee_mapping_setting
                 }
 
-            elif auto_map_employees_preference == 'NAME':
+            else:
                 filters = {
                     'value__iexact': source_employee.detail['full_name'],
                     'attribute_type': employee_mapping_setting
@@ -111,7 +117,11 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
                     created_entity: DestinationAttribute = qbo_connection.post_employee(
                         source_employee, auto_map_employees_preference)
                 else:
-                    created_entity: DestinationAttribute = qbo_connection.post_vendor(vendor=source_employee)
+                    created_entity: DestinationAttribute = qbo_connection.get_or_create_vendor(
+                        vendor_name=source_employee.detail['full_name'],
+                        email=source_employee.value,
+                        create=True
+                    )
 
             mapping = Mapping.create_or_update_mapping(
                 source_type='EMPLOYEE',
@@ -196,7 +206,8 @@ def create_bill(expense_group, task_log):
         qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
         if expense_group.fund_source == 'PERSONAL' and general_settings.auto_map_employees \
-                and general_settings.auto_create_destination_entity:
+                and general_settings.auto_create_destination_entity \
+                and general_settings.auto_map_employees != 'EMPLOYEE_CODE':
             create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
 
         with transaction.atomic():
@@ -290,7 +301,7 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                     'message': 'Default Credit Card Vendor not found'
                 })
     else:
-        if not (general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE'\
+        if not (general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE'
                 and general_settings.map_merchant_to_vendor and expense_group.fund_source == 'CCC'):
             try:
                 Mapping.objects.get(
@@ -465,19 +476,21 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
             chain.run()
 
 
-def create_credit_card_purchase(expense_group, task_log):
+def create_credit_card_purchase(expense_group: ExpenseGroup, task_log):
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
     try:
         qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
 
-        qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
+        qbo_connection = QBOConnector(qbo_credentials, int(expense_group.workspace_id))
 
         if not general_settings.map_merchant_to_vendor:
-            if general_settings.auto_map_employees and general_settings.auto_create_destination_entity:
+            if general_settings.auto_map_employees and general_settings.auto_create_destination_entity \
+                    and general_settings.auto_map_employees != 'EMPLOYEE_CODE':
                 create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
         else:
-            get_or_create_credit_card_vendor(expense_group.workspace_id)
+            merchant = expense_group.expenses.first().merchant
+            get_or_create_credit_card_vendor(expense_group.workspace_id, merchant)
 
         with transaction.atomic():
             __validate_expense_group(expense_group, general_settings)
@@ -583,7 +596,8 @@ def create_journal_entry(expense_group, task_log):
 
         qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
-        if general_settings.auto_map_employees and general_settings.auto_create_destination_entity:
+        if general_settings.auto_map_employees and general_settings.auto_create_destination_entity \
+                and general_settings.auto_map_employees != 'EMPLOYEE_CODE':
             create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
 
         with transaction.atomic():
