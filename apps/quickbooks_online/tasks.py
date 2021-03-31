@@ -11,7 +11,7 @@ from django_q.models import Schedule
 
 from qbosdk.exceptions import WrongParamsError
 
-from fyle_accounting_mappings.models import Mapping, ExpenseAttribute, MappingSetting, DestinationAttribute
+from fyle_accounting_mappings.models import Mapping, ExpenseAttribute, DestinationAttribute
 
 from fyle_qbo_api.exceptions import BulkError
 
