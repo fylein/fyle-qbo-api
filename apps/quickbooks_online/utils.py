@@ -18,6 +18,7 @@ class QBOConnector:
     """
     QBO utility functions
     """
+
     def __init__(self, credentials_object: QBOCredential, workspace_id: int):
         client_id = settings.QBO_CLIENT_ID
         client_secret = settings.QBO_CLIENT_SECRET
@@ -35,6 +36,25 @@ class QBOConnector:
 
         credentials_object.refresh_token = self.connection.refresh_token
         credentials_object.save()
+
+    def get_or_create_vendor(self, vendor_name: str, email: str = None, create: bool = False):
+        """
+        Call qbo api to get or create vendor
+        :param email: email for vendor user
+        :param vendor_name: Name of the vendor
+        :param create: False to just Get and True to Get or Create if not exists
+        :return: Vendor
+        """
+        vendor = self.connection.vendors.search_vendor_by_display_name(vendor_name)
+
+        if not vendor:
+            if create:
+                created_vendor = self.post_vendor(vendor_name, email)
+                return self.create_vendor_destionation_attribute(created_vendor)
+            else:
+                return
+        else:
+            return self.create_vendor_destionation_attribute(vendor)
 
     def sync_accounts(self, account_type: str):
         """
@@ -127,7 +147,7 @@ class QBOConnector:
                         vendor['PrimaryEmailAddr']['Address']
                 ) else None
             }
-            
+
             vendor_attributes.append({
                 'attribute_type': 'VENDOR',
                 'display_name': 'vendor',
@@ -140,35 +160,38 @@ class QBOConnector:
             vendor_attributes, self.workspace_id)
         return account_attributes
 
-    def post_vendor(self, vendor: ExpenseAttribute, auto_map_employee_preference: str):
-        """
-        Create an Vendor on Quickbooks online
-        :param auto_map_employee_preference: Preference while doing automap of employees
-        :param vendor: vendor attribute to be created
-        :return: Vendor Desination Atribute
-        """
-        quickbooks_display_name = vendor.detail['full_name']
-
-        vendor = {
-            'GivenName': quickbooks_display_name.split(' ')[0],
-            'FamilyName': quickbooks_display_name.split(' ')[-1]
-            if len(quickbooks_display_name.split(' ')) > 1 else '',
-            'DisplayName': quickbooks_display_name,
-            'PrimaryEmailAddr': {
-                'Address': vendor.value
-            }
-        }
-        created_vendor = self.connection.vendors.post(vendor)['Vendor']
-
+    def create_vendor_destionation_attribute(self, vendor):
         created_vendor = DestinationAttribute.bulk_upsert_destination_attributes([{
             'attribute_type': 'VENDOR',
             'display_name': 'vendor',
-            'value': created_vendor['DisplayName'],
-            'destination_id': created_vendor['Id'],
+            'value': vendor['DisplayName'],
+            'destination_id': vendor['Id'],
             'detail': {
-                'email': created_vendor['PrimaryEmailAddr']['Address']
+                'email': vendor['PrimaryEmailAddr']['Address'] if 'PrimaryEmailAddr' in vendor else None
             }
         }], self.workspace_id)[0]
+
+        return created_vendor
+
+    def post_vendor(self, vendor_name: str, email: str):
+        """
+        Create an Vendor on Quickbooks online
+        :param email: email for employee vendors
+        :param vendor_name: vendor attribute to be created
+        :return: Vendor Desination Atribute
+        """
+
+        vendor = {
+            'GivenName': vendor_name.split(' ')[0] if email else None,
+            'FamilyName': (
+                vendor_name.split(' ')[-1]if len(vendor_name.split(' ')) > 1 else ''
+            ) if email else None,
+            'DisplayName': vendor_name,
+            'PrimaryEmailAddr': {
+                'Address': email
+            }
+        }
+        created_vendor = self.connection.vendors.post(vendor)['Vendor']
 
         return created_vendor
 
@@ -233,7 +256,7 @@ class QBOConnector:
                 'email': created_employee['PrimaryEmailAddr']['Address']
             }
         }], self.workspace_id)[0]
-        
+
         return created_employee
 
     def sync_classes(self):
@@ -570,7 +593,7 @@ class QBOConnector:
         :return:
         """
         return self.connection.company_info.get()
-        
+
     def post_attachments(self, ref_id: str, ref_type: str, attachments: List[Dict]) -> List:
         """
         Link attachments to objects Quickbooks

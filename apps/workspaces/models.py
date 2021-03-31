@@ -50,6 +50,7 @@ class WorkspaceGeneralSettings(models.Model):
     corporate_credit_card_expenses_object = models.CharField(max_length=50,
                                                              help_text='Non Reimbursable Expenses type', null=True)
     employee_field_mapping = models.CharField(max_length=50, help_text='Mapping Settings ( VENDOR / EMPLOYEE )')
+    map_merchant_to_vendor = models.BooleanField(help_text='Map Merchant to Vendor for CCC Expenses', default=False)
     import_categories = models.BooleanField(default=False, help_text='Auto import Categories to Fyle')
     import_projects = models.BooleanField(default=False, help_text='Auto import projects to Fyle')
     auto_map_employees = models.CharField(
