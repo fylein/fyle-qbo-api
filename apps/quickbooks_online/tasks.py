@@ -28,7 +28,7 @@ from .utils import QBOConnector
 logger = logging.getLogger(__name__)
 
 
-def get_or_create_credit_card_vendor(workspace_id, merchant):
+def get_or_create_credit_card_vendor(workspace_id: int, merchant: str):
     """
     Get or create car default vendor
     :param workspace_id: Workspace Id
