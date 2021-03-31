@@ -17,11 +17,11 @@ class TasksView(generics.ListAPIView):
         """
         Return task logs in workspace
         """
-        task_status = self.request.query_params.getlist('status')
+        task_status = self.request.query_params.get('status').split(',')
         expense_group_ids = self.request.query_params.get('expense_group_ids')
         task_type = self.request.query_params.get('task_type')
 
-        if len(task_status) == 1 and task_status[0] == 'IN_PROGRESS' and expense_group_ids:
+        if expense_group_ids:
             expense_group_ids = expense_group_ids.split(',')
             task_type = task_type.split(',')
             filters = {

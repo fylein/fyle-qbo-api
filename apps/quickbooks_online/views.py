@@ -656,10 +656,7 @@ class DepartmentGroupUpdate(generics.CreateAPIView):
             expense_group_settings.reimbursable_expense_group_fields = reimbursable_settings
             expense_group_settings.corporate_credit_card_expense_group_fields = corporate_credit_card_settings
 
-            expense_group_settings.save(update_fields=[
-                'reimbursable_expense_group_fields',
-                'corporate_credit_card_expense_group_fields'
-            ])
+            expense_group_settings.save()
 
         return Response(
             data=self.serializer_class(expense_group_settings).data,
