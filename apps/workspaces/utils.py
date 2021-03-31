@@ -16,6 +16,7 @@ from qbosdk import UnauthorizedClientError, NotFoundClientError, WrongParamsErro
 
 from fyle_qbo_api.utils import assert_valid
 from .models import WorkspaceGeneralSettings
+from ..fyle.models import ExpenseGroupSettings
 
 
 def generate_qbo_refresh_token(authorization_code: str) -> str:
@@ -75,6 +76,11 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
 
     workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
 
+    map_merchant_to_vendor = True
+
+    if workspace_general_settings:
+        map_merchant_to_vendor = workspace_general_settings.map_merchant_to_vendor
+
     general_settings, _ = WorkspaceGeneralSettings.objects.update_or_create(
         workspace_id=workspace_id,
         category_sync_version=workspace_general_settings.category_sync_version if workspace_general_settings else 'v2',
@@ -89,9 +95,21 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
                 if 'corporate_credit_card_expenses_object' in general_settings_payload
                 and general_settings_payload['corporate_credit_card_expenses_object'] else None,
             'sync_fyle_to_qbo_payments': general_settings_payload['sync_fyle_to_qbo_payments'],
-            'sync_qbo_to_fyle_payments': general_settings_payload['sync_qbo_to_fyle_payments']
+            'sync_qbo_to_fyle_payments': general_settings_payload['sync_qbo_to_fyle_payments'],
+            'map_merchant_to_vendor': map_merchant_to_vendor
         }
     )
+
+    if general_settings.map_merchant_to_vendor and \
+            general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE':
+        expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
+
+        ccc_expense_group_fields = expense_group_settings.corporate_credit_card_expense_group_fields
+        ccc_expense_group_fields.append('expense_id')
+        expense_group_settings.corporate_credit_card_expense_group_fields = ccc_expense_group_fields
+
+        expense_group_settings.save()
+
     schedule_projects_creation(import_projects=general_settings.import_projects, workspace_id=workspace_id)
     schedule_categories_creation(import_categories=general_settings.import_categories, workspace_id=workspace_id)
 
