@@ -74,18 +74,12 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
                                       auto_map_employees_preference: str):
     try:
         Mapping.objects.get(
-            Q(destination_type='VENDOR') | Q(destination_type='EMPLOYEE'),
+            destination_type='VENDOR',
             source_type='EMPLOYEE',
             source__value=expense_group.description.get('employee_email'),
             workspace_id=expense_group.workspace_id
         )
     except Mapping.DoesNotExist:
-        employee_mapping_setting = MappingSetting.objects.filter(
-            Q(destination_field='VENDOR') | Q(destination_field='EMPLOYEE'),
-            source_field='EMPLOYEE',
-            workspace_id=expense_group.workspace_id
-        ).first().destination_field
-
         source_employee = ExpenseAttribute.objects.get(
             workspace_id=expense_group.workspace_id,
             attribute_type='EMPLOYEE',
@@ -96,37 +90,33 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
             if auto_map_employees_preference == 'EMAIL':
                 filters = {
                     'detail__email__iexact': source_employee.value,
-                    'attribute_type': employee_mapping_setting
+                    'attribute_type': 'VENDOR'
                 }
 
             else:
                 filters = {
                     'value__iexact': source_employee.detail['full_name'],
-                    'attribute_type': employee_mapping_setting
+                    'attribute_type': 'VENDOR'
                 }
             
-            created_entity = DestinationAttribute.objects.filter(
+            entity = DestinationAttribute.objects.filter(
                 workspace_id=expense_group.workspace_id,
                 **filters
             ).first()
 
-            if created_entity is None:
-                if employee_mapping_setting == 'EMPLOYEE':
-                    created_entity: DestinationAttribute = qbo_connection.post_employee(
-                        source_employee, auto_map_employees_preference)
-                else:
-                    created_entity: DestinationAttribute = qbo_connection.get_or_create_vendor(
-                        vendor_name=source_employee.detail['full_name'],
-                        email=source_employee.value,
-                        create=True
-                    )
+            if entity is None:
+                entity: DestinationAttribute = qbo_connection.get_or_create_vendor(
+                    vendor_name=source_employee.detail['full_name'],
+                    email=source_employee.value,
+                    create=True
+                )
 
             mapping = Mapping.create_or_update_mapping(
                 source_type='EMPLOYEE',
                 source_value=expense_group.description.get('employee_email'),
-                destination_type=employee_mapping_setting,
-                destination_id=created_entity.destination_id,
-                destination_value=created_entity.value,
+                destination_type='VENDOR',
+                destination_id=entity.destination_id,
+                destination_value=entity.value,
                 workspace_id=int(expense_group.workspace_id)
             )
 
@@ -139,30 +129,11 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
 
             # This error code comes up when the vendor or employee already exists
             if error_response['code'] == '6240':
-                qbo_entity = DestinationAttribute.objects.filter(
-                    value__iexact=source_employee.detail['full_name'],
-                    workspace_id=expense_group.workspace_id,
-                    attribute_type=employee_mapping_setting
-                ).first()
-
-                if qbo_entity:
-                    mapping = Mapping.create_or_update_mapping(
-                        source_type='EMPLOYEE',
-                        source_value=expense_group.description.get('employee_email'),
-                        destination_type=employee_mapping_setting,
-                        destination_id=qbo_entity.destination_id,
-                        destination_value=qbo_entity.value,
-                        workspace_id=int(expense_group.workspace_id)
-                    )
-
-                    mapping.source.auto_mapped = True
-                    mapping.source.save(update_fields=['auto_mapped'])
-                else:
-                    logger.error(
-                        'Destination Attribute with value %s not found in workspace %s',
-                        source_employee.detail['full_name'],
-                        expense_group.workspace_id
-                    )
+                logger.error(
+                    'Destination Attribute with value %s not found in workspace %s',
+                    source_employee.detail['full_name'],
+                    expense_group.workspace_id
+                )
 
 
 def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
