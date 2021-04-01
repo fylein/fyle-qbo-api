@@ -45,7 +45,7 @@ class QBOConnector:
         :param create: False to just Get and True to Get or Create if not exists
         :return: Vendor
         """
-        vendor = self.connection.vendors.search_vendor_by_display_name(vendor_name)
+        vendor = self.connection.vendors.search_vendor_by_display_name(vendor_name.replace("'", "\\'"))
 
         if not vendor:
             if create:
