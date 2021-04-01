@@ -470,7 +470,7 @@ class CreditCardPurchase(models.Model):
                 'transaction_date': get_transaction_date(expense_group),
                 'private_note': private_note,
                 'currency': expense.currency,
-                'credit_card_purchase_number': ''
+                'credit_card_purchase_number': expense.expense_number if map_merchant_to_vendor else ''
             }
         )
         return credit_card_purchase_object

@@ -301,11 +301,12 @@ class QBOConnector:
         return account_attributes
 
     @staticmethod
-    def purchase_object_payload(purchase_object, line, payment_type, account_ref, doc_number):
+    def purchase_object_payload(purchase_object, line, payment_type, account_ref, doc_number: str = None):
         """
         returns purchase object payload
         """
         purchase_object_payload = {
+            'DocNumber': doc_number if doc_number else None,
             'PaymentType': payment_type,
             'AccountRef': {
                 'value': account_ref
@@ -435,7 +436,7 @@ class QBOConnector:
         """
         line = self.__construct_cheque_lineitems(cheque_lineitems)
         cheque_payload = self.purchase_object_payload(
-            cheque, line, account_ref=cheque.bank_account_id, payment_type='Check', doc_number=cheque.cheque_number
+            cheque, line, account_ref=cheque.bank_account_id, payment_type='Check'
         )
         return cheque_payload
 
@@ -462,6 +463,7 @@ class QBOConnector:
                 'Description': line.description,
                 'DetailType': 'AccountBasedExpenseLineDetail',
                 'Amount': line.amount,
+
                 'AccountBasedExpenseLineDetail': {
                     'AccountRef': {
                         'value': line.account_id
