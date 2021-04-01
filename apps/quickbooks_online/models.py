@@ -442,6 +442,9 @@ class CreditCardPurchase(models.Model):
                 value__iexact=merchant, attribute_type='VENDOR', workspace_id=expense_group.workspace_id
             ).first()
 
+            expense_group.description['spent_at'] = expense.spent_at
+            expense_group.save()
+
             if not entity:
                 entity = DestinationAttribute.objects.filter(
                     value='Credit Card Misc', workspace_id=expense_group.workspace_id).first().destination_id
