@@ -442,6 +442,9 @@ class CreditCardPurchase(models.Model):
                 value__iexact=merchant, attribute_type='VENDOR', workspace_id=expense_group.workspace_id
             ).first()
 
+            expense_group.description['spent_at'] = expense.spent_at.strftime("%Y-%m-%d")
+            expense_group.save()
+
             if not entity:
                 entity = DestinationAttribute.objects.filter(
                     value='Credit Card Misc', workspace_id=expense_group.workspace_id).first().destination_id
@@ -470,7 +473,7 @@ class CreditCardPurchase(models.Model):
                 'transaction_date': get_transaction_date(expense_group),
                 'private_note': private_note,
                 'currency': expense.currency,
-                'credit_card_purchase_number': ''
+                'credit_card_purchase_number': expense.expense_number if map_merchant_to_vendor else ''
             }
         )
         return credit_card_purchase_object
