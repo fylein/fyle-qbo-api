@@ -41,6 +41,7 @@ class Expense(models.Model):
     category = models.CharField(max_length=255, null=True, blank=True, help_text='Fyle Expense Category')
     sub_category = models.CharField(max_length=255, null=True, blank=True, help_text='Fyle Expense Sub-Category')
     project = models.CharField(max_length=255, null=True, blank=True, help_text='Project')
+    org_id = models.CharField(max_length=255, null=True, help_text='Organization ID')
     expense_id = models.CharField(max_length=255, unique=True, help_text='Expense ID')
     expense_number = models.CharField(max_length=255, help_text='Expense Number')
     claim_number = models.CharField(max_length=255, help_text='Claim Number', null=True)
@@ -91,6 +92,7 @@ class Expense(models.Model):
             expense_object, _ = Expense.objects.update_or_create(
                 expense_id=expense['id'],
                 defaults={
+                    'org_id': expense['org_id'],
                     'employee_email': expense['employee_email'],
                     'category': expense['category_name'],
                     'sub_category': expense['sub_category'],
@@ -170,11 +172,14 @@ class ExpenseGroupSettings(models.Model):
         reimbursable_grouped_by = []
         corporate_credit_card_expenses_grouped_by = []
 
-        for field in current_reimbursable_settings:
+        immutable_reimbursable_list = tuple(current_reimbursable_settings)
+        immutable_ccc_list = tuple(current_ccc_settings)
+
+        for field in immutable_reimbursable_list:
             if field in ALLOWED_FORM_INPUT['group_expenses_by']:
                 current_reimbursable_settings.remove(field)
 
-        for field in current_ccc_settings:
+        for field in immutable_ccc_list:
             if field in ALLOWED_FORM_INPUT['group_expenses_by']:
                 current_ccc_settings.remove(field)
 

@@ -143,7 +143,7 @@ class ConnectFyleView(viewsets.ViewSet):
 
             workspace.name = org_name
             workspace.fyle_org_id = org_id
-            workspace.save(update_fields=['name', 'fyle_org_id'])
+            workspace.save()
 
             fyle_credentials, _ = FyleCredential.objects.update_or_create(
                 workspace_id=kwargs['workspace_id'],
@@ -245,7 +245,7 @@ class ConnectQBOView(viewsets.ViewSet):
                     workspace=workspace
                 )
                 workspace.qbo_realm_id = realm_id
-                workspace.save(update_fields=['qbo_realm_id'])
+                workspace.save()
             else:
                 assert_valid(realm_id == qbo_credentials.realm_id,
                              'Please choose the correct aaaaa Quickbooks online account')

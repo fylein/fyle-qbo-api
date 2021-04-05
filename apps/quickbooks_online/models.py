@@ -7,12 +7,12 @@ from django.db import models
 from django.db.models import Q
 from typing import List
 
-from fyle_accounting_mappings.models import Mapping, MappingSetting, ExpenseAttribute
+from fyle_accounting_mappings.models import Mapping, MappingSetting, ExpenseAttribute, DestinationAttribute
 
-from apps.fyle.models import ExpenseGroup, Expense, ExpenseGroupSettings
+from apps.fyle.models import ExpenseGroup, Expense
 from apps.fyle.utils import FyleConnector
 from apps.mappings.models import GeneralMapping
-from apps.workspaces.models import FyleCredential
+from apps.workspaces.models import FyleCredential, Workspace
 
 
 def get_transaction_date(expense_group: ExpenseGroup) -> str:
@@ -25,7 +25,6 @@ def get_transaction_date(expense_group: ExpenseGroup) -> str:
     elif 'last_spent_at' in expense_group.description and expense_group.description['last_spent_at']:
         return expense_group.description['last_spent_at']
 
-
     return datetime.now().strftime("%Y-%m-%d")
 
 
@@ -34,8 +33,10 @@ def get_expense_purpose(workspace_id, lineitem, category) -> str:
     fyle_connector = FyleConnector(fyle_credentials.refresh_token, workspace_id)
 
     cluster_domain = fyle_connector.get_cluster_domain()
-    expense_link = '{0}/app/main/#/enterprise/view_expense/{1}'.format(
-        cluster_domain['cluster_domain'], lineitem.expense_id
+    org_id = Workspace.objects.get(id=workspace_id).fyle_org_id
+
+    expense_link = '{0}/app/main/#/enterprise/view_expense/{1}?org_id={2}'.format(
+        cluster_domain['cluster_domain'], lineitem.expense_id, org_id
     )
 
     expense_purpose = ' purpose - {0}'.format(lineitem.purpose) if lineitem.purpose else ''
@@ -57,6 +58,7 @@ def construct_private_note(expense_group: ExpenseGroup):
         private_note = '{0}{1}{2}'.format(private_note, merchant, spent_at)
 
     return private_note
+
 
 def get_class_id_or_none(expense_group: ExpenseGroup, lineitem: Expense):
     class_setting: MappingSetting = MappingSetting.objects.filter(
@@ -419,9 +421,10 @@ class CreditCardPurchase(models.Model):
         db_table = 'credit_card_purchases'
 
     @staticmethod
-    def create_credit_card_purchase(expense_group: ExpenseGroup):
+    def create_credit_card_purchase(expense_group: ExpenseGroup, map_merchant_to_vendor: bool):
         """
         Create CreditCardPurchase
+        :param map_merchant_to_vendor: Map merchant to vendor for credit card purchases
         :param expense_group: expense group
         :return: CreditCardPurchase object
         """
@@ -431,6 +434,30 @@ class CreditCardPurchase(models.Model):
         department_id = get_department_id_or_none(expense_group)
 
         private_note = construct_private_note(expense_group)
+
+        if map_merchant_to_vendor:
+            merchant = expense.vendor if expense.vendor else ''
+
+            entity = DestinationAttribute.objects.filter(
+                value__iexact=merchant, attribute_type='VENDOR', workspace_id=expense_group.workspace_id
+            ).first()
+
+            expense_group.description['spent_at'] = expense.spent_at.strftime("%Y-%m-%d")
+            expense_group.save()
+
+            if not entity:
+                entity = DestinationAttribute.objects.filter(
+                    value='Credit Card Misc', workspace_id=expense_group.workspace_id).first().destination_id
+            else:
+                entity = entity.destination_id
+
+        else:
+            entity = Mapping.objects.get(
+                Q(destination_type='EMPLOYEE') | Q(destination_type='VENDOR'),
+                source_type='EMPLOYEE',
+                source__value=description.get('employee_email'),
+                workspace_id=expense_group.workspace_id
+            ).destination.destination_id
 
         credit_card_purchase_object, _ = CreditCardPurchase.objects.update_or_create(
             expense_group=expense_group,
@@ -442,16 +469,11 @@ class CreditCardPurchase(models.Model):
                     workspace_id=expense_group.workspace_id
                 ).destination.destination_id,
                 'department_id': department_id,
-                'entity_id': Mapping.objects.get(
-                    Q(destination_type='EMPLOYEE') | Q(destination_type='VENDOR'),
-                    source_type='EMPLOYEE',
-                    source__value=description.get('employee_email'),
-                    workspace_id=expense_group.workspace_id
-                ).destination.destination_id,
+                'entity_id': entity,
                 'transaction_date': get_transaction_date(expense_group),
                 'private_note': private_note,
                 'currency': expense.currency,
-                'credit_card_purchase_number': ''
+                'credit_card_purchase_number': expense.expense_number if map_merchant_to_vendor else ''
             }
         )
         return credit_card_purchase_object
