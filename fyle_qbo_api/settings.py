@@ -114,7 +114,10 @@ Q_CLUSTER = {
     'cached': False,
     'orm': 'default',
     'ack_failures': True,
-    'poll': 1
+    'poll': 1,
+    'retry': 14400,
+    'timeout': 3600,
+    'catch_up': False
 }
 
 SERVICE_NAME = os.environ.get('SERVICE_NAME')
