@@ -40,7 +40,10 @@ def get_or_create_credit_card_vendor(workspace_id: int, merchant: str):
     vendor = None
 
     if merchant:
-        vendor = qbo_connection.get_or_create_vendor(merchant, create=False)
+        try:
+            vendor = qbo_connection.get_or_create_vendor(merchant, create=False)
+        except WrongParamsError as bad_request:
+            logger.error(bad_request.response)
 
     if not vendor:
         vendor = qbo_connection.get_or_create_vendor('Credit Card Misc', create=True)
