@@ -17,6 +17,19 @@ from fylesdk import WrongParamsError
 logger = logging.getLogger(__name__)
 
 
+def remove_duplicates(ns_attributes: List[DestinationAttribute]):
+    unique_attributes = []
+
+    attribute_values = []
+
+    for attribute in ns_attributes:
+        if attribute.value not in attribute_values:
+            unique_attributes.append(attribute)
+            attribute_values.append(attribute.value)
+
+    return unique_attributes
+
+
 def create_fyle_projects_payload(projects: List[DestinationAttribute], workspace_id: int):
     """
     Create Fyle Projects Payload from QBO Customer / Projects
@@ -64,6 +77,7 @@ def upload_projects_to_fyle(workspace_id):
     fyle_connection.sync_projects()
 
     qbo_attributes: List[DestinationAttribute] = qbo_connection.sync_customers()
+    qbo_attributes = remove_duplicates(qbo_attributes)
 
     fyle_payload: List[Dict] = create_fyle_projects_payload(qbo_attributes, workspace_id)
 
@@ -205,6 +219,7 @@ def upload_categories_to_fyle(workspace_id):
     )
     fyle_connection.sync_categories(False)
     qbo_attributes: List[DestinationAttribute] = qbo_connection.sync_accounts(account_type='Expense')
+    qbo_attributes = remove_duplicates(qbo_attributes)
 
     fyle_payload: List[Dict] = create_fyle_categories_payload(qbo_attributes, workspace_id)
 
