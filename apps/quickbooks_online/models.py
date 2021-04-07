@@ -430,6 +430,7 @@ class CreditCardPurchase(models.Model):
         """
         description = expense_group.description
         expense = expense_group.expenses.first()
+        general_mappings = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
 
         department_id = get_department_id_or_none(expense_group)
 
@@ -459,15 +460,20 @@ class CreditCardPurchase(models.Model):
                 workspace_id=expense_group.workspace_id
             ).destination.destination_id
 
+        ccc_account_mapping: Mapping = Mapping.objects.filter(
+            destination_type='CREDIT_CARD_ACCOUNT',
+            source_type='EMPLOYEE',
+            source__value=description.get('employee_email'),
+            workspace_id=expense_group.workspace_id
+        ).first()
+
+        ccc_account_id = ccc_account_mapping.destination.destination_id if ccc_account_mapping \
+            else general_mappings.default_ccc_account_id
+
         credit_card_purchase_object, _ = CreditCardPurchase.objects.update_or_create(
             expense_group=expense_group,
             defaults={
-                'ccc_account_id': Mapping.objects.get(
-                    destination_type='CREDIT_CARD_ACCOUNT',
-                    source_type='EMPLOYEE',
-                    source__value=description.get('employee_email'),
-                    workspace_id=expense_group.workspace_id
-                ).destination.destination_id,
+                'ccc_account_id': ccc_account_id,
                 'department_id': department_id,
                 'entity_id': entity,
                 'transaction_date': get_transaction_date(expense_group),
