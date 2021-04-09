@@ -244,7 +244,7 @@ def auto_create_category_mappings(workspace_id):
     """
     try:
         fyle_categories = upload_categories_to_fyle(workspace_id=workspace_id)
-        category_mappings = bulk_create_mappings(fyle_categories, 'CATEOGORY', 'ACCOUNT', workspace_id)
+        category_mappings = bulk_create_mappings(fyle_categories, 'CATEGORY', 'ACCOUNT', workspace_id)
         return category_mappings
 
     except WrongParamsError as exception:
