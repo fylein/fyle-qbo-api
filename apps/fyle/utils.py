@@ -1,8 +1,6 @@
 import json
 from typing import List, Dict
 
-import time
-
 from django.conf import settings
 
 from fylesdk import FyleSDK, UnauthorizedClientError, NotFoundClientError, InternalServerError, WrongParamsError
