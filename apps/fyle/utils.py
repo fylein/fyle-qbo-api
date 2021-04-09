@@ -47,8 +47,10 @@ def bulk_create_or_update_expense_attributes(
     attributes_to_be_created = []
     attributes_to_be_updated = []
 
+    values_appended = []
     for attribute in attributes:
-        if attribute['value'] not in existing_attribute_values:
+        if attribute['value'] not in existing_attribute_values and attribute['value'] not in values_appended:
+            values_appended.append(attribute['value'])
             attributes_to_be_created.append(
                 ExpenseAttribute(
                     attribute_type=attribute_type,
