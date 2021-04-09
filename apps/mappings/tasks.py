@@ -2,6 +2,8 @@ import logging
 import traceback
 from datetime import datetime
 
+import time
+
 from typing import List, Dict
 
 from django.db.models import Q
@@ -27,6 +29,8 @@ def bulk_create_mappings(destination_attributes: List[DestinationAttribute], sou
     :param workspace_id: workspace_id
     :return: mappings list
     """
+    start = time.time()
+
     attribute_value_list = []
 
     for destination_attribute in destination_attributes:
@@ -56,6 +60,8 @@ def bulk_create_mappings(destination_attributes: List[DestinationAttribute], sou
 
     mappings = Mapping.objects.bulk_create(mapping_batch, batch_size=50)
 
+    end = time.time()
+    print('Project Mapping Time', end - start)
     return mappings
 
 
@@ -139,37 +145,13 @@ def auto_create_project_mappings(workspace_id):
         'source_field': 'PROJECT',
         'destination_field': 'CUSTOMER'
     }], workspace_id=workspace_id)
-
-    project_mappings = []
-
+    
     try:
         fyle_projects = upload_projects_to_fyle(workspace_id=workspace_id)
 
-        for project in fyle_projects:
-            try:
-                project_mappings = bulk_create_mappings(fyle_projects, 'PROJECT', 'CUSTOMER', workspace_id)
-            except ExpenseAttribute.DoesNotExist:
-                detail = {
-                    'source_value': project.value,
-                    'destination_value': project.value
-                }
-                logger.error(
-                    'Error while creating categories auto mapping workspace_id - %s %s',
-                    workspace_id, {'payload': detail}
-                )
-                raise ExpenseAttribute.DoesNotExist
+        project_mappings = bulk_create_mappings(fyle_projects, 'PROJECT', 'CUSTOMER', workspace_id)
 
         return project_mappings
-
-    except ExpenseAttribute.DoesNotExist as exception:
-        detail = {
-            'source_value': project.value,
-            'destination_value': project.value
-        }
-        logger.error(
-            'Error while creating projects auto mapping workspace_id - %s %s',
-            workspace_id, {'payload': detail}
-        )
 
     except WrongParamsError as exception:
         logger.error(
@@ -271,7 +253,7 @@ def auto_create_category_mappings(workspace_id):
 
     try:
         fyle_categories = upload_categories_to_fyle(workspace_id=workspace_id)
-
+        start = time.time()
         for category in fyle_categories:
             try:
                 mapping = Mapping.create_or_update_mapping(
@@ -285,7 +267,6 @@ def auto_create_category_mappings(workspace_id):
                 mapping.source.auto_mapped = True
                 mapping.source.save()
                 category_mappings.append(mapping)
-
             except ExpenseAttribute.DoesNotExist:
                 detail = {
                     'source_value': category.value,
@@ -296,7 +277,8 @@ def auto_create_category_mappings(workspace_id):
                     workspace_id, {'payload': detail}
                 )
                 raise ExpenseAttribute.DoesNotExist
-
+        end = time.time()
+        print('Category Mapping Time', end - start)
         return category_mappings
 
     except WrongParamsError as exception:
