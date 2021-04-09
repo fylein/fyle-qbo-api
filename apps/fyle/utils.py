@@ -14,10 +14,12 @@ import requests
 from apps.fyle.models import Reimbursement
 
 
-def bulk_create_or_update_expense_attributes(attributes: List[Dict], attribute_type: str, workspace_id: int):
+def bulk_create_or_update_expense_attributes(
+        attributes: List[Dict], attribute_type: str, workspace_id: int, update: bool = False):
     """
     Create Expense Attributes in bulk
-    :param attribute_type:
+    :param update: Update Pre-existing records or not
+    :param attribute_type: Attribute type
     :param attributes: attributes = [{
         'attribute_type': Type of attribute,
         'display_name': Display_name of attribute_field,
@@ -30,11 +32,20 @@ def bulk_create_or_update_expense_attributes(attributes: List[Dict], attribute_t
     """
     attribute_value_list = [attribute['value'] for attribute in attributes]
 
-    existing_attribute_values = ExpenseAttribute.objects.filter(
+    existing_attributes = ExpenseAttribute.objects.filter(
         value__in=attribute_value_list, attribute_type=attribute_type,
-        workspace_id=workspace_id).values_list('value', flat=True)
+        workspace_id=workspace_id).all()
+
+    existing_attribute_values = []
+
+    primary_key_map = {}
+
+    for existing_attribute in existing_attributes:
+        existing_attribute_values.append(existing_attribute.value)
+        primary_key_map[existing_attribute.value] = existing_attribute.id
 
     attributes_to_be_created = []
+    attributes_to_be_updated = []
 
     for attribute in attributes:
         if attribute['value'] not in existing_attribute_values:
@@ -48,10 +59,19 @@ def bulk_create_or_update_expense_attributes(attributes: List[Dict], attribute_t
                     workspace_id=workspace_id
                 )
             )
+        else:
+            if update:
+                attributes_to_be_updated.append(
+                    ExpenseAttribute(
+                        id=primary_key_map[attribute['value']],
+                        detail=attribute['detail'] if 'detail' in attribute else None,
+                    )
+                )
     if attributes_to_be_created:
-        return ExpenseAttribute.objects.bulk_create(attributes_to_be_created, batch_size=50)
+        ExpenseAttribute.objects.bulk_create(attributes_to_be_created, batch_size=50)
 
-    return []
+    if attributes_to_be_updated:
+        ExpenseAttribute.objects.bulk_update(attributes_to_be_updated, fields=['detail'])
 
 
 class FyleConnector:
@@ -195,8 +215,6 @@ class FyleConnector:
 
         employee_attributes = []
 
-        start = time.time()
-
         for employee in employees:
             employee_attributes.append({
                 'attribute_type': 'EMPLOYEE',
@@ -213,13 +231,9 @@ class FyleConnector:
                 }
             })
 
-        employee_attributes = bulk_create_or_update_expense_attributes(
-            employee_attributes, 'EMPLOYEE', self.workspace_id)
+        bulk_create_or_update_expense_attributes(employee_attributes, 'EMPLOYEE', self.workspace_id, True)
 
-        end = time.time()
-        print(len(employee_attributes), ' Employees Attributes: ', end-start)
-
-        return employee_attributes
+        return []
 
     def sync_categories(self, active_only: bool):
         """
@@ -228,7 +242,6 @@ class FyleConnector:
         categories = self.connection.Categories.get(active_only=active_only)['data']
 
         category_attributes = []
-        start = time.time()
 
         for category in categories:
             if category['name'] != category['sub_category']:
@@ -241,11 +254,9 @@ class FyleConnector:
                 'source_id': category['id']
             })
 
-        category_attributes = bulk_create_or_update_expense_attributes(
-            category_attributes, 'CATEGORY', self.workspace_id)
-        end = time.time()
-        print(len(category_attributes), ' Categories Attributes: ', end-start)
-        return category_attributes
+        bulk_create_or_update_expense_attributes(category_attributes, 'CATEGORY', self.workspace_id)
+
+        return []
 
     def sync_expense_custom_fields(self, active_only: bool):
         """
@@ -281,8 +292,6 @@ class FyleConnector:
 
         cost_center_attributes = []
 
-        start = time.time()
-
         for cost_center in cost_centers:
             cost_center_attributes.append({
                 'attribute_type': 'COST_CENTER',
@@ -291,13 +300,9 @@ class FyleConnector:
                 'source_id': cost_center['id']
             })
 
-        cost_center_attributes = bulk_create_or_update_expense_attributes(
-            cost_center_attributes, 'COST_CENTER', self.workspace_id)
+        bulk_create_or_update_expense_attributes(cost_center_attributes, 'COST_CENTER', self.workspace_id)
 
-        end = time.time()
-        print(len(cost_center_attributes), ' Cost Centers Attributes: ', end-start)
-
-        return cost_center_attributes
+        return []
 
     def sync_projects(self):
         """
@@ -318,8 +323,6 @@ class FyleConnector:
 
         project_attributes = []
 
-        start = time.time()
-
         for project in all_projects:
             project_attributes.append({
                 'attribute_type': 'PROJECT',
@@ -328,12 +331,9 @@ class FyleConnector:
                 'source_id': project['id']
             })
 
-        project_attributes = bulk_create_or_update_expense_attributes(project_attributes, 'PROJECT', self.workspace_id)
+        bulk_create_or_update_expense_attributes(project_attributes, 'PROJECT', self.workspace_id)
 
-        end = time.time()
-        print(len(project_attributes), ' Projects Attributes: ', end-start)
-
-        return project_attributes
+        return []
 
     def get_attachments(self, expense_ids: List[str]):
         """
