@@ -117,7 +117,9 @@ def upload_projects_to_fyle(workspace_id):
 
     fyle_connection.sync_projects()
 
-    qbo_attributes: List[DestinationAttribute] = qbo_connection.sync_customers()
+    qbo_connection.sync_customers()
+    qbo_attributes: List[DestinationAttribute] = DestinationAttribute.objects.filter(
+        workspace_id=workspace_id, attribute_type='CUSTOMER').all()
     qbo_attributes = remove_duplicates(qbo_attributes)
 
     fyle_payload: List[Dict] = create_fyle_projects_payload(qbo_attributes, workspace_id)
@@ -225,7 +227,9 @@ def upload_categories_to_fyle(workspace_id):
         workspace_id=workspace_id
     )
     fyle_connection.sync_categories(False)
-    qbo_attributes: List[DestinationAttribute] = qbo_connection.sync_accounts(account_type='Expense')
+    qbo_connection.sync_accounts(account_type='Expense')
+    qbo_attributes: List[DestinationAttribute] = DestinationAttribute.objects.filter(
+        workspace_id=workspace_id, attribute_type='ACCOUNT').all()
     qbo_attributes = remove_duplicates(qbo_attributes)
 
     fyle_payload: List[Dict] = create_fyle_categories_payload(qbo_attributes, workspace_id)
