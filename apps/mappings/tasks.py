@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 def bulk_create_mappings(destination_attributes: List[DestinationAttribute], source_type: str,
-                                 destination_type: str, workspace_id: int):
+                         destination_type: str, workspace_id: int):
     """
     Bulk create mappings
     :param destination_type: Destination Type
@@ -33,7 +33,7 @@ def bulk_create_mappings(destination_attributes: List[DestinationAttribute], sou
         attribute_value_list.append(destination_attribute.value)
 
     source_attributes: List[ExpenseAttribute] = ExpenseAttribute.objects.filter(
-        value__in=attribute_value_list, workspace_id=workspace_id, mapping__source_id_isnull=True).all()
+        value__in=attribute_value_list, workspace_id=workspace_id, mapping__source_id__isnull=True).all()
 
     source_value_id_map = {}
 
@@ -54,7 +54,9 @@ def bulk_create_mappings(destination_attributes: List[DestinationAttribute], sou
                 )
             )
 
-    return Mapping.objects.bulk_create(mapping_batch, batch_size=50)
+    mappings = Mapping.objects.bulk_create(mapping_batch, batch_size=50)
+
+    return mappings
 
 
 def remove_duplicates(ns_attributes: List[DestinationAttribute]):
@@ -145,17 +147,7 @@ def auto_create_project_mappings(workspace_id):
 
         for project in fyle_projects:
             try:
-                mapping = Mapping.create_or_update_mapping(
-                    source_type='PROJECT',
-                    destination_type='CUSTOMER',
-                    source_value=project.value,
-                    destination_value=project.value,
-                    destination_id=project.destination_id,
-                    workspace_id=workspace_id
-                )
-                mapping.source.auto_mapped = True
-                mapping.source.save()
-                project_mappings.append(mapping)
+                project_mappings = bulk_create_mappings(fyle_projects, 'PROJECT', 'CUSTOMER', workspace_id)
             except ExpenseAttribute.DoesNotExist:
                 detail = {
                     'source_value': project.value,
@@ -217,7 +209,7 @@ def schedule_projects_creation(import_projects, workspace_id):
         if schedule:
             schedule.delete()
 
-            
+
 def create_fyle_categories_payload(categories: List[DestinationAttribute], workspace_id: int):
     """
     Create Fyle Categories Payload from QBO Customer / Categories
