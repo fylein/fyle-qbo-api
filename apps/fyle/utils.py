@@ -12,6 +12,7 @@ import requests
 from apps.fyle.models import Reimbursement
 
 
+# To do: Add this function to Fyle accounting mappings library
 def bulk_create_or_update_expense_attributes(
         attributes: List[Dict], attribute_type: str, workspace_id: int, update: bool = False):
     """

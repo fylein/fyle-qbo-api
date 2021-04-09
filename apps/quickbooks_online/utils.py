@@ -14,6 +14,7 @@ from .models import BillLineitem, Bill, ChequeLineitem, Cheque, CreditCardPurcha
     JournalEntry, JournalEntryLineitem, BillPaymentLineitem, BillPayment
 
 
+# To do: Add this function to Fyle accounting mappings library
 def bulk_create_or_update_destination_attributes(
         attributes: List[Dict], attribute_type: str, workspace_id: int, update: bool = False):
     """

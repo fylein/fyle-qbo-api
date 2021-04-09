@@ -17,6 +17,7 @@ from fylesdk import WrongParamsError
 logger = logging.getLogger(__name__)
 
 
+# To do: Add this function to Fyle accounting mappings library
 def bulk_create_mappings(destination_attributes: List[DestinationAttribute], source_type: str,
                          destination_type: str, workspace_id: int):
     """
