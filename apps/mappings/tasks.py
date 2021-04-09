@@ -17,6 +17,43 @@ from fylesdk import WrongParamsError
 logger = logging.getLogger(__name__)
 
 
+def bulk_create_project_mappings(project_attributes: List[DestinationAttribute], workspace_id: int):
+    """
+    Bulk create Project mappings
+    :param project_attributes: Destination Attributes List
+    :param workspace_id: workspace_id
+    :return: mappings list
+    """
+    project_names = []
+
+    for project in project_attributes:
+        project_names.append(project.value)
+
+    source_attributes: List[ExpenseAttribute] = ExpenseAttribute.objects.filter(
+        value__in=project_names, workspace_id=workspace_id, mapping__source_id_isnull=True).all()
+
+    source_value_id_map = {}
+
+    for source_attribute in source_attributes:
+        source_value_id_map[source_attribute.value.lower()] = source_attribute.id
+
+    mapping_batch = []
+
+    for project in project_attributes:
+        if project.value.lower() in source_value_id_map:
+            mapping_batch.append(
+                Mapping(
+                    source_type='PROJECT',
+                    destination_type='CUSTOMER',
+                    source_id=source_value_id_map[project.value.lower()],
+                    destination_id=project.id,
+                    workspace_id=workspace_id
+                )
+            )
+
+    return Mapping.objects.bulk_create(mapping_batch, batch_size=50)
+
+
 def remove_duplicates(ns_attributes: List[DestinationAttribute]):
     unique_attributes = []
 
