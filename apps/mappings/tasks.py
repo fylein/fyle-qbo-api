@@ -411,7 +411,9 @@ def async_auto_map_ccc_account(workspace_id: str):
 
     fyle_connection = FyleConnector(refresh_token=fyle_credentials.refresh_token, workspace_id=workspace_id)
 
-    source_attributes = fyle_connection.sync_employees()
+    fyle_connection.sync_employees()
+
+    source_attributes = ExpenseAttribute.objects.filter(attribute_type='EMPLOYEE', workspace_id=workspace_id).all()
 
     mapping_attributes = {
         'destination_type': 'CREDIT_CARD_ACCOUNT',
