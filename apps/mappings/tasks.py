@@ -17,20 +17,23 @@ from fylesdk import WrongParamsError
 logger = logging.getLogger(__name__)
 
 
-def bulk_create_project_mappings(project_attributes: List[DestinationAttribute], workspace_id: int):
+def bulk_create_project_mappings(destination_attributes: List[DestinationAttribute], source_type: str,
+                                 destination_type: str, workspace_id: int):
     """
-    Bulk create Project mappings
-    :param project_attributes: Destination Attributes List
+    Bulk create mappings
+    :param destination_type: Destination Type
+    :param source_type: Source Type
+    :param destination_attributes: Destination Attributes List
     :param workspace_id: workspace_id
     :return: mappings list
     """
-    project_names = []
+    attribute_value_list = []
 
-    for project in project_attributes:
-        project_names.append(project.value)
+    for destination_attribute in destination_attributes:
+        attribute_value_list.append(destination_attribute.value)
 
     source_attributes: List[ExpenseAttribute] = ExpenseAttribute.objects.filter(
-        value__in=project_names, workspace_id=workspace_id, mapping__source_id_isnull=True).all()
+        value__in=attribute_value_list, workspace_id=workspace_id, mapping__source_id_isnull=True).all()
 
     source_value_id_map = {}
 
@@ -39,14 +42,14 @@ def bulk_create_project_mappings(project_attributes: List[DestinationAttribute],
 
     mapping_batch = []
 
-    for project in project_attributes:
-        if project.value.lower() in source_value_id_map:
+    for detination_attribute in destination_attributes:
+        if detination_attribute.value.lower() in source_value_id_map:
             mapping_batch.append(
                 Mapping(
-                    source_type='PROJECT',
-                    destination_type='CUSTOMER',
-                    source_id=source_value_id_map[project.value.lower()],
-                    destination_id=project.id,
+                    source_type=source_type,
+                    destination_type=destination_type,
+                    source_id=source_value_id_map[detination_attribute.value.lower()],
+                    destination_id=detination_attribute.id,
                     workspace_id=workspace_id
                 )
             )
