@@ -1,5 +1,5 @@
 import json
-from typing import List, Dict
+from typing import List
 
 from django.conf import settings
 
@@ -10,69 +10,6 @@ from fyle_accounting_mappings.models import ExpenseAttribute
 import requests
 
 from apps.fyle.models import Reimbursement
-
-
-# To do: Add this function to Fyle accounting mappings library
-def bulk_create_or_update_expense_attributes(
-        attributes: List[Dict], attribute_type: str, workspace_id: int, update: bool = False):
-    """
-    Create Expense Attributes in bulk
-    :param update: Update Pre-existing records or not
-    :param attribute_type: Attribute type
-    :param attributes: attributes = [{
-        'attribute_type': Type of attribute,
-        'display_name': Display_name of attribute_field,
-        'value': Value of attribute,
-        'destination_id': Destination Id of the attribute,
-        'detail': Extra Details of the attribute
-    }]
-    :param workspace_id: Workspace Id
-    :return: created / updated attributes
-    """
-    attribute_value_list = [attribute['value'] for attribute in attributes]
-
-    existing_attributes = ExpenseAttribute.objects.filter(
-        value__in=attribute_value_list, attribute_type=attribute_type,
-        workspace_id=workspace_id).all()
-
-    existing_attribute_values = []
-
-    primary_key_map = {}
-
-    for existing_attribute in existing_attributes:
-        existing_attribute_values.append(existing_attribute.value)
-        primary_key_map[existing_attribute.value] = existing_attribute.id
-
-    attributes_to_be_created = []
-    attributes_to_be_updated = []
-
-    values_appended = []
-    for attribute in attributes:
-        if attribute['value'] not in existing_attribute_values and attribute['value'] not in values_appended:
-            values_appended.append(attribute['value'])
-            attributes_to_be_created.append(
-                ExpenseAttribute(
-                    attribute_type=attribute_type,
-                    display_name=attribute['display_name'],
-                    value=attribute['value'],
-                    source_id=attribute['source_id'],
-                    detail=attribute['detail'] if 'detail' in attribute else None,
-                    workspace_id=workspace_id
-                )
-            )
-        else:
-            if update:
-                attributes_to_be_updated.append(
-                    ExpenseAttribute(
-                        id=primary_key_map[attribute['value']],
-                        detail=attribute['detail'] if 'detail' in attribute else None,
-                    )
-                )
-    if attributes_to_be_created:
-        ExpenseAttribute.objects.bulk_create(attributes_to_be_created, batch_size=50)
-
-    if attributes_to_be_updated:
-        ExpenseAttribute.objects.bulk_update(attributes_to_be_updated, fields=['detail'], batch_size=50)
 
 
 class FyleConnector:
@@ -232,7 +169,8 @@ class FyleConnector:
                 }
             })
 
-        bulk_create_or_update_expense_attributes(employee_attributes, 'EMPLOYEE', self.workspace_id, True)
+        ExpenseAttribute.bulk_create_or_update_expense_attributes(
+            employee_attributes, 'EMPLOYEE', self.workspace_id, True)
 
         return []
 
@@ -255,7 +193,8 @@ class FyleConnector:
                 'source_id': category['id']
             })
 
-        bulk_create_or_update_expense_attributes(category_attributes, 'CATEGORY', self.workspace_id)
+        ExpenseAttribute.bulk_create_or_update_expense_attributes(
+            category_attributes, 'CATEGORY', self.workspace_id)
 
         return []
 
@@ -280,7 +219,7 @@ class FyleConnector:
                 })
                 count = count + 1
 
-            bulk_create_or_update_expense_attributes(
+            ExpenseAttribute.bulk_create_or_update_expense_attributes(
                 expense_custom_field_attributes, custom_field['name'].upper().replace(' ', '_'),
                 self.workspace_id)
 
@@ -302,7 +241,8 @@ class FyleConnector:
                 'source_id': cost_center['id']
             })
 
-        bulk_create_or_update_expense_attributes(cost_center_attributes, 'COST_CENTER', self.workspace_id)
+        ExpenseAttribute.bulk_create_or_update_expense_attributes(
+            cost_center_attributes, 'COST_CENTER', self.workspace_id)
 
         return []
 
@@ -333,7 +273,7 @@ class FyleConnector:
                 'source_id': project['id']
             })
 
-        bulk_create_or_update_expense_attributes(project_attributes, 'PROJECT', self.workspace_id)
+        ExpenseAttribute.bulk_create_or_update_expense_attributes(project_attributes, 'PROJECT', self.workspace_id)
 
         return []
 
@@ -385,5 +325,3 @@ class FyleConnector:
         Process Reimbursements in bulk.
         """
         return self.connection.Reimbursements.post(reimbursement_ids)
-
-

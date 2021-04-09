@@ -17,48 +17,6 @@ from fylesdk import WrongParamsError
 logger = logging.getLogger(__name__)
 
 
-# To do: Add this function to Fyle accounting mappings library
-def bulk_create_mappings(destination_attributes: List[DestinationAttribute], source_type: str,
-                         destination_type: str, workspace_id: int):
-    """
-    Bulk create mappings
-    :param destination_type: Destination Type
-    :param source_type: Source Type
-    :param destination_attributes: Destination Attributes List
-    :param workspace_id: workspace_id
-    :return: mappings list
-    """
-    attribute_value_list = []
-
-    for destination_attribute in destination_attributes:
-        attribute_value_list.append(destination_attribute.value)
-
-    source_attributes: List[ExpenseAttribute] = ExpenseAttribute.objects.filter(
-        value__in=attribute_value_list, workspace_id=workspace_id, mapping__source_id__isnull=True).all()
-
-    source_value_id_map = {}
-
-    for source_attribute in source_attributes:
-        source_value_id_map[source_attribute.value.lower()] = source_attribute.id
-
-    mapping_batch = []
-
-    for destination_attribute in destination_attributes:
-        if destination_attribute.value.lower() in source_value_id_map:
-            mapping_batch.append(
-                Mapping(
-                    source_type=source_type,
-                    destination_type=destination_type,
-                    source_id=source_value_id_map[destination_attribute.value.lower()],
-                    destination_id=destination_attribute.id,
-                    workspace_id=workspace_id
-                )
-            )
-
-    mappings = Mapping.objects.bulk_create(mapping_batch, batch_size=50)
-    return mappings
-
-
 def remove_duplicates(ns_attributes: List[DestinationAttribute]):
     unique_attributes = []
 
@@ -145,7 +103,7 @@ def auto_create_project_mappings(workspace_id):
     try:
         fyle_projects = upload_projects_to_fyle(workspace_id=workspace_id)
 
-        project_mappings = bulk_create_mappings(fyle_projects, 'PROJECT', 'CUSTOMER', workspace_id)
+        project_mappings = Mapping.bulk_create_mappings(fyle_projects, 'PROJECT', 'CUSTOMER', workspace_id)
 
         return project_mappings
 
@@ -249,7 +207,7 @@ def auto_create_category_mappings(workspace_id):
     """
     try:
         fyle_categories = upload_categories_to_fyle(workspace_id=workspace_id)
-        category_mappings = bulk_create_mappings(fyle_categories, 'CATEGORY', 'ACCOUNT', workspace_id)
+        category_mappings = Mapping.bulk_create_mappings(fyle_categories, 'CATEGORY', 'ACCOUNT', workspace_id)
         return category_mappings
 
     except WrongParamsError as exception:
