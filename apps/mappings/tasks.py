@@ -2,8 +2,6 @@ import logging
 import traceback
 from datetime import datetime
 
-import time
-
 from typing import List, Dict
 
 from django.db.models import Q
@@ -29,8 +27,6 @@ def bulk_create_mappings(destination_attributes: List[DestinationAttribute], sou
     :param workspace_id: workspace_id
     :return: mappings list
     """
-    start = time.time()
-
     attribute_value_list = []
 
     for destination_attribute in destination_attributes:
@@ -46,22 +42,19 @@ def bulk_create_mappings(destination_attributes: List[DestinationAttribute], sou
 
     mapping_batch = []
 
-    for detination_attribute in destination_attributes:
-        if detination_attribute.value.lower() in source_value_id_map:
+    for destination_attribute in destination_attributes:
+        if destination_attribute.value.lower() in source_value_id_map:
             mapping_batch.append(
                 Mapping(
                     source_type=source_type,
                     destination_type=destination_type,
-                    source_id=source_value_id_map[detination_attribute.value.lower()],
-                    destination_id=detination_attribute.id,
+                    source_id=source_value_id_map[destination_attribute.value.lower()],
+                    destination_id=destination_attribute.id,
                     workspace_id=workspace_id
                 )
             )
 
     mappings = Mapping.objects.bulk_create(mapping_batch, batch_size=50)
-
-    end = time.time()
-    print('Project Mapping Time', end - start)
     return mappings
 
 
@@ -145,7 +138,7 @@ def auto_create_project_mappings(workspace_id):
         'source_field': 'PROJECT',
         'destination_field': 'CUSTOMER'
     }], workspace_id=workspace_id)
-    
+
     try:
         fyle_projects = upload_projects_to_fyle(workspace_id=workspace_id)
 
@@ -249,36 +242,9 @@ def auto_create_category_mappings(workspace_id):
     Create Category Mappings
     :return: mappings
     """
-    category_mappings = []
-
     try:
         fyle_categories = upload_categories_to_fyle(workspace_id=workspace_id)
-        start = time.time()
-        for category in fyle_categories:
-            try:
-                mapping = Mapping.create_or_update_mapping(
-                    source_type='CATEGORY',
-                    destination_type='ACCOUNT',
-                    source_value=category.value,
-                    destination_value=category.value,
-                    destination_id=category.destination_id,
-                    workspace_id=workspace_id
-                )
-                mapping.source.auto_mapped = True
-                mapping.source.save()
-                category_mappings.append(mapping)
-            except ExpenseAttribute.DoesNotExist:
-                detail = {
-                    'source_value': category.value,
-                    'destination_value': category.value
-                }
-                logger.error(
-                    'Error while creating categories auto mapping workspace_id - %s %s',
-                    workspace_id, {'payload': detail}
-                )
-                raise ExpenseAttribute.DoesNotExist
-        end = time.time()
-        print('Category Mapping Time', end - start)
+        category_mappings = bulk_create_mappings(fyle_categories, 'CATEOGORY', 'ACCOUNT', workspace_id)
         return category_mappings
 
     except WrongParamsError as exception:
