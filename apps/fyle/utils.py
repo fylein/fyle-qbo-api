@@ -1,5 +1,7 @@
 import json
-from typing import List
+from typing import List, Dict
+
+import time
 
 from django.conf import settings
 
@@ -9,8 +11,47 @@ from fyle_accounting_mappings.models import ExpenseAttribute
 
 import requests
 
-
 from apps.fyle.models import Reimbursement
+
+
+def bulk_create_or_update_expense_attributes(attributes: List[Dict], attribute_type: str, workspace_id: int):
+    """
+    Create Expense Attributes in bulk
+    :param attribute_type:
+    :param attributes: attributes = [{
+        'attribute_type': Type of attribute,
+        'display_name': Display_name of attribute_field,
+        'value': Value of attribute,
+        'source_id': Fyle Id of the attribute,
+        'detail': Extra Details of the attribute
+    }]
+    :param workspace_id: Workspace Id
+    :return: created / updated attributes
+    """
+    attribute_value_list = [attribute['value'] for attribute in attributes]
+
+    existing_attribute_values = ExpenseAttribute.objects.filter(
+        value__in=attribute_value_list, attribute_type=attribute_type,
+        workspace_id=workspace_id).values_list('value', flat=True)
+
+    attributes_to_be_created = []
+
+    for attribute in attributes:
+        if attribute['value'] not in existing_attribute_values:
+            attributes_to_be_created.append(
+                ExpenseAttribute(
+                    attribute_type=attribute_type,
+                    display_name=attribute['display_name'],
+                    value=attribute['value'],
+                    source_id=attribute['source_id'],
+                    detail=attribute['detail'] if 'detail' in attribute else None,
+                    workspace_id=workspace_id
+                )
+            )
+    if attributes_to_be_created:
+        return ExpenseAttribute.objects.bulk_create(attributes_to_be_created, batch_size=50)
+
+    return []
 
 
 class FyleConnector:
@@ -154,6 +195,8 @@ class FyleConnector:
 
         employee_attributes = []
 
+        start = time.time()
+
         for employee in employees:
             employee_attributes.append({
                 'attribute_type': 'EMPLOYEE',
@@ -170,7 +213,11 @@ class FyleConnector:
                 }
             })
 
-        employee_attributes = ExpenseAttribute.bulk_upsert_expense_attributes(employee_attributes, self.workspace_id)
+        employee_attributes = bulk_create_or_update_expense_attributes(
+            employee_attributes, 'EMPLOYEE', self.workspace_id)
+
+        end = time.time()
+        print(len(employee_attributes), ' Employees Attributes: ', end-start)
 
         return employee_attributes
 
@@ -181,6 +228,7 @@ class FyleConnector:
         categories = self.connection.Categories.get(active_only=active_only)['data']
 
         category_attributes = []
+        start = time.time()
 
         for category in categories:
             if category['name'] != category['sub_category']:
@@ -193,8 +241,10 @@ class FyleConnector:
                 'source_id': category['id']
             })
 
-        category_attributes = ExpenseAttribute.bulk_upsert_expense_attributes(category_attributes, self.workspace_id)
-
+        category_attributes = bulk_create_or_update_expense_attributes(
+            category_attributes, 'CATEGORY', self.workspace_id)
+        end = time.time()
+        print(len(category_attributes), ' Categories Attributes: ', end-start)
         return category_attributes
 
     def sync_expense_custom_fields(self, active_only: bool):
@@ -231,6 +281,8 @@ class FyleConnector:
 
         cost_center_attributes = []
 
+        start = time.time()
+
         for cost_center in cost_centers:
             cost_center_attributes.append({
                 'attribute_type': 'COST_CENTER',
@@ -239,8 +291,11 @@ class FyleConnector:
                 'source_id': cost_center['id']
             })
 
-        cost_center_attributes = ExpenseAttribute.bulk_upsert_expense_attributes(
-            cost_center_attributes, self.workspace_id)
+        cost_center_attributes = bulk_create_or_update_expense_attributes(
+            cost_center_attributes, 'COST_CENTER', self.workspace_id)
+
+        end = time.time()
+        print(len(cost_center_attributes), ' Cost Centers Attributes: ', end-start)
 
         return cost_center_attributes
 
@@ -263,6 +318,8 @@ class FyleConnector:
 
         project_attributes = []
 
+        start = time.time()
+
         for project in all_projects:
             project_attributes.append({
                 'attribute_type': 'PROJECT',
@@ -271,7 +328,10 @@ class FyleConnector:
                 'source_id': project['id']
             })
 
-        project_attributes = ExpenseAttribute.bulk_upsert_expense_attributes(project_attributes, self.workspace_id)
+        project_attributes = bulk_create_or_update_expense_attributes(project_attributes, 'PROJECT', self.workspace_id)
+
+        end = time.time()
+        print(len(project_attributes), ' Projects Attributes: ', end-start)
 
         return project_attributes
 
