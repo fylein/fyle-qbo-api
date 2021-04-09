@@ -17,7 +17,7 @@ from fylesdk import WrongParamsError
 logger = logging.getLogger(__name__)
 
 
-def bulk_create_project_mappings(destination_attributes: List[DestinationAttribute], source_type: str,
+def bulk_create_mappings(destination_attributes: List[DestinationAttribute], source_type: str,
                                  destination_type: str, workspace_id: int):
     """
     Bulk create mappings
