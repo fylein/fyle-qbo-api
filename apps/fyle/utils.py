@@ -71,7 +71,7 @@ def bulk_create_or_update_expense_attributes(
         ExpenseAttribute.objects.bulk_create(attributes_to_be_created, batch_size=50)
 
     if attributes_to_be_updated:
-        ExpenseAttribute.objects.bulk_update(attributes_to_be_updated, fields=['detail'])
+        ExpenseAttribute.objects.bulk_update(attributes_to_be_updated, fields=['detail'], batch_size=50)
 
 
 class FyleConnector:

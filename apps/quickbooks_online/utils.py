@@ -14,6 +14,70 @@ from .models import BillLineitem, Bill, ChequeLineitem, Cheque, CreditCardPurcha
     JournalEntry, JournalEntryLineitem, BillPaymentLineitem, BillPayment
 
 
+def bulk_create_or_update_destination_attributes(
+        attributes: List[Dict], attribute_type: str, workspace_id: int, update: bool = False):
+    """
+    Create Expense Attributes in bulk
+    :param update: Update Pre-existing records or not
+    :param attribute_type: Attribute type
+    :param attributes: attributes = [{
+        'attribute_type': Type of attribute,
+        'display_name': Display_name of attribute_field,
+        'value': Value of attribute,
+        'destination_id': Fyle Id of the attribute,
+        'detail': Extra Details of the attribute
+    }]
+    :param workspace_id: Workspace Id
+    :return: created / updated attributes
+    """
+    attribute_destination_id_list = [attribute['destination_id'] for attribute in attributes]
+
+    existing_attributes = DestinationAttribute.objects.filter(
+        destination_id__in=attribute_destination_id_list, attribute_type=attribute_type,
+        workspace_id=workspace_id).all()
+
+    existing_attribute_destination_ids = []
+
+    primary_key_map = {}
+
+    for existing_attribute in existing_attributes:
+        existing_attribute_destination_ids.append(existing_attribute.destination_id)
+        primary_key_map[existing_attribute.destination_id] = existing_attribute.id
+
+    attributes_to_be_created = []
+    attributes_to_be_updated = []
+
+    destination_ids_appended = []
+    for attribute in attributes:
+        if attribute['destination_id'] not in existing_attribute_destination_ids \
+                and attribute['destination_id'] not in destination_ids_appended:
+            destination_ids_appended.append(attribute['destination_id'])
+            attributes_to_be_created.append(
+                DestinationAttribute(
+                    attribute_type=attribute_type,
+                    display_name=attribute['display_name'],
+                    value=attribute['value'],
+                    destination_id=attribute['destination_id'],
+                    detail=attribute['detail'] if 'detail' in attribute else None,
+                    workspace_id=workspace_id
+                )
+            )
+        else:
+            if update:
+                attributes_to_be_updated.append(
+                    DestinationAttribute(
+                        id=primary_key_map[attribute['destination_id']],
+                        value=attribute['value'],
+                        detail=attribute['detail'] if 'detail' in attribute else None,
+                    )
+                )
+    if attributes_to_be_created:
+        DestinationAttribute.objects.bulk_create(attributes_to_be_created, batch_size=50)
+
+    if attributes_to_be_updated:
+        DestinationAttribute.objects.bulk_update(attributes_to_be_updated, fields=['detail', 'value'], batch_size=50)
+
+
 class QBOConnector:
     """
     QBO utility functions
@@ -108,9 +172,8 @@ class QBOConnector:
 
             account_attributes.append(attribute)
 
-        account_attributes = DestinationAttribute.bulk_upsert_destination_attributes(
-            account_attributes, self.workspace_id)
-        return account_attributes
+        bulk_create_or_update_destination_attributes(account_attributes, attribute_type, self.workspace_id, True)
+        return []
 
     def sync_departments(self):
         """
@@ -128,9 +191,8 @@ class QBOConnector:
                 'destination_id': department['Id']
             })
 
-        account_attributes = DestinationAttribute.bulk_upsert_destination_attributes(
-            department_attributes, self.workspace_id)
-        return account_attributes
+        bulk_create_or_update_destination_attributes(department_attributes, 'DEPARTMENT', self.workspace_id, True)
+        return []
 
     def sync_vendors(self):
         """
@@ -159,9 +221,8 @@ class QBOConnector:
                 'detail': detail
             })
 
-        account_attributes = DestinationAttribute.bulk_upsert_destination_attributes(
-            vendor_attributes, self.workspace_id)
-        return account_attributes
+        bulk_create_or_update_destination_attributes(vendor_attributes, 'VENDOR', self.workspace_id, True)
+        return []
 
     def create_vendor_destionation_attribute(self, vendor):
         created_vendor = DestinationAttribute.bulk_upsert_destination_attributes([{
@@ -225,9 +286,8 @@ class QBOConnector:
                 'detail': detail
             })
 
-        account_attributes = DestinationAttribute.bulk_upsert_destination_attributes(
-            employee_attributes, self.workspace_id)
-        return account_attributes
+        bulk_create_or_update_destination_attributes(employee_attributes, 'EMPLOYEE', self.workspace_id, True)
+        return []
 
     def post_employee(self, employee: ExpenseAttribute, auto_map_employee_preference: str):
         """
@@ -278,9 +338,8 @@ class QBOConnector:
                 'destination_id': qbo_class['Id']
             })
 
-        account_attributes = DestinationAttribute.bulk_upsert_destination_attributes(
-            class_attributes, self.workspace_id)
-        return account_attributes
+        bulk_create_or_update_destination_attributes(class_attributes, 'CLASS', self.workspace_id, True)
+        return []
 
     def sync_customers(self):
         """
@@ -299,9 +358,8 @@ class QBOConnector:
                 'active': customer['Active']
             })
 
-        account_attributes = DestinationAttribute.bulk_upsert_destination_attributes(
-            customer_attributes, self.workspace_id)
-        return account_attributes
+        bulk_create_or_update_destination_attributes(customer_attributes, 'CUSTOMER', self.workspace_id, True)
+        return []
 
     @staticmethod
     def purchase_object_payload(purchase_object, line, payment_type, account_ref, doc_number: str = None):
