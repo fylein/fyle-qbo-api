@@ -267,10 +267,10 @@ class FyleConnector:
 
         expense_custom_fields = filter(lambda field: field['type'] == 'SELECT', expense_custom_fields)
 
-        expense_custom_field_attributes = []
-
         for custom_field in expense_custom_fields:
             count = 1
+            expense_custom_field_attributes = []
+
             for option in custom_field['options']:
                 expense_custom_field_attributes.append({
                     'attribute_type': custom_field['name'].upper().replace(' ', '_'),
@@ -280,10 +280,11 @@ class FyleConnector:
                 })
                 count = count + 1
 
-        expense_custom_field_attributes = ExpenseAttribute.bulk_upsert_expense_attributes(
-            expense_custom_field_attributes, self.workspace_id)
+            bulk_create_or_update_expense_attributes(
+                expense_custom_field_attributes, custom_field['name'].upper().replace(' ', '_'),
+                self.workspace_id)
 
-        return expense_custom_field_attributes
+        return []
 
     def sync_cost_centers(self, active_only: bool):
         """
