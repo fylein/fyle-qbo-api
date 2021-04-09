@@ -22,7 +22,7 @@ def bulk_create_or_update_expense_attributes(
         'attribute_type': Type of attribute,
         'display_name': Display_name of attribute_field,
         'value': Value of attribute,
-        'source_id': Fyle Id of the attribute,
+        'destination_id': Destination Id of the attribute,
         'detail': Extra Details of the attribute
     }]
     :param workspace_id: Workspace Id
