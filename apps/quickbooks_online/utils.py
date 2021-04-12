@@ -6,7 +6,7 @@ from qbosdk import QuickbooksOnlineSDK
 
 import unidecode
 
-from fyle_accounting_mappings.models import ExpenseAttribute, DestinationAttribute
+from fyle_accounting_mappings.models import DestinationAttribute
 
 from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings
 
@@ -108,9 +108,9 @@ class QBOConnector:
 
             account_attributes.append(attribute)
 
-        account_attributes = DestinationAttribute.bulk_upsert_destination_attributes(
-            account_attributes, self.workspace_id)
-        return account_attributes
+        DestinationAttribute.bulk_create_or_update_destination_attributes(
+            account_attributes, attribute_type, self.workspace_id, True)
+        return []
 
     def sync_departments(self):
         """
@@ -128,9 +128,9 @@ class QBOConnector:
                 'destination_id': department['Id']
             })
 
-        account_attributes = DestinationAttribute.bulk_upsert_destination_attributes(
-            department_attributes, self.workspace_id)
-        return account_attributes
+        DestinationAttribute.bulk_create_or_update_destination_attributes(
+            department_attributes, 'DEPARTMENT', self.workspace_id, True)
+        return []
 
     def sync_vendors(self):
         """
@@ -159,12 +159,12 @@ class QBOConnector:
                 'detail': detail
             })
 
-        account_attributes = DestinationAttribute.bulk_upsert_destination_attributes(
-            vendor_attributes, self.workspace_id)
-        return account_attributes
+        DestinationAttribute.bulk_create_or_update_destination_attributes(
+            vendor_attributes, 'VENDOR', self.workspace_id, True)
+        return []
 
     def create_vendor_destionation_attribute(self, vendor):
-        created_vendor = DestinationAttribute.bulk_upsert_destination_attributes([{
+        created_vendor = DestinationAttribute.create_or_update_destination_attribute({
             'attribute_type': 'VENDOR',
             'display_name': 'vendor',
             'value': vendor['DisplayName'],
@@ -172,7 +172,7 @@ class QBOConnector:
             'detail': {
                 'email': vendor['PrimaryEmailAddr']['Address'] if 'PrimaryEmailAddr' in vendor else None
             }
-        }], self.workspace_id)[0]
+        }, self.workspace_id)
 
         return created_vendor
 
@@ -225,42 +225,9 @@ class QBOConnector:
                 'detail': detail
             })
 
-        account_attributes = DestinationAttribute.bulk_upsert_destination_attributes(
-            employee_attributes, self.workspace_id)
-        return account_attributes
-
-    def post_employee(self, employee: ExpenseAttribute, auto_map_employee_preference: str):
-        """
-        Create an Employee on Quickbooks online
-        :param auto_map_employee_preference: Auto map employee preference chosen
-        :param employee: employee attribute to be created
-        :return: Employee Desination Atribute
-        """
-        quickbooks_display_name = employee.detail['full_name']
-
-        employee = {
-            'GivenName': quickbooks_display_name.split(' ')[0],
-            'FamilyName': quickbooks_display_name.split(' ')[-1]
-            if len(quickbooks_display_name.split(' ')) > 1 else '',
-            'DisplayName': quickbooks_display_name,
-            'PrimaryEmailAddr': {
-                'Address': employee.value
-            }
-        }
-
-        created_employee = self.connection.employees.post(employee)['Employee']
-
-        created_employee = DestinationAttribute.bulk_upsert_destination_attributes([{
-            'attribute_type': 'EMPLOYEE',
-            'display_name': 'employee',
-            'value': created_employee['DisplayName'],
-            'destination_id': created_employee['Id'],
-            'detail': {
-                'email': created_employee['PrimaryEmailAddr']['Address']
-            }
-        }], self.workspace_id)[0]
-
-        return created_employee
+        DestinationAttribute.bulk_create_or_update_destination_attributes(
+            employee_attributes, 'EMPLOYEE', self.workspace_id, True)
+        return []
 
     def sync_classes(self):
         """
@@ -278,9 +245,9 @@ class QBOConnector:
                 'destination_id': qbo_class['Id']
             })
 
-        account_attributes = DestinationAttribute.bulk_upsert_destination_attributes(
-            class_attributes, self.workspace_id)
-        return account_attributes
+        DestinationAttribute.bulk_create_or_update_destination_attributes(
+            class_attributes, 'CLASS', self.workspace_id, True)
+        return []
 
     def sync_customers(self):
         """
@@ -299,9 +266,9 @@ class QBOConnector:
                 'active': customer['Active']
             })
 
-        account_attributes = DestinationAttribute.bulk_upsert_destination_attributes(
-            customer_attributes, self.workspace_id)
-        return account_attributes
+        DestinationAttribute.bulk_create_or_update_destination_attributes(
+            customer_attributes, 'CUSTOMER', self.workspace_id, True)
+        return []
 
     @staticmethod
     def purchase_object_payload(purchase_object, line, payment_type, account_ref, doc_number: str = None):
@@ -602,7 +569,6 @@ class QBOConnector:
     def post_attachments(self, ref_id: str, ref_type: str, attachments: List[Dict]) -> List:
         """
         Link attachments to objects Quickbooks
-        :param prep_id: prep id for export
         :param ref_id: object id
         :param ref_type: type of object
         :param attachments: attachment[dict()]

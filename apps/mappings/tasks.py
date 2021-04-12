@@ -76,7 +76,9 @@ def upload_projects_to_fyle(workspace_id):
 
     fyle_connection.sync_projects()
 
-    qbo_attributes: List[DestinationAttribute] = qbo_connection.sync_customers()
+    qbo_connection.sync_customers()
+    qbo_attributes: List[DestinationAttribute] = DestinationAttribute.objects.filter(
+        workspace_id=workspace_id, attribute_type='CUSTOMER').all()
     qbo_attributes = remove_duplicates(qbo_attributes)
 
     fyle_payload: List[Dict] = create_fyle_projects_payload(qbo_attributes, workspace_id)
@@ -98,46 +100,10 @@ def auto_create_project_mappings(workspace_id):
         'destination_field': 'CUSTOMER'
     }], workspace_id=workspace_id)
 
-    project_mappings = []
-
     try:
         fyle_projects = upload_projects_to_fyle(workspace_id=workspace_id)
-
-        for project in fyle_projects:
-            try:
-                mapping = Mapping.create_or_update_mapping(
-                    source_type='PROJECT',
-                    destination_type='CUSTOMER',
-                    source_value=project.value,
-                    destination_value=project.value,
-                    destination_id=project.destination_id,
-                    workspace_id=workspace_id
-                )
-                mapping.source.auto_mapped = True
-                mapping.source.save()
-                project_mappings.append(mapping)
-            except ExpenseAttribute.DoesNotExist:
-                detail = {
-                    'source_value': project.value,
-                    'destination_value': project.value
-                }
-                logger.error(
-                    'Error while creating categories auto mapping workspace_id - %s %s',
-                    workspace_id, {'payload': detail}
-                )
-                raise ExpenseAttribute.DoesNotExist
-
+        project_mappings = Mapping.bulk_create_mappings(fyle_projects, 'PROJECT', 'CUSTOMER', workspace_id)
         return project_mappings
-
-    except ExpenseAttribute.DoesNotExist as exception:
-        detail = {
-            'source_value': project.value,
-            'destination_value': project.value
-        }
-        logger.error(
-            'Error while creating projects auto mapping workspace_id - %s %s',
-            workspace_id, {'payload': detail}
-        )
 
     except WrongParamsError as exception:
         logger.error(
@@ -177,7 +143,7 @@ def schedule_projects_creation(import_projects, workspace_id):
         if schedule:
             schedule.delete()
 
-            
+
 def create_fyle_categories_payload(categories: List[DestinationAttribute], workspace_id: int):
     """
     Create Fyle Categories Payload from QBO Customer / Categories
@@ -218,7 +184,9 @@ def upload_categories_to_fyle(workspace_id):
         workspace_id=workspace_id
     )
     fyle_connection.sync_categories(False)
-    qbo_attributes: List[DestinationAttribute] = qbo_connection.sync_accounts(account_type='Expense')
+    qbo_connection.sync_accounts(account_type='Expense')
+    qbo_attributes: List[DestinationAttribute] = DestinationAttribute.objects.filter(
+        workspace_id=workspace_id, attribute_type='ACCOUNT').all()
     qbo_attributes = remove_duplicates(qbo_attributes)
 
     fyle_payload: List[Dict] = create_fyle_categories_payload(qbo_attributes, workspace_id)
@@ -235,36 +203,9 @@ def auto_create_category_mappings(workspace_id):
     Create Category Mappings
     :return: mappings
     """
-    category_mappings = []
-
     try:
         fyle_categories = upload_categories_to_fyle(workspace_id=workspace_id)
-
-        for category in fyle_categories:
-            try:
-                mapping = Mapping.create_or_update_mapping(
-                    source_type='CATEGORY',
-                    destination_type='ACCOUNT',
-                    source_value=category.value,
-                    destination_value=category.value,
-                    destination_id=category.destination_id,
-                    workspace_id=workspace_id
-                )
-                mapping.source.auto_mapped = True
-                mapping.source.save()
-                category_mappings.append(mapping)
-
-            except ExpenseAttribute.DoesNotExist:
-                detail = {
-                    'source_value': category.value,
-                    'destination_value': category.value
-                }
-                logger.error(
-                    'Error while creating categories auto mapping workspace_id - %s %s',
-                    workspace_id, {'payload': detail}
-                )
-                raise ExpenseAttribute.DoesNotExist
-
+        category_mappings = Mapping.bulk_create_mappings(fyle_categories, 'CATEGORY', 'ACCOUNT', workspace_id)
         return category_mappings
 
     except WrongParamsError as exception:
@@ -431,7 +372,9 @@ def async_auto_map_ccc_account(workspace_id: str):
 
     fyle_connection = FyleConnector(refresh_token=fyle_credentials.refresh_token, workspace_id=workspace_id)
 
-    source_attributes = fyle_connection.sync_employees()
+    fyle_connection.sync_employees()
+
+    source_attributes = ExpenseAttribute.objects.filter(attribute_type='EMPLOYEE', workspace_id=workspace_id).all()
 
     mapping_attributes = {
         'destination_type': 'CREDIT_CARD_ACCOUNT',
