@@ -105,6 +105,20 @@ def auto_create_project_mappings(workspace_id):
 
         project_mappings = Mapping.bulk_create_mappings(fyle_projects, 'PROJECT', 'CUSTOMER', workspace_id)
 
+        expense_attributes_to_be_updated = []
+
+        for mapping in project_mappings:
+            expense_attributes_to_be_updated.append(
+                ExpenseAttribute(
+                    id=mapping.source.id,
+                    auto_mapped=True
+                )
+            )
+
+        if expense_attributes_to_be_updated:
+            ExpenseAttribute.objects.bulk_update(
+                expense_attributes_to_be_updated, fields=['auto_mapped'], batch_size=50)
+
         return project_mappings
 
     except WrongParamsError as exception:
@@ -207,7 +221,23 @@ def auto_create_category_mappings(workspace_id):
     """
     try:
         fyle_categories = upload_categories_to_fyle(workspace_id=workspace_id)
-        category_mappings = Mapping.bulk_create_mappings(fyle_categories, 'CATEGORY', 'ACCOUNT', workspace_id)
+        category_mappings: List[Mapping] = Mapping.bulk_create_mappings(
+            fyle_categories, 'CATEGORY', 'ACCOUNT', workspace_id)
+
+        expense_attributes_to_be_updated = []
+
+        for mapping in category_mappings:
+            expense_attributes_to_be_updated.append(
+                ExpenseAttribute(
+                    id=mapping.source.id,
+                    auto_mapped=True
+                )
+            )
+
+        if expense_attributes_to_be_updated:
+            ExpenseAttribute.objects.bulk_update(
+                expense_attributes_to_be_updated, fields=['auto_mapped'], batch_size=50)
+
         return category_mappings
 
     except WrongParamsError as exception:
