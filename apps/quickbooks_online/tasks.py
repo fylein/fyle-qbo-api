@@ -293,24 +293,24 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                 'type': 'General Mapping',
                 'message': 'Default Credit Card Account not found'
             })
-    else:
-        if not (general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE'
-                and general_settings.map_merchant_to_vendor and expense_group.fund_source == 'CCC'):
-            try:
-                Mapping.objects.get(
-                    Q(destination_type='VENDOR') | Q(destination_type='EMPLOYEE'),
-                    source_type='EMPLOYEE',
-                    source__value=expense_group.description.get('employee_email'),
-                    workspace_id=expense_group.workspace_id
-                )
-            except Mapping.DoesNotExist:
-                bulk_errors.append({
-                    'row': None,
-                    'expense_group_id': expense_group.id,
-                    'value': expense_group.description.get('employee_email'),
-                    'type': 'Employee Mapping',
-                    'message': 'Employee mapping not found'
-                })
+
+    if not (general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE'
+            and general_settings.map_merchant_to_vendor and expense_group.fund_source == 'CCC'):
+        try:
+            Mapping.objects.get(
+                Q(destination_type='VENDOR') | Q(destination_type='EMPLOYEE'),
+                source_type='EMPLOYEE',
+                source__value=expense_group.description.get('employee_email'),
+                workspace_id=expense_group.workspace_id
+            )
+        except Mapping.DoesNotExist:
+            bulk_errors.append({
+                'row': None,
+                'expense_group_id': expense_group.id,
+                'value': expense_group.description.get('employee_email'),
+                'type': 'Employee Mapping',
+                'message': 'Employee mapping not found'
+            })
 
     expenses = expense_group.expenses.all()
 
