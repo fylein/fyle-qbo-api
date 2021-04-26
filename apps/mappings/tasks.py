@@ -269,7 +269,7 @@ def async_auto_map_employees(workspace_id: int):
     else:
         qbo_connection.sync_vendors()
 
-    Mapping.auto_map_employees('EMPLOYEE', destination_type, employee_mapping_preference, workspace_id)
+    Mapping.auto_map_employees(destination_type, employee_mapping_preference, workspace_id)
 
 
 def schedule_auto_map_employees(employee_mapping_preference: str, workspace_id: str):
@@ -303,7 +303,7 @@ def async_auto_map_ccc_account(workspace_id: str):
     fyle_connection = FyleConnector(refresh_token=fyle_credentials.refresh_token, workspace_id=workspace_id)
     fyle_connection.sync_employees()
 
-    Mapping.auto_map_ccc_employees('EMPLOYEE', 'CREDIT_CARD_ACCOUNT', default_ccc_account_id, workspace_id)
+    Mapping.auto_map_ccc_employees('CREDIT_CARD_ACCOUNT', default_ccc_account_id, workspace_id)
 
 
 def schedule_auto_map_ccc_employees(workspace_id: str):
