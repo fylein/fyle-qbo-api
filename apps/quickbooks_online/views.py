@@ -13,7 +13,7 @@ from fyle_qbo_api.utils import assert_valid
 
 from apps.fyle.models import ExpenseGroup, ExpenseGroupSettings
 from apps.tasks.models import TaskLog
-from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings
+from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings, Workspace
 from apps.fyle.serializers import ExpenseGroupSettingsSerializer
 
 from .utils import QBOConnector
@@ -727,7 +727,7 @@ class SyncQuickbooksDimensionView(generics.ListCreateAPIView):
 
             if workspace.destination_synced_at is None or time_interval.days > 0:
                 quickbooks_credentials = QBOCredential.objects.get(workspace_id=kwargs['workspace_id'])
-                quickbooks_connector = QBOConnector(sage_intacct_credentials, workspace_id=kwargs['workspace_id'])
+                quickbooks_connector = QBOConnector(quickbooks_credentials, workspace_id=kwargs['workspace_id'])
 
                 quickbooks_connector.sync_dimensions()
 
@@ -758,7 +758,7 @@ class RefreshQuickbooksDimensionView(generics.ListCreateAPIView):
         """
         try:
             quickbooks_credentials = QBOCredential.objects.get(workspace_id=kwargs['workspace_id'])
-            quickbooks_connector = QBOConnector(sage_intacct_credentials, workspace_id=kwargs['workspace_id'])
+            quickbooks_connector = QBOConnector(quickbooks_credentials, workspace_id=kwargs['workspace_id'])
 
             quickbooks_connector.sync_dimensions()
 
