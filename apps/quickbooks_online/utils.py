@@ -161,6 +161,7 @@ class QBOConnector:
 
         DestinationAttribute.bulk_create_or_update_destination_attributes(
             vendor_attributes, 'VENDOR', self.workspace_id, True)
+            
         return []
 
     def create_vendor_destionation_attribute(self, vendor):
@@ -270,6 +271,60 @@ class QBOConnector:
             customer_attributes, 'CUSTOMER', self.workspace_id, True)
         return []
 
+
+    def sync_dimensions(self):
+
+        try:
+            self.sync_accounts('Accounts Payable')
+        except Exception as exception:
+            logger.exception(exception)
+        
+        try:
+            self.sync_accounts('Bill')
+        except Exception as exception:
+            logger.exception(exception)
+        
+        try:
+            self.sync_accounts('Bank')
+        except Exception as exception:
+            logger.exception(exception)
+
+        try:
+            self.sync_accounts('Expense')
+        except Exception as exception:
+            logger.exception(exception)
+
+        try:
+            self.sync_accounts('Credit Card')
+        except Exception as exception:
+            logger.exception(exception)
+        
+        try:
+            self.sync_employees()
+        except Exception as exception:
+            logger.exception(exception)
+
+        try:
+            self.sync_vendors()
+        except Exception as exception:
+            logger.exception(exception)
+
+        try:
+            self.sync_customers()
+        except Exception as exception:
+            logger.exception(exception)
+
+        try:
+            self.sync_classes()
+        except Exception as exception:
+            logger.exception(exception)
+
+        try:
+            self.sync_departments()
+        except Exception as exception:
+            logger.exception(exception)
+
+    
     @staticmethod
     def purchase_object_payload(purchase_object, line, payment_type, account_ref, doc_number: str = None):
         """

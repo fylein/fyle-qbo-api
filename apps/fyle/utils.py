@@ -1,5 +1,6 @@
 import json
 from typing import List
+import logging
 
 from django.conf import settings
 
@@ -11,7 +12,7 @@ import requests
 
 from apps.fyle.models import Reimbursement
 
-
+logger = logging.getLogger(__name__)
 class FyleConnector:
     """
     Fyle utility functions
@@ -325,3 +326,31 @@ class FyleConnector:
         Process Reimbursements in bulk.
         """
         return self.connection.Reimbursements.post(reimbursement_ids)
+
+
+    def sync_dimensions(self):
+
+        try:
+            self.sync_employees()
+        except Exception as exception:
+            logger.exception(exception)
+
+        try:
+            self.sync_categories(active_only=True)
+        except Exception as exception:
+            logger.exception(exception)
+
+        try:
+            self.sync_cost_centers(active_only=True)
+        except Exception as exception:
+            logger.exception(exception)
+
+        try:
+            self.sync_projects()
+        except Exception as exception:
+            logger.exception(exception)
+
+        try:
+            self.sync_expense_custom_fields(active_only=True)
+        except Exception as exception:
+            logger.exception(exception)

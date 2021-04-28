@@ -1,4 +1,5 @@
 from django.db.models import Q
+from datetime import datetime, timezone
 
 from rest_framework.views import status
 from rest_framework import generics
@@ -7,7 +8,7 @@ from rest_framework.response import Response
 from fyle_accounting_mappings.models import ExpenseAttribute
 from fyle_accounting_mappings.serializers import ExpenseAttributeSerializer
 
-from apps.workspaces.models import FyleCredential, WorkspaceGeneralSettings
+from apps.workspaces.models import FyleCredential, WorkspaceGeneralSettings, Workspace
 from apps.tasks.models import TaskLog
 
 from .tasks import create_expense_groups, schedule_expense_group_creation
@@ -381,6 +382,73 @@ class UserProfileView(generics.RetrieveAPIView):
                 data=employee_profile,
                 status=status.HTTP_200_OK
             )
+        except FyleCredential.DoesNotExist:
+            return Response(
+                data={
+                    'message': 'Fyle credentials not found in workspace'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class SyncFyleDimensionView(generics.ListCreateAPIView):
+    """
+    Sync Fyle Dimensions View
+    """
+
+    def post(self, request, *args, **kwargs):
+        """
+        Sync Data From Fyle
+        """
+        try:
+            workspace = Workspace.objects.get(id=kwargs['workspace_id'])
+            if workspace.source_synced_at:
+                time_interval = datetime.now(timezone.utc) - workspace.source_synced_at
+
+            if workspace.source_synced_at is None or time_interval.days > 0:
+                fyle_credentials = FyleCredential.objects.get(workspace_id=kwargs['workspace_id'])
+                fyle_connector = FyleConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
+
+                fyle_connector.sync_dimensions()
+
+                workspace.source_synced_at = datetime.now()
+                workspace.save(update_fields=['source_synced_at'])
+
+            return Response(
+                status=status.HTTP_200_OK
+            )
+
+        except FyleCredential.DoesNotExist:
+            return Response(
+                data={
+                    'message': 'Fyle credentials not found in workspace'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+class RefreshFyleDimensionView(generics.ListCreateAPIView):
+    """
+    Refresh Fyle Dimensions view
+    """
+
+    def post(self, request, *args, **kwargs):
+        """
+        Sync data from Fyle
+        """
+        try:
+            fyle_credentials = FyleCredential.objects.get(workspace_id=kwargs['workspace_id'])
+            fyle_connector = FyleConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
+
+            fyle_connector.sync_dimensions()
+
+            workspace = Workspace.objects.get(id=kwargs['workspace_id'])
+            workspace.source_synced_at = datetime.now()
+            workspace.save(update_fields=['source_synced_at'])
+
+            return Response(
+                status=status.HTTP_200_OK
+            )
+
         except FyleCredential.DoesNotExist:
             return Response(
                 data={
