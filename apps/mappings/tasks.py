@@ -299,17 +299,18 @@ def async_auto_map_ccc_account(workspace_id: str):
     general_mappings = GeneralMapping.objects.get(workspace_id=workspace_id)
     default_ccc_account_id = general_mappings.default_ccc_account_id
 
-    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-    fyle_connection = FyleConnector(refresh_token=fyle_credentials.refresh_token, workspace_id=workspace_id)
-    fyle_connection.sync_employees()
+    if default_ccc_account_id:
+        fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+        fyle_connection = FyleConnector(refresh_token=fyle_credentials.refresh_token, workspace_id=workspace_id)
+        fyle_connection.sync_employees()
 
-    Mapping.auto_map_ccc_employees('CREDIT_CARD_ACCOUNT', default_ccc_account_id, workspace_id)
+        Mapping.auto_map_ccc_employees('CREDIT_CARD_ACCOUNT', default_ccc_account_id, workspace_id)
 
 
 def schedule_auto_map_ccc_employees(workspace_id: str):
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
 
-    if general_settings.auto_map_employees and general_settings.corporate_credit_card_expenses_object:
+    if general_settings.auto_map_employees and general_settings.corporate_credit_card_expenses_object != 'BILL':
         start_datetime = datetime.now()
 
         schedule, _ = Schedule.objects.update_or_create(
