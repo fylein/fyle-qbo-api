@@ -13,6 +13,8 @@ import requests
 from apps.fyle.models import Reimbursement
 
 logger = logging.getLogger(__name__)
+
+
 class FyleConnector:
     """
     Fyle utility functions
@@ -295,7 +297,7 @@ class FyleConnector:
                             attachment['expense_id'] = expense_id
                             attachments.append(attachment)
                             attachment_file_names.append(attachment['filename'])
-                        
+
             return attachments
 
         return []
@@ -326,7 +328,6 @@ class FyleConnector:
         Process Reimbursements in bulk.
         """
         return self.connection.Reimbursements.post(reimbursement_ids)
-
 
     def sync_dimensions(self):
 

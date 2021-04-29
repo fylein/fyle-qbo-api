@@ -1,4 +1,5 @@
 from typing import List, Dict
+import logging
 
 from django.conf import settings
 
@@ -13,6 +14,7 @@ from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings
 from .models import BillLineitem, Bill, ChequeLineitem, Cheque, CreditCardPurchase, CreditCardPurchaseLineitem, \
     JournalEntry, JournalEntryLineitem, BillPaymentLineitem, BillPayment
 
+logger = logging.getLogger(__name__)
 
 class QBOConnector:
     """
