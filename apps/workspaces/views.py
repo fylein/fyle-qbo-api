@@ -49,7 +49,7 @@ class WorkspaceView(viewsets.ViewSet):
 
         if workspace:
             workspace.user.add(User.objects.get(user_id=request.user))
-            cache.delete(str(workspace_id))
+            cache.delete(str(workspace.id))
         else:
             workspace = Workspace.objects.create(name=org_name, fyle_org_id=org_id)
 
