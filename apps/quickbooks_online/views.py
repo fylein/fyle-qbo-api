@@ -715,7 +715,7 @@ class ReimburseQuickbooksPaymentsView(generics.ListCreateAPIView):
 
 class SyncQuickbooksDimensionView(generics.ListCreateAPIView):
     """
-    Sync Quickbooks Intacct Dimension View
+    Sync Quickbooks Dimension View
     """
 
     def post(self, request, *args, **kwargs):
