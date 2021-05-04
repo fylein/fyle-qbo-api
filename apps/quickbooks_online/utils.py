@@ -79,7 +79,6 @@ class QBOConnector:
             'accounts_payable': []
         }
 
-        
         for account in accounts:
             if account['AccountType'] == 'Expense':
                 account_attributes['account'].append({
