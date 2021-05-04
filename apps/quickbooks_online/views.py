@@ -115,7 +115,7 @@ class AccountView(generics.ListCreateAPIView):
 
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
-            accounts = qbo_connector.sync_accounts(account_type='Expense')
+            accounts = qbo_connector.sync_accounts()
 
             return Response(
                 data=self.serializer_class(accounts, many=True).data,
@@ -150,7 +150,7 @@ class CreditCardAccountView(generics.ListCreateAPIView):
 
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
-            accounts = qbo_connector.sync_accounts(account_type='Credit Card')
+            accounts = qbo_connector.sync_accounts()
 
             return Response(
                 data=self.serializer_class(accounts, many=True).data,
@@ -185,7 +185,7 @@ class BankAccountView(generics.ListCreateAPIView):
 
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
-            accounts = qbo_connector.sync_accounts(account_type='Bank')
+            accounts = qbo_connector.sync_accounts()
 
             return Response(
                 data=self.serializer_class(accounts, many=True).data,
@@ -220,7 +220,7 @@ class AccountsPayableView(generics.ListCreateAPIView):
 
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
-            accounts = qbo_connector.sync_accounts(account_type='Accounts Payable')
+            accounts = qbo_connector.sync_accounts()
 
             return Response(
                 data=self.serializer_class(accounts, many=True).data,
