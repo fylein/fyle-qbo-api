@@ -61,7 +61,7 @@ class QBOConnector:
         else:
             return self.create_vendor_destionation_attribute(vendor)
 
-    def sync_accounts(self, account_type: str = None):
+    def sync_accounts(self):
         """
         Get accounts
         """
@@ -79,115 +79,59 @@ class QBOConnector:
             'accounts_payable': []
         }
 
-        if account_type:
-            accounts = list(filter(lambda current_account: current_account['AccountType'] == account_type, accounts))
+        
+        for account in accounts:
+            if account['AccountType'] == 'Expense':
+                account_attributes['account'].append({
+                        'attribute_type': 'ACCOUNT',
+                        'display_name': 'Account',
+                        'value': unidecode.unidecode(u'{0}'.format(
+                            account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])).replace('/', '-'),
+                        'destination_id': account['Id'],
+                        'active': account['Active'],
+                        'detail': {
+                            'fully_qualified_name': account['FullyQualifiedName']
+                        }
+                    })
 
-            for account in accounts:   
-                if account_type == 'Expense':
-                    account_attributes['account'].append({
-                            'attribute_type': 'ACCOUNT',
-                            'display_name': 'Account',
-                            'value': unidecode.unidecode(u'{0}'.format(
-                                account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])).replace('/', '-'),
-                            'destination_id': account['Id'],
-                            'active': account['Active'],
-                            'detail': {
-                                'fully_qualified_name': account['FullyQualifiedName']
-                            }
-                        })
-                
-                elif account_type == 'Credit Card':
-                    account_attributes['credit_card_account'].append({
-                            'attribute_type': 'CREDIT_CARD_ACCOUNT',
-                            'display_name': 'Credit Card Account',
-                            'value': unidecode.unidecode(u'{0}'.format(
-                                account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])),
-                            'destination_id': account['Id'],
-                            'active': account['Active'],
-                            'detail': {
-                                'fully_qualified_name': account['FullyQualifiedName']
-                            }
-                        })
+            elif account['AccountType'] == 'Credit Card':
+                account_attributes['credit_card_account'].append({
+                        'attribute_type': 'CREDIT_CARD_ACCOUNT',
+                        'display_name': 'Credit Card Account',
+                        'value': unidecode.unidecode(u'{0}'.format(
+                            account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])),
+                        'destination_id': account['Id'],
+                        'active': account['Active'],
+                        'detail': {
+                            'fully_qualified_name': account['FullyQualifiedName']
+                        }
+                    })
 
-                elif account_type == 'Bank':
-                     account_attributes['bank_account'].append({
-                            'attribute_type': 'BANK_ACCOUNT',
-                            'display_name': 'Bank Account',
-                            'value': unidecode.unidecode(u'{0}'.format(
-                                account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])),
-                            'destination_id': account['Id'],
-                            'active': account['Active'],
-                            'detail': {
-                                'fully_qualified_name': account['FullyQualifiedName']
-                            }
-                        })
-
-                else:
-                     account_attributes['accounts_payable'].append({
-                            'attribute_type': 'ACCOUNTS_PAYABLE',
-                            'display_name': 'Accounts Payable',
-                            'value': unidecode.unidecode(u'{0}'.format(
-                                account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])),
-                            'destination_id': account['Id'],
-                            'active': account['Active'],
-                            'detail': {
-                                'fully_qualified_name': account['FullyQualifiedName']
-                            }
-                        })
-
-        else:
-            for account in accounts:
-                if account['AccountType'] == 'Expense':
-                    account_attributes['account'].append({
-                            'attribute_type': 'ACCOUNT',
-                            'display_name': 'Account',
-                            'value': unidecode.unidecode(u'{0}'.format(
-                                account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])).replace('/', '-'),
-                            'destination_id': account['Id'],
-                            'active': account['Active'],
-                            'detail': {
-                                'fully_qualified_name': account['FullyQualifiedName']
-                            }
-                        })
-
-                elif account['AccountType'] == 'Credit Card':
-                    account_attributes['credit_card_account'].append({
-                            'attribute_type': 'CREDIT_CARD_ACCOUNT',
-                            'display_name': 'Credit Card Account',
-                            'value': unidecode.unidecode(u'{0}'.format(
-                                account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])),
-                            'destination_id': account['Id'],
-                            'active': account['Active'],
-                            'detail': {
-                                'fully_qualified_name': account['FullyQualifiedName']
-                            }
-                        })
-
-                elif account['AccountType'] == 'Bank':
-                    account_attributes['bank_account'].append({
-                            'attribute_type': 'BANK_ACCOUNT',
-                            'display_name': 'Bank Account',
-                            'value': unidecode.unidecode(u'{0}'.format(
-                                account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])),
-                            'destination_id': account['Id'],
-                            'active': account['Active'],
-                            'detail': {
-                                'fully_qualified_name': account['FullyQualifiedName']
-                            }
-                        })
-                        
-                else:
-                    account_attributes['accounts_payable'].append({
-                            'attribute_type': 'ACCOUNTS_PAYABLE',
-                            'display_name': 'Accounts Payable',
-                            'value': unidecode.unidecode(u'{0}'.format(
-                                account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])),
-                            'destination_id': account['Id'],
-                            'active': account['Active'],
-                            'detail': {
-                                'fully_qualified_name': account['FullyQualifiedName']
-                            }
-                        })
+            elif account['AccountType'] == 'Bank':
+                account_attributes['bank_account'].append({
+                        'attribute_type': 'BANK_ACCOUNT',
+                        'display_name': 'Bank Account',
+                        'value': unidecode.unidecode(u'{0}'.format(
+                            account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])),
+                        'destination_id': account['Id'],
+                        'active': account['Active'],
+                        'detail': {
+                            'fully_qualified_name': account['FullyQualifiedName']
+                        }
+                    })
+                    
+            else:
+                account_attributes['accounts_payable'].append({
+                        'attribute_type': 'ACCOUNTS_PAYABLE',
+                        'display_name': 'Accounts Payable',
+                        'value': unidecode.unidecode(u'{0}'.format(
+                            account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])),
+                        'destination_id': account['Id'],
+                        'active': account['Active'],
+                        'detail': {
+                            'fully_qualified_name': account['FullyQualifiedName']
+                        }
+                    })
             
         for attribute_type, attribute in account_attributes.items():
             if attribute:
