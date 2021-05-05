@@ -401,6 +401,124 @@ class ChequeLineitem(models.Model):
         return cheque_lineitem_objects
 
 
+class QBOExpense(models.Model):
+    """
+    QBO Expense
+    """
+    id = models.AutoField(primary_key=True)
+    expense_group = models.OneToOneField(ExpenseGroup, on_delete=models.PROTECT, help_text='Expense group reference')
+    expense_account_id = models.CharField(max_length=255, help_text='QBO account id')
+    entity_id = models.CharField(max_length=255, help_text='QBO entity id')
+    department_id = models.CharField(max_length=255, help_text='QBO department id', null=True)
+    transaction_date = models.DateField(help_text='QBO Expense transaction date')
+    currency = models.CharField(max_length=255, help_text='QBO Expense Currency')
+    private_note = models.TextField(help_text='QBO Expense Description')
+    created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
+    updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
+
+    class Meta:
+        db_table = 'qbo_expenses'
+
+    @staticmethod
+    def create_qbo_expense(expense_group: ExpenseGroup):
+        """
+        Create QBO Expense
+        :param expense_group: expense group
+        :return: QBO Expense object
+        """
+        description = expense_group.description
+
+        expense = expense_group.expenses.first()
+
+        general_mappings = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
+
+        private_note = construct_private_note(expense_group)
+
+        department_id = get_department_id_or_none(expense_group)
+
+        qbo_expense_object, _ = QBOExpense.objects.update_or_create(
+            expense_group=expense_group,
+            defaults={
+                'expense_account_id': general_mappings.qbo_expense_account_id,
+                'entity_id': Mapping.objects.get(
+                    Q(destination_type='EMPLOYEE') | Q(destination_type='VENDOR'),
+                    source_type='EMPLOYEE',
+                    source__value=description.get('employee_email'),
+                    workspace_id=expense_group.workspace_id
+                ).destination.destination_id,
+                'department_id': department_id,
+                'transaction_date': get_transaction_date(expense_group),
+                'private_note': private_note,
+                'currency': expense.currency
+            }
+        )
+        return qbo_expense_object
+
+
+class QBOExpenseLineitem(models.Model):
+    """
+    QBO Expense Lineitem
+    """
+    id = models.AutoField(primary_key=True)
+    qbo_expense = models.ForeignKey(QBOExpense, on_delete=models.PROTECT, help_text='Reference to QBO Expense')
+    expense = models.OneToOneField(Expense, on_delete=models.PROTECT, help_text='Reference to Fyle Expense')
+    account_id = models.CharField(max_length=255, help_text='QBO account id')
+    class_id = models.CharField(max_length=255, help_text='QBO class id', null=True)
+    customer_id = models.CharField(max_length=255, help_text='QBO customer id', null=True)
+    amount = models.FloatField(help_text='Expense amount')
+    billable = models.BooleanField(null=True, help_text='Expense Billable or not')
+    description = models.TextField(help_text='QBO expense lineitem description', null=True)
+    created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
+    updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
+
+    class Meta:
+        db_table = 'qbo_expense_lineitems'
+
+    @staticmethod
+    def create_qbo_expense_lineitems(expense_group: ExpenseGroup):
+        """
+        Create QBO Expense lineitems
+        :param expense_group: expense group
+        :return: lineitems objects
+        """
+        expenses: List[Expense] = expense_group.expenses.all()
+        qbo_expense = QBOExpense.objects.get(expense_group=expense_group)
+
+        qbo_expense_lineitem_objects = []
+
+        for lineitem in expenses:
+            category = lineitem.category if lineitem.category == lineitem.sub_category else '{0} / {1}'.format(
+                lineitem.category, lineitem.sub_category)
+
+            account: Mapping = Mapping.objects.filter(
+                source_type='CATEGORY',
+                destination_type='ACCOUNT',
+                source__value=category,
+                workspace_id=expense_group.workspace_id
+            ).first()
+
+            class_id = get_class_id_or_none(expense_group, lineitem)
+
+            customer_id = get_customer_id_or_none(expense_group, lineitem)
+
+            qbo_expense_lineitem_object, _ = QBOExpenseLineitem.objects.update_or_create(
+                qbo_expense=qbo_expense,
+                expense_id=lineitem.id,
+                defaults={
+                    'account_id': account.destination.destination_id if account else None,
+                    'class_id': class_id,
+                    'customer_id': customer_id,
+                    'amount': lineitem.amount,
+                    'billable': lineitem.billable,
+                    'description': get_expense_purpose(expense_group.workspace_id, lineitem, category)
+                }
+            )
+
+            qbo_expense_lineitem_objects.append(qbo_expense_lineitem_object)
+
+        return qbo_expense_lineitem_objects
+
+
 class CreditCardPurchase(models.Model):
     """
     QBO CreditCardPurchase

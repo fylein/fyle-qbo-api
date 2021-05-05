@@ -43,7 +43,8 @@ class ExpenseGroupView(generics.ListCreateAPIView):
                 bill__id__isnull=True,
                 cheque__id__isnull=True,
                 creditcardpurchase__id__isnull=True,
-                journalentry__id__isnull=True
+                journalentry__id__isnull=True,
+                qboexpense__id__isnull=True
             ).order_by('-updated_at')
 
     def post(self, request, *args, **kwargs):

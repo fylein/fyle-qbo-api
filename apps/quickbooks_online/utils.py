@@ -11,7 +11,7 @@ from fyle_accounting_mappings.models import DestinationAttribute
 from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings
 
 from .models import BillLineitem, Bill, ChequeLineitem, Cheque, CreditCardPurchase, CreditCardPurchaseLineitem, \
-    JournalEntry, JournalEntryLineitem, BillPaymentLineitem, BillPayment
+    JournalEntry, JournalEntryLineitem, BillPaymentLineitem, BillPayment, QBOExpense, QBOExpenseLineitem
 
 
 class QBOConnector:
@@ -367,6 +367,57 @@ class QBOConnector:
         """
         bill = self.connection.bills.get_by_id(bill_id)
         return bill
+
+    @staticmethod
+    def __construct_qbo_expense_lineitems(qbo_expense_lineitems: List[QBOExpenseLineitem]) -> List[Dict]:
+        """
+        Create Expense line items
+        :param qbo_expense_lineitems: list of expense line items extracted from database
+        :return: constructed line items
+        """
+        lines = []
+
+        for line in qbo_expense_lineitems:
+            line = {
+                'Description': line.description,
+                'DetailType': 'AccountBasedExpenseLineDetail',
+                'Amount': line.amount,
+                'AccountBasedExpenseLineDetail': {
+                    'AccountRef': {
+                        'value': line.account_id
+                    },
+                    'CustomerRef': {
+                        'value': line.customer_id
+                    },
+                    'ClassRef': {
+                        'value': line.class_id
+                    },
+                    'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
+                }
+            }
+            lines.append(line)
+
+        return lines
+
+    def __construct_qbo_expense(self, qbo_expense: QBOExpense, qbo_expense_lineitems: List[QBOExpenseLineitem]) -> Dict:
+        """
+        Create a expense
+        :param qbo_expense: expense object extracted from database
+        :return: constructed expense
+        """
+        line = self.__construct_qbo_expense_lineitems(qbo_expense_lineitems)
+        qbo_expense_payload = self.purchase_object_payload(
+            qbo_expense, line, account_ref=qbo_expense.expense_account_id, payment_type='Cash'
+        )
+        return qbo_expense_payload
+
+    def post_qbo_expense(self, qbo_expense: QBOExpense, qbo_expense_lineitems: List[QBOExpenseLineitem]):
+        """
+        Post Expense to QBO
+        """
+        qbo_expenses_payload = self.__construct_qbo_expense(qbo_expense, qbo_expense_lineitems)
+        created_qbo_expense = self.connection.purchases.post(qbo_expenses_payload)
+        return created_qbo_expense
 
     @staticmethod
     def __construct_cheque_lineitems(cheque_lineitems: List[ChequeLineitem]) -> List[Dict]:

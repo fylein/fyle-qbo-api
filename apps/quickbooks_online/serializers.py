@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from fyle_accounting_mappings.models import DestinationAttribute
 from .models import Bill, BillLineitem, Cheque, ChequeLineitem, CreditCardPurchase, CreditCardPurchaseLineitem,\
-    JournalEntry, JournalEntryLineitem
+    JournalEntry, JournalEntryLineitem, QBOExpense, QBOExpenseLineitem
 
 
 class BillSerializer(serializers.ModelSerializer):
@@ -38,6 +38,24 @@ class ChequeLineitemsSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = ChequeLineitem
+        fields = '__all__'
+
+
+class QBOExpenseSerializer(serializers.ModelSerializer):
+    """
+    QBO Expense serializer
+    """
+    class Meta:
+        model = QBOExpense
+        fields = '__all__'
+
+
+class QBOExpenseLineitemsSerializer(serializers.ModelSerializer):
+    """
+    QBO Expense Lineitems serializer
+    """
+    class Meta:
+        model = QBOExpenseLineitem
         fields = '__all__'
 
 

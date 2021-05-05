@@ -18,10 +18,11 @@ from apps.fyle.serializers import ExpenseGroupSettingsSerializer
 from .utils import QBOConnector
 from .tasks import create_bill, schedule_bills_creation, create_cheque, schedule_cheques_creation, \
     create_credit_card_purchase, schedule_credit_card_purchase_creation, create_journal_entry, \
-    schedule_journal_entry_creation, create_bill_payment, process_reimbursements, check_qbo_object_status
-from .models import Bill, Cheque, CreditCardPurchase, JournalEntry
+    schedule_journal_entry_creation, create_bill_payment, process_reimbursements, check_qbo_object_status,\
+    create_qbo_expense, schedule_qbo_expense_creation
+from .models import Bill, Cheque, CreditCardPurchase, JournalEntry, QBOExpense
 from .serializers import BillSerializer, ChequeSerializer, CreditCardPurchaseSerializer, JournalEntrySerializer, \
-    QuickbooksFieldSerializer
+    QuickbooksFieldSerializer, QBOExpenseSerializer
 
 
 class VendorView(generics.ListCreateAPIView):
@@ -479,6 +480,54 @@ class BillScheduleView(generics.CreateAPIView):
         expense_group_ids = request.data.get('expense_group_ids', [])
 
         schedule_bills_creation(
+            kwargs['workspace_id'], expense_group_ids)
+
+        return Response(
+            status=status.HTTP_200_OK
+        )
+
+
+class QBOExpenseView(generics.ListCreateAPIView):
+    """
+    Create QBO Expense
+    """
+    serializer_class = QBOExpenseSerializer
+
+    def get_queryset(self):
+        return QBOExpense.objects.filter(expense_group__workspace_id=self.kwargs['workspace_id']).order_by(
+            '-updated_at'
+        )
+
+    def post(self, request, *args, **kwargs):
+        """
+        Create QBO Expense from expense group
+        """
+        expense_group_id = request.data.get('expense_group_id')
+        task_log_id = request.data.get('task_log_id')
+
+        assert_valid(expense_group_id is not None, 'expense group id not found')
+        assert_valid(task_log_id is not None, 'Task Log id not found')
+
+        expense_group = ExpenseGroup.objects.get(pk=expense_group_id)
+        task_log = TaskLog.objects.get(pk=task_log_id)
+
+        create_qbo_expense(expense_group, task_log)
+
+        return Response(
+            data={},
+            status=status.HTTP_200_OK
+        )
+
+
+class QBOExpenseScheduleView(generics.CreateAPIView):
+    """
+    Schedule QBO Expenses creation
+    """
+
+    def post(self, request, *args, **kwargs):
+        expense_group_ids = request.data.get('expense_group_ids', [])
+
+        schedule_qbo_expense_creation(
             kwargs['workspace_id'], expense_group_ids)
 
         return Response(

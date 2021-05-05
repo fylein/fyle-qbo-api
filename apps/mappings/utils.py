@@ -28,6 +28,8 @@ class MappingUtils:
         params = {
             'accounts_payable_name': None,
             'accounts_payable_id': None,
+            'qbo_expense_account_name': None,
+            'qbo_expense_account_id': None,
             'bank_account_name': None,
             'bank_account_id': None,
             'default_ccc_account_name': None,
@@ -41,8 +43,9 @@ class MappingUtils:
             source_field='EMPLOYEE', workspace_id=self.__workspace_id
         ).first()
 
-        if mapping_setting.destination_field == 'VENDOR' or\
-                general_settings.corporate_credit_card_expenses_object == 'BILL':
+        if (mapping_setting.destination_field == 'VENDOR' or
+                general_settings.corporate_credit_card_expenses_object == 'BILL') and\
+                general_settings.reimbursable_expenses_object != 'EXPENSE':
             assert_valid('accounts_payable_name' in general_mapping and general_mapping['accounts_payable_name'],
                          'account payable account name field is blank')
             assert_valid('accounts_payable_id' in general_mapping and general_mapping['accounts_payable_id'],
@@ -51,7 +54,8 @@ class MappingUtils:
             params['accounts_payable_name'] = general_mapping.get('accounts_payable_name')
             params['accounts_payable_id'] = general_mapping.get('accounts_payable_id')
 
-        if mapping_setting.destination_field == 'EMPLOYEE':
+        if mapping_setting.destination_field == 'EMPLOYEE' and \
+                general_settings.reimbursable_expenses_object != 'EXPENSE':
             assert_valid('bank_account_name' in general_mapping and general_mapping['bank_account_name'],
                          'bank account name field is blank')
             assert_valid('bank_account_id' in general_mapping and general_mapping['bank_account_id'],
@@ -89,6 +93,15 @@ class MappingUtils:
 
             params['bill_payment_account_name'] = general_mapping.get('bill_payment_account_name')
             params['bill_payment_account_id'] = general_mapping.get('bill_payment_account_id')
+
+        if general_settings.reimbursable_expenses_object == 'EXPENSE':
+            assert_valid('qbo_expense_account_name' in general_mapping and general_mapping['qbo_expense_account_name'],
+                         'qbo expense account name field is blank')
+            assert_valid('qbo_expense_account_id' in general_mapping and general_mapping['qbo_expense_account_id'],
+                         'qbo expense account id field is blank')
+
+            params['qbo_expense_account_name'] = general_mapping.get('qbo_expense_account_name')
+            params['qbo_expense_account_id'] = general_mapping.get('qbo_expense_account_id')
 
         general_mapping_object, _ = GeneralMapping.objects.update_or_create(
             workspace_id=self.__workspace_id,

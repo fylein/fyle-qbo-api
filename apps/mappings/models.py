@@ -13,6 +13,8 @@ class GeneralMapping(models.Model):
     id = models.AutoField(primary_key=True)
     accounts_payable_name = models.CharField(max_length=255, help_text='Accounts payable bank account name', null=True)
     accounts_payable_id = models.CharField(max_length=40, help_text='QBO accounts payable bank account id', null=True)
+    qbo_expense_account_name = models.CharField(max_length=255, help_text='Name of the QBO Expense account', null=True)
+    qbo_expense_account_id = models.CharField(max_length=40, help_text='QBO Expense Account id', null=True)
     bank_account_name = models.CharField(max_length=255, help_text='Name of the bank account', null=True)
     bank_account_id = models.CharField(max_length=40, help_text='QBO bank account id', null=True)
     default_ccc_account_name = models.CharField(max_length=255, help_text='Name of the default ccc account', null=True)

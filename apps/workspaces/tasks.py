@@ -4,8 +4,8 @@ from django_q.models import Schedule
 
 from apps.fyle.models import ExpenseGroup
 from apps.fyle.tasks import async_create_expense_groups
-from apps.quickbooks_online.tasks import schedule_bills_creation, schedule_cheques_creation,\
-    schedule_journal_entry_creation, schedule_credit_card_purchase_creation
+from apps.quickbooks_online.tasks import schedule_bills_creation, schedule_cheques_creation, \
+    schedule_journal_entry_creation, schedule_credit_card_purchase_creation, schedule_qbo_expense_creation
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import WorkspaceSchedule, WorkspaceGeneralSettings
 
@@ -42,6 +42,7 @@ def schedule_sync(workspace_id: int, schedule_enabled: bool, hours: int):
 
     return ws_schedule
 
+
 def run_sync_schedule(workspace_id):
     """
     Run schedule
@@ -52,7 +53,7 @@ def run_sync_schedule(workspace_id):
         workspace_id=workspace_id,
         type='FETCHING_EXPENSES',
         defaults={
-           'status': 'IN_PROGRESS'
+            'status': 'IN_PROGRESS'
         }
     )
 
@@ -74,6 +75,11 @@ def run_sync_schedule(workspace_id):
 
             if general_settings.reimbursable_expenses_object == 'BILL':
                 schedule_bills_creation(
+                    workspace_id=workspace_id, expense_group_ids=expense_group_ids
+                )
+
+            elif general_settings.reimbursable_expenses_object == 'EXPENSE':
+                schedule_qbo_expense_creation(
                     workspace_id=workspace_id, expense_group_ids=expense_group_ids
                 )
 
