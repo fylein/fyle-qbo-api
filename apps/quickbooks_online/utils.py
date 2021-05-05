@@ -265,13 +265,14 @@ class QBOConnector:
             customer_attributes = []
 
             for customer in customers:
-                customer_attributes.append({
-                    'attribute_type': 'CUSTOMER',
-                    'display_name': 'customer',
-                    'value': unidecode.unidecode(u'{0}'.format(customer['FullyQualifiedName'])),
-                    'destination_id': customer['Id'],
-                    'active': customer['Active']
-                })
+                if customer['Active']:
+                    customer_attributes.append({
+                        'attribute_type': 'CUSTOMER',
+                        'display_name': 'customer',
+                        'value': unidecode.unidecode(u'{0}'.format(customer['FullyQualifiedName'])),
+                        'destination_id': customer['Id'],
+                        'active': True
+                    })
 
             DestinationAttribute.bulk_create_or_update_destination_attributes(
                 customer_attributes, 'CUSTOMER', self.workspace_id, True)
