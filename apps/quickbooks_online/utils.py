@@ -14,6 +14,11 @@ from .models import BillLineitem, Bill, ChequeLineitem, Cheque, CreditCardPurcha
     JournalEntry, JournalEntryLineitem, BillPaymentLineitem, BillPayment
 
 
+SYNC_UPPER_LIMIT = {
+    'customers': 5000
+}
+
+
 class QBOConnector:
     """
     QBO utility functions
@@ -253,21 +258,23 @@ class QBOConnector:
         """
         Get customers
         """
-        customers = self.connection.customers.get()
+        customers_count = self.connection.customers.count()
+        if customers_count < SYNC_UPPER_LIMIT['customers']:
+            customers = self.connection.customers.get()
 
-        customer_attributes = []
+            customer_attributes = []
 
-        for customer in customers:
-            customer_attributes.append({
-                'attribute_type': 'CUSTOMER',
-                'display_name': 'customer',
-                'value': unidecode.unidecode(u'{0}'.format(customer['FullyQualifiedName'])),
-                'destination_id': customer['Id'],
-                'active': customer['Active']
-            })
+            for customer in customers:
+                customer_attributes.append({
+                    'attribute_type': 'CUSTOMER',
+                    'display_name': 'customer',
+                    'value': unidecode.unidecode(u'{0}'.format(customer['FullyQualifiedName'])),
+                    'destination_id': customer['Id'],
+                    'active': customer['Active']
+                })
 
-        DestinationAttribute.bulk_create_or_update_destination_attributes(
-            customer_attributes, 'CUSTOMER', self.workspace_id, True)
+            DestinationAttribute.bulk_create_or_update_destination_attributes(
+                customer_attributes, 'CUSTOMER', self.workspace_id, True)
         return []
 
     @staticmethod
