@@ -294,7 +294,7 @@ class FyleConnector:
                             attachment['expense_id'] = expense_id
                             attachments.append(attachment)
                             attachment_file_names.append(attachment['filename'])
-                        
+
             return attachments
 
         return []
@@ -305,20 +305,9 @@ class FyleConnector:
         """
         reimbursements = self.connection.Reimbursements.get_all()
 
-        reimbursement_attributes = []
-
-        for reimbursement in reimbursements:
-            reimbursement_attributes.append({
-                'reimbursement_id': reimbursement['id'],
-                'settlement_id': reimbursement['settlement_id'],
-                'state': reimbursement['state']
-            })
-
-        reimbursement_attributes = Reimbursement.create_reimbursement_objects(
-            reimbursement_attributes, self.workspace_id
+        Reimbursement.create_or_update_reimbursement_objects(
+            reimbursements, self.workspace_id
         )
-
-        return reimbursement_attributes
 
     def post_reimbursement(self, reimbursement_ids: list):
         """
