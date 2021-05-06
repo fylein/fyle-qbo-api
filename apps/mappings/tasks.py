@@ -7,12 +7,13 @@ from typing import List, Dict
 from django.db.models import Q
 from django_q.models import Schedule
 
+from fyle_accounting_mappings.models import MappingSetting, Mapping, DestinationAttribute, ExpenseAttribute
+from fylesdk import WrongParamsError
+
 from apps.fyle.utils import FyleConnector
 from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.utils import QBOConnector
 from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGeneralSettings
-from fyle_accounting_mappings.models import MappingSetting, Mapping, DestinationAttribute, ExpenseAttribute
-from fylesdk import WrongParamsError
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +31,7 @@ def remove_duplicates(ns_attributes: List[DestinationAttribute]):
     return unique_attributes
 
 
-def create_fyle_projects_payload(projects: List[DestinationAttribute], workspace_id: int):
+def create_fyle_projects_payload(projects: List[DestinationAttribute], existing_project_names: list, workspace_id: int):
     """
     Create Fyle Projects Payload from QBO Customer / Projects
     :param workspace_id: integer id of workspace
@@ -38,9 +39,6 @@ def create_fyle_projects_payload(projects: List[DestinationAttribute], workspace
     :return: Fyle Projects Payload
     """
     payload = []
-
-    existing_project_names = ExpenseAttribute.objects.filter(
-        attribute_type='PROJECT', workspace_id=workspace_id).values_list('value', flat=True)
 
     for project in projects:
         if project.value not in existing_project_names:
@@ -57,53 +55,52 @@ def create_fyle_projects_payload(projects: List[DestinationAttribute], workspace
     return payload
 
 
-def upload_projects_to_fyle(workspace_id):
-    """
-    Upload projects to Fyle
-    """
-    fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
-    qbo_credentials: QBOCredential = QBOCredential.objects.get(workspace_id=workspace_id)
+def post_projects_in_batches(fyle_connection: FyleConnector, workspace_id: int):
+    existing_project_names = ExpenseAttribute.objects.filter(
+        attribute_type='PROJECT', workspace_id=workspace_id).values_list('value', flat=True)
+    qbo_attributes_count = DestinationAttribute.objects.filter(
+        attribute_type='CUSTOMER', workspace_id=workspace_id).count()
 
-    fyle_connection = FyleConnector(
-        refresh_token=fyle_credentials.refresh_token,
-        workspace_id=workspace_id
-    )
+    page_size = 200
+    for offset in range(0, qbo_attributes_count, page_size):
+        limit = offset + page_size
+        paginated_qbo_attributes = DestinationAttribute.objects.filter(
+            attribute_type='CUSTOMER', workspace_id=workspace_id).order_by('value', 'id')[offset:limit]
 
-    qbo_connection = QBOConnector(
-        credentials_object=qbo_credentials,
-        workspace_id=workspace_id
-    )
+        paginated_qbo_attributes = remove_duplicates(paginated_qbo_attributes)
 
-    fyle_connection.sync_projects()
+        fyle_payload: List[Dict] = create_fyle_projects_payload(
+            paginated_qbo_attributes, existing_project_names, workspace_id)
+        if fyle_payload:
+            fyle_connection.connection.Projects.post(fyle_payload)
+            fyle_connection.sync_projects()
 
-    qbo_connection.sync_customers()
-    qbo_attributes: List[DestinationAttribute] = DestinationAttribute.objects.filter(
-        workspace_id=workspace_id, attribute_type='CUSTOMER').all()
-    qbo_attributes = remove_duplicates(qbo_attributes)
-
-    fyle_payload: List[Dict] = create_fyle_projects_payload(qbo_attributes, workspace_id)
-
-    if fyle_payload:
-        fyle_connection.connection.Projects.post(fyle_payload)
-        fyle_connection.sync_projects()
-
-    return qbo_attributes
+        Mapping.bulk_create_mappings(paginated_qbo_attributes, 'PROJECT', 'CUSTOMER', workspace_id)
 
 
-def auto_create_project_mappings(workspace_id):
+def auto_create_project_mappings(workspace_id: int):
     """
     Create Project Mappings
     :return: mappings
     """
-    MappingSetting.bulk_upsert_mapping_setting([{
-        'source_field': 'PROJECT',
-        'destination_field': 'CUSTOMER'
-    }], workspace_id=workspace_id)
-
     try:
-        fyle_projects = upload_projects_to_fyle(workspace_id=workspace_id)
-        project_mappings = Mapping.bulk_create_mappings(fyle_projects, 'PROJECT', 'CUSTOMER', workspace_id)
-        return project_mappings
+        fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
+        qbo_credentials: QBOCredential = QBOCredential.objects.get(workspace_id=workspace_id)
+
+        fyle_connection = FyleConnector(
+            refresh_token=fyle_credentials.refresh_token,
+            workspace_id=workspace_id
+        )
+
+        qbo_connection = QBOConnector(
+            credentials_object=qbo_credentials,
+            workspace_id=workspace_id
+        )
+
+        fyle_connection.sync_projects()
+        qbo_connection.sync_customers()
+
+        post_projects_in_batches(fyle_connection, workspace_id)
 
     except WrongParamsError as exception:
         logger.error(
