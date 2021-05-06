@@ -1,4 +1,5 @@
 from typing import List, Dict
+import logging
 
 from django.conf import settings
 
@@ -12,6 +13,12 @@ from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings
 
 from .models import BillLineitem, Bill, ChequeLineitem, Cheque, CreditCardPurchase, CreditCardPurchaseLineitem, \
     JournalEntry, JournalEntryLineitem, BillPaymentLineitem, BillPayment, QBOExpense, QBOExpenseLineitem
+
+logger = logging.getLogger(__name__)
+
+SYNC_UPPER_LIMIT = {
+    'customers': 5000
+}
 
 
 class QBOConnector:
@@ -59,57 +66,82 @@ class QBOConnector:
         else:
             return self.create_vendor_destionation_attribute(vendor)
 
-    def sync_accounts(self, account_type: str):
+    def sync_accounts(self):
         """
         Get accounts
         """
         accounts = self.connection.accounts.get()
 
-        accounts = list(filter(lambda current_account: current_account['AccountType'] == account_type, accounts))
-
-        account_attributes = []
-
-        if account_type == 'Expense':
-            attribute_type = 'ACCOUNT'
-            display_name = 'Account'
-        elif account_type == 'Credit Card':
-            attribute_type = 'CREDIT_CARD_ACCOUNT'
-            display_name = 'Credit Card Account'
-        elif account_type == 'Bank':
-            attribute_type = 'BANK_ACCOUNT'
-            display_name = 'Bank Account'
-        elif account_type == 'Bank' or account_type == 'Credit Card':
-            attribute_type = 'BILL_PAYMENT_ACCOUNT'
-            display_name = 'Bill Payment Account'
-        else:
-            attribute_type = 'ACCOUNTS_PAYABLE'
-            display_name = 'Accounts Payable'
-
         category_sync_version = 'v2'
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
         if general_settings:
             category_sync_version = general_settings.category_sync_version
+        
+        account_attributes = {
+            'account': [],
+            'credit_card_account': [],
+            'bank_account': [],
+            'accounts_payable': []
+        }
 
         for account in accounts:
-            attribute = {
-                'attribute_type': attribute_type,
-                'display_name': display_name,
-                'value': unidecode.unidecode(u'{0}'.format(
-                    account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])),
-                'destination_id': account['Id'],
-                'active': account['Active'],
-                'detail': {
-                    'fully_qualified_name': account['FullyQualifiedName']
-                }
-            }
+            if account['AccountType'] == 'Expense':
+                account_attributes['account'].append({
+                        'attribute_type': 'ACCOUNT',
+                        'display_name': 'Account',
+                        'value': unidecode.unidecode(u'{0}'.format(
+                            account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])).replace('/', '-'),
+                        'destination_id': account['Id'],
+                        'active': account['Active'],
+                        'detail': {
+                            'fully_qualified_name': account['FullyQualifiedName']
+                        }
+                    })
 
-            if account_type == 'Expense':
-                attribute['value'] = attribute['value'].replace('/', '-')
+            elif account['AccountType'] == 'Credit Card':
+                account_attributes['credit_card_account'].append({
+                        'attribute_type': 'CREDIT_CARD_ACCOUNT',
+                        'display_name': 'Credit Card Account',
+                        'value': unidecode.unidecode(u'{0}'.format(
+                            account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])),
+                        'destination_id': account['Id'],
+                        'active': account['Active'],
+                        'detail': {
+                            'fully_qualified_name': account['FullyQualifiedName']
+                        }
+                    })
 
-            account_attributes.append(attribute)
+            elif account['AccountType'] == 'Bank':
+                account_attributes['bank_account'].append({
+                        'attribute_type': 'BANK_ACCOUNT',
+                        'display_name': 'Bank Account',
+                        'value': unidecode.unidecode(u'{0}'.format(
+                            account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])),
+                        'destination_id': account['Id'],
+                        'active': account['Active'],
+                        'detail': {
+                            'fully_qualified_name': account['FullyQualifiedName']
+                        }
+                    })
+                    
+            else:
+                account_attributes['accounts_payable'].append({
+                        'attribute_type': 'ACCOUNTS_PAYABLE',
+                        'display_name': 'Accounts Payable',
+                        'value': unidecode.unidecode(u'{0}'.format(
+                            account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])),
+                        'destination_id': account['Id'],
+                        'active': account['Active'],
+                        'detail': {
+                            'fully_qualified_name': account['FullyQualifiedName']
+                        }
+                    })
+            
+        for attribute_type, attribute in account_attributes.items():
+            if attribute:
+                DestinationAttribute.bulk_create_or_update_destination_attributes(
+                    attribute, attribute_type.upper(), self.workspace_id, True)
 
-        DestinationAttribute.bulk_create_or_update_destination_attributes(
-            account_attributes, attribute_type, self.workspace_id, True)
         return []
 
     def sync_departments(self):
@@ -161,6 +193,7 @@ class QBOConnector:
 
         DestinationAttribute.bulk_create_or_update_destination_attributes(
             vendor_attributes, 'VENDOR', self.workspace_id, True)
+            
         return []
 
     def create_vendor_destionation_attribute(self, vendor):
@@ -253,23 +286,60 @@ class QBOConnector:
         """
         Get customers
         """
-        customers = self.connection.customers.get()
+        customers_count = self.connection.customers.count()
+        if customers_count < SYNC_UPPER_LIMIT['customers']:
+            customers = self.connection.customers.get()
 
-        customer_attributes = []
+            customer_attributes = []
 
-        for customer in customers:
-            customer_attributes.append({
-                'attribute_type': 'CUSTOMER',
-                'display_name': 'customer',
-                'value': unidecode.unidecode(u'{0}'.format(customer['FullyQualifiedName'])),
-                'destination_id': customer['Id'],
-                'active': customer['Active']
-            })
+            for customer in customers:
+                if customer['Active']:
+                    customer_attributes.append({
+                        'attribute_type': 'CUSTOMER',
+                        'display_name': 'customer',
+                        'value': unidecode.unidecode(u'{0}'.format(customer['FullyQualifiedName'])),
+                        'destination_id': customer['Id'],
+                        'active': True
+                    })
 
-        DestinationAttribute.bulk_create_or_update_destination_attributes(
-            customer_attributes, 'CUSTOMER', self.workspace_id, True)
+            DestinationAttribute.bulk_create_or_update_destination_attributes(
+                customer_attributes, 'CUSTOMER', self.workspace_id, True)
         return []
 
+
+    def sync_dimensions(self):
+
+        try:
+            self.sync_accounts()
+        except Exception as exception:
+            logger.exception(exception)
+
+        try:
+            self.sync_employees()
+        except Exception as exception:
+            logger.exception(exception)
+
+        try:
+            self.sync_vendors()
+        except Exception as exception:
+            logger.exception(exception)
+
+        try:
+            self.sync_customers()
+        except Exception as exception:
+            logger.exception(exception)
+
+        try:
+            self.sync_classes()
+        except Exception as exception:
+            logger.exception(exception)
+
+        try:
+            self.sync_departments()
+        except Exception as exception:
+            logger.exception(exception)
+
+    
     @staticmethod
     def purchase_object_payload(purchase_object, line, payment_type, account_ref, doc_number: str = None):
         """

@@ -184,7 +184,7 @@ def upload_categories_to_fyle(workspace_id):
         workspace_id=workspace_id
     )
     fyle_connection.sync_categories(False)
-    qbo_connection.sync_accounts(account_type='Expense')
+    qbo_connection.sync_accounts()
     qbo_attributes: List[DestinationAttribute] = DestinationAttribute.objects.filter(
         workspace_id=workspace_id, attribute_type='ACCOUNT').all()
     qbo_attributes = remove_duplicates(qbo_attributes)

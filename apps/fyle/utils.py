@@ -1,5 +1,6 @@
 import json
 from typing import List
+import logging
 
 from django.conf import settings
 
@@ -10,6 +11,8 @@ from fyle_accounting_mappings.models import ExpenseAttribute
 import requests
 
 from apps.fyle.models import Reimbursement
+
+logger = logging.getLogger(__name__)
 
 
 class FyleConnector:
@@ -294,7 +297,7 @@ class FyleConnector:
                             attachment['expense_id'] = expense_id
                             attachments.append(attachment)
                             attachment_file_names.append(attachment['filename'])
-                        
+
             return attachments
 
         return []
@@ -305,23 +308,39 @@ class FyleConnector:
         """
         reimbursements = self.connection.Reimbursements.get_all()
 
-        reimbursement_attributes = []
-
-        for reimbursement in reimbursements:
-            reimbursement_attributes.append({
-                'reimbursement_id': reimbursement['id'],
-                'settlement_id': reimbursement['settlement_id'],
-                'state': reimbursement['state']
-            })
-
-        reimbursement_attributes = Reimbursement.create_reimbursement_objects(
-            reimbursement_attributes, self.workspace_id
+        Reimbursement.create_or_update_reimbursement_objects(
+            reimbursements, self.workspace_id
         )
-
-        return reimbursement_attributes
 
     def post_reimbursement(self, reimbursement_ids: list):
         """
         Process Reimbursements in bulk.
         """
         return self.connection.Reimbursements.post(reimbursement_ids)
+
+    def sync_dimensions(self):
+
+        try:
+            self.sync_employees()
+        except Exception as exception:
+            logger.exception(exception)
+
+        try:
+            self.sync_categories(active_only=True)
+        except Exception as exception:
+            logger.exception(exception)
+
+        try:
+            self.sync_cost_centers(active_only=True)
+        except Exception as exception:
+            logger.exception(exception)
+
+        try:
+            self.sync_projects()
+        except Exception as exception:
+            logger.exception(exception)
+
+        try:
+            self.sync_expense_custom_fields(active_only=True)
+        except Exception as exception:
+            logger.exception(exception)

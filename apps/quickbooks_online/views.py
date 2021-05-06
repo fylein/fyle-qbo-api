@@ -1,4 +1,5 @@
 from django.db.models import Q
+from datetime import datetime, timezone
 from rest_framework.response import Response
 from rest_framework.views import status
 from rest_framework import generics
@@ -12,7 +13,7 @@ from fyle_qbo_api.utils import assert_valid
 
 from apps.fyle.models import ExpenseGroup, ExpenseGroupSettings
 from apps.tasks.models import TaskLog
-from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings
+from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings, Workspace
 from apps.fyle.serializers import ExpenseGroupSettingsSerializer
 
 from .utils import QBOConnector
@@ -115,7 +116,7 @@ class AccountView(generics.ListCreateAPIView):
 
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
-            accounts = qbo_connector.sync_accounts(account_type='Expense')
+            accounts = qbo_connector.sync_accounts()
 
             return Response(
                 data=self.serializer_class(accounts, many=True).data,
@@ -150,7 +151,7 @@ class CreditCardAccountView(generics.ListCreateAPIView):
 
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
-            accounts = qbo_connector.sync_accounts(account_type='Credit Card')
+            accounts = qbo_connector.sync_accounts()
 
             return Response(
                 data=self.serializer_class(accounts, many=True).data,
@@ -185,7 +186,7 @@ class BankAccountView(generics.ListCreateAPIView):
 
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
-            accounts = qbo_connector.sync_accounts(account_type='Bank')
+            accounts = qbo_connector.sync_accounts()
 
             return Response(
                 data=self.serializer_class(accounts, many=True).data,
@@ -220,7 +221,7 @@ class AccountsPayableView(generics.ListCreateAPIView):
 
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
-            accounts = qbo_connector.sync_accounts(account_type='Accounts Payable')
+            accounts = qbo_connector.sync_accounts()
 
             return Response(
                 data=self.serializer_class(accounts, many=True).data,
@@ -759,3 +760,69 @@ class ReimburseQuickbooksPaymentsView(generics.ListCreateAPIView):
             data={},
             status=status.HTTP_200_OK
         )
+
+
+class SyncQuickbooksDimensionView(generics.ListCreateAPIView):
+    """
+    Sync Quickbooks Dimension View
+    """
+
+    def post(self, request, *args, **kwargs):
+
+        try:
+            workspace = Workspace.objects.get(id=kwargs['workspace_id'])
+            if workspace.destination_synced_at:
+                time_interval = datetime.now(timezone.utc) - workspace.destination_synced_at
+
+            if workspace.destination_synced_at is None or time_interval.days > 0:
+                quickbooks_credentials = QBOCredential.objects.get(workspace_id=kwargs['workspace_id'])
+                quickbooks_connector = QBOConnector(quickbooks_credentials, workspace_id=kwargs['workspace_id'])
+
+                quickbooks_connector.sync_dimensions()
+
+                workspace.destination_synced_at = datetime.now()
+                workspace.save(update_fields=['destination_synced_at'])
+
+            return Response(
+                status=status.HTTP_200_OK
+            )
+
+        except QBOCredential.DoesNotExist:
+            return Response(
+                data={
+                    'message': 'Quickbooks Credentials not found in workspace'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class RefreshQuickbooksDimensionView(generics.ListCreateAPIView):
+    """
+    Refresh Quickbooks Dimensions view
+    """
+
+    def post(self, request, *args, **kwargs):
+        """
+        Sync data from quickbooks
+        """
+        try:
+            quickbooks_credentials = QBOCredential.objects.get(workspace_id=kwargs['workspace_id'])
+            quickbooks_connector = QBOConnector(quickbooks_credentials, workspace_id=kwargs['workspace_id'])
+
+            quickbooks_connector.sync_dimensions()
+
+            workspace = Workspace.objects.get(id=kwargs['workspace_id'])
+            workspace.destination_synced_at = datetime.now()
+            workspace.save(update_fields=['destination_synced_at'])
+
+            return Response(
+                status=status.HTTP_200_OK
+            )
+
+        except QBOCredential.DoesNotExist:
+            return Response(
+                data={
+                    'message': 'Quickbooks credentials not found in workspace'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )

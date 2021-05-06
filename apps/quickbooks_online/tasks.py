@@ -125,6 +125,9 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
 
             mapping.source.auto_mapped = True
             mapping.source.save()
+
+            mapping.destination.auto_created = True
+            mapping.destination.save()
         except WrongParamsError as bad_request:
             logger.error(bad_request.response)
 
