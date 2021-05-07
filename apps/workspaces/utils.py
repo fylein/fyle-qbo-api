@@ -81,10 +81,7 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
     if workspace_general_settings:
         map_merchant_to_vendor = workspace_general_settings.map_merchant_to_vendor
 
-    if workspace_id == 98:
-        category_sync_version = 'v1'
-    else:
-        category_sync_version = workspace_general_settings.category_sync_version if workspace_general_settings else 'v2'
+    category_sync_version = workspace_general_settings.category_sync_version if workspace_general_settings else 'v2'
 
     general_settings, _ = WorkspaceGeneralSettings.objects.update_or_create(
         workspace_id=workspace_id,
