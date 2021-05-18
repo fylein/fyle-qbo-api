@@ -87,7 +87,7 @@ BEGIN
   DELETE
   FROM bill_payment_lineitems bpl
   WHERE bpl.bill_payment_id IN (
-      SELECT bp.id FROM bill_payments bp WHERE c.expense_group_id IN (
+      SELECT bp.id FROM bill_payments bp WHERE bp.expense_group_id IN (
           SELECT eg.id FROM expense_groups eg WHERE eg.workspace_id = _workspace_id
       )
   );
@@ -131,12 +131,6 @@ BEGIN
   WHERE eg.workspace_id = _workspace_id;
   GET DIAGNOSTICS rcount = ROW_COUNT;
   RAISE NOTICE 'Deleted % expense_groups', rcount;
-
-  DELETE
-  FROM tenant_mappings tm
-  WHERE tm.workspace_id = _workspace_id;
-  GET DIAGNOSTICS rcount = ROW_COUNT;
-  RAISE NOTICE 'Deleted % tenant_mappings', rcount;
 
   DELETE
   FROM mappings m
