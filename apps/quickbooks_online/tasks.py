@@ -474,7 +474,7 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
                 expense_group=expense_group,
                 defaults={
                     'status': 'ENQUEUED',
-                    'type': 'CREATING_QBO_EXPENSE'
+                    'type': 'CREATING_EXPENSE'
                 }
             )
             if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
