@@ -253,22 +253,11 @@ class FyleConnector:
         """
         Get projects from fyle
         """
-        all_projects = []
-        limit = 1000
-        offset = 0
-
-        while True:
-            projects = self.connection.Projects.get(limit=str(limit), offset=str(offset))['data']
-
-            if len(projects) == 0:
-                break
-            else:
-                all_projects.extend(projects)
-                offset = offset + limit
+        projects = self.connection.Projects.get_all()
 
         project_attributes = []
 
-        for project in all_projects:
+        for project in projects:
             project_attributes.append({
                 'attribute_type': 'PROJECT',
                 'display_name': 'Project',

@@ -81,6 +81,7 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
     if workspace_general_settings:
         map_merchant_to_vendor = workspace_general_settings.map_merchant_to_vendor
 
+    # TODO: remove this hack once workspace settings are saved
     if workspace_id == 98:
         category_sync_version = 'v1'
     else:
