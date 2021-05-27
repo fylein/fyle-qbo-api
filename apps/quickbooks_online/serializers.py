@@ -41,24 +41,6 @@ class ChequeLineitemsSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class QBOExpenseSerializer(serializers.ModelSerializer):
-    """
-    QBO Expense serializer
-    """
-    class Meta:
-        model = QBOExpense
-        fields = '__all__'
-
-
-class QBOExpenseLineitemsSerializer(serializers.ModelSerializer):
-    """
-    QBO Expense Lineitems serializer
-    """
-    class Meta:
-        model = QBOExpenseLineitem
-        fields = '__all__'
-
-
 class CreditCardPurchaseSerializer(serializers.ModelSerializer):
     """
     QBO CreditCardPurchase serializer
