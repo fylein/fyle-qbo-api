@@ -22,7 +22,7 @@ from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGener
 from apps.fyle.utils import FyleConnector
 
 from .models import Bill, BillLineitem, Cheque, ChequeLineitem, CreditCardPurchase, CreditCardPurchaseLineitem, \
-    JournalEntry, JournalEntryLineitem, BillPayment, BillPaymentLineitem
+    JournalEntry, JournalEntryLineitem, BillPayment, BillPaymentLineitem, QBOExpense, QBOExpenseLineitem
 from .utils import QBOConnector
 
 logger = logging.getLogger(__name__)
@@ -205,8 +205,6 @@ def create_bill(expense_group, task_log_id):
 
             created_bill = qbo_connection.post_bill(bill_object, bill_lineitems_objects)
 
-            load_attachments(qbo_connection, created_bill['Bill']['Id'], 'Bill', expense_group)
-
             task_log.detail = created_bill
             task_log.bill = bill_object
             task_log.status = 'COMPLETE'
@@ -215,6 +213,8 @@ def create_bill(expense_group, task_log_id):
 
             expense_group.exported_at = datetime.now()
             expense_group.save()
+
+            load_attachments(qbo_connection, created_bill['Bill']['Id'], 'Bill', expense_group)
 
     except QBOCredential.DoesNotExist:
         logger.error(
@@ -401,8 +401,6 @@ def create_cheque(expense_group, task_log_id):
 
             created_cheque = qbo_connection.post_cheque(cheque_object, cheque_line_item_objects)
 
-            load_attachments(qbo_connection, created_cheque['Purchase']['Id'], 'Purchase', expense_group)
-
             task_log.detail = created_cheque
             task_log.cheque = cheque_object
             task_log.status = 'COMPLETE'
@@ -411,6 +409,120 @@ def create_cheque(expense_group, task_log_id):
 
             expense_group.exported_at = datetime.now()
             expense_group.save()
+
+            load_attachments(qbo_connection, created_cheque['Purchase']['Id'], 'Purchase', expense_group)
+
+    except QBOCredential.DoesNotExist:
+        logger.error(
+            'QBO Credentials not found for workspace_id %s / expense group %s',
+            expense_group.id,
+            expense_group.workspace_id
+        )
+        detail = {
+            'expense_group_id': expense_group.id,
+            'message': 'QBO Account not connected'
+        }
+        task_log.status = 'FAILED'
+        task_log.detail = detail
+
+        task_log.save()
+
+    except BulkError as exception:
+        logger.error(exception.response)
+        detail = exception.response
+        task_log.status = 'FAILED'
+        task_log.detail = detail
+
+        task_log.save()
+
+    except WrongParamsError as exception:
+        logger.error(exception.response)
+        detail = json.loads(exception.response)
+        task_log.status = 'FAILED'
+        task_log.detail = detail
+
+        task_log.save()
+
+    except Exception:
+        error = traceback.format_exc()
+        task_log.detail = {
+            'error': error
+        }
+        task_log.status = 'FATAL'
+        task_log.save()
+        logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
+
+
+def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str]):
+    """
+    Schedule QBO expense creation
+    :param expense_group_ids: List of expense group ids
+    :param workspace_id: workspace id
+    :return: None
+    """
+    if expense_group_ids:
+        expense_groups = ExpenseGroup.objects.filter(
+            Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']),
+            workspace_id=workspace_id, id__in=expense_group_ids, qboexpense__id__isnull=True, exported_at__isnull=True
+        ).all()
+
+        chain = Chain()
+
+        for expense_group in expense_groups:
+            task_log, _ = TaskLog.objects.get_or_create(
+                workspace_id=expense_group.workspace_id,
+                expense_group=expense_group,
+                defaults={
+                    'status': 'ENQUEUED',
+                    'type': 'CREATING_EXPENSE'
+                }
+            )
+            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
+                task_log.status = 'ENQUEUED'
+                task_log.save()
+
+            chain.append('apps.quickbooks_online.tasks.create_qbo_expense', expense_group, task_log.id)
+
+        if chain.length():
+            chain.run()
+
+
+def create_qbo_expense(expense_group, task_log_id):
+    task_log = TaskLog.objects.get(id=task_log_id)
+    if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
+        task_log.status = 'IN_PROGRESS'
+        task_log.save()
+    else:
+        return
+
+    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
+    try:
+        qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
+
+        qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
+
+        if general_settings.auto_map_employees and general_settings.auto_create_destination_entity:
+            create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
+
+        with transaction.atomic():
+            __validate_expense_group(expense_group, general_settings)
+
+            qbo_expense_object = QBOExpense.create_qbo_expense(expense_group)
+
+            qbo_expense_line_item_objects = QBOExpenseLineitem.create_qbo_expense_lineitems(expense_group)
+
+            created_qbo_expense = qbo_connection.post_qbo_expense(qbo_expense_object, qbo_expense_line_item_objects)
+
+            task_log.detail = created_qbo_expense
+            task_log.qbo_expense = qbo_expense_object
+            task_log.status = 'COMPLETE'
+
+            task_log.save()
+
+            expense_group.exported_at = datetime.now()
+            expense_group.save()
+
+            load_attachments(qbo_connection, created_qbo_expense['Purchase']['Id'], 'Purchase', expense_group)
 
     except QBOCredential.DoesNotExist:
         logger.error(
@@ -525,8 +637,6 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id):
                 credit_card_purchase_object, credit_card_purchase_lineitems_objects
             )
 
-            load_attachments(qbo_connection, created_credit_card_purchase['Purchase']['Id'], 'Purchase', expense_group)
-
             task_log.detail = created_credit_card_purchase
             task_log.credit_card_purchase = credit_card_purchase_object
             task_log.status = 'COMPLETE'
@@ -535,6 +645,8 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id):
 
             expense_group.exported_at = datetime.now()
             expense_group.save()
+
+            load_attachments(qbo_connection, created_credit_card_purchase['Purchase']['Id'], 'Purchase', expense_group)
 
     except QBOCredential.DoesNotExist:
         logger.error(
@@ -642,8 +754,6 @@ def create_journal_entry(expense_group, task_log_id):
             created_journal_entry = qbo_connection.post_journal_entry(journal_entry_object,
                                                                       journal_entry_lineitems_objects)
 
-            load_attachments(qbo_connection, created_journal_entry['JournalEntry']['Id'], 'JournalEntry', expense_group)
-
             task_log.detail = created_journal_entry
             task_log.journal_entry = journal_entry_object
             task_log.status = 'COMPLETE'
@@ -652,6 +762,8 @@ def create_journal_entry(expense_group, task_log_id):
 
             expense_group.exported_at = datetime.now()
             expense_group.save()
+
+            load_attachments(qbo_connection, created_journal_entry['JournalEntry']['Id'], 'JournalEntry', expense_group)
 
     except QBOCredential.DoesNotExist:
         logger.error(

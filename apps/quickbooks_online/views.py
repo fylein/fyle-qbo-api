@@ -19,7 +19,8 @@ from apps.fyle.serializers import ExpenseGroupSettingsSerializer
 from .utils import QBOConnector
 from .tasks import create_bill, schedule_bills_creation, create_cheque, schedule_cheques_creation, \
     create_credit_card_purchase, schedule_credit_card_purchase_creation, create_journal_entry, \
-    schedule_journal_entry_creation, create_bill_payment, process_reimbursements, check_qbo_object_status
+    schedule_journal_entry_creation, create_bill_payment, process_reimbursements, check_qbo_object_status,\
+    schedule_qbo_expense_creation
 from .models import Bill, Cheque, CreditCardPurchase, JournalEntry
 from .serializers import BillSerializer, ChequeSerializer, CreditCardPurchaseSerializer, JournalEntrySerializer, \
     QuickbooksFieldSerializer
@@ -480,6 +481,22 @@ class BillScheduleView(generics.CreateAPIView):
         expense_group_ids = request.data.get('expense_group_ids', [])
 
         schedule_bills_creation(
+            kwargs['workspace_id'], expense_group_ids)
+
+        return Response(
+            status=status.HTTP_200_OK
+        )
+
+
+class QBOExpenseScheduleView(generics.CreateAPIView):
+    """
+    Schedule QBO Expenses creation
+    """
+
+    def post(self, request, *args, **kwargs):
+        expense_group_ids = request.data.get('expense_group_ids', [])
+
+        schedule_qbo_expense_creation(
             kwargs['workspace_id'], expense_group_ids)
 
         return Response(
