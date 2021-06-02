@@ -28,6 +28,6 @@ requests==2.22.0
 requests-cache==0.5.2
 six==1.13.0
 sqlparse==0.3.0
-urllib3==1.25.7
+urllib3==1.26.5
 Unidecode==1.1.2
 wcwidth==0.1.8
