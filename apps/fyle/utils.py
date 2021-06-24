@@ -226,16 +226,16 @@ class FyleConnector:
                 count = count + 1
 
             ExpenseAttribute.bulk_create_or_update_expense_attributes(
-                expense_custom_field_attributes, custom_field['name'].upper().replace(' ', '_'),
-                self.workspace_id)
+                expense_custom_field_attributes, custom_field['name'].upper().replace(' ', '_'), self.workspace_id
+            )
 
         return []
 
-    def sync_cost_centers(self, active_only: bool):
+    def sync_cost_centers(self):
         """
         Get cost centers from fyle
         """
-        cost_centers = self.connection.CostCenters.get(active_only=active_only)['data']
+        cost_centers = self.connection.CostCenters.get()['data']
 
         cost_center_attributes = []
 
