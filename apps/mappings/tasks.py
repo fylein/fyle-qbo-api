@@ -551,22 +551,30 @@ def auto_create_expense_fields_mappings(workspace_id: int, qbo_attribute_type: s
             'Error while creating %s workspace_id - %s error: %s', fyle_attribute_type, workspace_id, error
         )
 
+
 def async_auto_create_custom_field_mappings(workspace_id):
-    mapping_settings = MappingSetting.objects.filter(is_custom=True, import_to_fyle=True, workspace_id=workspace_id)
+    mapping_settings = MappingSetting.objects.filter(
+        is_custom=True,
+        import_to_fyle=True,
+        workspace_id=workspace_id
+    ).all()
 
     if mapping_settings:
         for mapping_setting in mapping_settings:
-            if mapping_setting['import_to_fyle']:
+            if mapping_setting.import_to_fyle:
                 auto_create_expense_fields_mappings(
                     workspace_id, mapping_setting.destination_field, mapping_setting.source_field
                 )
 
 
-def schedule_fyle_attributes_creation(workspace_id: int, fyle_attribute_type: str, import_to_fyle: bool):
-    if import_to_fyle:
-        schedule, _ = Schedule.objects.update_or_create(
+def schedule_fyle_attributes_creation(workspace_id: int):
+    mapping_settings = MappingSetting.objects.filter(
+        is_custom=True, import_to_fyle=True, workspace_id=workspace_id
+    ).all()
+    if mapping_settings:
+        schedule, _ = Schedule.objects.get_or_create(
             func='apps.mappings.tasks.async_auto_create_custom_field_mappings',
-            args=(workspace_id, fyle_attribute_type),
+            args='{0}'.format(workspace_id),
             defaults={
                 'schedule_type': Schedule.MINUTES,
                 'minutes': 24 * 60,
@@ -576,7 +584,7 @@ def schedule_fyle_attributes_creation(workspace_id: int, fyle_attribute_type: st
     else:
         schedule: Schedule = Schedule.objects.filter(
             func='apps.mappings.tasks.async_auto_create_custom_field_mappings',
-            args=(workspace_id, fyle_attribute_type),
+            args='{0}'.format(workspace_id)
         ).first()
 
         if schedule:
