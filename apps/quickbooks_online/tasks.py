@@ -141,6 +141,26 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
                     expense_group.workspace_id
                 )
 
+def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: TaskLog, export_type: str):
+    logger.error(exception.response)
+    response = json.loads(exception.response)
+    quickbooks_errors = response['Fault']['Error']
+    
+    error_msg = 'Failed to creaetm {0} in you quickbooks online account.'.format(export_type)
+    errors = []
+
+    for error in quickbooks_errors:
+        errors.append({
+            'expense_group_id': expense_group.id,
+            'type': response['Fault']['type'] +' / ' + error['code'],
+            'short_description': error['Message'] if error['Message'] else '{0} error'.format(export_type),
+            'long_description': error['Detail'] if error['Detail'] else error_msg
+        })
+    
+    task_log.status = 'FAILED'
+    task_log.detail = None
+    task_log.quickbooks_errors = errors
+    task_log.save()
 
 def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
     """
@@ -240,12 +260,8 @@ def create_bill(expense_group, task_log_id):
         task_log.save()
 
     except WrongParamsError as exception:
-        logger.error(exception.response)
-        detail = json.loads(exception.response)
-        task_log.status = 'FAILED'
-        task_log.detail = detail
+        handle_quickbooks_error(exception, expense_group, task_log, 'BILL')
 
-        task_log.save()
 
     except Exception:
         error = traceback.format_exc()
@@ -258,26 +274,7 @@ def create_bill(expense_group, task_log_id):
 
 
 
-def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: TaskLog, export_type: str):
-    logger.error(exception.response)
-    response = json.loads(exception.response)
-    quickbooks_errors = response['Fault']['Error']
-    
-    error_msg = 'Failed to creaetm {0} in you quickbooks online account.'.format(export_type)
-    errors = []
 
-    for error in quickbooks_errors:
-        errors.append({
-            'expense_group_id': expense_group.id,
-            'type': response['Fault']['type'] +' / ' + error['code'],
-            'short_description': error['Message'] if error['Message'] else '{0} error'.format(export_type),
-            'long_description': error['Detail'] if error['Detail'] else error_msg
-        })
-    
-    task_log.status = 'FAILED'
-    task_log.detail = None
-    task_log.quickbooks_errors = errors
-    task_log.save()
     
 
 
@@ -460,12 +457,7 @@ def create_cheque(expense_group, task_log_id):
         task_log.save()
 
     except WrongParamsError as exception:
-        logger.error(exception.response)
-        detail = json.loads(exception.response)
-        task_log.status = 'FAILED'
-        task_log.detail = detail
-
-        task_log.save()
+        handle_quickbooks_error(exception, expense_group, task_log, 'CHEQUE')
 
     except Exception:
         error = traceback.format_exc()
