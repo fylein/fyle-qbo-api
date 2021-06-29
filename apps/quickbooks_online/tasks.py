@@ -273,11 +273,6 @@ def create_bill(expense_group, task_log_id):
         logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
 
 
-
-
-    
-
-
 def __validate_expense_group(expense_group: ExpenseGroup, general_settings: WorkspaceGeneralSettings):
     bulk_errors = []
     row = 0
