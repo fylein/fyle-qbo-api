@@ -146,13 +146,13 @@ def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: Ta
     response = json.loads(exception.response)
     quickbooks_errors = response['Fault']['Error']
     
-    error_msg = 'Failed to creaetm {0} in you quickbooks online account.'.format(export_type)
+    error_msg = 'Failed to create {0} in you quickbooks online account.'.format(export_type)
     errors = []
 
     for error in quickbooks_errors:
         errors.append({
             'expense_group_id': expense_group.id,
-            'type': response['Fault']['type'] +' / ' + error['code'],
+            'type': '{0} / {1}'.format(response['Fault']['type'], error['code']),
             'short_description': error['Message'] if error['Message'] else '{0} error'.format(export_type),
             'long_description': error['Detail'] if error['Detail'] else error_msg
         })
@@ -260,7 +260,7 @@ def create_bill(expense_group, task_log_id):
         task_log.save()
 
     except WrongParamsError as exception:
-        handle_quickbooks_error(exception, expense_group, task_log, 'BILL')
+        handle_quickbooks_error(exception, expense_group, task_log, 'Bill')
 
 
     except Exception:
@@ -452,7 +452,7 @@ def create_cheque(expense_group, task_log_id):
         task_log.save()
 
     except WrongParamsError as exception:
-        handle_quickbooks_error(exception, expense_group, task_log, 'CHEQUE')
+        handle_quickbooks_error(exception, expense_group, task_log, 'Check')
 
     except Exception:
         error = traceback.format_exc()
@@ -678,12 +678,7 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id):
         task_log.save()
 
     except WrongParamsError as exception:
-        logger.error(exception.response)
-        detail = json.loads(exception.response)
-        task_log.status = 'FAILED'
-        task_log.detail = detail
-
-        task_log.save()
+        handle_quickbooks_error(exception, expense_group, task_log, 'Credit Card Purchase')
 
     except Exception:
         error = traceback.format_exc()
@@ -795,12 +790,7 @@ def create_journal_entry(expense_group, task_log_id):
         task_log.save()
 
     except WrongParamsError as exception:
-        logger.error(exception.response)
-        detail = json.loads(exception.response)
-        task_log.status = 'FAILED'
-        task_log.detail = detail
-
-        task_log.save()
+        handle_quickbooks_error(exception, expense_group, task_log, 'Journal Entries')
 
     except Exception:
         error = traceback.format_exc()
@@ -904,12 +894,7 @@ def create_bill_payment(workspace_id):
                     task_log.save()
 
                 except WrongParamsError as exception:
-                    logger.error(exception.response)
-                    detail = json.loads(exception.response)
-                    task_log.status = 'FAILED'
-                    task_log.detail = detail
-
-                    task_log.save()
+                    handle_quickbooks_error(exception, expense_group, task_log, 'Bill Payment')
 
                 except Exception:
                     error = traceback.format_exc()
