@@ -146,7 +146,7 @@ def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: Ta
     response = json.loads(exception.response)
     quickbooks_errors = response['Fault']['Error']
     
-    error_msg = 'Failed to create {0} in you quickbooks online account.'.format(export_type)
+    error_msg = 'Failed to create {0}'.format(export_type)
     errors = []
 
     for error in quickbooks_errors:
