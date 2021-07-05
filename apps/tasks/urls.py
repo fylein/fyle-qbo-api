@@ -22,6 +22,3 @@ urlpatterns = [
     path('expense_group/<int:expense_group_id>/', TaskByExpenseGroupIdView.as_view()),
     path('all/', TasksView.as_view())
 ]
-
-
-
