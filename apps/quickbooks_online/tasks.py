@@ -894,7 +894,7 @@ def create_bill_payment(workspace_id):
                     task_log.save()
 
                 except WrongParamsError as exception:
-                    handle_quickbooks_error(exception, expense_group, task_log, 'Bill Payment')
+                    handle_quickbooks_error(exception, bill.expense_group, task_log, 'Bill Payment')
 
                 except Exception:
                     error = traceback.format_exc()
