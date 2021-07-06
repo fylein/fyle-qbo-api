@@ -506,10 +506,12 @@ def upload_attributes_to_fyle(workspace_id: int, qbo_attribute_type: str, fyle_a
         workspace_id=workspace_id, attribute_type=qbo_attribute_type
     )
 
+    qbo_attributes = remove_duplicates(qbo_attributes)
+
     fyle_custom_field_payload = create_fyle_expense_custom_field_payload(
-        fyle_attribute=fyle_attribute_type,
         qbo_attributes=qbo_attributes,
-        workspace_id=workspace_id
+        workspace_id=workspace_id,
+        fyle_attribute=fyle_attribute_type
     )
 
     if fyle_custom_field_payload:
