@@ -47,7 +47,7 @@ def create_fyle_projects_payload(projects: List[DestinationAttribute], existing_
             payload.append({
                 'name': project.value,
                 'code': project.destination_id,
-                'description': 'Quickbooks Online Customer / Project - {0}, Id - {1}'.format(
+                'description': 'Project - {0}, Id - {1}'.format(
                     project.value,
                     project.destination_id
                 ),
