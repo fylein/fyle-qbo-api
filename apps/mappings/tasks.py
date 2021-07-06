@@ -6,7 +6,6 @@ from typing import List, Dict
 
 from django.db.models import Q
 from django_q.models import Schedule
-from django_q.tasks import async_task
 
 from fyle_accounting_mappings.models import MappingSetting, Mapping, DestinationAttribute, ExpenseAttribute
 from fylesdk import WrongParamsError
@@ -516,13 +515,6 @@ def upload_attributes_to_fyle(workspace_id: int, qbo_attribute_type: str, fyle_a
     if fyle_custom_field_payload:
         fyle_connection.connection.ExpensesCustomFields.post(fyle_custom_field_payload)
         fyle_connection.sync_expense_custom_fields(active_only=True)
-
-        async_task(
-            'apps.mappings.tasks.auto_create_expense_fields_mappings',
-            fyle_attribute_type,
-            qbo_attribute_type,
-            workspace_id
-        )
 
     return qbo_attributes
 
