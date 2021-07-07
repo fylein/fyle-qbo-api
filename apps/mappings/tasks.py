@@ -1,6 +1,6 @@
 import logging
 import traceback
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from typing import List, Dict
 
@@ -15,15 +15,17 @@ from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.utils import QBOConnector
 from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGeneralSettings
 
+from .constants import FYLE_EXPENSE_SYSTEM_FIELDS
+
 logger = logging.getLogger(__name__)
 
 
-def remove_duplicates(ns_attributes: List[DestinationAttribute]):
+def remove_duplicates(qbo_attributes: List[DestinationAttribute]):
     unique_attributes = []
 
     attribute_values = []
 
-    for attribute in ns_attributes:
+    for attribute in qbo_attributes:
         if attribute.value not in attribute_values:
             unique_attributes.append(attribute)
             attribute_values.append(attribute.value)
@@ -31,11 +33,11 @@ def remove_duplicates(ns_attributes: List[DestinationAttribute]):
     return unique_attributes
 
 
-def create_fyle_projects_payload(projects: List[DestinationAttribute], existing_project_names: list, workspace_id: int):
+def create_fyle_projects_payload(projects: List[DestinationAttribute], existing_project_names: list):
     """
     Create Fyle Projects Payload from QBO Customer / Projects
-    :param workspace_id: integer id of workspace
     :param projects: QBO Projects
+    :param existing_project_names: Existing Projects in Fyle
     :return: Fyle Projects Payload
     """
     payload = []
@@ -45,7 +47,7 @@ def create_fyle_projects_payload(projects: List[DestinationAttribute], existing_
             payload.append({
                 'name': project.value,
                 'code': project.destination_id,
-                'description': 'Quickbooks Online Customer / Project - {0}, Id - {1}'.format(
+                'description': 'Project - {0}, Id - {1}'.format(
                     project.value,
                     project.destination_id
                 ),
@@ -55,17 +57,17 @@ def create_fyle_projects_payload(projects: List[DestinationAttribute], existing_
     return payload
 
 
-def post_projects_in_batches(fyle_connection: FyleConnector, workspace_id: int):
+def post_projects_in_batches(fyle_connection: FyleConnector, workspace_id: int, destination_field: str):
     existing_project_names = ExpenseAttribute.objects.filter(
         attribute_type='PROJECT', workspace_id=workspace_id).values_list('value', flat=True)
     qbo_attributes_count = DestinationAttribute.objects.filter(
-        attribute_type='CUSTOMER', workspace_id=workspace_id).count()
+        attribute_type=destination_field, workspace_id=workspace_id).count()
 
     page_size = 200
     for offset in range(0, qbo_attributes_count, page_size):
         limit = offset + page_size
         paginated_qbo_attributes = DestinationAttribute.objects.filter(
-            attribute_type='CUSTOMER', workspace_id=workspace_id).order_by('value', 'id')[offset:limit]
+            attribute_type=destination_field, workspace_id=workspace_id).order_by('value', 'id')[offset:limit]
 
         paginated_qbo_attributes = remove_duplicates(paginated_qbo_attributes)
 
@@ -75,7 +77,7 @@ def post_projects_in_batches(fyle_connection: FyleConnector, workspace_id: int):
             fyle_connection.connection.Projects.post(fyle_payload)
             fyle_connection.sync_projects()
 
-        Mapping.bulk_create_mappings(paginated_qbo_attributes, 'PROJECT', 'CUSTOMER', workspace_id)
+        Mapping.bulk_create_mappings(paginated_qbo_attributes, 'PROJECT', destination_field, workspace_id)
 
 
 def auto_create_project_mappings(workspace_id: int):
@@ -100,7 +102,11 @@ def auto_create_project_mappings(workspace_id: int):
         fyle_connection.sync_projects()
         qbo_connection.sync_customers()
 
-        post_projects_in_batches(fyle_connection, workspace_id)
+        mapping_setting = MappingSetting.objects.get(
+            source_field='PROJECT', workspace_id=workspace_id
+        )
+
+        post_projects_in_batches(fyle_connection, workspace_id, mapping_setting.destination_field)
 
     except WrongParamsError as exception:
         logger.error(
@@ -119,16 +125,15 @@ def auto_create_project_mappings(workspace_id: int):
         )
 
 
-def schedule_projects_creation(import_projects, workspace_id):
-    if import_projects:
-        start_datetime = datetime.now()
+def schedule_projects_creation(import_to_fyle, workspace_id):
+    if import_to_fyle:
         schedule, _ = Schedule.objects.update_or_create(
             func='apps.mappings.tasks.auto_create_project_mappings',
             args='{}'.format(workspace_id),
             defaults={
                 'schedule_type': Schedule.MINUTES,
                 'minutes': 6 * 60,
-                'next_run': start_datetime
+                'next_run': datetime.now()
             }
         )
     else:
@@ -324,6 +329,257 @@ def schedule_auto_map_ccc_employees(workspace_id: str):
         schedule: Schedule = Schedule.objects.filter(
             func='apps.mappings.tasks.async_auto_map_ccc_account',
             args='{}'.format(workspace_id)
+        ).first()
+
+        if schedule:
+            schedule.delete()
+
+
+def create_fyle_cost_centers_payload(qbo_attributes: List[DestinationAttribute], existing_fyle_cost_centers: list):
+    """
+    Create Fyle Cost Centers Payload from QBO Objects
+    :param existing_fyle_cost_centers: Existing cost center names
+    :param qbo_attributes: QBO Objects
+    :return: Fyle Cost Centers Payload
+    """
+    fyle_cost_centers_payload = []
+
+    for qbo_attribute in qbo_attributes:
+        if qbo_attribute.value not in existing_fyle_cost_centers:
+            fyle_cost_centers_payload.append({
+                'name': qbo_attribute.value,
+                'enabled': True if qbo_attribute.active is None else qbo_attribute.active,
+                'description': 'Cost Center - {0}, Id - {1}'.format(
+                    qbo_attribute.value,
+                    qbo_attribute.destination_id
+                )
+            })
+
+    return fyle_cost_centers_payload
+
+
+def post_cost_centers_in_batches(fyle_connection: FyleConnector, workspace_id: int, qbo_attribute_type: str):
+    existing_cost_center_names = ExpenseAttribute.objects.filter(
+        attribute_type='COST_CENTER', workspace_id=workspace_id).values_list('value', flat=True)
+
+    qbo_attributes_count = DestinationAttribute.objects.filter(
+        attribute_type=qbo_attribute_type, workspace_id=workspace_id).count()
+
+    page_size = 200
+
+    for offset in range(0, qbo_attributes_count, page_size):
+        limit = offset + page_size
+        paginated_qbo_attributes = DestinationAttribute.objects.filter(
+            attribute_type=qbo_attribute_type, workspace_id=workspace_id).order_by('value', 'id')[offset:limit]
+
+        paginated_qbo_attributes = remove_duplicates(paginated_qbo_attributes)
+
+        fyle_payload: List[Dict] = create_fyle_cost_centers_payload(
+            paginated_qbo_attributes, existing_cost_center_names)
+
+        if fyle_payload:
+            fyle_connection.connection.CostCenters.post(fyle_payload)
+            fyle_connection.sync_cost_centers()
+
+        Mapping.bulk_create_mappings(paginated_qbo_attributes, 'COST_CENTER', qbo_attribute_type, workspace_id)
+
+
+def auto_create_cost_center_mappings(workspace_id):
+    """
+    Create Cost Center Mappings
+    """
+    try:
+        fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
+        qbo_credentials: QBOCredential = QBOCredential.objects.get(workspace_id=workspace_id)
+
+        fyle_connection = FyleConnector(
+            refresh_token=fyle_credentials.refresh_token,
+            workspace_id=workspace_id
+        )
+
+        qbo_connection = QBOConnector(
+            credentials_object=qbo_credentials,
+            workspace_id=workspace_id
+        )
+
+        mapping_setting = MappingSetting.objects.get(
+            source_field='COST_CENTER', import_to_fyle=True, workspace_id=workspace_id
+        )
+
+        fyle_connection.sync_cost_centers()
+
+        if mapping_setting.destination_field == 'CUSTOMER':
+            qbo_connection.sync_customers()
+
+        elif mapping_setting.destination_field == 'DEPARTMENT':
+            qbo_connection.sync_departments()
+
+        elif mapping_setting.destination_field == 'CLASS':
+            qbo_connection.sync_classes()
+
+        post_cost_centers_in_batches(fyle_connection, workspace_id, mapping_setting.destination_field)
+
+    except WrongParamsError as exception:
+        logger.error(
+            'Error while creating cost centers workspace_id - %s in Fyle %s %s',
+            workspace_id, exception.message, {'error': exception.response}
+        )
+
+    except Exception:
+        error = traceback.format_exc()
+        error = {
+            'error': error
+        }
+        logger.error(
+            'Error while creating cost centers workspace_id - %s error: %s',
+            workspace_id, error
+        )
+
+
+def schedule_cost_centers_creation(import_to_fyle, workspace_id):
+    if import_to_fyle:
+        schedule, _ = Schedule.objects.update_or_create(
+            func='apps.mappings.tasks.auto_create_cost_center_mappings',
+            args='{}'.format(workspace_id),
+            defaults={
+                'schedule_type': Schedule.MINUTES,
+                'minutes': 24 * 60,
+                'next_run': datetime.now()
+            }
+        )
+    else:
+        schedule: Schedule = Schedule.objects.filter(
+            func='apps.mappings.tasks.auto_create_cost_center_mappings',
+            args='{}'.format(workspace_id)
+        ).first()
+
+        if schedule:
+            schedule.delete()
+
+
+def create_fyle_expense_custom_field_payload(qbo_attributes: List[DestinationAttribute], workspace_id: int,
+                                             fyle_attribute: str):
+    """
+    Create Fyle Expense Custom Field Payload from QBO Objects
+    :param workspace_id: Workspace ID
+    :param qbo_attributes: QBO Objects
+    :param fyle_attribute: Fyle Attribute
+    :return: Fyle Expense Custom Field Payload
+    """
+    fyle_expense_custom_field_options = []
+
+    [fyle_expense_custom_field_options.append(qbo_attribute.value) for qbo_attribute in qbo_attributes]
+
+    if fyle_attribute.lower() not in FYLE_EXPENSE_SYSTEM_FIELDS:
+        existing_attribute = ExpenseAttribute.objects.filter(
+            attribute_type=fyle_attribute, workspace_id=workspace_id).values_list('detail', flat=True).first()
+
+        custom_field_id = None
+        if existing_attribute is not None:
+            custom_field_id = existing_attribute['custom_field_id']
+
+        fyle_attribute = fyle_attribute.replace('_', ' ').title()
+
+        expense_custom_field_payload = {
+            'id': custom_field_id,
+            'name': fyle_attribute,
+            'type': 'SELECT',
+            'active': True,
+            'mandatory': False,
+            'placeholder': 'Select {0}'.format(fyle_attribute),
+            'default_value': None,
+            'options': fyle_expense_custom_field_options,
+            'code': None
+        }
+
+        return expense_custom_field_payload
+
+
+def upload_attributes_to_fyle(workspace_id: int, qbo_attribute_type: str, fyle_attribute_type: str):
+    """
+    Upload attributes to Fyle
+    """
+    fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
+
+    fyle_connection = FyleConnector(refresh_token=fyle_credentials.refresh_token, workspace_id=workspace_id)
+
+    qbo_attributes: List[DestinationAttribute] = DestinationAttribute.objects.filter(
+        workspace_id=workspace_id, attribute_type=qbo_attribute_type
+    )
+
+    qbo_attributes = remove_duplicates(qbo_attributes)
+
+    fyle_custom_field_payload = create_fyle_expense_custom_field_payload(
+        qbo_attributes=qbo_attributes,
+        workspace_id=workspace_id,
+        fyle_attribute=fyle_attribute_type
+    )
+
+    if fyle_custom_field_payload:
+        fyle_connection.connection.ExpensesCustomFields.post(fyle_custom_field_payload)
+        fyle_connection.sync_expense_custom_fields(active_only=True)
+
+    return qbo_attributes
+
+
+def auto_create_expense_fields_mappings(workspace_id: int, qbo_attribute_type: str, fyle_attribute_type: str):
+    """
+    Create Fyle Attributes Mappings
+    :return: mappings
+    """
+    try:
+        fyle_attributes = upload_attributes_to_fyle(workspace_id, qbo_attribute_type, fyle_attribute_type)
+        if fyle_attributes:
+            Mapping.bulk_create_mappings(fyle_attributes, fyle_attribute_type, qbo_attribute_type, workspace_id)
+
+    except WrongParamsError as exception:
+        logger.error(
+            'Error while creating %s workspace_id - %s in Fyle %s %s',
+            fyle_attribute_type, workspace_id, exception.message, {'error': exception.response}
+        )
+    except Exception:
+        error = traceback.format_exc()
+        error = {
+            'error': error
+        }
+        logger.error(
+            'Error while creating %s workspace_id - %s error: %s', fyle_attribute_type, workspace_id, error
+        )
+
+
+def async_auto_create_custom_field_mappings(workspace_id):
+    mapping_settings = MappingSetting.objects.filter(
+        is_custom=True,
+        import_to_fyle=True,
+        workspace_id=workspace_id
+    ).all()
+
+    if mapping_settings:
+        for mapping_setting in mapping_settings:
+            if mapping_setting.import_to_fyle:
+                auto_create_expense_fields_mappings(
+                    workspace_id, mapping_setting.destination_field, mapping_setting.source_field
+                )
+
+
+def schedule_fyle_attributes_creation(workspace_id: int):
+    mapping_settings = MappingSetting.objects.filter(
+        is_custom=True, import_to_fyle=True, workspace_id=workspace_id
+    ).all()
+    if mapping_settings:
+        schedule, _ = Schedule.objects.get_or_create(
+            func='apps.mappings.tasks.async_auto_create_custom_field_mappings',
+            args='{0}'.format(workspace_id),
+            defaults={
+                'schedule_type': Schedule.MINUTES,
+                'minutes': 24 * 60,
+                'next_run': datetime.now() + timedelta(hours=24)
+            }
+        )
+    else:
+        schedule: Schedule = Schedule.objects.filter(
+            func='apps.mappings.tasks.async_auto_create_custom_field_mappings',
+            args='{0}'.format(workspace_id)
         ).first()
 
         if schedule:

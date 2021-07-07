@@ -212,27 +212,34 @@ class FyleConnector:
         for custom_field in expense_custom_fields:
             count = 1
             expense_custom_field_attributes = []
+            options = []
 
             for option in custom_field['options']:
-                expense_custom_field_attributes.append({
-                    'attribute_type': custom_field['name'].upper().replace(' ', '_'),
-                    'display_name': custom_field['name'],
-                    'value': option,
-                    'source_id': 'expense_custom_field.{}.{}'.format(custom_field['name'].lower(), count)
-                })
-                count = count + 1
+                if option not in options:
+                    expense_custom_field_attributes.append({
+                        'attribute_type': custom_field['name'].upper().replace(' ', '_'),
+                        'display_name': custom_field['name'],
+                        'value': option,
+                        'source_id': 'expense_custom_field.{}.{}'.format(custom_field['name'].lower(), count),
+                        'detail': {
+                            'custom_field_id': custom_field['id']
+                        }
+                    })
+                    count = count + 1
+                options.append(option)
 
             ExpenseAttribute.bulk_create_or_update_expense_attributes(
-                expense_custom_field_attributes, custom_field['name'].upper().replace(' ', '_'),
-                self.workspace_id)
+                expense_custom_field_attributes, custom_field['name'].upper().replace(' ', '_'), self.workspace_id,
+                update=True
+            )
 
         return []
 
-    def sync_cost_centers(self, active_only: bool):
+    def sync_cost_centers(self):
         """
         Get cost centers from fyle
         """
-        cost_centers = self.connection.CostCenters.get(active_only=active_only)['data']
+        cost_centers = self.connection.CostCenters.get_all()
 
         cost_center_attributes = []
 
@@ -320,7 +327,7 @@ class FyleConnector:
             logger.exception(exception)
 
         try:
-            self.sync_cost_centers(active_only=True)
+            self.sync_cost_centers()
         except Exception as exception:
             logger.exception(exception)
 
