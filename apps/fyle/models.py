@@ -124,7 +124,7 @@ class Expense(models.Model):
                     'expense_updated_at': expense['updated_at'],
                     'fund_source': expense['fund_source'],
                     'verified_at': _format_date(expense['verified_at']),
-                    'custom_properties': expense_custom_properties
+                    'custom_properties': expense_custom_properties if expense_custom_properties else {}
                 }
             )
             if not ExpenseGroup.objects.filter(expenses__id=expense_object.id).first():
