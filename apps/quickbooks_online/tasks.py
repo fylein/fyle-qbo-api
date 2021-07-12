@@ -227,6 +227,7 @@ def create_bill(expense_group, task_log_id):
 
             task_log.detail = created_bill
             task_log.bill = bill_object
+            task_log.quickbooks_errors = None
             task_log.status = 'COMPLETE'
 
             task_log.save()
@@ -419,6 +420,7 @@ def create_cheque(expense_group, task_log_id):
 
             task_log.detail = created_cheque
             task_log.cheque = cheque_object
+            task_log.quickbooks_errors = None
             task_log.status = 'COMPLETE'
 
             task_log.save()
@@ -526,6 +528,7 @@ def create_qbo_expense(expense_group, task_log_id):
 
             task_log.detail = created_qbo_expense
             task_log.qbo_expense = qbo_expense_object
+            task_log.quickbooks_errors = None
             task_log.status = 'COMPLETE'
 
             task_log.save()
@@ -645,6 +648,7 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id):
 
             task_log.detail = created_credit_card_purchase
             task_log.credit_card_purchase = credit_card_purchase_object
+            task_log.quickbooks_errors = None
             task_log.status = 'COMPLETE'
 
             task_log.save()
@@ -757,6 +761,7 @@ def create_journal_entry(expense_group, task_log_id):
 
             task_log.detail = created_journal_entry
             task_log.journal_entry = journal_entry_object
+            task_log.quickbooks_errors = None
             task_log.status = 'COMPLETE'
 
             task_log.save()
@@ -866,6 +871,7 @@ def create_bill_payment(workspace_id):
 
                         task_log.detail = created_bill_payment
                         task_log.bill_payment = bill_payment_object
+                        task_log.quickbooks_errors = None
                         task_log.status = 'COMPLETE'
 
                         task_log.save()
