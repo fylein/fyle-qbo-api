@@ -87,15 +87,9 @@ def auto_create_project_mappings(workspace_id: int):
     """
     try:
         fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
-        qbo_credentials: QBOCredential = QBOCredential.objects.get(workspace_id=workspace_id)
 
         fyle_connection = FyleConnector(
             refresh_token=fyle_credentials.refresh_token,
-            workspace_id=workspace_id
-        )
-
-        qbo_connection = QBOConnector(
-            credentials_object=qbo_credentials,
             workspace_id=workspace_id
         )
 
