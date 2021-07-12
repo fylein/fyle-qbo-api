@@ -100,11 +100,12 @@ def auto_create_project_mappings(workspace_id: int):
         )
 
         fyle_connection.sync_projects()
-        qbo_connection.sync_customers()
 
         mapping_setting = MappingSetting.objects.get(
             source_field='PROJECT', workspace_id=workspace_id
         )
+
+        sync_qbo_attribute(mapping_setting.destination_field, workspace_id)
 
         post_projects_in_batches(fyle_connection, workspace_id, mapping_setting.destination_field)
 
@@ -335,6 +336,20 @@ def schedule_auto_map_ccc_employees(workspace_id: str):
             schedule.delete()
 
 
+def sync_qbo_attribute(qbo_attribute_type: str, workspace_id: int):
+    qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
+
+    if qbo_attribute_type == 'CUSTOMER':
+        qbo_connection.sync_customers()
+
+    elif qbo_attribute_type == 'DEPARTMENT':
+        qbo_connection.sync_departments()
+
+    elif qbo_attribute_type == 'CLASS':
+        qbo_connection.sync_classes()
+
+
 def create_fyle_cost_centers_payload(qbo_attributes: List[DestinationAttribute], existing_fyle_cost_centers: list):
     """
     Create Fyle Cost Centers Payload from QBO Objects
@@ -390,15 +405,9 @@ def auto_create_cost_center_mappings(workspace_id):
     """
     try:
         fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
-        qbo_credentials: QBOCredential = QBOCredential.objects.get(workspace_id=workspace_id)
 
         fyle_connection = FyleConnector(
             refresh_token=fyle_credentials.refresh_token,
-            workspace_id=workspace_id
-        )
-
-        qbo_connection = QBOConnector(
-            credentials_object=qbo_credentials,
             workspace_id=workspace_id
         )
 
@@ -408,14 +417,7 @@ def auto_create_cost_center_mappings(workspace_id):
 
         fyle_connection.sync_cost_centers()
 
-        if mapping_setting.destination_field == 'CUSTOMER':
-            qbo_connection.sync_customers()
-
-        elif mapping_setting.destination_field == 'DEPARTMENT':
-            qbo_connection.sync_departments()
-
-        elif mapping_setting.destination_field == 'CLASS':
-            qbo_connection.sync_classes()
+        sync_qbo_attribute(mapping_setting.destination_field, workspace_id)
 
         post_cost_centers_in_batches(fyle_connection, workspace_id, mapping_setting.destination_field)
 
@@ -557,6 +559,7 @@ def async_auto_create_custom_field_mappings(workspace_id):
     if mapping_settings:
         for mapping_setting in mapping_settings:
             if mapping_setting.import_to_fyle:
+                sync_qbo_attribute(mapping_setting.destination_field, workspace_id)
                 auto_create_expense_fields_mappings(
                     workspace_id, mapping_setting.destination_field, mapping_setting.source_field
                 )
