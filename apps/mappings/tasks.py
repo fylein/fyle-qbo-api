@@ -71,8 +71,7 @@ def post_projects_in_batches(fyle_connection: FyleConnector, workspace_id: int, 
 
         paginated_qbo_attributes = remove_duplicates(paginated_qbo_attributes)
 
-        fyle_payload: List[Dict] = create_fyle_projects_payload(
-            paginated_qbo_attributes, existing_project_names, workspace_id)
+        fyle_payload: List[Dict] = create_fyle_projects_payload(paginated_qbo_attributes, existing_project_names)
         if fyle_payload:
             fyle_connection.connection.Projects.post(fyle_payload)
             fyle_connection.sync_projects()
