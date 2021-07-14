@@ -102,7 +102,8 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
                 and general_settings_payload['corporate_credit_card_expenses_object'] else None,
             'sync_fyle_to_qbo_payments': general_settings_payload['sync_fyle_to_qbo_payments'],
             'sync_qbo_to_fyle_payments': general_settings_payload['sync_qbo_to_fyle_payments'],
-            'map_merchant_to_vendor': map_merchant_to_vendor
+            'map_merchant_to_vendor': map_merchant_to_vendor,
+            'je_single_credit_line': general_settings_payload['je_single_credit_line']
         }
     )
 

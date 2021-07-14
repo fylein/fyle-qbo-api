@@ -61,6 +61,7 @@ class WorkspaceGeneralSettings(models.Model):
     sync_fyle_to_qbo_payments = models.BooleanField(default=False, help_text='Auto Sync Payments from Fyle to QBO')
     sync_qbo_to_fyle_payments = models.BooleanField(default=False, help_text='Auto Sync Payments from QBO to Fyle')
     category_sync_version = models.CharField(default='v1', max_length=50, help_text='Category sync version')
+    je_single_credit_line = models.BooleanField(default=False, help_text='Single Credit Line for Journal Entries')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 

@@ -598,17 +598,45 @@ class QBOConnector:
         return created_credit_card_purchase
 
     @staticmethod
-    def __construct_journal_entry_lineitems(journal_entry_lineitems: List[JournalEntryLineitem],
-                                            posting_type) -> List[Dict]:
+    def __group_journal_entry_credits(journal_entry_lineitems: List[JournalEntryLineitem]) -> List[Dict]:
+        total_sum = sum(line.amount for line in journal_entry_lineitems)
+
+        return [{
+            'DetailType': 'JournalEntryLineDetail',
+            'Description': 'Total',
+            'Amount': total_sum,
+            'JournalEntryLineDetail': {
+                'PostingType': 'Credit',
+                'AccountRef': {
+                    'value': journal_entry_lineitems[0].debit_account_id
+                },
+                'DepartmentRef': {
+                    'value': journal_entry_lineitems[0].department_id
+                },
+                'ClassRef': {
+                    'value': journal_entry_lineitems[0].class_id
+                },
+                'Entity': {
+                    'EntityRef': {
+                        'value': journal_entry_lineitems[0].entity_id
+                    },
+                    'Type': journal_entry_lineitems[0].entity_type,
+                }
+            }
+        }]
+
+    def __construct_journal_entry_lineitems(self, journal_entry_lineitems: List[JournalEntryLineitem],
+        posting_type, single_credit_line: bool = False) -> List[Dict]:
         """
         Create journal_entry line items
         :param journal_entry_lineitems: list of journal entry line items extracted from database
         :return: constructed line items
         """
+        if single_credit_line:
+            return self.__group_journal_entry_credits(journal_entry_lineitems)
         lines = []
 
         for line in journal_entry_lineitems:
-
             account_ref = None
             if posting_type == 'Debit':
                 account_ref = line.account_id
@@ -642,14 +670,15 @@ class QBOConnector:
 
         return lines
 
-    def __construct_journal_entry(self, journal_entry: JournalEntry,
-                                  journal_entry_lineitems: List[JournalEntryLineitem]) -> Dict:
+    def __construct_journal_entry(self,
+        journal_entry: JournalEntry, journal_entry_lineitems: List[JournalEntryLineitem],
+        single_credit_line: bool) -> Dict:
         """
         Create a journal_entry
         :param journal_entry: journal_entry object extracted from database
         :return: constructed journal_entry
         """
-        credit_line = self.__construct_journal_entry_lineitems(journal_entry_lineitems, 'Credit')
+        credit_line = self.__construct_journal_entry_lineitems(journal_entry_lineitems, 'Credit', single_credit_line)
         debit_line = self.__construct_journal_entry_lineitems(journal_entry_lineitems, 'Debit')
         lines = []
         lines.extend(credit_line)
@@ -665,11 +694,13 @@ class QBOConnector:
         }
         return journal_entry_payload
 
-    def post_journal_entry(self, journal_entry: JournalEntry, journal_entry_lineitems: List[JournalEntryLineitem]):
+    def post_journal_entry(self, journal_entry: JournalEntry, journal_entry_lineitems: List[JournalEntryLineitem],
+        single_credit_line: bool):
         """
         Post journal entries to QBO
         """
-        journal_entry_payload = self.__construct_journal_entry(journal_entry, journal_entry_lineitems)
+        journal_entry_payload = self.__construct_journal_entry(
+            journal_entry, journal_entry_lineitems, single_credit_line)
         created_journal_entry = self.connection.journal_entries.post(journal_entry_payload)
         return created_journal_entry
 
