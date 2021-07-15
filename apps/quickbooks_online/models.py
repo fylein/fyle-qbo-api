@@ -183,7 +183,7 @@ class Bill(models.Model):
 
         expense = expense_group.expenses.first()
 
-        department_id = get_department_id_or_none(expense_group)
+        department_id = get_department_id_or_none(expense_group, expense)
 
         general_mappings = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
 
@@ -315,7 +315,7 @@ class Cheque(models.Model):
 
         private_note = construct_private_note(expense_group)
 
-        department_id = get_department_id_or_none(expense_group)
+        department_id = get_department_id_or_none(expense_group, expense)
 
         cheque_object, _ = Cheque.objects.update_or_create(
             expense_group=expense_group,
@@ -434,7 +434,7 @@ class QBOExpense(models.Model):
 
         private_note = construct_private_note(expense_group)
 
-        department_id = get_department_id_or_none(expense_group)
+        department_id = get_department_id_or_none(expense_group, expense)
 
         qbo_expense_object, _ = QBOExpense.objects.update_or_create(
             expense_group=expense_group,
@@ -550,7 +550,7 @@ class CreditCardPurchase(models.Model):
         expense = expense_group.expenses.first()
         general_mappings = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
 
-        department_id = get_department_id_or_none(expense_group)
+        department_id = get_department_id_or_none(expense_group, expense)
 
         private_note = construct_private_note(expense_group)
 
@@ -789,7 +789,7 @@ class JournalEntryLineitem(models.Model):
 
             customer_id = get_customer_id_or_none(expense_group, lineitem)
 
-            department_id = get_department_id_or_none(expense_group)
+            department_id = get_department_id_or_none(expense_group, lineitem)
 
             journal_entry_lineitem_object, _ = JournalEntryLineitem.objects.update_or_create(
                 journal_entry=qbo_journal_entry,
@@ -849,7 +849,7 @@ class BillPayment(models.Model):
         for expense in expenses:
             total_amount = total_amount + expense.amount
 
-        department_id = get_department_id_or_none(expense_group)
+        department_id = get_department_id_or_none(expense_group, expense)
 
         vendor_id = Mapping.objects.get(
                 source_type='EMPLOYEE',
