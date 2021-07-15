@@ -751,8 +751,8 @@ def create_journal_entry(expense_group, task_log_id):
                 expense_group
             )
 
-            created_journal_entry = qbo_connection.post_journal_entry(journal_entry_object,
-                                                                      journal_entry_lineitems_objects)
+            created_journal_entry = qbo_connection.post_journal_entry(
+                journal_entry_object, journal_entry_lineitems_objects, general_settings.je_single_credit_line)
 
             task_log.detail = created_journal_entry
             task_log.journal_entry = journal_entry_object
