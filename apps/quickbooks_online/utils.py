@@ -603,7 +603,7 @@ class QBOConnector:
 
         return [{
             'DetailType': 'JournalEntryLineDetail',
-            'Description': 'Total',
+            'Description': 'Total Amount',
             'Amount': total_sum,
             'JournalEntryLineDetail': {
                 'PostingType': 'Credit',
@@ -611,10 +611,10 @@ class QBOConnector:
                     'value': journal_entry_lineitems[0].debit_account_id
                 },
                 'DepartmentRef': {
-                    'value': journal_entry_lineitems[0].department_id
+                    'value': None
                 },
                 'ClassRef': {
-                    'value': journal_entry_lineitems[0].class_id
+                    'value': None
                 },
                 'Entity': {
                     'EntityRef': {
