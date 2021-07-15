@@ -118,7 +118,7 @@ def get_customer_id_or_none(expense_group: ExpenseGroup, lineitem: Expense):
     return customer_id
 
 
-def get_department_id_or_none(expense_group: ExpenseGroup, lineitem: Expense = None):
+def get_department_id_or_none(expense_group: ExpenseGroup, lineitem: Expense):
     department_setting: MappingSetting = MappingSetting.objects.filter(
         workspace_id=expense_group.workspace_id,
         destination_field='DEPARTMENT'
