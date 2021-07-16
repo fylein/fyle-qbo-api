@@ -76,7 +76,7 @@ class QBOConnector:
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
         if general_settings:
             category_sync_version = general_settings.category_sync_version
-        
+
         account_attributes = {
             'account': [],
             'credit_card_account': [],
@@ -87,56 +87,57 @@ class QBOConnector:
         for account in accounts:
             if account['AccountType'] == 'Expense':
                 account_attributes['account'].append({
-                        'attribute_type': 'ACCOUNT',
-                        'display_name': 'Account',
-                        'value': unidecode.unidecode(u'{0}'.format(
-                            account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])).replace('/', '-'),
-                        'destination_id': account['Id'],
-                        'active': account['Active'],
-                        'detail': {
-                            'fully_qualified_name': account['FullyQualifiedName']
-                        }
-                    })
+                    'attribute_type': 'ACCOUNT',
+                    'display_name': 'Account',
+                    'value': unidecode.unidecode(u'{0}'.format(
+                        account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])).replace(
+                        '/', '-'),
+                    'destination_id': account['Id'],
+                    'active': account['Active'],
+                    'detail': {
+                        'fully_qualified_name': account['FullyQualifiedName']
+                    }
+                })
 
             elif account['AccountType'] == 'Credit Card':
                 account_attributes['credit_card_account'].append({
-                        'attribute_type': 'CREDIT_CARD_ACCOUNT',
-                        'display_name': 'Credit Card Account',
-                        'value': unidecode.unidecode(u'{0}'.format(
-                            account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])),
-                        'destination_id': account['Id'],
-                        'active': account['Active'],
-                        'detail': {
-                            'fully_qualified_name': account['FullyQualifiedName']
-                        }
-                    })
+                    'attribute_type': 'CREDIT_CARD_ACCOUNT',
+                    'display_name': 'Credit Card Account',
+                    'value': unidecode.unidecode(u'{0}'.format(
+                        account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])),
+                    'destination_id': account['Id'],
+                    'active': account['Active'],
+                    'detail': {
+                        'fully_qualified_name': account['FullyQualifiedName']
+                    }
+                })
 
             elif account['AccountType'] == 'Bank':
                 account_attributes['bank_account'].append({
-                        'attribute_type': 'BANK_ACCOUNT',
-                        'display_name': 'Bank Account',
-                        'value': unidecode.unidecode(u'{0}'.format(
-                            account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])),
-                        'destination_id': account['Id'],
-                        'active': account['Active'],
-                        'detail': {
-                            'fully_qualified_name': account['FullyQualifiedName']
-                        }
-                    })
-                    
+                    'attribute_type': 'BANK_ACCOUNT',
+                    'display_name': 'Bank Account',
+                    'value': unidecode.unidecode(u'{0}'.format(
+                        account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])),
+                    'destination_id': account['Id'],
+                    'active': account['Active'],
+                    'detail': {
+                        'fully_qualified_name': account['FullyQualifiedName']
+                    }
+                })
+
             else:
                 account_attributes['accounts_payable'].append({
-                        'attribute_type': 'ACCOUNTS_PAYABLE',
-                        'display_name': 'Accounts Payable',
-                        'value': unidecode.unidecode(u'{0}'.format(
-                            account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])),
-                        'destination_id': account['Id'],
-                        'active': account['Active'],
-                        'detail': {
-                            'fully_qualified_name': account['FullyQualifiedName']
-                        }
-                    })
-            
+                    'attribute_type': 'ACCOUNTS_PAYABLE',
+                    'display_name': 'Accounts Payable',
+                    'value': unidecode.unidecode(u'{0}'.format(
+                        account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])),
+                    'destination_id': account['Id'],
+                    'active': account['Active'],
+                    'detail': {
+                        'fully_qualified_name': account['FullyQualifiedName']
+                    }
+                })
+
         for attribute_type, attribute in account_attributes.items():
             if attribute:
                 DestinationAttribute.bulk_create_or_update_destination_attributes(
@@ -156,7 +157,7 @@ class QBOConnector:
             department_attributes.append({
                 'attribute_type': 'DEPARTMENT',
                 'display_name': 'Department',
-                'value': department['Name'],
+                'value': department['FullyQualifiedName'],
                 'destination_id': department['Id']
             })
 
@@ -193,7 +194,7 @@ class QBOConnector:
 
         DestinationAttribute.bulk_create_or_update_destination_attributes(
             vendor_attributes, 'VENDOR', self.workspace_id, True)
-            
+
         return []
 
     def create_vendor_destionation_attribute(self, vendor):
@@ -220,7 +221,7 @@ class QBOConnector:
         vendor = {
             'GivenName': vendor_name.split(' ')[0] if email else None,
             'FamilyName': (
-                vendor_name.split(' ')[-1]if len(vendor_name.split(' ')) > 1 else ''
+                vendor_name.split(' ')[-1] if len(vendor_name.split(' ')) > 1 else ''
             ) if email else None,
             'DisplayName': vendor_name,
             'PrimaryEmailAddr': {
@@ -274,7 +275,7 @@ class QBOConnector:
             class_attributes.append({
                 'attribute_type': 'CLASS',
                 'display_name': 'class',
-                'value': qbo_class['Name'],
+                'value': qbo_class['FullyQualifiedName'],
                 'destination_id': qbo_class['Id']
             })
 
@@ -305,7 +306,6 @@ class QBOConnector:
             DestinationAttribute.bulk_create_or_update_destination_attributes(
                 customer_attributes, 'CUSTOMER', self.workspace_id, True)
         return []
-
 
     def sync_dimensions(self):
 
@@ -339,7 +339,6 @@ class QBOConnector:
         except Exception as exception:
             logger.exception(exception)
 
-    
     @staticmethod
     def purchase_object_payload(purchase_object, line, payment_type, account_ref, doc_number: str = None):
         """
@@ -626,7 +625,7 @@ class QBOConnector:
         }]
 
     def __construct_journal_entry_lineitems(self, journal_entry_lineitems: List[JournalEntryLineitem],
-        posting_type, single_credit_line: bool = False) -> List[Dict]:
+                                            posting_type, single_credit_line: bool = False) -> List[Dict]:
         """
         Create journal_entry line items
         :param journal_entry_lineitems: list of journal entry line items extracted from database
@@ -671,8 +670,8 @@ class QBOConnector:
         return lines
 
     def __construct_journal_entry(self,
-        journal_entry: JournalEntry, journal_entry_lineitems: List[JournalEntryLineitem],
-        single_credit_line: bool) -> Dict:
+                                  journal_entry: JournalEntry, journal_entry_lineitems: List[JournalEntryLineitem],
+                                  single_credit_line: bool) -> Dict:
         """
         Create a journal_entry
         :param journal_entry: journal_entry object extracted from database
@@ -695,7 +694,7 @@ class QBOConnector:
         return journal_entry_payload
 
     def post_journal_entry(self, journal_entry: JournalEntry, journal_entry_lineitems: List[JournalEntryLineitem],
-        single_credit_line: bool):
+                           single_credit_line: bool):
         """
         Post journal entries to QBO
         """
