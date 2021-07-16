@@ -274,7 +274,7 @@ class QBOConnector:
             class_attributes.append({
                 'attribute_type': 'CLASS',
                 'display_name': 'class',
-                'value': qbo_class['Name'],
+                'value': qbo_class['FullyQualifiedName'],
                 'destination_id': qbo_class['Id']
             })
 
