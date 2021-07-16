@@ -156,7 +156,7 @@ class QBOConnector:
             department_attributes.append({
                 'attribute_type': 'DEPARTMENT',
                 'display_name': 'Department',
-                'value': department['Name'],
+                'value': department['FullyQualifiedName'],
                 'destination_id': department['Id']
             })
 
