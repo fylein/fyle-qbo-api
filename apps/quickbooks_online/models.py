@@ -789,7 +789,7 @@ class JournalEntryLineitem(models.Model):
 
             customer_id = get_customer_id_or_none(expense_group, lineitem)
 
-            department_id = get_department_id_or_none(expense_group)
+            department_id = get_department_id_or_none(expense_group, lineitem)
 
             journal_entry_lineitem_object, _ = JournalEntryLineitem.objects.update_or_create(
                 journal_entry=qbo_journal_entry,
