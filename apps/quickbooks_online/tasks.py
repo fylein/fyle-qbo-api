@@ -845,6 +845,9 @@ def create_bill_payment(workspace_id):
                     }
                 )
                 try:
+                    qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
+                    qbo_connection = QBOConnector(qbo_credentials, workspace_id)
+
                     with transaction.atomic():
 
                         bill_payment_object = BillPayment.create_bill_payment(bill.expense_group)
@@ -856,10 +859,6 @@ def create_bill_payment(workspace_id):
                         bill_payment_lineitems_objects = BillPaymentLineitem.create_bill_payment_lineitems(
                             bill_payment_object.expense_group, linked_transaction_id
                         )
-
-                        qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
-
-                        qbo_connection = QBOConnector(qbo_credentials, workspace_id)
 
                         created_bill_payment = qbo_connection.post_bill_payment(
                             bill_payment_object, bill_payment_lineitems_objects
