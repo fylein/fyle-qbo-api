@@ -163,7 +163,6 @@ class Bill(models.Model):
     transaction_date = models.DateField(help_text='Bill transaction date')
     currency = models.CharField(max_length=255, help_text='Bill Currency')
     private_note = models.TextField(help_text='Bill Description')
-    bill_number = models.CharField(max_length=255)
     payment_synced = models.BooleanField(help_text='Payment synced status', default=False)
     paid_on_qbo = models.BooleanField(help_text='Payment status in QBO', default=False)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
@@ -210,8 +209,7 @@ class Bill(models.Model):
                 'department_id': department_id,
                 'transaction_date': get_transaction_date(expense_group),
                 'private_note': private_note,
-                'currency': expense.currency,
-                'bill_number': ''
+                'currency': expense.currency
             }
         )
         return bill_object
@@ -293,7 +291,6 @@ class Cheque(models.Model):
     transaction_date = models.DateField(help_text='Cheque transaction date')
     currency = models.CharField(max_length=255, help_text='Cheque Currency')
     private_note = models.TextField(help_text='Cheque Description')
-    cheque_number = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
@@ -330,8 +327,7 @@ class Cheque(models.Model):
                 'department_id': department_id,
                 'transaction_date': get_transaction_date(expense_group),
                 'private_note': private_note,
-                'currency': expense.currency,
-                'cheque_number': ''
+                'currency': expense.currency
             }
         )
         return cheque_object
@@ -677,7 +673,6 @@ class JournalEntry(models.Model):
     transaction_date = models.DateField(help_text='JournalEntry transaction date')
     currency = models.CharField(max_length=255, help_text='JournalEntry Currency')
     private_note = models.TextField(help_text='JournalEntry Description')
-    journal_entry_number = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
@@ -700,8 +695,7 @@ class JournalEntry(models.Model):
             defaults={
                 'transaction_date': get_transaction_date(expense_group),
                 'private_note': private_note,
-                'currency': expense.currency,
-                'journal_entry_number': ''
+                'currency': expense.currency
             }
         )
         return journal_entry_object
@@ -841,14 +835,13 @@ class BillPayment(models.Model):
         """
         description = expense_group.description
 
-        expense = expense_group.expenses.first()
-
         expenses: List[Expense] = expense_group.expenses.all()
 
         total_amount = 0
         for expense in expenses:
             total_amount = total_amount + expense.amount
 
+        expense = expense_group.expenses.first()
         department_id = get_department_id_or_none(expense_group)
 
         vendor_id = Mapping.objects.get(
