@@ -31,6 +31,24 @@ BEGIN
   RAISE NOTICE 'Deleted % bills', rcount;
 
   DELETE
+  FROM qbo_expense_lineitems qel
+  WHERE qel.qbo_expense_id IN (
+      SELECT qe.id FROM qbo_expenses qe WHERE qe.expense_group_id IN (
+          SELECT eg.id FROM expense_groups eg WHERE eg.workspace_id = _workspace_id
+      )
+  );
+  GET DIAGNOSTICS rcount = ROW_COUNT;
+  RAISE NOTICE 'Deleted % qbo_expense_lineitems', rcount;
+
+  DELETE
+  FROM qbo_expenses qe
+  WHERE qe.expense_group_id IN (
+      SELECT eg.id FROM expense_groups eg WHERE eg.workspace_id = _workspace_id
+  );
+  GET DIAGNOSTICS rcount = ROW_COUNT;
+  RAISE NOTICE 'Deleted % qbo_expenses', rcount;
+
+  DELETE
   FROM cheque_lineitems cl
   WHERE cl.cheque_id IN (
       SELECT c.id FROM cheques c WHERE c.expense_group_id IN (
