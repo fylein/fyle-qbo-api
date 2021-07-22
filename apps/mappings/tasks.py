@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 
 from typing import List, Dict
 
-from django.db.models import Q
 from django_q.models import Schedule
 
 from fyle_accounting_mappings.models import MappingSetting, Mapping, DestinationAttribute, ExpenseAttribute
@@ -246,12 +245,7 @@ def schedule_categories_creation(import_categories, workspace_id):
 def async_auto_map_employees(workspace_id: int):
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
     employee_mapping_preference = general_settings.auto_map_employees
-
-    mapping_setting = MappingSetting.objects.filter(
-        ~Q(destination_field='CREDIT_CARD_ACCOUNT'),
-        source_field='EMPLOYEE', workspace_id=workspace_id
-    ).first()
-    destination_type = mapping_setting.destination_field
+    destination_type = general_settings.employee_field_mapping
 
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
     fyle_connection = FyleConnector(refresh_token=fyle_credentials.refresh_token, workspace_id=workspace_id)

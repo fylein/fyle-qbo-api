@@ -12,7 +12,7 @@ from django.db import models
 from django.db.models import Count, Q
 
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
-from fyle_accounting_mappings.models import MappingSetting, ExpenseAttribute
+from fyle_accounting_mappings.models import ExpenseAttribute
 
 ALLOWED_FIELDS = [
     'employee_email', 'report_id', 'claim_number', 'settlement_id',
