@@ -256,7 +256,7 @@ class BillPaymentAccountView(generics.ListCreateAPIView):
 
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
-            accounts = qbo_connector.sync_accounts(account_type='Bank')
+            accounts = qbo_connector.sync_accounts()
 
             return Response(
                 data=self.serializer_class(accounts, many=True).data,
