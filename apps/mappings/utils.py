@@ -36,8 +36,9 @@ class MappingUtils:
             'default_ccc_vendor_id': None
         }
 
-        if (general_settings.employee_field_mapping == 'VENDOR' or
-                general_settings.corporate_credit_card_expenses_object == 'BILL'):
+        if ((general_settings.employee_field_mapping == 'VENDOR' or
+                general_settings.corporate_credit_card_expenses_object == 'BILL')
+                and general_settings.reimbursable_expenses_object != 'EXPENSE'):
             assert_valid('accounts_payable_name' in general_mapping and general_mapping['accounts_payable_name'],
                          'account payable account name field is blank')
             assert_valid('accounts_payable_id' in general_mapping and general_mapping['accounts_payable_id'],
