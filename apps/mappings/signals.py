@@ -35,7 +35,7 @@ def run_pre_mapping_settings_triggers(sender, instance: MappingSetting, **kwargs
     :param instance: Row Instance of Sender Class
     :return: None
     """
-    default_attributes = ['EMPLOYEE', 'CATEGORY', 'PROJECT', 'COST_CENTER']
+    default_attributes = ['CATEGORY', 'PROJECT', 'COST_CENTER']
 
     instance.source_field = instance.source_field.upper().replace(' ', '_')
 

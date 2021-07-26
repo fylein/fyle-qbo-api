@@ -11,7 +11,7 @@ from django_q.models import Schedule
 
 from qbosdk.exceptions import WrongParamsError
 
-from fyle_accounting_mappings.models import Mapping, ExpenseAttribute, DestinationAttribute
+from fyle_accounting_mappings.models import Mapping, ExpenseAttribute, DestinationAttribute, EmployeeMapping
 
 from fyle_qbo_api.exceptions import BulkError
 
@@ -76,13 +76,13 @@ def load_attachments(qbo_connection: QBOConnector, ref_id: str, ref_type: str, e
 def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connection: QBOConnector,
                                       auto_map_employees_preference: str):
     try:
-        Mapping.objects.get(
-            destination_type='VENDOR',
-            source_type='EMPLOYEE',
-            source__value=expense_group.description.get('employee_email'),
+        vendor_mapping = EmployeeMapping.objects.get(
+            source_employee__value=expense_group.description.get('employee_email'),
             workspace_id=expense_group.workspace_id
-        )
-    except Mapping.DoesNotExist:
+        ).destination_vendor
+        if not vendor_mapping:
+            raise EmployeeMapping.DoesNotExist
+    except EmployeeMapping.DoesNotExist:
         source_employee = ExpenseAttribute.objects.get(
             workspace_id=expense_group.workspace_id,
             attribute_type='EMPLOYEE',
@@ -114,6 +114,7 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
                     create=True
                 )
 
+            # TODO: fix this, create a helper function in Accounting Mappings
             mapping = Mapping.create_or_update_mapping(
                 source_type='EMPLOYEE',
                 source_value=expense_group.description.get('employee_email'),
@@ -317,13 +318,19 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
     if not (general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE'
             and general_settings.map_merchant_to_vendor and expense_group.fund_source == 'CCC'):
         try:
-            Mapping.objects.get(
-                Q(destination_type='VENDOR') | Q(destination_type='EMPLOYEE'),
-                source_type='EMPLOYEE',
-                source__value=expense_group.description.get('employee_email'),
+            entity = EmployeeMapping.objects.get(
+                source_employee__value=expense_group.description.get('employee_email'),
                 workspace_id=expense_group.workspace_id
             )
-        except Mapping.DoesNotExist:
+
+            if general_settings.employee_mapping_field == 'EMPLOYEE':
+                entity = entity.destination_employee
+            else:
+                entity = entity.destination_vendor
+
+            if not entity:
+                raise EmployeeMapping.DoesNotExist
+        except EmployeeMapping.DoesNotExist:
             bulk_errors.append({
                 'row': None,
                 'expense_group_id': expense_group.id,
