@@ -6,8 +6,9 @@ from typing import List, Dict
 
 from django_q.models import Schedule
 
-from fyle_accounting_mappings.models import MappingSetting, Mapping, DestinationAttribute, ExpenseAttribute
 from fylesdk import WrongParamsError
+
+from fyle_accounting_mappings.models import MappingSetting, Mapping, DestinationAttribute, ExpenseAttribute, EmployeeMapping
 
 from apps.fyle.utils import FyleConnector
 from apps.mappings.models import GeneralMapping
@@ -242,6 +243,132 @@ def schedule_categories_creation(import_categories, workspace_id):
             schedule.delete()
 
 
+def get_existing_source_and_mappings(destination_type: str, workspace_id: int):
+    existing_mappings = EmployeeMapping.objects.filter(
+        workspace_id=workspace_id
+    ).all()
+
+    existing_source_ids = []
+    for mapping in existing_mappings:
+        destination = None
+        if destination_type == 'EMPLOYEE':
+            destination = mapping.destination_employee
+        elif destination_type == 'VENDOR':
+            destination = mapping.destination_vendor
+        elif destination_type == 'CREDIT_CARD_ACCOUNT':
+            destination = mapping.destination_card_account
+
+        if destination:
+            existing_source_ids.append(mapping.source_employee.id)
+
+    return existing_source_ids, existing_mappings
+
+
+def construct_mapping_payload(employee_source_attributes: list, employee_mapping_preference: str,
+                              destination_id_value_map: dict, destination_type: str, workspace_id: int):
+    existing_source_ids, _ = get_existing_source_and_mappings(destination_type, workspace_id)
+
+    mapping_batch = []
+    for source_attribute in employee_source_attributes:
+        # Ignoring already present mappings
+        if source_attribute.id not in existing_source_ids:
+            if employee_mapping_preference == 'EMAIL':
+                source_value = source_attribute.value
+            elif employee_mapping_preference == 'NAME':
+                source_value = source_attribute.detail['full_name']
+            elif employee_mapping_preference == 'EMPLOYEE_CODE':
+                source_value = source_attribute.detail['employee_code']
+
+            # Checking exact match
+            if source_value.lower() in destination_id_value_map:
+                destination = {}
+                if destination_type == 'EMPLOYEE':
+                    destination['destination_employee_id'] = destination_id_value_map[source_value.lower()]
+                elif destination_type == 'VENDOR':
+                    destination['destination_vendor_id'] = destination_id_value_map[source_value.lower()]
+                elif destination_type == 'CREDIT_CARD_ACCOUNT':
+                    destination['destination_card_account_id'] = destination_id_value_map[source_value.lower()]
+
+                mapping_batch.append(
+                    EmployeeMapping(
+                        source_employee_id=source_attribute.id,
+                        workspace_id=workspace_id,
+                        **destination
+                    )
+                )
+
+    return mapping_batch
+
+
+def create_mappings_and_update_flag(mapping_batch: list, set_auto_mapped_flag: bool = True):
+    mappings = EmployeeMapping.objects.bulk_create(mapping_batch, batch_size=50)
+
+    if set_auto_mapped_flag:
+        expense_attributes_to_be_updated = []
+
+        for mapping in mappings:
+            expense_attributes_to_be_updated.append(
+                ExpenseAttribute(
+                    id=mapping.source_employee.id,
+                    auto_mapped=True
+                )
+            )
+
+        if expense_attributes_to_be_updated:
+            ExpenseAttribute.objects.bulk_update(
+                expense_attributes_to_be_updated, fields=['auto_mapped'], batch_size=50)
+
+    return mappings
+
+
+def auto_map_employees(destination_type: str, employee_mapping_preference: str, workspace_id: int):
+    """
+    Auto map employees
+    :param destination_type: Destination Type of mappings
+    :param employee_mapping_preference: Employee Mapping Preference
+    :param workspace_id: Workspace ID
+    """
+    # Filtering only not mapped destination attributes
+    employee_destination_attributes = DestinationAttribute.objects.filter(
+        attribute_type=destination_type, workspace_id=workspace_id).all()
+
+    attribute_values = ''
+    destination_id_value_map = {}
+    for destination_employee in employee_destination_attributes:
+        value_to_be_appended = None
+        if employee_mapping_preference == 'EMAIL' and destination_employee.detail \
+                and destination_employee.detail['email']:
+            value_to_be_appended = destination_employee.detail['email'].replace('*', '')
+        elif employee_mapping_preference in ['NAME', 'EMPLOYEE_CODE']:
+            value_to_be_appended = destination_employee.value.replace('*', '')
+
+        if value_to_be_appended:
+            attribute_values = '{}|{}'.format(attribute_values, value_to_be_appended.lower())
+            destination_id_value_map[value_to_be_appended.lower()] = destination_employee.id
+
+    if employee_mapping_preference == 'EMAIL':
+        filter_on = 'value__iregex'
+    elif employee_mapping_preference == 'NAME':
+        filter_on = 'detail__full_name__iregex'
+    elif employee_mapping_preference == 'EMPLOYEE_CODE':
+        filter_on = 'detail__employee_code__iregex'
+
+    destination_values_filter = {
+        filter_on: '({})'.format(attribute_values[1:])  # removing first character |
+    }
+
+    employee_source_attributes = ExpenseAttribute.objects.filter(
+        attribute_type='EMPLOYEE', workspace_id=workspace_id, auto_mapped=False, **destination_values_filter
+    ).all()
+
+    mapping_batch = construct_mapping_payload(
+        employee_source_attributes, employee_mapping_preference,
+        destination_id_value_map, destination_type, workspace_id
+    )
+
+    create_mappings_and_update_flag(mapping_batch)
+
+
 def async_auto_map_employees(workspace_id: int):
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
     employee_mapping_preference = general_settings.auto_map_employees
@@ -259,7 +386,7 @@ def async_auto_map_employees(workspace_id: int):
     else:
         qbo_connection.sync_vendors()
 
-    Mapping.auto_map_employees(destination_type, employee_mapping_preference, workspace_id)
+    auto_map_employees(destination_type, employee_mapping_preference, workspace_id)
 
 
 def schedule_auto_map_employees(employee_mapping_preference: str, workspace_id: str):
@@ -285,6 +412,55 @@ def schedule_auto_map_employees(employee_mapping_preference: str, workspace_id: 
             schedule.delete()
 
 
+def auto_map_ccc_employees(default_ccc_account_id: str, workspace_id: int):
+    """
+    Auto map ccc employees
+    :param default_ccc_account_id: Default CCC Account ID
+    :param workspace_id: Workspace ID
+    """
+    employee_source_attributes = ExpenseAttribute.objects.filter(
+        attribute_type='EMPLOYEE', workspace_id=workspace_id
+    ).all()
+
+    default_destination_attribute = DestinationAttribute.objects.filter(
+        destination_id=default_ccc_account_id, workspace_id=workspace_id, attribute_type='CREDIT_CARD_ACCOUNT'
+    ).first()
+
+    existing_source_ids, existing_mappings = get_existing_source_and_mappings('CREDIT_CARD_ACCOUNT', workspace_id)
+    existing_mappings_map = {mapping.source_employee_id: mapping.id for mapping in existing_mappings}
+
+    mapping_creation_batch = []
+    mapping_updation_batch = []
+    for source_employee in employee_source_attributes:
+        # Ignoring already present mappings
+        if source_employee.id not in existing_source_ids:
+            if source_employee.id in existing_mappings_map:
+                # If employee mapping row exists, then update it
+                mapping_updation_batch.append(
+                    EmployeeMapping(
+                        id=existing_mappings_map[source_employee.id],
+                        destination_card_account_id=default_destination_attribute.id
+                    )
+                )
+            else:
+                # If employee mapping row does not exist, then create it
+                mapping_creation_batch.append(
+                    EmployeeMapping(
+                        source_employee_id=source_employee.id,
+                        destination_card_account_id=default_destination_attribute.id,
+                        workspace_id=workspace_id
+                    )
+                )
+
+    if mapping_creation_batch:
+        EmployeeMapping.objects.bulk_create(mapping_creation_batch, batch_size=50)
+
+    if mapping_updation_batch:
+        EmployeeMapping.objects.bulk_update(
+            mapping_updation_batch, fields=['destination_card_account_id'], batch_size=50
+        )
+
+
 def async_auto_map_ccc_account(workspace_id: str):
     general_mappings = GeneralMapping.objects.filter(workspace_id=workspace_id).first()
     if general_mappings:
@@ -295,7 +471,7 @@ def async_auto_map_ccc_account(workspace_id: str):
             fyle_connection = FyleConnector(refresh_token=fyle_credentials.refresh_token, workspace_id=workspace_id)
             fyle_connection.sync_employees()
 
-            Mapping.auto_map_ccc_employees('CREDIT_CARD_ACCOUNT', default_ccc_account_id, workspace_id)
+            auto_map_ccc_employees(default_ccc_account_id, workspace_id)
 
 
 def schedule_auto_map_ccc_employees(workspace_id: str):
