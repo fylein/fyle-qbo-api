@@ -114,21 +114,17 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
                     create=True
                 )
 
-            # TODO: fix this, create a helper function in Accounting Mappings
-            mapping = Mapping.create_or_update_mapping(
-                source_type='EMPLOYEE',
-                source_value=expense_group.description.get('employee_email'),
-                destination_type='VENDOR',
-                destination_id=entity.destination_id,
-                destination_value=entity.value,
-                workspace_id=int(expense_group.workspace_id)
+            mapping = EmployeeMapping.create_or_update_employee_mapping(
+                source_employee_id=source_employee.id,
+                destination_vendor_id=entity.id,
+                workspace=expense_group.workspace
             )
 
-            mapping.source.auto_mapped = True
-            mapping.source.save()
+            mapping.source_employee.auto_mapped = True
+            mapping.source_employee.save()
 
-            mapping.destination.auto_created = True
-            mapping.destination.save()
+            mapping.destination_vendor.auto_created = True
+            mapping.destination_vendor.save()
         except WrongParamsError as bad_request:
             logger.error(bad_request.response)
 
@@ -323,7 +319,7 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                 workspace_id=expense_group.workspace_id
             )
 
-            if general_settings.employee_mapping_field == 'EMPLOYEE':
+            if general_settings.employee_field_mapping == 'EMPLOYEE':
                 entity = entity.destination_employee
             else:
                 entity = entity.destination_vendor

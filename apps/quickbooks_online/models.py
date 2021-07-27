@@ -429,7 +429,7 @@ class QBOExpense(models.Model):
         department_id = get_department_id_or_none(expense_group)
 
         workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
-        employee_mapping_field = workspace_general_settings.employee_mapping_field
+        employee_field_mapping = workspace_general_settings.employee_field_mapping
 
         entity = EmployeeMapping.objects.get(
             source_employee__value=description.get('employee_email'),
@@ -440,7 +440,7 @@ class QBOExpense(models.Model):
             expense_group=expense_group,
             defaults={
                 'expense_account_id': general_mappings.qbo_expense_account_id,
-                'entity_id': entity.destination_employee.destination_id if employee_mapping_field == 'EMPLOYEE' \
+                'entity_id': entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' \
                     else entity.destination_vendor.destination_id,
                 'department_id': department_id,
                 'transaction_date': get_transaction_date(expense_group),
@@ -568,7 +568,7 @@ class CreditCardPurchase(models.Model):
 
         else:
             workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
-            employee_mapping_field = workspace_general_settings.employee_mapping_field
+            employee_field_mapping = workspace_general_settings.employee_field_mapping
 
             entity = EmployeeMapping.objects.get(
                 source_employee__value=description.get('employee_email'),
@@ -589,7 +589,7 @@ class CreditCardPurchase(models.Model):
             defaults={
                 'ccc_account_id': ccc_account_id,
                 'department_id': department_id,
-                'entity_id': entity.destination_employee.destination_id if employee_mapping_field == 'EMPLOYEE' \
+                'entity_id': entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' \
                     else entity.destination_vendor.destination_id,
                 'transaction_date': get_transaction_date(expense_group),
                 'private_note': private_note,
@@ -741,7 +741,7 @@ class JournalEntryLineitem(models.Model):
         entity_type = None
 
         workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
-        employee_mapping_field = workspace_general_settings.employee_mapping_field
+        employee_field_mapping = workspace_general_settings.employee_field_mapping
 
         entity = EmployeeMapping.objects.get(
             source_employee__value=description.get('employee_email'),
@@ -749,10 +749,10 @@ class JournalEntryLineitem(models.Model):
         )
 
         if expense_group.fund_source == 'PERSONAL':
-            if employee_mapping_field == 'VENDOR':
+            if employee_field_mapping == 'VENDOR':
                 debit_account_id = GeneralMapping.objects.get(
                     workspace_id=expense_group.workspace_id).accounts_payable_id
-            elif employee_mapping_field == 'EMPLOYEE':
+            elif employee_field_mapping == 'EMPLOYEE':
                 debit_account_id = GeneralMapping.objects.get(
                     workspace_id=expense_group.workspace_id).bank_account_id
         elif expense_group.fund_source == 'CCC':
@@ -761,9 +761,9 @@ class JournalEntryLineitem(models.Model):
                 workspace_id=expense_group.workspace_id
             ).destination_card_account.destination_id
 
-        if employee_mapping_field == 'EMPLOYEE':
+        if employee_field_mapping == 'EMPLOYEE':
             entity_type = 'Employee'
-        elif employee_mapping_field == 'VENDOR':
+        elif employee_field_mapping == 'VENDOR':
             entity_type = 'Vendor'
 
         journal_entry_lineitem_objects = []
@@ -792,7 +792,7 @@ class JournalEntryLineitem(models.Model):
                     'debit_account_id': debit_account_id,
                     'account_id': account.destination.destination_id if account else None,
                     'class_id': class_id,
-                    'entity_id': entity.destination_employee.destination_id if employee_mapping_field == 'EMPLOYEE' \
+                    'entity_id': entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' \
                         else entity.destination_vendor.destination_id,
                     'entity_type': entity_type,
                     'customer_id': customer_id,
