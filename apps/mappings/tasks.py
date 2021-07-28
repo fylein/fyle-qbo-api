@@ -363,7 +363,7 @@ def create_mappings_and_update_flag(mapping_creation_batch: List[EmployeeMapping
             mapping_updation_batch, fields=[update_key], batch_size=50
         )
         for mapping in mapping_updation_batch:
-            mappings.extend(mapping)
+            mappings.append(mapping)
 
     expense_attributes_to_be_updated = []
 
