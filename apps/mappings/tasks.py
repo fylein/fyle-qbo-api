@@ -264,59 +264,117 @@ def get_existing_source_and_mappings(destination_type: str, workspace_id: int):
     return existing_source_ids, existing_mappings
 
 
-def construct_mapping_payload(employee_source_attributes: list, employee_mapping_preference: str,
-                              destination_id_value_map: dict, destination_type: str, workspace_id: int):
-    existing_source_ids, _ = get_existing_source_and_mappings(destination_type, workspace_id)
+def check_exact_matches(employee_mapping_preference: str, source_attribute: ExpenseAttribute,
+    destination_id_value_map: dict, destination_type: str):
+    """
+    Check if the source attribute matches with the destination attribute
+    :param employee_mapping_preference: Employee Mapping Preference
+    :param source_attribute: Source Attribute
+    :param destination_id_value_map: Destination ID Value Map
+    :param destination_type: Destination Type
+    :return: Destination Column and value if exact match found
+    """
+    source_value = ''
+    destination = {}
+    if employee_mapping_preference == 'EMAIL':
+        source_value = source_attribute.value
+    elif employee_mapping_preference == 'NAME':
+        source_value = source_attribute.detail['full_name']
+    elif employee_mapping_preference == 'EMPLOYEE_CODE':
+        source_value = source_attribute.detail['employee_code']
 
-    mapping_batch = []
+    # Checking exact match
+    if source_value.lower() in destination_id_value_map:
+        if destination_type == 'EMPLOYEE':
+            destination['destination_employee_id'] = destination_id_value_map[source_value.lower()]
+        elif destination_type == 'VENDOR':
+            destination['destination_vendor_id'] = destination_id_value_map[source_value.lower()]
+        elif destination_type == 'CREDIT_CARD_ACCOUNT':
+            destination['destination_card_account_id'] = destination_id_value_map[source_value.lower()]
+
+    return destination
+
+
+def construct_mapping_payload(employee_source_attributes: List[ExpenseAttribute], employee_mapping_preference: str,
+                              destination_id_value_map: dict, destination_type: str, workspace_id: int):
+    """
+    Construct mapping payload
+    :param employee_source_attributes: Employee Source Attributes
+    :param employee_mapping_preference: Employee Mapping Preference
+    :param destination_id_value_map: Destination ID Value Map
+    :param destination_type: Destination Type
+    :param workspace_id: Workspace ID
+    :return: mapping_creation_batch, mapping_updation_batch, update_key
+    """
+    existing_source_ids, existing_mappings = get_existing_source_and_mappings(destination_type, workspace_id)
+
+    mapping_creation_batch = []
+    mapping_updation_batch = []
+    existing_mappings_map = {mapping.source_employee_id: mapping.id for mapping in existing_mappings}
+
     for source_attribute in employee_source_attributes:
         # Ignoring already present mappings
         if source_attribute.id not in existing_source_ids:
-            if employee_mapping_preference == 'EMAIL':
-                source_value = source_attribute.value
-            elif employee_mapping_preference == 'NAME':
-                source_value = source_attribute.detail['full_name']
-            elif employee_mapping_preference == 'EMPLOYEE_CODE':
-                source_value = source_attribute.detail['employee_code']
-
-            # Checking exact match
-            if source_value.lower() in destination_id_value_map:
-                destination = {}
-                if destination_type == 'EMPLOYEE':
-                    destination['destination_employee_id'] = destination_id_value_map[source_value.lower()]
-                elif destination_type == 'VENDOR':
-                    destination['destination_vendor_id'] = destination_id_value_map[source_value.lower()]
-                elif destination_type == 'CREDIT_CARD_ACCOUNT':
-                    destination['destination_card_account_id'] = destination_id_value_map[source_value.lower()]
-
-                mapping_batch.append(
-                    EmployeeMapping(
-                        source_employee_id=source_attribute.id,
-                        workspace_id=workspace_id,
-                        **destination
+            update_key = None
+            destination = check_exact_matches(employee_mapping_preference, source_attribute,
+                destination_id_value_map, destination_type)
+            if destination:
+                update_key = list(destination.keys())[0]
+                if source_attribute.id in existing_mappings_map:
+                    # If employee mapping row exists, then update it
+                    mapping_updation_batch.append(
+                        EmployeeMapping(
+                            id=existing_mappings_map[source_attribute.id],
+                            **destination
+                        )
                     )
-                )
+                else:
+                    # If employee mapping row does not exist, then create it
+                    mapping_creation_batch.append(
+                        EmployeeMapping(
+                            source_employee_id=source_attribute.id,
+                            workspace_id=workspace_id,
+                            **destination
+                        )
+                    )
 
-    return mapping_batch
+    return mapping_creation_batch, mapping_updation_batch, update_key
 
 
-def create_mappings_and_update_flag(mapping_batch: list, set_auto_mapped_flag: bool = True):
-    mappings = EmployeeMapping.objects.bulk_create(mapping_batch, batch_size=50)
+def create_mappings_and_update_flag(mapping_creation_batch: List[EmployeeMapping],
+    mapping_updation_batch: List[EmployeeMapping], update_key: str):
+    """
+    Create Mappings and Update Flag
+    :param mapping_creation_batch: Mapping Creation Batch
+    :param mapping_updation_batch: Mapping Updation Batch
+    :param update_key: Update Key
+    :return: created mappings
+    """
+    mappings = []
 
-    if set_auto_mapped_flag:
-        expense_attributes_to_be_updated = []
+    if mapping_creation_batch:
+        created_mappings = EmployeeMapping.objects.bulk_create(mapping_creation_batch, batch_size=50)
+        mappings.extend(created_mappings)
 
-        for mapping in mappings:
-            expense_attributes_to_be_updated.append(
-                ExpenseAttribute(
-                    id=mapping.source_employee.id,
-                    auto_mapped=True
-                )
+    if mapping_updation_batch:
+        updated_mappings = EmployeeMapping.objects.bulk_update(
+            mapping_updation_batch, fields=[update_key], batch_size=50
+        )
+        mappings.extend(updated_mappings)
+
+    expense_attributes_to_be_updated = []
+
+    for mapping in mappings:
+        expense_attributes_to_be_updated.append(
+            ExpenseAttribute(
+                id=mapping.source_employee.id,
+                auto_mapped=True
             )
+        )
 
-        if expense_attributes_to_be_updated:
-            ExpenseAttribute.objects.bulk_update(
-                expense_attributes_to_be_updated, fields=['auto_mapped'], batch_size=50)
+    if expense_attributes_to_be_updated:
+        ExpenseAttribute.objects.bulk_update(
+            expense_attributes_to_be_updated, fields=['auto_mapped'], batch_size=50)
 
     return mappings
 
@@ -357,12 +415,12 @@ def auto_map_employees(destination_type: str, employee_mapping_preference: str, 
         )[offset:limit]
         employee_source_attributes.extend(paginated_employee_source_attributes)
 
-    mapping_batch = construct_mapping_payload(
+    mapping_creation_batch, mapping_updation_batch, update_key = construct_mapping_payload(
         employee_source_attributes, employee_mapping_preference,
         destination_id_value_map, destination_type, workspace_id
     )
 
-    create_mappings_and_update_flag(mapping_batch)
+    create_mappings_and_update_flag(mapping_creation_batch, mapping_updation_batch, update_key)
 
 
 def async_auto_map_employees(workspace_id: int):
