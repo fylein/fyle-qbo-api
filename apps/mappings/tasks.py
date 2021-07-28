@@ -8,7 +8,8 @@ from django_q.models import Schedule
 
 from fylesdk import WrongParamsError
 
-from fyle_accounting_mappings.models import MappingSetting, Mapping, DestinationAttribute, ExpenseAttribute, EmployeeMapping
+from fyle_accounting_mappings.models import MappingSetting, Mapping, DestinationAttribute, ExpenseAttribute,\
+    EmployeeMapping
 
 from apps.fyle.utils import FyleConnector
 from apps.mappings.models import GeneralMapping
@@ -443,7 +444,7 @@ def async_auto_map_employees(workspace_id: int):
     auto_map_employees(destination_type, employee_mapping_preference, workspace_id)
 
 
-def schedule_auto_map_employees(employee_mapping_preference: str, workspace_id: str):
+def schedule_auto_map_employees(employee_mapping_preference: str, workspace_id: int):
     if employee_mapping_preference:
         start_datetime = datetime.now()
 
@@ -515,7 +516,7 @@ def auto_map_ccc_employees(default_ccc_account_id: str, workspace_id: int):
         )
 
 
-def async_auto_map_ccc_account(workspace_id: str):
+def async_auto_map_ccc_account(workspace_id: int):
     general_mappings = GeneralMapping.objects.filter(workspace_id=workspace_id).first()
     if general_mappings:
         default_ccc_account_id = general_mappings.default_ccc_account_id
@@ -528,7 +529,7 @@ def async_auto_map_ccc_account(workspace_id: str):
             auto_map_ccc_employees(default_ccc_account_id, workspace_id)
 
 
-def schedule_auto_map_ccc_employees(workspace_id: str):
+def schedule_auto_map_ccc_employees(workspace_id: int):
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
 
     if general_settings.auto_map_employees and general_settings.corporate_credit_card_expenses_object != 'BILL':
