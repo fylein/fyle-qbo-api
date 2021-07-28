@@ -358,10 +358,11 @@ def create_mappings_and_update_flag(mapping_creation_batch: List[EmployeeMapping
         mappings.extend(created_mappings)
 
     if mapping_updation_batch:
-        updated_mappings = EmployeeMapping.objects.bulk_update(
+        EmployeeMapping.objects.bulk_update(
             mapping_updation_batch, fields=[update_key], batch_size=50
         )
-        mappings.extend(updated_mappings)
+        for mapping in mapping_updation_batch:
+            mappings.extend(mapping)
 
     expense_attributes_to_be_updated = []
 
