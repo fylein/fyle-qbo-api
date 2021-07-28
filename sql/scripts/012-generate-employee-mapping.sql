@@ -2,9 +2,10 @@
 rollback;
 begin;
 
-insert into employee_mappings
+insert into employee_mappings(
+    created_at, updated_at, destination_card_account_id, destination_employee_id,
+                              destination_vendor_id, source_employee_id, workspace_id)
 select 
-    row_number() over (order by workspace_id, created_at) as id,
     created_at,
     updated_at,
     destination_card_account_id,
