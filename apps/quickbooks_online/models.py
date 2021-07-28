@@ -2,17 +2,17 @@
 QBO models
 """
 from datetime import datetime
+from typing import List
 
 from django.db import models
 from django.db.models import Q
-from typing import List
 
-from fyle_accounting_mappings.models import Mapping, MappingSetting, ExpenseAttribute, DestinationAttribute
+from fyle_accounting_mappings.models import Mapping, MappingSetting, ExpenseAttribute, DestinationAttribute, EmployeeMapping
 
 from apps.fyle.models import ExpenseGroup, Expense
 from apps.fyle.utils import FyleConnector
 from apps.mappings.models import GeneralMapping
-from apps.workspaces.models import FyleCredential, Workspace
+from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
 
 
 def get_transaction_date(expense_group: ExpenseGroup) -> str:
@@ -188,12 +188,10 @@ class Bill(models.Model):
 
         vendor_id = None
         if expense_group.fund_source == 'PERSONAL':
-            vendor_id = Mapping.objects.get(
-                source_type='EMPLOYEE',
-                destination_type='VENDOR',
-                source__value=description.get('employee_email'),
+            vendor_id = EmployeeMapping.objects.get(
+                source_employee__value=description.get('employee_email'),
                 workspace_id=expense_group.workspace_id
-            ).destination.destination_id
+            ).destination_vendor.destination_id
         elif expense_group.fund_source == 'CCC':
             vendor_id = general_mappings.default_ccc_vendor_id
 
@@ -318,12 +316,10 @@ class Cheque(models.Model):
             expense_group=expense_group,
             defaults={
                 'bank_account_id': general_mappings.bank_account_id,
-                'entity_id': Mapping.objects.get(
-                    source_type='EMPLOYEE',
-                    destination_type='EMPLOYEE',
-                    source__value=description.get('employee_email'),
+                'entity_id': EmployeeMapping.objects.get(
+                    source_employee__value=description.get('employee_email'),
                     workspace_id=expense_group.workspace_id
-                ).destination.destination_id,
+                ).destination_employee.destination_id,
                 'department_id': department_id,
                 'transaction_date': get_transaction_date(expense_group),
                 'private_note': private_note,
@@ -432,16 +428,20 @@ class QBOExpense(models.Model):
 
         department_id = get_department_id_or_none(expense_group)
 
+        workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
+        employee_field_mapping = workspace_general_settings.employee_field_mapping
+
+        entity = EmployeeMapping.objects.get(
+            source_employee__value=description.get('employee_email'),
+            workspace_id=expense_group.workspace_id
+        )
+
         qbo_expense_object, _ = QBOExpense.objects.update_or_create(
             expense_group=expense_group,
             defaults={
                 'expense_account_id': general_mappings.qbo_expense_account_id,
-                'entity_id': Mapping.objects.get(
-                    Q(destination_type='EMPLOYEE') | Q(destination_type='VENDOR'),
-                    source_type='EMPLOYEE',
-                    source__value=description.get('employee_email'),
-                    workspace_id=expense_group.workspace_id
-                ).destination.destination_id,
+                'entity_id': entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' \
+                    else entity.destination_vendor.destination_id,
                 'department_id': department_id,
                 'transaction_date': get_transaction_date(expense_group),
                 'private_note': private_note,
@@ -567,21 +567,21 @@ class CreditCardPurchase(models.Model):
                 entity = entity.destination_id
 
         else:
-            entity = Mapping.objects.get(
-                Q(destination_type='EMPLOYEE') | Q(destination_type='VENDOR'),
-                source_type='EMPLOYEE',
-                source__value=description.get('employee_email'),
-                workspace_id=expense_group.workspace_id
-            ).destination.destination_id
+            workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
+            employee_field_mapping = workspace_general_settings.employee_field_mapping
 
-        ccc_account_mapping: Mapping = Mapping.objects.filter(
-            destination_type='CREDIT_CARD_ACCOUNT',
-            source_type='EMPLOYEE',
-            source__value=description.get('employee_email'),
+            entity = EmployeeMapping.objects.get(
+                source_employee__value=description.get('employee_email'),
+                workspace_id=expense_group.workspace_id
+            )
+
+        ccc_account_mapping: EmployeeMapping = EmployeeMapping.objects.filter(
+            source_employee__value=description.get('employee_email'),
             workspace_id=expense_group.workspace_id
         ).first()
 
-        ccc_account_id = ccc_account_mapping.destination.destination_id if ccc_account_mapping \
+        ccc_account_id = ccc_account_mapping.destination_card_account.destination_id \
+            if ccc_account_mapping and ccc_account_mapping.destination_card_account \
             else general_mappings.default_ccc_account_id
 
         credit_card_purchase_object, _ = CreditCardPurchase.objects.update_or_create(
@@ -589,7 +589,8 @@ class CreditCardPurchase(models.Model):
             defaults={
                 'ccc_account_id': ccc_account_id,
                 'department_id': department_id,
-                'entity_id': entity,
+                'entity_id': entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' \
+                    else entity.destination_vendor.destination_id,
                 'transaction_date': get_transaction_date(expense_group),
                 'private_note': private_note,
                 'currency': expense.currency,
@@ -739,31 +740,30 @@ class JournalEntryLineitem(models.Model):
         debit_account_id = None
         entity_type = None
 
-        entity = Mapping.objects.get(
-            Q(destination_type='EMPLOYEE') | Q(destination_type='VENDOR'),
-            source_type='EMPLOYEE',
-            source__value=description.get('employee_email'),
+        workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
+        employee_field_mapping = workspace_general_settings.employee_field_mapping
+
+        entity = EmployeeMapping.objects.get(
+            source_employee__value=description.get('employee_email'),
             workspace_id=expense_group.workspace_id
         )
 
         if expense_group.fund_source == 'PERSONAL':
-            if entity.destination_type == 'VENDOR':
+            if employee_field_mapping == 'VENDOR':
                 debit_account_id = GeneralMapping.objects.get(
                     workspace_id=expense_group.workspace_id).accounts_payable_id
-            elif entity.destination_type == 'EMPLOYEE':
+            elif employee_field_mapping == 'EMPLOYEE':
                 debit_account_id = GeneralMapping.objects.get(
                     workspace_id=expense_group.workspace_id).bank_account_id
         elif expense_group.fund_source == 'CCC':
-            debit_account_id = Mapping.objects.get(
-                source_type='EMPLOYEE',
-                destination_type='CREDIT_CARD_ACCOUNT',
-                source__value=description.get('employee_email'),
+            debit_account_id: EmployeeMapping = EmployeeMapping.objects.get(
+                source_employee__value=description.get('employee_email'),
                 workspace_id=expense_group.workspace_id
-            ).destination.destination_id
+            ).destination_card_account.destination_id
 
-        if entity.destination_type == 'EMPLOYEE':
+        if employee_field_mapping == 'EMPLOYEE':
             entity_type = 'Employee'
-        elif entity.destination_type == 'VENDOR':
+        elif employee_field_mapping == 'VENDOR':
             entity_type = 'Vendor'
 
         journal_entry_lineitem_objects = []
@@ -792,7 +792,8 @@ class JournalEntryLineitem(models.Model):
                     'debit_account_id': debit_account_id,
                     'account_id': account.destination.destination_id if account else None,
                     'class_id': class_id,
-                    'entity_id': entity.destination.destination_id,
+                    'entity_id': entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' \
+                        else entity.destination_vendor.destination_id,
                     'entity_type': entity_type,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
@@ -844,12 +845,10 @@ class BillPayment(models.Model):
         expense = expense_group.expenses.first()
         department_id = get_department_id_or_none(expense_group)
 
-        vendor_id = Mapping.objects.get(
-                source_type='EMPLOYEE',
-                destination_type='VENDOR',
-                source__value=description.get('employee_email'),
-                workspace_id=expense_group.workspace_id
-            ).destination.destination_id
+        vendor_id = EmployeeMapping.objects.get(
+            source_employee__value=description.get('employee_email'),
+            workspace_id=expense_group.workspace_id
+        ).destination_vendor.destination_id
 
         general_mappings = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
         bill_payment_object, _ = BillPayment.objects.update_or_create(
