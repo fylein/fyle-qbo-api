@@ -326,6 +326,7 @@ def construct_mapping_payload(employee_source_attributes: List[ExpenseAttribute]
                     mapping_updation_batch.append(
                         EmployeeMapping(
                             id=existing_mappings_map[source_attribute.id],
+                            source_employee=source_attribute,
                             **destination
                         )
                     )
