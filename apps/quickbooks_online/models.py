@@ -545,6 +545,8 @@ class CreditCardPurchase(models.Model):
         description = expense_group.description
         expense = expense_group.expenses.first()
         general_mappings = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
+        workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
+        employee_field_mapping = workspace_general_settings.employee_field_mapping
 
         department_id = get_department_id_or_none(expense_group)
 
@@ -567,9 +569,6 @@ class CreditCardPurchase(models.Model):
                 entity = entity.destination_id
 
         else:
-            workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
-            employee_field_mapping = workspace_general_settings.employee_field_mapping
-
             entity = EmployeeMapping.objects.get(
                 source_employee__value=description.get('employee_email'),
                 workspace_id=expense_group.workspace_id
