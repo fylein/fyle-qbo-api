@@ -311,12 +311,12 @@ def construct_mapping_payload(employee_source_attributes: List[ExpenseAttribute]
 
     mapping_creation_batch = []
     mapping_updation_batch = []
+    update_key = None
     existing_mappings_map = {mapping.source_employee_id: mapping.id for mapping in existing_mappings}
 
     for source_attribute in employee_source_attributes:
         # Ignoring already present mappings
         if source_attribute.id not in existing_source_ids:
-            update_key = None
             destination = check_exact_matches(employee_mapping_preference, source_attribute,
                 destination_id_value_map, destination_type)
             if destination:
