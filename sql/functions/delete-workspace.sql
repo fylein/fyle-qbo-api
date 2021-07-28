@@ -151,6 +151,18 @@ BEGIN
   RAISE NOTICE 'Deleted % expense_groups', rcount;
 
   DELETE
+  FROM employee_mappings em
+  WHERE em.workspace_id = _workspace_id;
+  GET DIAGNOSTICS rcount = ROW_COUNT;
+  RAISE NOTICE 'Deleted % employee_mappings', rcount;
+
+  DELETE
+  FROM category_mappings cm
+  WHERE cm.workspace_id = _workspace_id;
+  GET DIAGNOSTICS rcount = ROW_COUNT;
+  RAISE NOTICE 'Deleted % category_mappings', rcount;
+
+  DELETE
   FROM mappings m
   WHERE m.workspace_id = _workspace_id;
   GET DIAGNOSTICS rcount = ROW_COUNT;
