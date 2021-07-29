@@ -114,10 +114,20 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
                     create=True
                 )
 
+            existing_employee_mapping = EmployeeMapping.objects.filter(
+                source_employee=source_employee
+            ).first()
+
+            destination = {}
+            if existing_employee_mapping:
+                destination['destination_employee_id'] = existing_employee_mapping.destination_employee_id
+                destination['destination_card_account_id'] = existing_employee_mapping.destination_card_account_id
+
             mapping = EmployeeMapping.create_or_update_employee_mapping(
                 source_employee_id=source_employee.id,
                 destination_vendor_id=entity.id,
-                workspace=expense_group.workspace
+                workspace=expense_group.workspace,
+                **destination
             )
 
             mapping.source_employee.auto_mapped = True

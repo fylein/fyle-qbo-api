@@ -434,16 +434,21 @@ def async_auto_map_employees(workspace_id: int):
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
     fyle_connection = FyleConnector(refresh_token=fyle_credentials.refresh_token, workspace_id=workspace_id)
 
-    qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
-    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
+    try:
+        qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
+        qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
-    fyle_connection.sync_employees()
-    if destination_type == 'EMPLOYEE':
-        qbo_connection.sync_employees()
-    else:
-        qbo_connection.sync_vendors()
+        fyle_connection.sync_employees()
+        if destination_type == 'EMPLOYEE':
+            qbo_connection.sync_employees()
+        else:
+            qbo_connection.sync_vendors()
 
-    auto_map_employees(destination_type, employee_mapping_preference, workspace_id)
+        auto_map_employees(destination_type, employee_mapping_preference, workspace_id)
+    except QBOCredential.DoesNotExist:
+        logger.error(
+            'QBO Credentials not found for workspace_id %s', workspace_id
+        )
 
 
 def schedule_auto_map_employees(employee_mapping_preference: str, workspace_id: int):
