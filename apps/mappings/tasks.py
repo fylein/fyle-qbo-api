@@ -357,6 +357,8 @@ def create_mappings_and_update_flag(mapping_creation_batch: List[EmployeeMapping
     if mapping_creation_batch:
         created_mappings = EmployeeMapping.objects.bulk_create(mapping_creation_batch, batch_size=50)
         mappings.extend(created_mappings)
+        print('created_mappings',created_mappings)
+        print('mappings',mappings)
 
     if mapping_updation_batch:
         EmployeeMapping.objects.bulk_update(
@@ -364,10 +366,12 @@ def create_mappings_and_update_flag(mapping_creation_batch: List[EmployeeMapping
         )
         for mapping in mapping_updation_batch:
             mappings.append(mapping)
+            print('final mappings',mappings)
 
     expense_attributes_to_be_updated = []
 
     for mapping in mappings:
+        print('mapping.source_employee.id',mapping.source_employee.id)
         expense_attributes_to_be_updated.append(
             ExpenseAttribute(
                 id=mapping.source_employee.id,
@@ -375,7 +379,11 @@ def create_mappings_and_update_flag(mapping_creation_batch: List[EmployeeMapping
             )
         )
 
+    print('expense_attributes_to_be_updated',expense_attributes_to_be_updated)
+    print('len expense_attributes_to_be_updated',len(expense_attributes_to_be_updated))
+
     if expense_attributes_to_be_updated:
+        print('updating flag')
         ExpenseAttribute.objects.bulk_update(
             expense_attributes_to_be_updated, fields=['auto_mapped'], batch_size=50)
 
