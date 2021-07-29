@@ -547,6 +547,7 @@ class CreditCardPurchase(models.Model):
         general_mappings = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
         workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
         employee_field_mapping = workspace_general_settings.employee_field_mapping
+        entity_id = None
 
         department_id = get_department_id_or_none(expense_group)
 
@@ -563,16 +564,18 @@ class CreditCardPurchase(models.Model):
             expense_group.save()
 
             if not entity:
-                entity = DestinationAttribute.objects.filter(
+                entity_id = DestinationAttribute.objects.filter(
                     value='Credit Card Misc', workspace_id=expense_group.workspace_id).first().destination_id
             else:
-                entity = entity.destination_id
+                entity_id = entity.destination_id
 
         else:
             entity = EmployeeMapping.objects.get(
                 source_employee__value=description.get('employee_email'),
                 workspace_id=expense_group.workspace_id
             )
+            entity_id = entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' \
+                else entity.destination_vendor.destination_id,
 
         ccc_account_mapping: EmployeeMapping = EmployeeMapping.objects.filter(
             source_employee__value=description.get('employee_email'),
@@ -588,8 +591,7 @@ class CreditCardPurchase(models.Model):
             defaults={
                 'ccc_account_id': ccc_account_id,
                 'department_id': department_id,
-                'entity_id': entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' \
-                    else entity.destination_vendor.destination_id,
+                'entity_id': entity_id,
                 'transaction_date': get_transaction_date(expense_group),
                 'private_note': private_note,
                 'currency': expense.currency,
