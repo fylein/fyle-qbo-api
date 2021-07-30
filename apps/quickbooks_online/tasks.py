@@ -147,6 +147,14 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
                     source_employee.detail['full_name'],
                     expense_group.workspace_id
                 )
+                raise BulkError('Mappings are missing', [{
+                    'row': None,
+                    'expense_group_id': expense_group.id,
+                    'value': expense_group.description.get('employee_email'),
+                    'type': 'Employee Mapping',
+                    'message': 'Employee mapping not found'
+                }])
+
 
 def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: TaskLog, export_type: str):
     logger.error(exception.response)
