@@ -33,7 +33,7 @@ class TasksView(generics.ListAPIView):
         else:
             filters = {
                 'workspace_id': self.kwargs['workspace_id'],
-                'status__in': task_status,
+                'status__in': task_status
             }
 
         return TaskLog.objects.filter(**filters).order_by('-updated_at').all()

@@ -114,10 +114,20 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
                     create=True
                 )
 
+            existing_employee_mapping = EmployeeMapping.objects.filter(
+                source_employee=source_employee
+            ).first()
+
+            destination = {}
+            if existing_employee_mapping:
+                destination['destination_employee_id'] = existing_employee_mapping.destination_employee_id
+                destination['destination_card_account_id'] = existing_employee_mapping.destination_card_account_id
+
             mapping = EmployeeMapping.create_or_update_employee_mapping(
                 source_employee_id=source_employee.id,
                 destination_vendor_id=entity.id,
-                workspace=expense_group.workspace
+                workspace=expense_group.workspace,
+                **destination
             )
 
             mapping.source_employee.auto_mapped = True
@@ -137,6 +147,14 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
                     source_employee.detail['full_name'],
                     expense_group.workspace_id
                 )
+                raise BulkError('Mappings are missing', [{
+                    'row': None,
+                    'expense_group_id': expense_group.id,
+                    'value': expense_group.description.get('employee_email'),
+                    'type': 'Employee Mapping',
+                    'message': 'Employee mapping not found'
+                }])
+
 
 def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: TaskLog, export_type: str):
     logger.error(exception.response)
@@ -311,8 +329,10 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                 'message': 'Default Credit Card Account not found'
             })
 
-    if not (general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE'
-            and general_settings.map_merchant_to_vendor and expense_group.fund_source == 'CCC'):
+    if not (expense_group.fund_source == 'CCC' and \
+        (general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE' and \
+            general_settings.map_merchant_to_vendor) or \
+                general_settings.corporate_credit_card_expenses_object == 'BILL'):
         try:
             entity = EmployeeMapping.objects.get(
                 source_employee__value=expense_group.description.get('employee_email'),
