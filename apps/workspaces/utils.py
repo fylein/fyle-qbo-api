@@ -7,12 +7,11 @@ import requests
 from django.conf import settings
 
 from future.moves.urllib.parse import urlencode
+from qbosdk import UnauthorizedClientError, NotFoundClientError, WrongParamsError, InternalServerError
 
-from apps.mappings.tasks import schedule_projects_creation, schedule_categories_creation, schedule_auto_map_employees,\
-    schedule_auto_map_ccc_employees
+from apps.mappings.tasks import schedule_categories_creation, schedule_auto_map_employees, schedule_auto_map_ccc_employees
 from apps.quickbooks_online.tasks import schedule_bill_payment_creation, schedule_qbo_objects_status_sync,\
     schedule_reimbursements_sync
-from qbosdk import UnauthorizedClientError, NotFoundClientError, WrongParamsError, InternalServerError
 
 from fyle_qbo_api.utils import assert_valid
 from .models import WorkspaceGeneralSettings
@@ -76,6 +75,24 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
     if 'auto_map_employees' in general_settings_payload and general_settings_payload['auto_map_employees']:
         assert_valid(general_settings_payload['auto_map_employees'] in ['EMAIL', 'NAME', 'EMPLOYEE_CODE'],
                      'auto_map_employees can have only EMAIL / NAME / EMPLOYEE_CODE')
+
+    if general_settings_payload['auto_create_destination_entity']:
+        assert_valid(general_settings_payload['auto_map_employees'] and \
+            general_settings_payload['employee_field_mapping'] == 'VENDOR',
+            'auto_create_destination_entity can be set only if auto map is enabled and employee mapped to vendor')
+
+    if general_settings_payload['je_single_credit_line']:
+        assert_valid(
+            general_settings_payload['reimbursable_expenses_object'] == 'JOURNAL ENTRY' or
+            general_settings_payload['corporate_credit_card_expenses_object'] == 'JOURNAL ENTRY',
+            'je_single_credit_line can be set only if reimbursable_expenses_object or \
+                corporate_credit_card_expenses_object is JOURNAL ENTRY')
+
+    if general_settings_payload['sync_fyle_to_qbo_payments'] or general_settings_payload['sync_qbo_to_fyle_payments']:
+        assert_valid(
+            general_settings_payload['reimbursable_expenses_object'] == 'BILL',
+            'sync_fyle_to_qbo_payments / sync_qbo_to_fyle_payments can be set \
+                only if reimbursable_expenses_object is BILL')
 
     workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
 
