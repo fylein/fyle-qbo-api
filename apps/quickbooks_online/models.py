@@ -575,7 +575,7 @@ class CreditCardPurchase(models.Model):
                 workspace_id=expense_group.workspace_id
             )
             entity_id = entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' \
-                else entity.destination_vendor.destination_id,
+                else entity.destination_vendor.destination_id
 
         ccc_account_mapping: EmployeeMapping = EmployeeMapping.objects.filter(
             source_employee__value=description.get('employee_email'),
