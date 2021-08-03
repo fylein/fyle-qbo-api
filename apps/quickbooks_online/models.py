@@ -5,9 +5,11 @@ from datetime import datetime
 from typing import List
 
 from django.db import models
-from django.db.models import Q
 
-from fyle_accounting_mappings.models import Mapping, MappingSetting, ExpenseAttribute, DestinationAttribute, EmployeeMapping
+from fyle_accounting_mappings.models import Mapping, MappingSetting, ExpenseAttribute, DestinationAttribute,\
+    EmployeeMapping
+
+from fyle_qbo_api.exceptions import BulkError
 
 from apps.fyle.models import ExpenseGroup, Expense
 from apps.fyle.utils import FyleConnector
@@ -585,6 +587,15 @@ class CreditCardPurchase(models.Model):
         ccc_account_id = ccc_account_mapping.destination_card_account.destination_id \
             if ccc_account_mapping and ccc_account_mapping.destination_card_account \
             else general_mappings.default_ccc_account_id
+
+        if not ccc_account_id:
+            raise BulkError('CCC account mapping / Default CCC account is missing', [{
+                'row': None,
+                'expense_group_id': expense_group.id,
+                'value': expense_group.description.get('employee_email'),
+                'type': 'Employee / General Mapping',
+                'message': 'CCC account mapping / Default CCC account mapping not found'
+            }])
 
         credit_card_purchase_object, _ = CreditCardPurchase.objects.update_or_create(
             expense_group=expense_group,
