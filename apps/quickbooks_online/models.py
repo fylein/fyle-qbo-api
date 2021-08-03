@@ -762,7 +762,7 @@ class JournalEntryLineitem(models.Model):
                 source_employee__value=description.get('employee_email'),
                 workspace_id=expense_group.workspace_id
             ).first()
-            if debit_account:
+            if debit_account and debit_account.destination_card_account:
                 debit_account_id = debit_account.destination_card_account.destination_id
             else:
                 debit_account_id = general_mappings.default_ccc_account_id
