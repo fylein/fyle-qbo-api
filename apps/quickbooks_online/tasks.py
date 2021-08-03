@@ -353,6 +353,24 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
             'message': 'Expense Payment Account not found'
         })
 
+    if general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE' or \
+        general_settings.corporate_credit_card_expenses_object == 'JOURNAL ENTRY':
+        ccc_account_mapping: EmployeeMapping = EmployeeMapping.objects.filter(
+            source_employee__value=expense_group.description.get('employee_email'),
+            workspace_id=expense_group.workspace_id
+        ).first()
+        ccc_account_id = ccc_account_mapping.destination_card_account.destination_id \
+            if ccc_account_mapping and ccc_account_mapping.destination_card_account \
+            else general_mapping.default_ccc_account_id
+
+        if not ccc_account_id:
+            bulk_errors.append({
+                'row': None,
+                'expense_group_id': expense_group.id,
+                'value': expense_group.description.get('employee_email'),
+                'type': 'Employee / General Mapping',
+                'message': 'CCC account mapping / Default CCC account mapping not found'
+            })
 
     if general_settings.corporate_credit_card_expenses_object != 'BILL' and expense_group.fund_source == 'CCC':
         if not (general_mapping.default_ccc_account_id or general_mapping.default_ccc_account_name):
