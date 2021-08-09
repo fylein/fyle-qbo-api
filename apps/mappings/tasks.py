@@ -284,6 +284,10 @@ def check_exact_matches(employee_mapping_preference: str, source_attribute: Expe
     elif employee_mapping_preference == 'EMPLOYEE_CODE':
         source_value = source_attribute.detail['employee_code']
 
+    # Handling employee_code or full_name null case
+    if not source_value:
+        source_value = ''
+
     # Checking exact match
     if source_value.lower() in destination_id_value_map:
         if destination_type == 'EMPLOYEE':
