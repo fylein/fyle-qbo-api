@@ -17,24 +17,22 @@ class TasksView(generics.ListAPIView):
         """
         Return task logs in workspace
         """
-        task_status = self.request.query_params.get('status').split(',')
-        expense_group_ids = self.request.query_params.get('expense_group_ids')
         task_type = self.request.query_params.get('task_type')
+        expense_group_ids = self.request.query_params.get('expense_group_ids')
+        task_status = self.request.query_params.get('status')
+
+        filters = {
+            'workspace_id': self.kwargs['workspace_id']
+        }
+
+        if task_type:
+            filters['type__in'] = task_type.split(',')
 
         if expense_group_ids:
-            expense_group_ids = expense_group_ids.split(',')
-            task_type = task_type.split(',')
-            filters = {
-                'workspace_id': self.kwargs['workspace_id'],
-                'status__in': task_status,
-                'type__in': task_type,
-                'expense_group__in': expense_group_ids
-            }
-        else:
-            filters = {
-                'workspace_id': self.kwargs['workspace_id'],
-                'status__in': task_status
-            }
+            filters['expense_group_id__in'] = expense_group_ids.split(',')
+
+        if task_status:
+            filters['status__in'] = task_status.split(',')
 
         return TaskLog.objects.filter(**filters).order_by('-updated_at').all()
 
