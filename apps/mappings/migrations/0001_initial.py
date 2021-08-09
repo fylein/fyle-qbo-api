@@ -42,21 +42,6 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name='EmployeeMapping',
-            fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False)),
-                ('employee_email', models.CharField(help_text='Fyle employee email', max_length=255)),
-                ('vendor_display_name', models.CharField(help_text='QBO vendor display name', max_length=255)),
-                ('vendor_id', models.CharField(help_text='QBO vendor id', max_length=255)),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='Created at datetime')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='Updated at datetime')),
-                ('workspace', models.ForeignKey(help_text='Reference to Workspace model', on_delete=django.db.models.deletion.PROTECT, to='workspaces.Workspace')),
-            ],
-            options={
-                'unique_together': {('employee_email', 'workspace')},
-            },
-        ),
-        migrations.CreateModel(
             name='CostCenterMapping',
             fields=[
                 ('id', models.AutoField(primary_key=True, serialize=False)),
@@ -69,22 +54,6 @@ class Migration(migrations.Migration):
             ],
             options={
                 'unique_together': {('cost_center', 'workspace')},
-            },
-        ),
-        migrations.CreateModel(
-            name='CategoryMapping',
-            fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False)),
-                ('category', models.CharField(help_text='Fyle category', max_length=255)),
-                ('sub_category', models.CharField(help_text='Fyle sub category', max_length=255)),
-                ('account_name', models.CharField(help_text='QBO account name', max_length=255)),
-                ('account_id', models.CharField(help_text='QBO account id', max_length=255)),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='Created at datetime')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='Updated at datetime')),
-                ('workspace', models.ForeignKey(help_text='Reference to Workspace model', on_delete=django.db.models.deletion.PROTECT, to='workspaces.Workspace')),
-            ],
-            options={
-                'unique_together': {('category', 'sub_category', 'workspace')},
             },
         ),
     ]

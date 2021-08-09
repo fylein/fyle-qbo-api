@@ -11,16 +11,8 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AlterModelTable(
-            name='categorymapping',
-            table='category_mappings',
-        ),
-        migrations.AlterModelTable(
             name='costcentermapping',
             table='cost_center_mappings',
-        ),
-        migrations.AlterModelTable(
-            name='employeemapping',
-            table='employee_mappings',
         ),
         migrations.AlterModelTable(
             name='generalmapping',
