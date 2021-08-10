@@ -19,14 +19,6 @@ class Migration(migrations.Migration):
             name='workspace',
         ),
         migrations.AlterUniqueTogether(
-            name='employeemapping',
-            unique_together=None,
-        ),
-        migrations.RemoveField(
-            model_name='employeemapping',
-            name='workspace',
-        ),
-        migrations.AlterUniqueTogether(
             name='projectmapping',
             unique_together=None,
         ),
@@ -35,13 +27,7 @@ class Migration(migrations.Migration):
             name='workspace',
         ),
         migrations.DeleteModel(
-            name='CategoryMapping',
-        ),
-        migrations.DeleteModel(
             name='CostCenterMapping',
-        ),
-        migrations.DeleteModel(
-            name='EmployeeMapping',
         ),
         migrations.DeleteModel(
             name='ProjectMapping',
