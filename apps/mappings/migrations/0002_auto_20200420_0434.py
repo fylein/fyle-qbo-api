@@ -11,26 +11,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name='employeemapping',
-            name='ccc_account_id',
-            field=models.CharField(help_text='QBO ccc account id', max_length=40, null=True),
-        ),
-        migrations.AddField(
-            model_name='employeemapping',
-            name='ccc_account_name',
-            field=models.CharField(help_text='Name of the ccc account', max_length=255, null=True),
-        ),
-        migrations.AddField(
-            model_name='employeemapping',
-            name='employee_display_name',
-            field=models.CharField(help_text='QBO employee display name', max_length=255, null=True),
-        ),
-        migrations.AddField(
-            model_name='employeemapping',
-            name='employee_id',
-            field=models.CharField(help_text='QBO employee id', max_length=255, null=True),
-        ),
-        migrations.AddField(
             model_name='generalmapping',
             name='accounts_payable_id',
             field=models.CharField(help_text='QBO accounts payable bank account id', max_length=40, null=True),
@@ -39,16 +19,6 @@ class Migration(migrations.Migration):
             model_name='generalmapping',
             name='accounts_payable_name',
             field=models.CharField(help_text='Accounts payable bank account name', max_length=255, null=True),
-        ),
-        migrations.AlterField(
-            model_name='employeemapping',
-            name='vendor_display_name',
-            field=models.CharField(help_text='QBO vendor display name', max_length=255, null=True),
-        ),
-        migrations.AlterField(
-            model_name='employeemapping',
-            name='vendor_id',
-            field=models.CharField(help_text='QBO vendor id', max_length=255, null=True),
         ),
         migrations.AlterField(
             model_name='generalmapping',
