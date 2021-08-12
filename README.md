@@ -49,7 +49,7 @@ Django Rest Framework API for Fyle Quickbooks Online Integration
 * The database can be accessed by this command, on password prompt type `postgres`
 
     ```
-    docker-compose run db psql -h db -U postgres qbo_db
+    docker-compose run -e PGPASSWORD=postgres db psql -h db -U postgres qbo_db
     ```
 
 * To tail the logs of a service you can do
