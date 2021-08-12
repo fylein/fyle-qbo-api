@@ -144,6 +144,7 @@ dmypy.json
 # Local server
 local_run.sh
 fyle_accounting_mappings/
+db.sh
 
 # docker compose
 docker-compose.yml

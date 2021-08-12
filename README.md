@@ -8,10 +8,10 @@ Django Rest Framework API for Fyle Quickbooks Online Integration
 
 * If you're using a linux machine, please download docker according to the distrubution you're on.
 
-* Rename docker-compose.yml.template to docker-compose.yml
+* Copy docker-compose.yml.template as docker-compose.yml and add required secrets
 
     ```
-    $ mv docker-compose.yml.template docker-compose.yml
+    $ cp docker-compose.yml.template docker-compose.yml
     ```
   
 * Setup environment variables in docker_compose.yml
@@ -52,7 +52,7 @@ Django Rest Framework API for Fyle Quickbooks Online Integration
     docker-compose run db psql -h db -U postgres qbo_db
     ```
 
-* To tail the logs a service you can do
+* To tail the logs of a service you can do
     
     ```
     docker-compose logs -f <api / qcluster>
@@ -74,4 +74,11 @@ Django Rest Framework API for Fyle Quickbooks Online Integration
 
     ```
     docker-compose exec api /bin/bash
+    ```
+
+* To restart qcluster automatically after code changes, follow the steps below:
+
+    ```
+    pip install -r requirements.dev.txt
+    python q_cluster_watcher.py
     ```
