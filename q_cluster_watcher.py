@@ -20,7 +20,6 @@ class LoggingEventHandler(FileSystemEventHandler):
         super().on_modified(event)
 
         if 'tasks.py' in event.src_path:
-            print('self.counter',self.counter)
             if self.counter != 0 and self.counter % 2 == 1:
                 print('Restarting . . .')
                 os.system('docker-compose restart qcluster')
