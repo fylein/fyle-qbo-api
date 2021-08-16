@@ -202,6 +202,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
                 }
             )
             if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
+                task_log.type = 'CREATING_BILL'
                 task_log.status = 'ENQUEUED'
                 task_log.save()
 
@@ -248,6 +249,7 @@ def create_bill(expense_group, task_log_id):
             task_log.save()
 
             expense_group.exported_at = datetime.now()
+            expense_group.response_logs = created_bill
             expense_group.save()
 
             load_attachments(qbo_connection, created_bill['Bill']['Id'], 'Bill', expense_group)
@@ -318,6 +320,57 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                     'type': 'General Mapping',
                     'message': 'Default Credit Card Vendor not found'
                 })
+
+    if general_mapping and not (general_mapping.accounts_payable_id or general_mapping.accounts_payable_name):
+        if general_settings.reimbursable_expenses_object == 'BILL' or (
+            general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY' and
+            general_settings.employee_field_mapping == 'VENDOR' and expense_group.fund_source == 'PERSONAL'):
+            bulk_errors.append({
+                'row': None,
+                'expense_group_id': expense_group.id,
+                'value': 'Accounts Payable',
+                'type': 'General Mapping',
+                'message': 'Accounts Payable not found'
+            })
+
+    if general_mapping and not (general_mapping.bank_account_id or general_mapping.bank_account_name) and \
+        general_settings.reimbursable_expenses_object == 'CHECK':
+        bulk_errors.append({
+            'row': None,
+            'expense_group_id': expense_group.id,
+            'value': 'Bank Account',
+            'type': 'General Mapping',
+            'message': 'Bank Account not found'
+        })
+
+    if general_mapping and not (general_mapping.qbo_expense_account_id or general_mapping.qbo_expense_account_name)\
+        and general_settings.reimbursable_expenses_object == 'EXPENSE':
+        bulk_errors.append({
+            'row': None,
+            'expense_group_id': expense_group.id,
+            'value': 'Expense Payment Account',
+            'type': 'General Mapping',
+            'message': 'Expense Payment Account not found'
+        })
+
+    if general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE' or \
+        general_settings.corporate_credit_card_expenses_object == 'JOURNAL ENTRY':
+        ccc_account_mapping: EmployeeMapping = EmployeeMapping.objects.filter(
+            source_employee__value=expense_group.description.get('employee_email'),
+            workspace_id=expense_group.workspace_id
+        ).first()
+        ccc_account_id = ccc_account_mapping.destination_card_account.destination_id \
+            if ccc_account_mapping and ccc_account_mapping.destination_card_account \
+            else general_mapping.default_ccc_account_id
+
+        if not ccc_account_id:
+            bulk_errors.append({
+                'row': None,
+                'expense_group_id': expense_group.id,
+                'value': expense_group.description.get('employee_email'),
+                'type': 'Employee / General Mapping',
+                'message': 'CCC account mapping / Default CCC account mapping not found'
+            })
 
     if general_settings.corporate_credit_card_expenses_object != 'BILL' and expense_group.fund_source == 'CCC':
         if not (general_mapping.default_ccc_account_id or general_mapping.default_ccc_account_name):
@@ -406,6 +459,7 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
                 }
             )
             if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
+                task_log.type = 'CREATING_CHECK'
                 task_log.status = 'ENQUEUED'
                 task_log.save()
 
@@ -449,6 +503,7 @@ def create_cheque(expense_group, task_log_id):
             task_log.save()
 
             expense_group.exported_at = datetime.now()
+            expense_group.response_logs = created_cheque
             expense_group.save()
 
             load_attachments(qbo_connection, created_cheque['Purchase']['Id'], 'Purchase', expense_group)
@@ -514,6 +569,7 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
                 }
             )
             if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
+                task_log.type = 'CREATING_EXPENSE'
                 task_log.status = 'ENQUEUED'
                 task_log.save()
 
@@ -557,6 +613,7 @@ def create_qbo_expense(expense_group, task_log_id):
             task_log.save()
 
             expense_group.exported_at = datetime.now()
+            expense_group.response_logs = created_qbo_expense
             expense_group.save()
 
             load_attachments(qbo_connection, created_qbo_expense['Purchase']['Id'], 'Purchase', expense_group)
@@ -623,6 +680,7 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
                 }
             )
             if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
+                task_log.type = 'CREATING_CREDIT_CARD_PURCHASE'
                 task_log.status = 'ENQUEUED'
                 task_log.save()
 
@@ -677,6 +735,7 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id):
             task_log.save()
 
             expense_group.exported_at = datetime.now()
+            expense_group.response_logs = created_credit_card_purchase
             expense_group.save()
 
             load_attachments(qbo_connection, created_credit_card_purchase['Purchase']['Id'], 'Purchase', expense_group)
@@ -742,6 +801,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
                 }
             )
             if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
+                task_log.type = 'CREATING_JOURNAL_ENTRY'
                 task_log.status = 'ENQUEUED'
                 task_log.save()
 
@@ -790,6 +850,7 @@ def create_journal_entry(expense_group, task_log_id):
             task_log.save()
 
             expense_group.exported_at = datetime.now()
+            expense_group.response_logs = created_journal_entry
             expense_group.save()
 
             load_attachments(qbo_connection, created_journal_entry['JournalEntry']['Id'], 'JournalEntry', expense_group)
