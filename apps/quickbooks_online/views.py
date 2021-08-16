@@ -20,7 +20,7 @@ from .utils import QBOConnector
 from .tasks import create_bill, schedule_bills_creation, create_cheque, schedule_cheques_creation, \
     create_credit_card_purchase, schedule_credit_card_purchase_creation, create_journal_entry, \
     schedule_journal_entry_creation, create_bill_payment, process_reimbursements, check_qbo_object_status,\
-    schedule_qbo_expense_creation
+    schedule_qbo_expense_creation, schedule_credit_card_credit_creation
 from .models import Bill, Cheque, CreditCardPurchase, JournalEntry
 from .serializers import BillSerializer, ChequeSerializer, CreditCardPurchaseSerializer, JournalEntrySerializer, \
     QuickbooksFieldSerializer
@@ -592,8 +592,26 @@ class CreditCardPurchaseScheduleView(generics.CreateAPIView):
     def post(self, request, *args, **kwargs):
         expense_group_ids = request.data.get('expense_group_ids', [])
 
-        schedule_credit_card_purchase_creation(
-            kwargs['workspace_id'], expense_group_ids)
+        credit_card_credits = []
+        credit_card_purchases = []
+        for expense_group_id in expense_group_ids:
+            expense_group = ExpenseGroup.objects.filter(id=expense_group_id).first()
+            expense_group_expense = expense_group.expenses.first()
+
+            if expense_group_expense.amount < 0:
+                credit_card_credits.append(expense_group_id)
+            else:
+                credit_card_purchases.append(expense_group_id)
+
+        if credit_card_credits:
+            schedule_credit_card_credit_creation(
+                workspace_id=kwargs['workspace_id'], expense_group_ids=credit_card_credits
+            )
+
+        if credit_card_purchases:
+            schedule_credit_card_purchase_creation(
+                workspace_id=kwargs['workspace_id'], expense_group_ids=credit_card_purchases
+            )
 
         return Response(
             status=status.HTTP_200_OK

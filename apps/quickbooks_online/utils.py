@@ -12,7 +12,8 @@ from fyle_accounting_mappings.models import DestinationAttribute
 from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings
 
 from .models import BillLineitem, Bill, ChequeLineitem, Cheque, CreditCardPurchase, CreditCardPurchaseLineitem, \
-    JournalEntry, JournalEntryLineitem, BillPaymentLineitem, BillPayment, QBOExpense, QBOExpenseLineitem
+    JournalEntry, JournalEntryLineitem, BillPaymentLineitem, BillPayment, QBOExpense, QBOExpenseLineitem, \
+    CreditCardCredit, CreditCardCreditLineitem
 
 logger = logging.getLogger(__name__)
 
@@ -340,7 +341,7 @@ class QBOConnector:
             logger.exception(exception)
 
     @staticmethod
-    def purchase_object_payload(purchase_object, line, payment_type, account_ref, doc_number: str = None):
+    def purchase_object_payload(purchase_object, line, payment_type, account_ref, doc_number: str = None, credit=None):
         """
         returns purchase object payload
         """
@@ -361,6 +362,7 @@ class QBOConnector:
                 "value": purchase_object.currency
             },
             'PrivateNote': purchase_object.private_note,
+            'Credit': credit,
             'Line': line
         }
         return purchase_object_payload
@@ -668,6 +670,64 @@ class QBOConnector:
             lines.append(line)
 
         return lines
+
+    @staticmethod
+    def __construct_credit_card_credit_lineitems(
+            credit_card_credit_lineitems: List[CreditCardCreditLineitem]) -> List[Dict]:
+        """
+        Create credit_card_credit line items
+        :param credit_card_credit_lineitems: list of credit_card_credit line items extracted from database
+        :return: constructed line items
+        """
+        lines = []
+
+        for line in credit_card_credit_lineitems:
+            line = {
+                'Description': line.description,
+                'DetailType': 'AccountBasedExpenseLineDetail',
+                'Amount': abs(line.amount),
+
+                'AccountBasedExpenseLineDetail': {
+                    'AccountRef': {
+                        'value': line.account_id
+                    },
+                    'CustomerRef': {
+                        'value': line.customer_id
+                    },
+                    'ClassRef': {
+                        'value': line.class_id
+                    },
+                    'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
+                },
+            }
+            lines.append(line)
+
+        return lines
+
+    def __construct_credit_card_credit(self, credit_card_credit: CreditCardCredit,
+                                       credit_card_credit_lineitems: List[CreditCardCreditLineitem]) -> Dict:
+        """
+        Create a credit_card_credit
+        :param credit_card_credit: credit_card_credit object extracted from database
+        :return: constructed credit_card_credit
+        """
+        line = self.__construct_credit_card_credit_lineitems(credit_card_credit_lineitems)
+        credit_card_credit_payload = self.purchase_object_payload(
+            credit_card_credit, line, account_ref=credit_card_credit.ccc_account_id, payment_type='CreditCard',
+            doc_number=credit_card_credit.credit_card_credit_number, credit=True
+        )
+
+        return credit_card_credit_payload
+
+    def post_credit_card_credit(self, credit_card_credit: CreditCardCredit,
+                                credit_card_credit_lineitems: List[CreditCardCreditLineitem]):
+        """
+        Post credit card credit to QBO
+        """
+        credit_card_credit_payload = self.__construct_credit_card_credit(credit_card_credit,
+                                                                         credit_card_credit_lineitems)
+        created_credit_card_credit = self.connection.purchases.post(credit_card_credit_payload)
+        return created_credit_card_credit
 
     def __construct_journal_entry(self,
                                   journal_entry: JournalEntry, journal_entry_lineitems: List[JournalEntryLineitem],

@@ -666,6 +666,157 @@ class CreditCardPurchaseLineitem(models.Model):
         return credit_card_purchase_lineitem_objects
 
 
+class CreditCardCredit(models.Model):
+    """
+    QBO CreditCardCredit
+    """
+    id = models.AutoField(primary_key=True)
+    expense_group = models.OneToOneField(ExpenseGroup, on_delete=models.PROTECT, help_text='Expense group reference')
+    ccc_account_id = models.CharField(max_length=255, help_text='QBO CCC account id')
+    entity_id = models.CharField(max_length=255, help_text='QBO entity id')
+    department_id = models.CharField(max_length=255, help_text='QBO department id', null=True)
+    transaction_date = models.DateField(help_text='CreditCardCredit transaction date')
+    currency = models.CharField(max_length=255, help_text='CreditCardCredit Currency')
+    private_note = models.TextField(help_text='CreditCardCredit Description')
+    credit_card_credit_number = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
+    updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
+
+    class Meta:
+        db_table = 'credit_card_credits'
+
+    @staticmethod
+    def create_credit_card_credit(expense_group: ExpenseGroup, map_merchant_to_vendor: bool):
+        """
+        Create CreditCardCredit
+        :param map_merchant_to_vendor: Map merchant to vendor for credit card credits
+        :param expense_group: expense group
+        :return: CreditCardCredit object
+        """
+        description = expense_group.description
+        expense = expense_group.expenses.first()
+        general_mappings = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
+        workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
+        employee_field_mapping = workspace_general_settings.employee_field_mapping
+        entity_id = None
+
+        department_id = get_department_id_or_none(expense_group)
+
+        private_note = construct_private_note(expense_group)
+
+        if map_merchant_to_vendor:
+            merchant = expense.vendor if expense.vendor else ''
+
+            entity = DestinationAttribute.objects.filter(
+                value__iexact=merchant, attribute_type='VENDOR', workspace_id=expense_group.workspace_id
+            ).first()
+
+            expense_group.description['spent_at'] = expense.spent_at.strftime("%Y-%m-%d")
+            expense_group.save()
+
+            if not entity:
+                entity_id = DestinationAttribute.objects.filter(
+                    value='Credit Card Misc', workspace_id=expense_group.workspace_id).first().destination_id
+            else:
+                entity_id = entity.destination_id
+
+        else:
+            entity = EmployeeMapping.objects.get(
+                source_employee__value=description.get('employee_email'),
+                workspace_id=expense_group.workspace_id
+            )
+            entity_id = entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' \
+                else entity.destination_vendor.destination_id
+
+        ccc_account_mapping: EmployeeMapping = EmployeeMapping.objects.filter(
+            source_employee__value=description.get('employee_email'),
+            workspace_id=expense_group.workspace_id
+        ).first()
+
+        ccc_account_id = ccc_account_mapping.destination_card_account.destination_id \
+            if ccc_account_mapping and ccc_account_mapping.destination_card_account \
+            else general_mappings.default_ccc_account_id
+
+        credit_card_credit_object, _ = CreditCardCredit.objects.update_or_create(
+            expense_group=expense_group,
+            defaults={
+                'ccc_account_id': ccc_account_id,
+                'department_id': department_id,
+                'entity_id': entity_id,
+                'transaction_date': get_transaction_date(expense_group),
+                'private_note': private_note,
+                'currency': expense.currency,
+                'credit_card_credit_number': expense.expense_number if map_merchant_to_vendor else ''
+            }
+        )
+        return credit_card_credit_object
+
+
+class CreditCardCreditLineitem(models.Model):
+    """
+    QBO CreditCardCredit Lineitem
+    """
+    id = models.AutoField(primary_key=True)
+    credit_card_credit = models.ForeignKey(CreditCardCredit, on_delete=models.PROTECT,
+                                           help_text='Reference to credit card credit')
+    expense = models.OneToOneField(Expense, on_delete=models.PROTECT, help_text='Reference to Expense')
+    account_id = models.CharField(max_length=255, help_text='QBO account id')
+    class_id = models.CharField(max_length=255, help_text='QBO class id', null=True)
+    customer_id = models.CharField(max_length=255, help_text='QBO customer id', null=True)
+    amount = models.FloatField(help_text='credit card credit amount')
+    billable = models.BooleanField(null=True, help_text='Expense Billable or not')
+    description = models.TextField(help_text='QBO credit card credit lineitem description', null=True)
+    created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
+    updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
+
+    class Meta:
+        db_table = 'credit_card_credit_lineitems'
+
+    @staticmethod
+    def create_credit_card_credit_lineitems(expense_group: ExpenseGroup):
+        """
+        Create credit card credit lineitems
+        :param expense_group: expense group
+        :return: lineitems objects
+        """
+        expenses: List[Expense] = expense_group.expenses.all()
+        credit_card_credit = CreditCardCredit.objects.get(expense_group=expense_group)
+
+        credit_card_credit_lineitem_objects = []
+
+        for lineitem in expenses:
+            category = lineitem.category if lineitem.category == lineitem.sub_category else '{0} / {1}'.format(
+                lineitem.category, lineitem.sub_category)
+
+            account: Mapping = Mapping.objects.filter(
+                source_type='CATEGORY',
+                destination_type='ACCOUNT',
+                source__value=category,
+                workspace_id=expense_group.workspace_id
+            ).first()
+
+            class_id = get_class_id_or_none(expense_group, lineitem)
+
+            customer_id = get_customer_id_or_none(expense_group, lineitem)
+
+            credit_card_credit_lineitem_object, _ = CreditCardCreditLineitem.objects.update_or_create(
+                credit_card_credit=credit_card_credit,
+                expense_id=lineitem.id,
+                defaults={
+                    'account_id': account.destination.destination_id if account else None,
+                    'class_id': class_id,
+                    'customer_id': customer_id,
+                    'amount': lineitem.amount,
+                    'billable': lineitem.billable,
+                    'description': get_expense_purpose(expense_group.workspace_id, lineitem, category)
+                }
+            )
+
+            credit_card_credit_lineitem_objects.append(credit_card_credit_lineitem_object)
+
+        return credit_card_credit_lineitem_objects
+
+
 class JournalEntry(models.Model):
     """
     QBO JournalEntry

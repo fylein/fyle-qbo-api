@@ -5,7 +5,8 @@ from django_q.models import Schedule
 from apps.fyle.models import ExpenseGroup
 from apps.fyle.tasks import async_create_expense_groups
 from apps.quickbooks_online.tasks import schedule_bills_creation, schedule_cheques_creation, \
-    schedule_journal_entry_creation, schedule_credit_card_purchase_creation, schedule_qbo_expense_creation
+    schedule_journal_entry_creation, schedule_credit_card_purchase_creation, schedule_qbo_expense_creation,\
+    schedule_credit_card_credit_creation
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import WorkspaceSchedule, WorkspaceGeneralSettings
 
@@ -102,9 +103,27 @@ def run_sync_schedule(workspace_id):
                 )
 
             elif general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE':
-                schedule_credit_card_purchase_creation(
-                    workspace_id=workspace_id, expense_group_ids=expense_group_ids
-                )
+                credit_card_credits = []
+                credit_card_purchases = []
+
+                for expense_group_id in expense_group_ids:
+                    expense_group = ExpenseGroup.objects.filter(id=expense_group_id).first()
+                    expense_group_expense = expense_group.expenses.first()
+
+                    if expense_group_expense.amount < 0:
+                        credit_card_credits.append(expense_group_id)
+                    else:
+                        credit_card_purchases.append(expense_group_id)
+
+                if credit_card_credits:
+                    schedule_credit_card_credit_creation(
+                        workspace_id=workspace_id, expense_group_ids=credit_card_credits
+                    )
+
+                if credit_card_purchases:
+                    schedule_credit_card_purchase_creation(
+                        workspace_id=workspace_id, expense_group_ids=credit_card_purchases
+                    )
 
             elif general_settings.corporate_credit_card_expenses_object == 'BILL':
                 schedule_bills_creation(
