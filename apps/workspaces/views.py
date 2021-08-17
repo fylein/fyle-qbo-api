@@ -385,7 +385,6 @@ class GeneralSettingsView(viewsets.ViewSet):
         Post workspace general settings
         """
         general_settings_payload = request.data
-
         assert_valid(general_settings_payload is not None, 'Request body is empty')
 
         workspace_id = kwargs['workspace_id']

@@ -360,7 +360,7 @@ class ExpenseFieldsView(generics.ListAPIView):
     serializer_class = ExpenseFieldSerializer
 
     def get(self, request, *args, **kwargs):
-        default_attributes = ['CATEGORY', 'PROJECT', 'COST_CENTER']
+        default_attributes = ['CATEGORY', 'PROJECT', 'COST_CENTER', 'TAX']
 
         attributes = ExpenseAttribute.objects.filter(
             ~Q(attribute_type__in=default_attributes),

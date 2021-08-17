@@ -7,7 +7,7 @@ from qbosdk import QuickbooksOnlineSDK
 
 import unidecode
 
-from fyle_accounting_mappings.models import DestinationAttribute
+from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute
 
 from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings
 
@@ -42,7 +42,7 @@ class QBOConnector:
         self.workspace_id = workspace_id
 
         credentials_object.refresh_token = self.connection.refresh_token
-        credentials_object.save()
+        credentials_object.save()        
 
     def get_or_create_vendor(self, vendor_name: str, email: str = None, create: bool = False):
         """
@@ -165,6 +165,40 @@ class QBOConnector:
             department_attributes, 'DEPARTMENT', self.workspace_id, True)
         return []
 
+    def sync_taxcodes(self):
+        """
+        Get Tax Codes
+        """
+        taxcodes = self.connection.tax_codes.get()
+        
+        tax_attributes = []
+        tax_attributes1 = []
+
+        for taxcode in taxcodes:
+
+            if taxcode['PurchaseTaxRateList']['TaxRateDetail']:
+                tax_attributes.append({
+                    'attribute_type': 'TAX',
+                    'display_name': 'Tax Code',
+                    'value': taxcode['PurchaseTaxRateList']['TaxRateDetail'][0]['TaxRateRef']['name'] if taxcode['PurchaseTaxRateList']['TaxRateDetail'] else 'Unspecified',
+                    'destination_id': taxcode['Id'],
+                })
+                tax_attributes1.append({
+                    'attribute_type': 'TAX',
+                    'display_name': 'Tax Code',
+                    'value': taxcode['PurchaseTaxRateList']['TaxRateDetail'][0]['TaxRateRef']['name'] if taxcode['PurchaseTaxRateList']['TaxRateDetail'] else 'Unspecified',
+                    'source_id': taxcode['Id'],
+                })
+        
+        DestinationAttribute.bulk_create_or_update_destination_attributes(
+            tax_attributes, 'TAX', self.workspace_id, True)
+        
+        ExpenseAttribute.bulk_create_or_update_expense_attributes(
+            tax_attributes1, 'TAX', self.workspace_id)
+
+        
+        return []
+
     def sync_vendors(self):
         """
         Get vendors
@@ -194,7 +228,7 @@ class QBOConnector:
 
         DestinationAttribute.bulk_create_or_update_destination_attributes(
             vendor_attributes, 'VENDOR', self.workspace_id, True)
-
+        
         return []
 
     def create_vendor_destionation_attribute(self, vendor):
@@ -333,6 +367,11 @@ class QBOConnector:
             self.sync_classes()
         except Exception as exception:
             logger.exception(exception)
+        
+        try:
+            self.sync_taxcodes()
+        except Exception as exception:
+            logger.exception(exception)
 
         try:
             self.sync_departments()
@@ -356,10 +395,11 @@ class QBOConnector:
             'DepartmentRef': {
                 'value': purchase_object.department_id
             },
+            'GlobalTaxCalculation': 'TaxExcluded',
             'TxnDate': purchase_object.transaction_date,
-            "CurrencyRef": {
-                "value": purchase_object.currency
-            },
+#            "CurrencyRef": {
+#               "value": purchase_object.currency
+#            },
             'PrivateNote': purchase_object.private_note,
             'Line': line
         }
@@ -389,6 +429,9 @@ class QBOConnector:
                     'ClassRef': {
                         'value': line.class_id
                     },
+                    'TaxCodeRef': {
+                        'value': 6
+                    },
                     'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
                 }
             }
@@ -413,8 +456,9 @@ class QBOConnector:
                 'value': bill.department_id
             },
             'TxnDate': bill.transaction_date,
-            "CurrencyRef": {
-                "value": bill.currency
+            'GlobalTaxCalculation': 'TaxInclusive',
+            'CurrencyRef': {
+                'value': bill.currency
             },
             'PrivateNote': bill.private_note,
             'Line': self.__construct_bill_lineitems(bill_lineitems)
@@ -457,6 +501,9 @@ class QBOConnector:
                     },
                     'CustomerRef': {
                         'value': line.customer_id
+                    },
+                    'TaxCodeRef': {
+                        'value': 6
                     },
                     'ClassRef': {
                         'value': line.class_id
