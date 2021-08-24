@@ -340,7 +340,7 @@ class QBOConnector:
             logger.exception(exception)
 
     @staticmethod
-    def purchase_object_payload(purchase_object, line, payment_type, account_ref, doc_number: str = None):
+    def purchase_object_payload(purchase_object, line, payment_type, account_ref, doc_number: str = None, credit=None):
         """
         returns purchase object payload
         """
@@ -361,6 +361,7 @@ class QBOConnector:
                 "value": purchase_object.currency
             },
             'PrivateNote': purchase_object.private_note,
+            'Credit': credit,
             'Line': line
         }
         return purchase_object_payload
@@ -579,9 +580,15 @@ class QBOConnector:
         :return: constructed credit_card_purchase
         """
         line = self.__construct_credit_card_purchase_lineitems(credit_card_purchase_lineitems)
+        credit = False
+
+        if line[0]['Amount'] < 0:
+            credit = True
+            line[0]['Amount'] = abs(line[0]['Amount'])
+
         credit_card_purchase_payload = self.purchase_object_payload(
             credit_card_purchase, line, account_ref=credit_card_purchase.ccc_account_id, payment_type='CreditCard',
-            doc_number=credit_card_purchase.credit_card_purchase_number
+            doc_number=credit_card_purchase.credit_card_purchase_number, credit=credit
         )
 
         return credit_card_purchase_payload

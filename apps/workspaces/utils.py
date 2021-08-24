@@ -131,6 +131,7 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
     if general_settings.map_merchant_to_vendor and \
             general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE':
         expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
+        expense_group_settings.import_card_credits = True
 
         ccc_expense_group_fields = expense_group_settings.corporate_credit_card_expense_group_fields
         ccc_expense_group_fields.append('expense_id')
