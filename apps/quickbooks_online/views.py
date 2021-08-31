@@ -415,7 +415,7 @@ class TaxcodeView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         return DestinationAttribute.objects.filter(
-            attribute_type='TAX', workspace_id=self.kwargs['workspace_id']).order_by('value')
+            attribute_type='TAX_CODE', workspace_id=self.kwargs['workspace_id']).order_by('value')
 
 class CustomerView(generics.ListCreateAPIView):
     """

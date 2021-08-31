@@ -49,6 +49,8 @@ class Expense(models.Model):
     currency = models.CharField(max_length=5, help_text='Home Currency')
     foreign_amount = models.FloatField(null=True, help_text='Foreign Amount')
     foreign_currency = models.CharField(null=True, max_length=5, help_text='Foreign Currency')
+    tax_amount = models.FloatField(null=True, help_text="Tax Amount")
+    tax_group_id = models.CharField(null=True, max_length=255, help_text="Tax Group ID")
     settlement_id = models.CharField(max_length=255, null=True, help_text='Settlement ID')
     reimbursable = models.BooleanField(default=False, help_text='Expense reimbursable or not')
     billable = models.BooleanField(null=True, help_text='Expense Billable or not')
@@ -109,6 +111,8 @@ class Expense(models.Model):
                     'currency': expense['currency'],
                     'foreign_amount': expense['foreign_amount'],
                     'foreign_currency': expense['foreign_currency'],
+                    'tax_amount': expense['tax'],
+                    'tax_group_id': expense['tax_group_id'],
                     'settlement_id': expense['settlement_id'],
                     'reimbursable': expense['reimbursable'],
                     'billable': expense['billable'],

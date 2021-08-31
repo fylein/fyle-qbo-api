@@ -178,23 +178,23 @@ class QBOConnector:
 
             if taxcode['PurchaseTaxRateList']['TaxRateDetail']:
                 tax_attributes.append({
-                    'attribute_type': 'TAX',
+                    'attribute_type': 'TAX_CODE',
                     'display_name': 'Tax Code',
                     'value': taxcode['PurchaseTaxRateList']['TaxRateDetail'][0]['TaxRateRef']['name'] if taxcode['PurchaseTaxRateList']['TaxRateDetail'] else 'Unspecified',
                     'destination_id': taxcode['Id'],
                 })
                 tax_attributes1.append({
-                    'attribute_type': 'TAX',
-                    'display_name': 'Tax Code',
+                    'attribute_type': 'TAX_GROUP',
+                    'display_name': 'Tax Group',
                     'value': taxcode['PurchaseTaxRateList']['TaxRateDetail'][0]['TaxRateRef']['name'] if taxcode['PurchaseTaxRateList']['TaxRateDetail'] else 'Unspecified',
-                    'source_id': taxcode['Id'],
+                    'source_id': 'tg4Ji2lm1TjY',
                 })
         
         DestinationAttribute.bulk_create_or_update_destination_attributes(
-            tax_attributes, 'TAX', self.workspace_id, True)
+            tax_attributes, 'TAX_CODE', self.workspace_id, True)
         
         ExpenseAttribute.bulk_create_or_update_expense_attributes(
-            tax_attributes1, 'TAX', self.workspace_id)
+            tax_attributes1, 'TAX_GROUP', self.workspace_id)
 
         
         return []
@@ -395,7 +395,6 @@ class QBOConnector:
             'DepartmentRef': {
                 'value': purchase_object.department_id
             },
-            'GlobalTaxCalculation': 'TaxExcluded',
             'TxnDate': purchase_object.transaction_date,
 #            "CurrencyRef": {
 #               "value": purchase_object.currency
@@ -430,8 +429,9 @@ class QBOConnector:
                     'ClassRef': {
                         'value': line.class_id
                     },
+                    'TaxAmount': line.tax_amount,
                     'TaxCodeRef': {
-                        'value': 6
+                        'value': line.tax_code
                     },
                     'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
                 }
@@ -458,9 +458,9 @@ class QBOConnector:
             },
             'TxnDate': bill.transaction_date,
             'GlobalTaxCalculation': 'TaxInclusive',
-            'CurrencyRef': {
-                'value': bill.currency
-            },
+            #'CurrencyRef': {
+            #    'value': bill.currency
+            #},
             'PrivateNote': bill.private_note,
             'Line': self.__construct_bill_lineitems(bill_lineitems)
         }
@@ -492,6 +492,7 @@ class QBOConnector:
         lines = []
 
         for line in qbo_expense_lineitems:
+            print(line.tax_code)
             line = {
                 'Description': line.description,
                 'DetailType': 'AccountBasedExpenseLineDetail',
@@ -504,7 +505,7 @@ class QBOConnector:
                         'value': line.customer_id
                     },
                     'TaxCodeRef': {
-                        'value': 6
+                        'value': 4
                     },
                     'ClassRef': {
                         'value': line.class_id
@@ -526,6 +527,7 @@ class QBOConnector:
         qbo_expense_payload = self.purchase_object_payload(
             qbo_expense, line, account_ref=qbo_expense.expense_account_id, payment_type='Cash'
         )
+        print(qbo_expense_payload)
         return qbo_expense_payload
 
     def post_qbo_expense(self, qbo_expense: QBOExpense, qbo_expense_lineitems: List[QBOExpenseLineitem]):
@@ -558,6 +560,9 @@ class QBOConnector:
                     },
                     'CustomerRef': {
                         'value': line.customer_id
+                    },
+                    'TaxCodeRef': {
+                        'value': line.tax_code
                     },
                     'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
                 }
@@ -611,6 +616,9 @@ class QBOConnector:
                     },
                     'ClassRef': {
                         'value': line.class_id
+                    },
+                    'TaxCodeRef': {
+                        'value': line.tax_code
                     },
                     'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
                 },
@@ -711,6 +719,9 @@ class QBOConnector:
                     'ClassRef': {
                         'value': line.class_id
                     },
+                    'TaxCodeRef': {
+                        'value': line.tax_code
+                    },
                     'Entity': {
                         'EntityRef': {
                             'value': line.entity_id
@@ -741,9 +752,9 @@ class QBOConnector:
             'TxnDate': journal_entry.transaction_date,
             'PrivateNote': journal_entry.private_note,
             'Line': lines,
-            'CurrencyRef': {
-                "value": journal_entry.currency
-            }
+            #'CurrencyRef': {
+            #    "value": journal_entry.currency
+            #}
         }
         return journal_entry_payload
 
@@ -834,9 +845,9 @@ class QBOConnector:
                 'value': bill_payment.department_id
             },
             'TxnDate': bill_payment.transaction_date,
-            "CurrencyRef": {
-                "value": bill_payment.currency
-            },
+            #"CurrencyRef": {
+            #    "value": bill_payment.currency
+            #},
             'PrivateNote': bill_payment.private_note,
             'TotalAmt': bill_payment.amount,
             'PayType': 'Check',

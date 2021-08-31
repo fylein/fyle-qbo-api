@@ -877,7 +877,7 @@ def async_auto_create_custom_field_mappings(workspace_id):
         import_to_fyle=True,
         workspace_id=workspace_id
     ).all()
-    print("mappings_settings", mapping_settings)
+    
     if mapping_settings:
         for mapping_setting in mapping_settings:
             if mapping_setting.import_to_fyle:
