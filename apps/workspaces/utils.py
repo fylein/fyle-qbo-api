@@ -114,6 +114,7 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
             'employee_field_mapping': general_settings_payload['employee_field_mapping'],
             'import_projects': general_settings_payload['import_projects'],
             'import_categories': general_settings_payload['import_categories'],
+            'forced_export': general_settings_payload['forced_export'],
             'auto_map_employees': general_settings_payload['auto_map_employees'],
             'auto_create_destination_entity': general_settings_payload['auto_create_destination_entity'],
             'reimbursable_expenses_object': general_settings_payload['reimbursable_expenses_object'],
