@@ -1,0 +1,2 @@
+# Dev requirements
+watchdog==2.1.3
