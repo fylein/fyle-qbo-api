@@ -284,6 +284,10 @@ def check_exact_matches(employee_mapping_preference: str, source_attribute: Expe
     elif employee_mapping_preference == 'EMPLOYEE_CODE':
         source_value = source_attribute.detail['employee_code']
 
+    # Handling employee_code or full_name null case
+    if not source_value:
+        source_value = ''
+
     # Checking exact match
     if source_value.lower() in destination_id_value_map:
         if destination_type == 'EMPLOYEE':
@@ -405,17 +409,23 @@ def auto_map_employees(destination_type: str, employee_mapping_preference: str, 
         if value_to_be_appended:
             destination_id_value_map[value_to_be_appended.lower()] = destination_employee.id
 
-    employee_source_attributes_count = ExpenseAttribute.objects.filter(
-        attribute_type='EMPLOYEE', workspace_id=workspace_id, auto_mapped=False
-    ).count()
+    filters = {
+        'attribute_type': 'EMPLOYEE',
+        'workspace_id': workspace_id
+    }
+
+    if destination_type == 'VENDOR':
+        filters['employeemapping__destination_vendor__isnull'] = True
+    else:
+        filters['employeemapping__destination_employee__isnull'] = True
+
+    employee_source_attributes_count = ExpenseAttribute.objects.filter(**filters).count()
     page_size = 200
     employee_source_attributes = []
 
     for offset in range(0, employee_source_attributes_count, page_size):
         limit = offset + page_size
-        paginated_employee_source_attributes = ExpenseAttribute.objects.filter(
-            attribute_type='EMPLOYEE', workspace_id=workspace_id, auto_mapped=False
-        )[offset:limit]
+        paginated_employee_source_attributes = ExpenseAttribute.objects.filter(**filters)[offset:limit]
         employee_source_attributes.extend(paginated_employee_source_attributes)
 
     mapping_creation_batch, mapping_updation_batch, update_key = construct_mapping_payload(

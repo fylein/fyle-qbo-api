@@ -5,9 +5,9 @@ from datetime import datetime
 from typing import List
 
 from django.db import models
-from django.db.models import Q
 
-from fyle_accounting_mappings.models import Mapping, MappingSetting, ExpenseAttribute, DestinationAttribute, EmployeeMapping
+from fyle_accounting_mappings.models import Mapping, MappingSetting, ExpenseAttribute, DestinationAttribute,\
+    EmployeeMapping
 
 from apps.fyle.models import ExpenseGroup, Expense
 from apps.fyle.utils import FyleConnector
@@ -741,6 +741,7 @@ class JournalEntryLineitem(models.Model):
         debit_account_id = None
         entity_type = None
 
+        general_mappings = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
         workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
         employee_field_mapping = workspace_general_settings.employee_field_mapping
 
@@ -757,10 +758,14 @@ class JournalEntryLineitem(models.Model):
                 debit_account_id = GeneralMapping.objects.get(
                     workspace_id=expense_group.workspace_id).bank_account_id
         elif expense_group.fund_source == 'CCC':
-            debit_account_id: EmployeeMapping = EmployeeMapping.objects.get(
+            debit_account: EmployeeMapping = EmployeeMapping.objects.filter(
                 source_employee__value=description.get('employee_email'),
                 workspace_id=expense_group.workspace_id
-            ).destination_card_account.destination_id
+            ).first()
+            if debit_account and debit_account.destination_card_account:
+                debit_account_id = debit_account.destination_card_account.destination_id
+            else:
+                debit_account_id = general_mappings.default_ccc_account_id
 
         if employee_field_mapping == 'EMPLOYEE':
             entity_type = 'Employee'

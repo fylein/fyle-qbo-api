@@ -160,6 +160,7 @@ class ExpenseGroupSettings(models.Model):
                                      help_text='state at which the expenses are fetched ( PAYMENT_PENDING / '
                                                'PAYMENT_PROCESSING, PAID)')
     export_date_type = models.CharField(max_length=100, default='current_date', help_text='Export Date')
+    import_card_credits = models.BooleanField(help_text='Import Card Credits', default=False)
     workspace = models.OneToOneField(
         Workspace, on_delete=models.PROTECT, help_text='To which workspace this expense group setting belongs to'
     )
@@ -268,6 +269,7 @@ class ExpenseGroup(models.Model):
     fund_source = models.CharField(max_length=255, help_text='Expense fund source')
     expenses = models.ManyToManyField(Expense, help_text="Expenses under this Expense Group")
     description = JSONField(max_length=255, help_text='Description', null=True)
+    response_logs = JSONField(help_text='Reponse log of the export', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     exported_at = models.DateTimeField(help_text='Exported at', null=True)
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
