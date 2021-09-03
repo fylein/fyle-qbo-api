@@ -27,7 +27,6 @@ class GeneralMappingView(generics.ListCreateAPIView):
         assert_valid(general_mapping_payload is not None, 'Request body is empty')
 
         mapping_utils = MappingUtils(kwargs['workspace_id'])
-        print(general_mapping_payload)
         general_mapping = mapping_utils.create_or_update_general_mapping(general_mapping_payload)
 
         return Response(

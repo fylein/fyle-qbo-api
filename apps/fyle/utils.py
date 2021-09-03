@@ -9,8 +9,9 @@ from fylesdk import FyleSDK, UnauthorizedClientError, NotFoundClientError, Inter
 from fyle_accounting_mappings.models import ExpenseAttribute
 
 import requests
-
+from apps.workspaces.models import FyleCredential
 from apps.fyle.models import Reimbursement, ExpenseGroupSettings
+from .platform_connector import FylePlatformConnector
 
 logger = logging.getLogger(__name__)
 
@@ -350,3 +351,4 @@ class FyleConnector:
             self.sync_expense_custom_fields(active_only=True)
         except Exception as exception:
             logger.exception(exception)
+

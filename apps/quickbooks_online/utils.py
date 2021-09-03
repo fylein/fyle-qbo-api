@@ -172,31 +172,23 @@ class QBOConnector:
         taxcodes = self.connection.tax_codes.get()
         
         tax_attributes = []
-        tax_attributes1 = []
-
         for taxcode in taxcodes:
-
             if taxcode['PurchaseTaxRateList']['TaxRateDetail']:
+                tax_rate_id = taxcode['PurchaseTaxRateList']['TaxRateDetail'][0]['TaxRateRef']['value']
+                tax_rate = self.connection.tax_rates.get_by_id(tax_rate_id)['RateValue']
                 tax_attributes.append({
                     'attribute_type': 'TAX_CODE',
                     'display_name': 'Tax Code',
-                    'value': taxcode['PurchaseTaxRateList']['TaxRateDetail'][0]['TaxRateRef']['name'] if taxcode['PurchaseTaxRateList']['TaxRateDetail'] else 'Unspecified',
+                    'value': '{0}'.format(taxcode['Name']),
                     'destination_id': taxcode['Id'],
+                    'detail': {
+                        'tax_rate': tax_rate
+                    }
                 })
-                tax_attributes1.append({
-                    'attribute_type': 'TAX_GROUP',
-                    'display_name': 'Tax Group',
-                    'value': taxcode['PurchaseTaxRateList']['TaxRateDetail'][0]['TaxRateRef']['name'] if taxcode['PurchaseTaxRateList']['TaxRateDetail'] else 'Unspecified',
-                    'source_id': 'tg4Ji2lm1TjY',
-                })
-        
+
         DestinationAttribute.bulk_create_or_update_destination_attributes(
             tax_attributes, 'TAX_CODE', self.workspace_id, True)
-        
-        ExpenseAttribute.bulk_create_or_update_expense_attributes(
-            tax_attributes1, 'TAX_GROUP', self.workspace_id)
 
-        
         return []
 
     def sync_vendors(self):
@@ -396,6 +388,7 @@ class QBOConnector:
                 'value': purchase_object.department_id
             },
             'TxnDate': purchase_object.transaction_date,
+            'GlobalTaxCalculation': 'TaxInclusive',
 #            "CurrencyRef": {
 #               "value": purchase_object.currency
 #            },
@@ -492,7 +485,6 @@ class QBOConnector:
         lines = []
 
         for line in qbo_expense_lineitems:
-            print(line.tax_code)
             line = {
                 'Description': line.description,
                 'DetailType': 'AccountBasedExpenseLineDetail',
@@ -505,7 +497,7 @@ class QBOConnector:
                         'value': line.customer_id
                     },
                     'TaxCodeRef': {
-                        'value': 4
+                        'value': line.tax_code
                     },
                     'ClassRef': {
                         'value': line.class_id
@@ -527,7 +519,6 @@ class QBOConnector:
         qbo_expense_payload = self.purchase_object_payload(
             qbo_expense, line, account_ref=qbo_expense.expense_account_id, payment_type='Cash'
         )
-        print(qbo_expense_payload)
         return qbo_expense_payload
 
     def post_qbo_expense(self, qbo_expense: QBOExpense, qbo_expense_lineitems: List[QBOExpenseLineitem]):

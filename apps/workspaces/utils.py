@@ -9,7 +9,7 @@ from django.conf import settings
 from future.moves.urllib.parse import urlencode
 from qbosdk import UnauthorizedClientError, NotFoundClientError, WrongParamsError, InternalServerError
 
-from apps.mappings.tasks import schedule_categories_creation, schedule_auto_map_employees, schedule_auto_map_ccc_employees
+from apps.mappings.tasks import schedule_categories_creation, schedule_auto_map_employees, schedule_auto_map_ccc_employees, schedule_taxgroups_creation
 from apps.quickbooks_online.tasks import schedule_bill_payment_creation, schedule_qbo_objects_status_sync,\
     schedule_reimbursements_sync
 
@@ -141,6 +141,8 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
         expense_group_settings.save()
 
     schedule_categories_creation(import_categories=general_settings.import_categories, workspace_id=workspace_id)
+
+    schedule_taxgroups_creation(import_taxcodes=general_settings.import_taxcodes, workspace_id=workspace_id)
 
     schedule_auto_map_employees(general_settings_payload['auto_map_employees'], workspace_id)
 

@@ -12,6 +12,7 @@ from fyle_accounting_mappings.models import MappingSetting, Mapping, Destination
     EmployeeMapping
 
 from apps.fyle.utils import FyleConnector
+from apps.fyle.platform_connector import FylePlatformConnector
 from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.utils import QBOConnector
 from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGeneralSettings
@@ -87,20 +88,19 @@ def auto_create_taxcodes_mappings(workspace_id: int):
     try:
         fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
 
-        fyle_connection = FyleConnector(
+        fyle_connection = FylePlatformConnector(
             refresh_token=fyle_credentials.refresh_token,
             workspace_id=workspace_id
         )
 
-        fyle_connection.sync_taxcodes()
+        fyle_connection.sync_tax_groups()
 
         mapping_setting = MappingSetting.objects.get(
-            source_field='TAX', workspace_id=workspace_id
+            source_field='TAX_GROUP', workspace_id=workspace_id
         )
 
         sync_qbo_attribute(mapping_setting.destination_field, workspace_id)
-
-        post_taxgroups_in_batches(fyle_connection, workspace_id, mapping_setting.destination_field)
+        post_taxgroups_in_batches(fyle_connection, workspace_id)
 
     except WrongParamsError as exception:
         logger.error(
@@ -158,10 +158,10 @@ def auto_create_project_mappings(workspace_id: int):
             workspace_id, error
         )
 
-def schedule_taxgroups_creation(import_to_fyle, workspace_id):
-    if import_to_fyle:
+def schedule_taxgroups_creation(import_taxcodes, workspace_id):
+    if import_taxcodes:
         schedule, _ = Schedule.objects.update_or_create(
-            func='apps.mappings.tasks.auto_create_taxgroups_mappings',
+            func='apps.mappings.tasks.auto_create_taxcodes_mappings',
             args='{}'.format(workspace_id),
             defaults={
                 'schedule_type': Schedule.MINUTES,
@@ -628,31 +628,32 @@ def schedule_auto_map_ccc_employees(workspace_id: int):
         if schedule:
             schedule.delete()
 
-def post_taxgroups_in_batches(qbo_attribute_type: str, workspace_id: int):
-    
+def post_taxgroups_in_batches(platform_connection: FylePlatformConnector, workspace_id: int):    
     existing_taxcodes_name = ExpenseAttribute.objects.filter(
-        attribute_type='TAX', workspace_id=workspace_id).values_list('value', flat=True)
+        attribute_type='TAX_GROUP', workspace_id=workspace_id).values_list('value', flat=True)
 
     qbo_attributes_count = DestinationAttribute.objects.filter(
-        attribute_type=qbo_attribute_type, workspace_id=workspace_id).count()
+        attribute_type='TAX_CODE', workspace_id=workspace_id).count()
 
     page_size = 200
 
     for offset in range(0, qbo_attributes_count, page_size):
         limit = offset + page_size
         paginated_qbo_attributes = DestinationAttribute.objects.filter(
-            attribute_type=qbo_attribute_type, workspace_id=workspace_id).order_by('value', 'id')[offset:limit]
+            attribute_type='TAX_CODE', workspace_id=workspace_id).order_by('value', 'id')[offset:limit]
 
         paginated_qbo_attributes = remove_duplicates(paginated_qbo_attributes)
 
-        fyle_payload: List[Dict] = create_fyle_cost_centers_payload(
-            paginated_qbo_attributes, existing_cost_center_names)
+        fyle_payload: List[Dict] = create_fyle_tax_group_payload(
+            paginated_qbo_attributes, existing_taxcodes_name)
 
         if fyle_payload:
-            fyle_connection.connection.TaxCodes.post(fyle_payload)
-            fyle_connection.sync_taxcodes()
+            for payload in fyle_payload:
+                platform_connection.connection.v1.admin.tax_groups.post(payload)
 
-        Mapping.bulk_create_mappings(paginated_qbo_attributes, 'TAX', qbo_attribute_type, workspace_id)
+            platform_connection.sync_tax_groups()
+
+        Mapping.bulk_create_mappings(paginated_qbo_attributes, 'TAX_GROUP', 'TAX_CODE', workspace_id)
 
 
 def sync_qbo_attribute(qbo_attribute_type: str, workspace_id: int):
@@ -694,6 +695,26 @@ def create_fyle_cost_centers_payload(qbo_attributes: List[DestinationAttribute],
 
     return fyle_cost_centers_payload
 
+def create_fyle_tax_group_payload(qbo_attributes: List[DestinationAttribute], existing_fyle_tax_groups: list):
+    """
+    Create Fyle Cost Centers Payload from QBO Objects
+    :param existing_fyle_tax_groups: Existing cost center names
+    :param qbo_attributes: QBO Objects
+    :return: Fyle Cost Centers Payload
+    """
+
+    fyle_tax_group_payload = []
+    for qbo_attribute in qbo_attributes:
+        if qbo_attribute.value not in existing_fyle_tax_groups:
+            fyle_tax_group_payload.append({
+                'data': {
+                    'name': qbo_attribute.value,
+                    'is_enabled': True,
+                    'percentage': (qbo_attribute.detail['tax_rate'] / 100)
+                }
+            })
+    
+    return fyle_tax_group_payload
 
 def post_cost_centers_in_batches(fyle_connection: FyleConnector, workspace_id: int, qbo_attribute_type: str):
     existing_cost_center_names = ExpenseAttribute.objects.filter(

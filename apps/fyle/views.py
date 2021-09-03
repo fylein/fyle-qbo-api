@@ -13,6 +13,7 @@ from apps.tasks.models import TaskLog
 
 from .tasks import create_expense_groups, schedule_expense_group_creation
 from .utils import FyleConnector
+from .platform_connector import FylePlatformConnector
 from .models import Expense, ExpenseGroup, ExpenseGroupSettings
 from .serializers import ExpenseGroupSerializer, ExpenseSerializer, ExpenseFieldSerializer, \
     ExpenseGroupSettingsSerializer
@@ -86,6 +87,18 @@ class ExpenseGroupScheduleView(generics.CreateAPIView):
             status=status.HTTP_200_OK
         )
 
+class GetTaxGroups(generics.ListCreateAPIView):
+
+    def get(self, request, *args, **kwargs):
+        fyle_credentials = FyleCredential.objects.get(workspace_id=kwargs['workspace_id'])
+        platform_connector = FylePlatformConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
+
+        platform_connector.sync_tax_groups()
+
+        return Response(
+            data={"msg": "this is complete"},
+            status=status.HTTP_200_OK
+        )
 
 class ExpenseGroupByIdView(generics.RetrieveAPIView):
     """
@@ -422,8 +435,10 @@ class SyncFyleDimensionView(generics.ListCreateAPIView):
             if workspace.source_synced_at is None or time_interval.days > 0:
                 fyle_credentials = FyleCredential.objects.get(workspace_id=kwargs['workspace_id'])
                 fyle_connector = FyleConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
+                platform_connector = FylePlatformConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
 
                 fyle_connector.sync_dimensions()
+                platform_connector.sync_tax_groups()
 
                 workspace.source_synced_at = datetime.now()
                 workspace.save(update_fields=['source_synced_at'])
@@ -453,8 +468,10 @@ class RefreshFyleDimensionView(generics.ListCreateAPIView):
         try:
             fyle_credentials = FyleCredential.objects.get(workspace_id=kwargs['workspace_id'])
             fyle_connector = FyleConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
+            platform_connector = FylePlatformConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
 
             fyle_connector.sync_dimensions()
+            platform_connector.sync_tax_groups()
 
             workspace = Workspace.objects.get(id=kwargs['workspace_id'])
             workspace.source_synced_at = datetime.now()
