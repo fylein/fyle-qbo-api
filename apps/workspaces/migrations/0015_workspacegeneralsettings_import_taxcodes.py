@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='workspacegeneralsettings',
-            name='import_taxcodes',
+            name='import_tax_codes',
             field=models.BooleanField(default=False, help_text='Auto import tax codes to Fyle'),
         ),
     ]

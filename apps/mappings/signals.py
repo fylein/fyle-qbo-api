@@ -8,7 +8,7 @@ from django_q.tasks import async_task
 from fyle_accounting_mappings.models import MappingSetting
 
 from apps.mappings.tasks import upload_attributes_to_fyle, schedule_cost_centers_creation,\
-    schedule_fyle_attributes_creation, schedule_projects_creation, schedule_taxgroups_creation
+    schedule_fyle_attributes_creation, schedule_projects_creation
 
 
 @receiver(post_save, sender=MappingSetting)
@@ -23,7 +23,7 @@ def run_post_mapping_settings_triggers(sender, instance: MappingSetting, **kwarg
 
     if instance.source_field == 'COST_CENTER':
         schedule_cost_centers_creation(instance.import_to_fyle, int(instance.workspace_id))
-        
+   
     if instance.is_custom:
         (int(instance.workspace_id))
 

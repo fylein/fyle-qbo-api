@@ -9,7 +9,7 @@ from django.conf import settings
 from future.moves.urllib.parse import urlencode
 from qbosdk import UnauthorizedClientError, NotFoundClientError, WrongParamsError, InternalServerError
 
-from apps.mappings.tasks import schedule_categories_creation, schedule_auto_map_employees, schedule_auto_map_ccc_employees, schedule_taxgroups_creation
+from apps.mappings.tasks import schedule_categories_creation, schedule_auto_map_employees, schedule_auto_map_ccc_employees, schedule_tax_groups_creation
 from apps.quickbooks_online.tasks import schedule_bill_payment_creation, schedule_qbo_objects_status_sync,\
     schedule_reimbursements_sync
 
@@ -114,7 +114,7 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
             'employee_field_mapping': general_settings_payload['employee_field_mapping'],
             'import_projects': general_settings_payload['import_projects'],
             'import_categories': general_settings_payload['import_categories'],
-            'import_taxcodes': general_settings_payload['import_taxcodes'],
+            'import_tax_codes': general_settings_payload['import_tax_codes'],
             'auto_map_employees': general_settings_payload['auto_map_employees'],
             'auto_create_destination_entity': general_settings_payload['auto_create_destination_entity'],
             'reimbursable_expenses_object': general_settings_payload['reimbursable_expenses_object'],
@@ -142,7 +142,7 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
 
     schedule_categories_creation(import_categories=general_settings.import_categories, workspace_id=workspace_id)
 
-    schedule_taxgroups_creation(import_taxcodes=general_settings.import_taxcodes, workspace_id=workspace_id)
+    schedule_tax_groups_creation(import_tax_codes=general_settings.import_tax_codes, workspace_id=workspace_id)
 
     schedule_auto_map_employees(general_settings_payload['auto_map_employees'], workspace_id)
 

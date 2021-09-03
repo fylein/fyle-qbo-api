@@ -87,7 +87,7 @@ class ExpenseGroupScheduleView(generics.CreateAPIView):
             status=status.HTTP_200_OK
         )
 
-class GetTaxGroups(generics.ListCreateAPIView):
+class TaxGroupsView(generics.ListCreateAPIView):
 
     def get(self, request, *args, **kwargs):
         fyle_credentials = FyleCredential.objects.get(workspace_id=kwargs['workspace_id'])

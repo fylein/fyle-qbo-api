@@ -406,9 +406,9 @@ class DepartmentView(generics.ListCreateAPIView):
             )
 
 
-class TaxcodeView(generics.ListCreateAPIView):
+class TaxCodeView(generics.ListCreateAPIView):
     """
-    Taxcode API View
+    TaxCode API View
     """
     serializer_class = DestinationAttributeSerializer
     pagination_class = None
@@ -700,7 +700,7 @@ class QuickbooksFieldsView(generics.ListAPIView):
     def get_queryset(self):
         default_attributes = [
             'EMPLOYEE','ACCOUNT', 'VENDOR', 'ACCOUNTS_PAYABLE', 
-            'CREDIT_CARD_ACCOUNT', 'BANK_ACCOUNT', 'TAX'
+            'CREDIT_CARD_ACCOUNT', 'BANK_ACCOUNT', 'TAX_GROUP'
         ]
         attributes = DestinationAttribute.objects.filter(
             ~Q(attribute_type__in=default_attributes),

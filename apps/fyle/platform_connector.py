@@ -58,7 +58,6 @@ class FylePlatformConnector:
             tax_attributes, 'TAX_GROUP', self.workspace_id)
 
     def sync_platform_dimensions(self):
-
         try:
             self.sync_tax_groups()
         except Exception as exception:
