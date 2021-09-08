@@ -21,6 +21,8 @@ class GeneralMapping(models.Model):
     default_ccc_account_id = models.CharField(max_length=40, help_text='QBO default ccc account id', null=True)
     default_ccc_vendor_name = models.CharField(max_length=255, help_text='QBO default CCC Vendor Name', null=True)
     default_ccc_vendor_id = models.CharField(max_length=255, help_text='QBO default CCC Vendor ID', null=True)
+    default_tax_code_name = models.CharField(max_length=255, help_text='QBO default Tax Code name', null=True)
+    default_tax_code_id = models.CharField(max_length=255, help_text='QBO default Tax Code ID', null=True)
     bill_payment_account_id = models.CharField(max_length=255, help_text='BillPayment Account id', null=True)
     bill_payment_account_name = models.CharField(max_length=255, help_text='BillPayment Account name', null=True)
     workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')

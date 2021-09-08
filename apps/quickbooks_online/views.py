@@ -408,7 +408,7 @@ class DepartmentView(generics.ListCreateAPIView):
 
 class TaxCodeView(generics.ListCreateAPIView):
     """
-    TaxCode API View
+    Tax code API View
     """
     serializer_class = DestinationAttributeSerializer
     pagination_class = None

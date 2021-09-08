@@ -649,8 +649,7 @@ def post_tax_groups_in_batches(platform_connection: FylePlatformConnector, works
 
         if fyle_payload:
             for payload in fyle_payload:
-                print(payload)
-                #platform_connection.connection.v1.admin.tax_groups.post(payload)
+                platform_connection.connection.v1.admin.tax_groups.post(payload)
 
             platform_connection.sync_tax_groups()
 
@@ -899,7 +898,7 @@ def async_auto_create_custom_field_mappings(workspace_id):
         import_to_fyle=True,
         workspace_id=workspace_id
     ).all()
-    
+
     if mapping_settings:
         for mapping_setting in mapping_settings:
             if mapping_setting.import_to_fyle:

@@ -34,7 +34,7 @@ urlpatterns = [
     path('classes/', ClassView.as_view()),
     path('departments/', DepartmentView.as_view()),
     path('customers/', CustomerView.as_view()),
-    path('taxcodes/', TaxCodeView.as_view()),
+    path('tax_codes/', TaxCodeView.as_view()),
     path('bills/', BillView.as_view()),
     path('bills/trigger/', BillScheduleView.as_view()),
     path('checks/', ChequeView.as_view()),
