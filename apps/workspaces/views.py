@@ -241,6 +241,7 @@ class ConnectQBOView(viewsets.ViewSet):
                 if workspace.qbo_realm_id:
                     assert_valid(realm_id == workspace.qbo_realm_id,
                                  'Please choose the correct Quickbooks online account')
+
                 qbo_credentials = QBOCredential.objects.create(
                     refresh_token=refresh_token,
                     realm_id=realm_id,
@@ -250,7 +251,7 @@ class ConnectQBOView(viewsets.ViewSet):
                 workspace.save()
             else:
                 assert_valid(realm_id == qbo_credentials.realm_id,
-                             'Please choose the correct aaaaa Quickbooks online account')
+                             'Please choose the correct Quickbooks online account')
                 qbo_credentials.refresh_token = refresh_token
                 qbo_credentials.save()
 

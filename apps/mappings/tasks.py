@@ -710,7 +710,7 @@ def create_fyle_tax_group_payload(qbo_attributes: List[DestinationAttribute], ex
                 'data': {
                     'name': qbo_attribute.value,
                     'is_enabled': True,
-                    'percentage': (qbo_attribute.detail['tax_rate'] / 100)
+                    'percentage': round((qbo_attribute.detail['tax_rate']/100), 2)
                 }
             })
     

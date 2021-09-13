@@ -188,7 +188,7 @@ class QBOConnector:
                     tax_attributes.append({
                         'attribute_type': 'TAX_CODE',
                         'display_name': 'Tax Code',
-                        'value': '{0}'.format(tax_code['Name']),
+                        'value': '{0} @{1}%'.format(tax_code['Name'], effective_tax_rate),
                         'destination_id': tax_code['Id'],
                         'detail': {
                             'tax_rate': effective_tax_rate
@@ -401,7 +401,7 @@ class QBOConnector:
             },
             'TxnDate': purchase_object.transaction_date,
             "CurrencyRef": {
-               "value": purchase_object.currency
+               "value": 'USD'
             },
             'PrivateNote': purchase_object.private_note,
             'Credit': credit,
