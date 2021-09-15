@@ -17,6 +17,8 @@ from fyle_rest_auth.models import AuthToken
 
 from fyle_qbo_api.utils import assert_valid
 
+from apps.quickbooks_online.utils import QBOConnector
+
 from .models import Workspace, FyleCredential, QBOCredential, WorkspaceGeneralSettings, WorkspaceSchedule
 from .utils import generate_qbo_refresh_token, create_or_update_general_settings
 from .tasks import schedule_sync, run_sync_schedule
@@ -247,6 +249,21 @@ class ConnectQBOView(viewsets.ViewSet):
                     realm_id=realm_id,
                     workspace=workspace
                 )
+
+                try:
+                    qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
+
+                    company_info = qbo_connector.get_company_info()
+                    qbo_credentials.country = company_info['Country']
+                    qbo_credentials.company_name = company_info['CompanyName']
+                    qbo_credentials.save()
+
+                except Exception as exception:
+                    return Response(
+                        json.loads(exception.response),
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
                 workspace.qbo_realm_id = realm_id
                 workspace.save()
             else:
