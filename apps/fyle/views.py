@@ -71,6 +71,25 @@ class ExpenseGroupView(generics.ListCreateAPIView):
         )
 
 
+class ExpenseGroupCountView(generics.ListAPIView):
+    """
+    Expense Group Count View
+    """
+
+    def get(self, request, *args, **kwargs):
+        state_filter = {
+            'tasklog__status': self.request.query_params.get('state')
+        }
+        expense_groups_count = ExpenseGroup.objects.filter(
+            workspace_id=kwargs['workspace_id'], **state_filter
+        ).count()
+
+        return Response(
+            data={'count': expense_groups_count},
+            status=status.HTTP_200_OK
+        )
+
+
 class ExpenseGroupScheduleView(generics.CreateAPIView):
     """
     Create expense group schedule
