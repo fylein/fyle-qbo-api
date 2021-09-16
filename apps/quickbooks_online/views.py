@@ -775,6 +775,13 @@ class SyncQuickbooksDimensionView(generics.ListCreateAPIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
+        except Exception : 
+            return Response(
+                data={
+                    'message': 'Error in syncing Dimensions'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )    
 
 
 class RefreshQuickbooksDimensionView(generics.ListCreateAPIView):
@@ -804,6 +811,14 @@ class RefreshQuickbooksDimensionView(generics.ListCreateAPIView):
             return Response(
                 data={
                     'message': 'Quickbooks credentials not found in workspace'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        except Exception : 
+            return Response(
+                data={
+                    'message': 'Error in refreshing Dimensions'
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
