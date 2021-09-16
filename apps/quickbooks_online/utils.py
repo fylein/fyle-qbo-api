@@ -426,7 +426,7 @@ class QBOConnector:
 
         return bill_payload
 
-    def post_bill(self, bill: Bill, bill_lineitems: List[BillLineitem], expense_group: ExpenseGroup):
+    def post_bill(self, bill: Bill, bill_lineitems: List[BillLineitem]):
         """
         Post bills to QBO
         """
@@ -447,7 +447,6 @@ class QBOConnector:
                     bills_payload['TxnDate'] = txn_date.strftime("%Y-%m-%d")
                     created_bill = self.connection.bills.post(bills_payload)
 
-                    bill = Bill.objects.get(expense_group=expense_group)
                     bill.transaction_date = txn_date
                     bill.save()
                     return created_bill
@@ -504,7 +503,7 @@ class QBOConnector:
         )
         return qbo_expense_payload
 
-    def post_qbo_expense(self, qbo_expense: QBOExpense, qbo_expense_lineitems: List[QBOExpenseLineitem], expense_group: ExpenseGroup):
+    def post_qbo_expense(self, qbo_expense: QBOExpense, qbo_expense_lineitems: List[QBOExpenseLineitem]):
         """
         Post Expense to QBO
         """
@@ -524,7 +523,6 @@ class QBOConnector:
                     qbo_expenses_payload['TxnDate'] = txn_date.strftime("%Y-%m-%d")
                     created_qbo_expense = self.connection.purchases.post(qbo_expenses_payload)
 
-                    qbo_expense = QBOExpense.objects.get(expense_group=expense_group)
                     qbo_expense.transaction_date = txn_date
                     qbo_expense.save()
                     return created_qbo_expense
@@ -573,7 +571,7 @@ class QBOConnector:
         )
         return cheque_payload
 
-    def post_cheque(self, cheque: Cheque, cheque_lineitems: List[ChequeLineitem], expense_group: ExpenseGroup):
+    def post_cheque(self, cheque: Cheque, cheque_lineitems: List[ChequeLineitem]):
         """
         Post cheque to QBO
         """
@@ -593,7 +591,6 @@ class QBOConnector:
                     cheques_payload['TxnDate'] = txn_date.strftime("%Y-%m-%d")
                     created_cheque = self.connection.purchases.post(cheques_payload)
 
-                    cheque = Cheque.objects.get(expense_group=expense_group)
                     cheque.transaction_date = txn_date
                     cheque.save()
                     return created_cheque
@@ -656,8 +653,7 @@ class QBOConnector:
         return credit_card_purchase_payload
 
     def post_credit_card_purchase(self, credit_card_purchase: CreditCardPurchase,
-                                  credit_card_purchase_lineitems: List[CreditCardPurchaseLineitem],
-                                  expense_group: ExpenseGroup):
+                                  credit_card_purchase_lineitems: List[CreditCardPurchaseLineitem]):
 
         """
         Post bills to QBO
@@ -679,7 +675,6 @@ class QBOConnector:
                     credit_card_purchase_payload['TxnDate'] = txn_date.strftime("%Y-%m-%d")
                     created_credit_card_purchase = self.connection.purchases.post(credit_card_purchase_payload)
 
-                    credit_card_purchase = CreditCardPurchase.objects.get(expense_group=expense_group)
                     credit_card_purchase.transaction_date = txn_date
                     credit_card_purchase.save()
                     return created_credit_card_purchase
@@ -784,7 +779,7 @@ class QBOConnector:
         return journal_entry_payload
 
     def post_journal_entry(self, journal_entry: JournalEntry, journal_entry_lineitems: List[JournalEntryLineitem],
-                           single_credit_line: bool, expense_group: ExpenseGroup):
+                           single_credit_line: bool):
         """
         Post journal entries to QBO
         """
@@ -805,7 +800,6 @@ class QBOConnector:
                     journal_entry_payload['TxnDate'] = txn_date.strftime("%Y-%m-%d")
                     created_journal_entry = self.connection.journal_entries.post(journal_entry_payload)
 
-                    journal_entry = JournalEntry.objects.get(expense_group=expense_group)
                     journal_entry.transaction_date = txn_date
                     journal_entry.save()
                     return created_journal_entry

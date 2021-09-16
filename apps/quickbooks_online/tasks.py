@@ -239,7 +239,7 @@ def create_bill(expense_group, task_log_id):
 
             bill_lineitems_objects = BillLineitem.create_bill_lineitems(expense_group)
 
-            created_bill = qbo_connection.post_bill(bill_object, bill_lineitems_objects, expense_group)
+            created_bill = qbo_connection.post_bill(bill_object, bill_lineitems_objects)
 
             task_log.detail = created_bill
             task_log.bill = bill_object
@@ -496,7 +496,7 @@ def create_cheque(expense_group, task_log_id):
 
             cheque_line_item_objects = ChequeLineitem.create_cheque_lineitems(expense_group)
 
-            created_cheque = qbo_connection.post_cheque(cheque_object, cheque_line_item_objects, expense_group)
+            created_cheque = qbo_connection.post_cheque(cheque_object, cheque_line_item_objects)
 
             task_log.detail = created_cheque
             task_log.cheque = cheque_object
@@ -606,7 +606,7 @@ def create_qbo_expense(expense_group, task_log_id):
 
             qbo_expense_line_item_objects = QBOExpenseLineitem.create_qbo_expense_lineitems(expense_group)
 
-            created_qbo_expense = qbo_connection.post_qbo_expense(qbo_expense_object, qbo_expense_line_item_objects, expense_group)
+            created_qbo_expense = qbo_connection.post_qbo_expense(qbo_expense_object, qbo_expense_line_item_objects)
 
             task_log.detail = created_qbo_expense
             task_log.qbo_expense = qbo_expense_object
@@ -727,7 +727,7 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id):
             )
 
             created_credit_card_purchase = qbo_connection.post_credit_card_purchase(
-                credit_card_purchase_object, credit_card_purchase_lineitems_objects, expense_group
+                credit_card_purchase_object, credit_card_purchase_lineitems_objects
             )
 
             task_log.detail = created_credit_card_purchase
@@ -843,7 +843,7 @@ def create_journal_entry(expense_group, task_log_id):
             )
 
             created_journal_entry = qbo_connection.post_journal_entry(
-                journal_entry_object, journal_entry_lineitems_objects, general_settings.je_single_credit_line, expense_group)
+                journal_entry_object, journal_entry_lineitems_objects, general_settings.je_single_credit_line)
 
             task_log.detail = created_journal_entry
             task_log.journal_entry = journal_entry_object
