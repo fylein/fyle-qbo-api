@@ -807,3 +807,17 @@ class RefreshQuickbooksDimensionView(generics.ListCreateAPIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+
+class DestinationAttributesView(generics.ListAPIView):
+    """
+    Destination Attributes view
+    """
+    serializer_class = DestinationAttributeSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        attribute_types = self.request.query_params.get('attribute_types').split(',')
+
+        return DestinationAttribute.objects.filter(
+            attribute_type__in=attribute_types, workspace_id=self.kwargs['workspace_id']).order_by('value')

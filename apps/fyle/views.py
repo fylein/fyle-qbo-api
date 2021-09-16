@@ -87,19 +87,6 @@ class ExpenseGroupScheduleView(generics.CreateAPIView):
             status=status.HTTP_200_OK
         )
 
-class TaxGroupsView(generics.ListCreateAPIView):
-
-    def get(self, request, *args, **kwargs):
-        fyle_credentials = FyleCredential.objects.get(workspace_id=kwargs['workspace_id'])
-        platform_connector = FylePlatformConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
-
-        platform_connector.sync_tax_groups()
-
-        return Response(
-            data={"msg": "this is complete"},
-            status=status.HTTP_200_OK
-        )
-
 class ExpenseGroupByIdView(generics.RetrieveAPIView):
     """
     Expense Group by Id view

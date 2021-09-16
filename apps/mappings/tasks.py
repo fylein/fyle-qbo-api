@@ -83,7 +83,7 @@ def post_projects_in_batches(fyle_connection: FyleConnector, workspace_id: int, 
 def auto_create_tax_codes_mappings(workspace_id: int):
     """
     Create Tax Codes Mappings
-    :return: mappings
+    :return: None
     """
     try:
         fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
@@ -100,11 +100,11 @@ def auto_create_tax_codes_mappings(workspace_id: int):
         )
 
         sync_qbo_attribute(mapping_setting.destination_field, workspace_id)
-        post_tax_groups_in_batches(fyle_connection, workspace_id)
+        upload_tax_groups_to_fyle(fyle_connection, workspace_id)
 
     except WrongParamsError as exception:
         logger.error(
-            'Error while creating taxgroups workspace_id - %s in Fyle %s %s',
+            'Error while creating tax groups workspace_id - %s in Fyle %s %s',
             workspace_id, exception.message, {'error': exception.response}
         )
 
@@ -114,7 +114,7 @@ def auto_create_tax_codes_mappings(workspace_id: int):
             'error': error
         }
         logger.error(
-            'Error while creating taxgroups ZAq aAqZAqwaZAqAAAAAu2qew5  workspace_id - %s error: %s',
+            'Error while creating tax groups workspace_id - %s error: %s',
             workspace_id, error
         )
 
@@ -165,7 +165,7 @@ def schedule_tax_groups_creation(import_tax_codes, workspace_id):
             args='{}'.format(workspace_id),
             defaults={
                 'schedule_type': Schedule.MINUTES,
-                'minutes': 6 * 60,
+                'minutes': 24 * 60,
                 'next_run': datetime.now()
             }
         )
@@ -628,32 +628,22 @@ def schedule_auto_map_ccc_employees(workspace_id: int):
         if schedule:
             schedule.delete()
 
-def post_tax_groups_in_batches(platform_connection: FylePlatformConnector, workspace_id: int):    
+def upload_tax_groups_to_fyle(platform_connection: FylePlatformConnector, workspace_id: int):    
     existing_tax_codes_name = ExpenseAttribute.objects.filter(
         attribute_type='TAX_GROUP', workspace_id=workspace_id).values_list('value', flat=True)
 
-    qbo_attributes_count = DestinationAttribute.objects.filter(
-        attribute_type='TAX_CODE', workspace_id=workspace_id).count()
+    qbo_attributes = DestinationAttribute.objects.filter(
+        attribute_type='TAX_CODE', workspace_id=workspace_id).order_by('value', 'id')[offset:limit]
 
-    page_size = 200
+    qbo_attributes = remove_duplicates(qbo_attributes)
 
-    for offset in range(0, qbo_attributes_count, page_size):
-        limit = offset + page_size
-        paginated_qbo_attributes = DestinationAttribute.objects.filter(
-            attribute_type='TAX_CODE', workspace_id=workspace_id).order_by('value', 'id')[offset:limit]
+    fyle_payload: List[Dict] = create_fyle_tax_group_payload(qbo_attributes, existing_tax_codes_name)
 
-        paginated_qbo_attributes = remove_duplicates(paginated_qbo_attributes)
+    for payload in fyle_payload:
+        platform_connection.connection.v1.admin.tax_groups.post(payload)
 
-        fyle_payload: List[Dict] = create_fyle_tax_group_payload(
-            paginated_qbo_attributes, existing_tax_codes_name)
-
-        if fyle_payload:
-            for payload in fyle_payload:
-                platform_connection.connection.v1.admin.tax_groups.post(payload)
-
-            platform_connection.sync_tax_groups()
-
-        Mapping.bulk_create_mappings(paginated_qbo_attributes, 'TAX_GROUP', 'TAX_CODE', workspace_id)
+    platform_connection.sync_tax_groups()
+    Mapping.bulk_create_mappings(paginated_qbo_attributes, 'TAX_GROUP', 'TAX_CODE', workspace_id)
 
 
 def sync_qbo_attribute(qbo_attribute_type: str, workspace_id: int):
