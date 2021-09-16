@@ -17,11 +17,12 @@ from django.urls import path
 
 from .views import ExpenseGroupView, ExpenseGroupByIdView, ExpenseGroupScheduleView, ExpenseView, EmployeeView, \
     CategoryView, CostCenterView, ProjectView, UserProfileView, ExpenseFieldsView, ExpenseCustomFieldsView, \
-    ExpenseGroupSettingsView, RefreshFyleDimensionView, SyncFyleDimensionView
+    ExpenseGroupSettingsView, RefreshFyleDimensionView, SyncFyleDimensionView, ExpenseGroupCountView
 
 urlpatterns = [
     path('user/', UserProfileView.as_view()),
     path('expense_groups/', ExpenseGroupView.as_view()),
+    path('expense_groups/count/', ExpenseGroupCountView.as_view(), name='expense-groups-count'),
     path('expense_group_settings/', ExpenseGroupSettingsView.as_view()),
     path('expense_groups/trigger/', ExpenseGroupScheduleView.as_view()),
     path('expense_groups/<int:expense_group_id>/', ExpenseGroupByIdView.as_view()),
