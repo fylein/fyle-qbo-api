@@ -633,7 +633,7 @@ def upload_tax_groups_to_fyle(platform_connection: FylePlatformConnector, worksp
         attribute_type='TAX_GROUP', workspace_id=workspace_id).values_list('value', flat=True)
 
     qbo_attributes = DestinationAttribute.objects.filter(
-        attribute_type='TAX_CODE', workspace_id=workspace_id).order_by('value', 'id')[offset:limit]
+        attribute_type='TAX_CODE', workspace_id=workspace_id).order_by('value', 'id')
 
     qbo_attributes = remove_duplicates(qbo_attributes)
 
@@ -643,7 +643,7 @@ def upload_tax_groups_to_fyle(platform_connection: FylePlatformConnector, worksp
         platform_connection.connection.v1.admin.tax_groups.post(payload)
 
     platform_connection.sync_tax_groups()
-    Mapping.bulk_create_mappings(paginated_qbo_attributes, 'TAX_GROUP', 'TAX_CODE', workspace_id)
+    Mapping.bulk_create_mappings(qbo_attributes, 'TAX_GROUP', 'TAX_CODE', workspace_id)
 
 
 def sync_qbo_attribute(qbo_attribute_type: str, workspace_id: int):
