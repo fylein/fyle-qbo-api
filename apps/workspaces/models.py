@@ -55,6 +55,7 @@ class WorkspaceGeneralSettings(models.Model):
     map_merchant_to_vendor = models.BooleanField(help_text='Map Merchant to Vendor for CCC Expenses', default=False)
     import_categories = models.BooleanField(default=False, help_text='Auto import Categories to Fyle')
     import_projects = models.BooleanField(default=False, help_text='Auto import projects to Fyle')
+    change_accounting_period = models.BooleanField(default=False, help_text='Export Expense when accounting period is closed')
     auto_map_employees = models.CharField(
         max_length=50, help_text='Auto Map Employees type from QBO to Fyle', null=True)
     auto_create_destination_entity = models.BooleanField(default=False, help_text='Auto create vendor / employee')
