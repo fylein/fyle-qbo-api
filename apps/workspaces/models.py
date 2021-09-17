@@ -56,6 +56,7 @@ class WorkspaceGeneralSettings(models.Model):
     import_categories = models.BooleanField(default=False, help_text='Auto import Categories to Fyle')
     import_projects = models.BooleanField(default=False, help_text='Auto import projects to Fyle')
     import_tax_codes = models.BooleanField(default=False, help_text='Auto import tax codes to Fyle', null=True)
+    change_accounting_period = models.BooleanField(default=False, help_text='Export Expense when accounting period is closed')
     auto_map_employees = models.CharField(
         max_length=50, help_text='Auto Map Employees type from QBO to Fyle', null=True)
     auto_create_destination_entity = models.BooleanField(default=False, help_text='Auto create vendor / employee')
