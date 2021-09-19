@@ -402,9 +402,9 @@ class QBOConnector:
                 'value': purchase_object.department_id
             },
             'TxnDate': purchase_object.transaction_date,
-            "CurrencyRef": {
-               "value": 'USD'
-            },
+            #"CurrencyRef": {
+            #   "value": purchase_object.currency
+            #},
             'PrivateNote': purchase_object.private_note,
             'Credit': credit,
             'Line': line
@@ -430,7 +430,7 @@ class QBOConnector:
             lineitem = {
                 'Description': line.description,
                 'DetailType': 'AccountBasedExpenseLineDetail',
-                'Amount': line.amount,
+                'Amount': line.amount - line.tax_amount if line.tax_code else line.amount,
                 'AccountBasedExpenseLineDetail': {
                     'AccountRef': {
                         'value': line.account_id
@@ -475,7 +475,7 @@ class QBOConnector:
             },
             'TxnDate': bill.transaction_date,
             'CurrencyRef': {
-                'value': 'AUD'
+                'value': bill.currency
             },
             'PrivateNote': bill.private_note,
             'Line': self.__construct_bill_lineitems(bill_lineitems, general_mappings)
@@ -535,7 +535,7 @@ class QBOConnector:
             line = {
                 'Description': lineitem.description,
                 'DetailType': 'AccountBasedExpenseLineDetail',
-                'Amount': lineitem.amount,
+                'Amount': lineitem.amount - lineitem.tax_amount if lineitem.tax_code else lineitem.amount,
                 'AccountBasedExpenseLineDetail': {
                     'AccountRef': {
                         'value': lineitem.account_id
@@ -610,7 +610,7 @@ class QBOConnector:
             lineitem = {
                 'Description': line.description,
                 'DetailType': 'AccountBasedExpenseLineDetail',
-                'Amount': line.amount,
+                'Amount': line.amount - line.tax_amount if line.tax_code else line.amount,
                 'AccountBasedExpenseLineDetail': {
                     'AccountRef': {
                         'value': line.account_id
@@ -688,8 +688,7 @@ class QBOConnector:
             lineitem = {
                 'Description': line.description,
                 'DetailType': 'AccountBasedExpenseLineDetail',
-                'Amount': line.amount,
-
+                'Amount': line.amount - line.tax_amount if line.tax_code else line.amount,
                 'AccountBasedExpenseLineDetail': {
                     'AccountRef': {
                         'value': line.account_id
@@ -703,7 +702,6 @@ class QBOConnector:
                     'TaxCodeRef': {
                         'value': line.tax_code if line.tax_code else general_mappings.default_tax_code_id
                     },
-                    'TaxAmount': line.tax_amount if line.tax_amount else 0,
                     'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
                 },
             }
@@ -826,9 +824,9 @@ class QBOConnector:
                         'value': line.class_id
                     },
                     'TaxCodeRef': {
-                        'value': line.tax_code
+                        'value': line.tax_code if line.tax_code else general_mappings.default_tax_code_id
                     },
-                    'TaxAmount': line.tax_amount,
+                    'TaxAmount': line.tax_amount if line.tax_amount else 0,
                     'Entity': {
                         'EntityRef': {
                             'value': line.entity_id
