@@ -44,7 +44,7 @@ class WorkspaceView(viewsets.ViewSet):
         """
 
         auth_tokens = AuthToken.objects.get(user__user_id=request.user)
-        fyle_user = auth_utils.get_fyle_user(auth_tokens.refresh_token)
+        fyle_user = auth_utils.get_fyle_user(auth_tokens.refresh_token, None)
         org_name = fyle_user['org_name']
         org_id = fyle_user['org_id']
 
@@ -139,7 +139,7 @@ class ConnectFyleView(viewsets.ViewSet):
             workspace = Workspace.objects.get(id=kwargs['workspace_id'])
 
             refresh_token = auth_utils.generate_fyle_refresh_token(authorization_code)['refresh_token']
-            fyle_user = auth_utils.get_fyle_user(refresh_token)
+            fyle_user = auth_utils.get_fyle_user(refresh_token, None)
             org_id = fyle_user['org_id']
             org_name = fyle_user['org_name']
 
@@ -221,33 +221,6 @@ class ConnectFyleView(viewsets.ViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-class QBOCredentialView(generics.ListCreateAPIView):
-    """
-    QBO Credentials View
-    """
-    def post(self, request, **kwargs):
-        try:
-            workspace = Workspace.objects.get(pk=kwargs['workspace_id'])
-            print(workspace)
-            qbo_credentials = QBOCredential.objects.filter(workspace=workspace).first()
-            qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
-            company_info = qbo_connector.get_company_info()
-            print(company_info)
-            qbo_credentials.country = company_info['Country']
-            qbo_credentials.company_name = company_info['CompanyName']
-            qbo_credentials.save()
-
-            return Response(
-                data=QBOCredentialSerializer(qbo_credentials).data,
-                status=status.HTTP_200_OK
-            )
-
-        except Exception as exception:
-            return Response(
-                json.loads(exception.response),
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
 
 class ConnectQBOView(viewsets.ViewSet):
     """
@@ -297,9 +270,21 @@ class ConnectQBOView(viewsets.ViewSet):
                 assert_valid(realm_id == qbo_credentials.realm_id,
                              'Please choose the correct Quickbooks online account')
                 qbo_credentials.refresh_token = refresh_token
-                qbo_credentials.country = country
-                qbo_credentials.company_name = company_name
                 qbo_credentials.save()
+
+                try:
+                    qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
+
+                    company_info = qbo_connector.get_company_info()
+                    qbo_credentials.country = company_info['Country']
+                    qbo_credentials.company_name = company_info['CompanyName']
+                    qbo_credentials.save()
+
+                except Exception as exception:
+                    return Response(
+                        json.loads(exception.response),
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
             return Response(
                 data=QBOCredentialSerializer(qbo_credentials).data,

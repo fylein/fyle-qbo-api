@@ -187,15 +187,16 @@ class QBOConnector:
             if 'PurchaseTaxRateList' in tax_code.keys():
                 if tax_code['PurchaseTaxRateList']['TaxRateDetail']:
                     effective_tax_rate = self.get_effective_tax_rates(tax_code['PurchaseTaxRateList']['TaxRateDetail'])
-                    tax_attributes.append({
-                        'attribute_type': 'TAX_CODE',
-                        'display_name': 'Tax Code',
-                        'value': '{0} @{1}%'.format(tax_code['Name'], effective_tax_rate),
-                        'destination_id': tax_code['Id'],
-                        'detail': {
-                            'tax_rate': effective_tax_rate
-                        }
-                    })
+                    if effective_tax_rate >= 0:
+                        tax_attributes.append({
+                            'attribute_type': 'TAX_CODE',
+                            'display_name': 'Tax Code',
+                            'value': '{0} @{1}%'.format(tax_code['Name'], effective_tax_rate),
+                            'destination_id': tax_code['Id'],
+                            'detail': {
+                                'tax_rate': effective_tax_rate
+                            }
+                        })
 
         DestinationAttribute.bulk_create_or_update_destination_attributes(
             tax_attributes, 'TAX_CODE', self.workspace_id, True)
@@ -402,9 +403,9 @@ class QBOConnector:
                 'value': purchase_object.department_id
             },
             'TxnDate': purchase_object.transaction_date,
-            #"CurrencyRef": {
-            #   "value": purchase_object.currency
-            #},
+            "CurrencyRef": {
+               "value": purchase_object.currency
+            },
             'PrivateNote': purchase_object.private_note,
             'Credit': credit,
             'Line': line

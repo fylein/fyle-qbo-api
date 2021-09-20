@@ -14,6 +14,7 @@ from fyle_qbo_api.utils import assert_valid
 from apps.fyle.models import ExpenseGroup, ExpenseGroupSettings
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings, Workspace
+from apps.workspaces.serializers import QBOCredentialSerializer
 from apps.fyle.serializers import ExpenseGroupSettingsSerializer
 
 from .utils import QBOConnector
@@ -311,6 +312,27 @@ class PreferencesView(generics.RetrieveAPIView):
     """
     Preferences View
     """
+    def post(self, request, **kwargs):
+        try:
+            qbo_credentials = QBOCredential.objects.filter(workspace=kwargs['workspace_id']).first()
+            qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
+
+            company_info = qbo_connector.get_company_info()
+            qbo_credentials.country = company_info['Country']
+            qbo_credentials.company_name = company_info['CompanyName']
+            qbo_credentials.save()
+
+            return Response(
+                data=QBOCredentialSerializer(qbo_credentials).data,
+                status=status.HTTP_200_OK
+            )
+
+        except WrongParamsError as exception:
+            logger.error(
+                'Something unexpected happened workspace_id: %s %s',
+                workspace_id, exception.message
+            )
+
     def get(self, request, *args, **kwargs):
         try:
             qbo_credentials = QBOCredential.objects.get(workspace_id=kwargs['workspace_id'])
