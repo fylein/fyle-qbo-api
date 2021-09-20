@@ -439,7 +439,7 @@ class QBOConnector:
             general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
             error_response = json.loads(bad_request.response)['Fault']['Error'][0]
 
-            if general_settings.change_accounting_period and 'the account period has closed' in error_response['Detail'].lower():
+            if general_settings.change_accounting_period and 'account period closed' in error_response['Message'].lower():
                 book_closed_date = self.connection.preferences.get()['AccountingInfoPrefs']['BookCloseDate']
                 txn_date = datetime.strptime(book_closed_date, '%Y-%m-%d') + timedelta(days=1)
 
@@ -515,7 +515,7 @@ class QBOConnector:
             general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
             error_response = json.loads(bad_request.response)['Fault']['Error'][0]
 
-            if general_settings.change_accounting_period and 'the account period has closed' in error_response['Detail'].lower():
+            if general_settings.change_accounting_period and 'account period closed' in error_response['Message'].lower():
                 book_closed_date = self.connection.preferences.get()['AccountingInfoPrefs']['BookCloseDate']
                 txn_date = datetime.strptime(book_closed_date, '%Y-%m-%d') + timedelta(days=1)
                 qbo_expenses_payload['TxnDate'] = txn_date.strftime("%Y-%m-%d")
@@ -582,7 +582,7 @@ class QBOConnector:
             general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
             error_response = json.loads(bad_request.response)['Fault']['Error'][0]
 
-            if general_settings.change_accounting_period and 'the account period has closed' in error_response['Detail'].lower():
+            if general_settings.change_accounting_period and 'account period closed' in error_response['Message'].lower():
                 book_closed_date = self.connection.preferences.get()['AccountingInfoPrefs']['BookCloseDate']
                 txn_date = datetime.strptime(book_closed_date, '%Y-%m-%d') + timedelta(days=1)
                 cheques_payload['TxnDate'] = txn_date.strftime("%Y-%m-%d")
@@ -665,7 +665,7 @@ class QBOConnector:
             general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
             error_response = json.loads(bad_request.response)['Fault']['Error'][0]
 
-            if general_settings.change_accounting_period and 'the account period has closed' in error_response['Detail'].lower():
+            if general_settings.change_accounting_period and 'account period closed' in error_response['Message'].lower():
                 book_closed_date = self.connection.preferences.get()['AccountingInfoPrefs']['BookCloseDate']
                 txn_date = datetime.strptime(book_closed_date, '%Y-%m-%d') + timedelta(days=1)
                 credit_card_purchase_payload['TxnDate'] = txn_date.strftime("%Y-%m-%d")
@@ -789,7 +789,7 @@ class QBOConnector:
             general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
             error_response = json.loads(bad_request.response)['Fault']['Error'][0]
 
-            if general_settings.change_accounting_period and 'the account period has closed' in error_response['Detail'].lower():
+            if general_settings.change_accounting_period and 'account period closed' in error_response['Message'].lower():
                 book_closed_date = self.connection.preferences.get()['AccountingInfoPrefs']['BookCloseDate']
                 txn_date = datetime.strptime(book_closed_date, '%Y-%m-%d') + timedelta(days=1)
                 journal_entry_payload['TxnDate'] = txn_date.strftime("%Y-%m-%d")
