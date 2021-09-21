@@ -12,6 +12,8 @@ from apps.tasks.models import TaskLog
 from .models import Expense, ExpenseGroup, ExpenseGroupSettings
 from .utils import FyleConnector
 from .serializers import ExpenseGroupSerializer
+import sentry_sdk
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +67,8 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
         with transaction.atomic():
 
             workspace = Workspace.objects.get(pk=workspace_id)
-
+            # this is used to catch a exception manually with sentry
+            sentry_sdk.capture_exception(error=sys.exc_info())
             last_synced_at = workspace.last_synced_at
 
             updated_at = []

@@ -1,9 +1,9 @@
+import os
+
 import sentry_sdk
 
 from sentry_sdk.integrations.django import DjangoIntegration
 
-from django.conf import settings
-import os
 
 class Sentry:
 
