@@ -332,6 +332,12 @@ class PreferencesView(generics.RetrieveAPIView):
                 'Something unexpected happened workspace_id: %s %s',
                 workspace_id, exception.message
             )
+            return Response(
+                data={
+                    'message': 'Quickbooks Online connection expired'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     def get(self, request, *args, **kwargs):
         try:

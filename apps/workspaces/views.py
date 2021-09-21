@@ -44,7 +44,7 @@ class WorkspaceView(viewsets.ViewSet):
         """
 
         auth_tokens = AuthToken.objects.get(user__user_id=request.user)
-        fyle_user = auth_utils.get_fyle_user(auth_tokens.refresh_token, None)
+        fyle_user = auth_utils.get_fyle_user(auth_tokens.refresh_token)
         org_name = fyle_user['org_name']
         org_id = fyle_user['org_id']
 
@@ -139,7 +139,7 @@ class ConnectFyleView(viewsets.ViewSet):
             workspace = Workspace.objects.get(id=kwargs['workspace_id'])
 
             refresh_token = auth_utils.generate_fyle_refresh_token(authorization_code)['refresh_token']
-            fyle_user = auth_utils.get_fyle_user(refresh_token, None)
+            fyle_user = auth_utils.get_fyle_user(refresh_token)
             org_id = fyle_user['org_id']
             org_name = fyle_user['org_name']
 
@@ -258,11 +258,8 @@ class ConnectQBOView(viewsets.ViewSet):
                     qbo_credentials.company_name = company_info['CompanyName']
                     qbo_credentials.save()
 
-                except Exception as exception:
-                    return Response(
-                        json.loads(exception.response),
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+                except WrongParamsError as exception:
+                    logger.error('Quickbooks Online connection expired')
 
                 workspace.qbo_realm_id = realm_id
                 workspace.save()
@@ -271,20 +268,6 @@ class ConnectQBOView(viewsets.ViewSet):
                              'Please choose the correct Quickbooks online account')
                 qbo_credentials.refresh_token = refresh_token
                 qbo_credentials.save()
-
-                try:
-                    qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
-
-                    company_info = qbo_connector.get_company_info()
-                    qbo_credentials.country = company_info['Country']
-                    qbo_credentials.company_name = company_info['CompanyName']
-                    qbo_credentials.save()
-
-                except Exception as exception:
-                    return Response(
-                        json.loads(exception.response),
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
 
             return Response(
                 data=QBOCredentialSerializer(qbo_credentials).data,
