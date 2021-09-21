@@ -1,3 +1,5 @@
+import logging
+
 from django.db.models import Q
 from datetime import datetime, timezone
 from rest_framework.response import Response
@@ -26,6 +28,7 @@ from .models import Bill, Cheque, CreditCardPurchase, JournalEntry
 from .serializers import BillSerializer, ChequeSerializer, CreditCardPurchaseSerializer, JournalEntrySerializer, \
     QuickbooksFieldSerializer
 
+logger = logging.getLogger(__name__)
 
 class VendorView(generics.ListCreateAPIView):
     """
