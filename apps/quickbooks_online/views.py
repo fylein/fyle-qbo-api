@@ -334,7 +334,7 @@ class PreferencesView(generics.RetrieveAPIView):
             )
             return Response(
                 data={
-                    'message': 'Quickbooks Online connection expired'
+                    'message': 'Something unexpected happened while making the request'
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )

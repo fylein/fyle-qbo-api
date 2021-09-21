@@ -44,7 +44,7 @@ class WorkspaceView(viewsets.ViewSet):
         """
 
         auth_tokens = AuthToken.objects.get(user__user_id=request.user)
-        fyle_user = auth_utils.get_fyle_user(auth_tokens.refresh_token)
+        fyle_user = auth_utils.get_fyle_user(auth_tokens.refresh_token, None)
         org_name = fyle_user['org_name']
         org_id = fyle_user['org_id']
 
@@ -139,7 +139,7 @@ class ConnectFyleView(viewsets.ViewSet):
             workspace = Workspace.objects.get(id=kwargs['workspace_id'])
 
             refresh_token = auth_utils.generate_fyle_refresh_token(authorization_code)['refresh_token']
-            fyle_user = auth_utils.get_fyle_user(refresh_token)
+            fyle_user = auth_utils.get_fyle_user(refresh_token, None)
             org_id = fyle_user['org_id']
             org_name = fyle_user['org_name']
 
@@ -259,7 +259,7 @@ class ConnectQBOView(viewsets.ViewSet):
                     qbo_credentials.save()
 
                 except WrongParamsError as exception:
-                    logger.error('Quickbooks Online connection expired')
+                    logger.error(exception.response)
 
                 workspace.qbo_realm_id = realm_id
                 workspace.save()
