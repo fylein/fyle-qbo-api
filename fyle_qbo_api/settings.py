@@ -14,6 +14,11 @@ import os
 
 import dj_database_url
 
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+
+from .sentry import Sentry
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -165,9 +170,26 @@ LOGGING = {
             'handlers': ['debug_logs'],
             'level': 'ERROR',
             'propagate': False
-        }
+        },
+        'django_q': {
+            'handlers': ['debug_logs'],
+            'propagate': True,
+        },
     }
 }
+
+# Sentry
+# sentry_sdk.init(
+#     dsn= os.environ.get('SENTRY_DSN'),
+#     integrations=[DjangoIntegration()],
+#     traces_sample_rate=1.0,
+#     send_default_pii=True,
+#     environment='quickbooks',
+#     release=os.environ.get('RELEASE'),
+#     attach_stacktrace=True
+# )
+
+Sentry.init()
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
