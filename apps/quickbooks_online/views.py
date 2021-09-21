@@ -333,7 +333,7 @@ class PreferencesView(generics.RetrieveAPIView):
         except WrongParamsError as exception:
             logger.error(
                 'Something unexpected happened workspace_id: %s %s',
-                workspace_id, exception.message
+                kwargs['workspace_id'], exception.message
             )
             return Response(
                 data={
