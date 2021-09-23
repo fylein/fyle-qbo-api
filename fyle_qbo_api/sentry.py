@@ -4,7 +4,6 @@ import sentry_sdk
 
 from sentry_sdk.integrations.django import DjangoIntegration
 
-
 class Sentry:
 
     @staticmethod
@@ -13,8 +12,7 @@ class Sentry:
             dsn=os.environ.get('SENTRY_DSN'),
             send_default_pii=True,
             integrations=[DjangoIntegration()],
-            server_name='qucikbooks-api',
-            environment='Quickbooks',
+            environment='quickbooks-api',
             traces_sampler=Sentry.traces_sampler,
             attach_stacktrace=True
         )
@@ -26,4 +24,4 @@ class Sentry:
             if sampling_context['wsgi_environ']['PATH_INFO'] in ['/ready']:
                 return 0
 
-        return 0.2
+        return 1.0
