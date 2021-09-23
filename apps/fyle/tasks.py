@@ -13,7 +13,6 @@ from .models import Expense, ExpenseGroup, ExpenseGroupSettings
 from .utils import FyleConnector
 from .serializers import ExpenseGroupSerializer
 
-
 logger = logging.getLogger(__name__)
 
 
