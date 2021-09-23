@@ -67,8 +67,6 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
 
             workspace = Workspace.objects.get(pk=workspace_id)
             
-            logger.error('my error')
-            raise Exception('custom exception')
             last_synced_at = workspace.last_synced_at
 
             updated_at = []

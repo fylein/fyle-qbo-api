@@ -14,6 +14,7 @@ class Sentry:
             integrations=[DjangoIntegration()],
             environment='quickbooks-api',
             traces_sampler=Sentry.traces_sampler,
+            release=os.environ.get('RELEASE'),
             attach_stacktrace=True
         )
 
