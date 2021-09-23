@@ -66,7 +66,7 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
         with transaction.atomic():
 
             workspace = Workspace.objects.get(pk=workspace_id)
-            
+
             last_synced_at = workspace.last_synced_at
 
             updated_at = []
