@@ -22,7 +22,10 @@ class Sentry:
             'apps.mappings',
             'apps.fyle',
             'apps.quickbooks_online',
-            'apps.tasks'],
+            'apps.tasks',
+            'fyle_rest_auth',
+            'fyle_accounting_mappings'],
+            
         )
 
     @staticmethod
