@@ -17,6 +17,7 @@ class Sentry:
             release=os.environ.get('RELEASE'),
             attach_stacktrace=True,
             request_bodies= 'small',
+            in_app_include=['apps.users', 'apps.workspaces', 'apps.mappings', 'apps.fyle', 'apps.quickbooks_online', 'apps.tasks'],
         )
 
     @staticmethod
