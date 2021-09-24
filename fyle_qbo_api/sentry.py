@@ -16,7 +16,7 @@ class Sentry:
             traces_sampler=Sentry.traces_sampler,
             release=os.environ.get('RELEASE'),
             attach_stacktrace=True,
-            request_bodies= 'small',
+            request_bodies='small',
             in_app_include=['apps.users',
             'apps.workspaces',
             'apps.mappings',
