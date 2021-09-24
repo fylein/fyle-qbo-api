@@ -25,7 +25,6 @@ class Sentry:
             'apps.tasks',
             'fyle_rest_auth',
             'fyle_accounting_mappings'],
-            
         )
 
     @staticmethod
