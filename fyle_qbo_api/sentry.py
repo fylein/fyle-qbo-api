@@ -15,7 +15,8 @@ class Sentry:
             environment='quickbooks-api',
             traces_sampler=Sentry.traces_sampler,
             release=os.environ.get('RELEASE'),
-            attach_stacktrace=True
+            attach_stacktrace=True,
+            request_bodies= 'small',
         )
 
     @staticmethod
@@ -25,4 +26,4 @@ class Sentry:
             if sampling_context['wsgi_environ']['PATH_INFO'] in ['/ready']:
                 return 0
 
-        return 1.0
+        return 0.5
