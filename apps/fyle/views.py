@@ -501,7 +501,7 @@ class RefreshFyleDimensionView(generics.ListCreateAPIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
-        except Exception : 
+        except Exception as exception:
             return Response(
                 data={
                     'message': 'Error in refreshing Dimensions'

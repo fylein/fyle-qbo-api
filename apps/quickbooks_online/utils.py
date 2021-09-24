@@ -77,6 +77,16 @@ class QBOConnector:
         
         return effective_tax_rate
 
+    def get_tax_inclusive_amount(self, amount, default_tax_code_id):
+
+        tax_attribute = DestinationAttribute.objects.filter(destination_id=default_tax_code_id, attribute_type='TAX_CODE',workspace_id=self.workspace_id).first()
+        tax_inclusive_amount = amount
+        if tax_attribute:
+            tax_rate = int(tax_attribute.detail['tax_rate'])
+            tax_inclusive_amount = round((amount - (amount/(tax_rate + 1))), 2)
+        return tax_inclusive_amount
+
+
     def sync_accounts(self):
         """
         Get accounts
@@ -194,7 +204,7 @@ class QBOConnector:
                             'value': '{0} @{1}%'.format(tax_code['Name'], effective_tax_rate),
                             'destination_id': tax_code['Id'],
                             'detail': {
-                                'tax_rate': effective_tax_rate
+                                'tax_rate': effective_tax_rate,
                             }
                         })
 
@@ -418,8 +428,7 @@ class QBOConnector:
 
         return purchase_object_payload
 
-    @staticmethod
-    def __construct_bill_lineitems(bill_lineitems: List[BillLineitem], general_mappings: GeneralMapping) -> List[Dict]:
+    def __construct_bill_lineitems(self, bill_lineitems: List[BillLineitem], general_mappings: GeneralMapping) -> List[Dict]:
         """
         Create bill line items
         :param bill_lineitems: list of bill line items extracted from database
@@ -431,7 +440,8 @@ class QBOConnector:
             lineitem = {
                 'Description': line.description,
                 'DetailType': 'AccountBasedExpenseLineDetail',
-                'Amount': line.amount - line.tax_amount if line.tax_code else line.amount,
+                'Amount': line.amount - line.tax_amount if line.tax_code else \
+                        self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
                 'AccountBasedExpenseLineDetail': {
                     'AccountRef': {
                         'value': line.account_id
@@ -445,7 +455,7 @@ class QBOConnector:
                     'TaxCodeRef': {
                         'value': line.tax_code if line.tax_code else general_mappings.default_tax_code_id
                     },
-                    'TaxAmount': line.tax_amount if line.tax_code else 0,
+                    'TaxAmount': line.tax_amount if line.tax_amount else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2),
                     'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable',
                 }
             }
@@ -523,8 +533,7 @@ class QBOConnector:
         bill = self.connection.bills.get_by_id(bill_id)
         return bill
 
-    @staticmethod
-    def __construct_qbo_expense_lineitems(qbo_expense_lineitems: List[QBOExpenseLineitem], general_mappings) -> List[Dict]:
+    def __construct_qbo_expense_lineitems(self, qbo_expense_lineitems: List[QBOExpenseLineitem], general_mappings) -> List[Dict]:
         """
         Create Expense line items
         :param qbo_expense_lineitems: list of expense line items extracted from database
@@ -536,7 +545,8 @@ class QBOConnector:
             line = {
                 'Description': lineitem.description,
                 'DetailType': 'AccountBasedExpenseLineDetail',
-                'Amount': lineitem.amount - lineitem.tax_amount if lineitem.tax_code else lineitem.amount,
+                'Amount': line.amount - line.tax_amount if line.tax_code else \
+                        self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
                 'AccountBasedExpenseLineDetail': {
                     'AccountRef': {
                         'value': lineitem.account_id
@@ -550,7 +560,7 @@ class QBOConnector:
                     'TaxCodeRef': {
                         'value': lineitem.tax_code if lineitem.tax_code else general_mappings.default_tax_code_id
                     },
-                    'TaxAmount': lineitem.tax_amount if lineitem.tax_amount else 0,
+                    'TaxAmount': line.tax_amount if line.tax_amount else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2),
                     'BillableStatus': 'Billable' if lineitem.billable and lineitem.customer_id else 'NotBillable'
                 }
             }
@@ -599,8 +609,7 @@ class QBOConnector:
             else:
                 raise
 
-    @staticmethod
-    def __construct_cheque_lineitems(cheque_lineitems: List[ChequeLineitem], general_mappings: GeneralMapping) -> List[Dict]:
+    def __construct_cheque_lineitems(self, cheque_lineitems: List[ChequeLineitem], general_mappings: GeneralMapping) -> List[Dict]:
         """
         Create cheque lineitems
         :param cheque_lineitems: list of cheque line items extracted from database
@@ -611,7 +620,8 @@ class QBOConnector:
             lineitem = {
                 'Description': line.description,
                 'DetailType': 'AccountBasedExpenseLineDetail',
-                'Amount': line.amount - line.tax_amount if line.tax_code else line.amount,
+                'Amount': line.amount - line.tax_amount if line.tax_code else \
+                        self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
                 'AccountBasedExpenseLineDetail': {
                     'AccountRef': {
                         'value': line.account_id
@@ -625,8 +635,7 @@ class QBOConnector:
                     'TaxCodeRef': {
                         'value': line.tax_code if line.tax_code else general_mappings.default_tax_code_id
                     },
-                    'TaxAmount': line.tax_amount if line.tax_amount else 0,
-                    'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
+                    'TaxAmount': line.tax_amount if line.tax_code else line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),                    'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
                 }
             }
 
@@ -675,8 +684,7 @@ class QBOConnector:
                 raise
 
 
-    @staticmethod
-    def __construct_credit_card_purchase_lineitems(
+    def __construct_credit_card_purchase_lineitems(self,
             credit_card_purchase_lineitems: List[CreditCardPurchaseLineitem], general_mappings: GeneralMapping) -> List[Dict]:
         """
         Create credit_card_purchase line items
@@ -689,7 +697,8 @@ class QBOConnector:
             lineitem = {
                 'Description': line.description,
                 'DetailType': 'AccountBasedExpenseLineDetail',
-                'Amount': line.amount - line.tax_amount if line.tax_code else line.amount,
+                'Amount': line.amount - line.tax_amount if line.tax_code else \
+                        self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
                 'AccountBasedExpenseLineDetail': {
                     'AccountRef': {
                         'value': line.account_id
@@ -703,10 +712,11 @@ class QBOConnector:
                     'TaxCodeRef': {
                         'value': line.tax_code if line.tax_code else general_mappings.default_tax_code_id
                     },
+                    'TaxAmount': line.tax_amount if line.tax_amount else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2),
                     'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
                 },
             }
-         
+
             lines.append(lineitem)
 
         return lines
@@ -764,7 +774,7 @@ class QBOConnector:
                 raise
 
     @staticmethod
-    def __group_journal_entry_credits(journal_entry_lineitems: List[JournalEntryLineitem]) -> List[Dict]:
+    def __group_journal_entry_credits(journal_entry_lineitems: List[JournalEntryLineitem], general_mappings: GeneralMapping) -> List[Dict]:
         total_sum = sum(line.amount for line in journal_entry_lineitems)
 
         return [{
@@ -792,14 +802,14 @@ class QBOConnector:
         }]
 
     def __construct_journal_entry_lineitems(self, journal_entry_lineitems: List[JournalEntryLineitem],
-                                            posting_type, single_credit_line: bool = False) -> List[Dict]:
+                                            posting_type,  general_mappings: GeneralMapping, single_credit_line: bool = False) -> List[Dict]:
         """
         Create journal_entry line items
         :param journal_entry_lineitems: list of journal entry line items extracted from database
         :return: constructed line items
         """
         if single_credit_line:
-            return self.__group_journal_entry_credits(journal_entry_lineitems)
+            return self.__group_journal_entry_credits(journal_entry_lineitems, general_mappings)
         lines = []
 
         for line in journal_entry_lineitems:
@@ -824,10 +834,6 @@ class QBOConnector:
                     'ClassRef': {
                         'value': line.class_id
                     },
-                    'TaxCodeRef': {
-                        'value': line.tax_code if line.tax_code else general_mappings.default_tax_code_id
-                    },
-                    'TaxAmount': line.tax_amount if line.tax_amount else 0,
                     'Entity': {
                         'EntityRef': {
                             'value': line.entity_id
@@ -837,7 +843,7 @@ class QBOConnector:
                 }
             }
 
-            lines.append(line)
+            lines.append(lineitem)
 
         return lines
 
@@ -849,8 +855,10 @@ class QBOConnector:
         :param journal_entry: journal_entry object extracted from database
         :return: constructed journal_entry
         """
-        credit_line = self.__construct_journal_entry_lineitems(journal_entry_lineitems, 'Credit', single_credit_line)
-        debit_line = self.__construct_journal_entry_lineitems(journal_entry_lineitems, 'Debit')
+        general_mappings = GeneralMapping.objects.filter(workspace_id=self.workspace_id).first()
+
+        credit_line = self.__construct_journal_entry_lineitems(journal_entry_lineitems, 'Credit', single_credit_line, general_mappings)
+        debit_line = self.__construct_journal_entry_lineitems(journal_entry_lineitems, 'Debit', general_mappings)
         lines = []
         lines.extend(credit_line)
         lines.extend(debit_line)
@@ -859,9 +867,8 @@ class QBOConnector:
             'TxnDate': journal_entry.transaction_date,
             'PrivateNote': journal_entry.private_note,
             'Line': lines,
-            'GlobalTaxCalculation': 'TaxInclusive',
             'CurrencyRef': {
-               "value": journal_entry.currency
+               "value": 'AUD'
             }
 
         }

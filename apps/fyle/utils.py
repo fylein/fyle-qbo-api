@@ -11,7 +11,6 @@ from fyle_accounting_mappings.models import ExpenseAttribute
 import requests
 from apps.workspaces.models import FyleCredential
 from apps.fyle.models import Reimbursement, ExpenseGroupSettings
-from .platform_connector import FylePlatformConnector
 
 logger = logging.getLogger(__name__)
 
