@@ -548,8 +548,8 @@ class QBOConnector:
             line = {
                 'Description': lineitem.description,
                 'DetailType': 'AccountBasedExpenseLineDetail',
-                'Amount': line.amount - line.tax_amount if line.tax_code else \
-                        self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
+                'Amount': lineitem.amount - lineitem.tax_amount if lineitem.tax_code else \
+                        self.get_tax_inclusive_amount(lineitem.amount, general_mappings.default_tax_code_id),
                 'AccountBasedExpenseLineDetail': {
                     'AccountRef': {
                         'value': lineitem.account_id
@@ -563,7 +563,7 @@ class QBOConnector:
                     'TaxCodeRef': {
                         'value': lineitem.tax_code if lineitem.tax_code else general_mappings.default_tax_code_id
                     },
-                    'TaxAmount': line.tax_amount if line.tax_amount else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2),
+                    'TaxAmount': lineitem.tax_amount if lineitem.tax_amount else round(lineitem.amount - self.get_tax_inclusive_amount(lineitem.amount, general_mappings.default_tax_code_id), 2),
                     'BillableStatus': 'Billable' if lineitem.billable and lineitem.customer_id else 'NotBillable'
                 }
             }
@@ -776,8 +776,7 @@ class QBOConnector:
             else:
                 raise
 
-    @staticmethod
-    def __group_journal_entry_credits(journal_entry_lineitems: List[JournalEntryLineitem], general_mappings: GeneralMapping) -> List[Dict]:
+    def __group_journal_entry_credits(self, journal_entry_lineitems: List[JournalEntryLineitem], general_mappings: GeneralMapping) -> List[Dict]:
         total_sum = sum(line.amount for line in journal_entry_lineitems)
         total_tax = 0
 
@@ -891,10 +890,9 @@ class QBOConnector:
         journal_entry_payload = {
             'TxnDate': journal_entry.transaction_date,
             'PrivateNote': journal_entry.private_note,
-            "GlobalTaxCalculation": "TaxInclusive",
             'Line': lines,
             'CurrencyRef': {
-               "value": 'AUD'
+               "value": journal_entry.currency
             },
             'TxnTaxDetail': {
                 'TaxLine': []
@@ -906,25 +904,25 @@ class QBOConnector:
                 'GlobalTaxCalculation': 'TaxInclusive',
             })
 
-        for line_item in journal_entry_lineitems:
-            tax_code_id = line_item.tax_code
+            for line_item in journal_entry_lineitems:
+                tax_code_id = line_item.tax_code if line_item.tax_code else general_mappings.default_tax_code_id
 
-            destination_attribute = DestinationAttribute.objects.filter(destination_id=tax_code_id, attribute_type='TAX_CODE',workspace_id=self.workspace_id).first()
-            for tax_rate_ref in destination_attribute.detail['tax_refs']:
-                tax_rate_refs.append(tax_rate_ref)
+                destination_attribute = DestinationAttribute.objects.filter(destination_id=tax_code_id, attribute_type='TAX_CODE',workspace_id=self.workspace_id).first()
+                for tax_rate_ref in destination_attribute.detail['tax_refs']:
+                    tax_rate_refs.append(tax_rate_ref)
 
-        for tax_rate in tax_rate_refs:
-            journal_entry_payload['TxnTaxDetail']['TaxLine'].append(
-                {
-                    "Amount":0,
-                    "DetailType":"TaxLineDetail",
-                    'TaxLineDetail': {
-                        'TaxRateRef': tax_rate,
-                        "PercentBased":True,
-                        "NetAmountTaxable":0
-                    },
-                }
-            )
+            for tax_rate in tax_rate_refs:
+                journal_entry_payload['TxnTaxDetail']['TaxLine'].append(
+                    {
+                        "Amount":0,
+                        "DetailType":"TaxLineDetail",
+                        'TaxLineDetail': {
+                            'TaxRateRef': tax_rate,
+                            "PercentBased":True,
+                            "NetAmountTaxable":0
+                        },
+                    }
+                )
 
         return journal_entry_payload
 
