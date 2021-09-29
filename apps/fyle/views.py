@@ -13,6 +13,7 @@ from apps.tasks.models import TaskLog
 
 from .tasks import create_expense_groups, schedule_expense_group_creation
 from .utils import FyleConnector
+from .platform_connector import FylePlatformConnector
 from .models import Expense, ExpenseGroup, ExpenseGroupSettings
 from .serializers import ExpenseGroupSerializer, ExpenseSerializer, ExpenseFieldSerializer, \
     ExpenseGroupSettingsSerializer
@@ -104,7 +105,6 @@ class ExpenseGroupScheduleView(generics.CreateAPIView):
         return Response(
             status=status.HTTP_200_OK
         )
-
 
 class ExpenseGroupByIdView(generics.RetrieveAPIView):
     """
@@ -379,7 +379,7 @@ class ExpenseFieldsView(generics.ListAPIView):
     serializer_class = ExpenseFieldSerializer
 
     def get(self, request, *args, **kwargs):
-        default_attributes = ['CATEGORY', 'PROJECT', 'COST_CENTER']
+        default_attributes = ['CATEGORY', 'PROJECT', 'COST_CENTER', 'TAX_GROUP']
 
         attributes = ExpenseAttribute.objects.filter(
             ~Q(attribute_type__in=default_attributes),
@@ -441,8 +441,10 @@ class SyncFyleDimensionView(generics.ListCreateAPIView):
             if workspace.source_synced_at is None or time_interval.days > 0:
                 fyle_credentials = FyleCredential.objects.get(workspace_id=kwargs['workspace_id'])
                 fyle_connector = FyleConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
+                platform_connector = FylePlatformConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
 
                 fyle_connector.sync_dimensions()
+                platform_connector.sync_tax_groups()
 
                 workspace.source_synced_at = datetime.now()
                 workspace.save(update_fields=['source_synced_at'])
@@ -479,8 +481,10 @@ class RefreshFyleDimensionView(generics.ListCreateAPIView):
         try:
             fyle_credentials = FyleCredential.objects.get(workspace_id=kwargs['workspace_id'])
             fyle_connector = FyleConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
+            platform_connector = FylePlatformConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
 
             fyle_connector.sync_dimensions()
+            platform_connector.sync_tax_groups()
 
             workspace = Workspace.objects.get(id=kwargs['workspace_id'])
             workspace.source_synced_at = datetime.now()
@@ -497,7 +501,7 @@ class RefreshFyleDimensionView(generics.ListCreateAPIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
-        except Exception : 
+        except Exception as exception:
             return Response(
                 data={
                     'message': 'Error in refreshing Dimensions'
