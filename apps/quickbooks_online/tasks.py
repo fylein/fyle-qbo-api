@@ -385,15 +385,14 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                 'message': 'Default Credit Card Account not found'
             })
 
-    if general_settings.import_tax_codes:
-        if not (general_mapping.default_tax_code_id or general_mapping.default_tax_code_name):
-            bulk_errors.append({
-                'row': None,
-                'expense_group_id': expense_group_id,
-                'value': 'Default Tax Code',
-                'type': 'General Mapping',
-                'message': 'Default Tax Code not found'
-            })
+    if general_settings.import_tax_codes and not (general_mapping.default_tax_code_id or general_mapping.default_tax_code_name):
+        bulk_errors.append({
+            'row': None,
+            'expense_group_id': expense_group_id,
+            'value': 'Default Tax Code',
+            'type': 'General Mapping',
+            'message': 'Default Tax Code not found'
+        })
 
     if not (expense_group.fund_source == 'CCC' and \
         (general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE' and \
