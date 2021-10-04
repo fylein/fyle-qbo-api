@@ -9,7 +9,7 @@ from qbosdk.exceptions import WrongParamsError
 
 import unidecode
 
-from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute
+from fyle_accounting_mappings.models import DestinationAttribute
 
 from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings
 from apps.mappings.models import GeneralMapping
@@ -22,6 +22,18 @@ logger = logging.getLogger(__name__)
 SYNC_UPPER_LIMIT = {
     'customers': 5000
 }
+
+def format_special_characters(value: str) -> str:
+    """
+    Formats special characters in the string.
+    :param value: string to be formatted
+    :return: formatted string
+    """
+    formatted_string = unidecode.unidecode(u'{}'.format(value))
+    if not formatted_string.strip():
+        return ''
+
+    return formatted_string
 
 
 class QBOConnector:
@@ -110,13 +122,14 @@ class QBOConnector:
         }
 
         for account in accounts:
-            if account['AccountType'] == 'Expense':
+            value = format_special_characters(
+                account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName']
+            )
+            if account['AccountType'] == 'Expense' and value:
                 account_attributes['account'].append({
                     'attribute_type': 'ACCOUNT',
                     'display_name': 'Account',
-                    'value': unidecode.unidecode(u'{0}'.format(
-                        account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])).replace(
-                        '/', '-'),
+                    'value': value,
                     'destination_id': account['Id'],
                     'active': account['Active'],
                     'detail': {
@@ -124,12 +137,11 @@ class QBOConnector:
                     }
                 })
 
-            elif account['AccountType'] == 'Credit Card':
+            elif account['AccountType'] == 'Credit Card' and value:
                 account_attributes['credit_card_account'].append({
                     'attribute_type': 'CREDIT_CARD_ACCOUNT',
                     'display_name': 'Credit Card Account',
-                    'value': unidecode.unidecode(u'{0}'.format(
-                        account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])),
+                    'value': value,
                     'destination_id': account['Id'],
                     'active': account['Active'],
                     'detail': {
@@ -137,12 +149,11 @@ class QBOConnector:
                     }
                 })
 
-            elif account['AccountType'] == 'Bank':
+            elif account['AccountType'] == 'Bank' and value:
                 account_attributes['bank_account'].append({
                     'attribute_type': 'BANK_ACCOUNT',
                     'display_name': 'Bank Account',
-                    'value': unidecode.unidecode(u'{0}'.format(
-                        account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])),
+                    'value': value,
                     'destination_id': account['Id'],
                     'active': account['Active'],
                     'detail': {
@@ -150,12 +161,11 @@ class QBOConnector:
                     }
                 })
 
-            else:
+            elif value:
                 account_attributes['accounts_payable'].append({
                     'attribute_type': 'ACCOUNTS_PAYABLE',
                     'display_name': 'Accounts Payable',
-                    'value': unidecode.unidecode(u'{0}'.format(
-                        account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])),
+                    'value': value,
                     'destination_id': account['Id'],
                     'active': account['Active'],
                     'detail': {
@@ -347,11 +357,12 @@ class QBOConnector:
             customer_attributes = []
 
             for customer in customers:
-                if customer['Active']:
+                value = format_special_characters(customer['FullyQualifiedName'])
+                if customer['Active'] and value:
                     customer_attributes.append({
                         'attribute_type': 'CUSTOMER',
                         'display_name': 'customer',
-                        'value': unidecode.unidecode(u'{0}'.format(customer['FullyQualifiedName'])),
+                        'value': value,
                         'destination_id': customer['Id'],
                         'active': True
                     })
