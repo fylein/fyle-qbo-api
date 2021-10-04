@@ -84,8 +84,10 @@ class QBOConnector:
         tax_attribute = DestinationAttribute.objects.filter(destination_id=default_tax_code_id, attribute_type='TAX_CODE',workspace_id=self.workspace_id).first()
         tax_inclusive_amount = amount
         if tax_attribute:
-            tax_rate = int(tax_attribute.detail['tax_rate'])
-            tax_inclusive_amount = round((amount - (amount/(tax_rate + 1))), 2)
+            tax_rate = float((tax_attribute.detail['tax_rate']) / 100)
+            tax_amount = round((amount - (amount / ( tax_rate + 1))), 2)
+            tax_inclusive_amount = round((amount - tax_amount), 2)
+
         return tax_inclusive_amount
 
 
