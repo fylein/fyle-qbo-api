@@ -432,7 +432,6 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
             workspace_id=expense_group.workspace_id
         ).first()
 
-
         if not account:
             bulk_errors.append({
                 'row': row,
