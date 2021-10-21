@@ -424,7 +424,7 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
 
     for lineitem in expenses:
         category = lineitem.category if lineitem.category == lineitem.sub_category else '{0} / {1}'.format(
-            lineitem.category, lineitem.sub_category)        
+            lineitem.category, lineitem.sub_category)  
 
         account = Mapping.objects.filter(
             source_type='CATEGORY',
