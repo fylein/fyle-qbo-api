@@ -334,7 +334,15 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
             })
 
     if general_mapping and not (general_mapping.bank_account_id or general_mapping.bank_account_name) and \
-        general_settings.reimbursable_expenses_object == 'CHECK':
+        (
+            (
+                general_settings.reimbursable_expenses_object == 'CHECK'
+                or (
+                    general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY' and
+                    general_settings.employee_field_mapping == 'EMPLOYEE' and expense_group.fund_source == 'PERSONAL'
+                )
+            )
+        ):
         bulk_errors.append({
             'row': None,
             'expense_group_id': expense_group.id,
