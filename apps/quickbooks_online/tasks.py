@@ -441,7 +441,7 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                 'message': 'Category Mapping not found'
             })
         
-        if general_settings.import_tax_codes:
+        if general_settings.import_tax_codes and lineitem.tax_group_id:
             tax_group  = ExpenseAttribute.objects.get(
                 workspace_id=expense_group.workspace_id,
                 attribute_type='TAX_GROUP',
