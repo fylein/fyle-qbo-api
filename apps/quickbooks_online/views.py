@@ -731,7 +731,7 @@ class QuickbooksFieldsView(generics.ListAPIView):
     def get_queryset(self):
         default_attributes = [
             'EMPLOYEE','ACCOUNT', 'VENDOR', 'ACCOUNTS_PAYABLE', 
-            'CREDIT_CARD_ACCOUNT', 'BANK_ACCOUNT', 'TAX_GROUP'
+            'CREDIT_CARD_ACCOUNT', 'BANK_ACCOUNT', 'TAX_CODE'
         ]
         attributes = DestinationAttribute.objects.filter(
             ~Q(attribute_type__in=default_attributes),

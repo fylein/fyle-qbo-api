@@ -431,6 +431,7 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
             source__value=category,
             workspace_id=expense_group.workspace_id
         ).first()
+
         if not account:
             bulk_errors.append({
                 'row': row,
@@ -439,6 +440,28 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                 'type': 'Category Mapping',
                 'message': 'Category Mapping not found'
             })
+        
+        if general_settings.import_tax_codes:
+            tax_group  = ExpenseAttribute.objects.get(
+                workspace_id=expense_group.workspace_id,
+                attribute_type='TAX_GROUP',
+                source_id=lineitem.tax_group_id
+            )
+
+            tax_code = Mapping.objects.filter(
+                source_type='TAX_GROUP',
+                source__value=tax_group.value,
+                workspace_id=expense_group.workspace_id
+            ).first()
+
+            if not tax_code:
+                bulk_errors.append({
+                    'row': row,
+                    'expense_group_id': expense_group.id,
+                    'value': tax_group.value,
+                    'type': 'Tax Group Mapping',
+                    'message': 'Tax Group Mapping not found'
+                })
 
         row = row + 1
 
