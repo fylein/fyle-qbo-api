@@ -322,7 +322,8 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                 })
 
     if general_mapping and not (general_mapping.accounts_payable_id or general_mapping.accounts_payable_name):
-        if general_settings.reimbursable_expenses_object == 'BILL' or (
+        if (general_settings.reimbursable_expenses_object == 'BILL' or \
+            general_settings.corporate_credit_card_expenses_object == 'BILL') or (
             general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY' and
             general_settings.employee_field_mapping == 'VENDOR' and expense_group.fund_source == 'PERSONAL'):
             bulk_errors.append({
