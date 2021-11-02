@@ -395,17 +395,11 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
             })
 
     if general_settings.import_tax_codes and not (general_mapping.default_tax_code_id or general_mapping.default_tax_code_name):
-        tax_group = ExpenseAttribute.objects.filter(
-                workspace_id=expense_group.workspace_id,
-                attribute_type='TAX_GROUP',
-                source_id=lineitem.tax_group_id
-            ).first()
-
         tax_code = Mapping.objects.filter(
-            source_type='TAX_GROUP',
-            source__value=tax_group.value,
-            workspace_id=expense_group.workspace_id
-        ).first()
+                source_type='TAX_GROUP',
+                source__source_id=lineitem.tax_group_id,
+                workspace_id=expense_group.workspace_id
+            ).first()
 
         if not tax_code:
             bulk_errors.append({
