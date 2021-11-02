@@ -395,13 +395,26 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
             })
 
     if general_settings.import_tax_codes and not (general_mapping.default_tax_code_id or general_mapping.default_tax_code_name):
-        bulk_errors.append({
-            'row': None,
-            'expense_group_id': expense_group.id,
-            'value': 'Default Tax Code',
-            'type': 'General Mapping',
-            'message': 'Default Tax Code not found'
-        })
+        tax_group = ExpenseAttribute.objects.filter(
+                workspace_id=expense_group.workspace_id,
+                attribute_type='TAX_GROUP',
+                source_id=lineitem.tax_group_id
+            ).first()
+
+        tax_code = Mapping.objects.filter(
+            source_type='TAX_GROUP',
+            source__value=tax_group.value,
+            workspace_id=expense_group.workspace_id
+        ).first()
+
+        if not tax_code:
+            bulk_errors.append({
+                'row': None,
+                'expense_group_id': expense_group.id,
+                'value': 'Default Tax Code',
+                'type': 'General Mapping',
+                'message': 'Default Tax Code not found'
+            })
 
     if not (expense_group.fund_source == 'CCC' and \
         ((general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE' and \
@@ -451,11 +464,11 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
             })
         
         if general_settings.import_tax_codes and lineitem.tax_group_id:
-            tax_group  = ExpenseAttribute.objects.get(
+            tax_group = ExpenseAttribute.objects.filter(
                 workspace_id=expense_group.workspace_id,
                 attribute_type='TAX_GROUP',
                 source_id=lineitem.tax_group_id
-            )
+            ).first()
 
             tax_code = Mapping.objects.filter(
                 source_type='TAX_GROUP',
