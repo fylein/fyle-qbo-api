@@ -48,7 +48,7 @@ class Expense(models.Model):
     amount = models.FloatField(help_text='Home Amount')
     currency = models.CharField(max_length=5, help_text='Home Currency')
     foreign_amount = models.FloatField(null=True, help_text='Foreign Amount')
-    foreign_currency = models.CharField(null=True, max_length=5, help_text='Foreign Currency')
+    foreign_currency = models.CharField(null=True, max_length=15, help_text='Foreign Currency')
     tax_amount = models.FloatField(null=True, help_text='Tax Amount')
     tax_group_id = models.CharField(null=True, max_length=255, help_text='Tax Group ID')
     settlement_id = models.CharField(max_length=255, null=True, help_text='Settlement ID')
