@@ -68,10 +68,10 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
 
             last_synced_at = workspace.last_synced_at
 
-            updated_at = []
+            settled_at = []
 
             if last_synced_at:
-                updated_at.append('gte:{0}'.format(datetime.strftime(last_synced_at, '%Y-%m-%dT%H:%M:%S.000Z')))
+                settled_at.append('gte:{0}'.format(datetime.strftime(last_synced_at, '%Y-%m-%dT%H:%M:%S.000Z')))
 
             fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
 
@@ -85,7 +85,7 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
 
             expenses = fyle_connector.get_expenses(
                 state=import_state,
-                updated_at=updated_at,
+                settled_at=settled_at,
                 fund_source=fund_source
             )
 
