@@ -215,7 +215,7 @@ def create_fyle_categories_payload(categories: List[DestinationAttribute], works
         if category.value not in existing_category_names:
             payload.append({
                 'name': category.value,
-                'code': category.destination_id,
+                'code': category.detail['account_number'],
                 'enabled': category.active
             })
 

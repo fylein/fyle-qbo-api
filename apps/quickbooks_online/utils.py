@@ -133,7 +133,8 @@ class QBOConnector:
                     'destination_id': account['Id'],
                     'active': account['Active'],
                     'detail': {
-                        'fully_qualified_name': account['FullyQualifiedName']
+                        'fully_qualified_name': account['FullyQualifiedName'],
+                        'account_number': account['AcctNum'] if 'AcctNum' in account else None
                     }
                 })
 
