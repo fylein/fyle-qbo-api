@@ -133,7 +133,8 @@ class QBOConnector:
                     'destination_id': account['Id'],
                     'active': account['Active'],
                     'detail': {
-                        'fully_qualified_name': account['FullyQualifiedName']
+                        'fully_qualified_name': account['FullyQualifiedName'],
+                        'account_type': account['AccountType']
                     }
                 })
 
@@ -145,7 +146,8 @@ class QBOConnector:
                     'destination_id': account['Id'],
                     'active': account['Active'],
                     'detail': {
-                        'fully_qualified_name': account['FullyQualifiedName']
+                        'fully_qualified_name': account['FullyQualifiedName'],
+                        'account_type': account['AccountType']
                     }
                 })
 
@@ -157,7 +159,8 @@ class QBOConnector:
                     'destination_id': account['Id'],
                     'active': account['Active'],
                     'detail': {
-                        'fully_qualified_name': account['FullyQualifiedName']
+                        'fully_qualified_name': account['FullyQualifiedName'],
+                        'account_type': account['AccountType']
                     }
                 })
 
@@ -169,7 +172,8 @@ class QBOConnector:
                     'destination_id': account['Id'],
                     'active': account['Active'],
                     'detail': {
-                        'fully_qualified_name': account['FullyQualifiedName']
+                        'fully_qualified_name': account['FullyQualifiedName'],
+                        'account_type': account['AccountType']
                     }
                 })
 
