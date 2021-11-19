@@ -108,7 +108,6 @@ class QBOConnector:
         Get accounts
         """
         accounts = self.connection.accounts.get()
-
         category_sync_version = 'v2'
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
         if general_settings:
@@ -125,20 +124,22 @@ class QBOConnector:
             value = format_special_characters(
                 account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName']
             )
-            if account['AccountType'] == 'Expense' and value:
-                account_attributes['account'].append({
-                    'attribute_type': 'ACCOUNT',
-                    'display_name': 'Account',
-                    'value': value,
-                    'destination_id': account['Id'],
-                    'active': account['Active'],
-                    'detail': {
-                        'fully_qualified_name': account['FullyQualifiedName'],
-                        'account_type': account['AccountType']
-                    }
-                })
 
-            elif account['AccountType'] == 'Credit Card' and value:
+            for chart_of_account in general_settings.charts_of_accounts:
+                if account['AccountType'] == chart_of_account and value:
+                    account_attributes['account'].append({
+                        'attribute_type': 'ACCOUNT',
+                        'display_name': 'Account',
+                        'value': value,
+                        'destination_id': account['Id'],
+                        'active': account['Active'],
+                        'detail': {
+                            'fully_qualified_name': account['FullyQualifiedName'],
+                            'account_type': account['AccountType']
+                        }
+                    })
+
+            if account['AccountType'] == 'Credit Card' and value:
                 account_attributes['credit_card_account'].append({
                     'attribute_type': 'CREDIT_CARD_ACCOUNT',
                     'display_name': 'Credit Card Account',
