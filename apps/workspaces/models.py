@@ -45,6 +45,7 @@ class WorkspaceSchedule(models.Model):
 
 def get_default_chart_of_accounts():
     return ['Expense']
+
 class WorkspaceGeneralSettings(models.Model):
     """
     Workspace General Settings
@@ -62,7 +63,7 @@ class WorkspaceGeneralSettings(models.Model):
     change_accounting_period = models.BooleanField(default=False, help_text='Export Expense when accounting period is closed')
     charts_of_accounts = ArrayField(
         base_field=models.CharField(max_length=100), default=get_default_chart_of_accounts,
-        help_text='list of charts of accounts to be imported to fyle'
+        help_text='list of chart of account types to be imported into Fyle'
     )
     auto_map_employees = models.CharField(
         max_length=50, help_text='Auto Map Employees type from QBO to Fyle', null=True)

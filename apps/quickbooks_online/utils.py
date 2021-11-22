@@ -125,21 +125,20 @@ class QBOConnector:
                 account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName']
             )
 
-            for chart_of_account in general_settings.charts_of_accounts:
-                if account['AccountType'] == chart_of_account and value:
-                    account_attributes['account'].append({
-                        'attribute_type': 'ACCOUNT',
-                        'display_name': 'Account',
-                        'value': value,
-                        'destination_id': account['Id'],
-                        'active': account['Active'],
-                        'detail': {
-                            'fully_qualified_name': account['FullyQualifiedName'],
-                            'account_type': account['AccountType']
-                        }
-                    })
+            if account['AccountType'] in general_settings.chart_of_accounts and value:
+                account_attributes['account'].append({
+                    'attribute_type': 'ACCOUNT',
+                    'display_name': 'Account',
+                    'value': value,
+                    'destination_id': account['Id'],
+                    'active': account['Active'],
+                    'detail': {
+                        'fully_qualified_name': account['FullyQualifiedName'],
+                        'account_type': account['AccountType']
+                    }
+                })
 
-            if account['AccountType'] == 'Credit Card' and value:
+            elif account['AccountType'] == 'Credit Card' and value:
                 account_attributes['credit_card_account'].append({
                     'attribute_type': 'CREDIT_CARD_ACCOUNT',
                     'display_name': 'Credit Card Account',
