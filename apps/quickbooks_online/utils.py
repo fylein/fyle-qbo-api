@@ -1052,7 +1052,8 @@ class QBOConnector:
             'CheckPayment': {
                 "BankAccountRef": {
                     "value": bill_payment.payment_account
-                }
+                },
+                "PrintStatus": "NotSet"
             },
             'Line': self.__construct_bill_payment_lineitems(bill_payment_lineitems)
         }
