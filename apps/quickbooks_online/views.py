@@ -806,13 +806,14 @@ class SyncQuickbooksDimensionView(generics.ListCreateAPIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
-        except Exception : 
+        except Exception as exception:
+            logger.exception(exception)
             return Response(
                 data={
                     'message': 'Error in syncing Dimensions'
                 },
                 status=status.HTTP_400_BAD_REQUEST
-            )    
+            )
 
 
 class RefreshQuickbooksDimensionView(generics.ListCreateAPIView):
@@ -846,7 +847,8 @@ class RefreshQuickbooksDimensionView(generics.ListCreateAPIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        except Exception : 
+        except Exception as exception:
+            logger.exception(exception)
             return Response(
                 data={
                     'message': 'Error in refreshing Dimensions'
