@@ -108,7 +108,6 @@ class QBOConnector:
         Get accounts
         """
         accounts = self.connection.accounts.get()
-
         category_sync_version = 'v2'
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
         if general_settings:
@@ -125,7 +124,8 @@ class QBOConnector:
             value = format_special_characters(
                 account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName']
             )
-            if account['AccountType'] == 'Expense' and value:
+
+            if account['AccountType'] in general_settings.charts_of_accounts and value:
                 account_attributes['account'].append({
                     'attribute_type': 'ACCOUNT',
                     'display_name': 'Account',

@@ -2,11 +2,11 @@
 Workspace Models
 """
 from django.db import models
+from django.contrib.postgres.fields import JSONField, ArrayField
 from django.contrib.auth import get_user_model
 from django_q.models import Schedule
 
 User = get_user_model()
-
 
 class Workspace(models.Model):
     """
@@ -43,6 +43,9 @@ class WorkspaceSchedule(models.Model):
         db_table = 'workspace_schedules'
 
 
+def get_default_chart_of_accounts():
+    return ['Expense']
+
 class WorkspaceGeneralSettings(models.Model):
     """
     Workspace General Settings
@@ -58,6 +61,10 @@ class WorkspaceGeneralSettings(models.Model):
     import_projects = models.BooleanField(default=False, help_text='Auto import projects to Fyle')
     import_tax_codes = models.BooleanField(default=False, help_text='Auto import tax codes to Fyle', null=True)
     change_accounting_period = models.BooleanField(default=False, help_text='Export Expense when accounting period is closed')
+    charts_of_accounts = ArrayField(
+        base_field=models.CharField(max_length=100), default=get_default_chart_of_accounts,
+        help_text='list of chart of account types to be imported into Fyle'
+    )
     auto_map_employees = models.CharField(
         max_length=50, help_text='Auto Map Employees type from QBO to Fyle', null=True)
     auto_create_destination_entity = models.BooleanField(default=False, help_text='Auto create vendor / employee')
