@@ -23,10 +23,10 @@ def test_user_creation():
     '''
     Test Post of User Profile
     '''
-    user = User(password='', last_login=datetime.now(tz=timezone.utc), email='nilesh.p@fyle.in',
-                         user_id='ust5Gda9HC3qc', full_name='', active='t', staff='f', admin='t')
+    user = User(password='', last_login=datetime.now(tz=timezone.utc), email='ashwin.t@fyle.in',
+                         user_id='usqywo0f3nBY', full_name='', active='t', staff='f', admin='t')
 
     user.save()
 
-    assert user.email=='nilesh.p@fyle.in'
+    assert user.email=='ashwin.t@fyle.in'
 
