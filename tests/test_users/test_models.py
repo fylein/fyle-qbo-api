@@ -1,19 +1,3 @@
-# import pytest
-# from apps.users.models import User
-
-# @pytest.mark.django_db
-# def test_user_creation():
-#     '''
-#     Test 
-#     '''
-
-#     assert 1 == 1
-
-#     # user = UserManager.create_user(email='nilesh.p@fyle.in', full_name='', password='hello')
-
-#     # assert user.email=='nilesh.p@fyle.in'
-
-
 import pytest
 from datetime import datetime, timezone
 from fyle_rest_auth.models import User
@@ -29,4 +13,6 @@ def test_user_creation():
     user.save()
 
     assert user.email=='ashwin.t@fyle.in'
+
+    # assert 'ashwin.t@fyle.in'=='ashwin.t@fyle.in'
 

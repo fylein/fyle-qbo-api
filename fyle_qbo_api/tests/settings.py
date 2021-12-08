@@ -14,7 +14,6 @@ import os
 
 import dj_database_url
 
-from .sentry import Sentry
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -26,7 +25,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True if os.environ.get('DEBUG') == 'True' else False
+DEBUG = True
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(',')
 
@@ -45,7 +44,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'fyle_rest_auth',
     'fyle_accounting_mappings',
-    'django_q',
 
     # User Created Apps
     'apps.users',
@@ -175,9 +173,6 @@ LOGGING = {
     }
 }
 
-# Sentry
-Sentry.init()
-
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 if os.environ.get('DATABASE_URL', ''):
@@ -206,13 +201,33 @@ CACHES = {
     }
 }
 
-DATABASES['cache_db'] = {
-    'ENGINE': 'django.db.backends.sqlite3',
-    'NAME': 'cache.db'
-}
+# DATABASES['cache_db'] = {
+#     'ENGINE': 'django.db.backends.sqlite3',
+#     'NAME': 'cache.db'
+# }
 
-DATABASE_ROUTERS = ['fyle_qbo_api.cache_router.CacheRouter']
+# DATABASE_ROUTERS = ['fyle_qbo_api.cache_router.CacheRouter']
 
+# Database
+# https://docs.djangoproject.com/en/3.0/ref/settings/#databases
+if os.environ.get('DATABASE_URL', ''):
+    DATABASES = {
+        'default': dj_database_url.config()
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'OPTIONS': {
+                'options': '-c search_path={0}'.format(os.environ.get('DB_SCHEMA'))
+            },
+            'NAME': os.environ.get('DB_NAME'),
+            'USER': os.environ.get('DB_USER'),
+            'PASSWORD': os.environ.get('DB_PASSWORD'),
+            'HOST': os.environ.get('DB_HOST'),
+            'PORT': os.environ.get('DB_PORT'),
+        }
+    }
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
 
