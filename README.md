@@ -82,3 +82,24 @@ Django Rest Framework API for Fyle Quickbooks Online Integration
     pip install -r requirements.dev.txt
     python q_cluster_watcher.py
     ```
+### Running Tests
+
+* Add the following environment variables to setup.sh file
+
+    ```
+    export FYLE_BASE_URL=<fyle base url>
+    export FYLE_CLIENT_ID=<client_id>
+    export FYLE_CLIENT_SECRET=<client_secret>
+    export FYLE_REFRESH_TOKEN=<refresh_token>
+    export FYLE_TOKEN_URI=<fyle token uri>
+    export QBO_CLIENT_ID=<qbo client id>
+    export QBO_CLIENT_SECRET=<qbo client secret>
+    export QBO_REDIRECT_URI=<qbo redirect uri>
+    export QBO_TOKEN_URI=<qbo token uri>
+    export QBO_ENVIRONMENT=<qbo environment>
+    ```
+* Run the following commands
+
+    1. docker-compose -f docker-compose-pipeline.yml build
+    2. docker-compose -f docker-compose-pipeline.yml up -d
+    3. docker-compose -f docker-compose-pipeline.yml exec api pytest tests/

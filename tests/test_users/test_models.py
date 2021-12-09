@@ -13,6 +13,3 @@ def test_user_creation():
     user.save()
 
     assert user.email=='ashwin.t@fyle.in'
-
-    # assert 'ashwin.t@fyle.in'=='ashwin.t@fyle.in'
-
