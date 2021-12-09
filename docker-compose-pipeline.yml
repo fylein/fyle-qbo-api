@@ -9,7 +9,7 @@ services:
     entrypoint: bash run.sh
     restart: unless-stopped
     volumes:
-    - ./:/fyle-netsuite-api
+    - ./:/fyle-qbo-api
     ports:
     - 8000:8000
     depends_on:
