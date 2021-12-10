@@ -2,11 +2,11 @@
 Workspace Models
 """
 from django.db import models
+from django.contrib.postgres.fields import JSONField, ArrayField
 from django.contrib.auth import get_user_model
 from django_q.models import Schedule
 
 User = get_user_model()
-
 
 class Workspace(models.Model):
     """
@@ -17,6 +17,7 @@ class Workspace(models.Model):
     user = models.ManyToManyField(User, help_text='Reference to users table')
     fyle_org_id = models.CharField(max_length=255, help_text='org id', unique=True)
     qbo_realm_id = models.CharField(max_length=255, help_text='qbo realm id')
+    cluster_domain = models.CharField(max_length=255, help_text='fyle cluster domain', null=True)
     last_synced_at = models.DateTimeField(help_text='Datetime when expenses were pulled last', null=True)
     source_synced_at = models.DateTimeField(help_text='Datetime when source dimensions were pulled', null=True)
     destination_synced_at = models.DateTimeField(help_text='Datetime when destination dimensions were pulled', null=True)
@@ -42,6 +43,9 @@ class WorkspaceSchedule(models.Model):
         db_table = 'workspace_schedules'
 
 
+def get_default_chart_of_accounts():
+    return ['Expense']
+
 class WorkspaceGeneralSettings(models.Model):
     """
     Workspace General Settings
@@ -55,6 +59,12 @@ class WorkspaceGeneralSettings(models.Model):
     map_merchant_to_vendor = models.BooleanField(help_text='Map Merchant to Vendor for CCC Expenses', default=False)
     import_categories = models.BooleanField(default=False, help_text='Auto import Categories to Fyle')
     import_projects = models.BooleanField(default=False, help_text='Auto import projects to Fyle')
+    import_tax_codes = models.BooleanField(default=False, help_text='Auto import tax codes to Fyle', null=True)
+    change_accounting_period = models.BooleanField(default=False, help_text='Export Expense when accounting period is closed')
+    charts_of_accounts = ArrayField(
+        base_field=models.CharField(max_length=100), default=get_default_chart_of_accounts,
+        help_text='list of chart of account types to be imported into Fyle'
+    )
     auto_map_employees = models.CharField(
         max_length=50, help_text='Auto Map Employees type from QBO to Fyle', null=True)
     auto_create_destination_entity = models.BooleanField(default=False, help_text='Auto create vendor / employee')
@@ -76,6 +86,8 @@ class QBOCredential(models.Model):
     id = models.AutoField(primary_key=True)
     refresh_token = models.TextField(help_text='Stores QBO refresh token')
     realm_id = models.CharField(max_length=40, help_text='QBO realm / company Id')
+    company_name = models.CharField(max_length=255, help_text='QBO Company Name', null=True)
+    country = models.CharField(max_length=255, help_text='QBO Country Name', null=True)
     workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')

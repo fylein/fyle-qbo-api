@@ -1,3 +1,5 @@
+import logging
+
 from django.db.models import Q
 from datetime import datetime, timezone
 
@@ -13,9 +15,13 @@ from apps.tasks.models import TaskLog
 
 from .tasks import create_expense_groups, schedule_expense_group_creation
 from .utils import FyleConnector
+from .platform_connector import FylePlatformConnector
 from .models import Expense, ExpenseGroup, ExpenseGroupSettings
 from .serializers import ExpenseGroupSerializer, ExpenseSerializer, ExpenseFieldSerializer, \
     ExpenseGroupSettingsSerializer
+
+
+logger = logging.getLogger(__name__)
 
 
 class ExpenseGroupView(generics.ListCreateAPIView):
@@ -71,6 +77,25 @@ class ExpenseGroupView(generics.ListCreateAPIView):
         )
 
 
+class ExpenseGroupCountView(generics.ListAPIView):
+    """
+    Expense Group Count View
+    """
+
+    def get(self, request, *args, **kwargs):
+        state_filter = {
+            'tasklog__status': self.request.query_params.get('state')
+        }
+        expense_groups_count = ExpenseGroup.objects.filter(
+            workspace_id=kwargs['workspace_id'], **state_filter
+        ).count()
+
+        return Response(
+            data={'count': expense_groups_count},
+            status=status.HTTP_200_OK
+        )
+
+
 class ExpenseGroupScheduleView(generics.CreateAPIView):
     """
     Create expense group schedule
@@ -85,7 +110,6 @@ class ExpenseGroupScheduleView(generics.CreateAPIView):
         return Response(
             status=status.HTTP_200_OK
         )
-
 
 class ExpenseGroupByIdView(generics.RetrieveAPIView):
     """
@@ -360,7 +384,7 @@ class ExpenseFieldsView(generics.ListAPIView):
     serializer_class = ExpenseFieldSerializer
 
     def get(self, request, *args, **kwargs):
-        default_attributes = ['CATEGORY', 'PROJECT', 'COST_CENTER']
+        default_attributes = ['EMPLOYEE','CATEGORY', 'PROJECT', 'COST_CENTER', 'TAX_GROUP']
 
         attributes = ExpenseAttribute.objects.filter(
             ~Q(attribute_type__in=default_attributes),
@@ -422,8 +446,10 @@ class SyncFyleDimensionView(generics.ListCreateAPIView):
             if workspace.source_synced_at is None or time_interval.days > 0:
                 fyle_credentials = FyleCredential.objects.get(workspace_id=kwargs['workspace_id'])
                 fyle_connector = FyleConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
+                platform_connector = FylePlatformConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
 
                 fyle_connector.sync_dimensions()
+                platform_connector.sync_tax_groups()
 
                 workspace.source_synced_at = datetime.now()
                 workspace.save(update_fields=['source_synced_at'])
@@ -436,6 +462,14 @@ class SyncFyleDimensionView(generics.ListCreateAPIView):
             return Response(
                 data={
                     'message': 'Fyle credentials not found in workspace'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as exception:
+            logger.exception(exception)
+            return Response(
+                data={
+                    'message': 'Error in syncing Dimensions'
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
@@ -453,8 +487,10 @@ class RefreshFyleDimensionView(generics.ListCreateAPIView):
         try:
             fyle_credentials = FyleCredential.objects.get(workspace_id=kwargs['workspace_id'])
             fyle_connector = FyleConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
+            platform_connector = FylePlatformConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
 
             fyle_connector.sync_dimensions()
+            platform_connector.sync_tax_groups()
 
             workspace = Workspace.objects.get(id=kwargs['workspace_id'])
             workspace.source_synced_at = datetime.now()
@@ -468,6 +504,14 @@ class RefreshFyleDimensionView(generics.ListCreateAPIView):
             return Response(
                 data={
                     'message': 'Fyle credentials not found in workspace'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as exception:
+            logger.exception(exception)
+            return Response(
+                data={
+                    'message': 'Error in refreshing Dimensions'
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )

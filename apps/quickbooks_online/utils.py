@@ -1,15 +1,18 @@
 from typing import List, Dict
+from datetime import datetime, timedelta
 import logging
-
+import json
 from django.conf import settings
 
 from qbosdk import QuickbooksOnlineSDK
+from qbosdk.exceptions import WrongParamsError
 
 import unidecode
 
 from fyle_accounting_mappings.models import DestinationAttribute
 
 from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings
+from apps.mappings.models import GeneralMapping
 
 from .models import BillLineitem, Bill, ChequeLineitem, Cheque, CreditCardPurchase, CreditCardPurchaseLineitem, \
     JournalEntry, JournalEntryLineitem, BillPaymentLineitem, BillPayment, QBOExpense, QBOExpenseLineitem
@@ -19,6 +22,18 @@ logger = logging.getLogger(__name__)
 SYNC_UPPER_LIMIT = {
     'customers': 5000
 }
+
+def format_special_characters(value: str) -> str:
+    """
+    Formats special characters in the string.
+    :param value: string to be formatted
+    :return: formatted string
+    """
+    formatted_string = unidecode.unidecode(u'{}'.format(value))
+    if not formatted_string.strip():
+        return ''
+
+    return formatted_string
 
 
 class QBOConnector:
@@ -66,12 +81,33 @@ class QBOConnector:
         else:
             return self.create_vendor_destionation_attribute(vendor)
 
+    def get_effective_tax_rates(self, tax_rates):
+        effective_tax_rate = 0
+        tax_rate_refs = []
+        for tax_rate in tax_rates:
+            tax_rate_refs.append(tax_rate['TaxRateRef'])
+            tax_rate_id = tax_rate['TaxRateRef']['value']
+            effective_tax_rate += self.connection.tax_rates.get_by_id(tax_rate_id)['RateValue']
+
+        return effective_tax_rate, tax_rate_refs
+
+    def get_tax_inclusive_amount(self, amount, default_tax_code_id):
+
+        tax_attribute = DestinationAttribute.objects.filter(destination_id=default_tax_code_id, attribute_type='TAX_CODE',workspace_id=self.workspace_id).first()
+        tax_inclusive_amount = amount
+        if tax_attribute:
+            tax_rate = float((tax_attribute.detail['tax_rate']) / 100)
+            tax_amount = round((amount - (amount / ( tax_rate + 1))), 2)
+            tax_inclusive_amount = round((amount - tax_amount), 2)
+
+        return tax_inclusive_amount
+
+
     def sync_accounts(self):
         """
         Get accounts
         """
         accounts = self.connection.accounts.get()
-
         category_sync_version = 'v2'
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
         if general_settings:
@@ -85,56 +121,59 @@ class QBOConnector:
         }
 
         for account in accounts:
-            if account['AccountType'] == 'Expense':
+            value = format_special_characters(
+                account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName']
+            )
+
+            if account['AccountType'] in general_settings.charts_of_accounts and value:
                 account_attributes['account'].append({
                     'attribute_type': 'ACCOUNT',
                     'display_name': 'Account',
-                    'value': unidecode.unidecode(u'{0}'.format(
-                        account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])).replace(
-                        '/', '-'),
+                    'value': value,
                     'destination_id': account['Id'],
                     'active': account['Active'],
                     'detail': {
-                        'fully_qualified_name': account['FullyQualifiedName']
+                        'fully_qualified_name': account['FullyQualifiedName'],
+                        'account_type': account['AccountType']
                     }
                 })
 
-            elif account['AccountType'] == 'Credit Card':
+            elif account['AccountType'] == 'Credit Card' and value:
                 account_attributes['credit_card_account'].append({
                     'attribute_type': 'CREDIT_CARD_ACCOUNT',
                     'display_name': 'Credit Card Account',
-                    'value': unidecode.unidecode(u'{0}'.format(
-                        account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])),
+                    'value': value,
                     'destination_id': account['Id'],
                     'active': account['Active'],
                     'detail': {
-                        'fully_qualified_name': account['FullyQualifiedName']
+                        'fully_qualified_name': account['FullyQualifiedName'],
+                        'account_type': account['AccountType']
                     }
                 })
 
-            elif account['AccountType'] == 'Bank':
+            elif account['AccountType'] == 'Bank' and value:
                 account_attributes['bank_account'].append({
                     'attribute_type': 'BANK_ACCOUNT',
                     'display_name': 'Bank Account',
-                    'value': unidecode.unidecode(u'{0}'.format(
-                        account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])),
+                    'value': value,
                     'destination_id': account['Id'],
                     'active': account['Active'],
                     'detail': {
-                        'fully_qualified_name': account['FullyQualifiedName']
+                        'fully_qualified_name': account['FullyQualifiedName'],
+                        'account_type': account['AccountType']
                     }
                 })
 
-            else:
+            elif value:
                 account_attributes['accounts_payable'].append({
                     'attribute_type': 'ACCOUNTS_PAYABLE',
                     'display_name': 'Accounts Payable',
-                    'value': unidecode.unidecode(u'{0}'.format(
-                        account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])),
+                    'value': value,
                     'destination_id': account['Id'],
                     'active': account['Active'],
                     'detail': {
-                        'fully_qualified_name': account['FullyQualifiedName']
+                        'fully_qualified_name': account['FullyQualifiedName'],
+                        'account_type': account['AccountType']
                     }
                 })
 
@@ -163,6 +202,34 @@ class QBOConnector:
 
         DestinationAttribute.bulk_create_or_update_destination_attributes(
             department_attributes, 'DEPARTMENT', self.workspace_id, True)
+        return []
+
+    def sync_tax_codes(self):
+        """
+        Get Tax Codes
+        """
+        tax_codes = self.connection.tax_codes.get()
+        
+        tax_attributes = []
+        for tax_code in tax_codes:
+            if 'PurchaseTaxRateList' in tax_code.keys():
+                if tax_code['PurchaseTaxRateList']['TaxRateDetail']:
+                    effective_tax_rate, tax_rates = self.get_effective_tax_rates(tax_code['PurchaseTaxRateList']['TaxRateDetail'])
+                    if effective_tax_rate >= 0:
+                        tax_attributes.append({
+                            'attribute_type': 'TAX_CODE',
+                            'display_name': 'Tax Code',
+                            'value': '{0} @{1}%'.format(tax_code['Name'], effective_tax_rate),
+                            'destination_id': tax_code['Id'],
+                            'detail': {
+                                'tax_rate': effective_tax_rate,
+                                'tax_refs': tax_rates
+                            }
+                        })
+
+        DestinationAttribute.bulk_create_or_update_destination_attributes(
+            tax_attributes, 'TAX_CODE', self.workspace_id, True)
+
         return []
 
     def sync_vendors(self):
@@ -294,11 +361,12 @@ class QBOConnector:
             customer_attributes = []
 
             for customer in customers:
-                if customer['Active']:
+                value = format_special_characters(customer['FullyQualifiedName'])
+                if customer['Active'] and value:
                     customer_attributes.append({
                         'attribute_type': 'CUSTOMER',
                         'display_name': 'customer',
-                        'value': unidecode.unidecode(u'{0}'.format(customer['FullyQualifiedName'])),
+                        'value': value,
                         'destination_id': customer['Id'],
                         'active': True
                     })
@@ -333,17 +401,25 @@ class QBOConnector:
             self.sync_classes()
         except Exception as exception:
             logger.exception(exception)
+        
+        try:
+            self.sync_tax_codes()
+        except Exception as exception:
+            logger.exception(exception)
 
         try:
             self.sync_departments()
         except Exception as exception:
             logger.exception(exception)
 
-    @staticmethod
-    def purchase_object_payload(purchase_object, line, payment_type, account_ref, doc_number: str = None, credit=None):
+
+    def purchase_object_payload(self, purchase_object, line, payment_type, account_ref, doc_number: str = None, credit=None):
         """
         returns purchase object payload
         """
+
+        general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+
         purchase_object_payload = {
             'DocNumber': doc_number if doc_number else None,
             'PaymentType': payment_type,
@@ -358,16 +434,21 @@ class QBOConnector:
             },
             'TxnDate': purchase_object.transaction_date,
             "CurrencyRef": {
-                "value": purchase_object.currency
+               "value": purchase_object.currency
             },
             'PrivateNote': purchase_object.private_note,
             'Credit': credit,
             'Line': line
         }
+
+        if general_settings.import_tax_codes:
+            purchase_object_payload.update({
+                'GlobalTaxCalculation': 'TaxInclusive',
+            })
+
         return purchase_object_payload
 
-    @staticmethod
-    def __construct_bill_lineitems(bill_lineitems: List[BillLineitem]) -> List[Dict]:
+    def __construct_bill_lineitems(self, bill_lineitems: List[BillLineitem], general_mappings: GeneralMapping) -> List[Dict]:
         """
         Create bill line items
         :param bill_lineitems: list of bill line items extracted from database
@@ -376,10 +457,11 @@ class QBOConnector:
         lines = []
 
         for line in bill_lineitems:
-            line = {
+            lineitem = {
                 'Description': line.description,
                 'DetailType': 'AccountBasedExpenseLineDetail',
-                'Amount': line.amount,
+                'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount) else \
+                        self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
                 'AccountBasedExpenseLineDetail': {
                     'AccountRef': {
                         'value': line.account_id
@@ -390,10 +472,15 @@ class QBOConnector:
                     'ClassRef': {
                         'value': line.class_id
                     },
-                    'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
+                    'TaxCodeRef': {
+                        'value': line.tax_code if (line.tax_code and line.tax_amount) else general_mappings.default_tax_code_id
+                    },
+                    'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount) else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2),
+                    'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable',
                 }
             }
-            lines.append(line)
+
+            lines.append(lineitem)
 
         return lines
 
@@ -403,6 +490,10 @@ class QBOConnector:
         :param bill: bill object extracted from database
         :return: constructed bill
         """
+
+        general_mappings = GeneralMapping.objects.filter(workspace_id=self.workspace_id).first()
+        general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+
         bill_payload = {
             'VendorRef': {
                 'value': bill.vendor_id
@@ -414,12 +505,17 @@ class QBOConnector:
                 'value': bill.department_id
             },
             'TxnDate': bill.transaction_date,
-            "CurrencyRef": {
-                "value": bill.currency
+            'CurrencyRef': {
+                'value': bill.currency
             },
             'PrivateNote': bill.private_note,
-            'Line': self.__construct_bill_lineitems(bill_lineitems)
+            'Line': self.__construct_bill_lineitems(bill_lineitems, general_mappings)
         }
+
+        if general_settings.import_tax_codes:
+            bill_payload.update({
+                'GlobalTaxCalculation': 'TaxInclusive',
+            })
 
         return bill_payload
 
@@ -427,9 +523,27 @@ class QBOConnector:
         """
         Post bills to QBO
         """
-        bills_payload = self.__construct_bill(bill, bill_lineitems)
-        created_bill = self.connection.bills.post(bills_payload)
-        return created_bill
+        try:
+            bills_payload = self.__construct_bill(bill, bill_lineitems)
+            created_bill = self.connection.bills.post(bills_payload)
+            return created_bill
+
+        except WrongParamsError as bad_request:
+            general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+            error_response = json.loads(bad_request.response)['Fault']['Error'][0]
+
+            if general_settings.change_accounting_period and 'account period closed' in error_response['Message'].lower():
+                book_closed_date = self.connection.preferences.get()['AccountingInfoPrefs']['BookCloseDate']
+                txn_date = datetime.strptime(book_closed_date, '%Y-%m-%d') + timedelta(days=1)
+
+                bills_payload['TxnDate'] = txn_date.strftime("%Y-%m-%d")
+                created_bill = self.connection.bills.post(bills_payload)
+
+                bill.transaction_date = txn_date
+                bill.save()
+                return created_bill
+            else:
+                raise
 
     def get_bill(self, bill_id):
         """
@@ -438,8 +552,7 @@ class QBOConnector:
         bill = self.connection.bills.get_by_id(bill_id)
         return bill
 
-    @staticmethod
-    def __construct_qbo_expense_lineitems(qbo_expense_lineitems: List[QBOExpenseLineitem]) -> List[Dict]:
+    def __construct_qbo_expense_lineitems(self, qbo_expense_lineitems: List[QBOExpenseLineitem], general_mappings) -> List[Dict]:
         """
         Create Expense line items
         :param qbo_expense_lineitems: list of expense line items extracted from database
@@ -447,24 +560,30 @@ class QBOConnector:
         """
         lines = []
 
-        for line in qbo_expense_lineitems:
+        for lineitem in qbo_expense_lineitems:
             line = {
-                'Description': line.description,
+                'Description': lineitem.description,
                 'DetailType': 'AccountBasedExpenseLineDetail',
-                'Amount': line.amount,
+                'Amount': lineitem.amount - lineitem.tax_amount if (lineitem.tax_code and lineitem.tax_amount ) else \
+                        self.get_tax_inclusive_amount(lineitem.amount, general_mappings.default_tax_code_id),
                 'AccountBasedExpenseLineDetail': {
                     'AccountRef': {
-                        'value': line.account_id
+                        'value': lineitem.account_id
                     },
                     'CustomerRef': {
-                        'value': line.customer_id
+                        'value': lineitem.customer_id
                     },
                     'ClassRef': {
-                        'value': line.class_id
+                        'value': lineitem.class_id
                     },
-                    'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
+                    'TaxCodeRef': {
+                        'value': lineitem.tax_code if (lineitem.tax_code and lineitem.tax_amount) else general_mappings.default_tax_code_id
+                    },
+                    'TaxAmount': lineitem.tax_amount if (lineitem.tax_code and lineitem.tax_amount) else round(lineitem.amount - self.get_tax_inclusive_amount(lineitem.amount, general_mappings.default_tax_code_id), 2),
+                    'BillableStatus': 'Billable' if lineitem.billable and lineitem.customer_id else 'NotBillable'
                 }
             }
+
             lines.append(line)
 
         return lines
@@ -475,7 +594,9 @@ class QBOConnector:
         :param qbo_expense: expense object extracted from database
         :return: constructed expense
         """
-        line = self.__construct_qbo_expense_lineitems(qbo_expense_lineitems)
+        general_mappings = GeneralMapping.objects.filter(workspace_id=self.workspace_id).first()
+
+        line = self.__construct_qbo_expense_lineitems(qbo_expense_lineitems, general_mappings)
         qbo_expense_payload = self.purchase_object_payload(
             qbo_expense, line, account_ref=qbo_expense.expense_account_id, payment_type='Cash'
         )
@@ -485,12 +606,28 @@ class QBOConnector:
         """
         Post Expense to QBO
         """
-        qbo_expenses_payload = self.__construct_qbo_expense(qbo_expense, qbo_expense_lineitems)
-        created_qbo_expense = self.connection.purchases.post(qbo_expenses_payload)
-        return created_qbo_expense
+        try:
+            qbo_expenses_payload = self.__construct_qbo_expense(qbo_expense, qbo_expense_lineitems)
+            created_qbo_expense = self.connection.purchases.post(qbo_expenses_payload)
+            return created_qbo_expense
 
-    @staticmethod
-    def __construct_cheque_lineitems(cheque_lineitems: List[ChequeLineitem]) -> List[Dict]:
+        except WrongParamsError as bad_request:
+            general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+            error_response = json.loads(bad_request.response)['Fault']['Error'][0]
+
+            if general_settings.change_accounting_period and 'account period closed' in error_response['Message'].lower():
+                book_closed_date = self.connection.preferences.get()['AccountingInfoPrefs']['BookCloseDate']
+                txn_date = datetime.strptime(book_closed_date, '%Y-%m-%d') + timedelta(days=1)
+                qbo_expenses_payload['TxnDate'] = txn_date.strftime("%Y-%m-%d")
+                created_qbo_expense = self.connection.purchases.post(qbo_expenses_payload)
+
+                qbo_expense.transaction_date = txn_date
+                qbo_expense.save()
+                return created_qbo_expense
+            else:
+                raise
+
+    def __construct_cheque_lineitems(self, cheque_lineitems: List[ChequeLineitem], general_mappings: GeneralMapping) -> List[Dict]:
         """
         Create cheque lineitems
         :param cheque_lineitems: list of cheque line items extracted from database
@@ -498,10 +635,11 @@ class QBOConnector:
         """
         lines = []
         for line in cheque_lineitems:
-            line = {
+            lineitem = {
                 'Description': line.description,
                 'DetailType': 'AccountBasedExpenseLineDetail',
-                'Amount': line.amount,
+                'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount) else \
+                        self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
                 'AccountBasedExpenseLineDetail': {
                     'AccountRef': {
                         'value': line.account_id
@@ -512,10 +650,14 @@ class QBOConnector:
                     'CustomerRef': {
                         'value': line.customer_id
                     },
-                    'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
+                    'TaxCodeRef': {
+                        'value': line.tax_code if (line.tax_code and line.tax_amount) else general_mappings.default_tax_code_id
+                    },
+                    'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount) else line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),                    'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
                 }
             }
-            lines.append(line)
+
+            lines.append(lineitem)
 
         return lines
 
@@ -525,7 +667,9 @@ class QBOConnector:
         :param cheque: cheque object extracted from database
         :return: constructed cheque
         """
-        line = self.__construct_cheque_lineitems(cheque_lineitems)
+        general_mappings = GeneralMapping.objects.filter(workspace_id=self.workspace_id).first()
+
+        line = self.__construct_cheque_lineitems(cheque_lineitems, general_mappings)
         cheque_payload = self.purchase_object_payload(
             cheque, line, account_ref=cheque.bank_account_id, payment_type='Check'
         )
@@ -535,13 +679,30 @@ class QBOConnector:
         """
         Post cheque to QBO
         """
-        cheques_payload = self.__construct_cheque(cheque, cheque_lineitems)
-        created_cheque = self.connection.purchases.post(cheques_payload)
-        return created_cheque
+        try:
+            cheques_payload = self.__construct_cheque(cheque, cheque_lineitems)
+            created_cheque = self.connection.purchases.post(cheques_payload)
+            return created_cheque
 
-    @staticmethod
-    def __construct_credit_card_purchase_lineitems(
-            credit_card_purchase_lineitems: List[CreditCardPurchaseLineitem]) -> List[Dict]:
+        except WrongParamsError as bad_request:
+            general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+            error_response = json.loads(bad_request.response)['Fault']['Error'][0]
+
+            if general_settings.change_accounting_period and 'account period closed' in error_response['Message'].lower():
+                book_closed_date = self.connection.preferences.get()['AccountingInfoPrefs']['BookCloseDate']
+                txn_date = datetime.strptime(book_closed_date, '%Y-%m-%d') + timedelta(days=1)
+                cheques_payload['TxnDate'] = txn_date.strftime("%Y-%m-%d")
+                created_cheque = self.connection.purchases.post(cheques_payload)
+
+                cheque.transaction_date = txn_date
+                cheque.save()
+                return created_cheque
+            else:
+                raise
+
+
+    def __construct_credit_card_purchase_lineitems(self,
+            credit_card_purchase_lineitems: List[CreditCardPurchaseLineitem], general_mappings: GeneralMapping) -> List[Dict]:
         """
         Create credit_card_purchase line items
         :param credit_card_purchase_lineitems: list of credit_card_purchase line items extracted from database
@@ -550,11 +711,11 @@ class QBOConnector:
         lines = []
 
         for line in credit_card_purchase_lineitems:
-            line = {
+            lineitem = {
                 'Description': line.description,
                 'DetailType': 'AccountBasedExpenseLineDetail',
-                'Amount': line.amount,
-
+                'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount) else \
+                        self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
                 'AccountBasedExpenseLineDetail': {
                     'AccountRef': {
                         'value': line.account_id
@@ -565,10 +726,15 @@ class QBOConnector:
                     'ClassRef': {
                         'value': line.class_id
                     },
+                    'TaxCodeRef': {
+                        'value': line.tax_code if (line.tax_code and line.tax_amount) else general_mappings.default_tax_code_id
+                    },
+                    'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount) else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2),
                     'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
                 },
             }
-            lines.append(line)
+
+            lines.append(lineitem)
 
         return lines
 
@@ -579,7 +745,9 @@ class QBOConnector:
         :param credit_card_purchase: credit_card_purchase object extracted from database
         :return: constructed credit_card_purchase
         """
-        line = self.__construct_credit_card_purchase_lineitems(credit_card_purchase_lineitems)
+        general_mappings = GeneralMapping.objects.filter(workspace_id=self.workspace_id).first()
+
+        line = self.__construct_credit_card_purchase_lineitems(credit_card_purchase_lineitems, general_mappings)
         credit = False
 
         if line[0]['Amount'] < 0:
@@ -595,22 +763,46 @@ class QBOConnector:
 
     def post_credit_card_purchase(self, credit_card_purchase: CreditCardPurchase,
                                   credit_card_purchase_lineitems: List[CreditCardPurchaseLineitem]):
+
         """
         Post bills to QBO
         """
-        credit_card_purchase_payload = self.__construct_credit_card_purchase(credit_card_purchase,
-                                                                             credit_card_purchase_lineitems)
-        created_credit_card_purchase = self.connection.purchases.post(credit_card_purchase_payload)
-        return created_credit_card_purchase
+        try:
+            credit_card_purchase_payload = self.__construct_credit_card_purchase(credit_card_purchase,
+                                                                                credit_card_purchase_lineitems)
+            created_credit_card_purchase = self.connection.purchases.post(credit_card_purchase_payload)
+            return created_credit_card_purchase
 
-    @staticmethod
-    def __group_journal_entry_credits(journal_entry_lineitems: List[JournalEntryLineitem]) -> List[Dict]:
+        except WrongParamsError as bad_request:
+            general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+            error_response = json.loads(bad_request.response)['Fault']['Error'][0]
+
+            if general_settings.change_accounting_period and 'account period closed' in error_response['Message'].lower():
+                book_closed_date = self.connection.preferences.get()['AccountingInfoPrefs']['BookCloseDate']
+                txn_date = datetime.strptime(book_closed_date, '%Y-%m-%d') + timedelta(days=1)
+                credit_card_purchase_payload['TxnDate'] = txn_date.strftime("%Y-%m-%d")
+                created_credit_card_purchase = self.connection.purchases.post(credit_card_purchase_payload)
+
+                credit_card_purchase.transaction_date = txn_date
+                credit_card_purchase.save()
+                return created_credit_card_purchase
+            else:
+                raise
+
+    def __group_journal_entry_credits(self, journal_entry_lineitems: List[JournalEntryLineitem], general_mappings: GeneralMapping) -> List[Dict]:
         total_sum = sum(line.amount for line in journal_entry_lineitems)
+        total_tax = 0
+
+        for lineitem in journal_entry_lineitems:
+            if (lineitem.tax_code and lineitem.tax_amount):
+                total_tax += lineitem.tax_amount
+            else:
+                total_tax += round(lineitem.amount - self.get_tax_inclusive_amount(lineitem.amount, general_mappings.default_tax_code_id), 2)
 
         return [{
             'DetailType': 'JournalEntryLineDetail',
             'Description': 'Total Amount',
-            'Amount': total_sum,
+            'Amount': total_sum - total_tax,
             'JournalEntryLineDetail': {
                 'PostingType': 'Credit',
                 'AccountRef': {
@@ -627,19 +819,25 @@ class QBOConnector:
                         'value': journal_entry_lineitems[0].entity_id
                     },
                     'Type': journal_entry_lineitems[0].entity_type,
+                },
+                'TaxCodeRef': {
+                    'value': journal_entry_lineitems[0].tax_code if journal_entry_lineitems[0].tax_code else general_mappings.default_tax_code_id
+                },
+                'TaxInclusiveAmt': total_sum,
+                "TaxApplicableOn":"Purchase",
+                'TaxAmount': total_tax,
                 }
-            }
         }]
 
     def __construct_journal_entry_lineitems(self, journal_entry_lineitems: List[JournalEntryLineitem],
-                                            posting_type, single_credit_line: bool = False) -> List[Dict]:
+                                            posting_type,  general_mappings: GeneralMapping, single_credit_line: bool = False) -> List[Dict]:
         """
         Create journal_entry line items
         :param journal_entry_lineitems: list of journal entry line items extracted from database
         :return: constructed line items
         """
         if single_credit_line:
-            return self.__group_journal_entry_credits(journal_entry_lineitems)
+            return self.__group_journal_entry_credits(journal_entry_lineitems, general_mappings)
         lines = []
 
         for line in journal_entry_lineitems:
@@ -649,10 +847,11 @@ class QBOConnector:
             elif posting_type == 'Credit':
                 account_ref = line.debit_account_id
 
-            line = {
+            lineitem = {
                 'DetailType': 'JournalEntryLineDetail',
                 'Description': line.description,
-                'Amount': line.amount,
+                'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount) else \
+                        self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
                 'JournalEntryLineDetail': {
                     'PostingType': posting_type,
                     'AccountRef': {
@@ -669,10 +868,16 @@ class QBOConnector:
                             'value': line.entity_id
                         },
                         'Type': line.entity_type,
+                    },
+                    'TaxInclusiveAmt': line.amount,
+                    'TaxCodeRef': {
+                        'value': line.tax_code if (line.tax_code and line.tax_amount) else general_mappings.default_tax_code_id
+                    },
+                    'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount) else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2),
+                    "TaxApplicableOn":"Purchase",
                     }
                 }
-            }
-            lines.append(line)
+            lines.append(lineitem)
 
         return lines
 
@@ -684,8 +889,13 @@ class QBOConnector:
         :param journal_entry: journal_entry object extracted from database
         :return: constructed journal_entry
         """
-        credit_line = self.__construct_journal_entry_lineitems(journal_entry_lineitems, 'Credit', single_credit_line)
-        debit_line = self.__construct_journal_entry_lineitems(journal_entry_lineitems, 'Debit')
+        general_mappings = GeneralMapping.objects.filter(workspace_id=self.workspace_id).first()
+        general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+
+        tax_rate_refs = []
+
+        credit_line = self.__construct_journal_entry_lineitems(journal_entry_lineitems, 'Credit', general_mappings, single_credit_line)
+        debit_line = self.__construct_journal_entry_lineitems(journal_entry_lineitems, 'Debit', general_mappings)
         lines = []
         lines.extend(credit_line)
         lines.extend(debit_line)
@@ -695,9 +905,38 @@ class QBOConnector:
             'PrivateNote': journal_entry.private_note,
             'Line': lines,
             'CurrencyRef': {
-                "value": journal_entry.currency
+               "value": journal_entry.currency
+            },
+            'TxnTaxDetail': {
+                'TaxLine': []
             }
         }
+
+        if general_settings.import_tax_codes:
+            journal_entry_payload.update({
+                'GlobalTaxCalculation': 'TaxInclusive',
+            })
+
+            for line_item in journal_entry_lineitems:
+                tax_code_id = line_item.tax_code if (line_item.tax_code and line_item.tax_amount) else general_mappings.default_tax_code_id
+
+                destination_attribute = DestinationAttribute.objects.filter(destination_id=tax_code_id, attribute_type='TAX_CODE',workspace_id=self.workspace_id).first()
+                for tax_rate_ref in destination_attribute.detail['tax_refs']:
+                    tax_rate_refs.append(tax_rate_ref)
+
+            for tax_rate in tax_rate_refs:
+                journal_entry_payload['TxnTaxDetail']['TaxLine'].append(
+                    {
+                        "Amount":0,
+                        "DetailType":"TaxLineDetail",
+                        'TaxLineDetail': {
+                            'TaxRateRef': tax_rate,
+                            "PercentBased":True,
+                            "NetAmountTaxable":0
+                        },
+                    }
+                )
+
         return journal_entry_payload
 
     def post_journal_entry(self, journal_entry: JournalEntry, journal_entry_lineitems: List[JournalEntryLineitem],
@@ -705,10 +944,27 @@ class QBOConnector:
         """
         Post journal entries to QBO
         """
-        journal_entry_payload = self.__construct_journal_entry(
-            journal_entry, journal_entry_lineitems, single_credit_line)
-        created_journal_entry = self.connection.journal_entries.post(journal_entry_payload)
-        return created_journal_entry
+        try:
+            journal_entry_payload = self.__construct_journal_entry(
+                journal_entry, journal_entry_lineitems, single_credit_line)
+            created_journal_entry = self.connection.journal_entries.post(journal_entry_payload)
+            return created_journal_entry
+
+        except WrongParamsError as bad_request:
+            general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+            error_response = json.loads(bad_request.response)['Fault']['Error'][0]
+
+            if general_settings.change_accounting_period and 'account period closed' in error_response['Message'].lower():
+                book_closed_date = self.connection.preferences.get()['AccountingInfoPrefs']['BookCloseDate']
+                txn_date = datetime.strptime(book_closed_date, '%Y-%m-%d') + timedelta(days=1)
+                journal_entry_payload['TxnDate'] = txn_date.strftime("%Y-%m-%d")
+                created_journal_entry = self.connection.journal_entries.post(journal_entry_payload)
+
+                journal_entry.transaction_date = txn_date
+                journal_entry.save()
+                return created_journal_entry
+            else:
+                raise
 
     def get_company_preference(self):
         """
@@ -796,7 +1052,8 @@ class QBOConnector:
             'CheckPayment': {
                 "BankAccountRef": {
                     "value": bill_payment.payment_account
-                }
+                },
+                "PrintStatus": "NotSet"
             },
             'Line': self.__construct_bill_payment_lineitems(bill_payment_lineitems)
         }

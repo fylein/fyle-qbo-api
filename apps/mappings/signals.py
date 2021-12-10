@@ -8,7 +8,7 @@ from django_q.tasks import async_task
 from fyle_accounting_mappings.models import MappingSetting
 
 from apps.mappings.tasks import upload_attributes_to_fyle, schedule_cost_centers_creation,\
-    schedule_fyle_attributes_creation, schedule_projects_creation
+    schedule_fyle_attributes_creation, schedule_projects_creation, schedule_tax_groups_creation
 
 
 @receiver(post_save, sender=MappingSetting)
@@ -35,10 +35,9 @@ def run_pre_mapping_settings_triggers(sender, instance: MappingSetting, **kwargs
     :param instance: Row Instance of Sender Class
     :return: None
     """
-    default_attributes = ['CATEGORY', 'PROJECT', 'COST_CENTER']
+    default_attributes = ['CATEGORY', 'PROJECT', 'COST_CENTER', 'TAX_GROUP']
 
     instance.source_field = instance.source_field.upper().replace(' ', '_')
-
     if instance.source_field not in default_attributes:
         upload_attributes_to_fyle(
             workspace_id=int(instance.workspace_id),

@@ -14,6 +14,8 @@ import os
 
 import dj_database_url
 
+from .sentry import Sentry
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -109,7 +111,7 @@ WSGI_APPLICATION = 'fyle_qbo_api.wsgi.application'
 Q_CLUSTER = {
     'name': 'fyle_quickbooks_api',
     'save_limit': 0,
-    'workers': 4,
+    'workers': os.environ.get('NO_WORKERS', 4),
     'queue_limit': 30,
     'cached': False,
     'orm': 'default',
@@ -165,9 +167,16 @@ LOGGING = {
             'handlers': ['debug_logs'],
             'level': 'ERROR',
             'propagate': False
-        }
+        },
+        'django_q': {
+            'handlers': ['debug_logs'],
+            'propagate': True,
+        },
     }
 }
+
+# Sentry
+Sentry.init()
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
@@ -258,3 +267,9 @@ QBO_ENVIRONMENT = os.environ.get('QBO_ENVIRONMENT')
 CACHE_EXPIRY = 3600
 
 CORS_ORIGIN_ALLOW_ALL = True
+
+CORS_ALLOW_HEADERS = [
+    'sentry-trace',
+    'authorization',
+    'content-type'
+]

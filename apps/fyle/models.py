@@ -6,10 +6,10 @@ from datetime import datetime
 from typing import List, Dict
 
 from django.contrib.postgres.aggregates import ArrayAgg
-from django.contrib.postgres.fields import JSONField, ArrayField
+from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.db import models
-from django.db.models import Count, Q
+from django.db.models import Count, Q, JSONField
 
 from apps.workspaces.models import Workspace
 from fyle_accounting_mappings.models import ExpenseAttribute
@@ -48,7 +48,9 @@ class Expense(models.Model):
     amount = models.FloatField(help_text='Home Amount')
     currency = models.CharField(max_length=5, help_text='Home Currency')
     foreign_amount = models.FloatField(null=True, help_text='Foreign Amount')
-    foreign_currency = models.CharField(null=True, max_length=5, help_text='Foreign Currency')
+    foreign_currency = models.CharField(null=True, max_length=15, help_text='Foreign Currency')
+    tax_amount = models.FloatField(null=True, help_text='Tax Amount')
+    tax_group_id = models.CharField(null=True, max_length=255, help_text='Tax Group ID')
     settlement_id = models.CharField(max_length=255, null=True, help_text='Settlement ID')
     reimbursable = models.BooleanField(default=False, help_text='Expense reimbursable or not')
     billable = models.BooleanField(null=True, help_text='Expense Billable or not')
@@ -109,6 +111,8 @@ class Expense(models.Model):
                     'currency': expense['currency'],
                     'foreign_amount': expense['foreign_amount'],
                     'foreign_currency': expense['foreign_currency'],
+                    'tax_amount': expense['tax'],
+                    'tax_group_id': expense['tax_group_id'],
                     'settlement_id': expense['settlement_id'],
                     'reimbursable': expense['reimbursable'],
                     'billable': expense['billable'],

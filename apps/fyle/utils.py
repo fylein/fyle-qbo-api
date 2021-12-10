@@ -9,7 +9,7 @@ from fylesdk import FyleSDK, UnauthorizedClientError, NotFoundClientError, Inter
 from fyle_accounting_mappings.models import ExpenseAttribute
 
 import requests
-
+from apps.workspaces.models import FyleCredential
 from apps.fyle.models import Reimbursement, ExpenseGroupSettings
 
 logger = logging.getLogger(__name__)
@@ -137,11 +137,14 @@ class FyleConnector:
 
         return self._get_request(api_url, params)
 
-    def get_expenses(self, state, updated_at: List[str], fund_source: List[str]):
+    def get_expenses(self, state: List[str], fund_source: List[str],
+        settled_at: List[str]=None, updated_at: List[str]=None):
         """
         Get expenses from fyle
         """
-        expenses = self.connection.Expenses.get_all(state=state, updated_at=updated_at, fund_source=fund_source)
+        expenses = self.connection.Expenses.get_all(
+            state=state, settled_at=settled_at, updated_at=updated_at, fund_source=fund_source
+        )
         expenses = list(
             filter(lambda expense: not (not expense['reimbursable'] and expense['fund_source'] == 'PERSONAL'),
                    expenses))
@@ -350,3 +353,4 @@ class FyleConnector:
             self.sync_expense_custom_fields(active_only=True)
         except Exception as exception:
             logger.exception(exception)
+

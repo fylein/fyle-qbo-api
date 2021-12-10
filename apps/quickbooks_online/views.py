@@ -1,3 +1,5 @@
+import logging
+
 from django.db.models import Q
 from datetime import datetime, timezone
 from rest_framework.response import Response
@@ -14,6 +16,7 @@ from fyle_qbo_api.utils import assert_valid
 from apps.fyle.models import ExpenseGroup, ExpenseGroupSettings
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings, Workspace
+from apps.workspaces.serializers import QBOCredentialSerializer
 from apps.fyle.serializers import ExpenseGroupSettingsSerializer
 
 from .utils import QBOConnector
@@ -25,6 +28,7 @@ from .models import Bill, Cheque, CreditCardPurchase, JournalEntry
 from .serializers import BillSerializer, ChequeSerializer, CreditCardPurchaseSerializer, JournalEntrySerializer, \
     QuickbooksFieldSerializer
 
+logger = logging.getLogger(__name__)
 
 class VendorView(generics.ListCreateAPIView):
     """
@@ -311,6 +315,33 @@ class PreferencesView(generics.RetrieveAPIView):
     """
     Preferences View
     """
+    def post(self, request, **kwargs):
+        try:
+            qbo_credentials = QBOCredential.objects.filter(workspace=kwargs['workspace_id']).first()
+            qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
+
+            company_info = qbo_connector.get_company_info()
+            qbo_credentials.country = company_info['Country']
+            qbo_credentials.company_name = company_info['CompanyName']
+            qbo_credentials.save()
+
+            return Response(
+                data=QBOCredentialSerializer(qbo_credentials).data,
+                status=status.HTTP_200_OK
+            )
+
+        except WrongParamsError as exception:
+            logger.error(
+                'Something unexpected happened workspace_id: %s %s',
+                kwargs['workspace_id'], exception.message
+            )
+            return Response(
+                data={
+                    'message': 'Something unexpected happened while making the request'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
     def get(self, request, *args, **kwargs):
         try:
             qbo_credentials = QBOCredential.objects.get(workspace_id=kwargs['workspace_id'])
@@ -405,6 +436,17 @@ class DepartmentView(generics.ListCreateAPIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+
+class TaxCodeView(generics.ListCreateAPIView):
+    """
+    Tax code API View
+    """
+    serializer_class = DestinationAttributeSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return DestinationAttribute.objects.filter(
+            attribute_type='TAX_CODE', workspace_id=self.kwargs['workspace_id']).order_by('value')
 
 class CustomerView(generics.ListCreateAPIView):
     """
@@ -687,10 +729,12 @@ class QuickbooksFieldsView(generics.ListAPIView):
     serializer_class = QuickbooksFieldSerializer
 
     def get_queryset(self):
+        default_attributes = [
+            'EMPLOYEE','ACCOUNT', 'VENDOR', 'ACCOUNTS_PAYABLE', 
+            'CREDIT_CARD_ACCOUNT', 'BANK_ACCOUNT', 'TAX_CODE'
+        ]
         attributes = DestinationAttribute.objects.filter(
-            ~Q(attribute_type='EMPLOYEE') & ~Q(attribute_type='ACCOUNT') &
-            ~Q(attribute_type='VENDOR') & ~Q(attribute_type='ACCOUNTS_PAYABLE') &
-            ~Q(attribute_type='CREDIT_CARD_ACCOUNT') & ~Q(attribute_type='BANK_ACCOUNT'),
+            ~Q(attribute_type__in=default_attributes),
             workspace_id=self.kwargs['workspace_id']
         ).values('attribute_type', 'display_name').distinct()
 
@@ -762,6 +806,14 @@ class SyncQuickbooksDimensionView(generics.ListCreateAPIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
+        except Exception as exception:
+            logger.exception(exception)
+            return Response(
+                data={
+                    'message': 'Error in syncing Dimensions'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class RefreshQuickbooksDimensionView(generics.ListCreateAPIView):
@@ -794,3 +846,26 @@ class RefreshQuickbooksDimensionView(generics.ListCreateAPIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        except Exception as exception:
+            logger.exception(exception)
+            return Response(
+                data={
+                    'message': 'Error in refreshing Dimensions'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class DestinationAttributesView(generics.ListAPIView):
+    """
+    Destination Attributes view
+    """
+    serializer_class = DestinationAttributeSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        attribute_types = self.request.query_params.get('attribute_types').split(',')
+
+        return DestinationAttribute.objects.filter(
+            attribute_type__in=attribute_types, workspace_id=self.kwargs['workspace_id']).order_by('value')

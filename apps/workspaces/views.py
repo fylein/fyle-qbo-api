@@ -6,6 +6,7 @@ from django.core.cache import cache
 from rest_framework.response import Response
 from rest_framework.views import status
 from rest_framework import viewsets
+from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 
 from fylesdk import exceptions as fyle_exc
@@ -16,6 +17,8 @@ from fyle_rest_auth.utils import AuthUtils
 from fyle_rest_auth.models import AuthToken
 
 from fyle_qbo_api.utils import assert_valid
+
+from apps.quickbooks_online.utils import QBOConnector
 
 from .models import Workspace, FyleCredential, QBOCredential, WorkspaceGeneralSettings, WorkspaceSchedule
 from .utils import generate_qbo_refresh_token, create_or_update_general_settings
@@ -41,7 +44,7 @@ class WorkspaceView(viewsets.ViewSet):
         """
 
         auth_tokens = AuthToken.objects.get(user__user_id=request.user)
-        fyle_user = auth_utils.get_fyle_user(auth_tokens.refresh_token)
+        fyle_user = auth_utils.get_fyle_user(auth_tokens.refresh_token, None)
         org_name = fyle_user['org_name']
         org_id = fyle_user['org_id']
 
@@ -136,7 +139,7 @@ class ConnectFyleView(viewsets.ViewSet):
             workspace = Workspace.objects.get(id=kwargs['workspace_id'])
 
             refresh_token = auth_utils.generate_fyle_refresh_token(authorization_code)['refresh_token']
-            fyle_user = auth_utils.get_fyle_user(refresh_token)
+            fyle_user = auth_utils.get_fyle_user(refresh_token, None)
             org_id = fyle_user['org_id']
             org_name = fyle_user['org_name']
 
@@ -230,7 +233,6 @@ class ConnectQBOView(viewsets.ViewSet):
         try:
             authorization_code = request.data.get('code')
             realm_id = request.data.get('realm_id')
-
             refresh_token = generate_qbo_refresh_token(authorization_code)
 
             workspace = Workspace.objects.get(pk=kwargs['workspace_id'])
@@ -241,16 +243,29 @@ class ConnectQBOView(viewsets.ViewSet):
                 if workspace.qbo_realm_id:
                     assert_valid(realm_id == workspace.qbo_realm_id,
                                  'Please choose the correct Quickbooks online account')
+
                 qbo_credentials = QBOCredential.objects.create(
                     refresh_token=refresh_token,
                     realm_id=realm_id,
                     workspace=workspace
                 )
+
+                try:
+                    qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
+
+                    company_info = qbo_connector.get_company_info()
+                    qbo_credentials.country = company_info['Country']
+                    qbo_credentials.company_name = company_info['CompanyName']
+                    qbo_credentials.save()
+
+                except WrongParamsError as exception:
+                    logger.error(exception.response)
+
                 workspace.qbo_realm_id = realm_id
                 workspace.save()
             else:
                 assert_valid(realm_id == qbo_credentials.realm_id,
-                             'Please choose the correct aaaaa Quickbooks online account')
+                             'Please choose the correct Quickbooks online account')
                 qbo_credentials.refresh_token = refresh_token
                 qbo_credentials.save()
 
@@ -385,7 +400,6 @@ class GeneralSettingsView(viewsets.ViewSet):
         Post workspace general settings
         """
         general_settings_payload = request.data
-
         assert_valid(general_settings_payload is not None, 'Request body is empty')
 
         workspace_id = kwargs['workspace_id']

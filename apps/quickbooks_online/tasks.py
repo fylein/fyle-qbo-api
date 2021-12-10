@@ -26,7 +26,7 @@ from .models import Bill, BillLineitem, Cheque, ChequeLineitem, CreditCardPurcha
 from .utils import QBOConnector
 
 logger = logging.getLogger(__name__)
-
+logger.level = logging.INFO
 
 def get_or_create_credit_card_vendor(workspace_id: int, merchant: str):
     """
@@ -157,7 +157,7 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
 
 
 def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: TaskLog, export_type: str):
-    logger.error(exception.response)
+    logger.info(exception.response)
     response = json.loads(exception.response)
     quickbooks_errors = response['Fault']['Error']
     
@@ -255,7 +255,7 @@ def create_bill(expense_group, task_log_id):
             load_attachments(qbo_connection, created_bill['Bill']['Id'], 'Bill', expense_group)
 
     except QBOCredential.DoesNotExist:
-        logger.error(
+        logger.info(
             'QBO Credentials not found for workspace_id %s / expense group %s',
             expense_group.workspace_id,
             expense_group.id
@@ -270,7 +270,7 @@ def create_bill(expense_group, task_log_id):
         task_log.save()
 
     except BulkError as exception:
-        logger.error(exception.response)
+        logger.info(exception.response)
         detail = exception.response
         task_log.status = 'FAILED'
         task_log.detail = detail
@@ -322,7 +322,8 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                 })
 
     if general_mapping and not (general_mapping.accounts_payable_id or general_mapping.accounts_payable_name):
-        if general_settings.reimbursable_expenses_object == 'BILL' or (
+        if (general_settings.reimbursable_expenses_object == 'BILL' or \
+            general_settings.corporate_credit_card_expenses_object == 'BILL') or (
             general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY' and
             general_settings.employee_field_mapping == 'VENDOR' and expense_group.fund_source == 'PERSONAL'):
             bulk_errors.append({
@@ -334,7 +335,15 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
             })
 
     if general_mapping and not (general_mapping.bank_account_id or general_mapping.bank_account_name) and \
-        general_settings.reimbursable_expenses_object == 'CHECK':
+        (
+            (
+                general_settings.reimbursable_expenses_object == 'CHECK'
+                or (
+                    general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY' and
+                    general_settings.employee_field_mapping == 'EMPLOYEE' and expense_group.fund_source == 'PERSONAL'
+                )
+            )
+        ):
         bulk_errors.append({
             'row': None,
             'expense_group_id': expense_group.id,
@@ -385,10 +394,19 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                 'message': 'Default Credit Card Account not found'
             })
 
+    if general_settings.import_tax_codes and not (general_mapping.default_tax_code_id or general_mapping.default_tax_code_name):
+        bulk_errors.append({
+            'row': None,
+            'expense_group_id': expense_group.id,
+            'value': 'Default Tax Code',
+            'type': 'General Mapping',
+            'message': 'Default Tax Code not found'
+        })
+
     if not (expense_group.fund_source == 'CCC' and \
-        (general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE' and \
+        ((general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE' and \
             general_settings.map_merchant_to_vendor) or \
-                general_settings.corporate_credit_card_expenses_object == 'BILL'):
+                general_settings.corporate_credit_card_expenses_object == 'BILL')):
         try:
             entity = EmployeeMapping.objects.get(
                 source_employee__value=expense_group.description.get('employee_email'),
@@ -422,6 +440,7 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
             source__value=category,
             workspace_id=expense_group.workspace_id
         ).first()
+
         if not account:
             bulk_errors.append({
                 'row': row,
@@ -430,6 +449,28 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                 'type': 'Category Mapping',
                 'message': 'Category Mapping not found'
             })
+        
+        if general_settings.import_tax_codes and lineitem.tax_group_id:
+            tax_group  = ExpenseAttribute.objects.get(
+                workspace_id=expense_group.workspace_id,
+                attribute_type='TAX_GROUP',
+                source_id=lineitem.tax_group_id
+            )
+
+            tax_code = Mapping.objects.filter(
+                source_type='TAX_GROUP',
+                source__value=tax_group.value,
+                workspace_id=expense_group.workspace_id
+            ).first()
+
+            if not tax_code:
+                bulk_errors.append({
+                    'row': row,
+                    'expense_group_id': expense_group.id,
+                    'value': tax_group.value,
+                    'type': 'Tax Group Mapping',
+                    'message': 'Tax Group Mapping not found'
+                })
 
         row = row + 1
 
@@ -512,7 +553,7 @@ def create_cheque(expense_group, task_log_id):
             load_attachments(qbo_connection, created_cheque['Purchase']['Id'], 'Purchase', expense_group)
 
     except QBOCredential.DoesNotExist:
-        logger.error(
+        logger.info(
             'QBO Credentials not found for workspace_id %s / expense group %s',
             expense_group.id,
             expense_group.workspace_id
@@ -527,7 +568,7 @@ def create_cheque(expense_group, task_log_id):
         task_log.save()
 
     except BulkError as exception:
-        logger.error(exception.response)
+        logger.info(exception.response)
         detail = exception.response
         task_log.status = 'FAILED'
         task_log.detail = detail
@@ -622,7 +663,7 @@ def create_qbo_expense(expense_group, task_log_id):
             load_attachments(qbo_connection, created_qbo_expense['Purchase']['Id'], 'Purchase', expense_group)
 
     except QBOCredential.DoesNotExist:
-        logger.error(
+        logger.info(
             'QBO Credentials not found for workspace_id %s / expense group %s',
             expense_group.id,
             expense_group.workspace_id
@@ -637,7 +678,7 @@ def create_qbo_expense(expense_group, task_log_id):
         task_log.save()
 
     except BulkError as exception:
-        logger.error(exception.response)
+        logger.info(exception.response)
         detail = exception.response
         task_log.status = 'FAILED'
         task_log.detail = detail
@@ -744,7 +785,7 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id):
             load_attachments(qbo_connection, created_credit_card_purchase['Purchase']['Id'], 'Purchase', expense_group)
 
     except QBOCredential.DoesNotExist:
-        logger.error(
+        logger.info(
             'QBO Credentials not found for workspace_id %s / expense group %s',
             expense_group.id,
             expense_group.workspace_id
@@ -759,7 +800,7 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id):
         task_log.save()
 
     except BulkError as exception:
-        logger.error(exception.response)
+        logger.info(exception.response)
         detail = exception.response
         task_log.status = 'FAILED'
         task_log.detail = detail
@@ -859,7 +900,7 @@ def create_journal_entry(expense_group, task_log_id):
             load_attachments(qbo_connection, created_journal_entry['JournalEntry']['Id'], 'JournalEntry', expense_group)
 
     except QBOCredential.DoesNotExist:
-        logger.error(
+        logger.info(
             'QBO Credentials not found for workspace_id %s / expense group %s',
             expense_group.id,
             expense_group.workspace_id
@@ -874,7 +915,7 @@ def create_journal_entry(expense_group, task_log_id):
         task_log.save()
 
     except BulkError as exception:
-        logger.error(exception.response)
+        logger.info(exception.response)
         detail = exception.response
         task_log.status = 'FAILED'
         task_log.detail = detail
@@ -963,7 +1004,7 @@ def create_bill_payment(workspace_id):
                         task_log.save()
 
                 except QBOCredential.DoesNotExist:
-                    logger.error(
+                    logger.info(
                         'QBO Credentials not found for workspace_id %s / expense group %s',
                         workspace_id,
                         bill.expense_group
@@ -978,7 +1019,7 @@ def create_bill_payment(workspace_id):
                     task_log.save()
 
                 except BulkError as exception:
-                    logger.error(exception.response)
+                    logger.info(exception.response)
                     detail = exception.response
                     task_log.status = 'FAILED'
                     task_log.detail = detail

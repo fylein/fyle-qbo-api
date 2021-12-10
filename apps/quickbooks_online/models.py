@@ -42,7 +42,7 @@ def get_expense_purpose(workspace_id, lineitem, category) -> str:
     expense_purpose = ' purpose - {0}'.format(lineitem.purpose) if lineitem.purpose else ''
     spent_at = ' spent on {0} '.format(lineitem.spent_at.date()) if lineitem.spent_at else ''
     merchant = ' spent on merchant {0}'.format(lineitem.vendor) if lineitem.vendor else ''
-    return 'Expense by {0}{1} against category {2}{3} with claim number - {4} -{5} - {6}'.format(
+    return 'Expense by {0}{1} against category {2}{3} with report number - {4} -{5} - {6}'.format(
         lineitem.employee_email, merchant, category, spent_at, lineitem.claim_number, expense_purpose,
         expense_link)
 
@@ -116,6 +116,19 @@ def get_customer_id_or_none(expense_group: ExpenseGroup, lineitem: Expense):
         if mapping:
             customer_id = mapping.destination.destination_id
     return customer_id
+
+def get_tax_code_id_or_none(expense_group: ExpenseGroup, lineitem: Expense = None):
+    tax_code = None
+    mapping: Mapping = Mapping.objects.filter(
+        source_type='TAX_GROUP',
+        destination_type='TAX_CODE',
+        source__source_id=lineitem.tax_group_id,
+        workspace_id=expense_group.workspace_id
+    ).first()
+    if mapping:
+        tax_code = mapping.destination.destination_id
+
+    return tax_code
 
 
 def get_department_id_or_none(expense_group: ExpenseGroup, lineitem: Expense = None):
@@ -224,6 +237,8 @@ class BillLineitem(models.Model):
     class_id = models.CharField(max_length=255, help_text='QBO class id', null=True)
     customer_id = models.CharField(max_length=255, help_text='QBO customer id', null=True)
     amount = models.FloatField(help_text='Bill amount')
+    tax_amount = models.FloatField(null=True, help_text='Tax amount')
+    tax_code = models.CharField(max_length=255, help_text='Tax Group ID', null=True)
     billable = models.BooleanField(null=True, help_text='Expense Billable or not')
     description = models.TextField(help_text='QBO bill lineitem description', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
@@ -267,6 +282,8 @@ class BillLineitem(models.Model):
                     'class_id': class_id,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
+                    'tax_code': get_tax_code_id_or_none(expense_group, lineitem),
+                    'tax_amount': lineitem.tax_amount,
                     'billable': lineitem.billable,
                     'description': get_expense_purpose(expense_group.workspace_id, lineitem, category)
                 }
@@ -340,6 +357,8 @@ class ChequeLineitem(models.Model):
     class_id = models.CharField(max_length=255, help_text='QBO class id', null=True)
     customer_id = models.CharField(max_length=255, help_text='QBO customer id', null=True)
     amount = models.FloatField(help_text='Cheque amount')
+    tax_amount = models.FloatField(null=True, help_text='Tax amount')
+    tax_code = models.CharField(max_length=255, help_text='Tax Group ID', null=True)
     billable = models.BooleanField(null=True, help_text='Expense Billable or not')
     description = models.TextField(help_text='QBO cheque lineitem description', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
@@ -383,6 +402,8 @@ class ChequeLineitem(models.Model):
                     'class_id': class_id,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
+                    'tax_amount': lineitem.tax_amount,
+                    'tax_code': get_tax_code_id_or_none(expense_group, lineitem),
                     'billable': lineitem.billable,
                     'description': get_expense_purpose(expense_group.workspace_id, lineitem, category)
                 }
@@ -462,6 +483,8 @@ class QBOExpenseLineitem(models.Model):
     class_id = models.CharField(max_length=255, help_text='QBO class id', null=True)
     customer_id = models.CharField(max_length=255, help_text='QBO customer id', null=True)
     amount = models.FloatField(help_text='Expense amount')
+    tax_amount = models.FloatField(null=True, help_text='Tax amount')
+    tax_code = models.CharField(max_length=255, help_text='Tax Group ID', null=True)
     billable = models.BooleanField(null=True, help_text='Expense Billable or not')
     description = models.TextField(help_text='QBO expense lineitem description', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
@@ -505,6 +528,8 @@ class QBOExpenseLineitem(models.Model):
                     'class_id': class_id,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
+                    'tax_amount': lineitem.tax_amount,
+                    'tax_code': get_tax_code_id_or_none(expense_group, lineitem),
                     'billable': lineitem.billable,
                     'description': get_expense_purpose(expense_group.workspace_id, lineitem, category)
                 }
@@ -613,6 +638,8 @@ class CreditCardPurchaseLineitem(models.Model):
     class_id = models.CharField(max_length=255, help_text='QBO class id', null=True)
     customer_id = models.CharField(max_length=255, help_text='QBO customer id', null=True)
     amount = models.FloatField(help_text='credit card purchase amount')
+    tax_amount = models.FloatField(null=True, help_text='Tax amount')
+    tax_code = models.CharField(max_length=255, help_text='Tax Group ID', null=True)
     billable = models.BooleanField(null=True, help_text='Expense Billable or not')
     description = models.TextField(help_text='QBO credit card purchase lineitem description', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
@@ -656,6 +683,8 @@ class CreditCardPurchaseLineitem(models.Model):
                     'class_id': class_id,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
+                    'tax_amount': lineitem.tax_amount,
+                    'tax_code': get_tax_code_id_or_none(expense_group, lineitem),
                     'billable': lineitem.billable,
                     'description': get_expense_purpose(expense_group.workspace_id, lineitem, category)
                 }
@@ -719,6 +748,8 @@ class JournalEntryLineitem(models.Model):
     department_id = models.CharField(max_length=255, help_text='QBO department id', null=True)
     posting_type = models.CharField(max_length=255, help_text='QBO posting type', null=True)
     amount = models.FloatField(help_text='JournalEntry amount')
+    tax_amount = models.FloatField(null=True, help_text='Tax amount')
+    tax_code = models.CharField(max_length=255, help_text='Tax Group ID', null=True)
     description = models.TextField(help_text='QBO JournalEntry lineitem description', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
@@ -803,6 +834,8 @@ class JournalEntryLineitem(models.Model):
                     'entity_type': entity_type,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
+                    'tax_amount': lineitem.tax_amount,
+                    'tax_code': get_tax_code_id_or_none(expense_group, lineitem),
                     'department_id': department_id,
                     'description': get_expense_purpose(expense_group.workspace_id, lineitem, category)
                 }
