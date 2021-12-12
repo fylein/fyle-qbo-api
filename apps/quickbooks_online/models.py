@@ -35,16 +35,24 @@ def get_expense_purpose(workspace_id, lineitem, category) -> str:
     cluster_domain = fyle_connector.get_cluster_domain()
     org_id = Workspace.objects.get(id=workspace_id).fyle_org_id
 
+    employee_email = lineitem.employee_email
+    merchant = lineitem.vendor if lineitem.vendor else ''
+    spent_at = lineitem.spent_at.date() if lineitem.spent_at else ''
+    report_number = lineitem.claim_number
+    purpose = lineitem.purpose if lineitem.purpose else ''
     expense_link = '{0}/app/main/#/enterprise/view_expense/{1}?org_id={2}'.format(
         cluster_domain['cluster_domain'], lineitem.expense_id, org_id
     )
 
-    expense_purpose = ' purpose - {0}'.format(lineitem.purpose) if lineitem.purpose else ''
-    spent_at = ' spent on {0} '.format(lineitem.spent_at.date()) if lineitem.spent_at else ''
-    merchant = ' spent on merchant {0}'.format(lineitem.vendor) if lineitem.vendor else ''
-    return 'Expense by {0}{1} against category {2}{3} with report number - {4} -{5} - {6}'.format(
-        lineitem.employee_email, merchant, category, spent_at, lineitem.claim_number, expense_purpose,
-        expense_link)
+    items = [employee_email, merchant, spent_at, report_number, purpose, expense_link]
+
+    workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+    customized_memo = workspace_general_settings.customized_memo
+    memo = ''
+    for field in customized_memo:
+        if field in items:
+            memo = memo + lineitem.field + ' - '
+    return memo
 
 
 def construct_private_note(expense_group: ExpenseGroup):
