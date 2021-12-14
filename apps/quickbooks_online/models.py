@@ -44,14 +44,28 @@ def get_expense_purpose(workspace_id, lineitem, category) -> str:
         cluster_domain['cluster_domain'], lineitem.expense_id, org_id
     )
 
-    items = [employee_email, merchant, spent_at, report_number, purpose, expense_link]
-
     workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
     customized_memo = workspace_general_settings.customized_memo
+
     memo = ''
+
     for field in customized_memo:
-        if field in items:
-            memo = memo + lineitem.field + ' - '
+        if field == 'merchant':
+            memo += merchant + ' - '
+        elif field == 'purpose':
+            memo += purpose
+        elif field == 'employee_email':
+            memo += employee_email + ' - '
+        elif field == 'category':
+            memo += category + ' - '
+        elif field == 'report_number':
+            memo += report_number + ' - '
+        elif field == 'spent_on':
+            memo += spent_at + ' - '
+        elif field == 'expense_link':
+            memo += expense_link + ' - '        
+
+    memo = memo[:-3] if memo[-1] == ' ' else memo
     return memo
 
 
