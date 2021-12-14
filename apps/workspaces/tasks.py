@@ -71,7 +71,7 @@ def run_sync_schedule(workspace_id):
 
         if general_settings.reimbursable_expenses_object:
 
-            expense_group_ids = ExpenseGroup.objects.filter(fund_source='PERSONAL').values_list('id', flat=True)
+            expense_group_ids = ExpenseGroup.objects.filter(fund_source='PERSONAL', workspace_id=workspace_id).values_list('id', flat=True)
 
             if general_settings.reimbursable_expenses_object == 'BILL':
                 schedule_bills_creation(

@@ -124,8 +124,20 @@ class QBOConnector:
             value = format_special_characters(
                 account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName']
             )
-
             if general_settings and account['AccountType'] in general_settings.charts_of_accounts and value:
+                account_attributes['account'].append({
+                    'attribute_type': 'ACCOUNT',
+                    'display_name': 'Account',
+                    'value': value,
+                    'destination_id': account['Id'],
+                    'active': account['Active'],
+                    'detail': {
+                        'fully_qualified_name': account['FullyQualifiedName'],
+                        'account_type': account['AccountType']
+                    }
+                })
+
+            elif account['AccountType'] == 'Expense' and value:
                 account_attributes['account'].append({
                     'attribute_type': 'ACCOUNT',
                     'display_name': 'Account',
