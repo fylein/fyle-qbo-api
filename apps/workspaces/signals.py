@@ -19,6 +19,6 @@ def run_post_configration_triggers(sender, instance: WorkspaceGeneralSettings, *
 
     qbo_connection = QBOConnector(
         credentials_object=qbo_credentials,
-        workspace_id=workspace_id
+        workspace_id=int(instance.workspace_id)
     )
     qbo_connection.sync_accounts()
