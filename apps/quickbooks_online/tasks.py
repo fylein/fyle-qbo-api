@@ -1177,3 +1177,13 @@ def schedule_reimbursements_sync(sync_qbo_to_fyle_payments, workspace_id):
 
         if schedule:
             schedule.delete()
+
+
+def async_sync_accounts(workspace_id):
+    qbo_credentials: QBOCredential = QBOCredential.objects.get(workspace_id=workspace_id)
+
+    qbo_connection = QBOConnector(
+        credentials_object=qbo_credentials,
+        workspace_id=workspace_id
+    )
+    qbo_connection.sync_accounts()
