@@ -15,7 +15,7 @@ def run_post_configration_triggers(sender, instance: WorkspaceGeneralSettings, *
     :param instance: Row Instance of Sender Class
     :return: None
     """
-    qbo_credentials: QBOCredential = QBOCredential.objects.get(workspace_id=workspace_id)
+    qbo_credentials: QBOCredential = QBOCredential.objects.get(workspace_id=int(instance.workspace_id))
 
     qbo_connection = QBOConnector(
         credentials_object=qbo_credentials,
