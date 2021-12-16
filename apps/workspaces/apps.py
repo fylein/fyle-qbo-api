@@ -6,4 +6,4 @@ class WorkspaceConfig(AppConfig):
 
     def ready(self):
         super(WorkspaceConfig, self).ready()
-    import apps.workspaces.signals
+        import apps.workspaces.signals

@@ -5,7 +5,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from apps.quickbooks_online.utils import QBOConnector
-from .models import WorkspaceGeneralSettings
+from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings
 
 
 @receiver(post_save, sender=WorkspaceGeneralSettings)
