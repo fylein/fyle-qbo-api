@@ -2,4 +2,8 @@ from django.apps import AppConfig
 
 
 class WorkspaceConfig(AppConfig):
-    name = 'workspaces'
+    name = 'apps.workspaces'
+
+    def ready(self):
+        super(WorkspaceConfig, self).ready()
+        import apps.workspaces.signals
