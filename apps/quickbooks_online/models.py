@@ -28,7 +28,7 @@ def get_transaction_date(expense_group: ExpenseGroup) -> str:
     return datetime.now().strftime("%Y-%m-%d")
 
 
-def get_expense_purpose(workspace_id, lineitem, category) -> str:
+def get_expense_purpose(workspace_id, lineitem, category, workspace_general_settings) -> str:
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
     fyle_connector = FyleConnector(fyle_credentials.refresh_token, workspace_id)
 
@@ -44,26 +44,25 @@ def get_expense_purpose(workspace_id, lineitem, category) -> str:
         cluster_domain['cluster_domain'], lineitem.expense_id, org_id
     )
 
-    workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
-    customized_memo = workspace_general_settings.customized_memo
+    memo_structure = workspace_general_settings.memo_structure
 
     memo = ''
 
-    for field in customized_memo:
+    for field in memo_structure:
         if field == 'merchant':
-            memo += merchant + ' - '
+            memo += '{0} - '.format(merchant)
         elif field == 'purpose':
-            memo += purpose
+            memo += '{0} - '.format(purpose)
         elif field == 'employee_email':
-            memo += employee_email + ' - '
+            memo += '{0} - '.format(employee_email)
         elif field == 'category':
-            memo += category + ' - '
+            memo += '{0} - '.format(category)
         elif field == 'report_number':
-            memo += report_number + ' - '
+            memo += '{0} - '.format(report_number)
         elif field == 'spent_on':
-            memo += spent_at + ' - '
+            memo += '{0} - '.format(spent_at)
         elif field == 'expense_link':
-            memo += expense_link + ' - '        
+            memo += '{0} - '.format(expense_link)
 
     memo = memo[:-3] if memo[-1] == ' ' else memo
     return memo
@@ -270,10 +269,11 @@ class BillLineitem(models.Model):
         db_table = 'bill_lineitems'
 
     @staticmethod
-    def create_bill_lineitems(expense_group: ExpenseGroup):
+    def create_bill_lineitems(expense_group: ExpenseGroup, workspace_general_settings: WorkspaceGeneralSettings):
         """
         Create bill lineitems
         :param expense_group: expense group
+        :param workspace_general_settings: Workspace General Settings
         :return: lineitems objects
         """
         expenses = expense_group.expenses.all()
@@ -307,7 +307,9 @@ class BillLineitem(models.Model):
                     'tax_code': get_tax_code_id_or_none(expense_group, lineitem),
                     'tax_amount': lineitem.tax_amount,
                     'billable': lineitem.billable,
-                    'description': get_expense_purpose(expense_group.workspace_id, lineitem, category)
+                    'description': get_expense_purpose(
+                        expense_group.workspace_id, lineitem, category, workspace_general_settings
+                    )
                 }
             )
 
@@ -390,10 +392,11 @@ class ChequeLineitem(models.Model):
         db_table = 'cheque_lineitems'
 
     @staticmethod
-    def create_cheque_lineitems(expense_group: ExpenseGroup):
+    def create_cheque_lineitems(expense_group: ExpenseGroup, workspace_general_settings: WorkspaceGeneralSettings):
         """
         Create cheque lineitems
         :param expense_group: expense group
+        :param workspace_general_settings: Workspace General Settings
         :return: lineitems objects
         """
         expenses: List[Expense] = expense_group.expenses.all()
@@ -427,7 +430,9 @@ class ChequeLineitem(models.Model):
                     'tax_amount': lineitem.tax_amount,
                     'tax_code': get_tax_code_id_or_none(expense_group, lineitem),
                     'billable': lineitem.billable,
-                    'description': get_expense_purpose(expense_group.workspace_id, lineitem, category)
+                    'description': get_expense_purpose(
+                        expense_group.workspace_id, lineitem, category, workspace_general_settings
+                    )
                 }
             )
 
@@ -516,10 +521,11 @@ class QBOExpenseLineitem(models.Model):
         db_table = 'qbo_expense_lineitems'
 
     @staticmethod
-    def create_qbo_expense_lineitems(expense_group: ExpenseGroup):
+    def create_qbo_expense_lineitems(expense_group: ExpenseGroup, workspace_general_settings: WorkspaceGeneralSettings):
         """
         Create QBO Expense lineitems
         :param expense_group: expense group
+        :param workspace_general_settings: Workspace General Settings
         :return: lineitems objects
         """
         expenses: List[Expense] = expense_group.expenses.all()
@@ -553,7 +559,9 @@ class QBOExpenseLineitem(models.Model):
                     'tax_amount': lineitem.tax_amount,
                     'tax_code': get_tax_code_id_or_none(expense_group, lineitem),
                     'billable': lineitem.billable,
-                    'description': get_expense_purpose(expense_group.workspace_id, lineitem, category)
+                    'description': get_expense_purpose(
+                        expense_group.workspace_id, lineitem, category, workspace_general_settings
+                    )
                 }
             )
 
@@ -671,10 +679,14 @@ class CreditCardPurchaseLineitem(models.Model):
         db_table = 'credit_card_purchase_lineitems'
 
     @staticmethod
-    def create_credit_card_purchase_lineitems(expense_group: ExpenseGroup):
+    def create_credit_card_purchase_lineitems(
+            expense_group: ExpenseGroup,
+            workspace_general_settings: WorkspaceGeneralSettings
+    ):
         """
         Create credit card purchase lineitems
         :param expense_group: expense group
+        :param workspace_general_settings: Workspace General Settings
         :return: lineitems objects
         """
         expenses: List[Expense] = expense_group.expenses.all()
@@ -708,7 +720,9 @@ class CreditCardPurchaseLineitem(models.Model):
                     'tax_amount': lineitem.tax_amount,
                     'tax_code': get_tax_code_id_or_none(expense_group, lineitem),
                     'billable': lineitem.billable,
-                    'description': get_expense_purpose(expense_group.workspace_id, lineitem, category)
+                    'description': get_expense_purpose(
+                        expense_group.workspace_id, lineitem, category, workspace_general_settings
+                    )
                 }
             )
 
@@ -780,10 +794,14 @@ class JournalEntryLineitem(models.Model):
         db_table = 'journal_entry_lineitems'
 
     @staticmethod
-    def create_journal_entry_lineitems(expense_group: ExpenseGroup):
+    def create_journal_entry_lineitems(
+            expense_group: ExpenseGroup,
+            workspace_general_settings: WorkspaceGeneralSettings
+    ):
         """
         Create journal_entry lineitems
         :param expense_group: expense group
+        :param workspace_general_settings: Workspace General Settings
         :return: lineitems objects
         """
         expenses = expense_group.expenses.all()
@@ -859,7 +877,9 @@ class JournalEntryLineitem(models.Model):
                     'tax_amount': lineitem.tax_amount,
                     'tax_code': get_tax_code_id_or_none(expense_group, lineitem),
                     'department_id': department_id,
-                    'description': get_expense_purpose(expense_group.workspace_id, lineitem, category)
+                    'description': get_expense_purpose(
+                        expense_group.workspace_id, lineitem, category, workspace_general_settings
+                    )
                 }
             )
 

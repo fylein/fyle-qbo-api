@@ -237,7 +237,7 @@ def create_bill(expense_group, task_log_id):
 
             bill_object = Bill.create_bill(expense_group)
 
-            bill_lineitems_objects = BillLineitem.create_bill_lineitems(expense_group)
+            bill_lineitems_objects = BillLineitem.create_bill_lineitems(expense_group, general_settings)
 
             created_bill = qbo_connection.post_bill(bill_object, bill_lineitems_objects)
 
@@ -535,7 +535,7 @@ def create_cheque(expense_group, task_log_id):
 
             cheque_object = Cheque.create_cheque(expense_group)
 
-            cheque_line_item_objects = ChequeLineitem.create_cheque_lineitems(expense_group)
+            cheque_line_item_objects = ChequeLineitem.create_cheque_lineitems(expense_group, general_settings)
 
             created_cheque = qbo_connection.post_cheque(cheque_object, cheque_line_item_objects)
 
@@ -645,7 +645,9 @@ def create_qbo_expense(expense_group, task_log_id):
 
             qbo_expense_object = QBOExpense.create_qbo_expense(expense_group)
 
-            qbo_expense_line_item_objects = QBOExpenseLineitem.create_qbo_expense_lineitems(expense_group)
+            qbo_expense_line_item_objects = QBOExpenseLineitem.create_qbo_expense_lineitems(
+                expense_group, general_settings
+            )
 
             created_qbo_expense = qbo_connection.post_qbo_expense(qbo_expense_object, qbo_expense_line_item_objects)
 
@@ -764,7 +766,7 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id):
                 expense_group, general_settings.map_merchant_to_vendor)
 
             credit_card_purchase_lineitems_objects = CreditCardPurchaseLineitem.create_credit_card_purchase_lineitems(
-                expense_group
+                expense_group, general_settings
             )
 
             created_credit_card_purchase = qbo_connection.post_credit_card_purchase(
@@ -880,7 +882,7 @@ def create_journal_entry(expense_group, task_log_id):
             journal_entry_object = JournalEntry.create_journal_entry(expense_group)
 
             journal_entry_lineitems_objects = JournalEntryLineitem.create_journal_entry_lineitems(
-                expense_group
+                expense_group, general_settings
             )
 
             created_journal_entry = qbo_connection.post_journal_entry(

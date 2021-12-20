@@ -117,8 +117,6 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
             'import_tax_codes': general_settings_payload['import_tax_codes'],
             'change_accounting_period': general_settings_payload['change_accounting_period'],
             'charts_of_accounts': general_settings_payload['charts_of_accounts'],
-            'customized_memo': general_settings_payload['customized_memo'] if
-            general_settings_payload['customized_memo'] else get_default_memo_fields(),
             'auto_map_employees': general_settings_payload['auto_map_employees'],
             'auto_create_destination_entity': general_settings_payload['auto_create_destination_entity'],
             'reimbursable_expenses_object': general_settings_payload['reimbursable_expenses_object'],
