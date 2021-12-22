@@ -77,7 +77,7 @@ AUTH_USER_MODEL = 'users.User'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'workspaces/templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -273,3 +273,13 @@ CORS_ALLOW_HEADERS = [
     'authorization',
     'content-type'
 ]
+
+EMAIL_BACKEND = os.environ.get('SENDGRID_BACKEND')
+
+SENDGRID_API_KEY = os.environ.get('SENDGRID_KEY')
+
+# Toggle sandbox mode (when running in DEBUG mode)
+SENDGRID_SANDBOX_MODE_IN_DEBUG=False
+
+# echo to stdout or any other file-like object that is passed to the backend via the stream kwarg.
+SENDGRID_ECHO_TO_STDOUT=True

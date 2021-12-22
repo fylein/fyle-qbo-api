@@ -1,4 +1,10 @@
 from datetime import datetime
+from django.core.mail import EmailMessage
+from django.template.loader import get_template
+from django.template.loader import render_to_string
+
+
+
 
 from django_q.models import Schedule
 
@@ -68,10 +74,13 @@ def run_sync_schedule(workspace_id):
         )
 
     if task_log.status == 'COMPLETE':
+        all_expense_group_ids = []
 
         if general_settings.reimbursable_expenses_object:
 
-            expense_group_ids = ExpenseGroup.objects.filter(fund_source='PERSONAL').values_list('id', flat=True)
+            expense_group_ids = ExpenseGroup.objects.filter(fund_source='PERSONAL', workspace_id=workspace_id).values_list('id', flat=True)
+            for expense_group_id in expense_group_ids:
+                all_expense_group_ids.append(expense_group_id)
 
             if general_settings.reimbursable_expenses_object == 'BILL':
                 schedule_bills_creation(
@@ -94,7 +103,9 @@ def run_sync_schedule(workspace_id):
                 )
 
         if general_settings.corporate_credit_card_expenses_object:
-            expense_group_ids = ExpenseGroup.objects.filter(fund_source='CCC').values_list('id', flat=True)
+            expense_group_ids = ExpenseGroup.objects.filter(fund_source='CCC', workspace_id=workspace_id).values_list('id', flat=True)
+            for expense_group_id in expense_group_ids:
+                all_expense_group_ids.append(expense_group_id)
 
             if general_settings.corporate_credit_card_expenses_object == 'JOURNAL ENTRY':
                 schedule_journal_entry_creation(
@@ -110,3 +121,27 @@ def run_sync_schedule(workspace_id):
                 schedule_bills_creation(
                     workspace_id=workspace_id, expense_group_ids=expense_group_ids
                 )
+
+        all_task_logs = []
+        for expense_group_id in all_expense_group_ids:
+            task_logs = TaskLog.objects.filter(workspace_id=workspace_id, expense_group_id=expense_group_id).all()
+            for task_log in task_logs:
+                all_task_logs.append(task_log)
+
+        context = {
+            'name': 'nilesh',
+            'errors': len(all_task_logs),
+            'task_log': all_task_logs[0].detail
+        }
+
+        message = render_to_string("mail_template.html", context)
+        mail = EmailMessage(
+            subject="Order confirmation",
+            body=message,
+            from_email='nilesh.p@fyle.in',
+            to=['nileshpant112@gmail.com'],
+        )
+
+        mail.content_subtype = "html"
+        mail.send()
+
