@@ -36,10 +36,11 @@ def get_expense_purpose(workspace_id, lineitem, category, workspace_general_sett
     org_id = Workspace.objects.get(id=workspace_id).fyle_org_id
 
     employee_email = lineitem.employee_email
-    merchant = lineitem.vendor if lineitem.vendor else ''
-    spent_at = lineitem.spent_at.date() if lineitem.spent_at else ''
-    report_number = lineitem.claim_number
-    purpose = lineitem.purpose if lineitem.purpose else ''
+    merchant = '{0} - '.format(lineitem.vendor) if lineitem.vendor else ''
+    spent_at = '{0} - '.format(lineitem.spent_at.date()) if lineitem.spent_at else ''
+    report_number = '{0} - '.format(lineitem.claim_number)
+    purpose = '{0} - '.format(lineitem.purpose) if lineitem.purpose else ''
+    category = '{0} -'.format(category if category else '')
     expense_link = '{0}/app/main/#/enterprise/view_expense/{1}?org_id={2}'.format(
         cluster_domain['cluster_domain'], lineitem.expense_id, org_id
     )
@@ -50,19 +51,19 @@ def get_expense_purpose(workspace_id, lineitem, category, workspace_general_sett
 
     for field in memo_structure:
         if field == 'merchant':
-            memo += '{0} - '.format(merchant)
+            memo += merchant
         elif field == 'purpose':
-            memo += '{0} - '.format(purpose)
+            memo += purpose
         elif field == 'employee_email':
-            memo += '{0} - '.format(employee_email)
+            memo += employee_email
         elif field == 'category':
-            memo += '{0} - '.format(category)
+            memo += category
         elif field == 'report_number':
-            memo += '{0} - '.format(report_number)
+            memo += report_number
         elif field == 'spent_on':
-            memo += '{0} - '.format(spent_at)
+            memo += spent_at
         elif field == 'expense_link':
-            memo += '{0} - '.format(expense_link)
+            memo += expense_link
 
     memo = memo[:-3] if memo[-1] == ' ' else memo
     return memo
