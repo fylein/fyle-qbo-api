@@ -49,7 +49,7 @@ def get_default_chart_of_accounts():
 
 
 def get_default_memo_fields():
-    return ['employee_email', 'category', 'spent_on', 'claim_number', 'purpose', 'expense_link']
+    return ['employee_email', 'category', 'spent_on', 'report_number', 'purpose', 'expense_link']
 
 
 class WorkspaceGeneralSettings(models.Model):
