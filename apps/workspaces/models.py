@@ -2,11 +2,12 @@
 Workspace Models
 """
 from django.db import models
-from django.contrib.postgres.fields import JSONField, ArrayField
+from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth import get_user_model
 from django_q.models import Schedule
 
 User = get_user_model()
+
 
 class Workspace(models.Model):
     """
@@ -46,6 +47,11 @@ class WorkspaceSchedule(models.Model):
 def get_default_chart_of_accounts():
     return ['Expense']
 
+
+def get_default_memo_fields():
+    return ['employee_email', 'category', 'spent_on', 'report_number', 'purpose', 'expense_link']
+
+
 class WorkspaceGeneralSettings(models.Model):
     """
     Workspace General Settings
@@ -64,6 +70,10 @@ class WorkspaceGeneralSettings(models.Model):
     charts_of_accounts = ArrayField(
         base_field=models.CharField(max_length=100), default=get_default_chart_of_accounts,
         help_text='list of chart of account types to be imported into Fyle'
+    )
+    memo_structure = ArrayField(
+        base_field=models.CharField(max_length=100), default=get_default_memo_fields,
+        help_text='list of system fields for creating custom memo'
     )
     auto_map_employees = models.CharField(
         max_length=50, help_text='Auto Map Employees type from QBO to Fyle', null=True)
