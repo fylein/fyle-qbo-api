@@ -16,7 +16,7 @@ from apps.quickbooks_online.tasks import schedule_bill_payment_creation, schedul
 from fyle_qbo_api.utils import assert_valid
 from .models import WorkspaceGeneralSettings
 from ..fyle.models import ExpenseGroupSettings
-from .models import get_default_memo_fields
+
 
 def generate_qbo_refresh_token(authorization_code: str) -> str:
     """
