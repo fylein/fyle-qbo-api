@@ -128,11 +128,27 @@ def run_sync_schedule(workspace_id):
             for task_log in task_logs:
                 all_task_logs.append(task_log)
 
+        
+
+
+def run_schedule_email_notification(workspace_id):
+
+    ws_schedule, _ = WorkspaceSchedule.objects.get_or_create(
+        workspace_id=workspace_id
+    )
+
+    if ws_schedule.enabled:
+        task_logs = TaskLog.objects.filter(workspace_id=workspace_id, status='FAILED')
+
+        #if ws_schedule.total_errors is None or len(task_logs) > ws_schedule.total_errors:
         context = {
             'name': 'nilesh',
-            'errors': len(all_task_logs),
-            'task_log': all_task_logs[0].detail
+            'errors': len(task_logs),
+            'task_log': task_logs[0].detail
         }
+
+        ws_schedule.total_errors = len(task_logs)
+        ws_schedule.save()
 
         message = render_to_string("mail_template.html", context)
         mail = EmailMessage(
@@ -144,4 +160,3 @@ def run_sync_schedule(workspace_id):
 
         mail.content_subtype = "html"
         mail.send()
-
