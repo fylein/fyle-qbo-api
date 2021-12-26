@@ -460,7 +460,7 @@ class QBOConnector:
             lineitem = {
                 'Description': line.description,
                 'DetailType': 'AccountBasedExpenseLineDetail',
-                'Amount': line.amount - line.tax_amount if (line.tax_item_id and line.tax_amount is not None) else \
+                'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None) else \
                         self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
                 'AccountBasedExpenseLineDetail': {
                     'AccountRef': {
