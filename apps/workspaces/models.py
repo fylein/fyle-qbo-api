@@ -38,7 +38,7 @@ class WorkspaceSchedule(models.Model):
     start_datetime = models.DateTimeField(help_text='Datetime for start of schedule', null=True)
     interval_hours = models.IntegerField(null=True)
     schedule = models.OneToOneField(Schedule, on_delete=models.PROTECT, null=True)
-    total_errors = models.IntegerField(null=True)
+    total_errors = models.IntegerField(null=True, help_text='Total Number of error occured after schedule run')
     class Meta:
         db_table = 'workspace_schedules'
 

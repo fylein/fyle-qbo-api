@@ -1,10 +1,8 @@
 from datetime import datetime
 from django.core.mail import EmailMessage
 from django.template.loader import get_template
+from django.contrib.auth import get_user_model
 from django.template.loader import render_to_string
-
-
-
 
 from django_q.models import Schedule
 
@@ -13,8 +11,9 @@ from apps.fyle.tasks import async_create_expense_groups
 from apps.quickbooks_online.tasks import schedule_bills_creation, schedule_cheques_creation, \
     schedule_journal_entry_creation, schedule_credit_card_purchase_creation, schedule_qbo_expense_creation
 from apps.tasks.models import TaskLog
-from apps.workspaces.models import WorkspaceSchedule, WorkspaceGeneralSettings
+from apps.workspaces.models import Workspace, WorkspaceSchedule, WorkspaceGeneralSettings
 
+User = get_user_model()
 
 def schedule_sync(workspace_id: int, schedule_enabled: bool, hours: int):
     ws_schedule, _ = WorkspaceSchedule.objects.get_or_create(
@@ -79,8 +78,6 @@ def run_sync_schedule(workspace_id):
         if general_settings.reimbursable_expenses_object:
 
             expense_group_ids = ExpenseGroup.objects.filter(fund_source='PERSONAL', workspace_id=workspace_id).values_list('id', flat=True)
-            for expense_group_id in expense_group_ids:
-                all_expense_group_ids.append(expense_group_id)
 
             if general_settings.reimbursable_expenses_object == 'BILL':
                 schedule_bills_creation(
@@ -104,8 +101,6 @@ def run_sync_schedule(workspace_id):
 
         if general_settings.corporate_credit_card_expenses_object:
             expense_group_ids = ExpenseGroup.objects.filter(fund_source='CCC', workspace_id=workspace_id).values_list('id', flat=True)
-            for expense_group_id in expense_group_ids:
-                all_expense_group_ids.append(expense_group_id)
 
             if general_settings.corporate_credit_card_expenses_object == 'JOURNAL ENTRY':
                 schedule_journal_entry_creation(
@@ -122,14 +117,6 @@ def run_sync_schedule(workspace_id):
                     workspace_id=workspace_id, expense_group_ids=expense_group_ids
                 )
 
-        all_task_logs = []
-        for expense_group_id in all_expense_group_ids:
-            task_logs = TaskLog.objects.filter(workspace_id=workspace_id, expense_group_id=expense_group_id).all()
-            for task_log in task_logs:
-                all_task_logs.append(task_log)
-
-        
-
 
 def run_schedule_email_notification(workspace_id):
 
@@ -137,26 +124,33 @@ def run_schedule_email_notification(workspace_id):
         workspace_id=workspace_id
     )
 
+    admin_emails = []
     if ws_schedule.enabled:
         task_logs = TaskLog.objects.filter(workspace_id=workspace_id, status='FAILED')
+        workspace_admins = Workspace.objects.filter(pk=workspace_id).values_list('user', flat=True)
 
-        #if ws_schedule.total_errors is None or len(task_logs) > ws_schedule.total_errors:
-        context = {
-            'name': 'nilesh',
-            'errors': len(task_logs),
-            'task_log': task_logs[0].detail
-        }
+        for admin_id in workspace_admins:
+            user_email = User.objects.get(id=admin_id).email
+            admin_emails.append(user_email)
 
-        ws_schedule.total_errors = len(task_logs)
-        ws_schedule.save()
+        if ws_schedule.total_errors is None or len(task_logs) > ws_schedule.total_errors:
+            context = {
+                'name': 'Elon Musk',
+                'errors': len(task_logs),
+                'task_log': task_logs[0].detail
+            }
 
-        message = render_to_string("mail_template.html", context)
-        mail = EmailMessage(
-            subject="Order confirmation",
-            body=message,
-            from_email='nilesh.p@fyle.in',
-            to=['nileshpant112@gmail.com'],
-        )
+            ws_schedule.total_errors = len(task_logs)
+            ws_schedule.save()
 
-        mail.content_subtype = "html"
-        mail.send()
+            message = render_to_string("mail_template.html", context)
+
+            mail = EmailMessage(
+                subject="Order confirmation",
+                body=message,
+                from_email='johncena@fyle.in',
+                to=admin_emails,
+            )
+
+            mail.content_subtype = "html"
+            mail.send()
