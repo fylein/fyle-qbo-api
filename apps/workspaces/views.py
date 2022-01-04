@@ -6,19 +6,19 @@ from django.core.cache import cache
 from rest_framework.response import Response
 from rest_framework.views import status
 from rest_framework import viewsets
-from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 
 from fylesdk import exceptions as fyle_exc
 from qbosdk import exceptions as qbo_exc
 
-
+from fyle_rest_auth.helpers import get_fyle_admin
 from fyle_rest_auth.utils import AuthUtils
 from fyle_rest_auth.models import AuthToken
 
 from fyle_qbo_api.utils import assert_valid
 
 from apps.quickbooks_online.utils import QBOConnector
+from apps.mappings.models import GeneralMapping
 
 from .models import Workspace, FyleCredential, QBOCredential, WorkspaceGeneralSettings, WorkspaceSchedule
 from .utils import generate_qbo_refresh_token, create_or_update_general_settings
@@ -43,10 +43,14 @@ class WorkspaceView(viewsets.ViewSet):
         Create a Workspace
         """
 
-        auth_tokens = AuthToken.objects.get(user__user_id=request.user)
-        fyle_user = auth_utils.get_fyle_user(auth_tokens.refresh_token, None)
-        org_name = fyle_user['org_name']
-        org_id = fyle_user['org_id']
+        # auth_tokens = AuthToken.objects.get(user__user_id=request.user)
+        # fyle_user = auth_utils.get_fyle_user(auth_tokens.refresh_token, None)
+        # org_name = fyle_user['org_name']
+        # org_id = fyle_user['org_id']
+        access_token = request.META.get('HTTP_AUTHORIZATION')
+        fyle_user = get_fyle_admin(access_token.split(' ')[1], None)
+        org_name = fyle_user['data']['org']['name']
+        org_id = fyle_user['data']['org']['id']
 
         workspace = Workspace.objects.filter(fyle_org_id=org_id).first()
 
@@ -59,6 +63,8 @@ class WorkspaceView(viewsets.ViewSet):
             ExpenseGroupSettings.objects.create(workspace_id=workspace.id)
 
             workspace.user.add(User.objects.get(user_id=request.user))
+
+            auth_tokens = AuthToken.objects.get(user__user_id=request.user)
 
             FyleCredential.objects.update_or_create(
                 refresh_token=auth_tokens.refresh_token,
@@ -138,10 +144,16 @@ class ConnectFyleView(viewsets.ViewSet):
 
             workspace = Workspace.objects.get(id=kwargs['workspace_id'])
 
-            refresh_token = auth_utils.generate_fyle_refresh_token(authorization_code)['refresh_token']
-            fyle_user = auth_utils.get_fyle_user(refresh_token, None)
-            org_id = fyle_user['org_id']
-            org_name = fyle_user['org_name']
+            # refresh_token = auth_utils.generate_fyle_refresh_token(authorization_code)['refresh_token']
+            # fyle_user = auth_utils.get_fyle_user(refresh_token, None)
+            # org_id = fyle_user['org_id']
+            # org_name = fyle_user['org_name']
+            tokens = auth_utils.generate_fyle_refresh_token(authorization_code)
+            refresh_token = tokens['refresh_token']
+
+            fyle_user = get_fyle_admin(tokens['access_token'], None)
+            org_name = fyle_user['data']['org']['name']
+            org_id = fyle_user['data']['org']['id']
 
             assert_valid(workspace.fyle_org_id and workspace.fyle_org_id == org_id,
                          'Please select the correct Fyle account - {0}'.format(workspace.name))
@@ -442,4 +454,116 @@ class GeneralSettingsView(viewsets.ViewSet):
             return Response(
                 data=serializer.data,
                 status=status.HTTP_200_OK
+            )
+
+
+class MockView(viewsets.ViewSet):
+    """
+    General Settings
+    """
+    def post(self, request, *args, **kwargs):
+        """
+        Post workspace general settings
+        """
+        general_settings_payload = request.data
+        return Response(
+            data={'workspace_general_settings': general_settings_payload},
+            status=status.HTTP_200_OK
+        )
+
+    def get(self, request, *args, **kwargs):
+        """
+        Get workspace general settings
+        """
+        try:
+            general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=kwargs['workspace_id'])
+            data = WorkSpaceGeneralSettingsSerializer(general_settings).data
+            return Response(
+                data={'workspace_general_settings': data},
+                status=status.HTTP_200_OK
+            )
+        except WorkspaceGeneralSettings.DoesNotExist:
+            return Response(
+                {
+                    'message': 'General Settings does not exist in workspace'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class MockView2(viewsets.ViewSet):
+    """
+    General Settings
+    """
+    def post(self, request, *args, **kwargs):
+        """
+        Post workspace general settings
+        """
+        general_settings_payload = request.data
+        return Response(
+            data={'workspace_general_settings': general_settings_payload},
+            status=status.HTTP_200_OK
+        )
+
+    def get(self, request, *args, **kwargs):
+        """
+        Get workspace general settings
+        """
+        try:
+            general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=2).first()
+            expense_group_settings = ExpenseGroupSettings.objects.filter(workspace_id=2).first()
+            general_mappings = GeneralMapping.objects.filter(workspace_id=2).first()
+            from apps.fyle.serializers import ExpenseGroupSettingsSerializer
+            from apps.mappings.serializers import GeneralMappingSerializer
+            return Response(
+                data={'workspace_general_settings': WorkSpaceGeneralSettingsSerializer(general_settings).data, 'expense_group_settings': ExpenseGroupSettingsSerializer(expense_group_settings).data, 'general_mappings': GeneralMappingSerializer(general_mappings).data},
+                # data={'workspace_general_settings': WorkSpaceGeneralSettingsSerializer(general_settings).data, 'expense_group_settings': None, 'general_mappings': None},
+                status=status.HTTP_200_OK
+            )
+        except WorkspaceGeneralSettings.DoesNotExist:
+            return Response(
+                {
+                    'message': 'General Settings does not exist in workspace'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class MockView3(viewsets.ViewSet):
+    """
+    General Settings
+    """
+    def post(self, request, *args, **kwargs):
+        """
+        Post workspace general settings
+        """
+        general_settings_payload = request.data
+        return Response(
+            data={'workspace_general_settings': general_settings_payload},
+            status=status.HTTP_200_OK
+        )
+
+    def get(self, request, *args, **kwargs):
+        """
+        Get workspace general settings
+        """
+        try:
+            from fyle_accounting_mappings.models import MappingSetting
+            general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=2).first()
+            mapping_settings = MappingSetting.objects.filter(workspace_id=2).all()
+            general_mappings = GeneralMapping.objects.filter(workspace_id=2).first()
+            from apps.fyle.serializers import ExpenseGroupSettingsSerializer
+            from apps.mappings.serializers import GeneralMappingSerializer
+            from fyle_accounting_mappings.serializers import MappingSettingSerializer
+            return Response(
+                data={'workspace_general_settings': WorkSpaceGeneralSettingsSerializer(general_settings).data, 'general_mappings': GeneralMappingSerializer(general_mappings).data, 'mapping_settings': MappingSettingSerializer(mapping_settings, many=True).data},
+                # data={'workspace_general_settings': WorkSpaceGeneralSettingsSerializer(general_settings).data, 'expense_group_settings': None, 'general_mappings': None},
+                status=status.HTTP_200_OK
+            )
+        except WorkspaceGeneralSettings.DoesNotExist:
+            return Response(
+                {
+                    'message': 'General Settings does not exist in workspace'
+                },
+                status=status.HTTP_400_BAD_REQUEST
             )

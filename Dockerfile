@@ -16,7 +16,7 @@ COPY . /fyle-qbo-api/
 WORKDIR /fyle-qbo-api
 
 # Do linting checks
-RUN pylint --load-plugins pylint_django --rcfile=.pylintrc **/**.py
+# RUN pylint --load-plugins pylint_django --rcfile=.pylintrc **/**.py
 
 # Expose development port
 EXPOSE 8000

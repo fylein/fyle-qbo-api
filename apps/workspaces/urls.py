@@ -16,7 +16,7 @@ Including another URLconf
 from django.urls import path, include
 
 from .views import WorkspaceView, ReadyView, ConnectFyleView, ConnectQBOView, ScheduleView, GeneralSettingsView, \
-    ScheduledSyncView
+    ScheduledSyncView, MockView, MockView2, MockView3
 
 urlpatterns = [
     path('', WorkspaceView.as_view({'get': 'get', 'post': 'post'})),
@@ -34,5 +34,8 @@ urlpatterns = [
     path('<int:workspace_id>/qbo/', include('apps.quickbooks_online.urls')),
     path('<int:workspace_id>/mappings/', include('apps.mappings.urls')),
     path('<int:workspace_id>/tasks/', include('apps.tasks.urls')),
-    path('ready/', ReadyView.as_view({'get': 'get'}))
+    path('ready/', ReadyView.as_view({'get': 'get'})),
+    path('<int:workspace_id>/mock/', MockView.as_view({'get': 'get', 'post': 'post'})),
+    path('<int:workspace_id>/mock2/', MockView2.as_view({'get': 'get', 'post': 'post'})),
+    path('<int:workspace_id>/mock3/', MockView3.as_view({'get': 'get', 'post': 'post'}))
 ]

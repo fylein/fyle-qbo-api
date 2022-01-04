@@ -76,7 +76,7 @@ class FyleOrgsView(generics.ListCreateAPIView):
             fyle_orgs = fyle_connector.get_fyle_orgs(cluser_domain=cluser_domain)
 
             return Response(
-                data=fyle_orgs,
+                data=len(fyle_orgs),
                 status=status.HTTP_200_OK
             )
         except FyleCredential.DoesNotExist:
