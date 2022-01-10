@@ -12,7 +12,7 @@ from fyle_accounting_mappings.models import MappingSetting, Mapping, Destination
     EmployeeMapping
 
 from apps.fyle.utils import FyleConnector
-from apps.fyle.platform_connector import FylePlatformConnector
+from apps.fyle.platform_connector import PlatformConnector
 from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.utils import QBOConnector
 from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGeneralSettings
@@ -21,6 +21,7 @@ from .constants import FYLE_EXPENSE_SYSTEM_FIELDS
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
+
 
 def remove_duplicates(qbo_attributes: List[DestinationAttribute]):
     unique_attributes = []
@@ -80,6 +81,7 @@ def post_projects_in_batches(fyle_connection: FyleConnector, workspace_id: int, 
 
         Mapping.bulk_create_mappings(paginated_qbo_attributes, 'PROJECT', destination_field, workspace_id)
 
+
 def auto_create_tax_codes_mappings(workspace_id: int):
     """
     Create Tax Codes Mappings
@@ -88,7 +90,7 @@ def auto_create_tax_codes_mappings(workspace_id: int):
     try:
         fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
 
-        fyle_connection = FylePlatformConnector(
+        fyle_connection = PlatformConnector(
             refresh_token=fyle_credentials.refresh_token,
             workspace_id=workspace_id
         )
@@ -158,6 +160,7 @@ def auto_create_project_mappings(workspace_id: int):
             workspace_id, error
         )
 
+
 def schedule_tax_groups_creation(import_tax_codes, workspace_id):
     if import_tax_codes:
         schedule, _ = Schedule.objects.update_or_create(
@@ -177,6 +180,7 @@ def schedule_tax_groups_creation(import_tax_codes, workspace_id):
 
         if schedule:
             schedule.delete()
+
 
 def schedule_projects_creation(import_to_fyle, workspace_id):
     if import_to_fyle:
@@ -628,7 +632,8 @@ def schedule_auto_map_ccc_employees(workspace_id: int):
         if schedule:
             schedule.delete()
 
-def upload_tax_groups_to_fyle(platform_connection: FylePlatformConnector, workspace_id: int):    
+
+def upload_tax_groups_to_fyle(platform_connection: PlatformConnector, workspace_id: int):
     existing_tax_codes_name = ExpenseAttribute.objects.filter(
         attribute_type='TAX_GROUP', workspace_id=workspace_id).values_list('value', flat=True)
 

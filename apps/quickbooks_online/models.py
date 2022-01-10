@@ -44,7 +44,7 @@ def get_expense_purpose(workspace_id, lineitem, category, workspace_general_sett
         'report_number': '{0}'.format(lineitem.claim_number),
         'spent_on': '{0}'.format(lineitem.spent_at.date()) if lineitem.spent_at else '',
         'expense_link': '{0}/app/main/#/enterprise/view_expense/{1}?org_id={2}'.format(
-            cluster_domain['cluster_domain'], lineitem.expense_id, org_id
+            fyle_credentials.cluster_domain, lineitem.expense_id, org_id
         )
     }
 
