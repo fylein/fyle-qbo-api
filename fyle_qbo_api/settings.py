@@ -172,7 +172,6 @@ LOGGING = {
             'handlers': ['debug_logs'],
             'propagate': True,
         },
-        # TODO: remove this later
         'fyle_integrations_platform_connector': {
             'handlers': ['debug_logs'],
             'propagate': True,
