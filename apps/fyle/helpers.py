@@ -15,6 +15,8 @@ def compare_tpa_and_platform_expenses(tpa_expenses: List[dict], platform_expense
     """
     Compare TPA expenses and platform expenses.
     """
+
+    # TODO: remove this later
     if len(tpa_expenses) != len(platform_expenses):
         # POST to sentry
         logger.error('count is different {} - {}'.format(len(tpa_expenses), len(platform_expenses)))

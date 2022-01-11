@@ -6,7 +6,7 @@ from datetime import datetime
 from django.db import transaction
 from django_q.tasks import async_task
 
-from fyle_integrations_platform_connector.connector.fyle_integrations_platform_connector import PlatformConnector
+from fyle_integrations_platform_connector import PlatformConnector
 
 from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
 from apps.tasks.models import TaskLog
@@ -113,6 +113,7 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
                 source_account_type, expense_group_settings.expense_state, last_synced_at, True
             )
 
+            # TODO: clean up this function later
             compare_tpa_and_platform_expenses(tpa_expenses, expenses, workspace_id)
 
             if expenses:

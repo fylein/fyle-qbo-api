@@ -10,8 +10,7 @@ from rest_framework.response import Response
 from fyle_accounting_mappings.models import ExpenseAttribute
 from fyle_accounting_mappings.serializers import ExpenseAttributeSerializer
 
-# fix import after fyle_integrations_platform_connector release
-from fyle_integrations_platform_connector.connector.fyle_integrations_platform_connector import PlatformConnector
+from fyle_integrations_platform_connector import PlatformConnector
 
 from apps.workspaces.models import FyleCredential, WorkspaceGeneralSettings, Workspace
 from apps.tasks.models import TaskLog

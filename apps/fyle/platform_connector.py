@@ -2,8 +2,7 @@ import json
 from typing import List
 import logging
 
-# fix this import after fyle_integrations_platform_connector release
-from fyle_integrations_platform_connector.connector.fyle_integrations_platform_connector import PlatformConnector as PlatformIntegrationsConnector
+from fyle_integrations_platform_connector import PlatformConnector as PlatformIntegrationsConnector
 
 from apps.workspaces.models import FyleCredential, Workspace
 from .utils import FyleConnector
