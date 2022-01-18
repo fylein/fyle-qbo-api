@@ -11,7 +11,6 @@ from fyle_integrations_platform_connector import PlatformConnector
 from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
 from apps.tasks.models import TaskLog
 
-from .helpers import compare_tpa_and_platform_expenses
 from .models import Expense, ExpenseGroup, ExpenseGroupSettings
 from .utils import FyleConnector
 from .serializers import ExpenseGroupSerializer
@@ -91,18 +90,6 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
                     'gte:{0}'.format(datetime.strftime(last_synced_at, '%Y-%m-%dT%H:%M:%S.000Z'))
                 )
 
-            fyle_connector = FyleConnector(fyle_credentials.refresh_token, workspace_id)
-
-            tpa_import_state = [expense_group_settings.expense_state]
-            if tpa_import_state[0] == 'PAYMENT_PROCESSING' and last_synced_at is not None:
-                tpa_import_state.append('PAID')
-
-            tpa_expenses = fyle_connector.get_expenses(
-                state=tpa_import_state,
-                updated_at=updated_at_fyle_tpa,
-                fund_source=fund_source
-            )
-
             platform = PlatformConnector(fyle_credentials)
 
             source_account_type = []
@@ -112,9 +99,6 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
             expenses = platform.expenses.get(
                 source_account_type, expense_group_settings.expense_state, last_synced_at, True
             )
-
-            # TODO: clean up this function later
-            compare_tpa_and_platform_expenses(tpa_expenses, expenses, workspace_id)
 
             if expenses:
                 workspace.last_synced_at = datetime.now()

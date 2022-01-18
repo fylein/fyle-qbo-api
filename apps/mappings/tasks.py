@@ -12,7 +12,7 @@ from fyle_accounting_mappings.models import MappingSetting, Mapping, Destination
     EmployeeMapping
 
 from apps.fyle.utils import FyleConnector
-from apps.fyle.platform_connector import PlatformConnector
+from fyle_integrations_platform_connector import PlatformConnector
 from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.utils import QBOConnector
 from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGeneralSettings
@@ -90,19 +90,16 @@ def auto_create_tax_codes_mappings(workspace_id: int):
     try:
         fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
 
-        fyle_connection = PlatformConnector(
-            refresh_token=fyle_credentials.refresh_token,
-            workspace_id=workspace_id
-        )
+        platform = PlatformConnector(fyle_credentials)
 
-        fyle_connection.sync_tax_groups()
+        platform.tax_groups.sync()
 
         mapping_setting = MappingSetting.objects.get(
             source_field='TAX_GROUP', workspace_id=workspace_id
         )
 
         sync_qbo_attribute(mapping_setting.destination_field, workspace_id)
-        upload_tax_groups_to_fyle(fyle_connection, workspace_id)
+        upload_tax_groups_to_fyle(platform, workspace_id)
 
     except WrongParamsError as exception:
         logger.error(
@@ -645,7 +642,7 @@ def upload_tax_groups_to_fyle(platform_connection: PlatformConnector, workspace_
     fyle_payload: List[Dict] = create_fyle_tax_group_payload(qbo_attributes, existing_tax_codes_name)
 
     for payload in fyle_payload:
-        platform_connection.connection.v1.admin.tax_groups.post(payload)
+        platform_connection.tax_groups.post(payload)
 
     platform_connection.sync_tax_groups()
     Mapping.bulk_create_mappings(qbo_attributes, 'TAX_GROUP', 'TAX_CODE', workspace_id)
