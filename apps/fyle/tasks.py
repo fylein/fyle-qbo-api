@@ -84,12 +84,6 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
                     'gte:{0}'.format(datetime.strftime(last_synced_at, '%Y-%m-%dT%H:%M:%S.000Z'))
                 )
 
-            updated_at_fyle_tpa = []
-            if last_synced_at:
-                updated_at_fyle_tpa.append(
-                    'gte:{0}'.format(datetime.strftime(last_synced_at, '%Y-%m-%dT%H:%M:%S.000Z'))
-                )
-
             platform = PlatformConnector(fyle_credentials)
 
             source_account_type = []
