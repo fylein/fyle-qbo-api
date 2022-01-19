@@ -641,10 +641,10 @@ def upload_tax_groups_to_fyle(platform_connection: PlatformConnector, workspace_
 
     fyle_payload: List[Dict] = create_fyle_tax_group_payload(qbo_attributes, existing_tax_codes_name)
 
-    for payload in fyle_payload:
-        platform_connection.tax_groups.post(payload)
+    if fyle_payload:
+        platform_connection.tax_groups.post_bulk(fyle_payload)
 
-    platform_connection.sync_tax_groups()
+    platform_connection.tax_groups.sync()
     Mapping.bulk_create_mappings(qbo_attributes, 'TAX_GROUP', 'TAX_CODE', workspace_id)
 
 
@@ -687,6 +687,7 @@ def create_fyle_cost_centers_payload(qbo_attributes: List[DestinationAttribute],
 
     return fyle_cost_centers_payload
 
+
 def create_fyle_tax_group_payload(qbo_attributes: List[DestinationAttribute], existing_fyle_tax_groups: list):
     """
     Create Fyle Cost Centers Payload from QBO Objects
@@ -699,13 +700,11 @@ def create_fyle_tax_group_payload(qbo_attributes: List[DestinationAttribute], ex
     for qbo_attribute in qbo_attributes:
         if qbo_attribute.value not in existing_fyle_tax_groups:
             fyle_tax_group_payload.append({
-                'data': {
                     'name': qbo_attribute.value,
                     'is_enabled': True,
                     'percentage': round((qbo_attribute.detail['tax_rate']/100), 2)
-                }
-            })
-    
+                })
+
     return fyle_tax_group_payload
 
 def post_cost_centers_in_batches(fyle_connection: FyleConnector, workspace_id: int, qbo_attribute_type: str):
