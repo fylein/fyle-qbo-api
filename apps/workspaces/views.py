@@ -567,3 +567,43 @@ class MockView3(viewsets.ViewSet):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+
+class MockView4(viewsets.ViewSet):
+    """
+    General Settings
+    """
+    def post(self, request, *args, **kwargs):
+        """
+        Post workspace general settings
+        """
+        general_settings_payload = request.data
+        return Response(
+            data={'workspace_general_settings': general_settings_payload},
+            status=status.HTTP_200_OK
+        )
+
+    def get(self, request, *args, **kwargs):
+        """
+        Get workspace general settings
+        """
+        try:
+            from fyle_accounting_mappings.models import MappingSetting
+            general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=2).first()
+            workspace_schedule = WorkspaceSchedule.objects.filter(workspace_id=2).first()
+            general_mappings = GeneralMapping.objects.filter(workspace_id=2).first()
+            from apps.fyle.serializers import ExpenseGroupSettingsSerializer
+            from apps.mappings.serializers import GeneralMappingSerializer
+            from fyle_accounting_mappings.serializers import MappingSettingSerializer
+            return Response(
+                data={'workspace_general_settings': WorkSpaceGeneralSettingsSerializer(general_settings).data, 'general_mappings': GeneralMappingSerializer(general_mappings).data, 'workspace_schedules': WorkspaceScheduleSerializer(workspace_schedule).data},
+                # data={'workspace_general_settings': WorkSpaceGeneralSettingsSerializer(general_settings).data, 'expense_group_settings': None, 'general_mappings': None},
+                status=status.HTTP_200_OK
+            )
+        except WorkspaceGeneralSettings.DoesNotExist:
+            return Response(
+                {
+                    'message': 'General Settings does not exist in workspace'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
