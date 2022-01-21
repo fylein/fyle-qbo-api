@@ -137,30 +137,6 @@ class FyleConnector:
 
         return self._get_request(api_url, params)
 
-    def get_expenses(self, state: List[str], fund_source: List[str],
-                     settled_at: List[str] = None, updated_at: List[str] = None):
-        """
-        Get expenses from fyle
-        """
-        expenses = self.connection.Expenses.get_all(
-            state=state, settled_at=settled_at, updated_at=updated_at, fund_source=fund_source
-        )
-        expenses = list(
-            filter(lambda expense: not (not expense['reimbursable'] and expense['fund_source'] == 'PERSONAL'),
-                   expenses))
-
-        expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=self.workspace_id)
-
-        if not expense_group_settings.import_card_credits:
-            expenses = list(filter(lambda expense: expense['amount'] > 0, expenses))
-            return expenses
-
-        else:
-            expenses = list(filter(
-                lambda expense: not (expense['amount'] < 0 and expense['fund_source'] == 'PERSONAL'), expenses
-            ))
-            return expenses
-
     def get_attachments(self, expense_ids: List[str]):
         """
         Get attachments against expense_ids
