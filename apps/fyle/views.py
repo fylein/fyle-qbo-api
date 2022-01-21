@@ -325,8 +325,7 @@ class SyncFyleDimensionView(generics.ListCreateAPIView):
                 fyle_credentials = FyleCredential.objects.get(workspace_id=kwargs['workspace_id'])
                 platform = PlatformConnector(fyle_credentials)
 
-                platform.import_fyle_dimensions()
-                platform.tax_groups.sync()
+                platform.import_fyle_dimensions(import_taxes=True)
 
                 workspace.source_synced_at = datetime.now()
                 workspace.save(update_fields=['source_synced_at'])
@@ -365,8 +364,7 @@ class RefreshFyleDimensionView(generics.ListCreateAPIView):
             fyle_credentials = FyleCredential.objects.get(workspace_id=kwargs['workspace_id'])
             platform = PlatformConnector(fyle_credentials)
 
-            platform.import_fyle_dimensions()
-            platform.tax_groups.sync()
+            platform.import_fyle_dimensions(import_taxes=True)
 
             workspace = Workspace.objects.get(id=kwargs['workspace_id'])
             workspace.source_synced_at = datetime.now()
