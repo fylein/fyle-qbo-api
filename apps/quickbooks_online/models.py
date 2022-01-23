@@ -129,6 +129,7 @@ def get_customer_id_or_none(expense_group: ExpenseGroup, lineitem: Expense):
             customer_id = mapping.destination.destination_id
     return customer_id
 
+
 def get_tax_code_id_or_none(expense_group: ExpenseGroup, lineitem: Expense = None):
     tax_code = None
     mapping: Mapping = Mapping.objects.filter(
@@ -623,14 +624,26 @@ class CreditCardPurchase(models.Model):
             entity_id = entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' \
                 else entity.destination_vendor.destination_id
 
-        ccc_account_mapping: EmployeeMapping = EmployeeMapping.objects.filter(
-            source_employee__value=description.get('employee_email'),
-            workspace_id=expense_group.workspace_id
-        ).first()
-
-        ccc_account_id = ccc_account_mapping.destination_card_account.destination_id \
-            if ccc_account_mapping and ccc_account_mapping.destination_card_account \
-            else general_mappings.default_ccc_account_id
+        ccc_account_id = None
+        if workspace_general_settings.map_fyle_cards_qbo_account:
+            ccc_account = Mapping.objects.filter(
+                source_type='CORPORATE_CARD',
+                destination_type='CREDIT_CARD_ACCOUNT',
+                source__source_id=expense.corporate_card_id,
+                workspace_id=expense_group.workspace_id
+            ).first()
+            if ccc_account:
+                ccc_account_id = ccc_account.destination.destination_id
+            else:
+                ccc_account_id = general_mappings.default_ccc_account_id
+        else:
+            ccc_account_mapping: EmployeeMapping = EmployeeMapping.objects.filter(
+                source_employee__value=description.get('employee_email'),
+                workspace_id=expense_group.workspace_id
+            ).first()
+            ccc_account_id = ccc_account_mapping.destination_card_account.destination_id \
+                if ccc_account_mapping and ccc_account_mapping.destination_card_account \
+                else general_mappings.default_ccc_account_id
 
         credit_card_purchase_object, _ = CreditCardPurchase.objects.update_or_create(
             expense_group=expense_group,
@@ -812,22 +825,7 @@ class JournalEntryLineitem(models.Model):
             workspace_id=expense_group.workspace_id
         )
 
-        if expense_group.fund_source == 'PERSONAL':
-            if employee_field_mapping == 'VENDOR':
-                debit_account_id = GeneralMapping.objects.get(
-                    workspace_id=expense_group.workspace_id).accounts_payable_id
-            elif employee_field_mapping == 'EMPLOYEE':
-                debit_account_id = GeneralMapping.objects.get(
-                    workspace_id=expense_group.workspace_id).bank_account_id
-        elif expense_group.fund_source == 'CCC':
-            debit_account: EmployeeMapping = EmployeeMapping.objects.filter(
-                source_employee__value=description.get('employee_email'),
-                workspace_id=expense_group.workspace_id
-            ).first()
-            if debit_account and debit_account.destination_card_account:
-                debit_account_id = debit_account.destination_card_account.destination_id
-            else:
-                debit_account_id = general_mappings.default_ccc_account_id
+        debit_account_id = None
 
         if employee_field_mapping == 'EMPLOYEE':
             entity_type = 'Employee'
@@ -839,6 +837,35 @@ class JournalEntryLineitem(models.Model):
         for lineitem in expenses:
             category = lineitem.category if lineitem.category == lineitem.sub_category else '{0} / {1}'.format(
                 lineitem.category, lineitem.sub_category)
+
+            if expense_group.fund_source == 'PERSONAL':
+                if employee_field_mapping == 'VENDOR':
+                    debit_account_id = GeneralMapping.objects.get(
+                        workspace_id=expense_group.workspace_id).accounts_payable_id
+                elif employee_field_mapping == 'EMPLOYEE':
+                    debit_account_id = GeneralMapping.objects.get(
+                        workspace_id=expense_group.workspace_id).bank_account_id
+            elif expense_group.fund_source == 'CCC':
+                if workspace_general_settings.map_fyle_cards_qbo_account:
+                    debit_account = Mapping.objects.filter(
+                        source_type='CORPORATE_CARD',
+                        destination_type='CREDIT_CARD_ACCOUNT',
+                        source__source_id=lineitem.corporate_card_id,
+                        workspace_id=expense_group.workspace_id
+                    ).first()
+                    if debit_account:
+                        debit_account_id = debit_account.destination.destination_id
+                    else:
+                        debit_account_id = general_mappings.default_ccc_account_id
+                else:
+                    debit_account: EmployeeMapping = EmployeeMapping.objects.filter(
+                        source_employee__value=description.get('employee_email'),
+                        workspace_id=expense_group.workspace_id
+                    ).first()
+                    if debit_account and debit_account.destination_card_account:
+                        debit_account_id = debit_account.destination_card_account.destination_id
+                    else:
+                        debit_account_id = general_mappings.default_ccc_account_id
 
             account: Mapping = Mapping.objects.filter(
                 source_type='CATEGORY',

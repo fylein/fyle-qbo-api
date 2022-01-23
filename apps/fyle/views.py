@@ -493,6 +493,7 @@ class RefreshFyleDimensionView(generics.ListCreateAPIView):
 
             fyle_connector.sync_dimensions()
             platform.tax_groups.sync()
+            platform.corporate_cards.sync()
 
             workspace = Workspace.objects.get(id=kwargs['workspace_id'])
             workspace.source_synced_at = datetime.now()
