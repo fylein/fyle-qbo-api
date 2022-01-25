@@ -19,6 +19,7 @@ from fyle_rest_auth.models import AuthToken
 from fyle_qbo_api.utils import assert_valid
 
 from apps.quickbooks_online.utils import QBOConnector
+from apps.fyle.utils import FyleConnector
 
 from .models import Workspace, FyleCredential, QBOCredential, WorkspaceGeneralSettings, WorkspaceSchedule
 from .utils import generate_qbo_refresh_token, create_or_update_general_settings
@@ -60,9 +61,13 @@ class WorkspaceView(viewsets.ViewSet):
 
             workspace.user.add(User.objects.get(user_id=request.user))
 
+            fyle_connector = FyleConnector(auth_tokens.refresh_token)
+            cluster_domain = fyle_connector.get_cluster_domain()['cluster_domain']
+
             FyleCredential.objects.update_or_create(
                 refresh_token=auth_tokens.refresh_token,
-                workspace_id=workspace.id
+                workspace_id=workspace.id,
+                cluster_domain=cluster_domain
             )
 
         return Response(
@@ -150,10 +155,14 @@ class ConnectFyleView(viewsets.ViewSet):
             workspace.fyle_org_id = org_id
             workspace.save()
 
+            fyle_connector = FyleConnector(refresh_token)
+            cluster_domain = fyle_connector.get_cluster_domain()['cluster_domain']
+
             fyle_credentials, _ = FyleCredential.objects.update_or_create(
                 workspace_id=kwargs['workspace_id'],
                 defaults={
                     'refresh_token': refresh_token,
+                    'cluster_domain': cluster_domain
                 }
             )
 
@@ -427,4 +436,19 @@ class GeneralSettingsView(viewsets.ViewSet):
                     'message': 'General Settings does not exist in workspace'
                 },
                 status=status.HTTP_400_BAD_REQUEST
+            )
+
+    def patch(self, request, **kwargs):
+        """
+        PATCH workspace general settings
+        """
+        workspace_general_settings_object = WorkspaceGeneralSettings.objects.get(workspace_id=kwargs['workspace_id'])
+        serializer = WorkSpaceGeneralSettingsSerializer(
+            workspace_general_settings_object, data=request.data, partial=True
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                data=serializer.data,
+                status=status.HTTP_200_OK
             )
