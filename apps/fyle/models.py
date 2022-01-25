@@ -308,13 +308,13 @@ class ExpenseGroup(models.Model):
         for expense_group in expense_groups:
             if expense_group_settings.reimbursable_export_date_type == 'last_spent_at':
                 expense_group['last_spent_at'] = Expense.objects.filter(
-                                                 id__in=expense_group['expense_ids']
-                                                 ).order_by('-spent_at').first().spent_at
+                    id__in=expense_group['expense_ids']
+                ).order_by('-spent_at').first().spent_at
 
             if expense_group_settings.ccc_export_date_type == 'last_spent_at':
                 expense_group['last_spent_at'] = Expense.objects.filter(
-                                                 id__in=expense_group['expense_ids']
-                                                 ).order_by('-spent_at').first().spent_at
+                    id__in=expense_group['expense_ids']
+                ).order_by('-spent_at').first().spent_at
 
             expense_ids = expense_group['expense_ids']
 
@@ -381,6 +381,7 @@ class Reimbursement(models.Model):
         attributes_to_be_updated = []
 
         for reimbursement in reimbursements:
+            reimbursement['state'] = 'COMPLETE' if reimbursement['is_paid'] else 'PENDING'
             if reimbursement['id'] not in existing_reimbursement_ids:
                 attributes_to_be_created.append(
                     Reimbursement(
@@ -404,3 +405,14 @@ class Reimbursement(models.Model):
 
         if attributes_to_be_updated:
             Reimbursement.objects.bulk_update(attributes_to_be_updated, fields=['state'], batch_size=50)
+
+    @staticmethod
+    def get_last_synced_at(workspace_id: int):
+        """
+        Get last synced at datetime
+        :param workspace_id: Workspace Id
+        :return: last_synced_at datetime
+        """
+        return Reimbursement.objects.filter(
+            workspace_id=workspace_id
+        ).order_by('-updated_at').first()

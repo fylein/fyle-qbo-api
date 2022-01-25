@@ -12,6 +12,7 @@ from django_q.models import Schedule
 from qbosdk.exceptions import WrongParamsError
 
 from fyle_accounting_mappings.models import Mapping, ExpenseAttribute, DestinationAttribute, EmployeeMapping
+from fyle_integrations_platform_connector import PlatformConnector
 
 from fyle_qbo_api.exceptions import BulkError
 
@@ -954,7 +955,8 @@ def create_bill_payment(workspace_id):
 
     fyle_connector = FyleConnector(fyle_credentials.refresh_token, workspace_id)
 
-    fyle_connector.sync_reimbursements()
+    platform = PlatformConnector(fyle_credentials)
+    platform.reimbursements.sync()
 
     bills = Bill.objects.filter(
         payment_synced=False, expense_group__workspace_id=workspace_id,
@@ -1136,7 +1138,8 @@ def process_reimbursements(workspace_id):
 
     fyle_connector = FyleConnector(fyle_credentials.refresh_token, workspace_id)
 
-    fyle_connector.sync_reimbursements()
+    platform = PlatformConnector(fyle_credentials)
+    platform.reimbursements.sync()
 
     reimbursements = Reimbursement.objects.filter(state='PENDING', workspace_id=workspace_id).all()
 
@@ -1156,7 +1159,7 @@ def process_reimbursements(workspace_id):
 
     if reimbursement_ids:
         fyle_connector.post_reimbursement(reimbursement_ids)
-        fyle_connector.sync_reimbursements()
+        platform.reimbursements.sync()
 
 
 def schedule_reimbursements_sync(sync_qbo_to_fyle_payments, workspace_id):
