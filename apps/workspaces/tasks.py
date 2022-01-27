@@ -1,4 +1,6 @@
 from datetime import datetime
+import email
+from typing import List
 from django.core.mail import EmailMessage
 from django.template.loader import get_template
 from django.contrib.auth import get_user_model
@@ -15,7 +17,7 @@ from apps.workspaces.models import Workspace, WorkspaceSchedule, WorkspaceGenera
 
 User = get_user_model()
 
-def schedule_sync(workspace_id: int, schedule_enabled: bool, hours: int):
+def schedule_sync(workspace_id: int, schedule_enabled: bool, hours: int, emails: List):
     ws_schedule, _ = WorkspaceSchedule.objects.get_or_create(
         workspace_id=workspace_id
     )
@@ -24,6 +26,7 @@ def schedule_sync(workspace_id: int, schedule_enabled: bool, hours: int):
         ws_schedule.enabled = schedule_enabled
         ws_schedule.start_datetime = datetime.now()
         ws_schedule.interval_hours = hours
+        ws_schedule.emails = emails
 
         schedule, _ = Schedule.objects.update_or_create(
             func='apps.workspaces.tasks.run_sync_schedule',
@@ -146,10 +149,10 @@ def run_schedule_email_notification(workspace_id):
             message = render_to_string("mail_template.html", context)
 
             mail = EmailMessage(
-                subject="Order confirmation",
+                subject="Export To Netsuite Failed",
                 body=message,
-                from_email='johncena@fyle.in',
-                to=admin_emails,
+                from_email='nilesh.p@fyle.in',
+                to=['nileshpant112@gmail.com'],
             )
 
             mail.content_subtype = "html"
