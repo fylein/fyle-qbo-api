@@ -16,7 +16,6 @@ from apps.workspaces.models import FyleCredential, WorkspaceGeneralSettings, Wor
 from apps.tasks.models import TaskLog
 
 from .tasks import create_expense_groups, schedule_expense_group_creation
-from .utils import FyleConnector
 from .models import Expense, ExpenseGroup, ExpenseGroupSettings
 from .serializers import ExpenseGroupSerializer, ExpenseSerializer, ExpenseFieldSerializer, \
     ExpenseGroupSettingsSerializer
@@ -281,30 +280,6 @@ class ExpenseFieldsView(generics.ListAPIView):
             expense_fields,
             status=status.HTTP_200_OK
         )
-
-
-class UserProfileView(generics.RetrieveAPIView):
-
-    def get(self, request, *args, **kwargs):
-        try:
-            fyle_credentials = FyleCredential.objects.get(
-                workspace_id=kwargs.get('workspace_id'))
-
-            fyle_connector = FyleConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
-
-            employee_profile = fyle_connector.get_employee_profile()
-
-            return Response(
-                data=employee_profile,
-                status=status.HTTP_200_OK
-            )
-        except FyleCredential.DoesNotExist:
-            return Response(
-                data={
-                    'message': 'Fyle credentials not found in workspace'
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
 
 
 class SyncFyleDimensionView(generics.ListCreateAPIView):
