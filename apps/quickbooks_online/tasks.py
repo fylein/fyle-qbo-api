@@ -29,6 +29,7 @@ from .utils import QBOConnector
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
 
+
 def get_or_create_credit_card_vendor(workspace_id: int, merchant: str):
     """
     Get or create car default vendor
@@ -63,7 +64,7 @@ def load_attachments(qbo_connection: QBOConnector, ref_id: str, ref_type: str, e
     try:
         fyle_credentials = FyleCredential.objects.get(workspace_id=expense_group.workspace_id)
         expense_ids = expense_group.expenses.values_list('expense_id', flat=True)
-        fyle_connector = FyleConnector(fyle_credentials.refresh_token, expense_group.workspace_id)
+        fyle_connector = FyleConnector(fyle_credentials.refresh_token)
         attachments = fyle_connector.get_attachments(expense_ids)
         qbo_connection.post_attachments(ref_id, ref_type, attachments)
     except Exception:
@@ -953,8 +954,6 @@ def check_expenses_reimbursement_status(expenses):
 def create_bill_payment(workspace_id):
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
 
-    fyle_connector = FyleConnector(fyle_credentials.refresh_token, workspace_id)
-
     platform = PlatformConnector(fyle_credentials)
     platform.reimbursements.sync()
 
@@ -1136,7 +1135,7 @@ def schedule_qbo_objects_status_sync(sync_qbo_to_fyle_payments, workspace_id):
 def process_reimbursements(workspace_id):
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
 
-    fyle_connector = FyleConnector(fyle_credentials.refresh_token, workspace_id)
+    fyle_connector = FyleConnector(fyle_credentials.refresh_token)
 
     platform = PlatformConnector(fyle_credentials)
     platform.reimbursements.sync()
