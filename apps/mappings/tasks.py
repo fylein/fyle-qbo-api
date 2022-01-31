@@ -6,6 +6,8 @@ from typing import List, Dict
 
 from django_q.models import Schedule
 
+from fylesdk import WrongParamsError
+
 from fyle_accounting_mappings.models import MappingSetting, Mapping, DestinationAttribute, ExpenseAttribute,\
     EmployeeMapping
 
