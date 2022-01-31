@@ -133,13 +133,6 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
         }
     )
 
-    if not general_settings.map_fyle_cards_qbo_account:
-        mapping_setting = MappingSetting.objects.filter(
-            workspace_id=workspace_id, source_field='CORPORATE_CARD', destination_field='CREDIT_CARD_ACCOUNT'
-        ).first()
-        if mapping_setting:
-            mapping_setting.delete()
-
     if general_settings.map_merchant_to_vendor and \
             general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE':
         expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
@@ -173,3 +166,12 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
     )
 
     return general_settings
+
+
+def delete_cards_mapping_settings(workspace_general_settings: WorkspaceGeneralSettings):
+    if not workspace_general_settings.map_fyle_cards_qbo_account:
+        mapping_setting = MappingSetting.objects.filter(
+            workspace_id=workspace_id, source_field='CORPORATE_CARD', destination_field='CREDIT_CARD_ACCOUNT'
+        ).first()
+        if mapping_setting:
+            mapping_setting.delete()
