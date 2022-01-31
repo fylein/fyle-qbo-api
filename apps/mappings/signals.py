@@ -29,7 +29,7 @@ def run_post_mapping_settings_triggers(sender, instance: MappingSetting, **kwarg
     if instance.is_custom:
         schedule_fyle_attributes_creation(int(instance.workspace_id))
 
-    workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
+    workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=instance.workspace_id).first()
 
     delete_cards_mapping_settings(workspace_general_settings)
 
