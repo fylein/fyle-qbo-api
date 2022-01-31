@@ -41,6 +41,5 @@ FYLE_EXPENSE_SYSTEM_FIELDS = [
     'reimbursable',
     'receipts',
     'paid date',
-    'expense created date',
-    'corporate_card'
+    'expense created date'
 ]
