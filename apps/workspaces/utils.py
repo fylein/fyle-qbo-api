@@ -169,7 +169,7 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
 
 
 def delete_cards_mapping_settings(workspace_general_settings: WorkspaceGeneralSettings):
-    if not workspace_general_settings.map_fyle_cards_qbo_account:
+    if not workspace_general_settings.map_fyle_cards_qbo_account or not workspace_general_settings.corporate_credit_card_expenses_object:
         mapping_setting = MappingSetting.objects.filter(
             workspace_id=workspace_general_settings.workspace_id,
             source_field='CORPORATE_CARD',
