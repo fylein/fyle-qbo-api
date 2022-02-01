@@ -103,3 +103,8 @@ Django Rest Framework API for Fyle Quickbooks Online Integration
     1. docker-compose -f docker-compose-pipeline.yml build
     2. docker-compose -f docker-compose-pipeline.yml up -d
     3. docker-compose -f docker-compose-pipeline.yml exec api pytest tests/
+
+* Run the following command to update tests SQL fixture (`tests/sql_fixtures/reset_db_fixtures/reset_db.sql`)
+    ```
+    docker-compose -f docker-compose-pipeline.yml exec api /bin/bash tests/sql_fixtures/migration_fixtures/create_migration.sh 
+    ```
