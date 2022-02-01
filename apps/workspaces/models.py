@@ -83,6 +83,7 @@ class WorkspaceGeneralSettings(models.Model):
     category_sync_version = models.CharField(default='v1', max_length=50, help_text='Category sync version')
     je_single_credit_line = models.BooleanField(default=False, help_text='Single Credit Line for Journal Entries')
     map_fyle_cards_qbo_account = models.BooleanField(default=True, help_text='Map Fyle Cards to QBO Accounts')
+    skip_cards_mapping = models.BooleanField(default=False, help_text='Skip cards mapping')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
