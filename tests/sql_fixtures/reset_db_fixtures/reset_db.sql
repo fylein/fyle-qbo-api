@@ -1063,7 +1063,9 @@ CREATE TABLE public.expenses (
     paid_on_qbo boolean NOT NULL,
     org_id character varying(255),
     tax_amount double precision,
-    tax_group_id character varying(255)
+    tax_group_id character varying(255),
+    file_ids character varying(255)[],
+    corporate_card_id character varying(255)
 );
 
 
@@ -1202,7 +1204,8 @@ CREATE TABLE public.fyle_credentials (
     refresh_token text NOT NULL,
     created_at timestamp with time zone NOT NULL,
     updated_at timestamp with time zone NOT NULL,
-    workspace_id integer NOT NULL
+    workspace_id integer NOT NULL,
+    cluster_domain character varying(255)
 );
 
 
@@ -1845,7 +1848,8 @@ CREATE TABLE public.workspace_general_settings (
     change_accounting_period boolean NOT NULL,
     import_tax_codes boolean,
     charts_of_accounts character varying(100)[] NOT NULL,
-    memo_structure character varying(100)[] NOT NULL
+    memo_structure character varying(100)[] NOT NULL,
+    map_fyle_cards_qbo_account boolean NOT NULL
 );
 
 
@@ -2511,6 +2515,10 @@ COPY public.auth_permission (id, name, content_type_id, codename) FROM stdin;
 -- Data for Name: auth_tokens; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
+COPY public.auth_tokens (id, refresh_token, user_id) FROM stdin;
+\.
+
+
 --
 -- Data for Name: bill_lineitems; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -3102,6 +3110,7 @@ COPY public.destination_attributes (id, attribute_type, display_name, value, des
 1606	ACCOUNT	Account	Taxes & Licenses	21	2022-01-21 10:42:38.345164+00	2022-01-21 10:42:38.345208+00	9	\N	{"account_type": "Expense", "fully_qualified_name": "Taxes & Licenses"}	f
 1607	ACCOUNT	Account	Travel	22	2022-01-21 10:42:38.345344+00	2022-01-21 10:42:38.34539+00	9	\N	{"account_type": "Expense", "fully_qualified_name": "Travel"}	f
 1608	ACCOUNT	Account	Travel Meals	23	2022-01-21 10:42:38.345524+00	2022-01-21 10:42:38.345572+00	9	\N	{"account_type": "Expense", "fully_qualified_name": "Travel Meals"}	f
+1940	EMPLOYEE	employee	Eren  Yeager	121	2022-01-28 10:12:38.844934+00	2022-01-28 10:12:38.84499+00	8	\N	{"email": null}	f
 1609	ACCOUNT	Account	Unapplied Cash Bill Payment Expense	88	2022-01-21 10:42:38.345921+00	2022-01-21 10:42:38.345994+00	9	\N	{"account_type": "Expense", "fully_qualified_name": "Unapplied Cash Bill Payment Expense"}	f
 1610	ACCOUNT	Account	Uncategorized Expense	31	2022-01-21 10:42:38.346141+00	2022-01-21 10:42:38.346193+00	9	\N	{"account_type": "Expense", "fully_qualified_name": "Uncategorized Expense"}	f
 1611	ACCOUNT	Account	Utilities	24	2022-01-21 10:42:38.346344+00	2022-01-21 10:42:38.346403+00	9	\N	{"account_type": "Expense", "fully_qualified_name": "Utilities"}	f
@@ -3110,6 +3119,7 @@ COPY public.destination_attributes (id, attribute_type, display_name, value, des
 1614	TAX_CODE	Tax Code	Out of scope @0%	4	2022-01-21 10:42:39.726257+00	2022-01-21 10:42:39.726319+00	9	\N	{"tax_rate": 0, "tax_refs": [{"name": "NO TAX PURCHASE", "value": "5"}]}	f
 1615	VENDOR	vendor	Credit Card Misc	58	2022-01-21 10:45:34.818483+00	2022-01-21 16:53:58.941658+00	9	\N	{"email": null}	f
 1616	VENDOR	vendor	test Sharma	59	2022-01-23 08:32:41.72086+00	2022-01-23 08:32:41.720905+00	9	\N	{"email": "test@fyle.in"}	f
+1941	CREDIT_CARD_ACCOUNT	Credit Card Account	QBO CCC Support Account	130	2022-02-01 07:56:49.993188+00	2022-02-01 07:56:49.993237+00	8	\N	{"account_type": "Credit Card", "fully_qualified_name": "QBO CCC Support Account"}	f
 \.
 
 
@@ -3293,6 +3303,10 @@ COPY public.django_migrations (id, app, name, applied) FROM stdin;
 116	workspaces	0017_workspace_cluster_domain	2021-12-19 02:49:23.024348+00
 117	workspaces	0018_workspacegeneralsettings_charts_of_accounts	2021-12-19 02:49:23.063038+00
 118	workspaces	0019_workspacegeneralsettings_memo_structure	2022-01-04 06:41:18.004555+00
+119	fyle	0022_expense_file_ids	2022-02-01 06:32:58.821939+00
+120	fyle	0023_expense_corporate_card_id	2022-02-01 06:32:58.901086+00
+121	workspaces	0020_fylecredential_cluster_domain	2022-02-01 06:32:58.982929+00
+122	workspaces	0021_workspacegeneralsettings_map_fyle_cards_qbo_account	2022-02-01 06:32:59.202384+00
 \.
 
 
@@ -3354,6 +3368,9 @@ black-nebraska-illinois-single	apps.quickbooks_online.tasks.create_qbo_expense	\
 kansas-xray-missouri-montana	apps.fyle.tasks.create_expense_groups	\N	gASVSwIAAAAAAABLCF2UKIwIUEVSU09OQUyUjANDQ0OUZYwVZGphbmdvLmRiLm1vZGVscy5iYXNllIwObW9kZWxfdW5waWNrbGWUk5SMBXRhc2tzlIwHVGFza0xvZ5SGlIWUUpR9lCiMBl9zdGF0ZZRoA4wKTW9kZWxTdGF0ZZSTlCmBlH2UKIwMZmllbGRzX2NhY2hllH2UjAZhZGRpbmeUiYwCZGKUjAdkZWZhdWx0lHVijAJpZJRLDIwMd29ya3NwYWNlX2lklEsIjAR0eXBllIwRRkVUQ0hJTkdfRVhQRU5TRVOUjAd0YXNrX2lklE6MEGV4cGVuc2VfZ3JvdXBfaWSUTowHYmlsbF9pZJROjAljaGVxdWVfaWSUTowQam91cm5hbF9lbnRyeV9pZJROjBdjcmVkaXRfY2FyZF9wdXJjaGFzZV9pZJROjA5xYm9fZXhwZW5zZV9pZJROjA9iaWxsX3BheW1lbnRfaWSUTowGc3RhdHVzlIwIQ09NUExFVEWUjAZkZXRhaWyUfZSMB21lc3NhZ2WUjBdDcmVhdGluZyBleHBlbnNlIGdyb3Vwc5RzjApjcmVhdGVkX2F0lIwIZGF0ZXRpbWWUjAhkYXRldGltZZSTlEMKB+YBFwwDBwPAipSMBHB5dHqUjARfVVRDlJOUKVKUhpRSlIwRcXVpY2tib29rc19lcnJvcnOUTowKdXBkYXRlZF9hdJRoK0MKB+YBFwwlNgKGVZRoMIaUUpSMD19kamFuZ29fdmVyc2lvbpSMBjMuMS4xM5R1YoeULg==	gAR9lC4=	gASVawIAAAAAAACMEnBpY2tsZWZpZWxkLmZpZWxkc5SMDl9PYmplY3RXcmFwcGVylJOUKYGUTn2UjARfb2JqlIwVZGphbmdvLmRiLm1vZGVscy5iYXNllIwObW9kZWxfdW5waWNrbGWUk5SMBXRhc2tzlIwHVGFza0xvZ5SGlIWUUpR9lCiMBl9zdGF0ZZRoBowKTW9kZWxTdGF0ZZSTlCmBlH2UKIwMZmllbGRzX2NhY2hllH2UjAZhZGRpbmeUiYwCZGKUjAdkZWZhdWx0lHVijAJpZJRLDIwMd29ya3NwYWNlX2lklEsIjAR0eXBllIwRRkVUQ0hJTkdfRVhQRU5TRVOUjAd0YXNrX2lklE6MEGV4cGVuc2VfZ3JvdXBfaWSUTowHYmlsbF9pZJROjAljaGVxdWVfaWSUTowQam91cm5hbF9lbnRyeV9pZJROjBdjcmVkaXRfY2FyZF9wdXJjaGFzZV9pZJROjA5xYm9fZXhwZW5zZV9pZJROjA9iaWxsX3BheW1lbnRfaWSUTowGc3RhdHVzlIwIQ09NUExFVEWUjAZkZXRhaWyUfZSMB21lc3NhZ2WUjBdDcmVhdGluZyBleHBlbnNlIGdyb3Vwc5RzjApjcmVhdGVkX2F0lIwIZGF0ZXRpbWWUjAhkYXRldGltZZSTlEMKB+YBFwwDBwPAipSMBHB5dHqUjARfVVRDlJOUKVKUhpRSlIwRcXVpY2tib29rc19lcnJvcnOUTowKdXBkYXRlZF9hdJRoLkMKB+YBFwwlNgKGVZRoM4aUUpSMD19kamFuZ29fdmVyc2lvbpSMBjMuMS4xM5R1YnOGlGIu	2022-01-23 12:37:51.498967+00	2022-01-23 12:37:54.170057+00	t	9f86b7c18a574e689754a0ed9201b2b3	\N	1
 seventeen-double-texas-seven	apps.quickbooks_online.tasks.create_journal_entry	\N	gASVWgMAAAAAAACMFWRqYW5nby5kYi5tb2RlbHMuYmFzZZSMDm1vZGVsX3VucGlja2xllJOUjARmeWxllIwMRXhwZW5zZUdyb3VwlIaUhZRSlH2UKIwGX3N0YXRllGgAjApNb2RlbFN0YXRllJOUKYGUfZQojAxmaWVsZHNfY2FjaGWUfZSMDGpvdXJuYWxlbnRyeZRoAowRcXVpY2tib29rc19vbmxpbmWUjAxKb3VybmFsRW50cnmUhpSFlFKUfZQojAZfc3RhdGWUaAspgZR9lCiMAmRilIwHZGVmYXVsdJRoDn2UjA1leHBlbnNlX2dyb3VwlGgHc4wGYWRkaW5nlIl1YowCaWSUSwOMEGV4cGVuc2VfZ3JvdXBfaWSUSwyMEHRyYW5zYWN0aW9uX2RhdGWUjAoyMDIyLTAxLTIzlIwIY3VycmVuY3mUjANVU0SUjAxwcml2YXRlX25vdGWUjDZDcmVkaXQgY2FyZCBleHBlbnNlIGJ5IGFzaHdpbi50QGZ5bGUuaW4gb24gMjAyMi0wMS0yMyCUjApjcmVhdGVkX2F0lIwIZGF0ZXRpbWWUjAhkYXRldGltZZSTlEMKB+YBFwwmAQ40JJSMBHB5dHqUjARfVVRDlJOUKVKUhpRSlIwKdXBkYXRlZF9hdJRoKkMKB+YBFwwmAQ40d5RoL4aUUpSMD19kamFuZ29fdmVyc2lvbpSMBjMuMS4xM5R1YnNoHoloGowHZGVmYXVsdJR1YowCaWSUSwyMDHdvcmtzcGFjZV9pZJRLCIwLZnVuZF9zb3VyY2WUjANDQ0OUjAtkZXNjcmlwdGlvbpR9lCiMCXJlcG9ydF9pZJSMDHJwMkhKVVJZS3NYSZSMC2Z1bmRfc291cmNllIwDQ0NDlIwMY2xhaW1fbnVtYmVylIwOQy8yMDIyLzAxL1IvMTSUjA5lbXBsb3llZV9lbWFpbJSMEGFzaHdpbi50QGZ5bGUuaW6UdYwNcmVzcG9uc2VfbG9nc5ROjApjcmVhdGVkX2F0lGgqQwoH5gEXDA86BtuzlGgvhpRSlIwLZXhwb3J0ZWRfYXSUTowKdXBkYXRlZF9hdJRoKkMKB+YBFwwPOgbb/pRoL4aUUpSMD19kamFuZ29fdmVyc2lvbpRoN3ViSw+GlC4=	gAR9lC4=	\N	2022-01-23 12:37:59.608466+00	2022-01-23 12:38:03.123018+00	t	42dca3fe2f314d669042b8b76f83e1cf	7d8a82faffb3474f8846142e5dc5b4f6	1
 missouri-oscar-iowa-nuts	apps.quickbooks_online.tasks.create_qbo_expense	\N	gASVnQMAAAAAAACMFWRqYW5nby5kYi5tb2RlbHMuYmFzZZSMDm1vZGVsX3VucGlja2xllJOUjARmeWxllIwMRXhwZW5zZUdyb3VwlIaUhZRSlH2UKIwGX3N0YXRllGgAjApNb2RlbFN0YXRllJOUKYGUfZQojAxmaWVsZHNfY2FjaGWUfZSMCnFib2V4cGVuc2WUaAKMEXF1aWNrYm9va3Nfb25saW5llIwKUUJPRXhwZW5zZZSGlIWUUpR9lCiMBl9zdGF0ZZRoCymBlH2UKIwCZGKUjAdkZWZhdWx0lGgOfZSMDWV4cGVuc2VfZ3JvdXCUaAdzjAZhZGRpbmeUiXVijAJpZJRLBIwQZXhwZW5zZV9ncm91cF9pZJRLDowSZXhwZW5zZV9hY2NvdW50X2lklIwCNDGUjAllbnRpdHlfaWSUjAI1NZSMDWRlcGFydG1lbnRfaWSUTowQdHJhbnNhY3Rpb25fZGF0ZZSMCjIwMjItMDEtMjOUjAhjdXJyZW5jeZSMA1VTRJSMDHByaXZhdGVfbm90ZZSMN1JlaW1idXJzYWJsZSBleHBlbnNlIGJ5IGFzaHdpbi50QGZ5bGUuaW4gb24gMjAyMi0wMS0yMyCUjApjcmVhdGVkX2F0lIwIZGF0ZXRpbWWUjAhkYXRldGltZZSTlEMKB+YBFwwmAQ7l1ZSMBHB5dHqUjARfVVRDlJOUKVKUhpRSlIwKdXBkYXRlZF9hdJRoL0MKB+YBFwwmAQ7mDJRoNIaUUpSMD19kamFuZ29fdmVyc2lvbpSMBjMuMS4xM5R1YnNoHoloGowHZGVmYXVsdJR1YowCaWSUSw6MDHdvcmtzcGFjZV9pZJRLCIwLZnVuZF9zb3VyY2WUjAhQRVJTT05BTJSMC2Rlc2NyaXB0aW9ulH2UKIwJcmVwb3J0X2lklIwMcnBCUTl2eDdGSmMzlIwLZnVuZF9zb3VyY2WUjAhQRVJTT05BTJSMDGNsYWltX251bWJlcpSMDkMvMjAyMi8wMS9SLzE2lIwOZW1wbG95ZWVfZW1haWyUjBBhc2h3aW4udEBmeWxlLmlulHWMDXJlc3BvbnNlX2xvZ3OUTowKY3JlYXRlZF9hdJRoL0MKB+YBFwwlNgIWHJRoNIaUUpSMC2V4cG9ydGVkX2F0lE6MCnVwZGF0ZWRfYXSUaC9DCgfmARcMJTYCFluUaDSGlFKUjA9fZGphbmdvX3ZlcnNpb26UaDx1YksRhpQu	gAR9lC4=	\N	2022-01-23 12:37:59.61673+00	2022-01-23 12:38:04.747405+00	t	a6e008c01790456ab3b06500619f1749	d940fe9f905243b0a0b22f891c97154f	1
+spaghetti-finch-double-california	apps.quickbooks_online.tasks.async_sync_accounts	\N	gASVBQAAAAAAAABLCoWULg==	gAR9lC4=	\N	2022-01-27 12:55:02.583895+00	2022-01-27 12:55:08.818904+00	t	a44aa7997c784001bdddcb9e63f08e03	\N	1
+florida-uranus-lithium-delta	apps.fyle.tasks.create_expense_groups	\N	gASVRAIAAAAAAABLCl2UjAhQRVJTT05BTJRhjBVkamFuZ28uZGIubW9kZWxzLmJhc2WUjA5tb2RlbF91bnBpY2tsZZSTlIwFdGFza3OUjAdUYXNrTG9nlIaUhZRSlH2UKIwGX3N0YXRllGgCjApNb2RlbFN0YXRllJOUKYGUfZQojAxmaWVsZHNfY2FjaGWUfZSMAmRilIwHZGVmYXVsdJSMBmFkZGluZ5SJdWKMAmlklEsSjAx3b3Jrc3BhY2VfaWSUSwqMBHR5cGWUjBFGRVRDSElOR19FWFBFTlNFU5SMB3Rhc2tfaWSUTowQZXhwZW5zZV9ncm91cF9pZJROjAdiaWxsX2lklE6MCWNoZXF1ZV9pZJROjBBqb3VybmFsX2VudHJ5X2lklE6MF2NyZWRpdF9jYXJkX3B1cmNoYXNlX2lklE6MDnFib19leHBlbnNlX2lklE6MD2JpbGxfcGF5bWVudF9pZJROjAZzdGF0dXOUjAhDT01QTEVURZSMBmRldGFpbJR9lIwHbWVzc2FnZZSMF0NyZWF0aW5nIGV4cGVuc2UgZ3JvdXBzlHOMCmNyZWF0ZWRfYXSUjAhkYXRldGltZZSMCGRhdGV0aW1llJOUQwoH5gEbDDo4CIiolIwEcHl0epSMBF9VVEOUk5QpUpSGlFKUjBFxdWlja2Jvb2tzX2Vycm9yc5ROjAp1cGRhdGVkX2F0lGgqQwoH5gEbDDsAA/n/lGgvhpRSlIwPX2RqYW5nb192ZXJzaW9ulIwGMy4xLjEzlHVih5Qu	gAR9lC4=	gASVawIAAAAAAACMEnBpY2tsZWZpZWxkLmZpZWxkc5SMDl9PYmplY3RXcmFwcGVylJOUKYGUTn2UjARfb2JqlIwVZGphbmdvLmRiLm1vZGVscy5iYXNllIwObW9kZWxfdW5waWNrbGWUk5SMBXRhc2tzlIwHVGFza0xvZ5SGlIWUUpR9lCiMBl9zdGF0ZZRoBowKTW9kZWxTdGF0ZZSTlCmBlH2UKIwMZmllbGRzX2NhY2hllH2UjAJkYpSMB2RlZmF1bHSUjAZhZGRpbmeUiXVijAJpZJRLEowMd29ya3NwYWNlX2lklEsKjAR0eXBllIwRRkVUQ0hJTkdfRVhQRU5TRVOUjAd0YXNrX2lklE6MEGV4cGVuc2VfZ3JvdXBfaWSUTowHYmlsbF9pZJROjAljaGVxdWVfaWSUTowQam91cm5hbF9lbnRyeV9pZJROjBdjcmVkaXRfY2FyZF9wdXJjaGFzZV9pZJROjA5xYm9fZXhwZW5zZV9pZJROjA9iaWxsX3BheW1lbnRfaWSUTowGc3RhdHVzlIwIQ09NUExFVEWUjAZkZXRhaWyUfZSMB21lc3NhZ2WUjBdDcmVhdGluZyBleHBlbnNlIGdyb3Vwc5RzjApjcmVhdGVkX2F0lIwIZGF0ZXRpbWWUjAhkYXRldGltZZSTlEMKB+YBGww6OAiIqJSMBHB5dHqUjARfVVRDlJOUKVKUhpRSlIwRcXVpY2tib29rc19lcnJvcnOUTowKdXBkYXRlZF9hdJRoLkMKB+YBGww7AAP5/5RoM4aUUpSMD19kamFuZ29fdmVyc2lvbpSMBjMuMS4xM5R1YnOGlGIu	2022-01-27 12:58:56.60749+00	2022-01-27 12:59:00.275781+00	t	cc5a03dfaa374b3ea17f6ecba1bf5d71	\N	1
+winner-paris-nuts-gee	apps.quickbooks_online.tasks.create_cheque	\N	gASVOQgAAAAAAACMFWRqYW5nby5kYi5tb2RlbHMuYmFzZZSMDm1vZGVsX3VucGlja2xllJOUjARmeWxllIwMRXhwZW5zZUdyb3VwlIaUhZRSlH2UKIwGX3N0YXRllGgAjApNb2RlbFN0YXRllJOUKYGUfZQojAxmaWVsZHNfY2FjaGWUfZSMBmNoZXF1ZZRoAowRcXVpY2tib29rc19vbmxpbmWUjAZDaGVxdWWUhpSFlFKUfZQojAZfc3RhdGWUaAspgZR9lCiMAmRilIwHZGVmYXVsdJRoDn2UjA1leHBlbnNlX2dyb3VwlGgHc4wGYWRkaW5nlIl1YowCaWSUSwGMEGV4cGVuc2VfZ3JvdXBfaWSUSw+MD2JhbmtfYWNjb3VudF9pZJSMAjM2lIwJZW50aXR5X2lklIwDMTA1lIwNZGVwYXJ0bWVudF9pZJROjBB0cmFuc2FjdGlvbl9kYXRllIwKMjAyMi0wMS0yN5SMCGN1cnJlbmN5lIwDVVNElIwMcHJpdmF0ZV9ub3RllIw3UmVpbWJ1cnNhYmxlIGV4cGVuc2UgYnkgYXNod2luLnRAZnlsZS5pbiBvbiAyMDIyLTAxLTI3IJSMCmNyZWF0ZWRfYXSUjAhkYXRldGltZZSMCGRhdGV0aW1llJOUQwoH5gEbDDsPDqEUlIwEcHl0epSMBF9VVEOUk5QpUpSGlFKUjAp1cGRhdGVkX2F0lGgvQwoH5gEbDDsPDqJVlGg0hpRSlIwPX2RqYW5nb192ZXJzaW9ulIwGMy4xLjEzlHVic2geiWgajAdkZWZhdWx0lHVijAJpZJRLD4wMd29ya3NwYWNlX2lklEsKjAtmdW5kX3NvdXJjZZSMCFBFUlNPTkFMlIwLZGVzY3JpcHRpb26UfZQojAlyZXBvcnRfaWSUjAxycHVsSHk1Z3hBTWyUjAtmdW5kX3NvdXJjZZSMCFBFUlNPTkFMlIwMY2xhaW1fbnVtYmVylIwOQy8yMDIyLzAxL1IvMTaUjA5lbXBsb3llZV9lbWFpbJSMEGFzaHdpbi50QGZ5bGUuaW6UdYwNcmVzcG9uc2VfbG9nc5R9lCiMCFB1cmNoYXNllH2UKIwKQWNjb3VudFJlZpR9lCiMBXZhbHVllIwCMzaUjARuYW1llIwHU2F2aW5nc5R1jAtQYXltZW50VHlwZZSMBUNoZWNrlIwJRW50aXR5UmVmlH2UKGhSjAMxMDWUaFSMCUNoZXRoYW4gTZSMBHR5cGWUjAhFbXBsb3llZZR1jAhUb3RhbEFtdJRHQFkAAAAAAACMC1ByaW50U3RhdHVzlIwGTm90U2V0lIwKUHVyY2hhc2VFeJR9lIwDYW55lF2UfZQoaFSMLntodHRwOi8vc2NoZW1hLmludHVpdC5jb20vZmluYW5jZS92M31OYW1lVmFsdWWUjAxkZWNsYXJlZFR5cGWUjCZjb20uaW50dWl0LnNjaGVtYS5maW5hbmNlLnYzLk5hbWVWYWx1ZZSMBXNjb3BllIwmamF2YXgueG1sLmJpbmQuSkFYQkVsZW1lbnQkR2xvYmFsU2NvcGWUaFJ9lCiMBE5hbWWUjAdUeG5UeXBllIwFVmFsdWWUjAEzlHWMA25pbJSJjAtnbG9iYWxTY29wZZSIjA90eXBlU3Vic3RpdHV0ZWSUiXVhc4wGZG9tYWlulIwDUUJPlIwGc3BhcnNllImMAklklIwEMjAwNZSMCVN5bmNUb2tlbpSMATCUjAhNZXRhRGF0YZR9lCiMCkNyZWF0ZVRpbWWUjBkyMDIyLTAxLTI3VDA0OjU5OjE4LTA4OjAwlIwPTGFzdFVwZGF0ZWRUaW1llIwZMjAyMi0wMS0yN1QwNDo1OToxOC0wODowMJR1jAtDdXN0b21GaWVsZJRdlIwHVHhuRGF0ZZSMCjIwMjItMDEtMjeUjAtDdXJyZW5jeVJlZpR9lChoUowDVVNElGhUjBRVbml0ZWQgU3RhdGVzIERvbGxhcpR1jAtQcml2YXRlTm90ZZSMNlJlaW1idXJzYWJsZSBleHBlbnNlIGJ5IGFzaHdpbi50QGZ5bGUuaW4gb24gMjAyMi0wMS0yN5SMBExpbmWUXZR9lChodowBMZSMC0Rlc2NyaXB0aW9ulIyYYXNod2luLnRAZnlsZS5pbiAtIEZvb2QgLSAyMDIyLTAxLTI3IC0gQy8yMDIyLzAxL1IvMTYgLSAgLSBodHRwczovL3N0YWdpbmcuZnlsZS50ZWNoL2FwcC9tYWluLyMvZW50ZXJwcmlzZS92aWV3X2V4cGVuc2UvdHh0Sks1T2FnMXVKP29yZ19pZD1vcmsyYzkwUEFIdGuUjAZBbW91bnSUR0BZAAAAAAAAjApEZXRhaWxUeXBllIwdQWNjb3VudEJhc2VkRXhwZW5zZUxpbmVEZXRhaWyUjB1BY2NvdW50QmFzZWRFeHBlbnNlTGluZURldGFpbJR9lChoUH2UKGhSjAIxMZRoVIwJSW5zdXJhbmNllHWMDkJpbGxhYmxlU3RhdHVzlIwLTm90QmlsbGFibGWUjApUYXhDb2RlUmVmlH2UaFKMA05PTpRzdXVhdYwEdGltZZSMHTIwMjItMDEtMjdUMDQ6NTk6MTguMjc2LTA4OjAwlHWMCmNyZWF0ZWRfYXSUaC9DCgfmARsMOwABaBSUaDSGlFKUjAtleHBvcnRlZF9hdJRoL0MKB+YBGww7EgV2+JSFlFKUjAp1cGRhdGVkX2F0lGgvQwoH5gEbDDsSBXhSlGg0hpRSlIwPX2RqYW5nb192ZXJzaW9ulGg8dWJLE4aULg==	gAR9lC4=	\N	2022-01-27 12:59:13.578689+00	2022-01-27 12:59:18.948269+00	t	d8044b61546c46d2988cc2765335b88c	521d817e3b9f4a9e8bddf84415cbcfaf	1
 \.
 
 
@@ -5116,6 +5133,7 @@ COPY public.expense_attributes (id, attribute_type, display_name, value, source_
 8686	EMPLOYEE	Employee	user7@fyleforbill.cct	ouxEY1eU72HD	2022-01-21 10:42:20.694767+00	2022-01-21 10:42:20.694807+00	9	\N	{"location": null, "full_name": "James Taylor", "department": "Department 2", "department_id": "deptUxQWUo5I4Z", "employee_code": null, "department_code": null}	f	f
 8687	EMPLOYEE	Employee	user8@fyleforbill.cct	ouhVFXcYcGNb	2022-01-21 10:42:20.694882+00	2022-01-21 10:42:20.694911+00	9	\N	{"location": null, "full_name": "Jessica Lane", "department": "Department 1", "department_id": "dept2i0V5eKfV4", "employee_code": null, "department_code": null}	f	f
 8688	EMPLOYEE	Employee	user9@fyleforbill.cct	ouaYCLXE3mdl	2022-01-21 10:42:20.694982+00	2022-01-21 10:42:20.695011+00	9	\N	{"location": null, "full_name": "Justin Glass", "department": "Department 3", "department_id": "depthXWVUDPbx2", "employee_code": null, "department_code": null}	f	f
+12209	CORPORATE_CARD	Corporate Card	BANK OF INDIA - 219874	baccxoXQr0p2kj	2022-02-01 07:50:24.756246+00	2022-02-01 07:50:24.75642+00	8	\N	{"cardholder_name": null}	f	f
 8690	EMPLOYEE	Employee	nilesh.p+1@fyle.in	ouyHH5kNYhzK	2022-01-21 10:42:20.695183+00	2022-01-21 10:42:20.695212+00	9	\N	{"location": null, "full_name": "Dwayne Jhonson", "department": null, "department_id": null, "employee_code": null, "department_code": null}	f	f
 8691	CATEGORY	Category	121 payment processing	160956	2022-01-21 10:42:22.263906+00	2022-01-21 10:42:22.263974+00	9	\N	\N	f	f
 8692	CATEGORY	Category	130fre	161193	2022-01-21 10:42:22.264379+00	2022-01-21 10:42:22.264476+00	9	\N	\N	f	f
@@ -6854,6 +6872,42 @@ COPY public.expense_attributes (id, attribute_type, display_name, value, source_
 10426	TAX_GROUP	Tax Group	GST: CPF-AU @0.00%	tgZDLivGwC4C	2022-01-21 10:42:30.513786+00	2022-01-21 10:42:30.537152+00	9	\N	{"tax_rate": 0}	f	f
 10427	TAX_GROUP	Tax Group	PVA Import 20.0% @0%	tgZHmshjcBit	2022-01-21 10:42:30.537397+00	2022-01-21 10:42:30.537446+00	9	\N	{"tax_rate": 0}	f	f
 10428	TAX_GROUP	Tax Group	GST: TS-AU @10.00%	tgzoMYBncKYp	2022-01-21 10:42:30.537561+00	2022-01-21 10:42:30.537599+00	9	\N	{"tax_rate": 0.1}	f	f
+12208	EMPLOYEE	Employee	mikasa@fyle.in	ou7l33OoTano	2022-01-28 10:12:31.762028+00	2022-01-28 10:12:31.762106+00	8	\N	{"location": null, "full_name": "mikasa", "department": null, "department_id": null, "employee_code": null, "department_code": null}	f	f
+12210	CORPORATE_CARD	Corporate Card	BANK OF INDIA - 219875	baccKkmmW4u1N4	2022-02-01 07:50:24.756517+00	2022-02-01 07:50:24.756621+00	8	\N	{"cardholder_name": null}	f	f
+12211	CORPORATE_CARD	Corporate Card	BANK OF INDIA - 219876	baccfiqYgkE8Db	2022-02-01 07:50:24.756754+00	2022-02-01 07:50:24.756788+00	8	\N	{"cardholder_name": null}	f	f
+12212	CORPORATE_CARD	Corporate Card	Bank of America - 8084	baccMCkKmsHV9X	2022-02-01 07:50:24.757022+00	2022-02-01 07:50:24.75706+00	8	\N	{"cardholder_name": null}	f	f
+12213	CORPORATE_CARD	Corporate Card	Bank of America - 1319	baccJKh39lWI2L	2022-02-01 07:50:24.757357+00	2022-02-01 07:50:24.757697+00	8	\N	{"cardholder_name": null}	f	f
+12214	CORPORATE_CARD	Corporate Card	American Express - 30350	bacc3D6qx7cb4J	2022-02-01 07:50:24.758121+00	2022-02-01 07:50:24.758165+00	8	\N	{"cardholder_name": "Dr. Ross Eustace Geller's account"}	f	f
+12215	CORPORATE_CARD	Corporate Card	American Express - 05556	baccuGmJMILiAr	2022-02-01 07:50:24.758242+00	2022-02-01 07:50:24.758271+00	8	\N	{"cardholder_name": "Phoebe Buffay-Hannigan's account"}	f	f
+12216	CORPORATE_CARD	Corporate Card	American Express - 93634	bacc8nxvDzy9UB	2022-02-01 07:50:24.758341+00	2022-02-01 07:50:24.75837+00	8	\N	{"cardholder_name": "Joseph Francis Tribbiani, Jr's account"}	f	f
+12217	CORPORATE_CARD	Corporate Card	American Express - 59344	baccRUz3T9WTG0	2022-02-01 07:50:24.75844+00	2022-02-01 07:50:24.758468+00	8	\N	{"cardholder_name": "Dr. Ross Eustace Geller's account"}	f	f
+12218	CORPORATE_CARD	Corporate Card	American Express - 29676	baccJEu4LHANTj	2022-02-01 07:50:24.758538+00	2022-02-01 07:50:24.758567+00	8	\N	{"cardholder_name": "Monica E. Geller-Bing's account"}	f	f
+12219	CORPORATE_CARD	Corporate Card	American Express - 97584	bacc3gPRo0BFI4	2022-02-01 07:50:24.759162+00	2022-02-01 07:50:24.759207+00	8	\N	{"cardholder_name": "Monica E. Geller-Bing's account"}	f	f
+12220	CORPORATE_CARD	Corporate Card	American Express - 27881	baccT6Cr2LOoCU	2022-02-01 07:50:24.75939+00	2022-02-01 07:50:24.759424+00	8	\N	{"cardholder_name": "Monica E. Geller-Bing's account"}	f	f
+12221	CORPORATE_CARD	Corporate Card	American Express - 40414	baccChwshlFsT5	2022-02-01 07:50:24.759647+00	2022-02-01 07:50:24.759689+00	8	\N	{"cardholder_name": "Monica E. Geller-Bing's account"}	f	f
+12222	CORPORATE_CARD	Corporate Card	American Express - 71149	baccaQY7KB7ogS	2022-02-01 07:50:24.760033+00	2022-02-01 07:50:24.760097+00	8	\N	{"cardholder_name": "Joseph Francis Tribbiani, Jr's account"}	f	f
+12223	CORPORATE_CARD	Corporate Card	American Express - 29578	bacce3rbqv5Veb	2022-02-01 07:50:24.760705+00	2022-02-01 07:50:24.760969+00	8	\N	{"cardholder_name": "Monica E. Geller-Bing's account"}	f	f
+12224	CORPORATE_CARD	Corporate Card	American Express - 93356	baccUhWPMgn4EB	2022-02-01 07:50:24.761208+00	2022-02-01 07:50:24.761249+00	8	\N	{"cardholder_name": "Dr. Ross Eustace Geller's account"}	f	f
+12225	CORPORATE_CARD	Corporate Card	American Express - 64504	baccE0fU1LTqxm	2022-02-01 07:50:24.761483+00	2022-02-01 07:50:24.761524+00	8	\N	{"cardholder_name": "Joseph Francis Tribbiani, Jr's account"}	f	f
+12226	CORPORATE_CARD	Corporate Card	American Express - 69115	baccKzSkYJjBQt	2022-02-01 07:50:24.761756+00	2022-02-01 07:50:24.761791+00	8	\N	{"cardholder_name": "Joseph Francis Tribbiani, Jr's account"}	f	f
+12227	CORPORATE_CARD	Corporate Card	GPAY BANK - 219875	baccbhkX5lA0TT	2022-02-01 07:57:28.821023+00	2022-02-01 07:57:28.821071+00	9	\N	{"cardholder_name": null}	f	f
+12228	CORPORATE_CARD	Corporate Card	GPAY BANK - 219876	baccmW34eWxXXM	2022-02-01 07:57:28.821155+00	2022-02-01 07:57:28.821186+00	9	\N	{"cardholder_name": null}	f	f
+12229	CORPORATE_CARD	Corporate Card	American Express - 70392	baccbGReqIa7xB	2022-02-01 07:57:28.821262+00	2022-02-01 07:57:28.821292+00	9	\N	{"cardholder_name": "Monica E. Geller-Bing's account"}	f	f
+12230	CORPORATE_CARD	Corporate Card	GPAY BANK - 219874	baccNUw01Ere0t	2022-02-01 07:57:28.821365+00	2022-02-01 07:57:28.821394+00	9	\N	{"cardholder_name": null}	f	f
+12231	CORPORATE_CARD	Corporate Card	American Express - 15812	baccDNQlplY8Yb	2022-02-01 07:57:28.821466+00	2022-02-01 07:57:28.821495+00	9	\N	{"cardholder_name": "Chandler Muriel Bing's account"}	f	f
+12232	CORPORATE_CARD	Corporate Card	Bank of America - 8084	baccdf7BlqXmNS	2022-02-01 07:57:28.821742+00	2022-02-01 07:57:28.821773+00	9	\N	{"cardholder_name": null}	f	f
+12233	CORPORATE_CARD	Corporate Card	Bank of America - 1319	bacctuee9mV2Dl	2022-02-01 07:57:28.821846+00	2022-02-01 07:57:28.821875+00	9	\N	{"cardholder_name": null}	f	f
+12234	CORPORATE_CARD	Corporate Card	American Express - 85470	bacczbsnk4TKQ0	2022-02-01 07:57:28.821946+00	2022-02-01 07:57:28.821975+00	9	\N	{"cardholder_name": "Monica E. Geller-Bing's account"}	f	f
+12235	CORPORATE_CARD	Corporate Card	American Express - 78448	baccPsL1HAPLtm	2022-02-01 07:57:28.822045+00	2022-02-01 07:57:28.822074+00	9	\N	{"cardholder_name": "Monica E. Geller-Bing's account"}	f	f
+12236	CORPORATE_CARD	Corporate Card	American Express - 39509	baccu5vSVlzQrb	2022-02-01 07:57:28.822143+00	2022-02-01 07:57:28.822173+00	9	\N	{"cardholder_name": "Joseph Francis Tribbiani, Jr's account"}	f	f
+12237	CORPORATE_CARD	Corporate Card	American Express - 62224	baccddo9BS6W6Y	2022-02-01 07:57:28.822242+00	2022-02-01 07:57:28.822271+00	9	\N	{"cardholder_name": "Chandler Muriel Bing's account"}	f	f
+12238	CORPORATE_CARD	Corporate Card	American Express - 00428	baccO1KAFCsXaF	2022-02-01 07:57:28.822341+00	2022-02-01 07:57:28.82237+00	9	\N	{"cardholder_name": "Phoebe Buffay-Hannigan's account"}	f	f
+12239	CORPORATE_CARD	Corporate Card	American Express - 13559	baccoVYhrFKuhV	2022-02-01 07:57:28.82244+00	2022-02-01 07:57:28.822469+00	9	\N	{"cardholder_name": "Monica E. Geller-Bing's account"}	f	f
+12240	CORPORATE_CARD	Corporate Card	American Express - 94385	baccURYMBjekiy	2022-02-01 07:57:28.822538+00	2022-02-01 07:57:28.822722+00	9	\N	{"cardholder_name": "Chandler Muriel Bing's account"}	f	f
+12241	CORPORATE_CARD	Corporate Card	American Express - 70381	baccvMtCrKypdV	2022-02-01 07:57:28.822795+00	2022-02-01 07:57:28.822824+00	9	\N	{"cardholder_name": "Dr. Ross Eustace Geller's account"}	f	f
+12242	CORPORATE_CARD	Corporate Card	American Express - 05433	baccCc3H0QFgWw	2022-02-01 07:57:28.822894+00	2022-02-01 07:57:28.822923+00	9	\N	{"cardholder_name": "Phoebe Buffay-Hannigan's account"}	f	f
+12243	CORPORATE_CARD	Corporate Card	American Express - 74399	bacczhJJcNhYue	2022-02-01 07:57:28.822993+00	2022-02-01 07:57:28.823022+00	9	\N	{"cardholder_name": "Dr. Ross Eustace Geller's account"}	f	f
+12244	CORPORATE_CARD	Corporate Card	American Express - 25493	baccw7tz5rfIwZ	2022-02-01 07:57:28.823091+00	2022-02-01 07:57:28.82312+00	9	\N	{"cardholder_name": "Joseph Francis Tribbiani, Jr's account"}	f	f
 \.
 
 
@@ -6905,22 +6959,27 @@ COPY public.expense_groups_expenses (id, expensegroup_id, expense_id) FROM stdin
 -- Data for Name: expenses; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.expenses (id, employee_email, category, sub_category, project, expense_id, expense_number, claim_number, amount, currency, foreign_amount, foreign_currency, settlement_id, reimbursable, exported, state, vendor, cost_center, purpose, report_id, spent_at, approved_at, expense_created_at, expense_updated_at, created_at, updated_at, fund_source, custom_properties, verified_at, billable, paid_on_qbo, org_id, tax_amount, tax_group_id) FROM stdin;
-6	ashwin.t@fyle.in	Travel	Travel	\N	txDmcqOv8LMD	E/2022/01/T/7	C/2022/01/R/7	120	USD	\N	\N	setS3D0ItJsD2	t	f	PAYMENT_PROCESSING	\N	\N	\N	rpqBKuvCwnTY	2022-01-21 00:00:00+00	2022-01-21 00:00:00+00	2022-01-21 10:00:23.459+00	2022-01-21 10:02:13.588+00	2022-01-21 10:45:18.322426+00	2022-01-21 10:45:18.322467+00	PERSONAL	{"Class": ""}	\N	\N	f	orGcBCVPijjO	\N	\N
-7	ashwin.t@fyle.in	Travel	Travel	\N	txJkZlJS4LrA	E/2022/01/T/8	C/2022/01/R/7	50	USD	\N	\N	setS3D0ItJsD2	f	f	PAYMENT_PROCESSING	\N	\N	\N	rpqBKuvCwnTY	2022-01-21 00:00:00+00	2022-01-21 00:00:00+00	2022-01-21 10:00:41.232+00	2022-01-21 10:02:13.588+00	2022-01-21 10:45:18.435608+00	2022-01-21 10:45:18.435701+00	CCC	{"Class": ""}	\N	\N	f	orGcBCVPijjO	\N	\N
-8	ashwin.t@fyle.in	Travel	Travel	\N	txlPjmNxssq1	E/2022/01/T/10	C/2022/01/R/8	60	USD	\N	\N	set5qvkasVDnI	t	f	PAYMENT_PROCESSING	\N	\N	\N	rpeM68HKCNNA	2022-01-21 00:00:00+00	2022-01-21 00:00:00+00	2022-01-21 10:46:19.877+00	2022-01-21 10:48:53.928+00	2022-01-21 10:51:06.448907+00	2022-01-21 10:51:06.448944+00	PERSONAL	{"Class": ""}	\N	\N	f	orGcBCVPijjO	\N	\N
-9	ashwin.t@fyle.in	Travel	Travel	\N	txvh8qm7RTRI	E/2022/01/T/9	C/2022/01/R/8	30	USD	\N	\N	set5qvkasVDnI	f	f	PAYMENT_PROCESSING	\N	\N	\N	rpeM68HKCNNA	2022-01-21 00:00:00+00	2022-01-21 00:00:00+00	2022-01-21 10:45:58.459+00	2022-01-21 10:48:53.928+00	2022-01-21 10:51:06.469783+00	2022-01-21 10:51:06.469819+00	CCC	{"Class": ""}	\N	\N	f	orGcBCVPijjO	\N	\N
-10	ashwin.t@fyle.in	Food	Food	Aaron Abbott	txraSPJaG9Ep	E/2022/01/T/13	C/2022/01/R/13	60	USD	\N	\N	setXTEjf2wY78	t	f	PAYMENT_PROCESSING	\N	\N	\N	rp0jk7Rg1epk	2022-01-23 00:00:00+00	2022-01-23 00:00:00+00	2022-01-23 12:01:23.234+00	2022-01-23 12:02:54.246+00	2022-01-23 12:03:10.909511+00	2022-01-23 12:03:10.909564+00	PERSONAL	{"Team": "", "Class": "", "Klass": "", "Team 2": "", "Location": "", "Team Copy": "", "Tax Groups": "", "Departments": "", "User Dimension": "", "Location Entity": "", "Operating System": "", "System Operating": "", "User Dimension Copy": ""}	\N	f	f	or79Cob97KSh	13.13	tggu76WXIdjY
-11	ashwin.t@fyle.in	Food	Food	Aaron Abbott	txiKwmiTDjwJ	E/2022/01/T/15	C/2022/01/R/14	60	USD	\N	\N	set8I1KlM4ViY	t	f	PAYMENT_PROCESSING	\N	\N	\N	rp2HJURYKsXI	2022-01-23 00:00:00+00	2022-01-23 00:00:00+00	2022-01-23 12:13:28.367+00	2022-01-23 12:15:45.203+00	2022-01-23 12:15:58.201656+00	2022-01-23 12:15:58.201693+00	PERSONAL	{"Team": "", "Class": "", "Klass": "", "Team 2": "", "Location": "", "Team Copy": "", "Tax Groups": "", "Departments": "", "User Dimension": "", "Location Entity": "", "Operating System": "", "System Operating": "", "User Dimension Copy": ""}	\N	\N	f	or79Cob97KSh	13.13	tggu76WXIdjY
-12	ashwin.t@fyle.in	Food	Food	Aaron Abbott	txMFjDHNxEPt	E/2022/01/T/14	C/2022/01/R/14	90	USD	\N	\N	set8I1KlM4ViY	f	f	PAYMENT_PROCESSING	\N	\N	\N	rp2HJURYKsXI	2022-01-23 00:00:00+00	2022-01-23 00:00:00+00	2022-01-23 12:13:03.532+00	2022-01-23 12:15:45.203+00	2022-01-23 12:15:58.31674+00	2022-01-23 12:15:58.316799+00	CCC	{"Team": "", "Class": "", "Klass": "", "Team 2": "", "Location": "", "Team Copy": "", "Tax Groups": "", "Departments": "", "User Dimension": "", "Location Entity": "", "Operating System": "", "System Operating": "", "User Dimension Copy": ""}	\N	\N	f	or79Cob97KSh	19.69	tggu76WXIdjY
-13	ashwin.t@fyle.in	Food	Food	Aaron Abbott	txQybwOwoQAA	E/2022/01/T/16	C/2022/01/R/15	60	USD	\N	\N	setRaxYbWGAop	t	f	PAYMENT_PROCESSING	\N	\N	\N	rprUeNwizDFb	2022-01-23 00:00:00+00	2022-01-23 00:00:00+00	2022-01-23 12:32:28.737+00	2022-01-23 12:33:23.908+00	2022-01-23 12:33:35.849933+00	2022-01-23 12:33:35.849968+00	PERSONAL	{"Team": "", "Class": "", "Klass": "", "Team 2": "", "Location": "", "Team Copy": "", "Tax Groups": "", "Departments": "", "User Dimension": "", "Location Entity": "", "Operating System": "", "System Operating": "", "User Dimension Copy": ""}	\N	\N	f	or79Cob97KSh	13.13	tggu76WXIdjY
-14	ashwin.t@fyle.in	Food	Food	Aaron Abbott	txRJYVMgMaH6	E/2022/01/T/17	C/2022/01/R/16	60	USD	\N	\N	setwQTDDrGSJN	t	f	PAYMENT_PROCESSING	\N	\N	\N	rpBQ9vx7FJc3	2022-01-23 00:00:00+00	2022-01-23 00:00:00+00	2022-01-23 12:34:58.834+00	2022-01-23 12:35:50.813+00	2022-01-23 12:37:54.106129+00	2022-01-23 12:37:54.106202+00	PERSONAL	{"Team": "", "Class": "", "Klass": "", "Team 2": "", "Location": "", "Team Copy": "", "Tax Groups": "", "Departments": "", "User Dimension": "", "Location Entity": "", "Operating System": "", "System Operating": "", "User Dimension Copy": ""}	\N	\N	f	or79Cob97KSh	13.13	tggu76WXIdjY
+COPY public.expenses (id, employee_email, category, sub_category, project, expense_id, expense_number, claim_number, amount, currency, foreign_amount, foreign_currency, settlement_id, reimbursable, exported, state, vendor, cost_center, purpose, report_id, spent_at, approved_at, expense_created_at, expense_updated_at, created_at, updated_at, fund_source, custom_properties, verified_at, billable, paid_on_qbo, org_id, tax_amount, tax_group_id, file_ids, corporate_card_id) FROM stdin;
+6	ashwin.t@fyle.in	Travel	Travel	\N	txDmcqOv8LMD	E/2022/01/T/7	C/2022/01/R/7	120	USD	\N	\N	setS3D0ItJsD2	t	f	PAYMENT_PROCESSING	\N	\N	\N	rpqBKuvCwnTY	2022-01-21 00:00:00+00	2022-01-21 00:00:00+00	2022-01-21 10:00:23.459+00	2022-01-21 10:02:13.588+00	2022-01-21 10:45:18.322426+00	2022-01-21 10:45:18.322467+00	PERSONAL	{"Class": ""}	\N	\N	f	orGcBCVPijjO	\N	\N	\N	\N
+7	ashwin.t@fyle.in	Travel	Travel	\N	txJkZlJS4LrA	E/2022/01/T/8	C/2022/01/R/7	50	USD	\N	\N	setS3D0ItJsD2	f	f	PAYMENT_PROCESSING	\N	\N	\N	rpqBKuvCwnTY	2022-01-21 00:00:00+00	2022-01-21 00:00:00+00	2022-01-21 10:00:41.232+00	2022-01-21 10:02:13.588+00	2022-01-21 10:45:18.435608+00	2022-01-21 10:45:18.435701+00	CCC	{"Class": ""}	\N	\N	f	orGcBCVPijjO	\N	\N	\N	\N
+8	ashwin.t@fyle.in	Travel	Travel	\N	txlPjmNxssq1	E/2022/01/T/10	C/2022/01/R/8	60	USD	\N	\N	set5qvkasVDnI	t	f	PAYMENT_PROCESSING	\N	\N	\N	rpeM68HKCNNA	2022-01-21 00:00:00+00	2022-01-21 00:00:00+00	2022-01-21 10:46:19.877+00	2022-01-21 10:48:53.928+00	2022-01-21 10:51:06.448907+00	2022-01-21 10:51:06.448944+00	PERSONAL	{"Class": ""}	\N	\N	f	orGcBCVPijjO	\N	\N	\N	\N
+9	ashwin.t@fyle.in	Travel	Travel	\N	txvh8qm7RTRI	E/2022/01/T/9	C/2022/01/R/8	30	USD	\N	\N	set5qvkasVDnI	f	f	PAYMENT_PROCESSING	\N	\N	\N	rpeM68HKCNNA	2022-01-21 00:00:00+00	2022-01-21 00:00:00+00	2022-01-21 10:45:58.459+00	2022-01-21 10:48:53.928+00	2022-01-21 10:51:06.469783+00	2022-01-21 10:51:06.469819+00	CCC	{"Class": ""}	\N	\N	f	orGcBCVPijjO	\N	\N	\N	\N
+10	ashwin.t@fyle.in	Food	Food	Aaron Abbott	txraSPJaG9Ep	E/2022/01/T/13	C/2022/01/R/13	60	USD	\N	\N	setXTEjf2wY78	t	f	PAYMENT_PROCESSING	\N	\N	\N	rp0jk7Rg1epk	2022-01-23 00:00:00+00	2022-01-23 00:00:00+00	2022-01-23 12:01:23.234+00	2022-01-23 12:02:54.246+00	2022-01-23 12:03:10.909511+00	2022-01-23 12:03:10.909564+00	PERSONAL	{"Team": "", "Class": "", "Klass": "", "Team 2": "", "Location": "", "Team Copy": "", "Tax Groups": "", "Departments": "", "User Dimension": "", "Location Entity": "", "Operating System": "", "System Operating": "", "User Dimension Copy": ""}	\N	f	f	or79Cob97KSh	13.13	tggu76WXIdjY	\N	\N
+11	ashwin.t@fyle.in	Food	Food	Aaron Abbott	txiKwmiTDjwJ	E/2022/01/T/15	C/2022/01/R/14	60	USD	\N	\N	set8I1KlM4ViY	t	f	PAYMENT_PROCESSING	\N	\N	\N	rp2HJURYKsXI	2022-01-23 00:00:00+00	2022-01-23 00:00:00+00	2022-01-23 12:13:28.367+00	2022-01-23 12:15:45.203+00	2022-01-23 12:15:58.201656+00	2022-01-23 12:15:58.201693+00	PERSONAL	{"Team": "", "Class": "", "Klass": "", "Team 2": "", "Location": "", "Team Copy": "", "Tax Groups": "", "Departments": "", "User Dimension": "", "Location Entity": "", "Operating System": "", "System Operating": "", "User Dimension Copy": ""}	\N	\N	f	or79Cob97KSh	13.13	tggu76WXIdjY	\N	\N
+12	ashwin.t@fyle.in	Food	Food	Aaron Abbott	txMFjDHNxEPt	E/2022/01/T/14	C/2022/01/R/14	90	USD	\N	\N	set8I1KlM4ViY	f	f	PAYMENT_PROCESSING	\N	\N	\N	rp2HJURYKsXI	2022-01-23 00:00:00+00	2022-01-23 00:00:00+00	2022-01-23 12:13:03.532+00	2022-01-23 12:15:45.203+00	2022-01-23 12:15:58.31674+00	2022-01-23 12:15:58.316799+00	CCC	{"Team": "", "Class": "", "Klass": "", "Team 2": "", "Location": "", "Team Copy": "", "Tax Groups": "", "Departments": "", "User Dimension": "", "Location Entity": "", "Operating System": "", "System Operating": "", "User Dimension Copy": ""}	\N	\N	f	or79Cob97KSh	19.69	tggu76WXIdjY	\N	\N
+13	ashwin.t@fyle.in	Food	Food	Aaron Abbott	txQybwOwoQAA	E/2022/01/T/16	C/2022/01/R/15	60	USD	\N	\N	setRaxYbWGAop	t	f	PAYMENT_PROCESSING	\N	\N	\N	rprUeNwizDFb	2022-01-23 00:00:00+00	2022-01-23 00:00:00+00	2022-01-23 12:32:28.737+00	2022-01-23 12:33:23.908+00	2022-01-23 12:33:35.849933+00	2022-01-23 12:33:35.849968+00	PERSONAL	{"Team": "", "Class": "", "Klass": "", "Team 2": "", "Location": "", "Team Copy": "", "Tax Groups": "", "Departments": "", "User Dimension": "", "Location Entity": "", "Operating System": "", "System Operating": "", "User Dimension Copy": ""}	\N	\N	f	or79Cob97KSh	13.13	tggu76WXIdjY	\N	\N
+14	ashwin.t@fyle.in	Food	Food	Aaron Abbott	txRJYVMgMaH6	E/2022/01/T/17	C/2022/01/R/16	60	USD	\N	\N	setwQTDDrGSJN	t	f	PAYMENT_PROCESSING	\N	\N	\N	rpBQ9vx7FJc3	2022-01-23 00:00:00+00	2022-01-23 00:00:00+00	2022-01-23 12:34:58.834+00	2022-01-23 12:35:50.813+00	2022-01-23 12:37:54.106129+00	2022-01-23 12:37:54.106202+00	PERSONAL	{"Team": "", "Class": "", "Klass": "", "Team 2": "", "Location": "", "Team Copy": "", "Tax Groups": "", "Departments": "", "User Dimension": "", "Location Entity": "", "Operating System": "", "System Operating": "", "User Dimension Copy": ""}	\N	\N	f	or79Cob97KSh	13.13	tggu76WXIdjY	\N	\N
 \.
 
 
 --
 -- Data for Name: fyle_credentials; Type: TABLE DATA; Schema: public; Owner: postgres
 --
+
+COPY public.fyle_credentials (id, refresh_token, created_at, updated_at, workspace_id, cluster_domain) FROM stdin;
+\.
+
+
 --
 -- Data for Name: general_mappings; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -6970,6 +7029,10 @@ COPY public.mappings (id, source_type, destination_type, created_at, updated_at,
 --
 -- Data for Name: qbo_credentials; Type: TABLE DATA; Schema: public; Owner: postgres
 --
+
+COPY public.qbo_credentials (id, refresh_token, realm_id, created_at, updated_at, workspace_id, company_name, country) FROM stdin;
+\.
+
 
 --
 -- Data for Name: qbo_expense_lineitems; Type: TABLE DATA; Schema: public; Owner: postgres
@@ -7033,9 +7096,9 @@ COPY public.users (password, last_login, id, email, user_id, full_name, active, 
 -- Data for Name: workspace_general_settings; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.workspace_general_settings (id, reimbursable_expenses_object, corporate_credit_card_expenses_object, employee_field_mapping, created_at, updated_at, workspace_id, import_projects, import_categories, sync_fyle_to_qbo_payments, sync_qbo_to_fyle_payments, auto_map_employees, category_sync_version, auto_create_destination_entity, map_merchant_to_vendor, je_single_credit_line, change_accounting_period, import_tax_codes, charts_of_accounts, memo_structure) FROM stdin;
-5	EXPENSE	JOURNAL ENTRY	EMPLOYEE	2022-01-21 10:37:30.3399+00	2022-01-21 10:37:30.339991+00	8	f	f	f	f	\N	v2	f	t	f	f	\N	{Expense}	{employee_email,category,spent_on,report_number,purpose,expense_link}
-6	BILL	CREDIT CARD PURCHASE	VENDOR	2022-01-21 10:42:32.68088+00	2022-01-21 10:42:32.680929+00	9	f	f	f	f	\N	v2	f	t	f	f	\N	{Expense}	{employee_email,category,spent_on,report_number,purpose,expense_link}
+COPY public.workspace_general_settings (id, reimbursable_expenses_object, corporate_credit_card_expenses_object, employee_field_mapping, created_at, updated_at, workspace_id, import_projects, import_categories, sync_fyle_to_qbo_payments, sync_qbo_to_fyle_payments, auto_map_employees, category_sync_version, auto_create_destination_entity, map_merchant_to_vendor, je_single_credit_line, change_accounting_period, import_tax_codes, charts_of_accounts, memo_structure, map_fyle_cards_qbo_account) FROM stdin;
+5	EXPENSE	JOURNAL ENTRY	EMPLOYEE	2022-01-21 10:37:30.3399+00	2022-01-21 10:37:30.339991+00	8	f	f	f	f	\N	v2	f	t	f	f	\N	{Expense}	{employee_email,category,spent_on,report_number,purpose,expense_link}	t
+6	BILL	CREDIT CARD PURCHASE	VENDOR	2022-01-21 10:42:32.68088+00	2022-01-21 10:42:32.680929+00	9	f	f	f	f	\N	v2	f	t	f	f	\N	{Expense}	{employee_email,category,spent_on,report_number,purpose,expense_link}	t
 \.
 
 
@@ -7052,8 +7115,8 @@ COPY public.workspace_schedules (id, enabled, start_datetime, interval_hours, sc
 --
 
 COPY public.workspaces (id, name, fyle_org_id, qbo_realm_id, last_synced_at, created_at, updated_at, destination_synced_at, source_synced_at, cluster_domain) FROM stdin;
-9	Fyle For Intacct Bill-CCT	orGcBCVPijjO	4620816365071123640	2022-01-21 10:51:06.388212+00	2022-01-21 10:41:25.311576+00	2022-01-23 08:32:21.82156+00	2022-01-23 08:32:59.638385+00	2022-01-23 08:14:56.71286+00	https://staging.fyle.tech
-8	Fyle For Arkham Asylum	or79Cob97KSh	4620816365031245740	2022-01-23 12:37:54.049698+00	2022-01-21 10:34:47.666562+00	2022-01-23 12:37:54.050448+00	2022-01-23 08:51:22.038636+00	2022-01-23 08:50:59.867517+00	https://staging.fyle.tech
+9	Fyle For Intacct Bill-CCT	orGcBCVPijjO	4620816365071123640	2022-01-21 10:51:06.388212+00	2022-01-21 10:41:25.311576+00	2022-02-01 07:58:51.519846+00	2022-02-01 07:59:32.793962+00	2022-02-01 07:59:16.969822+00	https://staging.fyle.tech
+8	Fyle For Arkham Asylum	or79Cob97KSh	4620816365031245740	2022-01-23 12:37:54.049698+00	2022-01-21 10:34:47.666562+00	2022-02-01 07:56:42.696594+00	2022-02-01 07:57:10.174588+00	2022-02-01 07:55:15.859027+00	https://staging.fyle.tech
 \.
 
 
@@ -7127,14 +7190,14 @@ SELECT pg_catalog.setval('public.django_content_type_id_seq', 41, true);
 -- Name: django_migrations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.django_migrations_id_seq', 118, true);
+SELECT pg_catalog.setval('public.django_migrations_id_seq', 122, true);
 
 
 --
 -- Name: django_q_ormq_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.django_q_ormq_id_seq', 34, true);
+SELECT pg_catalog.setval('public.django_q_ormq_id_seq', 37, true);
 
 
 --
@@ -7148,77 +7211,77 @@ SELECT pg_catalog.setval('public.django_q_schedule_id_seq', 1, false);
 -- Name: employee_mappings_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.employee_mappings_id_seq', 6, true);
+SELECT pg_catalog.setval('public.employee_mappings_id_seq', 7, true);
 
 
 --
 -- Name: fyle_accounting_mappings_destinationattribute_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.fyle_accounting_mappings_destinationattribute_id_seq', 1616, true);
+SELECT pg_catalog.setval('public.fyle_accounting_mappings_destinationattribute_id_seq', 1941, true);
 
 
 --
 -- Name: fyle_accounting_mappings_expenseattribute_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.fyle_accounting_mappings_expenseattribute_id_seq', 10428, true);
+SELECT pg_catalog.setval('public.fyle_accounting_mappings_expenseattribute_id_seq', 12244, true);
 
 
 --
 -- Name: fyle_accounting_mappings_mapping_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.fyle_accounting_mappings_mapping_id_seq', 13, true);
+SELECT pg_catalog.setval('public.fyle_accounting_mappings_mapping_id_seq', 14, true);
 
 
 --
 -- Name: fyle_accounting_mappings_mappingsetting_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.fyle_accounting_mappings_mappingsetting_id_seq', 8, true);
+SELECT pg_catalog.setval('public.fyle_accounting_mappings_mappingsetting_id_seq', 9, true);
 
 
 --
 -- Name: fyle_expense_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.fyle_expense_id_seq', 14, true);
+SELECT pg_catalog.setval('public.fyle_expense_id_seq', 15, true);
 
 
 --
 -- Name: fyle_expensegroup_expenses_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.fyle_expensegroup_expenses_id_seq', 14, true);
+SELECT pg_catalog.setval('public.fyle_expensegroup_expenses_id_seq', 15, true);
 
 
 --
 -- Name: fyle_expensegroup_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.fyle_expensegroup_id_seq', 14, true);
+SELECT pg_catalog.setval('public.fyle_expensegroup_id_seq', 15, true);
 
 
 --
 -- Name: fyle_expensegroupsettings_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.fyle_expensegroupsettings_id_seq', 9, true);
+SELECT pg_catalog.setval('public.fyle_expensegroupsettings_id_seq', 10, true);
 
 
 --
 -- Name: fyle_rest_auth_authtokens_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.fyle_rest_auth_authtokens_id_seq', 4, true);
+SELECT pg_catalog.setval('public.fyle_rest_auth_authtokens_id_seq', 5, true);
 
 
 --
 -- Name: mappings_generalmapping_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.mappings_generalmapping_id_seq', 6, true);
+SELECT pg_catalog.setval('public.mappings_generalmapping_id_seq', 7, true);
 
 
 --
@@ -7253,14 +7316,14 @@ SELECT pg_catalog.setval('public.quickbooks_online_billlineitem_id_seq', 4, true
 -- Name: quickbooks_online_cheque_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.quickbooks_online_cheque_id_seq', 1, false);
+SELECT pg_catalog.setval('public.quickbooks_online_cheque_id_seq', 1, true);
 
 
 --
 -- Name: quickbooks_online_chequelineitem_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.quickbooks_online_chequelineitem_id_seq', 1, false);
+SELECT pg_catalog.setval('public.quickbooks_online_chequelineitem_id_seq', 1, true);
 
 
 --
@@ -7302,7 +7365,7 @@ SELECT pg_catalog.setval('public.reimbursements_id_seq', 1, false);
 -- Name: tasks_tasklog_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.tasks_tasklog_id_seq', 17, true);
+SELECT pg_catalog.setval('public.tasks_tasklog_id_seq', 19, true);
 
 
 --
@@ -7316,35 +7379,35 @@ SELECT pg_catalog.setval('public.users_user_id_seq', 1, true);
 -- Name: workspaces_fylecredential_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.workspaces_fylecredential_id_seq', 9, true);
+SELECT pg_catalog.setval('public.workspaces_fylecredential_id_seq', 10, true);
 
 
 --
 -- Name: workspaces_qbocredential_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.workspaces_qbocredential_id_seq', 8, true);
+SELECT pg_catalog.setval('public.workspaces_qbocredential_id_seq', 18, true);
 
 
 --
 -- Name: workspaces_workspace_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.workspaces_workspace_id_seq', 9, true);
+SELECT pg_catalog.setval('public.workspaces_workspace_id_seq', 10, true);
 
 
 --
 -- Name: workspaces_workspace_user_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.workspaces_workspace_user_id_seq', 11, true);
+SELECT pg_catalog.setval('public.workspaces_workspace_user_id_seq', 12, true);
 
 
 --
 -- Name: workspaces_workspacegeneralsettings_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.workspaces_workspacegeneralsettings_id_seq', 6, true);
+SELECT pg_catalog.setval('public.workspaces_workspacegeneralsettings_id_seq', 7, true);
 
 
 --

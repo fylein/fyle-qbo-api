@@ -11,7 +11,7 @@ def test_sync_employees(add_qbo_credentials):
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=8)
 
     employee_count = DestinationAttribute.objects.filter(workspace_id=8, attribute_type='EMPLOYEE').count()
-    assert employee_count == 10
+    assert employee_count == 11
 
     qbo_connection.sync_employees()
 

@@ -43,7 +43,7 @@ def test_get_configuration_detail(api_client, test_connection):
 
     url = reverse(
         'workspace-general-settings', kwargs={
-            'workspace_id': 9
+            'workspace_id': 8
         }
     )
 
