@@ -58,6 +58,7 @@ data = {
         "category_sync_version":"v2",
         "je_single_credit_line":False,
         "map_fyle_cards_qbo_account":True,
+        "skip_cards_mapping": False,
         "created_at":"2022-01-21T10:37:30.339900Z",
         "updated_at":"2022-02-02T05:59:11.554072Z",
         "workspace":8

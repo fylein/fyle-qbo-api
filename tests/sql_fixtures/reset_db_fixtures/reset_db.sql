@@ -1849,7 +1849,8 @@ CREATE TABLE public.workspace_general_settings (
     import_tax_codes boolean,
     charts_of_accounts character varying(100)[] NOT NULL,
     memo_structure character varying(100)[] NOT NULL,
-    map_fyle_cards_qbo_account boolean NOT NULL
+    map_fyle_cards_qbo_account boolean NOT NULL,
+    skip_cards_mapping boolean NOT NULL
 );
 
 
@@ -3307,6 +3308,7 @@ COPY public.django_migrations (id, app, name, applied) FROM stdin;
 120	fyle	0023_expense_corporate_card_id	2022-02-01 06:32:58.901086+00
 121	workspaces	0020_fylecredential_cluster_domain	2022-02-01 06:32:58.982929+00
 122	workspaces	0021_workspacegeneralsettings_map_fyle_cards_qbo_account	2022-02-01 06:32:59.202384+00
+123	workspaces	0022_workspacegeneralsettings_skip_cards_mapping	2022-02-02 11:15:57.170023+00
 \.
 
 
@@ -3371,6 +3373,8 @@ missouri-oscar-iowa-nuts	apps.quickbooks_online.tasks.create_qbo_expense	\N	gASV
 spaghetti-finch-double-california	apps.quickbooks_online.tasks.async_sync_accounts	\N	gASVBQAAAAAAAABLCoWULg==	gAR9lC4=	\N	2022-01-27 12:55:02.583895+00	2022-01-27 12:55:08.818904+00	t	a44aa7997c784001bdddcb9e63f08e03	\N	1
 florida-uranus-lithium-delta	apps.fyle.tasks.create_expense_groups	\N	gASVRAIAAAAAAABLCl2UjAhQRVJTT05BTJRhjBVkamFuZ28uZGIubW9kZWxzLmJhc2WUjA5tb2RlbF91bnBpY2tsZZSTlIwFdGFza3OUjAdUYXNrTG9nlIaUhZRSlH2UKIwGX3N0YXRllGgCjApNb2RlbFN0YXRllJOUKYGUfZQojAxmaWVsZHNfY2FjaGWUfZSMAmRilIwHZGVmYXVsdJSMBmFkZGluZ5SJdWKMAmlklEsSjAx3b3Jrc3BhY2VfaWSUSwqMBHR5cGWUjBFGRVRDSElOR19FWFBFTlNFU5SMB3Rhc2tfaWSUTowQZXhwZW5zZV9ncm91cF9pZJROjAdiaWxsX2lklE6MCWNoZXF1ZV9pZJROjBBqb3VybmFsX2VudHJ5X2lklE6MF2NyZWRpdF9jYXJkX3B1cmNoYXNlX2lklE6MDnFib19leHBlbnNlX2lklE6MD2JpbGxfcGF5bWVudF9pZJROjAZzdGF0dXOUjAhDT01QTEVURZSMBmRldGFpbJR9lIwHbWVzc2FnZZSMF0NyZWF0aW5nIGV4cGVuc2UgZ3JvdXBzlHOMCmNyZWF0ZWRfYXSUjAhkYXRldGltZZSMCGRhdGV0aW1llJOUQwoH5gEbDDo4CIiolIwEcHl0epSMBF9VVEOUk5QpUpSGlFKUjBFxdWlja2Jvb2tzX2Vycm9yc5ROjAp1cGRhdGVkX2F0lGgqQwoH5gEbDDsAA/n/lGgvhpRSlIwPX2RqYW5nb192ZXJzaW9ulIwGMy4xLjEzlHVih5Qu	gAR9lC4=	gASVawIAAAAAAACMEnBpY2tsZWZpZWxkLmZpZWxkc5SMDl9PYmplY3RXcmFwcGVylJOUKYGUTn2UjARfb2JqlIwVZGphbmdvLmRiLm1vZGVscy5iYXNllIwObW9kZWxfdW5waWNrbGWUk5SMBXRhc2tzlIwHVGFza0xvZ5SGlIWUUpR9lCiMBl9zdGF0ZZRoBowKTW9kZWxTdGF0ZZSTlCmBlH2UKIwMZmllbGRzX2NhY2hllH2UjAJkYpSMB2RlZmF1bHSUjAZhZGRpbmeUiXVijAJpZJRLEowMd29ya3NwYWNlX2lklEsKjAR0eXBllIwRRkVUQ0hJTkdfRVhQRU5TRVOUjAd0YXNrX2lklE6MEGV4cGVuc2VfZ3JvdXBfaWSUTowHYmlsbF9pZJROjAljaGVxdWVfaWSUTowQam91cm5hbF9lbnRyeV9pZJROjBdjcmVkaXRfY2FyZF9wdXJjaGFzZV9pZJROjA5xYm9fZXhwZW5zZV9pZJROjA9iaWxsX3BheW1lbnRfaWSUTowGc3RhdHVzlIwIQ09NUExFVEWUjAZkZXRhaWyUfZSMB21lc3NhZ2WUjBdDcmVhdGluZyBleHBlbnNlIGdyb3Vwc5RzjApjcmVhdGVkX2F0lIwIZGF0ZXRpbWWUjAhkYXRldGltZZSTlEMKB+YBGww6OAiIqJSMBHB5dHqUjARfVVRDlJOUKVKUhpRSlIwRcXVpY2tib29rc19lcnJvcnOUTowKdXBkYXRlZF9hdJRoLkMKB+YBGww7AAP5/5RoM4aUUpSMD19kamFuZ29fdmVyc2lvbpSMBjMuMS4xM5R1YnOGlGIu	2022-01-27 12:58:56.60749+00	2022-01-27 12:59:00.275781+00	t	cc5a03dfaa374b3ea17f6ecba1bf5d71	\N	1
 winner-paris-nuts-gee	apps.quickbooks_online.tasks.create_cheque	\N	gASVOQgAAAAAAACMFWRqYW5nby5kYi5tb2RlbHMuYmFzZZSMDm1vZGVsX3VucGlja2xllJOUjARmeWxllIwMRXhwZW5zZUdyb3VwlIaUhZRSlH2UKIwGX3N0YXRllGgAjApNb2RlbFN0YXRllJOUKYGUfZQojAxmaWVsZHNfY2FjaGWUfZSMBmNoZXF1ZZRoAowRcXVpY2tib29rc19vbmxpbmWUjAZDaGVxdWWUhpSFlFKUfZQojAZfc3RhdGWUaAspgZR9lCiMAmRilIwHZGVmYXVsdJRoDn2UjA1leHBlbnNlX2dyb3VwlGgHc4wGYWRkaW5nlIl1YowCaWSUSwGMEGV4cGVuc2VfZ3JvdXBfaWSUSw+MD2JhbmtfYWNjb3VudF9pZJSMAjM2lIwJZW50aXR5X2lklIwDMTA1lIwNZGVwYXJ0bWVudF9pZJROjBB0cmFuc2FjdGlvbl9kYXRllIwKMjAyMi0wMS0yN5SMCGN1cnJlbmN5lIwDVVNElIwMcHJpdmF0ZV9ub3RllIw3UmVpbWJ1cnNhYmxlIGV4cGVuc2UgYnkgYXNod2luLnRAZnlsZS5pbiBvbiAyMDIyLTAxLTI3IJSMCmNyZWF0ZWRfYXSUjAhkYXRldGltZZSMCGRhdGV0aW1llJOUQwoH5gEbDDsPDqEUlIwEcHl0epSMBF9VVEOUk5QpUpSGlFKUjAp1cGRhdGVkX2F0lGgvQwoH5gEbDDsPDqJVlGg0hpRSlIwPX2RqYW5nb192ZXJzaW9ulIwGMy4xLjEzlHVic2geiWgajAdkZWZhdWx0lHVijAJpZJRLD4wMd29ya3NwYWNlX2lklEsKjAtmdW5kX3NvdXJjZZSMCFBFUlNPTkFMlIwLZGVzY3JpcHRpb26UfZQojAlyZXBvcnRfaWSUjAxycHVsSHk1Z3hBTWyUjAtmdW5kX3NvdXJjZZSMCFBFUlNPTkFMlIwMY2xhaW1fbnVtYmVylIwOQy8yMDIyLzAxL1IvMTaUjA5lbXBsb3llZV9lbWFpbJSMEGFzaHdpbi50QGZ5bGUuaW6UdYwNcmVzcG9uc2VfbG9nc5R9lCiMCFB1cmNoYXNllH2UKIwKQWNjb3VudFJlZpR9lCiMBXZhbHVllIwCMzaUjARuYW1llIwHU2F2aW5nc5R1jAtQYXltZW50VHlwZZSMBUNoZWNrlIwJRW50aXR5UmVmlH2UKGhSjAMxMDWUaFSMCUNoZXRoYW4gTZSMBHR5cGWUjAhFbXBsb3llZZR1jAhUb3RhbEFtdJRHQFkAAAAAAACMC1ByaW50U3RhdHVzlIwGTm90U2V0lIwKUHVyY2hhc2VFeJR9lIwDYW55lF2UfZQoaFSMLntodHRwOi8vc2NoZW1hLmludHVpdC5jb20vZmluYW5jZS92M31OYW1lVmFsdWWUjAxkZWNsYXJlZFR5cGWUjCZjb20uaW50dWl0LnNjaGVtYS5maW5hbmNlLnYzLk5hbWVWYWx1ZZSMBXNjb3BllIwmamF2YXgueG1sLmJpbmQuSkFYQkVsZW1lbnQkR2xvYmFsU2NvcGWUaFJ9lCiMBE5hbWWUjAdUeG5UeXBllIwFVmFsdWWUjAEzlHWMA25pbJSJjAtnbG9iYWxTY29wZZSIjA90eXBlU3Vic3RpdHV0ZWSUiXVhc4wGZG9tYWlulIwDUUJPlIwGc3BhcnNllImMAklklIwEMjAwNZSMCVN5bmNUb2tlbpSMATCUjAhNZXRhRGF0YZR9lCiMCkNyZWF0ZVRpbWWUjBkyMDIyLTAxLTI3VDA0OjU5OjE4LTA4OjAwlIwPTGFzdFVwZGF0ZWRUaW1llIwZMjAyMi0wMS0yN1QwNDo1OToxOC0wODowMJR1jAtDdXN0b21GaWVsZJRdlIwHVHhuRGF0ZZSMCjIwMjItMDEtMjeUjAtDdXJyZW5jeVJlZpR9lChoUowDVVNElGhUjBRVbml0ZWQgU3RhdGVzIERvbGxhcpR1jAtQcml2YXRlTm90ZZSMNlJlaW1idXJzYWJsZSBleHBlbnNlIGJ5IGFzaHdpbi50QGZ5bGUuaW4gb24gMjAyMi0wMS0yN5SMBExpbmWUXZR9lChodowBMZSMC0Rlc2NyaXB0aW9ulIyYYXNod2luLnRAZnlsZS5pbiAtIEZvb2QgLSAyMDIyLTAxLTI3IC0gQy8yMDIyLzAxL1IvMTYgLSAgLSBodHRwczovL3N0YWdpbmcuZnlsZS50ZWNoL2FwcC9tYWluLyMvZW50ZXJwcmlzZS92aWV3X2V4cGVuc2UvdHh0Sks1T2FnMXVKP29yZ19pZD1vcmsyYzkwUEFIdGuUjAZBbW91bnSUR0BZAAAAAAAAjApEZXRhaWxUeXBllIwdQWNjb3VudEJhc2VkRXhwZW5zZUxpbmVEZXRhaWyUjB1BY2NvdW50QmFzZWRFeHBlbnNlTGluZURldGFpbJR9lChoUH2UKGhSjAIxMZRoVIwJSW5zdXJhbmNllHWMDkJpbGxhYmxlU3RhdHVzlIwLTm90QmlsbGFibGWUjApUYXhDb2RlUmVmlH2UaFKMA05PTpRzdXVhdYwEdGltZZSMHTIwMjItMDEtMjdUMDQ6NTk6MTguMjc2LTA4OjAwlHWMCmNyZWF0ZWRfYXSUaC9DCgfmARsMOwABaBSUaDSGlFKUjAtleHBvcnRlZF9hdJRoL0MKB+YBGww7EgV2+JSFlFKUjAp1cGRhdGVkX2F0lGgvQwoH5gEbDDsSBXhSlGg0hpRSlIwPX2RqYW5nb192ZXJzaW9ulGg8dWJLE4aULg==	gAR9lC4=	\N	2022-01-27 12:59:13.578689+00	2022-01-27 12:59:18.948269+00	t	d8044b61546c46d2988cc2765335b88c	521d817e3b9f4a9e8bddf84415cbcfaf	1
+fourteen-king-july-india	apps.quickbooks_online.tasks.async_sync_accounts	\N	gASVBQAAAAAAAABLCIWULg==	gAR9lC4=	\N	2022-02-02 05:59:11.630144+00	2022-02-02 05:59:16.654162+00	t	45ecab4fbf4c4acbb4fb0a283994f23c	\N	1
+low-undress-low-april	apps.quickbooks_online.tasks.async_sync_accounts	\N	gASVBQAAAAAAAABLCYWULg==	gAR9lC4=	\N	2022-02-02 11:46:34.087323+00	2022-02-02 11:46:39.491333+00	t	6f494810775a4388b98d22683a7f3c7e	\N	1
 \.
 
 
@@ -7011,8 +7015,9 @@ COPY public.journal_entry_lineitems (id, debit_account_id, account_id, class_id,
 --
 
 COPY public.mapping_settings (id, source_field, destination_field, created_at, updated_at, workspace_id, import_to_fyle, is_custom) FROM stdin;
-7	CATEGORY	ACCOUNT	2022-01-21 10:37:30.494542+00	2022-01-21 10:37:30.494596+00	8	f	f
 8	CATEGORY	ACCOUNT	2022-01-21 10:42:32.726615+00	2022-01-21 10:42:32.726686+00	9	f	f
+7	CATEGORY	ACCOUNT	2022-01-21 10:37:30.494542+00	2022-02-02 05:59:11.615431+00	8	f	f
+10	CORPORATE_CARD	CREDIT_CARD_ACCOUNT	2022-02-02 05:59:11.684519+00	2022-02-02 05:59:11.68459+00	8	f	f
 \.
 
 
@@ -7023,6 +7028,7 @@ COPY public.mapping_settings (id, source_field, destination_field, created_at, u
 COPY public.mappings (id, source_type, destination_type, created_at, updated_at, destination_id, source_id, workspace_id) FROM stdin;
 12	CATEGORY	ACCOUNT	2022-01-21 10:40:59.810425+00	2022-01-21 10:40:59.810526+00	1349	7099	8
 13	CATEGORY	ACCOUNT	2022-01-21 10:43:37.42+00	2022-01-21 10:43:37.420061+00	1579	9097	9
+15	CORPORATE_CARD	CREDIT_CARD_ACCOUNT	2022-02-02 11:26:30.925904+00	2022-02-02 11:26:30.926137+00	1941	12215	8
 \.
 
 
@@ -7096,9 +7102,9 @@ COPY public.users (password, last_login, id, email, user_id, full_name, active, 
 -- Data for Name: workspace_general_settings; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.workspace_general_settings (id, reimbursable_expenses_object, corporate_credit_card_expenses_object, employee_field_mapping, created_at, updated_at, workspace_id, import_projects, import_categories, sync_fyle_to_qbo_payments, sync_qbo_to_fyle_payments, auto_map_employees, category_sync_version, auto_create_destination_entity, map_merchant_to_vendor, je_single_credit_line, change_accounting_period, import_tax_codes, charts_of_accounts, memo_structure, map_fyle_cards_qbo_account) FROM stdin;
-5	EXPENSE	JOURNAL ENTRY	EMPLOYEE	2022-01-21 10:37:30.3399+00	2022-01-21 10:37:30.339991+00	8	f	f	f	f	\N	v2	f	t	f	f	\N	{Expense}	{employee_email,category,spent_on,report_number,purpose,expense_link}	t
-6	BILL	CREDIT CARD PURCHASE	VENDOR	2022-01-21 10:42:32.68088+00	2022-01-21 10:42:32.680929+00	9	f	f	f	f	\N	v2	f	t	f	f	\N	{Expense}	{employee_email,category,spent_on,report_number,purpose,expense_link}	t
+COPY public.workspace_general_settings (id, reimbursable_expenses_object, corporate_credit_card_expenses_object, employee_field_mapping, created_at, updated_at, workspace_id, import_projects, import_categories, sync_fyle_to_qbo_payments, sync_qbo_to_fyle_payments, auto_map_employees, category_sync_version, auto_create_destination_entity, map_merchant_to_vendor, je_single_credit_line, change_accounting_period, import_tax_codes, charts_of_accounts, memo_structure, map_fyle_cards_qbo_account, skip_cards_mapping) FROM stdin;
+5	EXPENSE	JOURNAL ENTRY	EMPLOYEE	2022-01-21 10:37:30.3399+00	2022-02-02 05:59:11.554072+00	8	f	f	f	f	\N	v2	f	t	f	f	\N	{Expense}	{employee_email,category,spent_on,report_number,purpose,expense_link}	t	f
+6	BILL	CREDIT CARD PURCHASE	VENDOR	2022-01-21 10:42:32.68088+00	2022-02-02 11:46:34.058326+00	9	f	f	f	f	\N	v2	f	t	f	f	\N	{Expense}	{employee_email,category,spent_on,report_number,purpose,expense_link}	t	t
 \.
 
 
@@ -7115,8 +7121,8 @@ COPY public.workspace_schedules (id, enabled, start_datetime, interval_hours, sc
 --
 
 COPY public.workspaces (id, name, fyle_org_id, qbo_realm_id, last_synced_at, created_at, updated_at, destination_synced_at, source_synced_at, cluster_domain) FROM stdin;
-9	Fyle For Intacct Bill-CCT	orGcBCVPijjO	4620816365071123640	2022-01-21 10:51:06.388212+00	2022-01-21 10:41:25.311576+00	2022-02-01 07:58:51.519846+00	2022-02-01 07:59:32.793962+00	2022-02-01 07:59:16.969822+00	https://staging.fyle.tech
-8	Fyle For Arkham Asylum	or79Cob97KSh	4620816365031245740	2022-01-23 12:37:54.049698+00	2022-01-21 10:34:47.666562+00	2022-02-01 07:56:42.696594+00	2022-02-01 07:57:10.174588+00	2022-02-01 07:55:15.859027+00	https://staging.fyle.tech
+8	Fyle For Arkham Asylum	or79Cob97KSh	4620816365031245740	2022-01-23 12:37:54.049698+00	2022-01-21 10:34:47.666562+00	2022-02-02 11:25:54.936404+00	2022-02-02 11:26:24.190842+00	2022-02-02 11:23:46.41437+00	https://staging.fyle.tech
+9	Fyle For Intacct Bill-CCT	orGcBCVPijjO	4620816365071123640	2022-01-21 10:51:06.388212+00	2022-01-21 10:41:25.311576+00	2022-02-02 11:30:26.526992+00	2022-02-02 11:47:23.913656+00	2022-02-02 11:47:09.229035+00	https://staging.fyle.tech
 \.
 
 
@@ -7190,14 +7196,14 @@ SELECT pg_catalog.setval('public.django_content_type_id_seq', 41, true);
 -- Name: django_migrations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.django_migrations_id_seq', 122, true);
+SELECT pg_catalog.setval('public.django_migrations_id_seq', 123, true);
 
 
 --
 -- Name: django_q_ormq_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.django_q_ormq_id_seq', 37, true);
+SELECT pg_catalog.setval('public.django_q_ormq_id_seq', 39, true);
 
 
 --
@@ -7232,14 +7238,14 @@ SELECT pg_catalog.setval('public.fyle_accounting_mappings_expenseattribute_id_se
 -- Name: fyle_accounting_mappings_mapping_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.fyle_accounting_mappings_mapping_id_seq', 14, true);
+SELECT pg_catalog.setval('public.fyle_accounting_mappings_mapping_id_seq', 15, true);
 
 
 --
 -- Name: fyle_accounting_mappings_mappingsetting_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.fyle_accounting_mappings_mappingsetting_id_seq', 9, true);
+SELECT pg_catalog.setval('public.fyle_accounting_mappings_mappingsetting_id_seq', 10, true);
 
 
 --
@@ -7386,7 +7392,7 @@ SELECT pg_catalog.setval('public.workspaces_fylecredential_id_seq', 10, true);
 -- Name: workspaces_qbocredential_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.workspaces_qbocredential_id_seq', 18, true);
+SELECT pg_catalog.setval('public.workspaces_qbocredential_id_seq', 20, true);
 
 
 --
