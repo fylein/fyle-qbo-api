@@ -4,7 +4,6 @@ import pytest
 import json
 
 #  Will use paramaterize decorator of python later
-@pytest.mark.django_db(databases=['default'])
 def test_quickbooks_fields_view(api_client, test_connection):
 
    access_token = test_connection.access_token
@@ -22,7 +21,6 @@ def test_quickbooks_fields_view(api_client, test_connection):
 
    assert len(response) == 3
 
-@pytest.mark.django_db(databases=['default'])
 def test_destination_attributes_view(api_client, test_connection):
 
     access_token = test_connection.access_token

@@ -6,7 +6,6 @@ from tests.helper import dict_compare_keys
 from apps.workspaces.models import FyleCredential, WorkspaceSchedule
 from .fixtures import data
 
-@pytest.mark.django_db(databases=['default'])
 def test_get_workspace_by_id(api_client, test_connection):
 
     url = reverse(
@@ -23,7 +22,6 @@ def test_get_workspace_by_id(api_client, test_connection):
 
     assert dict_compare_keys(response, data['workspace']) == [], 'workspaces api returns a diff in the keys'
 
-@pytest.mark.django_db(databases=['default'])
 def test_post_of_workspace(api_client, test_connection):
 
     url = reverse(
@@ -39,7 +37,6 @@ def test_post_of_workspace(api_client, test_connection):
     assert dict_compare_keys(response, data['workspace']) == [], 'workspaces api returns a diff in the keys'
 
 
-@pytest.mark.django_db(databases=['default'])
 def test_get_configuration_detail(api_client, test_connection):
 
     url = reverse(
@@ -55,7 +52,6 @@ def test_get_configuration_detail(api_client, test_connection):
 
     assert dict_compare_keys(response, data['general_settings']) == [], 'configuration api returns a diff in keys'
 
-@pytest.mark.django_db(databases=['default'])
 def test_post_workspace_configurations(api_client, test_connection):
     url = reverse(
         'workspace-general-settings', kwargs={
@@ -97,7 +93,6 @@ def test_get_workspace_schedule(api_client, test_connection):
 
     assert response == {'enabled': False,'id': 1,'interval_hours': None,'schedule': None,'start_datetime': None,'workspace': 8}
 
-@pytest.mark.django_db(databases=['default'])
 def test_ready_view(api_client, test_connection):
     url = reverse('ready')
 
@@ -109,7 +104,6 @@ def test_ready_view(api_client, test_connection):
     assert response['message'] == 'Ready'
 
 
-@pytest.mark.django_db(databases=['default'])
 def test_delete_fyle_credentials_view(api_client, test_connection):
     url = reverse(
         'delete-fyle-credentials', kwargs={
@@ -125,7 +119,6 @@ def test_delete_fyle_credentials_view(api_client, test_connection):
     assert response['message'] == 'Fyle credentials deleted'
 
 
-@pytest.mark.django_db(databases=['default'])
 def test_get_fyle_credentials_view(api_client, test_connection, add_fyle_credentials):
     url = reverse(
         'get-fyle-credentials', kwargs={
@@ -149,7 +142,6 @@ def test_get_fyle_credentials_view(api_client, test_connection, add_fyle_credent
     assert response['message'] == 'Fyle Credentials not found in this workspace'
 
 
-@pytest.mark.django_db(databases=['default'])
 def test_get_qbo_credentials_view(api_client, test_connection, add_qbo_credentials):
     url = reverse(
         'get-qbo-credentials', kwargs={
@@ -165,7 +157,6 @@ def test_get_qbo_credentials_view(api_client, test_connection, add_qbo_credentia
     #Todo add a check with settings.realm_id 
     assert response['realm_id'] == '4620816365031245740'
     
-@pytest.mark.django_db(databases=['default'])
 def test_delete_qbo_credentials_view(api_client, test_connection, add_qbo_credentials):
     url = reverse(
         'delete-qbo-credentials', kwargs={

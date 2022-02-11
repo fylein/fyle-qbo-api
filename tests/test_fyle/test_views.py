@@ -6,7 +6,6 @@ from django.urls import reverse
 from .fixtures import data
 from tests.helper import dict_compare_keys
 
-@pytest.mark.django_db(databases=['default'])
 def test_expense_group_view(api_client, test_connection):
    access_token = test_connection.access_token
 
@@ -34,7 +33,6 @@ def test_expense_group_view(api_client, test_connection):
 
    assert response == data['expense_groups_ready_response']
 
-@pytest.mark.django_db(databases=['default'])
 def test_count_expense_view(api_client, test_connection):
     access_token = test_connection.access_token
 
@@ -52,7 +50,6 @@ def test_count_expense_view(api_client, test_connection):
     assert response.status_code==200
     assert response.data['count'] == 3
 
-@pytest.mark.django_db(databases=['default'])
 def test_expense_group_settings(api_client, test_connection):
     access_token = test_connection.access_token
 
@@ -85,7 +82,6 @@ def test_expense_group_settings(api_client, test_connection):
     
     
 
-@pytest.mark.django_db(databases=['default'])
 def test_fyle_refresh_dimension(api_client, test_connection, add_fyle_credentials):
     
     access_token = test_connection.access_token
@@ -108,7 +104,6 @@ def test_fyle_refresh_dimension(api_client, test_connection, add_fyle_credential
     assert response.status_code == 400
     assert response.data['message'] == 'Fyle credentials not found in workspace'
 
-@pytest.mark.django_db(databases=['default'])
 def test_fyle_sync_dimension(api_client, test_connection, add_fyle_credentials):
     
     access_token = test_connection.access_token
@@ -125,7 +120,6 @@ def test_fyle_sync_dimension(api_client, test_connection, add_fyle_credentials):
     assert response.status_code == 200
 
 # Todo : merge the two sync functions
-@pytest.mark.django_db(databases=['default'])
 def test_fyle_sync_dimension_fail(api_client, test_connection, add_fyle_credentials):
     
     access_token = test_connection.access_token
@@ -145,7 +139,6 @@ def test_fyle_sync_dimension_fail(api_client, test_connection, add_fyle_credenti
     assert new_response.status_code == 400
     assert new_response.data['message'] == 'Fyle credentials not found in workspace'
 
-@pytest.mark.django_db(databases=['default'])
 def test_expense_group_id_view(api_client, test_connection):
     
     access_token = test_connection.access_token
@@ -181,7 +174,6 @@ def test_expense_group_id_view(api_client, test_connection):
 
 
 
-@pytest.mark.django_db(databases=['default'])
 def test_expense_group_by_id_expenses_view(api_client, test_connection):
     
     access_token = test_connection.access_token
@@ -213,7 +205,6 @@ def test_expense_group_by_id_expenses_view(api_client, test_connection):
     assert response.status_code == 400
     assert response.data['message'] == 'Expense group not found'
 
-@pytest.mark.django_db(databases=['default'])
 def test_expense_fields_view(api_client, test_connection):
     
     access_token = test_connection.access_token
@@ -232,7 +223,6 @@ def test_expense_fields_view(api_client, test_connection):
     response = json.loads(response.content)
     assert response == data['expense_fields_response']
 
-@pytest.mark.django_db(databases=['default'])
 def test_employees_view(api_client, test_connection):
     
     access_token = test_connection.access_token
@@ -251,7 +241,6 @@ def test_employees_view(api_client, test_connection):
     response = json.loads(response.content)
     assert response == data['employees_response']
 
-@pytest.mark.django_db(databases=['default'])
 def test_categories_view(api_client, test_connection):
     
     access_token = test_connection.access_token
@@ -270,7 +259,6 @@ def test_categories_view(api_client, test_connection):
     response = json.loads(response.content)
     assert response == data['categories_response']
 
-@pytest.mark.django_db(databases=['default'])
 def test_cost_centers_view(api_client, test_connection):
     
     access_token = test_connection.access_token
@@ -290,7 +278,6 @@ def test_cost_centers_view(api_client, test_connection):
     assert response == data['cost_centers_response']
 
 # Todo: check the response as well for projects
-@pytest.mark.django_db(databases=['default'])
 def test_projects_view(api_client, test_connection):
     
     access_token = test_connection.access_token
