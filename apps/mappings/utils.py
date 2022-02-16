@@ -39,8 +39,8 @@ class MappingUtils:
             assert_valid('bank_account_id' in general_mapping and general_mapping['bank_account_id'],
                          'bank account id field is blank')
 
-        if general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE' and \
-                general_settings.corporate_credit_card_expenses_object != 'BILL':
+        if general_settings.corporate_credit_card_expenses_object and \
+                general_settings.corporate_credit_card_expenses_object not in ('BILL','DEBIT CARD EXPENSE'):
             assert_valid('default_ccc_account_name' in general_mapping and general_mapping['default_ccc_account_name'],
                          'default ccc account name field is blank')
             assert_valid('default_ccc_account_id' in general_mapping and general_mapping['default_ccc_account_id'],

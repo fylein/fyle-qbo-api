@@ -389,7 +389,7 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                 'message': 'CCC account mapping / Default CCC account mapping not found'
             })
 
-    if general_settings.corporate_credit_card_expenses_object != 'BILL' and general_settings.corporate_credit_card_expenses_object != 'DEBIT CARD EXPENSE' and expense_group.fund_source == 'CCC':
+    if general_settings.corporate_credit_card_expenses_object not in ('BILL', 'DEBIT CARD EXPENSE') and expense_group.fund_source == 'CCC':
         if not (general_mapping.default_ccc_account_id or general_mapping.default_ccc_account_name):
             bulk_errors.append({
                 'row': None,
@@ -656,7 +656,7 @@ def create_qbo_expense(expense_group, task_log_id):
             if general_settings.auto_map_employees and general_settings.auto_create_destination_entity:
                 create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
 
-        if expense_group.fund_source == 'CCC':
+        else:
             merchant = expense_group.expenses.first().vendor
             get_or_create_credit_card_or_debit_card_vendor(expense_group.workspace_id, merchant, True)
        
@@ -781,7 +781,6 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id):
             get_or_create_credit_card_or_debit_card_vendor(expense_group.workspace_id, merchant, False)
 
         with transaction.atomic():
-            print('this is credit card :(')
             __validate_expense_group(expense_group, general_settings)
 
             credit_card_purchase_object = CreditCardPurchase.create_credit_card_purchase(
