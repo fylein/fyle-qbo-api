@@ -19,6 +19,8 @@ class GeneralMapping(models.Model):
     bank_account_id = models.CharField(max_length=40, help_text='QBO bank account id', null=True)
     default_ccc_account_name = models.CharField(max_length=255, help_text='Name of the default ccc account', null=True)
     default_ccc_account_id = models.CharField(max_length=40, help_text='QBO default ccc account id', null=True)
+    default_debit_card_account_name = models.CharField(max_length=255, help_text='Name of the default debit card account', null=True)
+    default_debit_card_account_id = models.CharField(max_length=40, help_text='QBO default debit card account id', null=True)
     default_ccc_vendor_name = models.CharField(max_length=255, help_text='QBO default CCC Vendor Name', null=True)
     default_ccc_vendor_id = models.CharField(max_length=255, help_text='QBO default CCC Vendor ID', null=True)
     default_tax_code_name = models.CharField(max_length=255, help_text='QBO default Tax Code name', null=True)

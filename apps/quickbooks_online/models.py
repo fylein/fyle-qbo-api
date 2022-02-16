@@ -499,7 +499,7 @@ class QBOExpense(models.Model):
         qbo_expense_object, _ = QBOExpense.objects.update_or_create(
             expense_group=expense_group,
             defaults={
-                'expense_account_id': general_mappings.qbo_expense_account_id,
+                'expense_account_id': general_mappings.qbo_expense_account_id if expense_group.fund_source == 'PERSONAL' else general_mappings.default_debit_card_account_id,
                 'entity_id': entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' \
                     else entity.destination_vendor.destination_id,
                 'department_id': department_id,

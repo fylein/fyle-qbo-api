@@ -641,6 +641,22 @@ class CreditCardPurchaseScheduleView(generics.CreateAPIView):
             status=status.HTTP_200_OK
         )
 
+class DebitCardExpenseScheduleView(generics.CreateAPIView):
+    """
+    Schedule debit_card_expense create
+    """
+
+    def post(self, request, *args, **kwargs):
+        expense_group_ids = request.data.get('expense_group_ids', [])
+
+        schedule_qbo_expense_creation(
+            kwargs['workspace_id'], expense_group_ids)
+
+        return Response(
+            status=status.HTTP_200_OK
+        )
+
+
 
 class JournalEntryView(generics.ListCreateAPIView):
     """
