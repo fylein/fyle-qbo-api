@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 logger.level = logging.INFO
 
 
-def get_or_create_credit_card_vendor(workspace_id: int, merchant: str):
+def get_or_create_credit_card_or_debit_card_vendor(workspace_id: int, merchant: str, debit_card_expense: bool):
     """
     Get or create car default vendor
     :param workspace_id: Workspace Id
@@ -48,7 +48,10 @@ def get_or_create_credit_card_vendor(workspace_id: int, merchant: str):
             logger.error(bad_request.response)
 
     if not vendor:
-        vendor = qbo_connection.get_or_create_vendor('Credit Card Misc', create=True)
+        if debit_card_expense:
+            vendor = qbo_connection.get_or_create_vendor('Debit Card Misc', create=True)
+        else:
+            vendor = qbo_connection.get_or_create_vendor('Credit Card Misc', create=True)
 
     return vendor
 
@@ -386,7 +389,7 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                 'message': 'CCC account mapping / Default CCC account mapping not found'
             })
 
-    if general_settings.corporate_credit_card_expenses_object != 'BILL' and expense_group.fund_source == 'CCC':
+    if general_settings.corporate_credit_card_expenses_object not in ('BILL', 'DEBIT CARD EXPENSE') and expense_group.fund_source == 'CCC':
         if not (general_mapping.default_ccc_account_id or general_mapping.default_ccc_account_name):
             bulk_errors.append({
                 'row': None,
@@ -394,6 +397,16 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                 'value': 'Default Credit Card Account',
                 'type': 'General Mapping',
                 'message': 'Default Credit Card Account not found'
+            })
+    
+    if general_settings.corporate_credit_card_expenses_object == 'DEBIT CARD EXPENSE' and expense_group.fund_source == 'CCC':
+        if not (general_mapping.default_debit_card_account_id or general_mapping.default_debit_card_account_name):
+            bulk_errors.append({
+                'row': None,
+                'expense_group_id': expense_group.id,
+                'value': 'Default Debit Card Account',
+                'type': 'General Mapping',
+                'message': 'Default Debit Card Account not found'
             })
 
     if general_settings.import_tax_codes and not (general_mapping.default_tax_code_id or general_mapping.default_tax_code_name):
@@ -611,11 +624,11 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
                 expense_group=expense_group,
                 defaults={
                     'status': 'ENQUEUED',
-                    'type': 'CREATING_EXPENSE'
+                    'type': 'CREATING_EXPENSE' if expense_group.fund_source == 'PERSONAL' else 'CREATING_DEBIT_CARD_EXPENSE'
                 }
             )
             if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
-                task_log.type = 'CREATING_EXPENSE'
+                task_log.type = 'CREATING_EXPENSE' if expense_group.fund_source == 'PERSONAL' else 'CREATING_DEBIT_CARD_EXPENSE'
                 task_log.status = 'ENQUEUED'
                 task_log.save()
 
@@ -638,10 +651,15 @@ def create_qbo_expense(expense_group, task_log_id):
         qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
 
         qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
+        
+        if expense_group.fund_source == 'PERSONAL':
+            if general_settings.auto_map_employees and general_settings.auto_create_destination_entity:
+                create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
 
-        if general_settings.auto_map_employees and general_settings.auto_create_destination_entity:
-            create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
-
+        else:
+            merchant = expense_group.expenses.first().vendor
+            get_or_create_credit_card_or_debit_card_vendor(expense_group.workspace_id, merchant, True)
+       
         with transaction.atomic():
             __validate_expense_group(expense_group, general_settings)
 
@@ -759,7 +777,7 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id):
                 create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
         else:
             merchant = expense_group.expenses.first().vendor
-            get_or_create_credit_card_vendor(expense_group.workspace_id, merchant)
+            get_or_create_credit_card_or_debit_card_vendor(expense_group.workspace_id, merchant, False)
 
         with transaction.atomic():
             __validate_expense_group(expense_group, general_settings)

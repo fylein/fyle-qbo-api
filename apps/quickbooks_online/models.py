@@ -57,7 +57,10 @@ def get_expense_purpose(workspace_id, lineitem, category, workspace_general_sett
 
 def construct_private_note(expense_group: ExpenseGroup):
     expense = expense_group.expenses.first()
-    expense_type = 'Reimbursable' if expense_group.fund_source == 'PERSONAL' else 'Credit card'
+    workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
+    expense_type = 'Reimbursable'
+    if (expense_group.fund_source == 'CCC'):
+        expense_type = 'Debit Card' if workspace_general_settings.corporate_credit_card_expenses_object == 'DEBIT CARD EXPENSE' else 'Credit card'
     merchant = ' spent on merchant {0}'.format(expense.vendor) if expense.vendor else ''
     spent_at = ' on {0} '.format(expense.spent_at.date()) if expense.spent_at else ''
 
@@ -499,7 +502,8 @@ class QBOExpense(models.Model):
         qbo_expense_object, _ = QBOExpense.objects.update_or_create(
             expense_group=expense_group,
             defaults={
-                'expense_account_id': general_mappings.qbo_expense_account_id,
+                'expense_account_id': general_mappings.qbo_expense_account_id if expense_group.fund_source == 'PERSONAL'\
+                    else general_mappings.default_debit_card_account_id,
                 'entity_id': entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' \
                     else entity.destination_vendor.destination_id,
                 'department_id': department_id,
