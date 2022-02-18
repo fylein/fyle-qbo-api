@@ -661,7 +661,6 @@ def create_qbo_expense(expense_group, task_log_id):
             get_or_create_credit_card_or_debit_card_vendor(expense_group.workspace_id, merchant, True)
        
         with transaction.atomic():
-            print("hello this is qbo expense")
             __validate_expense_group(expense_group, general_settings)
 
             qbo_expense_object = QBOExpense.create_qbo_expense(expense_group)

@@ -57,7 +57,10 @@ def get_expense_purpose(workspace_id, lineitem, category, workspace_general_sett
 
 def construct_private_note(expense_group: ExpenseGroup):
     expense = expense_group.expenses.first()
-    expense_type = 'Reimbursable' if expense_group.fund_source == 'PERSONAL' else 'Credit card'
+    workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
+    expense_type = 'Reimbursable'
+    if (expense_group.fund_source == 'CCC'):
+        expense_type = 'Credit Card' if workspace_general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE' else 'Debit card'
     merchant = ' spent on merchant {0}'.format(expense.vendor) if expense.vendor else ''
     spent_at = ' on {0} '.format(expense.spent_at.date()) if expense.spent_at else ''
 
