@@ -418,10 +418,10 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
             'message': 'Default Tax Code not found'
         })
 
-    if not (expense_group.fund_source == 'CCC' and \
-        ((general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE' and \
-            general_settings.map_merchant_to_vendor) or \
-                general_settings.corporate_credit_card_expenses_object == 'BILL')):
+    if not (expense_group.fund_source == 'CCC' and
+        ((general_settings.corporate_credit_card_expenses_object in ('CREDIT CARD PURCHASE', 'DEBIT CARD EXPENSE') and
+          general_settings.map_merchant_to_vendor) or
+         general_settings.corporate_credit_card_expenses_object == 'BILL')):
         try:
             entity = EmployeeMapping.objects.get(
                 source_employee__value=expense_group.description.get('employee_email'),
