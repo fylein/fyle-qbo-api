@@ -494,18 +494,36 @@ class QBOExpense(models.Model):
         workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
         employee_field_mapping = workspace_general_settings.employee_field_mapping
 
-        entity = EmployeeMapping.objects.get(
-            source_employee__value=description.get('employee_email'),
-            workspace_id=expense_group.workspace_id
-        )
+        if workspace_general_settings.map_merchant_to_vendor and expense_group.fund_source == 'CCC':
+            merchant = expense.vendor if expense.vendor else ''
+
+            entity = DestinationAttribute.objects.filter(
+                value__iexact=merchant, attribute_type='VENDOR', workspace_id=expense_group.workspace_id
+            ).first()
+
+            expense_group.description['spent_at'] = expense.spent_at.strftime("%Y-%m-%d")
+            expense_group.save()
+
+            if not entity:
+                entity_id = DestinationAttribute.objects.filter(
+                    value='Debit Card Misc', workspace_id=expense_group.workspace_id).first().destination_id
+            else:
+                entity_id = entity.destination_id
+
+        else:
+            entity = EmployeeMapping.objects.get(
+                source_employee__value=description.get('employee_email'),
+                workspace_id=expense_group.workspace_id
+            )
+            entity_id = entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' \
+                else entity.destination_vendor.destination_id
 
         qbo_expense_object, _ = QBOExpense.objects.update_or_create(
             expense_group=expense_group,
             defaults={
                 'expense_account_id': general_mappings.qbo_expense_account_id if expense_group.fund_source == 'PERSONAL'\
                     else general_mappings.default_debit_card_account_id,
-                'entity_id': entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' \
-                    else entity.destination_vendor.destination_id,
+                'entity_id': entity_id,
                 'department_id': department_id,
                 'transaction_date': get_transaction_date(expense_group),
                 'private_note': private_note,
