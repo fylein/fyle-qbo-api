@@ -3,7 +3,7 @@
 --
 
 -- Dumped from database version 14.1 (Debian 14.1-1.pgdg110+1)
--- Dumped by pg_dump version 14.1 (Debian 14.1-1.pgdg110+1)
+-- Dumped by pg_dump version 14.2 (Debian 14.2-1.pgdg100+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -1343,7 +1343,9 @@ CREATE TABLE public.general_mappings (
     qbo_expense_account_id character varying(40),
     qbo_expense_account_name character varying(255),
     default_tax_code_id character varying(255),
-    default_tax_code_name character varying(255)
+    default_tax_code_name character varying(255),
+    default_debit_card_account_id character varying(40),
+    default_debit_card_account_name character varying(255)
 );
 
 
@@ -3309,6 +3311,7 @@ COPY public.django_migrations (id, app, name, applied) FROM stdin;
 121	workspaces	0020_fylecredential_cluster_domain	2022-02-01 06:32:58.982929+00
 122	workspaces	0021_workspacegeneralsettings_map_fyle_cards_qbo_account	2022-02-01 06:32:59.202384+00
 123	workspaces	0022_workspacegeneralsettings_skip_cards_mapping	2022-02-02 11:15:57.170023+00
+124	mappings	0009_auto_20220215_0843	2022-02-21 08:34:21.255745+00
 \.
 
 
@@ -6988,9 +6991,9 @@ COPY public.fyle_credentials (id, refresh_token, created_at, updated_at, workspa
 -- Data for Name: general_mappings; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.general_mappings (id, bank_account_name, bank_account_id, default_ccc_account_name, default_ccc_account_id, created_at, updated_at, workspace_id, accounts_payable_id, accounts_payable_name, default_ccc_vendor_id, default_ccc_vendor_name, bill_payment_account_id, bill_payment_account_name, qbo_expense_account_id, qbo_expense_account_name, default_tax_code_id, default_tax_code_name) FROM stdin;
-5	Checking	35	Visa	42	2022-01-21 10:37:50.899425+00	2022-01-21 10:37:50.899782+00	8	\N	\N	\N	\N	\N	\N	41	Mastercard	\N	\N
-6	\N	\N	Visa	42	2022-01-21 10:42:53.733958+00	2022-01-21 10:42:53.734048+00	9	33	Accounts Payable (A/P)	\N	\N	\N	\N	\N	\N	\N	\N
+COPY public.general_mappings (id, bank_account_name, bank_account_id, default_ccc_account_name, default_ccc_account_id, created_at, updated_at, workspace_id, accounts_payable_id, accounts_payable_name, default_ccc_vendor_id, default_ccc_vendor_name, bill_payment_account_id, bill_payment_account_name, qbo_expense_account_id, qbo_expense_account_name, default_tax_code_id, default_tax_code_name, default_debit_card_account_id, default_debit_card_account_name) FROM stdin;
+5	Checking	35	Visa	42	2022-01-21 10:37:50.899425+00	2022-01-21 10:37:50.899782+00	8	\N	\N	\N	\N	\N	\N	41	Mastercard	\N	\N	\N	\N
+6	\N	\N	Visa	42	2022-01-21 10:42:53.733958+00	2022-01-21 10:42:53.734048+00	9	33	Accounts Payable (A/P)	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
 \.
 
 
@@ -7196,7 +7199,7 @@ SELECT pg_catalog.setval('public.django_content_type_id_seq', 41, true);
 -- Name: django_migrations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.django_migrations_id_seq', 123, true);
+SELECT pg_catalog.setval('public.django_migrations_id_seq', 124, true);
 
 
 --
