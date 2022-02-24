@@ -29,7 +29,5 @@ def test_get_cluster_domain_and_refresh_token(add_users_to_database,add_fyle_cre
     )
     cluster_domain, refresh_token = get_cluster_domain_and_refresh_token(user)
 
-    print(cluster_domain)
-    
     assert cluster_domain == 'https://staging.fyle.tech'
     assert refresh_token == settings.FYLE_REFRESH_TOKEN
