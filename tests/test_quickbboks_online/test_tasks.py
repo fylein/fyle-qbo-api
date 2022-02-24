@@ -6,8 +6,6 @@ from apps.quickbooks_online.models import Bill, Cheque, QBOExpense, CreditCardPu
 from apps.quickbooks_online.tasks import create_bill, create_qbo_expense, create_credit_card_purchase, create_journal_entry, get_or_create_credit_card_or_debit_card_vendor, create_cheque 
 from fyle_accounting_mappings.models import EmployeeMapping, Mapping
 
-
-
 @pytest.mark.django_db()
 def test_post_bill_success(create_task_logs, add_qbo_credentials, add_fyle_credentials):
 
