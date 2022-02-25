@@ -3,10 +3,8 @@ import random
 from apps.tasks.models import TaskLog
 from apps.fyle.models import ExpenseGroup
 from apps.quickbooks_online.models import Bill, Cheque, QBOExpense, CreditCardPurchase, JournalEntry
-from apps.quickbooks_online.tasks import create_bill, create_qbo_expense, create_credit_card_purchase, create_journal_entry, get_or_create_credit_card_vendor, create_cheque 
+from apps.quickbooks_online.tasks import create_bill, create_qbo_expense, create_credit_card_purchase, create_journal_entry, get_or_create_credit_card_or_debit_card_vendor, create_cheque 
 from fyle_accounting_mappings.models import EmployeeMapping, Mapping
-
-
 
 @pytest.mark.django_db()
 def test_post_bill_success(create_task_logs, add_qbo_credentials, add_fyle_credentials):
@@ -163,9 +161,9 @@ def test_post_cheque_success(create_task_logs, add_qbo_credentials, add_fyle_cre
     assert cheque.private_note =='Credit card expense by ashwin.t@fyle.in on 2022-01-23 '
 
 @pytest.mark.django_db()
-def test_get_or_create_credit_card_vendor(add_qbo_credentials):
+def test_get_or_create_credit_card_or_debit_card_vendor(add_qbo_credentials):
     
-    created_vendor = get_or_create_credit_card_vendor(9,'test Sharma')
+    created_vendor = get_or_create_credit_card_or_debit_card_vendor(9,'test Sharma',False)
     
     assert created_vendor.destination_id == '59'
     assert created_vendor.display_name == 'vendor'

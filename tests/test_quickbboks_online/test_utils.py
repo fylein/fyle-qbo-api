@@ -37,7 +37,7 @@ def test_sync_vendors(add_qbo_credentials):
     qbo_connection.sync_vendors()
 
     new_vendor_count = DestinationAttribute.objects.filter(workspace_id=9, attribute_type='VENDOR').count()
-    assert new_vendor_count == 28
+    assert new_vendor_count == 29
 
 
 def test_sync_departments(add_qbo_credentials):
