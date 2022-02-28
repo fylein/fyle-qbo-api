@@ -27,7 +27,8 @@ class GeneralMapping(models.Model):
     default_tax_code_id = models.CharField(max_length=255, help_text='QBO default Tax Code ID', null=True)
     bill_payment_account_id = models.CharField(max_length=255, help_text='BillPayment Account id', null=True)
     bill_payment_account_name = models.CharField(max_length=255, help_text='BillPayment Account name', null=True)
-    workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
+    workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model', 
+                                        related_name='general_mappings')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')
 

@@ -6,7 +6,6 @@ from django.core.cache import cache
 from rest_framework.response import Response
 from rest_framework.views import status
 from rest_framework import viewsets
-from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 
 from fylesdk import exceptions as fyle_exc
@@ -20,7 +19,6 @@ from fyle_rest_auth.helpers import get_fyle_admin
 from fyle_qbo_api.utils import assert_valid
 
 from apps.quickbooks_online.utils import QBOConnector
-from apps.fyle.utils import FyleConnector
 from apps.fyle.helpers import get_cluster_domain
 
 from .models import Workspace, FyleCredential, QBOCredential, WorkspaceGeneralSettings, WorkspaceSchedule

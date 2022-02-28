@@ -57,7 +57,8 @@ class WorkspaceGeneralSettings(models.Model):
     Workspace General Settings
     """
     id = models.AutoField(primary_key=True, help_text='Unique Id to identify a workspace')
-    workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
+    workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model', 
+                                        related_name='workspace_general_settings')
     reimbursable_expenses_object = models.CharField(max_length=50, help_text='Reimbursable Expenses type')
     corporate_credit_card_expenses_object = models.CharField(max_length=50,
                                                              help_text='Non Reimbursable Expenses type', null=True)
