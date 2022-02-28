@@ -5,10 +5,10 @@ from apps.workspaces.models import WorkspaceGeneralSettings, Workspace
 from apps.mappings.models import GeneralMapping
 from apps.workspaces.serializers import WorkspaceSerializer
 
-from .serializers import ExportSettingsReadSerializer, GeneralMappingsSerializer
+from .serializers import ExportSettingsSerializer
 
 class ExportSettingsView(generics.RetrieveUpdateAPIView):
-    serializer_class = ExportSettingsReadSerializer
+    serializer_class = ExportSettingsSerializer
     authentication_classes = []
     permission_classes = []
     lookup_field = 'workspace_id'
