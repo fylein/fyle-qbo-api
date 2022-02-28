@@ -1,0 +1,65 @@
+{
+    "import_settings": {
+        "PUT": {
+            "import_settings": {
+                "accounts": {
+                    "import_accounts": true,
+                    "charts_of_accounts": ["Expense"],
+                    "account_sync_version": "v2"
+                },
+                "tax_codes": {
+                    "import_tax_codes": false
+                },
+                "customers": {
+                    "import_customers": true,
+                    "customers_mapped_to": "PROJECT"
+                },
+                "departments": {
+                    "import_departments": true,
+                    "departments_mapped_to": "COST_CENTER"
+                },
+                "classes": {
+                    "import_classes": true,
+                    "classes_mapped_to": "CLASS"
+                }
+            },
+            "general_mappings": {
+                "default_tax_code": {
+                    "id": null,
+                    "name": null
+                }
+            }
+        },
+        "GET": {
+            "import_settings": {
+                "accounts": {
+                    "import_accounts": true,
+                    "charts_of_accounts": ["Expense"],
+                    "account_sync_version": "v2"
+                },
+                "tax_codes": {
+                    "import_tax_codes": false
+                },
+                "customers": {
+                    "import_customers": true,
+                    "customers_mapped_to": "PROJECT"
+                },
+                "departments": {
+                    "import_departments": true,
+                    "departments_mapped_to": "COST_CENTER"
+                },
+                "classes": {
+                    "import_classes": true,
+                    "classes_mapped_to": "CLASS"
+                }
+            },
+            "general_mappings": {
+                "default_tax_code": {
+                    "id": null,
+                    "name": null
+                }
+            },
+            "workspace_id": 1
+        }
+    }
+}

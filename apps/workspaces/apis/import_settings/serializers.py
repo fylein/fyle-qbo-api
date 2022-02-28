@@ -39,7 +39,7 @@ class ImportSettingsModelSerializer(serializers.Serializer):
     accounts = ReadWriteSerializerMethodField()
     customers = ReadWriteSerializerMethodField()
     classes = ReadWriteSerializerMethodField()
-    department = ReadWriteSerializerMethodField()
+    departments = ReadWriteSerializerMethodField()
     tax_codes = ReadWriteSerializerMethodField()
 
     class Meta:
@@ -48,7 +48,7 @@ class ImportSettingsModelSerializer(serializers.Serializer):
             'accounts',
             'customers',
             'classes',
-            'department',
+            'departments',
             'tax_codes'
         ]
 
@@ -62,19 +62,19 @@ class ImportSettingsModelSerializer(serializers.Serializer):
     def get_customers(self, instance):
         return {
             'import_customers': instance.import_customers,
-            'customer_mapped_to': instance.customer_mapped_to
+            'customers_mapped_to': instance.customers_mapped_to
         }
     
     def get_classes(self, instance):
         return {
             'import_classes': instance.import_classes,
-            'class_mapped_to': instance.class_mapped_to
+            'classes_mapped_to': instance.classes_mapped_to
         }
     
-    def get_department(self, instance):
+    def get_departments(self, instance):
         return {
             'import_departments': instance.import_departments,
-            'department_mapped_to': instance.department_mapped_to
+            'departments_mapped_to': instance.departments_mapped_to
         }
     
     def get_tax_codes(self, instance):
@@ -116,6 +116,9 @@ class ImportSettingsSerializer(serializers.Serializer):
             }
         )
 
+        if not import_settings.get('accounts').get('account_sync_version'):
+            import_settings['accounts']['account_sync_version'] = 'v2'
+
         ImportSetting.objects.update_or_create(
             workspace=instance,
             defaults={
@@ -123,11 +126,11 @@ class ImportSettingsSerializer(serializers.Serializer):
                 'charts_of_accounts': import_settings.get('accounts').get('charts_of_accounts'),
                 'account_sync_version': import_settings.get('accounts').get('account_sync_version'),
                 'import_customers': import_settings.get('customers').get('import_customers'),
-                'customer_mapped_to': import_settings.get('customers').get('customer_mapped_to'),
+                'customers_mapped_to': import_settings.get('customers').get('customers_mapped_to'),
                 'import_classes': import_settings.get('classes').get('import_classes'),
-                'class_mapped_to': import_settings.get('classes').get('class_mapped_to'),
-                'import_departments': import_settings.get('department').get('import_departments'),
-                'department_mapped_to': import_settings.get('department').get('department_mapped_to'),
+                'classes_mapped_to': import_settings.get('classes').get('classes_mapped_to'),
+                'import_departments': import_settings.get('departments').get('import_departments'),
+                'departments_mapped_to': import_settings.get('departments').get('departments_mapped_to'),
                 'import_tax_codes': import_settings.get('tax_codes').get('import_tax_codes')
             }
         )
