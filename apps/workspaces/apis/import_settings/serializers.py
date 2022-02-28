@@ -36,20 +36,51 @@ class GeneralMappingsSerializer(serializers.ModelSerializer):
 
 
 class ImportSettingsModelSerializer(serializers.Serializer):
+    accounts = ReadWriteSerializerMethodField()
+    customers = ReadWriteSerializerMethodField()
+    classes = ReadWriteSerializerMethodField()
+    department = ReadWriteSerializerMethodField()
+    tax_codes = ReadWriteSerializerMethodField()
+
     class Meta:
         model = ImportSetting
         fields = [
-            'import_accounts',
-            'chart_of_accounts',
-            'account_sync_version',
-            'import_customers',
-            'customers_mapped_to',
-            'import_classes',
-            'classes_mapped_to',
-            'import_departments',
-            'departments_mapped_to',
-            'import_tax_codes'
+            'accounts',
+            'customers',
+            'classes',
+            'department',
+            'tax_codes'
         ]
+
+    def get_accounts(self, instance):
+        return {
+            'import_accounts': instance.import_accounts,
+            'charts_of_accounts': instance.charts_of_accounts,
+            'account_sync_version': instance.account_sync_version
+        }
+    
+    def get_customers(self, instance):
+        return {
+            'import_customers': instance.import_customers,
+            'customer_mapped_to': instance.customer_mapped_to
+        }
+    
+    def get_classes(self, instance):
+        return {
+            'import_classes': instance.import_classes,
+            'class_mapped_to': instance.class_mapped_to
+        }
+    
+    def get_department(self, instance):
+        return {
+            'import_departments': instance.import_departments,
+            'department_mapped_to': instance.department_mapped_to
+        }
+    
+    def get_tax_codes(self, instance):
+        return {
+            'import_tax_codes': instance.import_tax_codes
+        }
 
 
 class ImportSettingsSerializer(serializers.Serializer):
@@ -88,16 +119,16 @@ class ImportSettingsSerializer(serializers.Serializer):
         ImportSetting.objects.update_or_create(
             workspace=instance,
             defaults={
-                'import_accounts': import_settings.get('import_accounts'),
-                'chart_of_accounts': import_settings.get('chart_of_accounts'),
-                'account_sync_version': import_settings.get('account_sync_version'),
-                'import_customers': import_settings.get('import_customers'),
-                'customers_mapped_to': import_settings.get('customers_mapped_to'),
-                'import_classes': import_settings.get('import_classes'),
-                'classes_mapped_to': import_settings.get('classes_mapped_to'),
-                'import_departments': import_settings.get('import_departments'),
-                'departments_mapped_to': import_settings.get('departments_mapped_to'),
-                'import_tax_codes': import_settings.get('import_tax_codes')
+                'import_accounts': import_settings.get('accounts').get('import_accounts'),
+                'charts_of_accounts': import_settings.get('accounts').get('charts_of_accounts'),
+                'account_sync_version': import_settings.get('accounts').get('account_sync_version'),
+                'import_customers': import_settings.get('customers').get('import_customers'),
+                'customer_mapped_to': import_settings.get('customers').get('customer_mapped_to'),
+                'import_classes': import_settings.get('classes').get('import_classes'),
+                'class_mapped_to': import_settings.get('classes').get('class_mapped_to'),
+                'import_departments': import_settings.get('department').get('import_departments'),
+                'department_mapped_to': import_settings.get('department').get('department_mapped_to'),
+                'import_tax_codes': import_settings.get('tax_codes').get('import_tax_codes')
             }
         )
 
