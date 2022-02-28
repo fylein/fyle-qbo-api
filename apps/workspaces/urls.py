@@ -17,7 +17,8 @@ from django.urls import path, include
 
 from .views import WorkspaceView, ReadyView, ConnectFyleView, ConnectQBOView, ScheduleView, GeneralSettingsView, \
     ScheduledSyncView
-from.apis.export_settings.views import ExportSettingsView
+from .apis.export_settings.views import ExportSettingsView
+from .apis.map_employees.views import MapEmployeesView
 
 urlpatterns = [
     path('', WorkspaceView.as_view({'get': 'get', 'post': 'post'}), name='workspace'),
@@ -36,7 +37,6 @@ urlpatterns = [
     path('<int:workspace_id>/mappings/', include('apps.mappings.urls')),
     path('<int:workspace_id>/tasks/', include('apps.tasks.urls')),
     path('ready/', ReadyView.as_view({'get': 'get'}), name='ready'),
-    
-    # v2 APIs
-    path('v2/<int:workspace_id>/export_settings/', ExportSettingsView.as_view())
+    path('v2/<int:workspace_id>/export_settings/', ExportSettingsView.as_view()),
+    path('v2/<int:workspace_id>/map_employees/', MapEmployeesView.as_view())
 ]
