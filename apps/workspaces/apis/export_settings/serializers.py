@@ -91,7 +91,7 @@ class GeneralMappingsSerializer(serializers.ModelSerializer):
         }
 
 
-class ExportSettingsReadSerializer(serializers.Serializer, ExportSettingsValidator):
+class ExportSettingsReadSerializer(serializers.Serializer):
     """
     Serializer for the ExportSettings Form/API
     """
