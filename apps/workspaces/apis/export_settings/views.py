@@ -1,9 +1,6 @@
-from rest_framework import generics, mixins
-from rest_framework.response import Response
+from rest_framework import generics
 
-from apps.workspaces.models import WorkspaceGeneralSettings, Workspace
-from apps.mappings.models import GeneralMapping
-from apps.workspaces.serializers import WorkspaceSerializer
+from apps.workspaces.models import Workspace
 
 from .serializers import ExportSettingsSerializer
 
