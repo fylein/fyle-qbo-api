@@ -19,17 +19,17 @@ from .views import WorkspaceView, ReadyView, ConnectFyleView, ConnectQBOView, Sc
     ScheduledSyncView, MockView, MockView2, MockView3, MockView4
 
 urlpatterns = [
-    path('', WorkspaceView.as_view({'get': 'get', 'post': 'post'})),
-    path('<int:workspace_id>/', WorkspaceView.as_view({'get': 'get_by_id'})),
-    path('<int:workspace_id>/schedule/', ScheduleView.as_view({'post': 'post', 'get': 'get'})),
-    path('<int:workspace_id>/settings/general/', GeneralSettingsView.as_view({'post': 'post', 'get': 'get'})),
+    path('', WorkspaceView.as_view({'get': 'get', 'post': 'post'}), name='workspace'),
+    path('<int:workspace_id>/', WorkspaceView.as_view({'get': 'get_by_id'}), name='workspace-by-id'),
+    path('<int:workspace_id>/schedule/', ScheduleView.as_view({'post': 'post', 'get': 'get'}), name='workspace-schedule'),
+    path('<int:workspace_id>/settings/general/', GeneralSettingsView.as_view({'post': 'post', 'get': 'get'}), name='workspace-general-settings'),
     path('<int:workspace_id>/schedule/trigger/', ScheduledSyncView.as_view({'post': 'post'})),
     path('<int:workspace_id>/connect_fyle/authorization_code/', ConnectFyleView.as_view({'post': 'post'})),
-    path('<int:workspace_id>/credentials/fyle/', ConnectFyleView.as_view({'get': 'get'})),
-    path('<int:workspace_id>/credentials/fyle/delete/', ConnectFyleView.as_view({'post': 'delete'})),
+    path('<int:workspace_id>/credentials/fyle/', ConnectFyleView.as_view({'get': 'get'}), name='get-fyle-credentials'),
+    path('<int:workspace_id>/credentials/fyle/delete/', ConnectFyleView.as_view({'post': 'delete'}), name='delete-fyle-credentials'),
     path('<int:workspace_id>/connect_qbo/authorization_code/', ConnectQBOView.as_view({'post': 'post'})),
-    path('<int:workspace_id>/credentials/qbo/delete/', ConnectQBOView.as_view({'post': 'delete'})),
-    path('<int:workspace_id>/credentials/qbo/', ConnectQBOView.as_view({'get': 'get'})),
+    path('<int:workspace_id>/credentials/qbo/delete/', ConnectQBOView.as_view({'post': 'delete'}), name='delete-qbo-credentials'),
+    path('<int:workspace_id>/credentials/qbo/', ConnectQBOView.as_view({'get': 'get'}), name='get-qbo-credentials'),
     path('<int:workspace_id>/fyle/', include('apps.fyle.urls')),
     path('<int:workspace_id>/qbo/', include('apps.quickbooks_online.urls')),
     path('<int:workspace_id>/mappings/', include('apps.mappings.urls')),
@@ -38,5 +38,6 @@ urlpatterns = [
     path('<int:workspace_id>/mock/', MockView.as_view({'get': 'get', 'post': 'post'})),
     path('<int:workspace_id>/mock2/', MockView2.as_view({'get': 'get', 'post': 'post'})),
     path('<int:workspace_id>/mock3/', MockView3.as_view({'get': 'get', 'post': 'post'})),
-    path('<int:workspace_id>/mock4/', MockView4.as_view({'get': 'get', 'post': 'post'}))
+    path('<int:workspace_id>/mock4/', MockView4.as_view({'get': 'get', 'post': 'post'})),
+    path('ready/', ReadyView.as_view({'get': 'get'}), name='ready')
 ]

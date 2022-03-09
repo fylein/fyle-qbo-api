@@ -40,7 +40,7 @@ class MappingUtils:
                          'bank account id field is blank')
 
         if general_settings.corporate_credit_card_expenses_object and \
-                general_settings.corporate_credit_card_expenses_object != 'BILL':
+                general_settings.corporate_credit_card_expenses_object not in ('BILL','DEBIT CARD EXPENSE'):
             assert_valid('default_ccc_account_name' in general_mapping and general_mapping['default_ccc_account_name'],
                          'default ccc account name field is blank')
             assert_valid('default_ccc_account_id' in general_mapping and general_mapping['default_ccc_account_id'],
@@ -65,6 +65,12 @@ class MappingUtils:
                          'qbo expense account name field is blank')
             assert_valid('qbo_expense_account_id' in general_mapping and general_mapping['qbo_expense_account_id'],
                          'qbo expense account id field is blank')
+
+        if general_settings.corporate_credit_card_expenses_object == 'DEBIT CARD EXPENSE':
+            assert_valid('default_debit_card_account_name' in general_mapping and general_mapping['default_debit_card_account_name'],
+                         'debit card account name field is blank')
+            assert_valid('default_debit_card_account_id' in general_mapping and general_mapping['default_debit_card_account_id'],
+                         'debit card account id field is blank')
 
         general_mapping_object, _ = GeneralMapping.objects.update_or_create(
             workspace_id=self.__workspace_id,

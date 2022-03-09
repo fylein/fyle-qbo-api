@@ -105,6 +105,11 @@ def run_sync_schedule(workspace_id):
                 schedule_credit_card_purchase_creation(
                     workspace_id=workspace_id, expense_group_ids=expense_group_ids
                 )
+            
+            elif general_settings.corporate_credit_card_expenses_object == 'DEBIT CARD EXPENSE':
+                schedule_qbo_expense_creation(
+                    workspace_id=workspace_id, expense_group_ids=expense_group_ids
+                )
 
             elif general_settings.corporate_credit_card_expenses_object == 'BILL':
                 schedule_bills_creation(

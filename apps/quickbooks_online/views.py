@@ -641,6 +641,22 @@ class CreditCardPurchaseScheduleView(generics.CreateAPIView):
             status=status.HTTP_200_OK
         )
 
+class DebitCardExpenseScheduleView(generics.CreateAPIView):
+    """
+    Schedule debit_card_expense create
+    """
+
+    def post(self, request, *args, **kwargs):
+        expense_group_ids = request.data.get('expense_group_ids', [])
+
+        schedule_qbo_expense_creation(
+            kwargs['workspace_id'], expense_group_ids)
+
+        return Response(
+            status=status.HTTP_200_OK
+        )
+
+
 
 class JournalEntryView(generics.ListCreateAPIView):
     """
@@ -869,3 +885,15 @@ class DestinationAttributesView(generics.ListAPIView):
 
         return DestinationAttribute.objects.filter(
             attribute_type__in=attribute_types, workspace_id=self.kwargs['workspace_id']).order_by('value')
+
+
+class QBOAttributesView(generics.ListCreateAPIView):
+    """
+    GET Paginated QBO Attributes view
+    """
+    serializer_class = DestinationAttributeSerializer
+
+    def get_queryset(self):
+        attribute_type = self.request.query_params.get('attribute_type')
+        return DestinationAttribute.objects.filter(
+            attribute_type=attribute_type, workspace_id=self.kwargs['workspace_id']).order_by('value')

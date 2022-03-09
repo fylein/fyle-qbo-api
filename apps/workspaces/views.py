@@ -14,11 +14,14 @@ from qbosdk import exceptions as qbo_exc
 from fyle_rest_auth.helpers import get_fyle_admin
 from fyle_rest_auth.utils import AuthUtils
 from fyle_rest_auth.models import AuthToken
+from fyle_rest_auth.helpers import get_fyle_admin
 
 from fyle_qbo_api.utils import assert_valid
 
 from apps.quickbooks_online.utils import QBOConnector
 from apps.mappings.models import GeneralMapping
+from apps.fyle.utils import FyleConnector
+from apps.fyle.helpers import get_cluster_domain
 
 from .models import Workspace, FyleCredential, QBOCredential, WorkspaceGeneralSettings, WorkspaceSchedule
 from .utils import generate_qbo_refresh_token, create_or_update_general_settings
@@ -43,10 +46,6 @@ class WorkspaceView(viewsets.ViewSet):
         Create a Workspace
         """
 
-        # auth_tokens = AuthToken.objects.get(user__user_id=request.user)
-        # fyle_user = auth_utils.get_fyle_user(auth_tokens.refresh_token, None)
-        # org_name = fyle_user['org_name']
-        # org_id = fyle_user['org_id']
         access_token = request.META.get('HTTP_AUTHORIZATION')
         fyle_user = get_fyle_admin(access_token.split(' ')[1], None)
         org_name = fyle_user['data']['org']['name']
@@ -66,9 +65,12 @@ class WorkspaceView(viewsets.ViewSet):
 
             auth_tokens = AuthToken.objects.get(user__user_id=request.user)
 
+            cluster_domain = get_cluster_domain(auth_tokens.refresh_token)
+
             FyleCredential.objects.update_or_create(
                 refresh_token=auth_tokens.refresh_token,
-                workspace_id=workspace.id
+                workspace_id=workspace.id,
+                cluster_domain=cluster_domain
             )
 
         return Response(
@@ -144,10 +146,6 @@ class ConnectFyleView(viewsets.ViewSet):
 
             workspace = Workspace.objects.get(id=kwargs['workspace_id'])
 
-            # refresh_token = auth_utils.generate_fyle_refresh_token(authorization_code)['refresh_token']
-            # fyle_user = auth_utils.get_fyle_user(refresh_token, None)
-            # org_id = fyle_user['org_id']
-            # org_name = fyle_user['org_name']
             tokens = auth_utils.generate_fyle_refresh_token(authorization_code)
             refresh_token = tokens['refresh_token']
 
@@ -162,10 +160,13 @@ class ConnectFyleView(viewsets.ViewSet):
             workspace.fyle_org_id = org_id
             workspace.save()
 
+            cluster_domain = get_cluster_domain(refresh_token)
+
             fyle_credentials, _ = FyleCredential.objects.update_or_create(
                 workspace_id=kwargs['workspace_id'],
                 defaults={
                     'refresh_token': refresh_token,
+                    'cluster_domain': cluster_domain
                 }
             )
 

@@ -9,6 +9,7 @@ from django.conf import settings
 from future.moves.urllib.parse import urlencode
 from qbosdk import UnauthorizedClientError, NotFoundClientError, WrongParamsError, InternalServerError
 
+from fyle_accounting_mappings.models import MappingSetting
 from apps.mappings.tasks import schedule_categories_creation, schedule_auto_map_employees, schedule_auto_map_ccc_employees, schedule_tax_groups_creation
 from apps.quickbooks_online.tasks import schedule_bill_payment_creation, schedule_qbo_objects_status_sync,\
     schedule_reimbursements_sync
@@ -127,14 +128,16 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
             'sync_fyle_to_qbo_payments': general_settings_payload['sync_fyle_to_qbo_payments'],
             'sync_qbo_to_fyle_payments': general_settings_payload['sync_qbo_to_fyle_payments'],
             'map_merchant_to_vendor': map_merchant_to_vendor,
-            'je_single_credit_line': general_settings_payload['je_single_credit_line']
+            'je_single_credit_line': general_settings_payload['je_single_credit_line'],
+            'map_fyle_cards_qbo_account': general_settings_payload['map_fyle_cards_qbo_account']
         }
     )
 
     if general_settings.map_merchant_to_vendor and \
-            general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE':
+            general_settings.corporate_credit_card_expenses_object in ('CREDIT CARD PURCHASE', 'DEBIT CARD EXPENSE'):
         expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
-        expense_group_settings.import_card_credits = True
+        expense_group_settings.import_card_credits = True if \
+            general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE' else False
 
         ccc_expense_group_fields = expense_group_settings.corporate_credit_card_expense_group_fields
         ccc_expense_group_fields.append('expense_id')
@@ -164,3 +167,14 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
     )
 
     return general_settings
+
+
+def delete_cards_mapping_settings(workspace_general_settings: WorkspaceGeneralSettings):
+    if not workspace_general_settings.map_fyle_cards_qbo_account or not workspace_general_settings.corporate_credit_card_expenses_object:
+        mapping_setting = MappingSetting.objects.filter(
+            workspace_id=workspace_general_settings.workspace_id,
+            source_field='CORPORATE_CARD',
+            destination_field='CREDIT_CARD_ACCOUNT'
+        ).first()
+        if mapping_setting:
+            mapping_setting.delete()

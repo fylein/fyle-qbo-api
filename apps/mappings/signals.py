@@ -9,6 +9,8 @@ from fyle_accounting_mappings.models import MappingSetting
 
 from apps.mappings.tasks import upload_attributes_to_fyle, schedule_cost_centers_creation,\
     schedule_fyle_attributes_creation, schedule_projects_creation, schedule_tax_groups_creation
+from apps.workspaces.utils import delete_cards_mapping_settings
+from apps.workspaces.models import WorkspaceGeneralSettings
 
 
 @receiver(post_save, sender=MappingSetting)
@@ -27,6 +29,10 @@ def run_post_mapping_settings_triggers(sender, instance: MappingSetting, **kwarg
     if instance.is_custom:
         schedule_fyle_attributes_creation(int(instance.workspace_id))
 
+    workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=instance.workspace_id).first()
+    if workspace_general_settings:
+        delete_cards_mapping_settings(workspace_general_settings)
+
 
 @receiver(pre_save, sender=MappingSetting)
 def run_pre_mapping_settings_triggers(sender, instance: MappingSetting, **kwargs):
@@ -35,7 +41,7 @@ def run_pre_mapping_settings_triggers(sender, instance: MappingSetting, **kwargs
     :param instance: Row Instance of Sender Class
     :return: None
     """
-    default_attributes = ['CATEGORY', 'PROJECT', 'COST_CENTER', 'TAX_GROUP']
+    default_attributes = ['CATEGORY', 'PROJECT', 'COST_CENTER', 'TAX_GROUP', 'CORPORATE_CARD']
 
     instance.source_field = instance.source_field.upper().replace(' ', '_')
     if instance.source_field not in default_attributes:

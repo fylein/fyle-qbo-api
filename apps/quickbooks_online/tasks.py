@@ -12,6 +12,7 @@ from django_q.models import Schedule
 from qbosdk.exceptions import WrongParamsError
 
 from fyle_accounting_mappings.models import Mapping, ExpenseAttribute, DestinationAttribute, EmployeeMapping
+from fyle_integrations_platform_connector import PlatformConnector
 
 from fyle_qbo_api.exceptions import BulkError
 
@@ -28,7 +29,8 @@ from .utils import QBOConnector
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
 
-def get_or_create_credit_card_vendor(workspace_id: int, merchant: str):
+
+def get_or_create_credit_card_or_debit_card_vendor(workspace_id: int, merchant: str, debit_card_expense: bool):
     """
     Get or create car default vendor
     :param workspace_id: Workspace Id
@@ -46,7 +48,10 @@ def get_or_create_credit_card_vendor(workspace_id: int, merchant: str):
             logger.error(bad_request.response)
 
     if not vendor:
-        vendor = qbo_connection.get_or_create_vendor('Credit Card Misc', create=True)
+        if debit_card_expense:
+            vendor = qbo_connection.get_or_create_vendor('Debit Card Misc', create=True)
+        else:
+            vendor = qbo_connection.get_or_create_vendor('Credit Card Misc', create=True)
 
     return vendor
 
@@ -62,7 +67,7 @@ def load_attachments(qbo_connection: QBOConnector, ref_id: str, ref_type: str, e
     try:
         fyle_credentials = FyleCredential.objects.get(workspace_id=expense_group.workspace_id)
         expense_ids = expense_group.expenses.values_list('expense_id', flat=True)
-        fyle_connector = FyleConnector(fyle_credentials.refresh_token, expense_group.workspace_id)
+        fyle_connector = FyleConnector(fyle_credentials.refresh_token)
         attachments = fyle_connector.get_attachments(expense_ids)
         qbo_connection.post_attachments(ref_id, ref_type, attachments)
     except Exception:
@@ -384,7 +389,7 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                 'message': 'CCC account mapping / Default CCC account mapping not found'
             })
 
-    if general_settings.corporate_credit_card_expenses_object != 'BILL' and expense_group.fund_source == 'CCC':
+    if general_settings.corporate_credit_card_expenses_object not in ('BILL', 'DEBIT CARD EXPENSE') and expense_group.fund_source == 'CCC':
         if not (general_mapping.default_ccc_account_id or general_mapping.default_ccc_account_name):
             bulk_errors.append({
                 'row': None,
@@ -392,6 +397,16 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                 'value': 'Default Credit Card Account',
                 'type': 'General Mapping',
                 'message': 'Default Credit Card Account not found'
+            })
+    
+    if general_settings.corporate_credit_card_expenses_object == 'DEBIT CARD EXPENSE' and expense_group.fund_source == 'CCC':
+        if not (general_mapping.default_debit_card_account_id or general_mapping.default_debit_card_account_name):
+            bulk_errors.append({
+                'row': None,
+                'expense_group_id': expense_group.id,
+                'value': 'Default Debit Card Account',
+                'type': 'General Mapping',
+                'message': 'Default Debit Card Account not found'
             })
 
     if general_settings.import_tax_codes and not (general_mapping.default_tax_code_id or general_mapping.default_tax_code_name):
@@ -403,10 +418,10 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
             'message': 'Default Tax Code not found'
         })
 
-    if not (expense_group.fund_source == 'CCC' and \
-        ((general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE' and \
-            general_settings.map_merchant_to_vendor) or \
-                general_settings.corporate_credit_card_expenses_object == 'BILL')):
+    if not (expense_group.fund_source == 'CCC' and
+        ((general_settings.corporate_credit_card_expenses_object in ('CREDIT CARD PURCHASE', 'DEBIT CARD EXPENSE') and
+          general_settings.map_merchant_to_vendor) or
+         general_settings.corporate_credit_card_expenses_object == 'BILL')):
         try:
             entity = EmployeeMapping.objects.get(
                 source_employee__value=expense_group.description.get('employee_email'),
@@ -609,11 +624,11 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
                 expense_group=expense_group,
                 defaults={
                     'status': 'ENQUEUED',
-                    'type': 'CREATING_EXPENSE'
+                    'type': 'CREATING_EXPENSE' if expense_group.fund_source == 'PERSONAL' else 'CREATING_DEBIT_CARD_EXPENSE'
                 }
             )
             if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
-                task_log.type = 'CREATING_EXPENSE'
+                task_log.type = 'CREATING_EXPENSE' if expense_group.fund_source == 'PERSONAL' else 'CREATING_DEBIT_CARD_EXPENSE'
                 task_log.status = 'ENQUEUED'
                 task_log.save()
 
@@ -636,10 +651,15 @@ def create_qbo_expense(expense_group, task_log_id):
         qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
 
         qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
+        
+        if expense_group.fund_source == 'PERSONAL':
+            if general_settings.auto_map_employees and general_settings.auto_create_destination_entity:
+                create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
 
-        if general_settings.auto_map_employees and general_settings.auto_create_destination_entity:
-            create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
-
+        else:
+            merchant = expense_group.expenses.first().vendor
+            get_or_create_credit_card_or_debit_card_vendor(expense_group.workspace_id, merchant, True)
+       
         with transaction.atomic():
             __validate_expense_group(expense_group, general_settings)
 
@@ -757,7 +777,7 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id):
                 create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
         else:
             merchant = expense_group.expenses.first().vendor
-            get_or_create_credit_card_vendor(expense_group.workspace_id, merchant)
+            get_or_create_credit_card_or_debit_card_vendor(expense_group.workspace_id, merchant, False)
 
         with transaction.atomic():
             __validate_expense_group(expense_group, general_settings)
@@ -952,9 +972,8 @@ def check_expenses_reimbursement_status(expenses):
 def create_bill_payment(workspace_id):
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
 
-    fyle_connector = FyleConnector(fyle_credentials.refresh_token, workspace_id)
-
-    fyle_connector.sync_reimbursements()
+    platform = PlatformConnector(fyle_credentials)
+    platform.reimbursements.sync()
 
     bills = Bill.objects.filter(
         payment_synced=False, expense_group__workspace_id=workspace_id,
@@ -1134,9 +1153,10 @@ def schedule_qbo_objects_status_sync(sync_qbo_to_fyle_payments, workspace_id):
 def process_reimbursements(workspace_id):
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
 
-    fyle_connector = FyleConnector(fyle_credentials.refresh_token, workspace_id)
+    fyle_connector = FyleConnector(fyle_credentials.refresh_token)
 
-    fyle_connector.sync_reimbursements()
+    platform = PlatformConnector(fyle_credentials)
+    platform.reimbursements.sync()
 
     reimbursements = Reimbursement.objects.filter(state='PENDING', workspace_id=workspace_id).all()
 
@@ -1156,7 +1176,7 @@ def process_reimbursements(workspace_id):
 
     if reimbursement_ids:
         fyle_connector.post_reimbursement(reimbursement_ids)
-        fyle_connector.sync_reimbursements()
+        platform.reimbursements.sync()
 
 
 def schedule_reimbursements_sync(sync_qbo_to_fyle_payments, workspace_id):

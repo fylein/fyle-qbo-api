@@ -1,7 +1,7 @@
 """
 Fyle Models
 """
-import dateutil.parser
+from dateutil import parser
 from datetime import datetime
 from typing import List, Dict
 
@@ -25,10 +25,22 @@ ALLOWED_FORM_INPUT = {
     'export_date_type': ['current_date', 'approved_at', 'spent_at', 'verified_at', 'last_spent_at']
 }
 
+SOURCE_ACCOUNT_MAP = {
+    'PERSONAL_CASH_ACCOUNT': 'PERSONAL',
+    'PERSONAL_CORPORATE_CREDIT_CARD_ACCOUNT': 'CCC'
+}
 
-def _format_date(date_string: str) -> str:
+
+def _format_date(date_string) -> datetime:
+    """
+    Format date.
+    Args:
+        date_string (str): Date string.
+    Returns:
+        datetime: Formatted date.
+    """
     if date_string:
-        date_string = dateutil.parser.parse(date_string).strftime('%Y-%m-%dT00:00:00.000Z')
+        date_string = parser.parse(date_string)
     return date_string
 
 
@@ -60,6 +72,8 @@ class Expense(models.Model):
     cost_center = models.CharField(max_length=255, null=True, blank=True, help_text='Fyle Expense Cost Center')
     purpose = models.TextField(null=True, blank=True, help_text='Purpose')
     report_id = models.CharField(max_length=255, help_text='Report ID')
+    corporate_card_id = models.CharField(max_length=255, null=True, blank=True, help_text='Corporate Card ID')
+    file_ids = ArrayField(base_field=models.CharField(max_length=255), null=True, help_text='File IDs')
     spent_at = models.DateTimeField(null=True, help_text='Expense spent at')
     approved_at = models.DateTimeField(null=True, help_text='Expense approved at')
     expense_created_at = models.DateTimeField(help_text='Expense created at')
@@ -81,56 +95,43 @@ class Expense(models.Model):
         """
         expense_objects = []
 
-        custom_properties = ExpenseAttribute.objects.filter(
-            ~Q(attribute_type='EMPLOYEE') & ~Q(attribute_type='CATEGORY'),
-            ~Q(attribute_type='PROJECT') & ~Q(attribute_type='COST_CENTER'),
-            workspace_id=workspace_id
-        ).values('display_name').distinct()
-
-        custom_property_keys = list(set([prop['display_name'].lower() for prop in custom_properties]))
-
         for expense in expenses:
-            expense_custom_properties = {}
-
-            if custom_property_keys and expense['custom_properties']:
-                for prop in expense['custom_properties']:
-                    if prop['name'].lower() in custom_property_keys:
-                        expense_custom_properties[prop['name']] = prop['value']
-
             expense_object, _ = Expense.objects.update_or_create(
                 expense_id=expense['id'],
                 defaults={
-                    'org_id': expense['org_id'],
                     'employee_email': expense['employee_email'],
-                    'category': expense['category_name'],
+                    'category': expense['category'],
                     'sub_category': expense['sub_category'],
-                    'project': expense['project_name'],
+                    'project': expense['project'],
                     'expense_number': expense['expense_number'],
+                    'org_id': expense['org_id'],
                     'claim_number': expense['claim_number'],
                     'amount': expense['amount'],
                     'currency': expense['currency'],
                     'foreign_amount': expense['foreign_amount'],
                     'foreign_currency': expense['foreign_currency'],
-                    'tax_amount': expense['tax'],
+                    'tax_amount': expense['tax_amount'],
                     'tax_group_id': expense['tax_group_id'],
                     'settlement_id': expense['settlement_id'],
                     'reimbursable': expense['reimbursable'],
                     'billable': expense['billable'],
-                    'exported': expense['exported'],
                     'state': expense['state'],
-                    'vendor': expense['vendor'],
-                    'cost_center': expense['cost_center_name'],
+                    'vendor': expense['vendor'][:250] if expense['vendor'] else None,
+                    'cost_center': expense['cost_center'],
                     'purpose': expense['purpose'],
                     'report_id': expense['report_id'],
-                    'spent_at': _format_date(expense['spent_at']),
-                    'approved_at': _format_date(expense['approved_at']),
-                    'expense_created_at': expense['created_at'],
-                    'expense_updated_at': expense['updated_at'],
-                    'fund_source': expense['fund_source'],
-                    'verified_at': _format_date(expense['verified_at']),
-                    'custom_properties': expense_custom_properties if expense_custom_properties else {}
+                    'corporate_card_id': expense['corporate_card_id'],
+                    'file_ids': expense['file_ids'],
+                    'spent_at': expense['spent_at'],
+                    'approved_at': expense['approved_at'],
+                    'expense_created_at': expense['expense_created_at'],
+                    'expense_updated_at': expense['expense_updated_at'],
+                    'fund_source': SOURCE_ACCOUNT_MAP[expense['source_account_type']],
+                    'verified_at': expense['verified_at'],
+                    'custom_properties': expense['custom_properties']
                 }
             )
+
             if not ExpenseGroup.objects.filter(expenses__id=expense_object.id).first():
                 expense_objects.append(expense_object)
 
@@ -261,8 +262,7 @@ def _group_expenses(expenses, group_fields, workspace_id):
             group_fields.pop(group_fields.index(field))
             field = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type=field.upper()).first()
             if field:
-                custom_fields[field.attribute_type.lower()] = KeyTextTransform(field.display_name,
-                                                                         'custom_properties')
+                custom_fields[field.attribute_type.lower()] = KeyTextTransform(field.display_name, 'custom_properties')
 
     expense_groups = list(expenses.values(*group_fields, **custom_fields).annotate(
         total=Count('*'), expense_ids=ArrayAgg('id')))
@@ -310,13 +310,13 @@ class ExpenseGroup(models.Model):
         for expense_group in expense_groups:
             if expense_group_settings.reimbursable_export_date_type == 'last_spent_at':
                 expense_group['last_spent_at'] = Expense.objects.filter(
-                                                 id__in=expense_group['expense_ids']
-                                                 ).order_by('-spent_at').first().spent_at
+                    id__in=expense_group['expense_ids']
+                ).order_by('-spent_at').first().spent_at
 
             if expense_group_settings.ccc_export_date_type == 'last_spent_at':
                 expense_group['last_spent_at'] = Expense.objects.filter(
-                                                 id__in=expense_group['expense_ids']
-                                                 ).order_by('-spent_at').first().spent_at
+                    id__in=expense_group['expense_ids']
+                ).order_by('-spent_at').first().spent_at
 
             expense_ids = expense_group['expense_ids']
 
@@ -383,6 +383,7 @@ class Reimbursement(models.Model):
         attributes_to_be_updated = []
 
         for reimbursement in reimbursements:
+            reimbursement['state'] = 'COMPLETE' if reimbursement['is_paid'] else 'PENDING'
             if reimbursement['id'] not in existing_reimbursement_ids:
                 attributes_to_be_created.append(
                     Reimbursement(
@@ -406,3 +407,14 @@ class Reimbursement(models.Model):
 
         if attributes_to_be_updated:
             Reimbursement.objects.bulk_update(attributes_to_be_updated, fields=['state'], batch_size=50)
+
+    @staticmethod
+    def get_last_synced_at(workspace_id: int):
+        """
+        Get last synced at datetime
+        :param workspace_id: Workspace Id
+        :return: last_synced_at datetime
+        """
+        return Reimbursement.objects.filter(
+            workspace_id=workspace_id
+        ).order_by('-updated_at').first()
