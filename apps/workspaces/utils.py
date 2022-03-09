@@ -25,7 +25,7 @@ def generate_qbo_refresh_token(authorization_code: str) -> str:
     api_data = {
         'grant_type': 'authorization_code',
         'code': authorization_code,
-        'redirect_uri': settings.QBO_REDIRECT_URI
+        'redirect_uri': 'http://localhost:4200/qbo_callback'
     }
 
     auth = '{0}:{1}'.format(settings.QBO_CLIENT_ID, settings.QBO_CLIENT_SECRET)

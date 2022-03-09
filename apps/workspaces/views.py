@@ -516,10 +516,13 @@ class MockView2(viewsets.ViewSet):
             from apps.fyle.serializers import ExpenseGroupSettingsSerializer
             from apps.mappings.serializers import GeneralMappingSerializer
             return Response(
-                data={'workspace_general_settings': WorkSpaceGeneralSettingsSerializer(general_settings).data, 'expense_group_settings': ExpenseGroupSettingsSerializer(expense_group_settings).data, 'general_mappings': GeneralMappingSerializer(general_mappings).data},
-                # data={'workspace_general_settings': WorkSpaceGeneralSettingsSerializer(general_settings).data, 'expense_group_settings': None, 'general_mappings': None},
-                status=status.HTTP_200_OK
-            )
+                data={
+                    'workspace_general_settings': {
+                        'employee_field_mapping': 'EMPLOYEE'
+                    },
+                    'expense_group_settings': ExpenseGroupSettingsSerializer(expense_group_settings).data, 'general_mappings': GeneralMappingSerializer(general_mappings).data
+                },
+                status=status.HTTP_200_OK)
         except WorkspaceGeneralSettings.DoesNotExist:
             return Response(
                 {
