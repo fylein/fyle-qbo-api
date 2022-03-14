@@ -313,28 +313,38 @@ class ConnectQBOView(viewsets.ViewSet):
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
-    def delete(self, request, **kwargs):
-        """Delete credentials"""
+    def patch(self, request, **kwargs):
+        """Delete QBO refresh_token"""
         workspace_id = kwargs['workspace_id']
-        QBOCredential.objects.filter(workspace_id=workspace_id).delete()
+        qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
+        qbo_credentials.refresh_token = None
+        qbo_credentials.save()
 
         return Response(data={
             'workspace_id': workspace_id,
-            'message': 'QBO credentials deleted'
+            'message': 'QBO Refresh Token deleted'
         })
 
     def get(self, request, **kwargs):
         """
         Get QBO Credentials in Workspace
         """
+        workspace = Workspace.objects.get(pk=kwargs['workspace_id'])
+        qbo_credentials = QBOCredential.objects.get(workspace=workspace)
         try:
-            workspace = Workspace.objects.get(pk=kwargs['workspace_id'])
-            qbo_credentials = QBOCredential.objects.get(workspace=workspace)
+            if qbo_credentials.refresh_token:
+                return Response(
+                    data=QBOCredentialSerializer(qbo_credentials).data,
+                    status=status.HTTP_200_OK
+                )
+            else:
+                return Response(
+                    data={
+                        'message': 'QBO Credentials not found in this workspace'
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
-            return Response(
-                data=QBOCredentialSerializer(qbo_credentials).data,
-                status=status.HTTP_200_OK
-            )
         except QBOCredential.DoesNotExist:
             return Response(
                 data={

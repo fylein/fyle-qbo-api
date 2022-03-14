@@ -375,15 +375,14 @@ class CompanyInfoView(generics.RetrieveAPIView):
     Preferences View
     """
     def get(self, request, *args, **kwargs):
+        qbo_credentials = QBOCredential.objects.get(workspace_id=kwargs['workspace_id'])
         try:
-            qbo_credentials = QBOCredential.objects.get(workspace_id=kwargs['workspace_id'])
-
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
-            company_info = qbo_connector.get_company_info()
+            preferences = qbo_connector.get_company_preference()
 
             return Response(
-                data=company_info,
+                data=preferences,
                 status=status.HTTP_200_OK
             )
         except QBOCredential.DoesNotExist:
@@ -394,6 +393,8 @@ class CompanyInfoView(generics.RetrieveAPIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         except WrongParamsError:
+            qbo_credentials.refresh_token = None
+            qbo_credentials.save()
             return Response(
                 data={
                     'message': 'Quickbooks Online connection expired'
