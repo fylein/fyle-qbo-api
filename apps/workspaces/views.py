@@ -336,7 +336,6 @@ class ConnectQBOView(viewsets.ViewSet):
                 data=QBOCredentialSerializer(qbo_credentials).data,
                 status=status.HTTP_200_OK
             )
-
         except QBOCredential.DoesNotExist:
             return Response(
                 data={
