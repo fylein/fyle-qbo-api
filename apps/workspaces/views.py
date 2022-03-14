@@ -329,21 +329,14 @@ class ConnectQBOView(viewsets.ViewSet):
         """
         Get QBO Credentials in Workspace
         """
-        workspace = Workspace.objects.get(pk=kwargs['workspace_id'])
-        qbo_credentials = QBOCredential.objects.get(workspace=workspace)
         try:
-            if qbo_credentials.refresh_token:
-                return Response(
-                    data=QBOCredentialSerializer(qbo_credentials).data,
-                    status=status.HTTP_200_OK
-                )
-            else:
-                return Response(
-                    data={
-                        'message': 'QBO Credentials not found in this workspace'
-                    },
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+            qbo_credentials = QBOCredential.objects.get(workspace=kwargs['workspace_id'], refresh_token__isnull=False)
+            # qbo_credentials.objects.get(refreshtoken__isnull=False)
+
+            return Response(
+                data=QBOCredentialSerializer(qbo_credentials).data,
+                status=status.HTTP_200_OK
+            )
 
         except QBOCredential.DoesNotExist:
             return Response(
