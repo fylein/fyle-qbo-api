@@ -378,6 +378,7 @@ class CompanyInfoView(generics.RetrieveAPIView):
     def get(self, request, *args, **kwargs):
         try:
             qbo_credentials = QBOCredential.objects.get(workspace_id=kwargs['workspace_id'])
+
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
             company_info = qbo_connector.get_company_info()
