@@ -331,7 +331,6 @@ class ConnectQBOView(viewsets.ViewSet):
         """
         try:
             qbo_credentials = QBOCredential.objects.get(workspace=kwargs['workspace_id'], refresh_token__isnull=False)
-            # qbo_credentials.objects.get(refreshtoken__isnull=False)
 
             return Response(
                 data=QBOCredentialSerializer(qbo_credentials).data,
