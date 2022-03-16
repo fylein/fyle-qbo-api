@@ -28,7 +28,6 @@ urlpatterns = [
     path('<int:workspace_id>/credentials/fyle/', ConnectFyleView.as_view({'get': 'get'}), name='get-fyle-credentials'),
     path('<int:workspace_id>/credentials/fyle/delete/', ConnectFyleView.as_view({'post': 'delete'}), name='delete-fyle-credentials'),
     path('<int:workspace_id>/connect_qbo/authorization_code/', ConnectQBOView.as_view({'post': 'post'})),
-    path('<int:workspace_id>/credentials/qbo/delete/', ConnectQBOView.as_view({'post': 'delete'}), name='delete-qbo-credentials'),
     path('<int:workspace_id>/credentials/qbo/', ConnectQBOView.as_view({'get': 'get'}), name='get-qbo-credentials'),
     path('<int:workspace_id>/fyle/', include('apps.fyle.urls')),
     path('<int:workspace_id>/qbo/', include('apps.quickbooks_online.urls')),
