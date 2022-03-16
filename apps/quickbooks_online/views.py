@@ -344,7 +344,7 @@ class PreferencesView(generics.RetrieveAPIView):
 
     def get(self, request, *args, **kwargs):
         try:
-            qbo_credentials = QBOCredential.objects.get(workspace_id=kwargs['workspace_id'])
+            qbo_credentials = QBOCredential.objects.get(workspace=kwargs['workspace_id'], refresh_token__isnull=False)
 
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
@@ -362,6 +362,9 @@ class PreferencesView(generics.RetrieveAPIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         except WrongParamsError:
+            if qbo_credentials:
+                qbo_credentials.refresh_token = None
+                qbo_credentials.save()
             return Response(
                 data={
                     'message': 'Quickbooks Online connection expired'

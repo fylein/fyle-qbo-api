@@ -96,7 +96,7 @@ class QBOCredential(models.Model):
     Table to store QBO credentials
     """
     id = models.AutoField(primary_key=True)
-    refresh_token = models.TextField(help_text='Stores QBO refresh token')
+    refresh_token = models.TextField(help_text='Stores QBO refresh token', null=True)
     realm_id = models.CharField(max_length=40, help_text='QBO realm / company Id')
     company_name = models.CharField(max_length=255, help_text='QBO Company Name', null=True)
     country = models.CharField(max_length=255, help_text='QBO Country Name', null=True)
