@@ -19,6 +19,7 @@ from .views import WorkspaceView, ReadyView, ConnectFyleView, ConnectQBOView, Sc
     ScheduledSyncView
 from .apis.export_settings.views import ExportSettingsView
 from .apis.map_employees.views import MapEmployeesView
+from .apis.advanced_configurations.views import AdvancedConfigurationsView
 
 urlpatterns = [
     path('', WorkspaceView.as_view({'get': 'get', 'post': 'post'}), name='workspace'),
@@ -37,5 +38,6 @@ urlpatterns = [
     path('<int:workspace_id>/tasks/', include('apps.tasks.urls')),
     path('ready/', ReadyView.as_view({'get': 'get'}), name='ready'),
     path('v2/<int:workspace_id>/export_settings/', ExportSettingsView.as_view()),
-    path('v2/<int:workspace_id>/map_employees/', MapEmployeesView.as_view())
+    path('v2/<int:workspace_id>/map_employees/', MapEmployeesView.as_view()),
+    path('v2/<int:workspace_id>/advanced_configurations/', AdvancedConfigurationsView.as_view())
 ]
