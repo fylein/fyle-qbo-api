@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from apps.workspaces.models import WorkspaceGeneralSettings
 
+
 class MapEmployeesSerializer(serializers.ModelSerializer):
     workspace_id = serializers.SerializerMethodField()
 

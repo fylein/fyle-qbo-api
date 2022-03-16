@@ -33,8 +33,7 @@ class ExpenseGroupSettingsSerializer(serializers.ModelSerializer):
             'corporate_credit_card_expense_group_fields',
             'expense_state',
             'reimbursable_export_date_type',
-            'ccc_export_date_type',
-            'import_card_credits'
+            'ccc_export_date_type'
         ]
 
 
@@ -138,8 +137,7 @@ class ExportSettingsSerializer(serializers.Serializer):
                     'corporate_credit_card_expense_group_fields'),
                 'expense_state': expense_group_settings.get('expense_state'),
                 'reimbursable_export_date_type': expense_group_settings.get('reimbursable_export_date_type'),
-                'ccc_export_date_type': expense_group_settings.get('ccc_export_date_type'),
-                'import_card_credits': expense_group_settings.get('import_card_credits')
+                'ccc_export_date_type': expense_group_settings.get('ccc_export_date_type')
             }
         )
 

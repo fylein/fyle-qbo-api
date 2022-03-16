@@ -4,6 +4,7 @@ from apps.workspaces.models import WorkspaceGeneralSettings
 
 from .serializers import MapEmployeesSerializer
 
+
 class MapEmployeesView(generics.CreateAPIView, mixins.RetrieveModelMixin):
     serializer_class = MapEmployeesSerializer
     authentication_classes = []
