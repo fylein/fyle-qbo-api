@@ -429,9 +429,12 @@ class GeneralSettingsView(viewsets.ViewSet):
         Get workspace general settings
         """
         try:
-            general_settings = self.queryset.get(workspace_id=kwargs['workspace_id'])
+            # general_settings = self.queryset.get(workspace_id=kwargs['workspace_id'])
             return Response(
-                data=self.serializer_class(general_settings).data,
+                data={
+                    'employee_field_mapping': 'VENDOR',
+                    'reimbursable_expenses_object': 'JOURNAL ENTRY'
+                },
                 status=status.HTTP_200_OK
             )
         except WorkspaceGeneralSettings.DoesNotExist:
@@ -477,10 +480,12 @@ class MockView(viewsets.ViewSet):
         Get workspace general settings
         """
         try:
-            general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=kwargs['workspace_id'])
-            data = WorkSpaceGeneralSettingsSerializer(general_settings).data
+            # general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=kwargs['workspace_id'])
+            # data = WorkSpaceGeneralSettingsSerializer()
             return Response(
-                data={'workspace_general_settings': data},
+                data={'workspace_general_settings': {
+                    'employee_field_mapping': 'EMPLOYEE',
+                }},
                 status=status.HTTP_200_OK
             )
         except WorkspaceGeneralSettings.DoesNotExist:
@@ -519,7 +524,8 @@ class MockView2(viewsets.ViewSet):
             return Response(
                 data={
                     'workspace_general_settings': {
-                        'employee_field_mapping': 'EMPLOYEE'
+                        'employee_field_mapping': 'VENDOR',
+                        'corporate_credit_card_expenses_object': 'BILL'
                     },
                     'expense_group_settings': ExpenseGroupSettingsSerializer(expense_group_settings).data, 'general_mappings': GeneralMappingSerializer(general_mappings).data
                 },
