@@ -323,6 +323,7 @@ class PreferencesView(generics.RetrieveAPIView):
             company_info = qbo_connector.get_company_info()
             qbo_credentials.country = company_info['Country']
             qbo_credentials.company_name = company_info['CompanyName']
+            qbo_credentials.is_expired = False
             qbo_credentials.save()
 
             return Response(
@@ -364,6 +365,7 @@ class PreferencesView(generics.RetrieveAPIView):
         except WrongParamsError:
             if qbo_credentials:
                 qbo_credentials.refresh_token = None
+                qbo_credentials.is_expired = True
                 qbo_credentials.save()
             return Response(
                 data={
