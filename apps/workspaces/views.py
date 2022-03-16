@@ -320,7 +320,7 @@ class ConnectQBOView(viewsets.ViewSet):
         workspace_id = kwargs['workspace_id']
         qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
         qbo_credentials.refresh_token = None
-        qbo_credentials.is_expired = True
+        qbo_credentials.is_expired = False
         qbo_credentials.save()
 
         return Response(data={
