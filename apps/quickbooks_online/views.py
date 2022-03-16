@@ -353,7 +353,7 @@ class PreferencesView(generics.RetrieveAPIView):
             return Response(
                 data=preferences,
                 status=status.HTTP_200_OK
-                    )
+            )
 
         except QBOCredential.DoesNotExist:
             return Response(
