@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from apps.mappings.tasks import schedule_auto_map_employees
 from apps.workspaces.models import WorkspaceGeneralSettings
 
 
@@ -27,4 +28,7 @@ class MapEmployeesSerializer(serializers.ModelSerializer):
                 'auto_map_employees': validated_data['auto_map_employees']
             }
         )
+
+        schedule_auto_map_employees(validated_data['auto_map_employees'], workspace_id)
+
         return created_instance
