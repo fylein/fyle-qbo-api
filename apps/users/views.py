@@ -53,6 +53,6 @@ class FyleOrgsView(generics.ListCreateAPIView):
         fyle_orgs = get_fyle_orgs(refresh_token, cluster_domain)
 
         return Response(
-            data=fyle_orgs,
+            data=len(fyle_orgs),
             status=status.HTTP_200_OK
         )
