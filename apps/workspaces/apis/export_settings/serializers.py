@@ -3,6 +3,7 @@ from apps.workspaces.models import WorkspaceGeneralSettings, Workspace
 from apps.fyle.models import ExpenseGroupSettings
 from apps.mappings.models import GeneralMapping
 
+from .triggers import ExportSettingsTriggers
 
 class ReadWriteSerializerMethodField(serializers.SerializerMethodField):
     """
@@ -120,7 +121,7 @@ class ExportSettingsSerializer(serializers.Serializer):
         expense_group_settings = validated.pop('expense_group_settings')
         general_mappings = validated.pop('general_mappings')
 
-        WorkspaceGeneralSettings.objects.update_or_create(
+        workspace_general_settings_instance, _ = WorkspaceGeneralSettings.objects.update_or_create(
             workspace=instance,
             defaults={
                 'reimbursable_expenses_object': workspace_general_settings.get('reimbursable_expenses_object'),
@@ -129,7 +130,7 @@ class ExportSettingsSerializer(serializers.Serializer):
             }
         )
 
-        ExpenseGroupSettings.objects.update_or_create(
+        expense_group_settings_instance, _ = ExpenseGroupSettings.objects.update_or_create(
             workspace=instance,
             defaults={
                 'reimbursable_expense_group_fields': expense_group_settings.get('reimbursable_expense_group_fields'),
@@ -141,7 +142,7 @@ class ExportSettingsSerializer(serializers.Serializer):
             }
         )
 
-        GeneralMapping.objects.update_or_create(
+        general_mappings_instance, _ = GeneralMapping.objects.update_or_create(
             workspace=instance,
             defaults={
                 'accounts_payable_name': general_mappings.get('accounts_payable').get('name'),
@@ -158,6 +159,11 @@ class ExportSettingsSerializer(serializers.Serializer):
                 'default_ccc_vendor_id': general_mappings.get('default_ccc_vendor').get('id')
             }
         )
+
+        ExportSettingsTriggers.run_workspace_general_settings_triggers(workspace_general_settings_instance)
+        ExportSettingsTriggers.run_expense_group_settings_triggers(expense_group_settings_instance)
+        ExportSettingsTriggers.run_general_mappings_triggers(general_mappings_instance)
+
         return instance
 
     def validate(self, data):
