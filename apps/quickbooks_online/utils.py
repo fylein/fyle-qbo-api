@@ -124,7 +124,11 @@ class QBOConnector:
             value = format_special_characters(
                 account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName']
             )
-            if general_settings and account['AccountType'] in general_settings.charts_of_accounts and value:
+            charts_of_accounts=['Expence', 'Other Expense', 'Fixed Asset', 'Cost of Goods Sold','Current Liability',
+            'Equity', 'Other Current Asset', 'Other Current Liability', 'Long Term Liability', 'Current Asset']
+            
+
+            if general_settings and account['AccountType'] in charts_of_accounts and value:
                 account_attributes['account'].append({
                     'attribute_type': 'ACCOUNT',
                     'display_name': 'Account',
@@ -180,7 +184,6 @@ class QBOConnector:
             if attribute:
                 DestinationAttribute.bulk_create_or_update_destination_attributes(
                     attribute, attribute_type.upper(), self.workspace_id, True)
-
         return []
 
     def sync_departments(self):
