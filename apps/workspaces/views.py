@@ -246,7 +246,8 @@ class ConnectQBOView(viewsets.ViewSet):
         try:
             authorization_code = request.data.get('code')
             realm_id = request.data.get('realm_id')
-            refresh_token = generate_qbo_refresh_token(authorization_code)
+            redirect_uri = request.data.get('redirect_uri')
+            refresh_token = generate_qbo_refresh_token(authorization_code, redirect_uri)
 
             workspace = Workspace.objects.get(pk=kwargs['workspace_id'])
 
