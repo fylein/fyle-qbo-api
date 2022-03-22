@@ -34,7 +34,8 @@ class WorkspaceSchedule(models.Model):
     Workspace Schedule
     """
     id = models.AutoField(primary_key=True, help_text='Unique Id to identify a schedule')
-    workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
+    workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model',
+                                     related_name='workspace_schedules')
     enabled = models.BooleanField(default=False)
     start_datetime = models.DateTimeField(help_text='Datetime for start of schedule', null=True)
     interval_hours = models.IntegerField(null=True)
@@ -57,8 +58,9 @@ class WorkspaceGeneralSettings(models.Model):
     Workspace General Settings
     """
     id = models.AutoField(primary_key=True, help_text='Unique Id to identify a workspace')
-    workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
-    reimbursable_expenses_object = models.CharField(max_length=50, help_text='Reimbursable Expenses type')
+    workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model',
+                                        related_name='workspace_general_settings')
+    reimbursable_expenses_object = models.CharField(max_length=50, help_text='Reimbursable Expenses type', null=True)
     corporate_credit_card_expenses_object = models.CharField(max_length=50,
                                                              help_text='Non Reimbursable Expenses type', null=True)
     employee_field_mapping = models.CharField(max_length=50, help_text='Mapping Settings ( VENDOR / EMPLOYEE )')
