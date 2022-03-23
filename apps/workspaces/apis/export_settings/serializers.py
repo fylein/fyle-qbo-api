@@ -3,7 +3,6 @@ from apps.workspaces.models import WorkspaceGeneralSettings, Workspace
 from apps.fyle.models import ExpenseGroupSettings
 from apps.mappings.models import GeneralMapping
 
-from .triggers import ExportSettingsTriggers
 
 class ReadWriteSerializerMethodField(serializers.SerializerMethodField):
     """
@@ -121,28 +120,30 @@ class ExportSettingsSerializer(serializers.Serializer):
         expense_group_settings = validated.pop('expense_group_settings')
         general_mappings = validated.pop('general_mappings')
 
-        workspace_general_settings_instance, _ = WorkspaceGeneralSettings.objects.update_or_create(
+        workspace_general_settings_instance = WorkspaceGeneralSettings.objects.get(workspace_id=instance.id)
+
+        map_merchant_to_vendor = True
+
+        if workspace_general_settings_instance.map_merchant_to_vendor:
+            map_merchant_to_vendor = workspace_general_settings_instance.map_merchant_to_vendor
+
+        category_sync_version = workspace_general_settings_instance.category_sync_version \
+            if workspace_general_settings_instance.category_sync_version else 'v2'
+
+        WorkspaceGeneralSettings.objects.update_or_create(
             workspace=instance,
             defaults={
                 'reimbursable_expenses_object': workspace_general_settings.get('reimbursable_expenses_object'),
                 'corporate_credit_card_expenses_object': workspace_general_settings.get(
-                    'corporate_credit_card_expenses_object')
+                    'corporate_credit_card_expenses_object'),
+                'map_merchant_to_vendor': map_merchant_to_vendor,
+                'category_sync_version': category_sync_version
             }
         )
 
-        expense_group_settings_instance, _ = ExpenseGroupSettings.objects.update_or_create(
-            workspace=instance,
-            defaults={
-                'reimbursable_expense_group_fields': expense_group_settings.get('reimbursable_expense_group_fields'),
-                'corporate_credit_card_expense_group_fields': expense_group_settings.get(
-                    'corporate_credit_card_expense_group_fields'),
-                'expense_state': expense_group_settings.get('expense_state'),
-                'reimbursable_export_date_type': expense_group_settings.get('reimbursable_export_date_type'),
-                'ccc_export_date_type': expense_group_settings.get('ccc_export_date_type')
-            }
-        )
+        ExpenseGroupSettings.update_expense_group_settings(expense_group_settings, instance.id)
 
-        general_mappings_instance, _ = GeneralMapping.objects.update_or_create(
+        GeneralMapping.objects.update_or_create(
             workspace=instance,
             defaults={
                 'accounts_payable_name': general_mappings.get('accounts_payable').get('name'),
@@ -159,10 +160,6 @@ class ExportSettingsSerializer(serializers.Serializer):
                 'default_ccc_vendor_id': general_mappings.get('default_ccc_vendor').get('id')
             }
         )
-
-        ExportSettingsTriggers.run_workspace_general_settings_triggers(workspace_general_settings_instance)
-        ExportSettingsTriggers.run_expense_group_settings_triggers(expense_group_settings_instance)
-        ExportSettingsTriggers.run_general_mappings_triggers(general_mappings_instance)
 
         return instance
 
