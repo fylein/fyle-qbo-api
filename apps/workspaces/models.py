@@ -17,6 +17,7 @@ class Workspace(models.Model):
     name = models.CharField(max_length=255, help_text='Name of the workspace')
     user = models.ManyToManyField(User, help_text='Reference to users table')
     fyle_org_id = models.CharField(max_length=255, help_text='org id', unique=True)
+    fyle_currency = models.CharField(max_length=5, help_text='Fyle Currency', null=True)
     qbo_realm_id = models.CharField(max_length=255, help_text='qbo realm id')
     cluster_domain = models.CharField(max_length=255, help_text='fyle cluster domain', null=True)
     last_synced_at = models.DateTimeField(help_text='Datetime when expenses were pulled last', null=True)
