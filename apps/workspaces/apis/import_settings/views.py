@@ -7,6 +7,9 @@ from .serializers import ImportSettingsSerializer
 
 class ImportSettingsView(generics.RetrieveUpdateAPIView):
     serializer_class = ImportSettingsSerializer
+    permission_classes = []
+    authentication_classes = []
+
 
     def get_object(self):
         return Workspace.objects.filter(id=self.kwargs['workspace_id']).first()
