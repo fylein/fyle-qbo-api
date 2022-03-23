@@ -245,7 +245,7 @@ def upload_categories_to_fyle(workspace_id):
     platform.categories.sync()
     qbo_connection.sync_accounts()
     general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
-    qbo_attributes: DestinationAttribute.objects.filter(
+    qbo_attributes: List[DestinationAttribute] = DestinationAttribute.objects.filter(
         workspace_id=workspace_id, attribute_type='ACCOUNT', detail__account_type__in=general_settings.charts_of_accounts).all()
     qbo_attributes = remove_duplicates(qbo_attributes)
     fyle_payload: List[Dict] = create_fyle_categories_payload(qbo_attributes, workspace_id)
