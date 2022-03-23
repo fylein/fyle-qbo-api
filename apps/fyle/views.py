@@ -96,6 +96,21 @@ class ExpenseGroupCountView(generics.ListAPIView):
         )
 
 
+class ExpenseGroupsFilterView(generics.ListAPIView):
+    """
+    Filter Expense groups by exported_at date
+    """
+    serializer_class = ExpenseGroupSerializer
+
+    def get_queryset(self):
+        start_date = (self.request.query_params.get('start_date'))
+        end_date = (self.request.query_params.get('end_date'))
+
+        return ExpenseGroup.objects.filter(
+            workspace_id=self.kwargs['workspace_id'], exported_at__range=[start_date, end_date]
+        )
+
+
 class ExpenseGroupScheduleView(generics.CreateAPIView):
     """
     Create expense group schedule
