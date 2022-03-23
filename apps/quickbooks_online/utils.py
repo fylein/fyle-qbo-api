@@ -35,7 +35,7 @@ def format_special_characters(value: str) -> str:
 
     return formatted_string
 
-charts_of_accounts = [ 'Expense', 'Other Expense', 'Fixed Asset', 'Cost of Goods Sold', 
+CHARTS_OF_ACCOUNTS = [ 'Expense', 'Other Expense', 'Fixed Asset', 'Cost of Goods Sold', 
 'Current Liability', 'Equity', 'Other Current Asset', 'Other Current Liability', 
 'Long Term Liability', 'Current Asset' ]
 
@@ -128,7 +128,7 @@ class QBOConnector:
                 account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName']
             )
             
-            if general_settings and account['AccountType'] in charts_of_accounts and value:
+            if general_settings and account['AccountType'] in CHARTS_OF_ACCOUNTS and value:
                 account_attributes['account'].append({
                     'attribute_type': 'ACCOUNT',
                     'display_name': 'Account',
