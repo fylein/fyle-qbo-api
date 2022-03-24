@@ -8,6 +8,8 @@ from apps.mappings.models import GeneralMapping
 
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 
+from .triggers import ImportSettingsTrigger
+
 
 class MappingSettingFilteredListSerializer(serializers.ListSerializer):
     """
@@ -110,6 +112,14 @@ class ImportSettingsSerializer(serializers.Serializer):
                 'default_tax_code_id': general_mappings.get('default_tax_code').get('id')
             }
         )
+
+        trigger: ImportSettingsTrigger = ImportSettingsTrigger(
+            workspace_general_settings=workspace_general_settings,
+            mapping_settings=mapping_settings,
+            workspace_id=instance.id
+        )
+
+        trigger.pre_save_mapping_settings()
 
         if workspace_general_settings['import_tax_codes']:
             mapping_settings.append({
