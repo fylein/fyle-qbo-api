@@ -8,6 +8,7 @@ from apps.mappings.models import GeneralMapping
 
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 
+
 class FilteredListSerializer(serializers.ListSerializer):
     """
     Serializer to filter the active system, which is a boolen field in
