@@ -8,6 +8,18 @@ from apps.mappings.models import GeneralMapping
 
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 
+class FilteredListSerializer(serializers.ListSerializer):
+    """
+    Serializer to filter the active system, which is a boolen field in
+    System Model. The value argument to to_representation() method is
+    the model instance
+    """
+
+    def to_representation(self, data):
+        data = data.filter(destination_field__in=['CLASS', 'CUSTOMER', 'DEPARTMENT'])
+        return super(FilteredListSerializer, self).to_representation(data)
+
+
 class ReadWriteSerializerMethodField(serializers.SerializerMethodField):
     """
     Serializer Method Field to Read and Write from values
@@ -20,12 +32,15 @@ class ReadWriteSerializerMethodField(serializers.SerializerMethodField):
         super(serializers.SerializerMethodField, self).__init__(**kwargs)
 
     def to_internal_value(self, data):
-        return {self.field_name: data}
+        return {
+            self.field_name: data
+        }
 
 
 class MappingSettingSerializer(serializers.ModelSerializer):
     class Meta:
         model = MappingSetting
+        list_serializer_class = FilteredListSerializer
         fields = ['source_field', 'destination_field', 'import_to_fyle', 'is_custom']
 
 
@@ -106,7 +121,7 @@ class ImportSettingsSerializer(serializers.Serializer):
                     }
                 )
                 mapping_settings.append(mapping_setting)
-        
+
         return instance
 
     def validate(self, data):
