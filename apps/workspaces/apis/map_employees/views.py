@@ -7,8 +7,6 @@ from .serializers import MapEmployeesSerializer
 
 class MapEmployeesView(generics.CreateAPIView, mixins.RetrieveModelMixin):
     serializer_class = MapEmployeesSerializer
-    authentication_classes = []
-    permission_classes = []
 
     def get_object(self):
         return WorkspaceGeneralSettings.objects.filter(
