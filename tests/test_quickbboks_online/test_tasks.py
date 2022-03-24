@@ -176,6 +176,7 @@ def test_post_bill_mapping_error(create_task_logs, add_qbo_credentials, add_fyle
     EmployeeMapping.objects.filter(workspace_id=9).delete()
     Mapping.objects.filter(
             source_type='CATEGORY',
+            destination_type='ACCOUNT',
             workspace_id=9
         ).delete()
 

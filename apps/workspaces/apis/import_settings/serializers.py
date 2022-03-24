@@ -130,7 +130,6 @@ class ImportSettingsSerializer(serializers.Serializer):
                         'is_custom': setting['is_custom'] if 'is_custom' in setting else False
                     }
                 )
-                # mapping_settings.append(mapping_setting)
 
         return instance
 
