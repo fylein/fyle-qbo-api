@@ -452,6 +452,7 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
 
         account = Mapping.objects.filter(
             source_type='CATEGORY',
+            destination_type='ACCOUNT',
             source__value=category,
             workspace_id=expense_group.workspace_id
         ).first()
@@ -474,6 +475,7 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
 
             tax_code = Mapping.objects.filter(
                 source_type='TAX_GROUP',
+                destination_type='TAX_GROUP',
                 source__value=tax_group.value,
                 workspace_id=expense_group.workspace_id
             ).first()

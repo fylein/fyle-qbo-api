@@ -6,6 +6,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth import get_user_model
 from django_q.models import Schedule
 
+
 User = get_user_model()
 
 

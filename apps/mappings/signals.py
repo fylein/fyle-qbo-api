@@ -44,6 +44,7 @@ def run_pre_mapping_settings_triggers(sender, instance: MappingSetting, **kwargs
     default_attributes = ['CATEGORY', 'PROJECT', 'COST_CENTER', 'TAX_GROUP', 'CORPORATE_CARD']
 
     instance.source_field = instance.source_field.upper().replace(' ', '_')
+
     if instance.source_field not in default_attributes:
         upload_attributes_to_fyle(
             workspace_id=int(instance.workspace_id),
