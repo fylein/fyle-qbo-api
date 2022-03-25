@@ -141,6 +141,8 @@ class ImportSettingsSerializer(serializers.Serializer):
                     }
                 )
 
+        trigger.post_save_mapping_settings()
+
         return instance
 
     def validate(self, data):
