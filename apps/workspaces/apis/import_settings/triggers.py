@@ -24,21 +24,17 @@ class ImportSettingsTrigger:
 
         projects_mapping_available = False
         cost_center_mapping_available = False
-        custom_field_mapping_available = False
 
         for setting in mapping_settings:
             if setting['source_field'] == 'PROJECT':
                 projects_mapping_available = True
             elif setting['source_field'] == 'COST_CENTER':
                 cost_center_mapping_available = True
-            elif setting['source_field'] == 'CUSTOM_FIELD':
-                custom_field_mapping_available = True
-        
+
         if not projects_mapping_available:
             schedule_projects_creation(False, self.__workspace_id)
         
         if not cost_center_mapping_available:
             schedule_cost_centers_creation(False, self.__workspace_id)
         
-        if not custom_field_mapping_available:
-            schedule_fyle_attributes_creation(self.__workspace_id)
+        schedule_fyle_attributes_creation(self.__workspace_id)
