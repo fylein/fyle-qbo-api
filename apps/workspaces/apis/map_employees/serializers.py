@@ -4,44 +4,51 @@ from apps.workspaces.models import WorkspaceGeneralSettings
 
 from .triggers import MapEmployeesTriggers
 
+class WorkspaceGeneralSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkspaceGeneralSettings
+        fields = ['employee_field_mapping', 'auto_map_employees']
+
 
 class MapEmployeesSerializer(serializers.ModelSerializer):
+    workspace_general_settings = WorkspaceGeneralSettingsSerializer()
     workspace_id = serializers.SerializerMethodField()
 
     class Meta:
         model = WorkspaceGeneralSettings
         fields = [
-            'employee_field_mapping',
-            'auto_map_employees',
+            'workspace_general_settings',
             'workspace_id'
         ]
 
     def get_workspace_id(self, instance):
-        return instance.workspace_id
+        return instance.id
 
-    def create(self, validated_data):
-        workspace_id = self.context['view'].kwargs['workspace_id']
+    def update(self, instance, validated_data):
+        workspace_id = instance.id
+        workspace_general_settings = validated_data.pop('workspace_general_settings')
 
         workspace_general_settings_instance, _ = WorkspaceGeneralSettings.objects.update_or_create(
             workspace_id=workspace_id,
             defaults={
-                'employee_field_mapping': validated_data['employee_field_mapping'],
-                'auto_map_employees': validated_data['auto_map_employees']
+                'employee_field_mapping': workspace_general_settings['employee_field_mapping'],
+                'auto_map_employees': workspace_general_settings['auto_map_employees']
             }
         )
 
         MapEmployeesTriggers.run_workspace_general_settings_triggers(workspace_general_settings_instance)
 
-        return workspace_general_settings_instance
+        return instance
 
     def validate(self, data):
-        if not data.get('employee_field_mapping'):
+        if not data.get('workspace_general_settings').get('employee_field_mapping'):
             raise serializers.ValidationError('employee_field_mapping field is required')
 
-        if not data.get('auto_map_employees'):
+        if not data.get('workspace_general_settings').get('auto_map_employees'):
             raise serializers.ValidationError('auto_map_employees field is required')
 
-        if 'auto_map_employees' in data and data.get('auto_map_employees') not in ['EMAIL', 'NAME', 'EMPLOYEE_CODE']:
+        if 'auto_map_employees' in data.get('workspace_general_settings') and \
+            data.get('workspace_general_settings').get('auto_map_employees') not in ['EMAIL', 'NAME', 'EMPLOYEE_CODE']:
             raise serializers.ValidationError('auto_map_employees can have only EMAIL / NAME / EMPLOYEE_CODE')
 
         return data

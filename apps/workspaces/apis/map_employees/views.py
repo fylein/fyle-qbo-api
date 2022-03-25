@@ -1,17 +1,12 @@
-from rest_framework import generics, mixins
+from rest_framework import generics
 
-from apps.workspaces.models import WorkspaceGeneralSettings
+from apps.workspaces.models import Workspace
 
 from .serializers import MapEmployeesSerializer
 
 
-class MapEmployeesView(generics.CreateAPIView, mixins.RetrieveModelMixin):
+class MapEmployeesView(generics.RetrieveUpdateAPIView):
     serializer_class = MapEmployeesSerializer
 
     def get_object(self):
-        return WorkspaceGeneralSettings.objects.filter(
-            workspace_id=self.kwargs['workspace_id']
-        ).first()
-
-    def get(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
+        return Workspace.objects.filter(id=self.kwargs['workspace_id']).first()
