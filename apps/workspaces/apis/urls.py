@@ -22,5 +22,5 @@ from .map_employees.views import MapEmployeesView
 urlpatterns = [
     path('<int:workspace_id>/export_settings/', ExportSettingsView.as_view()),
     path('<int:workspace_id>/map_employees/', MapEmployeesView.as_view()),
-    path('<int:workspace_id>/import_settings/', ImportSettingsView.as_view()),
+    path('<int:workspace_id>/import_settings/', ImportSettingsView.as_view())
 ]
