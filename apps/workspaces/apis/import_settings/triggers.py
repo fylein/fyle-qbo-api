@@ -1,9 +1,9 @@
-from apps.mappings.tasks import schedule_cost_centers_creation, schedule_fyle_attributes_creation, schedule_projects_creation
+from apps.mappings.tasks import schedule_cost_centers_creation, schedule_fyle_attributes_creation, schedule_projects_creation, schedule_tax_groups_creation
 
 
 class ImportSettingsTrigger:
     """
-    All the post save actions of Import Saettings API
+    All the post save actions of Import Settings API
     """
     def __init__(self, workspace_general_settings, mapping_settings, workspace_id):
         self.__workspace_general_settings = workspace_general_settings
@@ -14,7 +14,10 @@ class ImportSettingsTrigger:
         """
         Post save action for workspace general settings
         """
-        pass
+        schedule_tax_groups_creation(
+            import_tax_codes=self.__workspace_general_settings['import_tax_codes'],
+            workspace_id=self.__workspace_id
+        )
 
     def pre_save_mapping_settings(self):
         """
