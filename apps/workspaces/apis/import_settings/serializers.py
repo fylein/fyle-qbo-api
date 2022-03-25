@@ -118,7 +118,8 @@ class ImportSettingsSerializer(serializers.Serializer):
             mapping_settings=mapping_settings,
             workspace_id=instance.id
         )
-
+        
+        trigger.post_save_workspace_general_settings()
         trigger.pre_save_mapping_settings()
 
         if workspace_general_settings['import_tax_codes']:
