@@ -2,7 +2,6 @@ from rest_framework import serializers
 
 from apps.workspaces.models import WorkspaceGeneralSettings, Workspace, WorkspaceSchedule
 from apps.mappings.models import GeneralMapping
-from fyle_qbo_api.utils import assert_valid
 
 from .triggers import AdvancedConfigurationsTriggers
 
@@ -56,7 +55,6 @@ class WorkspaceScheduleSerializer(serializers.ModelSerializer):
         model = WorkspaceSchedule
         fields = [
             'enabled',
-            'start_datetime',
             'interval_hours'
         ]
 
@@ -112,13 +110,11 @@ class AdvancedConfigurationsSerializer(serializers.Serializer):
             workspace=instance,
             defaults={
                 'enabled': workspace_schedules.get('enabled'),
-                'start_datetime': workspace_schedules.get('start_datetime'),
                 'interval_hours': workspace_schedules.get('interval_hours')
             }
         )
 
         AdvancedConfigurationsTriggers.run_workspace_general_settings_triggers(workspace_general_settings_instance)
-        AdvancedConfigurationsTriggers.run_general_mappings_triggers(workspace_general_settings_instance)
         AdvancedConfigurationsTriggers.run_workspace_schedule_triggers(workspace_schedule_instance)
 
         return instance

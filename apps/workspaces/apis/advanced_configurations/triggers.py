@@ -29,13 +29,6 @@ class AdvancedConfigurationsTriggers:
         )
 
     @staticmethod
-    def run_general_mappings_triggers(workspace_general_settings_instance: WorkspaceGeneralSettings):
-        schedule_bill_payment_creation(
-            sync_fyle_to_qbo_payments=workspace_general_settings_instance.sync_fyle_to_qbo_payments,
-            workspace_id=workspace_general_settings_instance.workspace.id
-        )
-
-    @staticmethod
     def run_workspace_schedule_triggers(workspace_schedule: WorkspaceSchedule):
         schedule_sync(
             workspace_id=workspace_schedule.workspace.id,
