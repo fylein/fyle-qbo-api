@@ -89,14 +89,15 @@ class ImportSettingsSerializer(serializers.Serializer):
         fields = [
             'workspace_general_settings',
             'general_mappings',
-            'workspace_id'
+            'workspace_id',
+            'onboarding_state'
         ]
         
-        read_only_fields = ['workspace_id']
+        read_only_fields = ['workspace_id', 'onboarding_state']
 
     def get_workspace_id(self, instance):
         return instance.id
-    
+
     def update(self, instance, validated):
         workspace_general_settings = validated.pop('workspace_general_settings')
         general_mappings = validated.pop('general_mappings')
@@ -150,6 +151,10 @@ class ImportSettingsSerializer(serializers.Serializer):
                 )
 
         trigger.post_save_mapping_settings()
+
+        if instance.onboarding_state != 'COMPLETE':
+            instance.onboarding_state = 'ADVANCED_CONFIGURATION'
+            instance.save()
 
         return instance
 

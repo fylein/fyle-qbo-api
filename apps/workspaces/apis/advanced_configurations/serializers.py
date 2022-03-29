@@ -75,9 +75,10 @@ class AdvancedConfigurationsSerializer(serializers.Serializer):
             'workspace_general_settings',
             'general_mappings',
             'workspace_schedules',
-            'workspace_id'
+            'workspace_id',
+            'onboarding_state'
         ]
-        read_only_fields = ['workspace_id']
+        read_only_fields = ['workspace_id', 'onboarding_state']
 
     def get_workspace_id(self, instance):
         return instance.id
@@ -114,6 +115,10 @@ class AdvancedConfigurationsSerializer(serializers.Serializer):
         )
 
         AdvancedConfigurationsTriggers.run_workspace_general_settings_triggers(workspace_general_settings_instance)
+
+        if instance.onboarding_state != 'COMPLETE':
+            instance.onboarding_state = 'COMPLETE'
+            instance.save()
 
         return instance
 

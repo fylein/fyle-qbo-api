@@ -1,8 +1,9 @@
 from rest_framework import serializers
 
-from apps.workspaces.models import WorkspaceGeneralSettings
+from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 
 from .triggers import MapEmployeesTriggers
+
 
 class WorkspaceGeneralSettingsSerializer(serializers.ModelSerializer):
     class Meta:
@@ -15,10 +16,11 @@ class MapEmployeesSerializer(serializers.ModelSerializer):
     workspace_id = serializers.SerializerMethodField()
 
     class Meta:
-        model = WorkspaceGeneralSettings
+        model = Workspace
         fields = [
             'workspace_general_settings',
-            'workspace_id'
+            'workspace_id',
+            'onboarding_state'
         ]
 
     def get_workspace_id(self, instance):
@@ -37,6 +39,10 @@ class MapEmployeesSerializer(serializers.ModelSerializer):
         )
 
         MapEmployeesTriggers.run_workspace_general_settings_triggers(workspace_general_settings_instance)
+
+        if instance.onboarding_state != 'COMPLETE':
+            instance.onboarding_state = 'EXPORT_SETTINGS'
+            instance.save()
 
         return instance
 

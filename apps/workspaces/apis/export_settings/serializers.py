@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from apps.workspaces.models import WorkspaceGeneralSettings, Workspace
+from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from apps.fyle.models import ExpenseGroupSettings
 from apps.mappings.models import GeneralMapping
 
@@ -108,9 +108,10 @@ class ExportSettingsSerializer(serializers.Serializer):
             'workspace_general_settings',
             'expense_group_settings',
             'general_mappings',
-            'workspace_id'
+            'workspace_id',
+            'onboarding_state'
         ]
-        read_only_fields = ['workspace_id']
+        read_only_fields = ['workspace_id', 'onboarding_state']
 
     def get_workspace_id(self, instance):
         return instance.id
@@ -160,6 +161,10 @@ class ExportSettingsSerializer(serializers.Serializer):
                 'default_ccc_vendor_id': general_mappings.get('default_ccc_vendor').get('id')
             }
         )
+
+        if instance.onboarding_state != 'COMPLETE':
+            instance.onboarding_state = 'IMPORT_SETTINGS'
+            instance.save()
 
         return instance
 
