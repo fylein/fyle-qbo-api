@@ -156,8 +156,8 @@ class ImportSettingsSerializer(serializers.Serializer):
 
         trigger.post_save_mapping_settings()
 
-        if instance.onboarding_state != ['COMPLETE']:
-            instance.onboarding_state = ['IMPORT_SETTINGS']
+        if instance.onboarding_state != 'COMPLETE':
+            instance.onboarding_state = 'IMPORT_SETTINGS'
             instance.save()
 
         return instance

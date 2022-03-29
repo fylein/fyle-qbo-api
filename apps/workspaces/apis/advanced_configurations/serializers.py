@@ -120,8 +120,8 @@ class AdvancedConfigurationsSerializer(serializers.Serializer):
 
         AdvancedConfigurationsTriggers.run_workspace_general_settings_triggers(workspace_general_settings_instance)
 
-        if instance.onboarding_state != ['COMPLETE']:
-            instance.onboarding_state = ['ADVANCED_CONFIGURATION']
+        if instance.onboarding_state != 'COMPLETE':
+            instance.onboarding_state = 'ADVANCED_CONFIGURATION'
             instance.save()
 
         return instance

@@ -166,8 +166,8 @@ class ExportSettingsSerializer(serializers.Serializer):
             }
         )
 
-        if instance.onboarding_state != ['COMPLETE']:
-            instance.onboarding_state = ['EXPORT_SETTINGS']
+        if instance.onboarding_state != 'COMPLETE':
+            instance.onboarding_state = 'EXPORT_SETTINGS'
             instance.save()
 
         return instance
