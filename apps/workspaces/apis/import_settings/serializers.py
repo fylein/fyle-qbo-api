@@ -157,7 +157,7 @@ class ImportSettingsSerializer(serializers.Serializer):
         if not data.get('workspace_general_settings'):
             raise serializers.ValidationError('Workspace general settings are required')
 
-        if data.get('mapping_settings') is not None:
+        if data.get('mapping_settings') is None:
             raise serializers.ValidationError('Mapping settings are required')
 
         if not data.get('general_mappings'):
