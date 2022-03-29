@@ -108,7 +108,7 @@ class AdvancedConfigurationsSerializer(serializers.Serializer):
         )
 
         schedule_sync(
-            workspace_id=workspace_general_settings_instance.workspace.id,
+            workspace_id=instance.id,
             schedule_enabled=workspace_schedules.get('enabled'),
             hours=workspace_schedules.get('interval_hours')
         )
