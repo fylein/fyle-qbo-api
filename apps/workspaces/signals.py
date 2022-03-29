@@ -35,3 +35,5 @@ def post_delete_qbo_connection(workspace_id):
     workspace = Workspace.objects.get(id=workspace_id)
     if workspace.onboarding_state in ('CONNECTION', 'MAP_EMPLOYEES', 'EXPORT_SETTINGS'):
         DestinationAttribute.objects.filter(workspace_id=workspace_id).delete()
+        workspace.onboarding_state = 'CONNECTION'
+        workspace.save()
