@@ -819,10 +819,23 @@ def create_fyle_expense_custom_field_payload(
             attribute_type=fyle_attribute, workspace_id=workspace_id).values_list('detail', flat=True).first()
 
         custom_field_id = None
+        placeholder = None
         if existing_attribute is not None:
             custom_field_id = existing_attribute['custom_field_id']
+            placeholder = existing_attribute['placeholder'] if 'placeholder' in existing_attribute else None
 
         fyle_attribute = fyle_attribute.replace('_', ' ').title()
+
+        new_placeholder = None
+
+        if not (source_placeholder and placeholder):
+            new_placeholder = 'Select {0}'.format(fyle_attribute)
+        elif not source_placeholder and placeholder:
+            new_placeholder = placeholder
+        elif source_placeholder and not placeholder:
+            new_placeholder = source_placeholder
+        else:
+            new_placeholder = source_placeholder
 
         expense_custom_field_payload = {
             'id': custom_field_id,
@@ -830,7 +843,7 @@ def create_fyle_expense_custom_field_payload(
             'type': 'SELECT',
             'active': True,
             'mandatory': False,
-            'placeholder': 'Select {0}'.format(fyle_attribute) if not source_placeholder else source_placeholder,
+            'placeholder': new_placeholder,
             'default_value': None,
             'options': fyle_expense_custom_field_options,
             'code': None
