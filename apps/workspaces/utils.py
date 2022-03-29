@@ -129,7 +129,9 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
             'sync_qbo_to_fyle_payments': general_settings_payload['sync_qbo_to_fyle_payments'],
             'map_merchant_to_vendor': map_merchant_to_vendor,
             'je_single_credit_line': general_settings_payload['je_single_credit_line'],
-            'map_fyle_cards_qbo_account': general_settings_payload['map_fyle_cards_qbo_account']
+            'map_fyle_cards_qbo_account': general_settings_payload['map_fyle_cards_qbo_account'],
+            'onboarding_state': general_settings_payload['onboarding_state']
+            if 'onboarding_state' in general_settings_payload else None
         }
     )
 

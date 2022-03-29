@@ -4,10 +4,11 @@ from apps.workspaces.models import WorkspaceGeneralSettings
 
 from .triggers import MapEmployeesTriggers
 
+
 class WorkspaceGeneralSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkspaceGeneralSettings
-        fields = ['employee_field_mapping', 'auto_map_employees']
+        fields = ['employee_field_mapping', 'auto_map_employees', 'onboarding_state']
 
 
 class MapEmployeesSerializer(serializers.ModelSerializer):
@@ -32,7 +33,8 @@ class MapEmployeesSerializer(serializers.ModelSerializer):
             workspace_id=workspace_id,
             defaults={
                 'employee_field_mapping': workspace_general_settings['employee_field_mapping'],
-                'auto_map_employees': workspace_general_settings['auto_map_employees']
+                'auto_map_employees': workspace_general_settings['auto_map_employees'],
+                'onboarding_state': workspace_general_settings['onboarding_state']
             }
         )
 
