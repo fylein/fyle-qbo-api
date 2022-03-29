@@ -19,8 +19,7 @@ class MapEmployeesSerializer(serializers.ModelSerializer):
         model = Workspace
         fields = [
             'workspace_general_settings',
-            'workspace_id',
-            'onboarding_state'
+            'workspace_id'
         ]
 
     def get_workspace_id(self, instance):

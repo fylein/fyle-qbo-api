@@ -293,6 +293,8 @@ class ConnectQBOView(viewsets.ViewSet):
                 qbo_credentials.refresh_token = refresh_token
                 qbo_credentials.save()
 
+            workspace.onboarding_state = 'MAP_EMPLOYEES'
+
             return Response(
                 data=QBOCredentialSerializer(qbo_credentials).data,
                 status=status.HTTP_200_OK
