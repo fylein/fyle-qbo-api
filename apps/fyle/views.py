@@ -63,8 +63,10 @@ class ExpenseGroupView(generics.ListCreateAPIView):
         queryset = WorkspaceGeneralSettings.objects.all()
         general_settings = queryset.get(workspace_id=kwargs['workspace_id'])
 
-        fund_source = ['PERSONAL']
-        if general_settings.corporate_credit_card_expenses_object is not None:
+        fund_source = []
+        if general_settings.reimbursable_expenses_object:
+            fund_source.append('PERSONAL')
+        if general_settings.corporate_credit_card_expenses_object:
             fund_source.append('CCC')
 
         create_expense_groups(
