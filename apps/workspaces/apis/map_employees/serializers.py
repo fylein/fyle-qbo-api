@@ -49,9 +49,6 @@ class MapEmployeesSerializer(serializers.ModelSerializer):
         if not data.get('workspace_general_settings').get('employee_field_mapping'):
             raise serializers.ValidationError('employee_field_mapping field is required')
 
-        if not data.get('workspace_general_settings').get('auto_map_employees'):
-            raise serializers.ValidationError('auto_map_employees field is required')
-
         if data.get('workspace_general_settings').get('auto_map_employees') and \
             data.get('workspace_general_settings').get('auto_map_employees') not in ['EMAIL', 'NAME', 'EMPLOYEE_CODE']:
             raise serializers.ValidationError('auto_map_employees can have only EMAIL / NAME / EMPLOYEE_CODE')
