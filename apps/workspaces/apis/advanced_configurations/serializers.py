@@ -75,10 +75,8 @@ class AdvancedConfigurationsSerializer(serializers.Serializer):
             'workspace_general_settings',
             'general_mappings',
             'workspace_schedules',
-            'workspace_id',
-            'onboarding_state'
+            'workspace_id'
         ]
-        read_only_fields = ['workspace_id', 'onboarding_state']
 
     def get_workspace_id(self, instance):
         return instance.id

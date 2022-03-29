@@ -89,11 +89,8 @@ class ImportSettingsSerializer(serializers.Serializer):
         fields = [
             'workspace_general_settings',
             'general_mappings',
-            'workspace_id',
-            'onboarding_state'
+            'workspace_id'
         ]
-        
-        read_only_fields = ['workspace_id', 'onboarding_state']
 
     def get_workspace_id(self, instance):
         return instance.id
