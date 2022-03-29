@@ -283,7 +283,7 @@ class ConnectQBOView(viewsets.ViewSet):
                     qbo_credentials.save()
 
                 except qbo_exc.WrongParamsError as exception:
-                    logger.exception(exception)
+                    logger.error(exception.response)
 
                 workspace.qbo_realm_id = realm_id
                 workspace.save()
