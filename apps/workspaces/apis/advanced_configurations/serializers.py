@@ -107,18 +107,10 @@ class AdvancedConfigurationsSerializer(serializers.Serializer):
             }
         )
 
-        workspace_schedule_instance, _ = WorkspaceSchedule.objects.update_or_create(
-            workspace=instance,
-            defaults={
-                'enabled': workspace_schedules.get('enabled'),
-                'interval_hours': workspace_schedules.get('interval_hours')
-            }
-        )
-
         schedule_sync(
-            workspace_id=workspace_schedule_instance.workspace.id,
-            schedule_enabled=workspace_schedule_instance.enabled,
-            hours=workspace_schedule_instance.interval_hours
+            workspace_id=workspace_general_settings_instance.workspace.id,
+            schedule_enabled=workspace_schedules.get('enabled'),
+            hours=workspace_schedules.get('interval_hours')
         )
 
         AdvancedConfigurationsTriggers.run_workspace_general_settings_triggers(workspace_general_settings_instance)
