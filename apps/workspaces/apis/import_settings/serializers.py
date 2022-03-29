@@ -56,7 +56,7 @@ class MappingSettingSerializer(serializers.ModelSerializer):
 class WorkspaceGeneralSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkspaceGeneralSettings
-        fields = ['import_categories', 'charts_of_accounts', 'import_tax_codes', 'onboarding_state']
+        fields = ['import_categories', 'charts_of_accounts', 'import_tax_codes']
 
 
 class GeneralMappingsSerializer(serializers.ModelSerializer):
@@ -83,20 +83,25 @@ class ImportSettingsSerializer(serializers.Serializer):
     general_mappings = GeneralMappingsSerializer()
     mapping_settings = MappingSettingSerializer(many=True)
     workspace_id = serializers.SerializerMethodField()
+    onboarding_state = serializers.SerializerMethodField()
 
     class Meta:
         model = Workspace
         fields = [
             'workspace_general_settings',
             'general_mappings',
-            'workspace_id'
+            'workspace_id',
+            'onboarding_state'
         ]
         
         read_only_fields = ['workspace_id']
 
     def get_workspace_id(self, instance):
         return instance.id
-    
+
+    def get_onboarding_state(self, instance):
+        return instance.onboarding_state
+
     def update(self, instance, validated):
         workspace_general_settings = validated.pop('workspace_general_settings')
         general_mappings = validated.pop('general_mappings')
@@ -107,8 +112,7 @@ class ImportSettingsSerializer(serializers.Serializer):
             defaults={
                 'import_categories': workspace_general_settings.get('import_categories'),
                 'charts_of_accounts': workspace_general_settings.get('charts_of_accounts'),
-                'import_tax_codes': workspace_general_settings.get('import_tax_codes'),
-                'onboarding_state': workspace_general_settings.get('onboarding_state')
+                'import_tax_codes': workspace_general_settings.get('import_tax_codes')
             }
         )
 
@@ -151,6 +155,10 @@ class ImportSettingsSerializer(serializers.Serializer):
                 )
 
         trigger.post_save_mapping_settings()
+
+        if instance.onboarding_state != ['COMPLETE']:
+            instance.onboarding_state = ['IMPORT_SETTINGS']
+            instance.save()
 
         return instance
 

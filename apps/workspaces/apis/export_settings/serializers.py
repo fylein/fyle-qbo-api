@@ -22,7 +22,7 @@ class ReadWriteSerializerMethodField(serializers.SerializerMethodField):
 class WorkspaceGeneralSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkspaceGeneralSettings
-        fields = ['reimbursable_expenses_object', 'corporate_credit_card_expenses_object', 'onboarding_state']
+        fields = ['reimbursable_expenses_object', 'corporate_credit_card_expenses_object']
 
 
 class ExpenseGroupSettingsSerializer(serializers.ModelSerializer):
@@ -101,6 +101,7 @@ class ExportSettingsSerializer(serializers.Serializer):
     expense_group_settings = ExpenseGroupSettingsSerializer()
     general_mappings = GeneralMappingsSerializer()
     workspace_id = serializers.SerializerMethodField()
+    onboarding_state = serializers.SerializerMethodField()
 
     class Meta:
         model = Workspace
@@ -108,12 +109,16 @@ class ExportSettingsSerializer(serializers.Serializer):
             'workspace_general_settings',
             'expense_group_settings',
             'general_mappings',
-            'workspace_id'
+            'workspace_id',
+            'onboarding_state'
         ]
         read_only_fields = ['workspace_id']
 
     def get_workspace_id(self, instance):
         return instance.id
+
+    def get_onboarding_state(self, instance):
+        return instance.onboarding_state
 
     def update(self, instance, validated):
         workspace_general_settings = validated.pop('workspace_general_settings')
@@ -137,8 +142,7 @@ class ExportSettingsSerializer(serializers.Serializer):
                 'corporate_credit_card_expenses_object': workspace_general_settings.get(
                     'corporate_credit_card_expenses_object'),
                 'map_merchant_to_vendor': map_merchant_to_vendor,
-                'category_sync_version': category_sync_version,
-                'onboarding_state': workspace_general_settings.get('onboarding_state')
+                'category_sync_version': category_sync_version
             }
         )
 
@@ -161,6 +165,10 @@ class ExportSettingsSerializer(serializers.Serializer):
                 'default_ccc_vendor_id': general_mappings.get('default_ccc_vendor').get('id')
             }
         )
+
+        if instance.onboarding_state != ['COMPLETE']:
+            instance.onboarding_state = ['EXPORT_SETTINGS']
+            instance.save()
 
         return instance
 

@@ -9,6 +9,10 @@ from django_q.models import Schedule
 User = get_user_model()
 
 
+def get_default_onboarding_state():
+    return ['CONNECTION']
+
+
 class Workspace(models.Model):
     """
     Workspace model
@@ -24,6 +28,10 @@ class Workspace(models.Model):
     source_synced_at = models.DateTimeField(help_text='Datetime when source dimensions were pulled', null=True)
     destination_synced_at = models.DateTimeField(help_text='Datetime when destination dimensions were pulled',
                                                  null=True)
+    onboarding_state = ArrayField(
+        base_field=models.CharField(max_length=100), default=get_default_onboarding_state,
+        help_text='Onboarding status of the workspace', null=True
+    )
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')
 
@@ -53,10 +61,6 @@ def get_default_chart_of_accounts():
 
 def get_default_memo_fields():
     return ['employee_email', 'category', 'spent_on', 'report_number', 'purpose', 'expense_link']
-
-
-def get_default_onboarding_state():
-    return ['CONNECTION']
 
 
 class WorkspaceGeneralSettings(models.Model):
@@ -92,10 +96,6 @@ class WorkspaceGeneralSettings(models.Model):
     je_single_credit_line = models.BooleanField(default=False, help_text='Single Credit Line for Journal Entries')
     map_fyle_cards_qbo_account = models.BooleanField(default=True, help_text='Map Fyle Cards to QBO Accounts')
     skip_cards_mapping = models.BooleanField(default=False, help_text='Skip cards mapping')
-    onboarding_state = ArrayField(
-        base_field=models.CharField(max_length=100), default=get_default_onboarding_state,
-        help_text='Onboarding status of the workspace', null=True
-    )
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 

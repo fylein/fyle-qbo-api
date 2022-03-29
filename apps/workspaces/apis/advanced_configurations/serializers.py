@@ -31,8 +31,7 @@ class WorkspaceGeneralSettingsSerializer(serializers.ModelSerializer):
             'auto_create_destination_entity',
             'je_single_credit_line',
             'change_accounting_period',
-            'memo_structure',
-            'onboarding_state'
+            'memo_structure'
         ]
 
 
@@ -69,6 +68,7 @@ class AdvancedConfigurationsSerializer(serializers.Serializer):
     general_mappings = GeneralMappingsSerializer()
     workspace_schedules = WorkspaceScheduleSerializer()
     workspace_id = serializers.SerializerMethodField()
+    onboarding_state = serializers.SerializerMethodField()
 
     class Meta:
         model = Workspace
@@ -76,12 +76,16 @@ class AdvancedConfigurationsSerializer(serializers.Serializer):
             'workspace_general_settings',
             'general_mappings',
             'workspace_schedules',
-            'workspace_id'
+            'workspace_id',
+            'onboarding_state'
         ]
         read_only_fields = ['workspace_id']
 
     def get_workspace_id(self, instance):
         return instance.id
+
+    def get_onboarding_state(self, instance):
+        return instance.onboarding_state
 
     def update(self, instance, validated):
         workspace_general_settings = validated.pop('workspace_general_settings')
@@ -96,8 +100,7 @@ class AdvancedConfigurationsSerializer(serializers.Serializer):
                 'auto_create_destination_entity': workspace_general_settings.get('auto_create_destination_entity'),
                 'je_single_credit_line': workspace_general_settings.get('je_single_credit_line'),
                 'change_accounting_period': workspace_general_settings.get('change_accounting_period'),
-                'memo_structure': workspace_general_settings.get('memo_structure'),
-                'onboarding_state': workspace_general_settings.get('onboarding_state')
+                'memo_structure': workspace_general_settings.get('memo_structure')
             }
         )
 
@@ -116,6 +119,10 @@ class AdvancedConfigurationsSerializer(serializers.Serializer):
         )
 
         AdvancedConfigurationsTriggers.run_workspace_general_settings_triggers(workspace_general_settings_instance)
+
+        if instance.onboarding_state != ['COMPLETE']:
+            instance.onboarding_state = ['ADVANCED_CONFIGURATION']
+            instance.save()
 
         return instance
 
