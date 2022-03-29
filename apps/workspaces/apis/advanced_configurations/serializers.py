@@ -97,7 +97,7 @@ class AdvancedConfigurationsSerializer(serializers.Serializer):
                 'je_single_credit_line': workspace_general_settings.get('je_single_credit_line'),
                 'change_accounting_period': workspace_general_settings.get('change_accounting_period'),
                 'memo_structure': workspace_general_settings.get('memo_structure'),
-                'onboarding_state': workspace_general_settings['onboarding_state']
+                'onboarding_state': workspace_general_settings.get('onboarding_state')
             }
         )
 

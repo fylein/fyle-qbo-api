@@ -102,7 +102,7 @@ class ImportSettingsSerializer(serializers.Serializer):
                 'import_categories': workspace_general_settings.get('import_categories'),
                 'charts_of_accounts': workspace_general_settings.get('charts_of_accounts'),
                 'import_tax_codes': workspace_general_settings.get('import_tax_codes'),
-                'onboarding_state': workspace_general_settings['onboarding_state']
+                'onboarding_state': workspace_general_settings.get('onboarding_state')
             }
         )
 

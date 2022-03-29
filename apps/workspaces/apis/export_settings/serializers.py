@@ -138,7 +138,7 @@ class ExportSettingsSerializer(serializers.Serializer):
                     'corporate_credit_card_expenses_object'),
                 'map_merchant_to_vendor': map_merchant_to_vendor,
                 'category_sync_version': category_sync_version,
-                'onboarding_state': workspace_general_settings['onboarding_state']
+                'onboarding_state': workspace_general_settings.get('onboarding_state')
             }
         )
 
