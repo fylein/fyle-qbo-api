@@ -97,7 +97,7 @@ class ImportSettingsTrigger:
         Post save action for workspace general settings
         """
         schedule_tax_groups_creation(
-            import_tax_codes=self.__workspace_general_settings.import_tax_codes,
+            import_tax_codes=self.__workspace_general_settings.get('import_tax_codes'),
             workspace_id=self.__workspace_id
         )
 
