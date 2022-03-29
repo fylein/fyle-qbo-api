@@ -1,4 +1,5 @@
 import json
+import logging
 
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
@@ -29,6 +30,10 @@ from .tasks import schedule_sync, run_sync_schedule
 from .serializers import WorkspaceSerializer, FyleCredentialSerializer, QBOCredentialSerializer, \
     WorkSpaceGeneralSettingsSerializer, WorkspaceScheduleSerializer
 from ..fyle.models import ExpenseGroupSettings
+
+logger = logging.getLogger(__name__)
+logger.level = logging.INFO
+
 
 User = get_user_model()
 auth_utils = AuthUtils()
@@ -277,7 +282,7 @@ class ConnectQBOView(viewsets.ViewSet):
                     qbo_credentials.company_name = company_info['CompanyName']
                     qbo_credentials.save()
 
-                except WrongParamsError as exception:
+                except qbo_exc.WrongParamsError as exception:
                     logger.error(exception.response)
 
                 workspace.qbo_realm_id = realm_id
