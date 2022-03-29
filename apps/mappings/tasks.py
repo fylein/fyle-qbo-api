@@ -799,8 +799,10 @@ def schedule_cost_centers_creation(import_to_fyle, workspace_id):
             schedule.delete()
 
 
-def create_fyle_expense_custom_field_payload(qbo_attributes: List[DestinationAttribute], workspace_id: int,
-                                             fyle_attribute: str):
+def create_fyle_expense_custom_field_payload(
+    qbo_attributes: List[DestinationAttribute], workspace_id: int,
+    fyle_attribute: str, source_placeholder: str = None
+):
     """
     Create Fyle Expense Custom Field Payload from QBO Objects
     :param workspace_id: Workspace ID
@@ -828,7 +830,7 @@ def create_fyle_expense_custom_field_payload(qbo_attributes: List[DestinationAtt
             'type': 'SELECT',
             'active': True,
             'mandatory': False,
-            'placeholder': 'Select {0}'.format(fyle_attribute),
+            'placeholder': 'Select {0}'.format(fyle_attribute) if not source_placeholder else source_placeholder,
             'default_value': None,
             'options': fyle_expense_custom_field_options,
             'code': None
@@ -837,7 +839,8 @@ def create_fyle_expense_custom_field_payload(qbo_attributes: List[DestinationAtt
         return expense_custom_field_payload
 
 
-def upload_attributes_to_fyle(workspace_id: int, qbo_attribute_type: str, fyle_attribute_type: str):
+def upload_attributes_to_fyle(
+    workspace_id: int, qbo_attribute_type: str, fyle_attribute_type: str, source_placeholder: str = None):
     """
     Upload attributes to Fyle
     """
@@ -856,7 +859,8 @@ def upload_attributes_to_fyle(workspace_id: int, qbo_attribute_type: str, fyle_a
     fyle_custom_field_payload = create_fyle_expense_custom_field_payload(
         qbo_attributes=qbo_attributes,
         workspace_id=workspace_id,
-        fyle_attribute=fyle_attribute_type
+        fyle_attribute=fyle_attribute_type,
+        source_placeholder=source_placeholder
     )
 
     if fyle_custom_field_payload:
@@ -866,13 +870,17 @@ def upload_attributes_to_fyle(workspace_id: int, qbo_attribute_type: str, fyle_a
     return qbo_attributes
 
 
-def auto_create_expense_fields_mappings(workspace_id: int, qbo_attribute_type: str, fyle_attribute_type: str):
+def auto_create_expense_fields_mappings(
+    workspace_id: int, qbo_attribute_type: str, fyle_attribute_type: str, source_placeholder: str = None
+):
     """
     Create Fyle Attributes Mappings
     :return: mappings
     """
     try:
-        fyle_attributes = upload_attributes_to_fyle(workspace_id, qbo_attribute_type, fyle_attribute_type)
+        fyle_attributes = upload_attributes_to_fyle(
+            workspace_id, qbo_attribute_type, fyle_attribute_type, source_placeholder
+        )
         if fyle_attributes:
             Mapping.bulk_create_mappings(fyle_attributes, fyle_attribute_type, qbo_attribute_type, workspace_id)
 
@@ -903,7 +911,8 @@ def async_auto_create_custom_field_mappings(workspace_id):
             if mapping_setting.import_to_fyle:
                 sync_qbo_attribute(mapping_setting.destination_field, workspace_id)
                 auto_create_expense_fields_mappings(
-                    workspace_id, mapping_setting.destination_field, mapping_setting.source_field
+                    workspace_id, mapping_setting.destination_field, mapping_setting.source_field,
+                    mapping_setting.source_placeholder
                 )
 
 
