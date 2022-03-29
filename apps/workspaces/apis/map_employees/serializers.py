@@ -19,8 +19,7 @@ class MapEmployeesSerializer(serializers.ModelSerializer):
         model = Workspace
         fields = [
             'workspace_general_settings',
-            'workspace_id',
-            'onboarding_state'
+            'workspace_id'
         ]
 
     def get_workspace_id(self, instance):
@@ -49,9 +48,6 @@ class MapEmployeesSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if not data.get('workspace_general_settings').get('employee_field_mapping'):
             raise serializers.ValidationError('employee_field_mapping field is required')
-
-        if not data.get('workspace_general_settings').get('auto_map_employees'):
-            raise serializers.ValidationError('auto_map_employees field is required')
 
         if data.get('workspace_general_settings').get('auto_map_employees') and \
             data.get('workspace_general_settings').get('auto_map_employees') not in ['EMAIL', 'NAME', 'EMPLOYEE_CODE']:

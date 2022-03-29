@@ -108,10 +108,8 @@ class ExportSettingsSerializer(serializers.Serializer):
             'workspace_general_settings',
             'expense_group_settings',
             'general_mappings',
-            'workspace_id',
-            'onboarding_state'
+            'workspace_id'
         ]
-        read_only_fields = ['workspace_id', 'onboarding_state']
 
     def get_workspace_id(self, instance):
         return instance.id
