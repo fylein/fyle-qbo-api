@@ -294,6 +294,7 @@ class ConnectQBOView(viewsets.ViewSet):
                 qbo_credentials.save()
 
             workspace.onboarding_state = 'MAP_EMPLOYEES'
+            workspace.save()
 
             return Response(
                 data=QBOCredentialSerializer(qbo_credentials).data,
