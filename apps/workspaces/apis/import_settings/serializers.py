@@ -83,7 +83,6 @@ class ImportSettingsSerializer(serializers.Serializer):
     general_mappings = GeneralMappingsSerializer()
     mapping_settings = MappingSettingSerializer(many=True)
     workspace_id = serializers.SerializerMethodField()
-    onboarding_state = serializers.SerializerMethodField()
 
     class Meta:
         model = Workspace
@@ -94,13 +93,10 @@ class ImportSettingsSerializer(serializers.Serializer):
             'onboarding_state'
         ]
         
-        read_only_fields = ['workspace_id']
+        read_only_fields = ['workspace_id', 'onboarding_state']
 
     def get_workspace_id(self, instance):
         return instance.id
-
-    def get_onboarding_state(self, instance):
-        return instance.onboarding_state
 
     def update(self, instance, validated):
         workspace_general_settings = validated.pop('workspace_general_settings')
