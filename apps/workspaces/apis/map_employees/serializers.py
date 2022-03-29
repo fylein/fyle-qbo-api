@@ -40,7 +40,7 @@ class MapEmployeesSerializer(serializers.ModelSerializer):
 
         MapEmployeesTriggers.run_workspace_general_settings_triggers(workspace_general_settings_instance)
 
-        if instance.onboarding_state != 'COMPLETE':
+        if instance.onboarding_state != 'COMPLETE' and instance.onboarding_state == 'MAP_EMPLOYEES':
             instance.onboarding_state = 'EXPORT_SETTINGS'
             instance.save()
 
