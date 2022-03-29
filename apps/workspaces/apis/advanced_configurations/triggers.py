@@ -1,7 +1,6 @@
-from apps.workspaces.models import WorkspaceGeneralSettings, WorkspaceSchedule
+from apps.workspaces.models import WorkspaceGeneralSettings
 from apps.quickbooks_online.tasks import schedule_bill_payment_creation, schedule_qbo_objects_status_sync, \
     schedule_reimbursements_sync
-from apps.workspaces.tasks import schedule_sync
 
 
 class AdvancedConfigurationsTriggers:
@@ -26,12 +25,4 @@ class AdvancedConfigurationsTriggers:
         schedule_reimbursements_sync(
             sync_qbo_to_fyle_payments=workspace_general_settings_instance.sync_qbo_to_fyle_payments,
             workspace_id=workspace_general_settings_instance.workspace.id
-        )
-
-    @staticmethod
-    def run_workspace_schedule_triggers(workspace_schedule: WorkspaceSchedule):
-        schedule_sync(
-            workspace_id=workspace_schedule.workspace.id,
-            schedule_enabled=workspace_schedule.enabled,
-            hours=workspace_schedule.interval_hours
         )

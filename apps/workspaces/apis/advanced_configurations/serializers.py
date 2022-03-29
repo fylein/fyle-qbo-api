@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from apps.workspaces.models import WorkspaceGeneralSettings, Workspace, WorkspaceSchedule
 from apps.mappings.models import GeneralMapping
+from apps.workspaces.tasks import schedule_sync
 
 from .triggers import AdvancedConfigurationsTriggers
 
@@ -114,8 +115,13 @@ class AdvancedConfigurationsSerializer(serializers.Serializer):
             }
         )
 
+        schedule_sync(
+            workspace_id=workspace_schedule_instance.workspace.id,
+            schedule_enabled=workspace_schedule_instance.enabled,
+            hours=workspace_schedule_instance.interval_hours
+        )
+
         AdvancedConfigurationsTriggers.run_workspace_general_settings_triggers(workspace_general_settings_instance)
-        AdvancedConfigurationsTriggers.run_workspace_schedule_triggers(workspace_schedule_instance)
 
         return instance
 
