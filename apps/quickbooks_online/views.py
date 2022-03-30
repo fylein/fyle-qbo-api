@@ -723,7 +723,7 @@ class DepartmentGroupUpdate(generics.CreateAPIView):
             general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=kwargs['workspace_id'])
 
             reimbursable_settings = expense_group_settings.reimbursable_expense_group_fields
-            if general_settings.reimbursable_expenses_object != 'JOURNAL ENTRY':
+            if general_settings.reimbursable_expenses_object and general_settings.reimbursable_expenses_object != 'JOURNAL ENTRY':
                 reimbursable_settings.append(mapping_setting.source_field.lower())
                 expense_group_settings.reimbursable_expense_group_fields = list(set(reimbursable_settings))
 
