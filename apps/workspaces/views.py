@@ -1,4 +1,5 @@
 import json
+import logging
 
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
@@ -6,7 +7,6 @@ from django.core.cache import cache
 from rest_framework.response import Response
 from rest_framework.views import status
 from rest_framework import viewsets
-from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 
 from fylesdk import exceptions as fyle_exc
@@ -20,7 +20,6 @@ from fyle_rest_auth.helpers import get_fyle_admin
 from fyle_qbo_api.utils import assert_valid
 
 from apps.quickbooks_online.utils import QBOConnector
-from apps.fyle.utils import FyleConnector
 from apps.fyle.helpers import get_cluster_domain
 
 from .models import Workspace, FyleCredential, QBOCredential, WorkspaceGeneralSettings, WorkspaceSchedule
@@ -28,7 +27,13 @@ from .utils import generate_qbo_refresh_token, create_or_update_general_settings
 from .tasks import schedule_sync, run_sync_schedule
 from .serializers import WorkspaceSerializer, FyleCredentialSerializer, QBOCredentialSerializer, \
     WorkSpaceGeneralSettingsSerializer, WorkspaceScheduleSerializer
-from ..fyle.models import ExpenseGroupSettings
+from .signals import post_delete_qbo_connection
+
+from apps.fyle.models import ExpenseGroupSettings
+
+logger = logging.getLogger(__name__)
+logger.level = logging.INFO
+
 
 User = get_user_model()
 auth_utils = AuthUtils()
@@ -277,7 +282,7 @@ class ConnectQBOView(viewsets.ViewSet):
                     qbo_credentials.company_name = company_info['CompanyName']
                     qbo_credentials.save()
 
-                except WrongParamsError as exception:
+                except qbo_exc.WrongParamsError as exception:
                     logger.error(exception.response)
 
                 workspace.qbo_realm_id = realm_id
@@ -287,6 +292,10 @@ class ConnectQBOView(viewsets.ViewSet):
                              'Please choose the correct Quickbooks online account')
                 qbo_credentials.refresh_token = refresh_token
                 qbo_credentials.save()
+
+            if workspace.onboarding_state == 'CONNECTION':
+                workspace.onboarding_state = 'MAP_EMPLOYEES'
+                workspace.save()
 
             return Response(
                 data=QBOCredentialSerializer(qbo_credentials).data,
@@ -327,6 +336,8 @@ class ConnectQBOView(viewsets.ViewSet):
         qbo_credentials.is_expired = False
         qbo_credentials.save()
 
+        post_delete_qbo_connection(workspace_id)
+            
         return Response(data={
             'workspace_id': workspace_id,
             'message': 'QBO Refresh Token deleted'

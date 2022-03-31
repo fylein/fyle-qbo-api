@@ -5,7 +5,9 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django_q.tasks import async_task
 
-from apps.workspaces.models import WorkspaceGeneralSettings
+from fyle_accounting_mappings.models import DestinationAttribute
+
+from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from apps.workspaces.utils import delete_cards_mapping_settings
 
 
@@ -22,3 +24,16 @@ def run_post_configration_triggers(sender, instance: WorkspaceGeneralSettings, *
     )
 
     delete_cards_mapping_settings(instance)
+
+
+# This is a manually triggered function
+def post_delete_qbo_connection(workspace_id):
+    """
+    Post delete qbo connection
+    :return: None
+    """
+    workspace = Workspace.objects.get(id=workspace_id)
+    if workspace.onboarding_state in ('CONNECTION', 'MAP_EMPLOYEES', 'EXPORT_SETTINGS'):
+        DestinationAttribute.objects.filter(workspace_id=workspace_id).delete()
+        workspace.onboarding_state = 'CONNECTION'
+        workspace.save()

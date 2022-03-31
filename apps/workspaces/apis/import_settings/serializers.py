@@ -44,7 +44,13 @@ class MappingSettingSerializer(serializers.ModelSerializer):
     class Meta:
         model = MappingSetting
         list_serializer_class = MappingSettingFilteredListSerializer
-        fields = ['source_field', 'destination_field', 'import_to_fyle', 'is_custom']
+        fields = [
+            'source_field',
+            'destination_field',
+            'import_to_fyle',
+            'is_custom',
+            'source_placeholder'
+        ]
 
 
 class WorkspaceGeneralSettingsSerializer(serializers.ModelSerializer):
@@ -85,12 +91,10 @@ class ImportSettingsSerializer(serializers.Serializer):
             'general_mappings',
             'workspace_id'
         ]
-        
-        read_only_fields = ['workspace_id']
 
     def get_workspace_id(self, instance):
         return instance.id
-    
+
     def update(self, instance, validated):
         workspace_general_settings = validated.pop('workspace_general_settings')
         general_mappings = validated.pop('general_mappings')
@@ -138,11 +142,16 @@ class ImportSettingsSerializer(serializers.Serializer):
                     defaults={
                         'source_field': setting['source_field'],
                         'import_to_fyle': setting['import_to_fyle'] if 'import_to_fyle' in setting else False,
-                        'is_custom': setting['is_custom'] if 'is_custom' in setting else False
+                        'is_custom': setting['is_custom'] if 'is_custom' in setting else False,
+                        'source_placeholder': setting['source_placeholder'] if 'source_placeholder' in setting else None
                     }
                 )
 
         trigger.post_save_mapping_settings()
+
+        if instance.onboarding_state == 'IMPORT_SETTINGS':
+            instance.onboarding_state = 'ADVANCED_CONFIGURATION'
+            instance.save()
 
         return instance
 
@@ -150,7 +159,7 @@ class ImportSettingsSerializer(serializers.Serializer):
         if not data.get('workspace_general_settings'):
             raise serializers.ValidationError('Workspace general settings are required')
 
-        if not data.get('mapping_settings'):
+        if data.get('mapping_settings') is None:
             raise serializers.ValidationError('Mapping settings are required')
 
         if not data.get('general_mappings'):

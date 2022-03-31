@@ -2,11 +2,11 @@ from rest_framework import generics
 
 from apps.workspaces.models import Workspace
 
-from .serializers import MapEmployeesSerializer
+from .serializers import AdvancedConfigurationsSerializer
 
 
-class MapEmployeesView(generics.RetrieveUpdateAPIView):
-    serializer_class = MapEmployeesSerializer
+class AdvancedConfigurationsView(generics.RetrieveUpdateAPIView):
+    serializer_class = AdvancedConfigurationsSerializer
 
     def get_object(self):
         return Workspace.objects.filter(id=self.kwargs['workspace_id']).first()

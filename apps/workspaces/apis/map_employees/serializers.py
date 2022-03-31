@@ -1,8 +1,9 @@
 from rest_framework import serializers
 
-from apps.workspaces.models import WorkspaceGeneralSettings
+from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 
 from .triggers import MapEmployeesTriggers
+
 
 class WorkspaceGeneralSettingsSerializer(serializers.ModelSerializer):
     class Meta:
@@ -15,7 +16,7 @@ class MapEmployeesSerializer(serializers.ModelSerializer):
     workspace_id = serializers.SerializerMethodField()
 
     class Meta:
-        model = WorkspaceGeneralSettings
+        model = Workspace
         fields = [
             'workspace_general_settings',
             'workspace_id'
@@ -38,16 +39,17 @@ class MapEmployeesSerializer(serializers.ModelSerializer):
 
         MapEmployeesTriggers.run_workspace_general_settings_triggers(workspace_general_settings_instance)
 
+        if instance.onboarding_state == 'MAP_EMPLOYEES':
+            instance.onboarding_state = 'EXPORT_SETTINGS'
+            instance.save()
+
         return instance
 
     def validate(self, data):
         if not data.get('workspace_general_settings').get('employee_field_mapping'):
             raise serializers.ValidationError('employee_field_mapping field is required')
 
-        if not data.get('workspace_general_settings').get('auto_map_employees'):
-            raise serializers.ValidationError('auto_map_employees field is required')
-
-        if 'auto_map_employees' in data.get('workspace_general_settings') and \
+        if data.get('workspace_general_settings').get('auto_map_employees') and \
             data.get('workspace_general_settings').get('auto_map_employees') not in ['EMAIL', 'NAME', 'EMPLOYEE_CODE']:
             raise serializers.ValidationError('auto_map_employees can have only EMAIL / NAME / EMPLOYEE_CODE')
 
