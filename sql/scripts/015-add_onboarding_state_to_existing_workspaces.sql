@@ -82,7 +82,7 @@ from all_settings_view
 where 
     configuration_id is not null and general_mappings_id is not null and qbo_creds_id is null;
 
---- Update all of the above to have onboarding state set to 'MAP_EMPLOYEES'
+--- Update all of the above to have onboarding state set to 'COMPLETE'
 update workspaces 
 set 
     onboarding_state = 'COMPLETE' 
