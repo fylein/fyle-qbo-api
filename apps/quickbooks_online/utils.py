@@ -898,7 +898,8 @@ class QBOConnector:
                     'TaxCodeRef': {
                         'value': line.tax_code if (line.tax_code and line.tax_amount) else general_mappings.default_tax_code_id
                     },
-                    'TaxAmount': abs(line.tax_amount if (line.tax_code and line.tax_amount) else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)),
+                    'TaxAmount': abs(line.tax_amount if (line.tax_code and line.tax_amount) else 
+                        round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)),
                     "TaxApplicableOn":"Purchase",
                     }
                 }

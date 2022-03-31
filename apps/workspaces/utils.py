@@ -146,7 +146,8 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
 
         expense_group_settings.save()
     
-    if general_settings.corporate_credit_card_expenses_object == 'JOURNAL ENTRY' or general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY':
+    if general_settings.corporate_credit_card_expenses_object == 'JOURNAL ENTRY' or \
+        general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY':
         expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
         expense_group_settings.import_card_credits = True
         expense_group_settings.save()
