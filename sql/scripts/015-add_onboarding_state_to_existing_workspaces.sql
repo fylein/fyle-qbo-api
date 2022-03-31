@@ -95,7 +95,7 @@ where id in (
 );
 
 
--- Count of all workspaces where qbo creds are present, configuration is not present and general mappings are not present
+-- Count of all workspaces where qbo creds are not present, configuration is present and general mappings are present
 select 
     'QC=FALSE, C=TRUE, GM=FALSE' as settings, count(*) 
 from all_settings_view 
