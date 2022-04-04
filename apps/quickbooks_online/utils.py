@@ -1,3 +1,4 @@
+from operator import le
 from typing import List, Dict
 from datetime import datetime, timedelta
 import logging
@@ -853,9 +854,11 @@ class QBOConnector:
             if non_refund_journal_entry_lineitems:
                 single_credit_lines =  self.__group_journal_entry_credits(non_refund_journal_entry_lineitems, general_mappings)
                 lines.append(single_credit_lines)
-            
+
             if refund_journal_entry_lineitems:
                 lineitems = refund_journal_entry_lineitems
+            else:
+                return lines
         
         refund = False
         for line in lineitems:
@@ -872,11 +875,16 @@ class QBOConnector:
             if posting_type == 'Credit' and refund:
                 account_ref = line.account_id
 
+            final_amount = 0
+            if (line.tax_code and line.tax_amount):
+                final_amount = abs(line.amount) - abs(line.tax_amount)
+            else:
+                final_amount = abs(self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id))
+
             lineitem = {
                 'DetailType': 'JournalEntryLineDetail',
                 'Description': line.description,
-                'Amount': abs(line.amount) - abs(line.tax_amount if (line.tax_code and line.tax_amount) else \
-                        self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id)),
+                'Amount': final_amount,
                 'JournalEntryLineDetail': {
                     'PostingType': posting_type,
                     'AccountRef': {
