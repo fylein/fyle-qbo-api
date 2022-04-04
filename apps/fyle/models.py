@@ -50,6 +50,7 @@ class Expense(models.Model):
     """
     id = models.AutoField(primary_key=True)
     employee_email = models.EmailField(max_length=255, unique=False, help_text='Email id of the Fyle employee')
+    employee_name = models.CharField(max_length=255, null=True, help_text='Name of the Fyle employee')
     category = models.CharField(max_length=255, null=True, blank=True, help_text='Fyle Expense Category')
     sub_category = models.CharField(max_length=255, null=True, blank=True, help_text='Fyle Expense Sub-Category')
     project = models.CharField(max_length=255, null=True, blank=True, help_text='Project')
@@ -100,6 +101,7 @@ class Expense(models.Model):
                 expense_id=expense['id'],
                 defaults={
                     'employee_email': expense['employee_email'],
+                    'employee_name': expense['employee_name'],
                     'category': expense['category'],
                     'sub_category': expense['sub_category'],
                     'project': expense['project'],
@@ -281,6 +283,7 @@ class ExpenseGroup(models.Model):
     expenses = models.ManyToManyField(Expense, help_text="Expenses under this Expense Group")
     description = JSONField(max_length=255, help_text='Description', null=True)
     response_logs = JSONField(help_text='Reponse log of the export', null=True)
+    employee_name = models.CharField(max_length=100, help_text='Expense Group Employee Name', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     exported_at = models.DateTimeField(help_text='Exported at', null=True)
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
@@ -319,6 +322,10 @@ class ExpenseGroup(models.Model):
                     id__in=expense_group['expense_ids']
                 ).order_by('-spent_at').first().spent_at
 
+            employee_name = Expense.objects.filter(
+                id__in=expense_group['expense_ids']
+            ).first().employee_name
+
             expense_ids = expense_group['expense_ids']
 
             expense_group.pop('total')
@@ -334,7 +341,8 @@ class ExpenseGroup(models.Model):
             expense_group_object = ExpenseGroup.objects.create(
                 workspace_id=workspace_id,
                 fund_source=expense_group['fund_source'],
-                description=expense_group
+                description=expense_group,
+                employee_name=employee_name
             )
 
             expense_group_object.expenses.add(*expense_ids)
