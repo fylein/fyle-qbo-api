@@ -98,8 +98,9 @@ class QBOConnector:
     def get_tax_inclusive_amount(self, amount, default_tax_code_id):
 
         tax_attribute = DestinationAttribute.objects.filter(destination_id=default_tax_code_id, attribute_type='TAX_CODE',workspace_id=self.workspace_id).first()
+        general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=self.workspace_id)
         tax_inclusive_amount = amount
-        if tax_attribute:
+        if tax_attribute and general_settings.import_tax_codes:
             tax_rate = float((tax_attribute.detail['tax_rate']) / 100)
             tax_amount = round((amount - (amount / ( tax_rate + 1))), 2)
             tax_inclusive_amount = round((amount - tax_amount), 2)
@@ -834,7 +835,7 @@ class QBOConnector:
         }
 
     def __construct_journal_entry_lineitems(self, journal_entry_lineitems: List[JournalEntryLineitem],
-                                            posting_type,  general_mappings: GeneralMapping, single_credit_line: bool = False) -> List[Dict]:
+                                            posting_type,  general_mappings: GeneralMapping, general_settings: WorkspaceGeneralSettings, single_credit_line: bool = False) -> List[Dict]:
         """
         Create journal_entry line items
         :param journal_entry_lineitems: list of journal entry line items extracted from database
@@ -905,6 +906,7 @@ class QBOConnector:
                     'TaxInclusiveAmt': abs(line.amount),
                     'TaxCodeRef': {
                         'value': line.tax_code if (line.tax_code and line.tax_amount) else general_mappings.default_tax_code_id
+                                    if general_settings.import_tax_codes else None
                     },
                     'TaxAmount': abs(line.tax_amount if (line.tax_code and line.tax_amount) else 
                         round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)),
@@ -929,8 +931,8 @@ class QBOConnector:
 
         tax_rate_refs = []
 
-        credit_line = self.__construct_journal_entry_lineitems(journal_entry_lineitems, 'Credit', general_mappings, single_credit_line)
-        debit_line = self.__construct_journal_entry_lineitems(journal_entry_lineitems, 'Debit', general_mappings)
+        credit_line = self.__construct_journal_entry_lineitems(journal_entry_lineitems, 'Credit', general_mappings, general_settings, single_credit_line)
+        debit_line = self.__construct_journal_entry_lineitems(journal_entry_lineitems, 'Debit', general_mappings, general_settings)
         lines = []
         lines.extend(credit_line)
         lines.extend(debit_line)
