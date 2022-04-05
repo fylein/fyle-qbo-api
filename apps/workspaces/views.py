@@ -291,6 +291,9 @@ class ConnectQBOView(viewsets.ViewSet):
                 assert_valid(realm_id == qbo_credentials.realm_id,
                              'Please choose the correct Quickbooks online account')
                 qbo_credentials.refresh_token = refresh_token
+                qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
+                company_info = qbo_connector.get_company_info()
+                qbo_credentials.company_name = company_info['CompanyName']
                 qbo_credentials.save()
 
             if workspace.onboarding_state == 'CONNECTION':
