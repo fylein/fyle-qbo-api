@@ -1,3 +1,4 @@
+from operator import le
 from typing import List, Dict
 from datetime import datetime, timedelta
 import logging
@@ -802,7 +803,7 @@ class QBOConnector:
             else:
                 total_tax += round(lineitem.amount - self.get_tax_inclusive_amount(lineitem.amount, general_mappings.default_tax_code_id), 2)
 
-        return [{
+        return {
             'DetailType': 'JournalEntryLineDetail',
             'Description': 'Total Amount',
             'Amount': total_sum - total_tax,
@@ -830,7 +831,7 @@ class QBOConnector:
                 "TaxApplicableOn":"Purchase",
                 'TaxAmount': total_tax,
                 }
-        }]
+        }
 
     def __construct_journal_entry_lineitems(self, journal_entry_lineitems: List[JournalEntryLineitem],
                                             posting_type,  general_mappings: GeneralMapping, single_credit_line: bool = False) -> List[Dict]:
@@ -839,22 +840,51 @@ class QBOConnector:
         :param journal_entry_lineitems: list of journal entry line items extracted from database
         :return: constructed line items
         """
-        if single_credit_line:
-            return self.__group_journal_entry_credits(journal_entry_lineitems, general_mappings)
         lines = []
+        lineitems = journal_entry_lineitems
+        if single_credit_line:
+            non_refund_journal_entry_lineitems = []
+            refund_journal_entry_lineitems = []
+            for line in journal_entry_lineitems:
+                if line.amount > 0:
+                    non_refund_journal_entry_lineitems.append(line)
+                else:
+                    refund_journal_entry_lineitems.append(line)
 
-        for line in journal_entry_lineitems:
+            if non_refund_journal_entry_lineitems:
+                single_credit_lines =  self.__group_journal_entry_credits(non_refund_journal_entry_lineitems, general_mappings)
+                lines.append(single_credit_lines)
+
+            if refund_journal_entry_lineitems:
+                lineitems = refund_journal_entry_lineitems
+            else:
+                return lines
+        
+        refund = False
+        for line in lineitems:
             account_ref = None
+            if line.amount < 0:
+                refund = True
+
             if posting_type == 'Debit':
                 account_ref = line.account_id
-            elif posting_type == 'Credit':
+            if posting_type == 'Credit':
                 account_ref = line.debit_account_id
+            if posting_type == 'Debit' and refund:
+                account_ref = line.debit_account_id
+            if posting_type == 'Credit' and refund:
+                account_ref = line.account_id
+
+            final_amount = 0
+            if (line.tax_code and line.tax_amount):
+                final_amount = abs(line.amount) - abs(line.tax_amount)
+            else:
+                final_amount = abs(self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id))
 
             lineitem = {
                 'DetailType': 'JournalEntryLineDetail',
                 'Description': line.description,
-                'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount) else \
-                        self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
+                'Amount': final_amount,
                 'JournalEntryLineDetail': {
                     'PostingType': posting_type,
                     'AccountRef': {
@@ -872,15 +902,17 @@ class QBOConnector:
                         },
                         'Type': line.entity_type,
                     },
-                    'TaxInclusiveAmt': line.amount,
+                    'TaxInclusiveAmt': abs(line.amount),
                     'TaxCodeRef': {
                         'value': line.tax_code if (line.tax_code and line.tax_amount) else general_mappings.default_tax_code_id
                     },
-                    'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount) else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2),
+                    'TaxAmount': abs(line.tax_amount if (line.tax_code and line.tax_amount) else 
+                        round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)),
                     "TaxApplicableOn":"Purchase",
                     }
                 }
             lines.append(lineitem)
+            refund = False
 
         return lines
 
