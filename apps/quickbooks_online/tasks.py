@@ -193,9 +193,9 @@ def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: Ta
         Error.objects.update_or_create(
             workspace_id=expense_group.workspace_id,
             expense_group=expense_group,
+            error_title=error['type'],
             defaults={
                 'type': 'QBO_ERROR',
-                'error_title': error['type'],
                 'error_detail': error['long_description'],
                 'is_resolved': False
             }
@@ -473,7 +473,6 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                 'type': 'Employee Mapping',
                 'message': 'Employee mapping not found'
             })
-            logger.info(f'Employee mapping not found for {expense_group.description.get("employee_email")}')
             if employee_attribute:
                 Error.objects.update_or_create(
                     workspace_id=expense_group.workspace_id,

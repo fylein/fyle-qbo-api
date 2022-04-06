@@ -34,3 +34,5 @@ class ErrorSerializer(serializers.Serializer):
     class Meta:
         model = Error
         fields = '__all__'
+        extra_fields = ['expense_attribute', 'expense_group']
+
