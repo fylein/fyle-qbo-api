@@ -8,7 +8,7 @@ from django_q.tasks import async_task
 from fyle_accounting_mappings.models import DestinationAttribute
 
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
-from apps.workspaces.utils import delete_cards_mapping_settings
+from apps.workspaces.utils import delete_cards_mapping_settings, delete_tax_mapping_settings
 
 
 @receiver(post_save, sender=WorkspaceGeneralSettings)
@@ -24,6 +24,7 @@ def run_post_configration_triggers(sender, instance: WorkspaceGeneralSettings, *
     )
 
     delete_cards_mapping_settings(instance)
+    delete_tax_mapping_settings(instance)
 
 
 # This is a manually triggered function

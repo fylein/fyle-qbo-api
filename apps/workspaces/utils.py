@@ -187,3 +187,15 @@ def delete_cards_mapping_settings(workspace_general_settings: WorkspaceGeneralSe
         ).first()
         if mapping_setting:
             mapping_setting.delete()
+
+
+def delete_tax_mapping_settings(workspace_general_settings: WorkspaceGeneralSettings):
+
+    if not workspace_general_settings.import_tax_codes:
+        mapping_setting = MappingSetting.objects.filter(
+            workspace_id=workspace_general_settings.workspace_id,
+            source_field='TAX_GROUP',
+            destination_field='TAX_CODE'
+        ).first()
+        if mapping_setting:
+            mapping_setting.delete()
