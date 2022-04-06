@@ -133,6 +133,13 @@ class ImportSettingsSerializer(serializers.Serializer):
                 'import_to_fyle': True,
                 'is_custom': False
             })
+        
+        mapping_settings.append({
+                'source_field': 'CATEGORY',
+                'destination_field': 'ACCOUNT',
+                'import_to_fyle': False,
+                'is_custom': False
+            })
 
         with transaction.atomic():
             for setting in mapping_settings:
