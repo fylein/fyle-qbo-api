@@ -1,0 +1,33 @@
+from rest_framework import serializers
+
+from fyle_accounting_mappings.models import ExpenseAttribute
+
+from apps.fyle.models import ExpenseGroup
+from apps.tasks.models import Error
+
+
+class ExpenseAttributeSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Expense Attribute
+    """
+    class Meta:
+        model = ExpenseAttribute
+
+
+class ExpenseGroupSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Expense Group
+    """
+    class Meta:
+        model = ExpenseGroup
+
+
+class ErrorSerializer(serializers.Serializer):
+    """
+    Serializer for the Errors
+    """
+    expense_attribute = ExpenseAttributeSerializer()
+    expense_group_serializer = ExpenseGroupSerializer()
+
+    class Meta:
+        model = Error
