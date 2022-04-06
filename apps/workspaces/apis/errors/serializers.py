@@ -29,7 +29,7 @@ class ErrorSerializer(serializers.Serializer):
     Serializer for the Errors
     """
     expense_attribute = ExpenseAttributeSerializer()
-    expense_group_serializer = ExpenseGroupSerializer()
+    expense_group = ExpenseGroupSerializer()
 
     class Meta:
         model = Error
