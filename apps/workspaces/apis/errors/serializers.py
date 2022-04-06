@@ -12,6 +12,7 @@ class ExpenseAttributeSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = ExpenseAttribute
+        fields = '__all__'
 
 
 class ExpenseGroupSerializer(serializers.ModelSerializer):
@@ -20,6 +21,7 @@ class ExpenseGroupSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = ExpenseGroup
+        fields = '__all__'
 
 
 class ErrorSerializer(serializers.Serializer):
@@ -31,3 +33,4 @@ class ErrorSerializer(serializers.Serializer):
 
     class Meta:
         model = Error
+        fields = '__all__'
