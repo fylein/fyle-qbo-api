@@ -17,7 +17,7 @@ from fyle_integrations_platform_connector import PlatformConnector
 from fyle_qbo_api.exceptions import BulkError
 
 from apps.fyle.models import ExpenseGroup, Reimbursement, Expense
-from apps.tasks.models import TaskLog
+from apps.tasks.models import Error, TaskLog
 from apps.mappings.models import GeneralMapping
 from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGeneralSettings
 from apps.fyle.utils import FyleConnector
@@ -422,9 +422,16 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
         ((general_settings.corporate_credit_card_expenses_object in ('CREDIT CARD PURCHASE', 'DEBIT CARD EXPENSE') and
           general_settings.map_merchant_to_vendor) or
          general_settings.corporate_credit_card_expenses_object == 'BILL')):
+        
+        employee_attribute = ExpenseAttribute.objects.filter(
+            value=expense_group.description.get('employee_email'),
+            workspace_id=expense_group.workspace_id,
+            attribute_type='EMPLOYEE'
+        ).first()
+        
         try:
             entity = EmployeeMapping.objects.get(
-                source_employee__value=expense_group.description.get('employee_email'),
+                source_employee=employee_attribute,
                 workspace_id=expense_group.workspace_id
             )
 
@@ -444,16 +451,34 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                 'message': 'Employee mapping not found'
             })
 
+            if employee_attribute:
+                Error.objects.update_or_create(
+                    workspace_id=expense_group.workspace_id,
+                    expense_attribute=employee_attribute,
+                    defaults={
+                        'type': 'EMPLOYEE_MAPPING',
+                        'error_title': employee_attribute.value,
+                        'error_detail': 'Employee mapping is missing',
+                        'is_resolved': False
+                    }
+                )
+
     expenses = expense_group.expenses.all()
 
     for lineitem in expenses:
         category = lineitem.category if lineitem.category == lineitem.sub_category else '{0} / {1}'.format(
             lineitem.category, lineitem.sub_category)
 
+        category_attribute = ExpenseAttribute.objects.filter(
+            value=category,
+            workspace_id=expense_group.workspace_id,
+            attribute_type='CATEGORY'
+        ).first()
+
         account = Mapping.objects.filter(
             source_type='CATEGORY',
             destination_type='ACCOUNT',
-            source__value=category,
+            source=category_attribute,
             workspace_id=expense_group.workspace_id
         ).first()
 
@@ -465,7 +490,19 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                 'type': 'Category Mapping',
                 'message': 'Category Mapping not found'
             })
-        
+
+            if category_attribute:
+                Error.objects.update_or_create(
+                    workspace_id=expense_group.workspace_id,
+                    expense_attribute=category_attribute,
+                    defaults={
+                        'type': 'CATEGORY_MAPPING',
+                        'error_title': category_attribute.value,
+                        'error_detail': 'Category mapping is missing',
+                        'is_resolved': False
+                    }
+                )
+
         if general_settings.import_tax_codes and lineitem.tax_group_id:
             tax_group  = ExpenseAttribute.objects.get(
                 workspace_id=expense_group.workspace_id,

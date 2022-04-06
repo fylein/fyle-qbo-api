@@ -62,8 +62,8 @@ class Error(models.Model):
         null=True, help_text='Reference to Expense group'
     )
     expense_attribute = models.OneToOneField(
-        ExpenseAttribute, on_delete=models.PROTECT, 
-        help_text='Reference to Expense Attribute'
+        ExpenseAttribute, on_delete=models.PROTECT,
+        null=True, help_text='Reference to Expense Attribute'
     )
     is_resolved = models.BooleanField(default=False, help_text='Is resolved')
     error_title = models.CharField(max_length=255, help_text='Error title')
@@ -73,3 +73,26 @@ class Error(models.Model):
 
     class Meta:
         db_table = 'errors'
+
+
+# errors, _ = Error.objects.update_or_create(
+#     workspace=Workspace.objects.get(id=1),
+#     expense_attribute_id=ExpenseAttribute.objects.get(id=1).id,
+#     defaults={
+#         'type': 'EMPLOYEE_MAPPING',
+#         'error_title': 'Employee mapping error',
+#         'error_detail': 'Employee mapping error detail',
+#         'is_resolved': False
+#     }
+# )
+
+# errors, _ = Error.objects.update_or_create(
+#     workspace=Workspace.objects.get(id=1),
+#     expense_attribute_id=ExpenseAttribute.objects.get(id=1).id,
+#     defaults={
+#         'type': 'CATEGORY_MAPPING',
+#         'error_title': 'Category mapping error',
+#         'error_detail': 'Category mapping error detail',
+#         'is_resolved': False
+#     }
+# )
