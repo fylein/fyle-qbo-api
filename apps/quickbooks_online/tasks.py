@@ -182,13 +182,24 @@ def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: Ta
     errors = []
 
     for error in quickbooks_errors:
-        errors.append({
+        error = {
             'expense_group_id': expense_group.id,
             'type': '{0} / {1}'.format(response['Fault']['type'], error['code']),
             'short_description': error['Message'] if error['Message'] else '{0} error'.format(export_type),
             'long_description': error['Detail'] if error['Detail'] else error_msg
-        })
-    
+        }
+        errors.append(error)
+
+        Error.objects.update_or_create(
+            workspace_id=expense_group.workspace_id,
+            expense_group=expense_group,
+            defaults={
+                'type': 'QBO_ERROR',
+                'error_title': error['type'],
+                'error_detail': error['long_description'],
+                'is_resolved': False
+            }
+        )
     task_log.status = 'FAILED'
     task_log.detail = None
     task_log.quickbooks_errors = errors

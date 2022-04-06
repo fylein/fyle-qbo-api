@@ -73,26 +73,3 @@ class Error(models.Model):
 
     class Meta:
         db_table = 'errors'
-
-
-# errors, _ = Error.objects.update_or_create(
-#     workspace=Workspace.objects.get(id=1),
-#     expense_attribute_id=ExpenseAttribute.objects.get(id=1).id,
-#     defaults={
-#         'type': 'EMPLOYEE_MAPPING',
-#         'error_title': 'Employee mapping error',
-#         'error_detail': 'Employee mapping error detail',
-#         'is_resolved': False
-#     }
-# )
-
-# errors, _ = Error.objects.update_or_create(
-#     workspace=Workspace.objects.get(id=1),
-#     expense_attribute_id=ExpenseAttribute.objects.get(id=1).id,
-#     defaults={
-#         'type': 'CATEGORY_MAPPING',
-#         'error_title': 'Category mapping error',
-#         'error_detail': 'Category mapping error detail',
-#         'is_resolved': False
-#     }
-# )
