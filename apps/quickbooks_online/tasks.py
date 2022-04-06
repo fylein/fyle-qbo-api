@@ -249,9 +249,9 @@ def create_bill(expense_group, task_log_id):
                 and general_settings.auto_map_employees != 'EMPLOYEE_CODE':
             create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
 
-        with transaction.atomic():
-            __validate_expense_group(expense_group, general_settings)
+        __validate_expense_group(expense_group, general_settings)
 
+        with transaction.atomic():
             bill_object = Bill.create_bill(expense_group)
 
             bill_lineitems_objects = BillLineitem.create_bill_lineitems(expense_group, general_settings)
@@ -462,7 +462,7 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                 'type': 'Employee Mapping',
                 'message': 'Employee mapping not found'
             })
-
+            logger.info(f'Employee mapping not found for {expense_group.description.get("employee_email")}')
             if employee_attribute:
                 Error.objects.update_or_create(
                     workspace_id=expense_group.workspace_id,
@@ -596,9 +596,9 @@ def create_cheque(expense_group, task_log_id):
         if general_settings.auto_map_employees and general_settings.auto_create_destination_entity:
             create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
 
-        with transaction.atomic():
-            __validate_expense_group(expense_group, general_settings)
+        __validate_expense_group(expense_group, general_settings)
 
+        with transaction.atomic():
             cheque_object = Cheque.create_cheque(expense_group)
 
             cheque_line_item_objects = ChequeLineitem.create_cheque_lineitems(expense_group, general_settings)
@@ -710,10 +710,10 @@ def create_qbo_expense(expense_group, task_log_id):
         else:
             merchant = expense_group.expenses.first().vendor
             get_or_create_credit_card_or_debit_card_vendor(expense_group.workspace_id, merchant, True)
-       
-        with transaction.atomic():
-            __validate_expense_group(expense_group, general_settings)
 
+        __validate_expense_group(expense_group, general_settings)
+
+        with transaction.atomic():
             qbo_expense_object = QBOExpense.create_qbo_expense(expense_group)
 
             qbo_expense_line_item_objects = QBOExpenseLineitem.create_qbo_expense_lineitems(
@@ -830,9 +830,9 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id):
             merchant = expense_group.expenses.first().vendor
             get_or_create_credit_card_or_debit_card_vendor(expense_group.workspace_id, merchant, False)
 
-        with transaction.atomic():
-            __validate_expense_group(expense_group, general_settings)
+        __validate_expense_group(expense_group, general_settings)
 
+        with transaction.atomic():
             credit_card_purchase_object = CreditCardPurchase.create_credit_card_purchase(
                 expense_group, general_settings.map_merchant_to_vendor)
 
@@ -947,9 +947,9 @@ def create_journal_entry(expense_group, task_log_id):
                 and general_settings.auto_map_employees != 'EMPLOYEE_CODE':
             create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
 
-        with transaction.atomic():
-            __validate_expense_group(expense_group, general_settings)
+        __validate_expense_group(expense_group, general_settings)
 
+        with transaction.atomic():
             journal_entry_object = JournalEntry.create_journal_entry(expense_group)
 
             journal_entry_lineitems_objects = JournalEntryLineitem.create_journal_entry_lineitems(
