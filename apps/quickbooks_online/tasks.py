@@ -152,6 +152,18 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
                     source_employee.detail['full_name'],
                     expense_group.workspace_id
                 )
+                if source_employee:
+                    Error.objects.update_or_create(
+                        workspace_id=expense_group.workspace_id,
+                        expense_attribute=source_employee,
+                        defaults={
+                            'type': 'EMPLOYEE_MAPPING',
+                            'error_title': source_employee.value,
+                            'error_detail': 'Employee mapping is missing',
+                            'is_resolved': False
+                        }
+                    )
+
                 raise BulkError('Mappings are missing', [{
                     'row': None,
                     'expense_group_id': expense_group.id,
