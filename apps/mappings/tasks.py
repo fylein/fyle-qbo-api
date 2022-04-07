@@ -34,8 +34,7 @@ def resolve_expense_attribute_errors(
     logger.info('Resolving Expense Attribute Errors')
     errored_attribute_ids: List[int] = Error.objects.filter(
         is_resolved=False,
-        workspace_id=workspace_id,
-        type='{}_MAPPING'.format(source_attribute_type)
+        type='EMPLOYEE_MAPPING'
     ).values_list('expense_attribute_id', flat=True)
 
     logger.info('Count of Expense Attribute Errors: %s', len(errored_attribute_ids))
@@ -54,17 +53,15 @@ def resolve_expense_attribute_errors(
             logger.info('Resolving Employee Errors')
             if destination_attribute_type == 'EMPLOYEE':
                 params = {
-                    'source_employee_id': errored_attribute_ids,
+                    'source_employee_id__in': errored_attribute_ids,
                     'destination_employee_id__isnull': False
                 }
             else:
                 params = {
-                    'source_employee_id': errored_attribute_ids,
+                    'source_employee_id__in': errored_attribute_ids,
                     'destination_vendor_id__isnull': False
                 }
-            mapped_attribute_ids: List[int] = EmployeeMapping.objects.filter(**params).values_list(
-                'source_employee_id', flat=True
-            )
+            mapped_attribute_ids: List[int] = EmployeeMapping.objects.filter(**params).values_list('source_employee_id', flat=True)
 
         logger.info('Count of Mapped Expense Attribute Errors: %s', len(mapped_attribute_ids))
         if mapped_attribute_ids:
