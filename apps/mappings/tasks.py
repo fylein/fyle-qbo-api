@@ -3,7 +3,6 @@ import traceback
 from datetime import datetime, timedelta
 
 from typing import List, Dict
-from attr import attr
 
 from django_q.models import Schedule
 
