@@ -31,7 +31,6 @@ def resolve_expense_attribute_errors(
     Resolve Expense Attribute Errors
     :return: None
     """
-    logger.info('Resolving Expense Attribute Errors')
     errored_attribute_ids: List[int] = Error.objects.filter(
         is_resolved=False,
         workspace_id=workspace_id,

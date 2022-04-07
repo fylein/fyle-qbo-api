@@ -5,12 +5,37 @@ from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django_q.tasks import async_task
 
-from fyle_accounting_mappings.models import MappingSetting
+from fyle_accounting_mappings.models import MappingSetting, Mapping, EmployeeMapping
 
+from apps.tasks.models import Error
 from apps.mappings.tasks import upload_attributes_to_fyle, schedule_cost_centers_creation,\
-    schedule_fyle_attributes_creation, schedule_projects_creation, schedule_tax_groups_creation
+    schedule_fyle_attributes_creation, schedule_projects_creation
 from apps.workspaces.utils import delete_cards_mapping_settings
 from apps.workspaces.models import WorkspaceGeneralSettings
+
+
+@receiver(post_save, sender=Mapping)
+def resolve_post_mapping_errors(sender, instance: Mapping, **kwargs):
+    """
+    Resolve errors after mapping is created
+    """
+    if kwargs.get('created'):
+        if instance.source_type == 'CATEGORY':
+            error = Error.objects.filter(expense_attribute_id=instance.source_id).first()
+            if error:
+                error.resolved = True
+                error.save()
+
+
+@receiver(post_save, sender=EmployeeMapping)
+def resolve_post_employees_mapping_errors(sender, instance: Mapping, **kwargs):
+    """
+    Resolve errors after mapping is created
+    """
+    error = Error.objects.filter(expense_attribute_id=instance.source_employee_id).first()
+    if error:
+        error.resolved = True
+        error.save()
 
 
 @receiver(post_save, sender=MappingSetting)
