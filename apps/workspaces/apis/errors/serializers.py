@@ -33,6 +33,13 @@ class ErrorSerializer(serializers.Serializer):
 
     class Meta:
         model = Error
-        fields = '__all__'
-        extra_fields = ['expense_attribute', 'expense_group']
-
+        fields = [
+            'id',
+            'expense_attribute',
+            'expense_group',
+            'is_resolved',
+            'type',
+            'error_detail',
+            'error_title',
+            'workspace'
+        ]
