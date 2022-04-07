@@ -34,7 +34,7 @@ def resolve_expense_attribute_errors(
     errored_attribute_ids: List[int] = Error.objects.filter(
         is_resolved=False,
         workspace_id=workspace_id,
-        attribute_type=source_attribute_type
+        type='{}_MAPPING'.format(source_attribute_type)
     ).values_list('expense_attribute_id', flat=True)
 
     if errored_attribute_ids:
