@@ -31,21 +31,27 @@ def resolve_expense_attribute_errors(
     Resolve Expense Attribute Errors
     :return: None
     """
+    logger.info('Resolving Expense Attribute Errors')
     errored_attribute_ids: List[int] = Error.objects.filter(
         is_resolved=False,
         workspace_id=workspace_id,
         type='{}_MAPPING'.format(source_attribute_type)
     ).values_list('expense_attribute_id', flat=True)
 
+    logger.info('Count of Expense Attribute Errors: %s', len(errored_attribute_ids))
+
     if errored_attribute_ids:
         mapped_attribute_ids = []
 
         if source_attribute_type == 'CATEGORY':
+            logger.info('Resolving Category Errors')
+
             mapped_attribute_ids: List[int] = Mapping.objects.filter(
                 source_id__in=errored_attribute_ids
             ).values_list('source_id', flat=True)
 
         elif source_attribute_type == 'EMPLOYEE':
+            logger.info('Resolving Employee Errors')
             if destination_attribute_type == 'EMPLOYEE':
                 params = {
                     'source_employee_id': errored_attribute_ids,
@@ -60,6 +66,7 @@ def resolve_expense_attribute_errors(
                 'source_employee_id', flat=True
             )
 
+        logger.info('Count of Mapped Expense Attribute Errors: %s', len(mapped_attribute_ids))
         if mapped_attribute_ids:
             Error.objects.filter(expense_attribute_id__in=mapped_attribute_ids).update(is_resolved=True)
 
