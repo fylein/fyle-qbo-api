@@ -19,13 +19,10 @@ def resolve_post_mapping_errors(sender, instance: Mapping, **kwargs):
     """
     Resolve errors after mapping is created
     """
-    print('Resolving post mapping errors')
     if instance.source_type == 'CATEGORY':
-        print('Resolving post mapping errors for category')
         error = Error.objects.filter(expense_attribute_id=instance.source_id).first()
-        print(error)
         if error:
-            error.resolved = True
+            error.is_resolved = True
             error.save()
 
 
@@ -34,12 +31,9 @@ def resolve_post_employees_mapping_errors(sender, instance: Mapping, **kwargs):
     """
     Resolve errors after mapping is created
     """
-    print('Resolving post employees mapping errors')
     error = Error.objects.filter(expense_attribute_id=instance.source_employee_id).first()
-    print(error)
     if error:
-        print('Resolving post employees mapping errors for employee')
-        error.resolved = True
+        error.is_resolved = True
         error.save()
 
 
