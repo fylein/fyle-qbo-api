@@ -3,6 +3,7 @@ import traceback
 from datetime import datetime, timedelta
 
 from typing import List, Dict
+from attr import attr
 
 from django_q.models import Schedule
 
@@ -16,11 +17,51 @@ from fyle_integrations_platform_connector import PlatformConnector
 from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.utils import QBOConnector
 from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGeneralSettings
+from apps.tasks.models import Error
 
 from .constants import FYLE_EXPENSE_SYSTEM_FIELDS
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
+
+
+def resolve_expense_attribute_errors(
+    source_attribute_type: str, workspace_id: int, destination_attribute_type: str = None):
+    """
+    Resolve Expense Attribute Errors
+    :return: None
+    """
+    errored_attribute_ids: List[int] = Error.objects.filter(
+        is_resolved=False,
+        workspace_id=workspace_id,
+        attribute_type=source_attribute_type
+    ).values_list('expense_attribute_id', flat=True)
+
+    if errored_attribute_ids:
+        mapped_attribute_ids = []
+
+        if source_attribute_type == 'CATEGORY':
+            mapped_attribute_ids: List[int] = Mapping.objects.filter(
+                source_id__in=errored_attribute_ids
+            ).values_list('source_id', flat=True)
+
+        elif source_attribute_type == 'EMPLOYEE':
+            if destination_attribute_type == 'EMPLOYEE':
+                params = {
+                    'source_employee_id': errored_attribute_ids,
+                    'destination_employee_id__is_null': False
+                }
+            else:
+                params = {
+                    'source_employee_id': errored_attribute_ids,
+                    'destination_vendor_id__is_null': False
+                }
+            mapped_attribute_ids: List[int] = EmployeeMapping.objects.filter(**params).values_list(
+                'source_employee_id', flat=True
+            )
+
+        if mapped_attribute_ids:
+            Error.objects.filter(expense_attribute_id__in=mapped_attribute_ids).update(is_resolved=True)
 
 
 def remove_duplicates(qbo_attributes: List[DestinationAttribute]):
@@ -265,8 +306,11 @@ def auto_create_category_mappings(workspace_id):
     try:
         fyle_categories = upload_categories_to_fyle(workspace_id=workspace_id)
         category_mappings = Mapping.bulk_create_mappings(fyle_categories, 'CATEGORY', 'ACCOUNT', workspace_id)
+        resolve_expense_attribute_errors(
+            source_attribute_type='CATEGORY',
+            workspace_id=workspace_id
+        )
         return category_mappings
-
     except WrongParamsError as exception:
         logger.error(
             'Error while creating categories workspace_id - %s in Fyle %s %s',
@@ -517,6 +561,12 @@ def async_auto_map_employees(workspace_id: int):
             qbo_connection.sync_vendors()
 
         auto_map_employees(destination_type, employee_mapping_preference, workspace_id)
+
+        resolve_expense_attribute_errors(
+            source_attribute_type='EMPLOYEE',
+            workspace_id=workspace_id,
+            destination_attribute_type=destination_type
+        )
     except QBOCredential.DoesNotExist:
         logger.error(
             'QBO Credentials not found for workspace_id %s', workspace_id
