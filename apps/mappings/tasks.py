@@ -55,12 +55,12 @@ def resolve_expense_attribute_errors(
             if destination_attribute_type == 'EMPLOYEE':
                 params = {
                     'source_employee_id': errored_attribute_ids,
-                    'destination_employee_id__is_null': False
+                    'destination_employee_id__isnull': False
                 }
             else:
                 params = {
                     'source_employee_id': errored_attribute_ids,
-                    'destination_vendor_id__is_null': False
+                    'destination_vendor_id__isnull': False
                 }
             mapped_attribute_ids: List[int] = EmployeeMapping.objects.filter(**params).values_list(
                 'source_employee_id', flat=True
