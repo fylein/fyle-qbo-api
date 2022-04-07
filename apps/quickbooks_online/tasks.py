@@ -30,6 +30,18 @@ logger = logging.getLogger(__name__)
 logger.level = logging.INFO
 
 
+def resolve_errors_for_exported_expense_group(expense_group: ExpenseGroup):
+    """
+    Resolve errors for exported expense group
+    :param expense_group: Expense group
+    """
+    Error.objects.filter(
+        workspace_id=expense_group.workspace_id,
+        expense_group=expense_group,
+        is_resolved=False
+    ).update(is_resolved=True)
+
+
 def get_or_create_credit_card_or_debit_card_vendor(workspace_id: int, merchant: str, debit_card_expense: bool):
     """
     Get or create car default vendor
@@ -279,6 +291,8 @@ def create_bill(expense_group, task_log_id):
             expense_group.exported_at = datetime.now()
             expense_group.response_logs = created_bill
             expense_group.save()
+
+            resolve_errors_for_exported_expense_group(expense_group)
 
             load_attachments(qbo_connection, created_bill['Bill']['Id'], 'Bill', expense_group)
 
@@ -626,6 +640,8 @@ def create_cheque(expense_group, task_log_id):
             expense_group.response_logs = created_cheque
             expense_group.save()
 
+            resolve_errors_for_exported_expense_group(expense_group)
+
             load_attachments(qbo_connection, created_cheque['Purchase']['Id'], 'Purchase', expense_group)
 
     except QBOCredential.DoesNotExist:
@@ -742,6 +758,8 @@ def create_qbo_expense(expense_group, task_log_id):
             expense_group.exported_at = datetime.now()
             expense_group.response_logs = created_qbo_expense
             expense_group.save()
+
+            resolve_errors_for_exported_expense_group(expense_group)
 
             load_attachments(qbo_connection, created_qbo_expense['Purchase']['Id'], 'Purchase', expense_group)
 
@@ -865,6 +883,8 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id):
             expense_group.response_logs = created_credit_card_purchase
             expense_group.save()
 
+            resolve_errors_for_exported_expense_group(expense_group)
+
             load_attachments(qbo_connection, created_credit_card_purchase['Purchase']['Id'], 'Purchase', expense_group)
 
     except QBOCredential.DoesNotExist:
@@ -979,6 +999,8 @@ def create_journal_entry(expense_group, task_log_id):
             expense_group.exported_at = datetime.now()
             expense_group.response_logs = created_journal_entry
             expense_group.save()
+
+            resolve_errors_for_exported_expense_group(expense_group)
 
             load_attachments(qbo_connection, created_journal_entry['JournalEntry']['Id'], 'JournalEntry', expense_group)
 
