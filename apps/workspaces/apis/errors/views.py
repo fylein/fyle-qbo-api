@@ -11,4 +11,12 @@ class ErrorsView(generics.ListAPIView):
     permission_classes = []
     
     def get_queryset(self):
-        return Error.objects.filter(workspace_id=self.kwargs['workspace_id'])
+        type = self.request.query_params.get('type')
+        params = {
+            'is_resolved': self.request.query_params.get('is_resolved', False),
+            'workspace__id': self.kwargs.get('workspace_id')
+        }
+        if type:
+            params['type'] = type
+        
+        return Error.objects.filter(**params)
