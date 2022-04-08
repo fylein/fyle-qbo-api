@@ -7,8 +7,6 @@ from .serializers import ErrorSerializer
 
 class ErrorsView(generics.ListAPIView):
     serializer_class = ErrorSerializer
-    authentication_classes = []
-    permission_classes = []
     
     def get_queryset(self):
         type = self.request.query_params.get('type')
