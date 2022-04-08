@@ -93,7 +93,7 @@ class GeneralMappingsSerializer(serializers.ModelSerializer):
         }
 
 
-class ExportSettingsSerializer(serializers.Serializer):
+class ExportSettingsSerializer(serializers.ModelSerializer):
     """
     Serializer for the ExportSettings Form/API
     """
@@ -110,6 +110,7 @@ class ExportSettingsSerializer(serializers.Serializer):
             'general_mappings',
             'workspace_id'
         ]
+        read_only_fields = ['workspace_id']
 
     def get_workspace_id(self, instance):
         return instance.id

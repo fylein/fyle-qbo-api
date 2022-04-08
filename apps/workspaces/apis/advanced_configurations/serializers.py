@@ -60,7 +60,7 @@ class WorkspaceScheduleSerializer(serializers.ModelSerializer):
         ]
 
 
-class AdvancedConfigurationsSerializer(serializers.Serializer):
+class AdvancedConfigurationsSerializer(serializers.ModelSerializer):
     """
     Serializer for the Advanced Configurations Form/API
     """
@@ -77,6 +77,7 @@ class AdvancedConfigurationsSerializer(serializers.Serializer):
             'workspace_schedules',
             'workspace_id'
         ]
+        read_only_fields = ['workspace_id']
 
     def get_workspace_id(self, instance):
         return instance.id

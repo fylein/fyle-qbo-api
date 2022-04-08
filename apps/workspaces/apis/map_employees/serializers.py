@@ -21,6 +21,7 @@ class MapEmployeesSerializer(serializers.ModelSerializer):
             'workspace_general_settings',
             'workspace_id'
         ]
+        read_only_fields = ['workspace_id']
 
     def get_workspace_id(self, instance):
         return instance.id
