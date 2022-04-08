@@ -89,6 +89,7 @@ class ImportSettingsSerializer(serializers.ModelSerializer):
         fields = [
             'workspace_general_settings',
             'general_mappings',
+            'mapping_settings',
             'workspace_id'
         ]
         read_only_fields = ['workspace_id']
