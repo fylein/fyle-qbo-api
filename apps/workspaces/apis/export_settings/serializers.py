@@ -26,6 +26,9 @@ class WorkspaceGeneralSettingsSerializer(serializers.ModelSerializer):
 
 
 class ExpenseGroupSettingsSerializer(serializers.ModelSerializer):
+    reimbursable_expense_group_fields = serializers.ListField(allow_null=True, required=False)
+    reimbursable_export_date_type = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+
     class Meta:
         model = ExpenseGroupSettings
         fields = [

@@ -214,12 +214,13 @@ class ExpenseGroupSettings(models.Model):
         reimbursable_grouped_by.extend(current_reimbursable_settings)
         corporate_credit_card_expenses_grouped_by.extend(current_ccc_settings)
 
-        reimbursable_grouped_by.extend(expense_group_settings['reimbursable_expense_group_fields'])
+        if expense_group_settings['reimbursable_expense_group_fields']:
+            reimbursable_grouped_by.extend(expense_group_settings['reimbursable_expense_group_fields'])
+            reimbursable_grouped_by = list(set(reimbursable_grouped_by))
+
         corporate_credit_card_expenses_grouped_by.extend(
             expense_group_settings['corporate_credit_card_expense_group_fields']
         )
-
-        reimbursable_grouped_by = list(set(reimbursable_grouped_by))
         corporate_credit_card_expenses_grouped_by = list(set(corporate_credit_card_expenses_grouped_by))
 
         for field in ALLOWED_FORM_INPUT['export_date_type']:
@@ -230,7 +231,8 @@ class ExpenseGroupSettings(models.Model):
             if field in corporate_credit_card_expenses_grouped_by:
                 corporate_credit_card_expenses_grouped_by.remove(field)
 
-        if expense_group_settings['reimbursable_export_date_type'] != 'current_date':
+        if expense_group_settings['reimbursable_export_date_type'] and\
+                expense_group_settings['reimbursable_export_date_type'] != 'current_date':
             reimbursable_grouped_by.append(expense_group_settings['reimbursable_export_date_type'])
 
         if expense_group_settings['ccc_export_date_type'] != 'current_date':
@@ -248,7 +250,8 @@ class ExpenseGroupSettings(models.Model):
                 'reimbursable_expense_group_fields': reimbursable_grouped_by,
                 'corporate_credit_card_expense_group_fields': corporate_credit_card_expenses_grouped_by,
                 'expense_state': expense_group_settings['expense_state'],
-                'reimbursable_export_date_type': expense_group_settings['reimbursable_export_date_type'],
+                'reimbursable_export_date_type': expense_group_settings['reimbursable_export_date_type']
+                if expense_group_settings['reimbursable_export_date_type'] else 'current_date',
                 'ccc_export_date_type': expense_group_settings['ccc_export_date_type']
             }
         )
