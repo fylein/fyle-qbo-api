@@ -24,7 +24,7 @@ class ExpenseGroupSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ErrorSerializer(serializers.Serializer):
+class ErrorSerializer(serializers.ModelSerializer):
     """
     Serializer for the Errors
     """
@@ -33,13 +33,4 @@ class ErrorSerializer(serializers.Serializer):
 
     class Meta:
         model = Error
-        fields = [
-            'id',
-            'expense_attribute',
-            'expense_group',
-            'is_resolved',
-            'type',
-            'error_detail',
-            'error_title',
-            'workspace'
-        ]
+        fields = '__all__'
