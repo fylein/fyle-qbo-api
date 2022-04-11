@@ -26,6 +26,9 @@ class WorkspaceGeneralSettingsSerializer(serializers.ModelSerializer):
 
 
 class ExpenseGroupSettingsSerializer(serializers.ModelSerializer):
+    reimbursable_expense_group_fields = serializers.ListField(allow_null=True, required=False)
+    reimbursable_export_date_type = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+
     class Meta:
         model = ExpenseGroupSettings
         fields = [
@@ -139,6 +142,12 @@ class ExportSettingsSerializer(serializers.Serializer):
                 'category_sync_version': category_sync_version
             }
         )
+
+        if not expense_group_settings['reimbursable_expense_group_fields']:
+            expense_group_settings['reimbursable_expense_group_fields'] = ['employee_email', 'report_id', 'fund_source']
+
+        if not expense_group_settings['reimbursable_export_date_type']:
+            expense_group_settings['reimbursable_export_date_type'] = 'current_date'
 
         ExpenseGroupSettings.update_expense_group_settings(expense_group_settings, instance.id)
 
