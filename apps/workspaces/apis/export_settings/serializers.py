@@ -143,6 +143,12 @@ class ExportSettingsSerializer(serializers.Serializer):
             }
         )
 
+        if not expense_group_settings['reimbursable_expense_group_fields']:
+            expense_group_settings['reimbursable_expense_group_fields'] = ['employee_email', 'report_id', 'fund_source']
+
+        if not expense_group_settings['reimbursable_export_date_type']:
+            expense_group_settings['reimbursable_export_date_type'] = 'current_date'
+
         ExpenseGroupSettings.update_expense_group_settings(expense_group_settings, instance.id)
 
         GeneralMapping.objects.update_or_create(
