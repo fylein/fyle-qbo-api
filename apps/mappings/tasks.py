@@ -563,7 +563,7 @@ def async_auto_map_employees(workspace_id: int):
 
         resolve_expense_attribute_errors(
             source_attribute_type='EMPLOYEE',
-            workspace_id=workspace_id,
+            workspace_id=workspace_id ,
             destination_attribute_type=destination_type
         )
     except QBOCredential.DoesNotExist:
