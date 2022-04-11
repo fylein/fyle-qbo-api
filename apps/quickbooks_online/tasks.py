@@ -17,7 +17,7 @@ from fyle_integrations_platform_connector import PlatformConnector
 from fyle_qbo_api.exceptions import BulkError
 
 from apps.fyle.models import ExpenseGroup, Reimbursement, Expense
-from apps.tasks.models import TaskLog
+from apps.tasks.models import Error, TaskLog
 from apps.mappings.models import GeneralMapping
 from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGeneralSettings
 from apps.fyle.utils import FyleConnector
@@ -28,6 +28,18 @@ from .utils import QBOConnector
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
+
+
+def resolve_errors_for_exported_expense_group(expense_group: ExpenseGroup):
+    """
+    Resolve errors for exported expense group
+    :param expense_group: Expense group
+    """
+    Error.objects.filter(
+        workspace_id=expense_group.workspace_id,
+        expense_group=expense_group,
+        is_resolved=False
+    ).update(is_resolved=True)
 
 
 def get_or_create_credit_card_or_debit_card_vendor(workspace_id: int, merchant: str, debit_card_expense: bool):
@@ -152,6 +164,18 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
                     source_employee.detail['full_name'],
                     expense_group.workspace_id
                 )
+                if source_employee:
+                    Error.objects.update_or_create(
+                        workspace_id=expense_group.workspace_id,
+                        expense_attribute=source_employee,
+                        defaults={
+                            'type': 'EMPLOYEE_MAPPING',
+                            'error_title': source_employee.value,
+                            'error_detail': 'Employee mapping is missing',
+                            'is_resolved': False
+                        }
+                    )
+
                 raise BulkError('Mappings are missing', [{
                     'row': None,
                     'expense_group_id': expense_group.id,
@@ -170,13 +194,24 @@ def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: Ta
     errors = []
 
     for error in quickbooks_errors:
-        errors.append({
+        error = {
             'expense_group_id': expense_group.id,
             'type': '{0} / {1}'.format(response['Fault']['type'], error['code']),
             'short_description': error['Message'] if error['Message'] else '{0} error'.format(export_type),
             'long_description': error['Detail'] if error['Detail'] else error_msg
-        })
-    
+        }
+        errors.append(error)
+
+        Error.objects.update_or_create(
+            workspace_id=expense_group.workspace_id,
+            expense_group=expense_group,
+            error_title=error['type'],
+            defaults={
+                'type': 'QBO_ERROR',
+                'error_detail': error['long_description'],
+                'is_resolved': False
+            }
+        )
     task_log.status = 'FAILED'
     task_log.detail = None
     task_log.quickbooks_errors = errors
@@ -237,9 +272,9 @@ def create_bill(expense_group, task_log_id):
                 and general_settings.auto_map_employees != 'EMPLOYEE_CODE':
             create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
 
-        with transaction.atomic():
-            __validate_expense_group(expense_group, general_settings)
+        __validate_expense_group(expense_group, general_settings)
 
+        with transaction.atomic():
             bill_object = Bill.create_bill(expense_group)
 
             bill_lineitems_objects = BillLineitem.create_bill_lineitems(expense_group, general_settings)
@@ -256,6 +291,8 @@ def create_bill(expense_group, task_log_id):
             expense_group.exported_at = datetime.now()
             expense_group.response_logs = created_bill
             expense_group.save()
+
+            resolve_errors_for_exported_expense_group(expense_group)
 
             load_attachments(qbo_connection, created_bill['Bill']['Id'], 'Bill', expense_group)
 
@@ -422,9 +459,16 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
         ((general_settings.corporate_credit_card_expenses_object in ('CREDIT CARD PURCHASE', 'DEBIT CARD EXPENSE') and
           general_settings.map_merchant_to_vendor) or
          general_settings.corporate_credit_card_expenses_object == 'BILL')):
+        
+        employee_attribute = ExpenseAttribute.objects.filter(
+            value=expense_group.description.get('employee_email'),
+            workspace_id=expense_group.workspace_id,
+            attribute_type='EMPLOYEE'
+        ).first()
+        
         try:
             entity = EmployeeMapping.objects.get(
-                source_employee__value=expense_group.description.get('employee_email'),
+                source_employee=employee_attribute,
                 workspace_id=expense_group.workspace_id
             )
 
@@ -443,6 +487,17 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                 'type': 'Employee Mapping',
                 'message': 'Employee mapping not found'
             })
+            if employee_attribute:
+                Error.objects.update_or_create(
+                    workspace_id=expense_group.workspace_id,
+                    expense_attribute=employee_attribute,
+                    defaults={
+                        'type': 'EMPLOYEE_MAPPING',
+                        'error_title': employee_attribute.value,
+                        'error_detail': 'Employee mapping is missing',
+                        'is_resolved': False
+                    }
+                )
 
     expenses = expense_group.expenses.all()
 
@@ -450,10 +505,16 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
         category = lineitem.category if lineitem.category == lineitem.sub_category else '{0} / {1}'.format(
             lineitem.category, lineitem.sub_category)
 
+        category_attribute = ExpenseAttribute.objects.filter(
+            value=category,
+            workspace_id=expense_group.workspace_id,
+            attribute_type='CATEGORY'
+        ).first()
+
         account = Mapping.objects.filter(
             source_type='CATEGORY',
             destination_type='ACCOUNT',
-            source__value=category,
+            source=category_attribute,
             workspace_id=expense_group.workspace_id
         ).first()
 
@@ -465,7 +526,19 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                 'type': 'Category Mapping',
                 'message': 'Category Mapping not found'
             })
-        
+
+            if category_attribute:
+                Error.objects.update_or_create(
+                    workspace_id=expense_group.workspace_id,
+                    expense_attribute=category_attribute,
+                    defaults={
+                        'type': 'CATEGORY_MAPPING',
+                        'error_title': category_attribute.value,
+                        'error_detail': 'Category mapping is missing',
+                        'is_resolved': False
+                    }
+                )
+
         if general_settings.import_tax_codes and lineitem.tax_group_id:
             tax_group  = ExpenseAttribute.objects.get(
                 workspace_id=expense_group.workspace_id,
@@ -547,9 +620,9 @@ def create_cheque(expense_group, task_log_id):
         if general_settings.auto_map_employees and general_settings.auto_create_destination_entity:
             create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
 
-        with transaction.atomic():
-            __validate_expense_group(expense_group, general_settings)
+        __validate_expense_group(expense_group, general_settings)
 
+        with transaction.atomic():
             cheque_object = Cheque.create_cheque(expense_group)
 
             cheque_line_item_objects = ChequeLineitem.create_cheque_lineitems(expense_group, general_settings)
@@ -566,6 +639,8 @@ def create_cheque(expense_group, task_log_id):
             expense_group.exported_at = datetime.now()
             expense_group.response_logs = created_cheque
             expense_group.save()
+
+            resolve_errors_for_exported_expense_group(expense_group)
 
             load_attachments(qbo_connection, created_cheque['Purchase']['Id'], 'Purchase', expense_group)
 
@@ -661,10 +736,10 @@ def create_qbo_expense(expense_group, task_log_id):
         else:
             merchant = expense_group.expenses.first().vendor
             get_or_create_credit_card_or_debit_card_vendor(expense_group.workspace_id, merchant, True)
-       
-        with transaction.atomic():
-            __validate_expense_group(expense_group, general_settings)
 
+        __validate_expense_group(expense_group, general_settings)
+
+        with transaction.atomic():
             qbo_expense_object = QBOExpense.create_qbo_expense(expense_group)
 
             qbo_expense_line_item_objects = QBOExpenseLineitem.create_qbo_expense_lineitems(
@@ -683,6 +758,8 @@ def create_qbo_expense(expense_group, task_log_id):
             expense_group.exported_at = datetime.now()
             expense_group.response_logs = created_qbo_expense
             expense_group.save()
+
+            resolve_errors_for_exported_expense_group(expense_group)
 
             load_attachments(qbo_connection, created_qbo_expense['Purchase']['Id'], 'Purchase', expense_group)
 
@@ -781,9 +858,9 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id):
             merchant = expense_group.expenses.first().vendor
             get_or_create_credit_card_or_debit_card_vendor(expense_group.workspace_id, merchant, False)
 
-        with transaction.atomic():
-            __validate_expense_group(expense_group, general_settings)
+        __validate_expense_group(expense_group, general_settings)
 
+        with transaction.atomic():
             credit_card_purchase_object = CreditCardPurchase.create_credit_card_purchase(
                 expense_group, general_settings.map_merchant_to_vendor)
 
@@ -805,6 +882,8 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id):
             expense_group.exported_at = datetime.now()
             expense_group.response_logs = created_credit_card_purchase
             expense_group.save()
+
+            resolve_errors_for_exported_expense_group(expense_group)
 
             load_attachments(qbo_connection, created_credit_card_purchase['Purchase']['Id'], 'Purchase', expense_group)
 
@@ -898,9 +977,9 @@ def create_journal_entry(expense_group, task_log_id):
                 and general_settings.auto_map_employees != 'EMPLOYEE_CODE':
             create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
 
-        with transaction.atomic():
-            __validate_expense_group(expense_group, general_settings)
+        __validate_expense_group(expense_group, general_settings)
 
+        with transaction.atomic():
             journal_entry_object = JournalEntry.create_journal_entry(expense_group)
 
             journal_entry_lineitems_objects = JournalEntryLineitem.create_journal_entry_lineitems(
@@ -920,6 +999,8 @@ def create_journal_entry(expense_group, task_log_id):
             expense_group.exported_at = datetime.now()
             expense_group.response_logs = created_journal_entry
             expense_group.save()
+
+            resolve_errors_for_exported_expense_group(expense_group)
 
             load_attachments(qbo_connection, created_journal_entry['JournalEntry']['Id'], 'JournalEntry', expense_group)
 

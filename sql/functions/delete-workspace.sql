@@ -11,7 +11,13 @@ BEGIN
   WHERE tl.workspace_id = _workspace_id;
   GET DIAGNOSTICS rcount = ROW_COUNT;
   RAISE NOTICE 'Deleted % task_logs', rcount;
-
+  
+  DELETE
+  FROM errors er
+  where er.workspace_id = _workspace_id;
+  GET DIAGNOSTICS rcount = ROW_COUNT;
+  RAISE NOTICE 'Deleted % errors', rcount;
+  
   DELETE
   FROM bill_lineitems bl
   WHERE bl.bill_id IN (

@@ -75,7 +75,7 @@ class GeneralMappingsSerializer(serializers.ModelSerializer):
         }
 
 
-class ImportSettingsSerializer(serializers.Serializer):
+class ImportSettingsSerializer(serializers.ModelSerializer):
     """
     Serializer for the ImportSettings Form/API
     """
@@ -89,8 +89,10 @@ class ImportSettingsSerializer(serializers.Serializer):
         fields = [
             'workspace_general_settings',
             'general_mappings',
+            'mapping_settings',
             'workspace_id'
         ]
+        read_only_fields = ['workspace_id']
 
     def get_workspace_id(self, instance):
         return instance.id
@@ -133,6 +135,13 @@ class ImportSettingsSerializer(serializers.Serializer):
                 'import_to_fyle': True,
                 'is_custom': False
             })
+        
+        mapping_settings.append({
+            'source_field': 'CATEGORY',
+            'destination_field': 'ACCOUNT',
+            'import_to_fyle': False,
+            'is_custom': False
+        })
 
         with transaction.atomic():
             for setting in mapping_settings:
