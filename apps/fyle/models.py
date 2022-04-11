@@ -218,6 +218,7 @@ class ExpenseGroupSettings(models.Model):
         corporate_credit_card_expenses_grouped_by.extend(
             expense_group_settings['corporate_credit_card_expense_group_fields']
         )
+
         reimbursable_grouped_by = list(set(reimbursable_grouped_by))
         corporate_credit_card_expenses_grouped_by = list(set(corporate_credit_card_expenses_grouped_by))
 
