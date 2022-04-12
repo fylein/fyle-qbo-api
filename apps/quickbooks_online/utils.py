@@ -803,13 +803,10 @@ class QBOConnector:
             if (lineitem.tax_code and lineitem.tax_amount):
                 total_tax += lineitem.tax_amount
             else:
-                total_tax += round(lineitem.amount - self.get_tax_inclusive_amount(lineitem.amount,
-                                                                                   general_mappings.default_tax_code_id),
-                                   2)
+                total_tax += round(lineitem.amount - self.get_tax_inclusive_amount(lineitem.amount, general_mappings.default_tax_code_id), 2)
 
             if lineitem.debit_account_id in card_objects:
-                card_objects[lineitem.debit_account_id]['amount'] = card_objects[lineitem.debit_account_id][
-                                                                        'amount'] + lineitem.amount
+                card_objects[lineitem.debit_account_id]['amount'] = card_objects[lineitem.debit_account_id]['amount'] + lineitem.amount
             else:
                 card_objects[lineitem.debit_account_id] = {
                     'debit_account_id': lineitem.debit_account_id,
