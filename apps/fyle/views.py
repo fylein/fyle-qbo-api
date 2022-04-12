@@ -106,7 +106,7 @@ class ExpenseGroupCountView(generics.ListAPIView):
         )
 
 
-class ExportableExpenseGroupsView(generics.ListCreateAPIView):
+class ExportableExpenseGroupsView(generics.RetrieveAPIView):
     """
     List Exportable Expense Groups
     """
