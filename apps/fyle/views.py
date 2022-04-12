@@ -33,6 +33,13 @@ class ExpenseGroupView(generics.ListCreateAPIView):
         state = self.request.query_params.get('state', 'ALL')
         start_date = self.request.query_params.get('start_date', None)
         end_date = self.request.query_params.get('end_date', None)
+        expense_group_ids = self.request.query_params.get('expense_group_ids', None)
+
+        if expense_group_ids:
+            return ExpenseGroup.objects.filter(
+                workspace_id=self.kwargs['workspace_id'],
+                id__in=expense_group_ids.split(',')
+            )
 
         if state == 'ALL':
             return ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id']).order_by('-updated_at')
