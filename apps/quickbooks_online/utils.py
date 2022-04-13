@@ -792,28 +792,33 @@ class QBOConnector:
             else:
                 raise
 
-    def __group_journal_entry_credits(self, journal_entry_lineitems: List[JournalEntryLineitem], general_mappings: GeneralMapping) -> List[Dict]:
-        total_sum = sum(line.amount for line in journal_entry_lineitems)
+    def _get_total_tax(self, lineitem, general_mappings):
         total_tax = 0
+        if lineitem.tax_code and lineitem.tax_amount:
+            total_tax += lineitem.tax_amount
+        else:
+            total_tax += round(
+                lineitem.amount - self.get_tax_inclusive_amount(lineitem.amount, general_mappings.default_tax_code_id), 2
+            )
+        return total_tax
 
+    def __group_journal_entry_credits(self, journal_entry_lineitems: List[JournalEntryLineitem], general_mappings: GeneralMapping) -> List[Dict]:
         card_objects = {}
         data = []
 
         for lineitem in journal_entry_lineitems:
-            if (lineitem.tax_code and lineitem.tax_amount):
-                total_tax += lineitem.tax_amount
-            else:
-                total_tax += round(lineitem.amount - self.get_tax_inclusive_amount(lineitem.amount, general_mappings.default_tax_code_id), 2)
-
+            total_tax = self._get_total_tax(lineitem, general_mappings)
             if lineitem.debit_account_id in card_objects:
                 card_objects[lineitem.debit_account_id]['amount'] = card_objects[lineitem.debit_account_id]['amount'] + lineitem.amount
+                card_objects[lineitem.debit_account_id]['total_tax'] = card_objects[lineitem.debit_account_id]['total_tax'] + self._get_total_tax(lineitem, general_mappings)
             else:
                 card_objects[lineitem.debit_account_id] = {
                     'debit_account_id': lineitem.debit_account_id,
                     'amount': lineitem.amount,
                     'entity_id': lineitem.entity_id,
                     'entity_type': lineitem.entity_type,
-                    'tax_code': lineitem.tax_code
+                    'tax_code': lineitem.tax_code,
+                    'total_tax': total_tax
                 }
 
         for key, value in card_objects.items():
@@ -824,7 +829,7 @@ class QBOConnector:
             line_items.append({
                 'DetailType': 'JournalEntryLineDetail',
                 'Description': 'Total Amount',
-                'Amount': line['amount'],
+                'Amount': line['amount'] - line['total_tax'],
                 'JournalEntryLineDetail': {
                     'PostingType': 'Credit',
                     'AccountRef': {
@@ -845,9 +850,9 @@ class QBOConnector:
                     'TaxCodeRef': {
                         'value': line['tax_code'] if line['tax_code'] else general_mappings.default_tax_code_id
                     },
-                    'TaxInclusiveAmt': total_sum,
+                    'TaxInclusiveAmt': line['amount'],
                     "TaxApplicableOn": "Purchase",
-                    'TaxAmount': total_tax,
+                    'TaxAmount': line['total_tax']
                 }
             })
         return line_items
