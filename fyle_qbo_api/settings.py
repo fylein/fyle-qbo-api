@@ -96,11 +96,11 @@ FYLE_REST_AUTH_SERIALIZERS = {
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
-        # 'rest_framework.permissions.IsAuthenticated',
-        # 'apps.workspaces.permissions.WorkspacePermissions'
+        'rest_framework.permissions.IsAuthenticated',
+        'apps.workspaces.permissions.WorkspacePermissions'
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        # 'fyle_rest_auth.authentication.FyleJWTAuthentication',
+        'fyle_rest_auth.authentication.FyleJWTAuthentication',
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 100
