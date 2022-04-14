@@ -106,6 +106,22 @@ class ExpenseGroupCountView(generics.ListAPIView):
         )
 
 
+class ExportableExpenseGroupsView(generics.RetrieveAPIView):
+    """
+    List Exportable Expense Groups
+    """
+    def get(self, request, *args, **kwargs):
+        expense_group_ids = ExpenseGroup.objects.filter(
+            workspace_id=self.kwargs['workspace_id'],
+            exported_at__isnull=True,
+        ).values_list('id', flat=True)
+
+        return Response(
+            data={'exportable_expense_group_ids': expense_group_ids},
+            status=status.HTTP_200_OK
+        )
+
+
 class ExpenseGroupScheduleView(generics.CreateAPIView):
     """
     Create expense group schedule

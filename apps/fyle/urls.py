@@ -16,12 +16,13 @@ Including another URLconf
 from django.urls import path
 
 from .views import ExpenseGroupView, ExpenseGroupByIdView, ExpenseGroupScheduleView, ExpenseView, EmployeeView, \
-    CategoryView, CostCenterView, ProjectView, ExpenseFieldsView, ExpenseCustomFieldsView, \
+    CategoryView, CostCenterView, ProjectView, ExpenseFieldsView, ExpenseCustomFieldsView, ExportableExpenseGroupsView, \
     ExpenseGroupSettingsView, RefreshFyleDimensionView, SyncFyleDimensionView, ExpenseGroupCountView
 
 urlpatterns = [
     path('expense_groups/', ExpenseGroupView.as_view(), name='expense-groups'),
     path('expense_groups/count/', ExpenseGroupCountView.as_view(), name='expense-groups-count'),
+    path('exportable_expense_groups/', ExportableExpenseGroupsView.as_view(), name='exportable-expense-groups'),
     path('expense_group_settings/', ExpenseGroupSettingsView.as_view(), name='expense-group-settings'),
     path('expense_groups/trigger/', ExpenseGroupScheduleView.as_view()),
     path('expense_groups/<int:expense_group_id>/', ExpenseGroupByIdView.as_view(), name='expense-group-by-id'),
