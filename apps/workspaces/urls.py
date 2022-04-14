@@ -16,7 +16,7 @@ Including another URLconf
 from django.urls import path, include
 
 from .views import WorkspaceView, ReadyView, ConnectFyleView, ConnectQBOView, ScheduleView, GeneralSettingsView, \
-    ScheduledSyncView
+    ScheduledSyncView, SyncAndExportView
 
 urlpatterns = [
     path('', WorkspaceView.as_view({'get': 'get', 'post': 'post'}), name='workspace'),
@@ -29,6 +29,7 @@ urlpatterns = [
     path('<int:workspace_id>/credentials/fyle/delete/', ConnectFyleView.as_view({'post': 'delete'}), name='delete-fyle-credentials'),
     path('<int:workspace_id>/connect_qbo/authorization_code/', ConnectQBOView.as_view({'post': 'post'})),
     path('<int:workspace_id>/credentials/qbo/', ConnectQBOView.as_view({'get': 'get'}), name='get-qbo-credentials'),
+    path('<int:workspace_id>/sync_export/', SyncAndExportView.as_view({'post': 'post'}), name='sync-export'),
     path('<int:workspace_id>/fyle/', include('apps.fyle.urls')),
     path('<int:workspace_id>/qbo/', include('apps.quickbooks_online.urls')),
     path('<int:workspace_id>/mappings/', include('apps.mappings.urls')),

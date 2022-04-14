@@ -3,7 +3,7 @@ from datetime import datetime
 from django_q.models import Schedule
 
 from apps.fyle.models import ExpenseGroup
-from apps.fyle.tasks import async_create_expense_groups
+from apps.fyle.tasks import async_create_expense_groups, schedule_expense_group_creation
 from apps.quickbooks_online.tasks import schedule_bills_creation, schedule_cheques_creation, \
     schedule_journal_entry_creation, schedule_credit_card_purchase_creation, schedule_qbo_expense_creation
 from apps.tasks.models import TaskLog
@@ -118,3 +118,44 @@ def run_sync_schedule(workspace_id):
                 schedule_bills_creation(
                     workspace_id=workspace_id, expense_group_ids=expense_group_ids
                 )
+
+
+def sync_and_export_to_qbo(workspace_id):
+    """
+    Export to QBO
+    :param workspace_id: workspace id
+    :return: None
+    """
+    schedule_expense_group_creation(workspace_id, async_call=False)
+
+    reimbursable_expense_group_ids = ExpenseGroup.objects.filter(
+        exported_at__isnull=True, fund_source='PERSONAL', workspace_id=workspace_id
+    ).values_list('id', flat=True)
+
+    ccc_expense_group_ids = ExpenseGroup.objects.filter(
+        exported_at__isnull=True, fund_source='CCC', workspace_id=workspace_id
+    ).values_list('id', flat=True)
+
+    workspace_general_settings = WorkspaceGeneralSettings.objects.get(
+        workspace_id=workspace_id
+    )
+
+    if workspace_general_settings.reimbursable_expenses_object and reimbursable_expense_group_ids:
+        if workspace_general_settings.reimbursable_expenses_object == 'EXPENSE':
+            schedule_qbo_expense_creation(workspace_general_settings.workspace_id, reimbursable_expense_group_ids)
+        if workspace_general_settings.reimbursable_expenses_object == 'CHECK':
+            schedule_cheques_creation(workspace_general_settings.workspace_id, reimbursable_expense_group_ids)
+        if workspace_general_settings.reimbursable_expenses_object == 'BILL':
+            schedule_bills_creation(workspace_general_settings.workspace_id, reimbursable_expense_group_ids)
+        if workspace_general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY':
+            schedule_journal_entry_creation(workspace_general_settings.workspace_id, reimbursable_expense_group_ids)
+
+    if workspace_general_settings.corporate_credit_card_expenses_object and ccc_expense_group_ids:
+        if workspace_general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE':
+            schedule_qbo_expense_creation(workspace_general_settings.workspace_id, ccc_expense_group_ids)
+        if workspace_general_settings.corporate_credit_card_expenses_object == 'DEBIT CARD EXPENSE':
+            schedule_qbo_expense_creation(workspace_general_settings.workspace_id, ccc_expense_group_ids)
+        if workspace_general_settings.corporate_credit_card_expenses_object == 'BILL':
+            schedule_bills_creation(workspace_general_settings.workspace_id, ccc_expense_group_ids)
+        if workspace_general_settings.corporate_credit_card_expenses_object == 'JOURNAL ENTRY':
+            schedule_journal_entry_creation(workspace_general_settings.workspace_id, ccc_expense_group_ids)

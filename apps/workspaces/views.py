@@ -24,7 +24,7 @@ from apps.fyle.helpers import get_cluster_domain
 
 from .models import Workspace, FyleCredential, QBOCredential, WorkspaceGeneralSettings, WorkspaceSchedule
 from .utils import generate_qbo_refresh_token, create_or_update_general_settings
-from .tasks import schedule_sync, run_sync_schedule
+from .tasks import schedule_sync, run_sync_schedule, sync_and_export_to_qbo
 from .serializers import WorkspaceSerializer, FyleCredentialSerializer, QBOCredentialSerializer, \
     WorkSpaceGeneralSettingsSerializer, WorkspaceScheduleSerializer
 from .signals import post_delete_qbo_connection
@@ -478,3 +478,18 @@ class GeneralSettingsView(viewsets.ViewSet):
                 data=serializer.data,
                 status=status.HTTP_200_OK
             )
+
+
+class SyncAndExportView(viewsets.ViewSet):
+    """
+    Sync and Export Expenses to QBO
+    """
+
+    def post(self, request, *args, **kwargs):
+
+        sync_and_export_to_qbo(kwargs['workspace_id'])
+
+        return Response(
+            status=status.HTTP_200_OK
+        )
+
