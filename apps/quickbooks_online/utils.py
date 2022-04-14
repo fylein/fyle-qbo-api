@@ -1,4 +1,3 @@
-from operator import le
 from typing import List, Dict
 from datetime import datetime, timedelta
 import logging
@@ -793,45 +792,70 @@ class QBOConnector:
             else:
                 raise
 
-    def __group_journal_entry_credits(self, journal_entry_lineitems: List[JournalEntryLineitem], general_mappings: GeneralMapping) -> List[Dict]:
-        total_sum = sum(line.amount for line in journal_entry_lineitems)
+    def _get_total_tax(self, lineitem, general_mappings):
         total_tax = 0
+        if lineitem.tax_code and lineitem.tax_amount:
+            total_tax += lineitem.tax_amount
+        else:
+            total_tax += round(
+                lineitem.amount - self.get_tax_inclusive_amount(lineitem.amount, general_mappings.default_tax_code_id), 2
+            )
+        return total_tax
+
+    def __group_journal_entry_credits(self, journal_entry_lineitems: List[JournalEntryLineitem], general_mappings: GeneralMapping) -> List[Dict]:
+        card_objects = {}
+        data = []
 
         for lineitem in journal_entry_lineitems:
-            if (lineitem.tax_code and lineitem.tax_amount):
-                total_tax += lineitem.tax_amount
+            total_tax = self._get_total_tax(lineitem, general_mappings)
+            if lineitem.debit_account_id in card_objects:
+                card_objects[lineitem.debit_account_id]['amount'] = card_objects[lineitem.debit_account_id]['amount'] + lineitem.amount
+                card_objects[lineitem.debit_account_id]['total_tax'] = card_objects[lineitem.debit_account_id]['total_tax'] + self._get_total_tax(lineitem, general_mappings)
             else:
-                total_tax += round(lineitem.amount - self.get_tax_inclusive_amount(lineitem.amount, general_mappings.default_tax_code_id), 2)
-
-        return {
-            'DetailType': 'JournalEntryLineDetail',
-            'Description': 'Total Amount',
-            'Amount': total_sum - total_tax,
-            'JournalEntryLineDetail': {
-                'PostingType': 'Credit',
-                'AccountRef': {
-                    'value': journal_entry_lineitems[0].debit_account_id
-                },
-                'DepartmentRef': {
-                    'value': None
-                },
-                'ClassRef': {
-                    'value': None
-                },
-                'Entity': {
-                    'EntityRef': {
-                        'value': journal_entry_lineitems[0].entity_id
-                    },
-                    'Type': journal_entry_lineitems[0].entity_type,
-                },
-                'TaxCodeRef': {
-                    'value': journal_entry_lineitems[0].tax_code if journal_entry_lineitems[0].tax_code else general_mappings.default_tax_code_id
-                },
-                'TaxInclusiveAmt': total_sum,
-                "TaxApplicableOn":"Purchase",
-                'TaxAmount': total_tax,
+                card_objects[lineitem.debit_account_id] = {
+                    'debit_account_id': lineitem.debit_account_id,
+                    'amount': lineitem.amount,
+                    'entity_id': lineitem.entity_id,
+                    'entity_type': lineitem.entity_type,
+                    'tax_code': lineitem.tax_code,
+                    'total_tax': total_tax
                 }
-        }
+
+        for key, value in card_objects.items():
+            data.append(value)
+
+        line_items = []
+        for line in data:
+            line_items.append({
+                'DetailType': 'JournalEntryLineDetail',
+                'Description': 'Total Amount',
+                'Amount': line['amount'] - line['total_tax'],
+                'JournalEntryLineDetail': {
+                    'PostingType': 'Credit',
+                    'AccountRef': {
+                        'value': line['debit_account_id']
+                    },
+                    'DepartmentRef': {
+                        'value': None
+                    },
+                    'ClassRef': {
+                        'value': None
+                    },
+                    'Entity': {
+                        'EntityRef': {
+                            'value': line['entity_id']
+                        },
+                        'Type': line['entity_type'],
+                    },
+                    'TaxCodeRef': {
+                        'value': line['tax_code'] if line['tax_code'] else general_mappings.default_tax_code_id
+                    },
+                    'TaxInclusiveAmt': line['amount'],
+                    "TaxApplicableOn": "Purchase",
+                    'TaxAmount': line['total_tax']
+                }
+            })
+        return line_items
 
     def __construct_journal_entry_lineitems(self, journal_entry_lineitems: List[JournalEntryLineitem],
                                             posting_type,  general_mappings: GeneralMapping, single_credit_line: bool = False) -> List[Dict]:
@@ -853,7 +877,8 @@ class QBOConnector:
 
             if non_refund_journal_entry_lineitems:
                 single_credit_lines =  self.__group_journal_entry_credits(non_refund_journal_entry_lineitems, general_mappings)
-                lines.append(single_credit_lines)
+                for line in single_credit_lines:
+                    lines.append(line)
 
             if refund_journal_entry_lineitems:
                 lineitems = refund_journal_entry_lineitems
