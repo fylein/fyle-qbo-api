@@ -142,20 +142,26 @@ def sync_and_export_to_qbo(workspace_id):
 
     if workspace_general_settings.reimbursable_expenses_object and reimbursable_expense_group_ids:
         if workspace_general_settings.reimbursable_expenses_object == 'EXPENSE':
-            schedule_qbo_expense_creation(workspace_general_settings.workspace_id, reimbursable_expense_group_ids)
+            schedule_qbo_expense_creation(workspace_id, reimbursable_expense_group_ids)
+
         if workspace_general_settings.reimbursable_expenses_object == 'CHECK':
-            schedule_cheques_creation(workspace_general_settings.workspace_id, reimbursable_expense_group_ids)
+            schedule_cheques_creation(workspace_id, reimbursable_expense_group_ids)
+
         if workspace_general_settings.reimbursable_expenses_object == 'BILL':
-            schedule_bills_creation(workspace_general_settings.workspace_id, reimbursable_expense_group_ids)
+            schedule_bills_creation(workspace_id, reimbursable_expense_group_ids)
+
         if workspace_general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY':
-            schedule_journal_entry_creation(workspace_general_settings.workspace_id, reimbursable_expense_group_ids)
+            schedule_journal_entry_creation(workspace_id, reimbursable_expense_group_ids)
 
     if workspace_general_settings.corporate_credit_card_expenses_object and ccc_expense_group_ids:
         if workspace_general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE':
-            schedule_qbo_expense_creation(workspace_general_settings.workspace_id, ccc_expense_group_ids)
+            schedule_qbo_expense_creation(workspace_id, ccc_expense_group_ids)
+
         if workspace_general_settings.corporate_credit_card_expenses_object == 'DEBIT CARD EXPENSE':
-            schedule_qbo_expense_creation(workspace_general_settings.workspace_id, ccc_expense_group_ids)
+            schedule_qbo_expense_creation(workspace_id, ccc_expense_group_ids)
+
         if workspace_general_settings.corporate_credit_card_expenses_object == 'BILL':
-            schedule_bills_creation(workspace_general_settings.workspace_id, ccc_expense_group_ids)
+            schedule_bills_creation(workspace_id, ccc_expense_group_ids)
+
         if workspace_general_settings.corporate_credit_card_expenses_object == 'JOURNAL ENTRY':
-            schedule_journal_entry_creation(workspace_general_settings.workspace_id, ccc_expense_group_ids)
+            schedule_journal_entry_creation(workspace_id, ccc_expense_group_ids)
