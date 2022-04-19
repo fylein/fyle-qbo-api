@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import status
 from rest_framework import generics
 
-from qbosdk.exceptions import WrongParamsError
+from qbosdk.exceptions import WrongParamsError, InvalidTokenError
 
 from fyle_accounting_mappings.models import DestinationAttribute, MappingSetting
 from fyle_accounting_mappings.serializers import DestinationAttributeSerializer
@@ -370,6 +370,17 @@ class PreferencesView(generics.RetrieveAPIView):
             return Response(
                 data={
                     'message': 'Quickbooks Online connection expired'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except InvalidTokenError:
+            if qbo_credentials:
+                qbo_credentials.refresh_token = None
+                qbo_credentials.is_expired = True
+                qbo_credentials.save()
+            return Response(
+                data={
+                    'message': 'Invalid token, try to refresh it'
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
