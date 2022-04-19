@@ -1,5 +1,6 @@
 import logging
 import traceback
+from dateutil import parser
 from datetime import datetime, timedelta
 
 from typing import List, Dict
@@ -717,6 +718,9 @@ def sync_qbo_attribute(qbo_attribute_type: str, workspace_id: int):
     elif qbo_attribute_type == 'TAX_CODE':
         qbo_connection.sync_tax_codes()
 
+    elif qbo_attribute_type == 'VENDOR':
+        qbo_connection.sync_vendors()
+
 
 def create_fyle_cost_centers_payload(qbo_attributes: List[DestinationAttribute], existing_fyle_cost_centers: list):
     """
@@ -1005,6 +1009,88 @@ def schedule_fyle_attributes_creation(workspace_id: int):
         schedule: Schedule = Schedule.objects.filter(
             func='apps.mappings.tasks.async_auto_create_custom_field_mappings',
             args='{0}'.format(workspace_id)
+        ).first()
+
+        if schedule:
+            schedule.delete()
+
+
+def create_fyle_merchants_payload(vendors, existing_merchants_name):
+    payload: List[str] = []
+    for vendor in vendors:
+        if vendor.value not in existing_merchants_name:
+            payload.append(vendor.value)
+
+    return payload
+
+def post_merchants(platform_connection: PlatformConnector, workspace_id: int, first_run: bool):
+    existing_merchants_name = ExpenseAttribute.objects.filter(
+        attribute_type='MERCHANT', workspace_id=workspace_id).values_list('value', flat=True)
+
+    if first_run:
+        qbo_attributes = DestinationAttribute.objects.filter(
+            attribute_type='VENDOR', workspace_id=workspace_id).order_by('value', 'id')
+    else:
+        merchant = platform_connection.merchants.get()
+        merchant_updated_at = parser.isoparse(merchant['updated_at']).strftime('%Y-%m-%d %H:%M:%S.%f')
+        today_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
+        qbo_attributes = DestinationAttribute.objects.filter(attribute_type='VENDOR', workspace_id=workspace_id,
+            updated_at__range=[merchant_updated_at, today_date]).order_by('value', 'id')
+
+    qbo_attributes = remove_duplicates(qbo_attributes)
+
+    fyle_payload: List[str] = create_fyle_merchants_payload(
+        qbo_attributes, existing_merchants_name)
+
+    if fyle_payload:
+        platform_connection.merchants.post(fyle_payload)
+
+    platform_connection.merchants.sync(workspace_id)
+
+def auto_create_vendors_as_merchants(workspace_id):
+    try:
+        fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
+
+        fyle_connection = PlatformConnector(fyle_credentials)
+
+        existing_merchants_name = ExpenseAttribute.objects.filter(attribute_type='MERCHANT', workspace_id=workspace_id)
+        first_run = False if existing_merchants_name else True
+
+        fyle_connection.merchants.sync(workspace_id)
+
+        sync_qbo_attribute('VENDOR', workspace_id)
+        post_merchants(fyle_connection, workspace_id, first_run)
+
+    except WrongParamsError as exception:
+        logger.error(
+            'Error while posting vendors as merchants to fyle for workspace_id - %s in Fyle %s %s',
+            workspace_id, exception.message, {'error': exception.response}
+        )
+
+    except Exception:
+        error = traceback.format_exc()
+        error = {
+            'error': error
+        }
+        logger.exception(
+            'Error while posting vendors as merchants to fyle for workspace_id - %s error: %s',
+            workspace_id, error)
+
+def schedule_vendors_as_merchants_creation(import_vendors_as_merchants, workspace_id):
+    if import_vendors_as_merchants:
+        schedule, _ = Schedule.objects.update_or_create(
+            func='apps.mappings.tasks.auto_create_vendors_as_merchants',
+            args='{}'.format(workspace_id),
+            defaults={
+                'schedule_type': Schedule.MINUTES,
+                'minutes': 24 * 60,
+                'next_run': datetime.now()
+            }
+        )
+    else:
+        schedule: Schedule = Schedule.objects.filter(
+            func='apps.mappings.tasks.auto_create_vendors_as_merchants',
+            args='{}'.format(workspace_id),
         ).first()
 
         if schedule:
