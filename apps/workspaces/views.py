@@ -3,6 +3,7 @@ import logging
 
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
+from django_q.tasks import Chain
 
 from rest_framework.response import Response
 from rest_framework.views import status
@@ -24,7 +25,7 @@ from apps.fyle.helpers import get_cluster_domain
 
 from .models import Workspace, FyleCredential, QBOCredential, WorkspaceGeneralSettings, WorkspaceSchedule
 from .utils import generate_qbo_refresh_token, create_or_update_general_settings
-from .tasks import schedule_sync, run_sync_schedule, sync_and_export_to_qbo
+from .tasks import schedule_sync, run_sync_schedule
 from .serializers import WorkspaceSerializer, FyleCredentialSerializer, QBOCredentialSerializer, \
     WorkSpaceGeneralSettingsSerializer, WorkspaceScheduleSerializer
 from .signals import post_delete_qbo_connection
@@ -487,7 +488,13 @@ class SyncAndExportView(viewsets.ViewSet):
 
     def post(self, request, *args, **kwargs):
 
-        sync_and_export_to_qbo(kwargs['workspace_id'])
+        chain = Chain()
+
+        chain.append('apps.fyle.tasks.schedule_expense_group_creation', kwargs['workspace_id'])
+        chain.append('apps.workspaces.tasks.sync_and_export_to_qbo', kwargs['workspace_id'])
+        print('Chain details - ', chain)
+        if chain.length():
+            chain.run()
 
         return Response(
             status=status.HTTP_200_OK
