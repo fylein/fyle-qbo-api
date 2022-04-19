@@ -24,14 +24,7 @@ SOURCE_ACCOUNT_MAP = {
 }
 
 
-def schedule_expense_group_creation(workspace_id: int):
-    """
-    Schedule Expense group creation
-    :param workspace_id: Workspace id
-    :param user: User email
-    :return: None
-    """
-    print('Scheduled expense group creation started')
+def get_task_log_and_fund_source(workspace_id: int):
     task_log, _ = TaskLog.objects.update_or_create(
         workspace_id=workspace_id,
         type='FETCHING_EXPENSES',
@@ -47,8 +40,18 @@ def schedule_expense_group_creation(workspace_id: int):
     if general_settings.corporate_credit_card_expenses_object:
         fund_source.append('CCC')
 
+    return fund_source, task_log
+
+
+def schedule_expense_group_creation(workspace_id: int):
+    """
+    Schedule Expense group creation
+    :param workspace_id: Workspace id
+    :return: None
+    """
+    fund_source, task_log = get_task_log_and_fund_source(workspace_id)
+
     async_task('apps.fyle.tasks.create_expense_groups', workspace_id, fund_source, task_log)
-    print('Scheduled expense group creation completed')
 
 
 def create_expense_groups(workspace_id: int, fund_source: List[str], task_log: TaskLog):

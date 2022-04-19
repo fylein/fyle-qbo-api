@@ -31,6 +31,7 @@ from .serializers import WorkspaceSerializer, FyleCredentialSerializer, QBOCrede
 from .signals import post_delete_qbo_connection
 
 from apps.fyle.models import ExpenseGroupSettings
+from ..fyle.tasks import get_task_log_and_fund_source
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -490,9 +491,11 @@ class SyncAndExportView(viewsets.ViewSet):
 
         chain = Chain()
 
-        chain.append('apps.fyle.tasks.schedule_expense_group_creation', kwargs['workspace_id'])
+        fund_source, task_log = get_task_log_and_fund_source(kwargs['workspace_id'])
+
+        chain.append('apps.fyle.tasks.create_expense_groups', kwargs['workspace_id'], fund_source, task_log)
         chain.append('apps.workspaces.tasks.sync_and_export_to_qbo', kwargs['workspace_id'])
-        print('Chain details - ', chain)
+
         if chain.length():
             chain.run()
 
