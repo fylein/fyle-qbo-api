@@ -18,6 +18,11 @@ ONBOARDING_STATE_CHOICES = (
     ('COMPLETE', 'COMPLETE')
 )
 
+EXPORT_MODE_CHOICES = (
+    ('MANUAL', 'MANUAL'),
+    ('AUTO', 'AUTO')
+)
+
 
 def get_default_onboarding_state():
     return 'CONNECTION'
@@ -145,3 +150,27 @@ class FyleCredential(models.Model):
 
     class Meta:
         db_table = 'fyle_credentials'
+
+
+class PastExportDetail(models.Model):
+    """
+    Table to store Past Export Details
+    """
+    id = models.AutoField(primary_key=True)
+    last_exported_at = models.DateTimeField(help_text='Last exported at datetime')
+    export_mode = models.CharField(
+        max_length=50, help_text='Mode of the export Auto / Manual', choices=EXPORT_MODE_CHOICES
+    )
+    total_expense_groups = models.IntegerField(help_text='Total expense groups exported')
+    successful_expense_groups = ArrayField(
+        base_field=models.CharField(max_length=255), help_text='list of successful expense groups'
+    )
+    failed_expense_groups = ArrayField(
+        base_field=models.CharField(max_length=255), help_text='list of failed expense groups'
+    )
+    workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
+    created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
+    updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')
+
+    class Meta:
+        db_table = 'past_export_details'
