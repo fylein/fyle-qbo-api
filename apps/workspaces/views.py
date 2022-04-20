@@ -478,3 +478,17 @@ class GeneralSettingsView(viewsets.ViewSet):
                 data=serializer.data,
                 status=status.HTTP_200_OK
             )
+
+
+class SyncAndExportView(viewsets.ViewSet):
+    """
+    Sync and Export Expenses to QBO
+    """
+
+    def post(self, request, *args, **kwargs):
+
+        run_sync_schedule(kwargs['workspace_id'])
+
+        return Response(
+            status=status.HTTP_200_OK
+        )
