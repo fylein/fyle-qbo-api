@@ -196,7 +196,7 @@ def delete_cards_mapping_settings(workspace_general_settings: WorkspaceGeneralSe
             mapping_setting.delete()
 
 
-def create_or_update_past_export_details(workspace_id):
+def update_past_export_details(workspace_id):
     past_export_detail = PastExportDetail.objects.get(workspace_id=workspace_id)
 
     last_export = TaskLog.objects.filter(workspace_id=workspace_id).order_by('-updated_at').first()
