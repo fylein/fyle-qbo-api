@@ -31,8 +31,7 @@ class WorkspaceGeneralSettingsSerializer(serializers.ModelSerializer):
             'auto_create_destination_entity',
             'je_single_credit_line',
             'change_accounting_period',
-            'memo_structure',
-            'import_vendors_as_merchants'
+            'memo_structure'
         ]
 
 
@@ -96,8 +95,7 @@ class AdvancedConfigurationsSerializer(serializers.ModelSerializer):
                 'auto_create_destination_entity': workspace_general_settings.get('auto_create_destination_entity'),
                 'je_single_credit_line': workspace_general_settings.get('je_single_credit_line'),
                 'change_accounting_period': workspace_general_settings.get('change_accounting_period'),
-                'memo_structure': workspace_general_settings.get('memo_structure'),
-                'import_vendors_as_merchants': workspace_general_settings.get('import_vendors_as_merchants')
+                'memo_structure': workspace_general_settings.get('memo_structure')
             }
         )
 
