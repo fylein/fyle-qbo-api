@@ -3,6 +3,8 @@ import logging
 
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
+from django.db.models import Q
+from django_q.tasks import async_task
 
 from rest_framework.response import Response
 from rest_framework.views import status
@@ -22,14 +24,16 @@ from fyle_qbo_api.utils import assert_valid
 from apps.quickbooks_online.utils import QBOConnector
 from apps.fyle.helpers import get_cluster_domain
 
-from .models import Workspace, FyleCredential, QBOCredential, WorkspaceGeneralSettings, WorkspaceSchedule
+from .models import Workspace, FyleCredential, QBOCredential, WorkspaceGeneralSettings, WorkspaceSchedule, \
+    PastExportDetail
 from .utils import generate_qbo_refresh_token, create_or_update_general_settings
 from .tasks import schedule_sync, run_sync_schedule
 from .serializers import WorkspaceSerializer, FyleCredentialSerializer, QBOCredentialSerializer, \
-    WorkSpaceGeneralSettingsSerializer, WorkspaceScheduleSerializer
+    WorkSpaceGeneralSettingsSerializer, WorkspaceScheduleSerializer, PastExportDetailSerializer
 from .signals import post_delete_qbo_connection
 
 from apps.fyle.models import ExpenseGroupSettings
+from ..tasks.models import TaskLog
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -487,8 +491,63 @@ class SyncAndExportView(viewsets.ViewSet):
 
     def post(self, request, *args, **kwargs):
 
-        run_sync_schedule(kwargs['workspace_id'])
+        async_task(run_sync_schedule(kwargs['workspace_id']))
+        past_export_detail = PastExportDetail.objects.get(workspace_id=kwargs['workspace_id'])
+        past_export_detail.export_mode = 'MANUAL'
+        past_export_detail.save()
 
         return Response(
+            status=status.HTTP_200_OK
+        )
+
+
+class PastExportDetailView(viewsets.ViewSet):
+    """
+
+    """
+    serializer_class = PastExportDetailSerializer
+
+    def get(self, request, *args, **kwargs):
+        """
+        Get past export detail
+        """
+        past_export_detail = PastExportDetail.objects.get(workspace_id=kwargs['workspace_id'])
+
+        last_export = TaskLog.objects.filter(workspace_id=kwargs['workspace_id']).order_by('-updated_at').first()
+
+        failed_exports = TaskLog.objects.filter(
+            workspace_id=kwargs['workspace_id'], status='FAILED'
+        ).values_list('expense_group_id', flat=True)
+
+        fetching_expenses_task_log = TaskLog.objects.filter(
+            workspace_id=kwargs['workspace_id'], type='FETCHING_EXPENSES', status='COMPLETE'
+        ).first()
+
+        successful_exports = TaskLog.objects.filter(
+            workspace_id=kwargs['workspace_id'], status='COMPLETE', updated_at__gt=fetching_expenses_task_log.updated_at
+        ).values_list('expense_group_id', flat=True)
+
+        total_expense_groups = TaskLog.objects.filter(
+            ~Q(type='FETCHING_EXPENSES'),
+            workspace_id=kwargs['workspace_id'],
+            updated_at__gt=fetching_expenses_task_log.updated_at
+        ).count()
+
+        failed_exports = {
+            'expense_group_ids': list(failed_exports)
+        }
+
+        successful_exports = {
+            'expense_group_ids': list(successful_exports)
+        }
+
+        past_export_detail.last_exported_at = last_export.updated_at
+        past_export_detail.failed_expense_groups = failed_exports
+        past_export_detail.successful_expense_groups = successful_exports
+        past_export_detail.total_expense_groups = total_expense_groups
+        past_export_detail.save()
+
+        return Response(
+            data=self.serializer_class(past_export_detail).data,
             status=status.HTTP_200_OK
         )

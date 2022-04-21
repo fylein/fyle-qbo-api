@@ -5,6 +5,7 @@ from django.db import models
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth import get_user_model
 from django_q.models import Schedule
+from django.db.models import JSONField
 
 User = get_user_model()
 
@@ -65,6 +66,8 @@ class WorkspaceSchedule(models.Model):
     start_datetime = models.DateTimeField(help_text='Datetime for start of schedule', null=True)
     interval_hours = models.IntegerField(null=True)
     schedule = models.OneToOneField(Schedule, on_delete=models.PROTECT, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
+    updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')
 
     class Meta:
         db_table = 'workspace_schedules'
@@ -162,12 +165,8 @@ class PastExportDetail(models.Model):
         max_length=50, help_text='Mode of the export Auto / Manual', choices=EXPORT_MODE_CHOICES
     )
     total_expense_groups = models.IntegerField(help_text='Total expense groups exported')
-    successful_expense_groups = ArrayField(
-        base_field=models.CharField(max_length=255), help_text='list of successful expense groups'
-    )
-    failed_expense_groups = ArrayField(
-        base_field=models.CharField(max_length=255), help_text='list of failed expense groups'
-    )
+    successful_expense_groups = JSONField(help_text='List of successful expense_groups ', null=True)
+    failed_expense_groups = JSONField(help_text='List of failed expense_groups ', null=True)
     workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')

@@ -7,7 +7,7 @@ from apps.fyle.tasks import async_create_expense_groups
 from apps.quickbooks_online.tasks import schedule_bills_creation, schedule_cheques_creation, \
     schedule_journal_entry_creation, schedule_credit_card_purchase_creation, schedule_qbo_expense_creation
 from apps.tasks.models import TaskLog
-from apps.workspaces.models import WorkspaceSchedule, WorkspaceGeneralSettings
+from apps.workspaces.models import WorkspaceSchedule, WorkspaceGeneralSettings, PastExportDetail
 
 
 def schedule_sync(workspace_id: int, schedule_enabled: bool, hours: int):
@@ -30,8 +30,11 @@ def schedule_sync(workspace_id: int, schedule_enabled: bool, hours: int):
             }
         )
         ws_schedule.schedule = schedule
+        past_export_detail = PastExportDetail.objects.get(workspace_id=workspace_id)
+        past_export_detail.export_mode = 'AUTO'
 
         ws_schedule.save()
+        past_export_detail.save()
 
     elif not schedule_enabled:
         schedule = ws_schedule.schedule
