@@ -6,7 +6,7 @@ from fyle_accounting_mappings.models import MappingSetting
 from apps.fyle.models import ExpenseGroupSettings
 from apps.workspaces.models import WorkspaceGeneralSettings
 
-from apps.mappings.tasks import schedule_cost_centers_creation, \
+from apps.mappings.tasks import schedule_cost_centers_creation, schedule_vendors_as_merchants_creation, \
     schedule_fyle_attributes_creation, schedule_projects_creation, schedule_tax_groups_creation
 
 
@@ -57,7 +57,6 @@ class ImportSettingsTrigger:
 
             expense_group_settings.save()
 
-
     def __update_expense_group_settings_for_departments(self):
         """
         Should group expenses by department source field in case the export is journal entries
@@ -98,6 +97,11 @@ class ImportSettingsTrigger:
         """
         schedule_tax_groups_creation(
             import_tax_codes=self.__workspace_general_settings.get('import_tax_codes'),
+            workspace_id=self.__workspace_id
+        )
+
+        schedule_vendors_as_merchants_creation(
+            import_vendors_as_merchants=self.__workspace_general_settings.get('import_vendors_as_merchants'),
             workspace_id=self.__workspace_id
         )
 

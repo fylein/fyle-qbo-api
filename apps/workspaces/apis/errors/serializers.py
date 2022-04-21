@@ -3,6 +3,7 @@ from rest_framework import serializers
 from fyle_accounting_mappings.models import ExpenseAttribute
 
 from apps.fyle.models import ExpenseGroup
+from apps.fyle.serializers import ExpenseSerializer
 from apps.tasks.models import Error
 
 
@@ -19,6 +20,8 @@ class ExpenseGroupSerializer(serializers.ModelSerializer):
     """
     Serializer for Expense Group
     """
+    expenses = ExpenseSerializer(many=True)
+
     class Meta:
         model = ExpenseGroup
         fields = '__all__'
