@@ -5,7 +5,6 @@ from django.db import models
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth import get_user_model
 from django_q.models import Schedule
-from django.db.models import JSONField
 
 User = get_user_model()
 
@@ -153,9 +152,9 @@ class FyleCredential(models.Model):
         db_table = 'fyle_credentials'
 
 
-class PastExportDetail(models.Model):
+class LastExportDetail(models.Model):
     """
-    Table to store Past Export Details
+    Table to store Last Export Details
     """
     id = models.AutoField(primary_key=True)
     last_exported_at = models.DateTimeField(help_text='Last exported at datetime', null=True)
@@ -163,11 +162,11 @@ class PastExportDetail(models.Model):
         max_length=50, help_text='Mode of the export Auto / Manual', choices=EXPORT_MODE_CHOICES, null=True
     )
     total_expense_groups = models.IntegerField(help_text='Total expense groups exported', null=True)
-    successful_expense_groups = JSONField(help_text='List of successful expense_groups ', null=True)
-    failed_expense_groups = JSONField(help_text='List of failed expense_groups ', null=True)
+    successful_expense_groups = models.IntegerField(help_text='List of successful expense_groups ', null=True)
+    failed_expense_groups = models.IntegerField(help_text='List of failed expense_groups ', null=True)
     workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')
 
     class Meta:
-        db_table = 'past_export_details'
+        db_table = 'last_export_details'

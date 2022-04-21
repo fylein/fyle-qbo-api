@@ -16,7 +16,7 @@ from apps.quickbooks_online.tasks import schedule_bill_payment_creation, schedul
     schedule_reimbursements_sync
 
 from fyle_qbo_api.utils import assert_valid
-from .models import WorkspaceGeneralSettings, PastExportDetail
+from .models import WorkspaceGeneralSettings, LastExportDetail
 from ..fyle.models import ExpenseGroupSettings
 from ..tasks.models import TaskLog
 
@@ -196,37 +196,20 @@ def delete_cards_mapping_settings(workspace_general_settings: WorkspaceGeneralSe
             mapping_setting.delete()
 
 
-def update_past_export_details(workspace_id):
-    past_export_detail = PastExportDetail.objects.get(workspace_id=workspace_id)
-
-    last_export = TaskLog.objects.filter(workspace_id=workspace_id).order_by('-updated_at').first()
+def update_last_export_details(workspace_id):
+    last_export_detail = LastExportDetail.objects.get(workspace_id=workspace_id)
 
     failed_exports = TaskLog.objects.filter(
         workspace_id=workspace_id, status='FAILED'
-    ).values_list('expense_group_id', flat=True)
-
-    fetching_expenses_task_log = TaskLog.objects.filter(
-        workspace_id=workspace_id, type='FETCHING_EXPENSES', status='COMPLETE'
-    ).first()
+    ).count()
 
     successful_exports = TaskLog.objects.filter(
-        workspace_id=workspace_id, status='COMPLETE', updated_at__gt=fetching_expenses_task_log.updated_at
-    ).values_list('expense_group_id', flat=True)
+        workspace_id=workspace_id, status='COMPLETE', updated_at__gt=last_export_detail.last_exported_at
+    ).count()
 
-    failed_exports = {
-        'expense_group_ids': list(failed_exports)
-    }
+    last_export_detail.failed_expense_groups = failed_exports
+    last_export_detail.successful_expense_groups = successful_exports
+    last_export_detail.total_expense_groups = failed_exports + successful_exports
+    last_export_detail.save()
 
-    successful_exports = {
-        'expense_group_ids': list(successful_exports)
-    }
-
-    total_expense_groups = len(successful_exports['expense_group_ids']) + len(failed_exports['expense_group_ids'])
-
-    past_export_detail.last_exported_at = last_export.updated_at
-    past_export_detail.failed_expense_groups = failed_exports
-    past_export_detail.successful_expense_groups = successful_exports
-    past_export_detail.total_expense_groups = total_expense_groups
-    past_export_detail.save()
-
-    return past_export_detail
+    return last_export_detail

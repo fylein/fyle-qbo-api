@@ -4,7 +4,7 @@ Workspace Serializers
 from rest_framework import serializers
 
 from .models import Workspace, WorkspaceGeneralSettings, WorkspaceSchedule, FyleCredential,\
-    QBOCredential, PastExportDetail
+    QBOCredential, LastExportDetail
 
 
 class WorkspaceSerializer(serializers.ModelSerializer):
@@ -52,10 +52,10 @@ class QBOCredentialSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class PastExportDetailSerializer(serializers.ModelSerializer):
+class LastExportDetailSerializer(serializers.ModelSerializer):
     """
-    Past export detail serializer
+    Last export detail serializer
     """
     class Meta:
-        model = PastExportDetail
+        model = LastExportDetail
         fields = '__all__'

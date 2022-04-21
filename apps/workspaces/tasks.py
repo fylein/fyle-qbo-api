@@ -7,7 +7,7 @@ from apps.fyle.tasks import async_create_expense_groups
 from apps.quickbooks_online.tasks import schedule_bills_creation, schedule_cheques_creation, \
     schedule_journal_entry_creation, schedule_credit_card_purchase_creation, schedule_qbo_expense_creation
 from apps.tasks.models import TaskLog
-from apps.workspaces.models import WorkspaceSchedule, WorkspaceGeneralSettings, PastExportDetail
+from apps.workspaces.models import WorkspaceSchedule, WorkspaceGeneralSettings, LastExportDetail
 
 
 def schedule_sync(workspace_id: int, schedule_enabled: bool, hours: int):
@@ -30,11 +30,11 @@ def schedule_sync(workspace_id: int, schedule_enabled: bool, hours: int):
             }
         )
         ws_schedule.schedule = schedule
-        past_export_detail = PastExportDetail.objects.get(workspace_id=workspace_id)
-        past_export_detail.export_mode = 'AUTO'
+        last_export_detail = LastExportDetail.objects.get(workspace_id=workspace_id)
+        last_export_detail.export_mode = 'AUTO'
 
         ws_schedule.save()
-        past_export_detail.save()
+        last_export_detail.save()
 
     elif not schedule_enabled:
         schedule = ws_schedule.schedule
@@ -62,6 +62,7 @@ def run_sync_schedule(workspace_id):
     )
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+    last_export_detail = LastExportDetail.objects.get(workspace_id=workspace_id)
 
     fund_source = []
     if general_settings.reimbursable_expenses_object:
@@ -72,6 +73,9 @@ def run_sync_schedule(workspace_id):
         async_create_expense_groups(
             workspace_id=workspace_id, fund_source=fund_source, task_log=task_log
         )
+
+    last_export_detail.last_exported_at = task_log.updated_at
+    last_export_detail.save()
 
     if task_log.status == 'COMPLETE':
 
@@ -111,7 +115,7 @@ def run_sync_schedule(workspace_id):
                 schedule_credit_card_purchase_creation(
                     workspace_id=workspace_id, expense_group_ids=expense_group_ids
                 )
-            
+
             elif general_settings.corporate_credit_card_expenses_object == 'DEBIT CARD EXPENSE':
                 schedule_qbo_expense_creation(
                     workspace_id=workspace_id, expense_group_ids=expense_group_ids

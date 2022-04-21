@@ -3,7 +3,6 @@ import logging
 
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
-from django_q.tasks import async_task
 
 from rest_framework.response import Response
 from rest_framework.views import status
@@ -24,11 +23,11 @@ from apps.quickbooks_online.utils import QBOConnector
 from apps.fyle.helpers import get_cluster_domain
 
 from .models import Workspace, FyleCredential, QBOCredential, WorkspaceGeneralSettings, WorkspaceSchedule, \
-    PastExportDetail
-from .utils import generate_qbo_refresh_token, create_or_update_general_settings, create_or_update_past_export_details
+    LastExportDetail
+from .utils import generate_qbo_refresh_token, create_or_update_general_settings, update_last_export_details
 from .tasks import schedule_sync, run_sync_schedule
 from .serializers import WorkspaceSerializer, FyleCredentialSerializer, QBOCredentialSerializer, \
-    WorkSpaceGeneralSettingsSerializer, WorkspaceScheduleSerializer, PastExportDetailSerializer
+    WorkSpaceGeneralSettingsSerializer, WorkspaceScheduleSerializer, LastExportDetailSerializer
 from .signals import post_delete_qbo_connection
 
 from apps.fyle.models import ExpenseGroupSettings
@@ -69,7 +68,7 @@ class WorkspaceView(viewsets.ViewSet):
 
             ExpenseGroupSettings.objects.create(workspace_id=workspace.id)
 
-            PastExportDetail.objects.create(workspace_id=workspace.id)
+            LastExportDetail.objects.create(workspace_id=workspace.id)
 
             workspace.user.add(User.objects.get(user_id=request.user))
 
@@ -491,30 +490,30 @@ class SyncAndExportView(viewsets.ViewSet):
 
     def post(self, request, *args, **kwargs):
 
-        async_task(run_sync_schedule(kwargs['workspace_id']))
-        past_export_detail = PastExportDetail.objects.get(workspace_id=kwargs['workspace_id'])
-        past_export_detail.export_mode = 'MANUAL'
-        past_export_detail.save()
+        run_sync_schedule(workspace_id=kwargs['workspace_id'])
+        last_export_detail = LastExportDetail.objects.get(workspace_id=kwargs['workspace_id'])
+        last_export_detail.export_mode = 'MANUAL'
+        last_export_detail.save()
 
         return Response(
             status=status.HTTP_200_OK
         )
 
 
-class PastExportDetailView(viewsets.ViewSet):
+class LastExportDetailView(viewsets.ViewSet):
     """
-    Past Export Details
+    Last Export Details
     """
-    serializer_class = PastExportDetailSerializer
+    serializer_class = LastExportDetailSerializer
 
     def get(self, request, *args, **kwargs):
         """
-        past export detail
+        last export detail
         """
 
-        past_export_details = create_or_update_past_export_details(kwargs['workspace_id'])
+        last_export_details = update_last_export_details(kwargs['workspace_id'])
 
         return Response(
-            data=self.serializer_class(past_export_details).data,
+            data=self.serializer_class(last_export_details).data,
             status=status.HTTP_200_OK
         )
