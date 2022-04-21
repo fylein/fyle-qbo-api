@@ -66,8 +66,6 @@ class WorkspaceSchedule(models.Model):
     start_datetime = models.DateTimeField(help_text='Datetime for start of schedule', null=True)
     interval_hours = models.IntegerField(null=True)
     schedule = models.OneToOneField(Schedule, on_delete=models.PROTECT, null=True)
-    created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
-    updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')
 
     class Meta:
         db_table = 'workspace_schedules'
@@ -160,11 +158,11 @@ class PastExportDetail(models.Model):
     Table to store Past Export Details
     """
     id = models.AutoField(primary_key=True)
-    last_exported_at = models.DateTimeField(help_text='Last exported at datetime')
+    last_exported_at = models.DateTimeField(help_text='Last exported at datetime', null=True)
     export_mode = models.CharField(
-        max_length=50, help_text='Mode of the export Auto / Manual', choices=EXPORT_MODE_CHOICES
+        max_length=50, help_text='Mode of the export Auto / Manual', choices=EXPORT_MODE_CHOICES, null=True
     )
-    total_expense_groups = models.IntegerField(help_text='Total expense groups exported')
+    total_expense_groups = models.IntegerField(help_text='Total expense groups exported', null=True)
     successful_expense_groups = JSONField(help_text='List of successful expense_groups ', null=True)
     failed_expense_groups = JSONField(help_text='List of failed expense_groups ', null=True)
     workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
