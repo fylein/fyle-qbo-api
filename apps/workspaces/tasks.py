@@ -35,10 +35,11 @@ def schedule_sync(workspace_id: int, schedule_enabled: bool, hours: int):
 
     elif not schedule_enabled:
         schedule = ws_schedule.schedule
-        ws_schedule.enabled = schedule_enabled
-        ws_schedule.schedule = None
-        ws_schedule.save()
-        schedule.delete()
+        if schedule:
+            ws_schedule.enabled = schedule_enabled
+            ws_schedule.schedule = None
+            ws_schedule.save()
+            schedule.delete()
 
     return ws_schedule
 
@@ -59,7 +60,9 @@ def run_sync_schedule(workspace_id):
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
 
-    fund_source = ['PERSONAL']
+    fund_source = []
+    if general_settings.reimbursable_expenses_object:
+        fund_source.append('PERSONAL')
     if general_settings.corporate_credit_card_expenses_object:
         fund_source.append('CCC')
     if general_settings.reimbursable_expenses_object:
@@ -103,6 +106,11 @@ def run_sync_schedule(workspace_id):
 
             elif general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE':
                 schedule_credit_card_purchase_creation(
+                    workspace_id=workspace_id, expense_group_ids=expense_group_ids
+                )
+            
+            elif general_settings.corporate_credit_card_expenses_object == 'DEBIT CARD EXPENSE':
+                schedule_qbo_expense_creation(
                     workspace_id=workspace_id, expense_group_ids=expense_group_ids
                 )
 

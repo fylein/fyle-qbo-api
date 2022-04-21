@@ -1,4 +1,5 @@
 import json
+import logging
 
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
@@ -6,7 +7,6 @@ from django.core.cache import cache
 from rest_framework.response import Response
 from rest_framework.views import status
 from rest_framework import viewsets
-from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 
 from fylesdk import exceptions as fyle_exc
@@ -15,17 +15,25 @@ from qbosdk import exceptions as qbo_exc
 
 from fyle_rest_auth.utils import AuthUtils
 from fyle_rest_auth.models import AuthToken
+from fyle_rest_auth.helpers import get_fyle_admin
 
 from fyle_qbo_api.utils import assert_valid
 
 from apps.quickbooks_online.utils import QBOConnector
+from apps.fyle.helpers import get_cluster_domain
 
 from .models import Workspace, FyleCredential, QBOCredential, WorkspaceGeneralSettings, WorkspaceSchedule
 from .utils import generate_qbo_refresh_token, create_or_update_general_settings
 from .tasks import schedule_sync, run_sync_schedule
 from .serializers import WorkspaceSerializer, FyleCredentialSerializer, QBOCredentialSerializer, \
     WorkSpaceGeneralSettingsSerializer, WorkspaceScheduleSerializer
-from ..fyle.models import ExpenseGroupSettings
+from .signals import post_delete_qbo_connection
+
+from apps.fyle.models import ExpenseGroupSettings
+
+logger = logging.getLogger(__name__)
+logger.level = logging.INFO
+
 
 User = get_user_model()
 auth_utils = AuthUtils()
@@ -43,10 +51,11 @@ class WorkspaceView(viewsets.ViewSet):
         Create a Workspace
         """
 
-        auth_tokens = AuthToken.objects.get(user__user_id=request.user)
-        fyle_user = auth_utils.get_fyle_user(auth_tokens.refresh_token, None)
-        org_name = fyle_user['org_name']
-        org_id = fyle_user['org_id']
+        access_token = request.META.get('HTTP_AUTHORIZATION')
+        fyle_user = get_fyle_admin(access_token.split(' ')[1], None)
+        org_name = fyle_user['data']['org']['name']
+        org_id = fyle_user['data']['org']['id']
+        org_currency = fyle_user['data']['org']['currency']
 
         workspace = Workspace.objects.filter(fyle_org_id=org_id).first()
 
@@ -54,15 +63,20 @@ class WorkspaceView(viewsets.ViewSet):
             workspace.user.add(User.objects.get(user_id=request.user))
             cache.delete(str(workspace.id))
         else:
-            workspace = Workspace.objects.create(name=org_name, fyle_org_id=org_id)
+            workspace = Workspace.objects.create(name=org_name, fyle_org_id=org_id, fyle_currency=org_currency)
 
             ExpenseGroupSettings.objects.create(workspace_id=workspace.id)
 
             workspace.user.add(User.objects.get(user_id=request.user))
 
+            auth_tokens = AuthToken.objects.get(user__user_id=request.user)
+
+            cluster_domain = get_cluster_domain(auth_tokens.refresh_token)
+
             FyleCredential.objects.update_or_create(
                 refresh_token=auth_tokens.refresh_token,
-                workspace_id=workspace.id
+                workspace_id=workspace.id,
+                cluster_domain=cluster_domain
             )
 
         return Response(
@@ -138,22 +152,29 @@ class ConnectFyleView(viewsets.ViewSet):
 
             workspace = Workspace.objects.get(id=kwargs['workspace_id'])
 
-            refresh_token = auth_utils.generate_fyle_refresh_token(authorization_code)['refresh_token']
-            fyle_user = auth_utils.get_fyle_user(refresh_token, None)
-            org_id = fyle_user['org_id']
-            org_name = fyle_user['org_name']
+            tokens = auth_utils.generate_fyle_refresh_token(authorization_code)
+            refresh_token = tokens['refresh_token']
+
+            fyle_user = get_fyle_admin(tokens['access_token'], None)
+            org_name = fyle_user['data']['org']['name']
+            org_id = fyle_user['data']['org']['id']
+            org_currency = fyle_user['data']['org']['currency']
 
             assert_valid(workspace.fyle_org_id and workspace.fyle_org_id == org_id,
                          'Please select the correct Fyle account - {0}'.format(workspace.name))
 
             workspace.name = org_name
             workspace.fyle_org_id = org_id
+            workspace.fyle_currency = org_currency
             workspace.save()
+
+            cluster_domain = get_cluster_domain(refresh_token)
 
             fyle_credentials, _ = FyleCredential.objects.update_or_create(
                 workspace_id=kwargs['workspace_id'],
                 defaults={
                     'refresh_token': refresh_token,
+                    'cluster_domain': cluster_domain
                 }
             )
 
@@ -233,11 +254,14 @@ class ConnectQBOView(viewsets.ViewSet):
         try:
             authorization_code = request.data.get('code')
             realm_id = request.data.get('realm_id')
-            refresh_token = generate_qbo_refresh_token(authorization_code)
+            redirect_uri = request.data.get('redirect_uri')
+            refresh_token = generate_qbo_refresh_token(authorization_code, redirect_uri)
 
             workspace = Workspace.objects.get(pk=kwargs['workspace_id'])
 
             qbo_credentials = QBOCredential.objects.filter(workspace=workspace).first()
+            if qbo_credentials:
+                qbo_credentials.is_expired = False
 
             if not qbo_credentials:
                 if workspace.qbo_realm_id:
@@ -258,7 +282,7 @@ class ConnectQBOView(viewsets.ViewSet):
                     qbo_credentials.company_name = company_info['CompanyName']
                     qbo_credentials.save()
 
-                except WrongParamsError as exception:
+                except qbo_exc.WrongParamsError as exception:
                     logger.error(exception.response)
 
                 workspace.qbo_realm_id = realm_id
@@ -267,7 +291,14 @@ class ConnectQBOView(viewsets.ViewSet):
                 assert_valid(realm_id == qbo_credentials.realm_id,
                              'Please choose the correct Quickbooks online account')
                 qbo_credentials.refresh_token = refresh_token
+                qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
+                company_info = qbo_connector.get_company_info()
+                qbo_credentials.company_name = company_info['CompanyName']
                 qbo_credentials.save()
+
+            if workspace.onboarding_state == 'CONNECTION':
+                workspace.onboarding_state = 'MAP_EMPLOYEES'
+                workspace.save()
 
             return Response(
                 data=QBOCredentialSerializer(qbo_credentials).data,
@@ -300,14 +331,19 @@ class ConnectQBOView(viewsets.ViewSet):
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
-    def delete(self, request, **kwargs):
-        """Delete credentials"""
+    def patch(self, request, **kwargs):
+        """Delete QBO refresh_token"""
         workspace_id = kwargs['workspace_id']
-        QBOCredential.objects.filter(workspace_id=workspace_id).delete()
+        qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
+        qbo_credentials.refresh_token = None
+        qbo_credentials.is_expired = False
+        qbo_credentials.save()
 
+        post_delete_qbo_connection(workspace_id)
+            
         return Response(data={
             'workspace_id': workspace_id,
-            'message': 'QBO credentials deleted'
+            'message': 'QBO Refresh Token deleted'
         })
 
     def get(self, request, **kwargs):
@@ -315,12 +351,11 @@ class ConnectQBOView(viewsets.ViewSet):
         Get QBO Credentials in Workspace
         """
         try:
-            workspace = Workspace.objects.get(pk=kwargs['workspace_id'])
-            qbo_credentials = QBOCredential.objects.get(workspace=workspace)
+            qbo_credentials = QBOCredential.objects.get(workspace=kwargs['workspace_id'])
 
             return Response(
                 data=QBOCredentialSerializer(qbo_credentials).data,
-                status=status.HTTP_200_OK
+                status=status.HTTP_200_OK if qbo_credentials.refresh_token else status.HTTP_400_BAD_REQUEST
             )
         except QBOCredential.DoesNotExist:
             return Response(
@@ -443,3 +478,17 @@ class GeneralSettingsView(viewsets.ViewSet):
                 data=serializer.data,
                 status=status.HTTP_200_OK
             )
+
+
+class SyncAndExportView(viewsets.ViewSet):
+    """
+    Sync and Export Expenses to QBO
+    """
+
+    def post(self, request, *args, **kwargs):
+
+        run_sync_schedule(kwargs['workspace_id'])
+
+        return Response(
+            status=status.HTTP_200_OK
+        )

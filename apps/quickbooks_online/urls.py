@@ -12,6 +12,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from unicodedata import name
 from django.urls import path
 
 from .views import VendorView, EmployeeView, AccountView, CreditCardAccountView, ClassView, DepartmentView, BillView, \
@@ -19,7 +20,7 @@ from .views import VendorView, EmployeeView, AccountView, CreditCardAccountView,
     CreditCardPurchaseScheduleView, JournalEntryView, JournalEntryScheduleView, BankAccountView, AccountsPayableView, \
     PreferencesView, CompanyInfoView, QuickbooksFieldsView, DepartmentGroupUpdate, ReimburseQuickbooksPaymentsView, \
     BillPaymentView, BillPaymentAccountView, SyncQuickbooksDimensionView, RefreshQuickbooksDimensionView, \
-    QBOExpenseScheduleView, TaxCodeView, DestinationAttributesView
+    QBOExpenseScheduleView, TaxCodeView, DestinationAttributesView, DebitCardExpenseScheduleView, QBOAttributesView
 
 urlpatterns = [
     path('preferences/', PreferencesView.as_view()),
@@ -42,13 +43,15 @@ urlpatterns = [
     path('expenses/trigger/', QBOExpenseScheduleView.as_view()),
     path('credit_card_purchases/', CreditCardPurchaseView.as_view()),
     path('credit_card_purchases/trigger/', CreditCardPurchaseScheduleView.as_view()),
+    path('debit_card_expenses/trigger/', DebitCardExpenseScheduleView.as_view()),
     path('journal_entries/', JournalEntryView.as_view()),
     path('journal_entries/trigger/', JournalEntryScheduleView.as_view()),
-    path('quickbooks_fields/', QuickbooksFieldsView.as_view()),
+    path('quickbooks_fields/', QuickbooksFieldsView.as_view(), name='quickbooks-fields'),
     path('update_grouping_on_department/', DepartmentGroupUpdate.as_view()),
     path('reimburse_payments/', ReimburseQuickbooksPaymentsView.as_view()),
     path('bill_payments/', BillPaymentView.as_view()),
     path('sync_dimensions/', SyncQuickbooksDimensionView.as_view()),
     path('refresh_dimensions/', RefreshQuickbooksDimensionView.as_view()),
-    path('destination_attributes/', DestinationAttributesView.as_view())
+    path('destination_attributes/', DestinationAttributesView.as_view(), name='destination-attributes'),
+    path('qbo_attributes/', QBOAttributesView.as_view(), name='qbo-attributes')
 ]

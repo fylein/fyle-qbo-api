@@ -9,7 +9,9 @@ from django.conf import settings
 from future.moves.urllib.parse import urlencode
 from qbosdk import UnauthorizedClientError, NotFoundClientError, WrongParamsError, InternalServerError
 
-from apps.mappings.tasks import schedule_categories_creation, schedule_auto_map_employees, schedule_auto_map_ccc_employees, schedule_tax_groups_creation
+from fyle_accounting_mappings.models import MappingSetting
+from apps.mappings.tasks import schedule_categories_creation, schedule_auto_map_employees, schedule_auto_map_ccc_employees, \
+    schedule_tax_groups_creation, schedule_vendors_as_merchants_creation
 from apps.quickbooks_online.tasks import schedule_bill_payment_creation, schedule_qbo_objects_status_sync,\
     schedule_reimbursements_sync
 
@@ -18,14 +20,14 @@ from .models import WorkspaceGeneralSettings
 from ..fyle.models import ExpenseGroupSettings
 
 
-def generate_qbo_refresh_token(authorization_code: str) -> str:
+def generate_qbo_refresh_token(authorization_code: str, redirect_uri: str) -> str:
     """
     Generate QBO refresh token from authorization code
     """
     api_data = {
         'grant_type': 'authorization_code',
         'code': authorization_code,
-        'redirect_uri': settings.QBO_REDIRECT_URI
+        'redirect_uri': redirect_uri
     }
 
     auth = '{0}:{1}'.format(settings.QBO_CLIENT_ID, settings.QBO_CLIENT_SECRET)
@@ -119,7 +121,10 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
             'charts_of_accounts': general_settings_payload['charts_of_accounts'],
             'auto_map_employees': general_settings_payload['auto_map_employees'],
             'auto_create_destination_entity': general_settings_payload['auto_create_destination_entity'],
-            'reimbursable_expenses_object': general_settings_payload['reimbursable_expenses_object'],
+            'reimbursable_expenses_object':
+                general_settings_payload['reimbursable_expenses_object']
+                if 'reimbursable_expenses_object' in general_settings_payload
+                and general_settings_payload['reimbursable_expenses_object'] else None,
             'corporate_credit_card_expenses_object':
                 general_settings_payload['corporate_credit_card_expenses_object']
                 if 'corporate_credit_card_expenses_object' in general_settings_payload
@@ -127,20 +132,29 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
             'sync_fyle_to_qbo_payments': general_settings_payload['sync_fyle_to_qbo_payments'],
             'sync_qbo_to_fyle_payments': general_settings_payload['sync_qbo_to_fyle_payments'],
             'map_merchant_to_vendor': map_merchant_to_vendor,
-            'je_single_credit_line': general_settings_payload['je_single_credit_line']
+            'je_single_credit_line': general_settings_payload['je_single_credit_line'],
+            'map_fyle_cards_qbo_account': general_settings_payload['map_fyle_cards_qbo_account'],
+            'import_vendors_as_merchants': general_settings_payload['import_vendors_as_merchants']
         }
     )
 
     if general_settings.map_merchant_to_vendor and \
-            general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE':
+            general_settings.corporate_credit_card_expenses_object in ('CREDIT CARD PURCHASE', 'DEBIT CARD EXPENSE'):
         expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
-        expense_group_settings.import_card_credits = True
+        expense_group_settings.import_card_credits = True if \
+            general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE' else False
 
         ccc_expense_group_fields = expense_group_settings.corporate_credit_card_expense_group_fields
         ccc_expense_group_fields.append('expense_id')
         expense_group_settings.corporate_credit_card_expense_group_fields = list(set(ccc_expense_group_fields))
         expense_group_settings.ccc_export_date_type = 'spent_at'
 
+        expense_group_settings.save()
+    
+    if general_settings.corporate_credit_card_expenses_object == 'JOURNAL ENTRY' or \
+        general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY':
+        expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
+        expense_group_settings.import_card_credits = True
         expense_group_settings.save()
 
     schedule_categories_creation(import_categories=general_settings.import_categories, workspace_id=workspace_id)
@@ -150,6 +164,10 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
     schedule_auto_map_employees(general_settings_payload['auto_map_employees'], workspace_id)
 
     schedule_auto_map_ccc_employees(workspace_id)
+
+    schedule_vendors_as_merchants_creation(
+            import_vendors_as_merchants=general_settings_payload['import_vendors_as_merchants'],
+            workspace_id = workspace_id)
 
     schedule_bill_payment_creation(general_settings.sync_fyle_to_qbo_payments, workspace_id)
 
@@ -164,3 +182,14 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
     )
 
     return general_settings
+
+
+def delete_cards_mapping_settings(workspace_general_settings: WorkspaceGeneralSettings):
+    if not workspace_general_settings.map_fyle_cards_qbo_account or not workspace_general_settings.corporate_credit_card_expenses_object:
+        mapping_setting = MappingSetting.objects.filter(
+            workspace_id=workspace_general_settings.workspace_id,
+            source_field='CORPORATE_CARD',
+            destination_field='CREDIT_CARD_ACCOUNT'
+        ).first()
+        if mapping_setting:
+            mapping_setting.delete()

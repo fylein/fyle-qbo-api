@@ -10,16 +10,15 @@ from rest_framework.response import Response
 from fyle_accounting_mappings.models import ExpenseAttribute
 from fyle_accounting_mappings.serializers import ExpenseAttributeSerializer
 
+from fyle_integrations_platform_connector import PlatformConnector
+
 from apps.workspaces.models import FyleCredential, WorkspaceGeneralSettings, Workspace
 from apps.tasks.models import TaskLog
 
 from .tasks import create_expense_groups, schedule_expense_group_creation
-from .utils import FyleConnector
-from .platform_connector import FylePlatformConnector
 from .models import Expense, ExpenseGroup, ExpenseGroupSettings
 from .serializers import ExpenseGroupSerializer, ExpenseSerializer, ExpenseFieldSerializer, \
     ExpenseGroupSettingsSerializer
-
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +31,15 @@ class ExpenseGroupView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         state = self.request.query_params.get('state', 'ALL')
+        start_date = self.request.query_params.get('start_date', None)
+        end_date = self.request.query_params.get('end_date', None)
+        expense_group_ids = self.request.query_params.get('expense_group_ids', None)
+
+        if expense_group_ids:
+            return ExpenseGroup.objects.filter(
+                workspace_id=self.kwargs['workspace_id'],
+                id__in=expense_group_ids.split(',')
+            )
 
         if state == 'ALL':
             return ExpenseGroup.objects.filter(workspace_id=self.kwargs['workspace_id']).order_by('-updated_at')
@@ -41,8 +49,15 @@ class ExpenseGroupView(generics.ListCreateAPIView):
                                                workspace_id=self.kwargs['workspace_id']).order_by('-updated_at')
 
         elif state == 'COMPLETE':
-            return ExpenseGroup.objects.filter(tasklog__status='COMPLETE',
-                                               workspace_id=self.kwargs['workspace_id']).order_by('-exported_at')
+            filters = {
+                'workspace_id': self.kwargs['workspace_id'],
+                'tasklog__status': 'COMPLETE'
+            }
+
+            if start_date and end_date:
+                filters['exported_at__range'] = [start_date, end_date]
+
+            return ExpenseGroup.objects.filter(**filters).order_by('-exported_at')
 
         elif state == 'READY':
             return ExpenseGroup.objects.filter(
@@ -63,8 +78,10 @@ class ExpenseGroupView(generics.ListCreateAPIView):
         queryset = WorkspaceGeneralSettings.objects.all()
         general_settings = queryset.get(workspace_id=kwargs['workspace_id'])
 
-        fund_source = ['PERSONAL']
-        if general_settings.corporate_credit_card_expenses_object is not None:
+        fund_source = []
+        if general_settings.reimbursable_expenses_object:
+            fund_source.append('PERSONAL')
+        if general_settings.corporate_credit_card_expenses_object:
             fund_source.append('CCC')
 
         create_expense_groups(
@@ -96,6 +113,22 @@ class ExpenseGroupCountView(generics.ListAPIView):
         )
 
 
+class ExportableExpenseGroupsView(generics.RetrieveAPIView):
+    """
+    List Exportable Expense Groups
+    """
+    def get(self, request, *args, **kwargs):
+        expense_group_ids = ExpenseGroup.objects.filter(
+            workspace_id=self.kwargs['workspace_id'],
+            exported_at__isnull=True,
+        ).values_list('id', flat=True)
+
+        return Response(
+            data={'exportable_expense_group_ids': expense_group_ids},
+            status=status.HTTP_200_OK
+        )
+
+
 class ExpenseGroupScheduleView(generics.CreateAPIView):
     """
     Create expense group schedule
@@ -110,6 +143,7 @@ class ExpenseGroupScheduleView(generics.CreateAPIView):
         return Response(
             status=status.HTTP_200_OK
         )
+
 
 class ExpenseGroupByIdView(generics.RetrieveAPIView):
     """
@@ -202,30 +236,6 @@ class EmployeeView(generics.ListCreateAPIView):
         return ExpenseAttribute.objects.filter(
             attribute_type='EMPLOYEE', workspace_id=self.kwargs['workspace_id']).order_by('value')
 
-    def post(self, request, *args, **kwargs):
-        """
-        Get employees from Fyle
-        """
-        try:
-            fyle_credentials = FyleCredential.objects.get(
-                workspace_id=kwargs['workspace_id'])
-
-            fyle_connector = FyleConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
-
-            employee_attributes = fyle_connector.sync_employees()
-
-            return Response(
-                data=self.serializer_class(employee_attributes, many=True).data,
-                status=status.HTTP_200_OK
-            )
-        except FyleCredential.DoesNotExist:
-            return Response(
-                data={
-                    'message': 'Fyle credentials not found in workspace'
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
 
 class CategoryView(generics.ListCreateAPIView):
     """
@@ -238,31 +248,6 @@ class CategoryView(generics.ListCreateAPIView):
     def get_queryset(self):
         return ExpenseAttribute.objects.filter(
             attribute_type='CATEGORY', workspace_id=self.kwargs['workspace_id']).order_by('value')
-
-    def post(self, request, *args, **kwargs):
-        """
-        Get categories from Fyle
-        """
-        try:
-            active_only = request.GET.get('active_only', False)
-            fyle_credentials = FyleCredential.objects.get(
-                workspace_id=kwargs['workspace_id'])
-
-            fyle_connector = FyleConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
-
-            category_attributes = fyle_connector.sync_categories(active_only=active_only)
-
-            return Response(
-                data=self.serializer_class(category_attributes, many=True).data,
-                status=status.HTTP_200_OK
-            )
-        except FyleCredential.DoesNotExist:
-            return Response(
-                data={
-                    'message': 'Fyle credentials not found in workspace'
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
 
 
 class CostCenterView(generics.ListCreateAPIView):
@@ -277,31 +262,6 @@ class CostCenterView(generics.ListCreateAPIView):
         return ExpenseAttribute.objects.filter(
             attribute_type='COST_CENTER', workspace_id=self.kwargs['workspace_id']).order_by('value')
 
-    def post(self, request, *args, **kwargs):
-        """
-        Get categories from Fyle
-        """
-        try:
-            active_only = request.GET.get('active_only', False)
-            fyle_credentials = FyleCredential.objects.get(
-                workspace_id=kwargs['workspace_id'])
-
-            fyle_connector = FyleConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
-
-            cost_center_attributes = fyle_connector.sync_cost_centers(active_only=active_only)
-
-            return Response(
-                data=self.serializer_class(cost_center_attributes, many=True).data,
-                status=status.HTTP_200_OK
-            )
-        except FyleCredential.DoesNotExist:
-            return Response(
-                data={
-                    'message': 'Fyle credentials not found in workspace'
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
 
 class ProjectView(generics.ListCreateAPIView):
     """
@@ -313,31 +273,6 @@ class ProjectView(generics.ListCreateAPIView):
     def get_queryset(self):
         return ExpenseAttribute.objects.filter(
             attribute_type='PROJECT', workspace_id=self.kwargs['workspace_id']).order_by('value')
-
-    def post(self, request, *args, **kwargs):
-        """
-        Get categories from Fyle
-        """
-        try:
-            active_only = request.GET.get('active_only', False)
-            fyle_credentials = FyleCredential.objects.get(
-                workspace_id=kwargs['workspace_id'])
-
-            fyle_connector = FyleConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
-
-            project_attributes = fyle_connector.sync_projects()
-
-            return Response(
-                data=self.serializer_class(project_attributes, many=True).data,
-                status=status.HTTP_200_OK
-            )
-        except FyleCredential.DoesNotExist:
-            return Response(
-                data={
-                    'message': 'Fyle credentials not found in workspace'
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
 
 
 class ExpenseCustomFieldsView(generics.ListCreateAPIView):
@@ -353,38 +288,13 @@ class ExpenseCustomFieldsView(generics.ListCreateAPIView):
         return ExpenseAttribute.objects.filter(
             attribute_type=attribute_type, workspace_id=self.kwargs['workspace_id']).order_by('value')
 
-    def post(self, request, *args, **kwargs):
-        """
-        Get Expense Custom Fields from Fyle
-        """
-        try:
-            active_only = request.GET.get('active_only', True)
-            fyle_credentials = FyleCredential.objects.get(
-                workspace_id=kwargs['workspace_id'])
-
-            fyle_connector = FyleConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
-
-            expense_custom_field_attributes = fyle_connector.sync_expense_custom_fields(active_only=active_only)
-
-            return Response(
-                data=self.serializer_class(expense_custom_field_attributes, many=True).data,
-                status=status.HTTP_200_OK
-            )
-        except FyleCredential.DoesNotExist:
-            return Response(
-                data={
-                    'message': 'Fyle credentials not found in workspace'
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
 
 class ExpenseFieldsView(generics.ListAPIView):
     pagination_class = None
     serializer_class = ExpenseFieldSerializer
 
     def get(self, request, *args, **kwargs):
-        default_attributes = ['EMPLOYEE','CATEGORY', 'PROJECT', 'COST_CENTER', 'TAX_GROUP']
+        default_attributes = ['EMPLOYEE', 'CATEGORY', 'PROJECT', 'COST_CENTER', 'TAX_GROUP', 'CORPORATE_CARD', 'MERCHANT']
 
         attributes = ExpenseAttribute.objects.filter(
             ~Q(attribute_type__in=default_attributes),
@@ -405,30 +315,6 @@ class ExpenseFieldsView(generics.ListAPIView):
         )
 
 
-class UserProfileView(generics.RetrieveAPIView):
-
-    def get(self, request, *args, **kwargs):
-        try:
-            fyle_credentials = FyleCredential.objects.get(
-                workspace_id=kwargs.get('workspace_id'))
-
-            fyle_connector = FyleConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
-
-            employee_profile = fyle_connector.get_employee_profile()
-
-            return Response(
-                data=employee_profile,
-                status=status.HTTP_200_OK
-            )
-        except FyleCredential.DoesNotExist:
-            return Response(
-                data={
-                    'message': 'Fyle credentials not found in workspace'
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-
 class SyncFyleDimensionView(generics.ListCreateAPIView):
     """
     Sync Fyle Dimensions View
@@ -445,11 +331,9 @@ class SyncFyleDimensionView(generics.ListCreateAPIView):
 
             if workspace.source_synced_at is None or time_interval.days > 0:
                 fyle_credentials = FyleCredential.objects.get(workspace_id=kwargs['workspace_id'])
-                fyle_connector = FyleConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
-                platform_connector = FylePlatformConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
+                platform = PlatformConnector(fyle_credentials)
 
-                fyle_connector.sync_dimensions()
-                platform_connector.sync_tax_groups()
+                platform.import_fyle_dimensions(import_taxes=True)
 
                 workspace.source_synced_at = datetime.now()
                 workspace.save(update_fields=['source_synced_at'])
@@ -486,11 +370,9 @@ class RefreshFyleDimensionView(generics.ListCreateAPIView):
         """
         try:
             fyle_credentials = FyleCredential.objects.get(workspace_id=kwargs['workspace_id'])
-            fyle_connector = FyleConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
-            platform_connector = FylePlatformConnector(fyle_credentials.refresh_token, kwargs['workspace_id'])
+            platform = PlatformConnector(fyle_credentials)
 
-            fyle_connector.sync_dimensions()
-            platform_connector.sync_tax_groups()
+            platform.import_fyle_dimensions(import_taxes=True)
 
             workspace = Workspace.objects.get(id=kwargs['workspace_id'])
             workspace.source_synced_at = datetime.now()

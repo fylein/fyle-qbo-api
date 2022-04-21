@@ -9,6 +9,20 @@ from django_q.models import Schedule
 User = get_user_model()
 
 
+ONBOARDING_STATE_CHOICES = (
+    ('CONNECTION', 'CONNECTION'),
+    ('MAP_EMPLOYEES', 'MAP_EMPLOYEES'),
+    ('EXPORT_SETTINGS', 'EXPORT_SETTINGS'),
+    ('IMPORT_SETTINGS', 'IMPORT_SETTINGS'),
+    ('ADVANCED_CONFIGURATION', 'ADVANCED_CONFIGURATION'),
+    ('COMPLETE', 'COMPLETE')
+)
+
+
+def get_default_onboarding_state():
+    return 'CONNECTION'
+
+
 class Workspace(models.Model):
     """
     Workspace model
@@ -17,11 +31,17 @@ class Workspace(models.Model):
     name = models.CharField(max_length=255, help_text='Name of the workspace')
     user = models.ManyToManyField(User, help_text='Reference to users table')
     fyle_org_id = models.CharField(max_length=255, help_text='org id', unique=True)
+    fyle_currency = models.CharField(max_length=5, help_text='Fyle Currency', null=True)
     qbo_realm_id = models.CharField(max_length=255, help_text='qbo realm id')
     cluster_domain = models.CharField(max_length=255, help_text='fyle cluster domain', null=True)
     last_synced_at = models.DateTimeField(help_text='Datetime when expenses were pulled last', null=True)
     source_synced_at = models.DateTimeField(help_text='Datetime when source dimensions were pulled', null=True)
-    destination_synced_at = models.DateTimeField(help_text='Datetime when destination dimensions were pulled', null=True)
+    destination_synced_at = models.DateTimeField(help_text='Datetime when destination dimensions were pulled',
+                                                 null=True)
+    onboarding_state = models.CharField(
+        max_length=50, choices=ONBOARDING_STATE_CHOICES, default=get_default_onboarding_state,
+        help_text='Onboarding status of the workspace', null=True
+    )
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')
 
@@ -34,7 +54,8 @@ class WorkspaceSchedule(models.Model):
     Workspace Schedule
     """
     id = models.AutoField(primary_key=True, help_text='Unique Id to identify a schedule')
-    workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
+    workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model',
+                                     related_name='workspace_schedules')
     enabled = models.BooleanField(default=False)
     start_datetime = models.DateTimeField(help_text='Datetime for start of schedule', null=True)
     interval_hours = models.IntegerField(null=True)
@@ -57,8 +78,9 @@ class WorkspaceGeneralSettings(models.Model):
     Workspace General Settings
     """
     id = models.AutoField(primary_key=True, help_text='Unique Id to identify a workspace')
-    workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
-    reimbursable_expenses_object = models.CharField(max_length=50, help_text='Reimbursable Expenses type')
+    workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model',
+                                        related_name='workspace_general_settings')
+    reimbursable_expenses_object = models.CharField(max_length=50, help_text='Reimbursable Expenses type', null=True)
     corporate_credit_card_expenses_object = models.CharField(max_length=50,
                                                              help_text='Non Reimbursable Expenses type', null=True)
     employee_field_mapping = models.CharField(max_length=50, help_text='Mapping Settings ( VENDOR / EMPLOYEE )')
@@ -82,6 +104,9 @@ class WorkspaceGeneralSettings(models.Model):
     sync_qbo_to_fyle_payments = models.BooleanField(default=False, help_text='Auto Sync Payments from QBO to Fyle')
     category_sync_version = models.CharField(default='v1', max_length=50, help_text='Category sync version')
     je_single_credit_line = models.BooleanField(default=False, help_text='Single Credit Line for Journal Entries')
+    map_fyle_cards_qbo_account = models.BooleanField(default=True, help_text='Map Fyle Cards to QBO Accounts')
+    skip_cards_mapping = models.BooleanField(default=False, help_text='Skip cards mapping')
+    import_vendors_as_merchants = models.BooleanField(default=False, help_text='Auto import vendors from qbo as merchants to Fyle')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
@@ -94,8 +119,9 @@ class QBOCredential(models.Model):
     Table to store QBO credentials
     """
     id = models.AutoField(primary_key=True)
-    refresh_token = models.TextField(help_text='Stores QBO refresh token')
+    refresh_token = models.TextField(help_text='Stores QBO refresh token', null=True)
     realm_id = models.CharField(max_length=40, help_text='QBO realm / company Id')
+    is_expired = models.BooleanField(default=False, help_text='QBO token expiry flag')
     company_name = models.CharField(max_length=255, help_text='QBO Company Name', null=True)
     country = models.CharField(max_length=255, help_text='QBO Country Name', null=True)
     workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
@@ -112,6 +138,7 @@ class FyleCredential(models.Model):
     """
     id = models.AutoField(primary_key=True)
     refresh_token = models.TextField(help_text='Stores Fyle refresh token')
+    cluster_domain = models.CharField(max_length=255, help_text='Cluster Domain', null=True)
     workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')

@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import status
 from rest_framework import generics
 
-from qbosdk.exceptions import WrongParamsError
+from qbosdk.exceptions import WrongParamsError, InvalidTokenError
 
 from fyle_accounting_mappings.models import DestinationAttribute, MappingSetting
 from fyle_accounting_mappings.serializers import DestinationAttributeSerializer
@@ -323,6 +323,7 @@ class PreferencesView(generics.RetrieveAPIView):
             company_info = qbo_connector.get_company_info()
             qbo_credentials.country = company_info['Country']
             qbo_credentials.company_name = company_info['CompanyName']
+            qbo_credentials.is_expired = False
             qbo_credentials.save()
 
             return Response(
@@ -344,7 +345,7 @@ class PreferencesView(generics.RetrieveAPIView):
 
     def get(self, request, *args, **kwargs):
         try:
-            qbo_credentials = QBOCredential.objects.get(workspace_id=kwargs['workspace_id'])
+            qbo_credentials = QBOCredential.objects.get(workspace=kwargs['workspace_id'], refresh_token__isnull=False)
 
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
@@ -362,9 +363,24 @@ class PreferencesView(generics.RetrieveAPIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         except WrongParamsError:
+            if qbo_credentials:
+                qbo_credentials.refresh_token = None
+                qbo_credentials.is_expired = True
+                qbo_credentials.save()
             return Response(
                 data={
                     'message': 'Quickbooks Online connection expired'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except InvalidTokenError:
+            if qbo_credentials:
+                qbo_credentials.refresh_token = None
+                qbo_credentials.is_expired = True
+                qbo_credentials.save()
+            return Response(
+                data={
+                    'message': 'Invalid token, try to refresh it'
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
@@ -641,6 +657,22 @@ class CreditCardPurchaseScheduleView(generics.CreateAPIView):
             status=status.HTTP_200_OK
         )
 
+class DebitCardExpenseScheduleView(generics.CreateAPIView):
+    """
+    Schedule debit_card_expense create
+    """
+
+    def post(self, request, *args, **kwargs):
+        expense_group_ids = request.data.get('expense_group_ids', [])
+
+        schedule_qbo_expense_creation(
+            kwargs['workspace_id'], expense_group_ids)
+
+        return Response(
+            status=status.HTTP_200_OK
+        )
+
+
 
 class JournalEntryView(generics.ListCreateAPIView):
     """
@@ -702,7 +734,7 @@ class DepartmentGroupUpdate(generics.CreateAPIView):
             general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=kwargs['workspace_id'])
 
             reimbursable_settings = expense_group_settings.reimbursable_expense_group_fields
-            if general_settings.reimbursable_expenses_object != 'JOURNAL ENTRY':
+            if general_settings.reimbursable_expenses_object and general_settings.reimbursable_expenses_object != 'JOURNAL ENTRY':
                 reimbursable_settings.append(mapping_setting.source_field.lower())
                 expense_group_settings.reimbursable_expense_group_fields = list(set(reimbursable_settings))
 
@@ -869,3 +901,17 @@ class DestinationAttributesView(generics.ListAPIView):
 
         return DestinationAttribute.objects.filter(
             attribute_type__in=attribute_types, workspace_id=self.kwargs['workspace_id']).order_by('value')
+
+
+class QBOAttributesView(generics.ListCreateAPIView):
+    """
+    GET Paginated QBO Attributes view
+    """
+    serializer_class = DestinationAttributeSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        attribute_types = self.request.query_params.get('attribute_types').split(',')
+
+        return DestinationAttribute.objects.filter(
+            attribute_type__in=attribute_types, workspace_id=self.kwargs['workspace_id']).distinct('attribute_type')

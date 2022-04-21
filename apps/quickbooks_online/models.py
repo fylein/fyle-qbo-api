@@ -10,7 +10,6 @@ from fyle_accounting_mappings.models import Mapping, MappingSetting, ExpenseAttr
     EmployeeMapping
 
 from apps.fyle.models import ExpenseGroup, Expense
-from apps.fyle.utils import FyleConnector
 from apps.mappings.models import GeneralMapping
 from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
 
@@ -30,9 +29,6 @@ def get_transaction_date(expense_group: ExpenseGroup) -> str:
 
 def get_expense_purpose(workspace_id, lineitem, category, workspace_general_settings) -> str:
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-    fyle_connector = FyleConnector(fyle_credentials.refresh_token, workspace_id)
-
-    cluster_domain = fyle_connector.get_cluster_domain()
     org_id = Workspace.objects.get(id=workspace_id).fyle_org_id
     memo_structure = workspace_general_settings.memo_structure
 
@@ -44,7 +40,7 @@ def get_expense_purpose(workspace_id, lineitem, category, workspace_general_sett
         'report_number': '{0}'.format(lineitem.claim_number),
         'spent_on': '{0}'.format(lineitem.spent_at.date()) if lineitem.spent_at else '',
         'expense_link': '{0}/app/main/#/enterprise/view_expense/{1}?org_id={2}'.format(
-            cluster_domain['cluster_domain'], lineitem.expense_id, org_id
+            fyle_credentials.cluster_domain, lineitem.expense_id, org_id
         )
     }
 
@@ -61,7 +57,10 @@ def get_expense_purpose(workspace_id, lineitem, category, workspace_general_sett
 
 def construct_private_note(expense_group: ExpenseGroup):
     expense = expense_group.expenses.first()
-    expense_type = 'Reimbursable' if expense_group.fund_source == 'PERSONAL' else 'Credit card'
+    workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
+    expense_type = 'Reimbursable'
+    if (expense_group.fund_source == 'CCC'):
+        expense_type = 'Debit Card' if workspace_general_settings.corporate_credit_card_expenses_object == 'DEBIT CARD EXPENSE' else 'Credit card'
     merchant = ' spent on merchant {0}'.format(expense.vendor) if expense.vendor else ''
     spent_at = ' on {0} '.format(expense.spent_at.date()) if expense.spent_at else ''
 
@@ -70,6 +69,30 @@ def construct_private_note(expense_group: ExpenseGroup):
         private_note = '{0}{1}{2}'.format(private_note, merchant, spent_at)
 
     return private_note
+
+
+def get_ccc_account_id(workspace_general_settings, general_mappings, expense, description):
+    if workspace_general_settings.map_fyle_cards_qbo_account:
+        ccc_account = Mapping.objects.filter(
+            source_type='CORPORATE_CARD',
+            destination_type='CREDIT_CARD_ACCOUNT',
+            source__source_id=expense.corporate_card_id,
+            workspace_id=workspace_general_settings.workspace_id
+        ).first()
+        if ccc_account:
+            ccc_account_id = ccc_account.destination.destination_id
+        else:
+            ccc_account_id = general_mappings.default_ccc_account_id
+    else:
+        ccc_account_mapping: EmployeeMapping = EmployeeMapping.objects.filter(
+            source_employee__value=description.get('employee_email'),
+            workspace_id=workspace_general_settings.workspace_id
+        ).first()
+        ccc_account_id = ccc_account_mapping.destination_card_account.destination_id \
+            if ccc_account_mapping and ccc_account_mapping.destination_card_account \
+            else general_mappings.default_ccc_account_id
+
+    return ccc_account_id
 
 
 def get_class_id_or_none(expense_group: ExpenseGroup, lineitem: Expense):
@@ -128,6 +151,7 @@ def get_customer_id_or_none(expense_group: ExpenseGroup, lineitem: Expense):
         if mapping:
             customer_id = mapping.destination.destination_id
     return customer_id
+
 
 def get_tax_code_id_or_none(expense_group: ExpenseGroup, lineitem: Expense = None):
     tax_code = None
@@ -470,17 +494,36 @@ class QBOExpense(models.Model):
         workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
         employee_field_mapping = workspace_general_settings.employee_field_mapping
 
-        entity = EmployeeMapping.objects.get(
-            source_employee__value=description.get('employee_email'),
-            workspace_id=expense_group.workspace_id
-        )
+        if workspace_general_settings.map_merchant_to_vendor and expense_group.fund_source == 'CCC':
+            merchant = expense.vendor if expense.vendor else ''
+
+            entity = DestinationAttribute.objects.filter(
+                value__iexact=merchant, attribute_type='VENDOR', workspace_id=expense_group.workspace_id
+            ).first()
+
+            expense_group.description['spent_at'] = expense.spent_at.strftime("%Y-%m-%d")
+            expense_group.save()
+
+            if not entity:
+                entity_id = DestinationAttribute.objects.filter(
+                    value='Debit Card Misc', workspace_id=expense_group.workspace_id).first().destination_id
+            else:
+                entity_id = entity.destination_id
+
+        else:
+            entity = EmployeeMapping.objects.get(
+                source_employee__value=description.get('employee_email'),
+                workspace_id=expense_group.workspace_id
+            )
+            entity_id = entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' \
+                else entity.destination_vendor.destination_id
 
         qbo_expense_object, _ = QBOExpense.objects.update_or_create(
             expense_group=expense_group,
             defaults={
-                'expense_account_id': general_mappings.qbo_expense_account_id,
-                'entity_id': entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' \
-                    else entity.destination_vendor.destination_id,
+                'expense_account_id': general_mappings.qbo_expense_account_id if expense_group.fund_source == 'PERSONAL'\
+                    else general_mappings.default_debit_card_account_id,
+                'entity_id': entity_id,
                 'department_id': department_id,
                 'transaction_date': get_transaction_date(expense_group),
                 'private_note': private_note,
@@ -623,14 +666,7 @@ class CreditCardPurchase(models.Model):
             entity_id = entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' \
                 else entity.destination_vendor.destination_id
 
-        ccc_account_mapping: EmployeeMapping = EmployeeMapping.objects.filter(
-            source_employee__value=description.get('employee_email'),
-            workspace_id=expense_group.workspace_id
-        ).first()
-
-        ccc_account_id = ccc_account_mapping.destination_card_account.destination_id \
-            if ccc_account_mapping and ccc_account_mapping.destination_card_account \
-            else general_mappings.default_ccc_account_id
+        ccc_account_id = get_ccc_account_id(workspace_general_settings, general_mappings, expense, description)
 
         credit_card_purchase_object, _ = CreditCardPurchase.objects.update_or_create(
             expense_group=expense_group,
@@ -812,22 +848,7 @@ class JournalEntryLineitem(models.Model):
             workspace_id=expense_group.workspace_id
         )
 
-        if expense_group.fund_source == 'PERSONAL':
-            if employee_field_mapping == 'VENDOR':
-                debit_account_id = GeneralMapping.objects.get(
-                    workspace_id=expense_group.workspace_id).accounts_payable_id
-            elif employee_field_mapping == 'EMPLOYEE':
-                debit_account_id = GeneralMapping.objects.get(
-                    workspace_id=expense_group.workspace_id).bank_account_id
-        elif expense_group.fund_source == 'CCC':
-            debit_account: EmployeeMapping = EmployeeMapping.objects.filter(
-                source_employee__value=description.get('employee_email'),
-                workspace_id=expense_group.workspace_id
-            ).first()
-            if debit_account and debit_account.destination_card_account:
-                debit_account_id = debit_account.destination_card_account.destination_id
-            else:
-                debit_account_id = general_mappings.default_ccc_account_id
+        debit_account_id = None
 
         if employee_field_mapping == 'EMPLOYEE':
             entity_type = 'Employee'
@@ -839,6 +860,16 @@ class JournalEntryLineitem(models.Model):
         for lineitem in expenses:
             category = lineitem.category if lineitem.category == lineitem.sub_category else '{0} / {1}'.format(
                 lineitem.category, lineitem.sub_category)
+
+            if expense_group.fund_source == 'PERSONAL':
+                if employee_field_mapping == 'VENDOR':
+                    debit_account_id = GeneralMapping.objects.get(
+                        workspace_id=expense_group.workspace_id).accounts_payable_id
+                elif employee_field_mapping == 'EMPLOYEE':
+                    debit_account_id = GeneralMapping.objects.get(
+                        workspace_id=expense_group.workspace_id).bank_account_id
+            elif expense_group.fund_source == 'CCC':
+                debit_account_id = get_ccc_account_id(workspace_general_settings, general_mappings, lineitem, description)
 
             account: Mapping = Mapping.objects.filter(
                 source_type='CATEGORY',

@@ -4,15 +4,6 @@ from fyle_accounting_mappings.models import ExpenseAttribute
 from .models import Expense, ExpenseGroup, ExpenseGroupSettings, Reimbursement
 
 
-class ExpenseGroupSerializer(serializers.ModelSerializer):
-    """
-    Expense group serializer
-    """
-    class Meta:
-        model = ExpenseGroup
-        fields = '__all__'
-
-
 class ExpenseGroupSettingsSerializer(serializers.ModelSerializer):
     """
     Expense group serializer
@@ -29,6 +20,18 @@ class ExpenseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Expense
         fields = '__all__'
+
+
+class ExpenseGroupSerializer(serializers.ModelSerializer):
+    """
+    Expense group serializer
+    """
+    expenses = ExpenseSerializer(many=True)
+
+    class Meta:
+        model = ExpenseGroup
+        fields = '__all__'
+        extra_fields = ['expenses']
 
 
 class ExpenseFieldSerializer(serializers.ModelSerializer):

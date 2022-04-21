@@ -82,3 +82,45 @@ Django Rest Framework API for Fyle Quickbooks Online Integration
     pip install -r requirements.dev.txt
     python q_cluster_watcher.py
     ```
+### Running Tests
+
+* Add this to you Dockerfile before the # set environment variables step:
+    ```
+    # install the requirements from the requirements.txt file via git
+    RUN apt-get update && apt-get install git -y --no-install-recommends
+
+    ARG CI
+    RUN if [ "$CI" = "ENABLED" ]; then \
+            apt-get install lsb-release gnupg2 wget -y --no-install-recommends; \
+            apt-cache search postgresql | grep postgresql; \
+            sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'; \
+            wget --no-check-certificate --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - ; \
+            apt -y update; \
+            apt-get install postgresql-14 -y --no-install-recommends; \
+        fi
+    ```
+* Add the following environment variables to setup.sh file
+
+    ```
+    export FYLE_BASE_URL=<fyle base url>
+    export FYLE_CLIENT_ID=<client_id>
+    export FYLE_CLIENT_SECRET=<client_secret>
+    export FYLE_REFRESH_TOKEN=<refresh_token>
+    export FYLE_TOKEN_URI=<fyle token uri>
+    export QBO_CLIENT_ID=<qbo client id>
+    export QBO_CLIENT_SECRET=<qbo client secret>
+    export QBO_REDIRECT_URI=<qbo redirect uri>
+    export QBO_TOKEN_URI=<qbo token uri>
+    export QBO_ENVIRONMENT=<qbo environment>
+    ```
+* Run the following commands
+
+    1. docker-compose -f docker-compose-pipeline.yml build
+    2. docker-compose -f docker-compose-pipeline.yml up -d
+    3. docker-compose -f docker-compose-pipeline.yml exec api pytest tests/
+
+* Run the following command to update tests SQL fixture (`tests/sql_fixtures/reset_db_fixtures/reset_db.sql`)
+    ```
+    docker-compose -f docker-compose-pipeline.yml exec api /bin/bash tests/sql_fixtures/migration_fixtures/create_migration.sh 
+    ```
+

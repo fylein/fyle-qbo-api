@@ -6,6 +6,8 @@ from datetime import datetime
 from django.db import transaction
 from django_q.tasks import async_task
 
+from fyle_integrations_platform_connector import PlatformConnector
+
 from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
 from apps.tasks.models import TaskLog
 
@@ -15,6 +17,12 @@ from .serializers import ExpenseGroupSerializer
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
+
+SOURCE_ACCOUNT_MAP = {
+    'PERSONAL': 'PERSONAL_CASH_ACCOUNT',
+    'CCC': 'PERSONAL_CORPORATE_CREDIT_CARD_ACCOUNT'
+}
+
 
 def schedule_expense_group_creation(workspace_id: int):
     """
@@ -32,9 +40,10 @@ def schedule_expense_group_creation(workspace_id: int):
     )
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
-
-    fund_source = ['PERSONAL']
-    if general_settings.corporate_credit_card_expenses_object is not None:
+    fund_source = []
+    if general_settings.reimbursable_expenses_object:
+        fund_source.append('PERSONAL')
+    if general_settings.corporate_credit_card_expenses_object:
         fund_source.append('CCC')
 
     async_task('apps.fyle.tasks.create_expense_groups', workspace_id, fund_source, task_log)
@@ -45,7 +54,6 @@ def create_expense_groups(workspace_id: int, fund_source: List[str], task_log: T
     Create expense groups
     :param task_log: Task log object
     :param workspace_id: workspace id
-    :param state: expense state
     :param fund_source: expense fund source
     :return: task log
     """
@@ -64,9 +72,11 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
     try:
         with transaction.atomic():
 
+            expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
             workspace = Workspace.objects.get(pk=workspace_id)
 
             last_synced_at = workspace.last_synced_at
+            fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
 
             filter_by_timestamp = []
 
@@ -75,22 +85,22 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
                     'gte:{0}'.format(datetime.strftime(last_synced_at, '%Y-%m-%dT%H:%M:%S.000Z'))
                 )
 
-            fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+            platform = PlatformConnector(fyle_credentials)
 
-            fyle_connector = FyleConnector(fyle_credentials.refresh_token, workspace_id)
+            source_account_type = []
+            for source in fund_source:
+                source_account_type.append(SOURCE_ACCOUNT_MAP[source])
 
-            expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
-            import_state = [expense_group_settings.expense_state]
+            filter_credit_expenses = True
+            if expense_group_settings.import_card_credits:
+                filter_credit_expenses = False
 
-            if import_state[0] == 'PAYMENT_PROCESSING' and last_synced_at is not None:
-                import_state.append('PAID')
-
-            expenses = fyle_connector.get_expenses(
-                state=import_state,
-                fund_source=fund_source,
-                settled_at=filter_by_timestamp if expense_group_settings.expense_state == 'PAYMENT_PROCESSING' \
-                    else None,
-                updated_at=filter_by_timestamp if expense_group_settings.expense_state == 'PAID' else None
+            expenses = platform.expenses.get(
+                source_account_type=source_account_type,
+                state=expense_group_settings.expense_state,
+                last_synced_at=last_synced_at if expense_group_settings.expense_state == 'PAID' else None,
+                settled_at=last_synced_at if expense_group_settings.expense_state == 'PAYMENT_PROCESSING' else None,
+                filter_credit_expenses=filter_credit_expenses
             )
 
             if expenses:
