@@ -1,3 +1,4 @@
+from apps.mappings.tasks import schedule_vendors_as_merchants_creation
 from apps.workspaces.models import WorkspaceGeneralSettings
 from apps.quickbooks_online.tasks import schedule_bill_payment_creation, schedule_qbo_objects_status_sync, \
     schedule_reimbursements_sync
@@ -24,5 +25,10 @@ class AdvancedConfigurationsTriggers:
 
         schedule_reimbursements_sync(
             sync_qbo_to_fyle_payments=workspace_general_settings_instance.sync_qbo_to_fyle_payments,
+            workspace_id=workspace_general_settings_instance.workspace.id
+        )
+
+        schedule_vendors_as_merchants_creation(
+            import_vendors_as_merchants=workspace_general_settings_instance.import_vendors_as_merchants,
             workspace_id=workspace_general_settings_instance.workspace.id
         )
