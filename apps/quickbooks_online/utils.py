@@ -808,11 +808,11 @@ class QBOConnector:
 
         for lineitem in journal_entry_lineitems:
             total_tax = self._get_total_tax(lineitem, general_mappings)
-            if lineitem.debit_account_id in card_objects:
-                card_objects[lineitem.debit_account_id]['amount'] = card_objects[lineitem.debit_account_id]['amount'] + lineitem.amount
-                card_objects[lineitem.debit_account_id]['total_tax'] = card_objects[lineitem.debit_account_id]['total_tax'] + self._get_total_tax(lineitem, general_mappings)
+            if lineitem.debit_account_id+lineitem.tax_code in card_objects:
+                card_objects[lineitem.debit_account_id+lineitem.tax_code]['amount'] = card_objects[lineitem.debit_account_id+lineitem.tax_code]['amount'] + lineitem.amount
+                card_objects[lineitem.debit_account_id+lineitem.tax_code]['total_tax'] = card_objects[lineitem.debit_account_id+lineitem.tax_code]['total_tax'] + self._get_total_tax(lineitem, general_mappings)
             else:
-                card_objects[lineitem.debit_account_id] = {
+                card_objects[lineitem.debit_account_id+lineitem.tax_code] = {
                     'debit_account_id': lineitem.debit_account_id,
                     'amount': lineitem.amount,
                     'entity_id': lineitem.entity_id,
@@ -909,7 +909,7 @@ class QBOConnector:
             lineitem = {
                 'DetailType': 'JournalEntryLineDetail',
                 'Description': line.description,
-                'Amount': final_amount,
+                'Amount': round(final_amount,2),
                 'JournalEntryLineDetail': {
                     'PostingType': posting_type,
                     'AccountRef': {
@@ -927,7 +927,7 @@ class QBOConnector:
                         },
                         'Type': line.entity_type,
                     },
-                    'TaxInclusiveAmt': abs(line.amount),
+                    'TaxInclusiveAmt': round(abs(line.amount), 2),
                     'TaxCodeRef': {
                         'value': line.tax_code if (line.tax_code and line.tax_amount is not None) else general_mappings.default_tax_code_id
                     },
@@ -978,7 +978,7 @@ class QBOConnector:
             })
 
             for line_item in journal_entry_lineitems:
-                tax_code_id = line_item.tax_code if (line_item.tax_code and line_item.tax_amount) else general_mappings.default_tax_code_id
+                tax_code_id = line_item.tax_code if (line_item.tax_code and line_item.tax_amount is not None) else general_mappings.default_tax_code_id
 
                 destination_attribute = DestinationAttribute.objects.filter(destination_id=tax_code_id, attribute_type='TAX_CODE',workspace_id=self.workspace_id).first()
                 for tax_rate_ref in destination_attribute.detail['tax_refs']:
