@@ -808,11 +808,11 @@ class QBOConnector:
 
         for lineitem in journal_entry_lineitems:
             total_tax = self._get_total_tax(lineitem, general_mappings)
-            if lineitem.debit_account_id+lineitem.tax_code in card_objects:
-                card_objects[lineitem.debit_account_id+lineitem.tax_code]['amount'] = card_objects[lineitem.debit_account_id+lineitem.tax_code]['amount'] + lineitem.amount
-                card_objects[lineitem.debit_account_id+lineitem.tax_code]['total_tax'] = card_objects[lineitem.debit_account_id+lineitem.tax_code]['total_tax'] + self._get_total_tax(lineitem, general_mappings)
+            if lineitem.debit_account_id + lineitem.tax_code in card_objects:
+                card_objects[lineitem.debit_account_id + lineitem.tax_code]['amount'] = card_objects[lineitem.debit_account_id + lineitem.tax_code]['amount'] + lineitem.amount
+                card_objects[lineitem.debit_account_id + lineitem.tax_code]['total_tax'] = card_objects[lineitem.debit_account_id + lineitem.tax_code]['total_tax'] + self._get_total_tax(lineitem, general_mappings)
             else:
-                card_objects[lineitem.debit_account_id+lineitem.tax_code] = {
+                card_objects[lineitem.debit_account_id + lineitem.tax_code] = {
                     'debit_account_id': lineitem.debit_account_id,
                     'amount': lineitem.amount,
                     'entity_id': lineitem.entity_id,
