@@ -25,7 +25,7 @@ from apps.fyle.helpers import get_cluster_domain
 from .models import Workspace, FyleCredential, QBOCredential, WorkspaceGeneralSettings, WorkspaceSchedule, \
     LastExportDetail
 from .utils import generate_qbo_refresh_token, create_or_update_general_settings, update_last_export_details
-from .tasks import schedule_sync, run_sync_schedule
+from .tasks import schedule_sync, run_sync_schedule, export_to_qbo
 from .serializers import WorkspaceSerializer, FyleCredentialSerializer, QBOCredentialSerializer, \
     WorkSpaceGeneralSettingsSerializer, WorkspaceScheduleSerializer, LastExportDetailSerializer
 from .signals import post_delete_qbo_connection
@@ -378,9 +378,6 @@ class ScheduledSyncView(viewsets.ViewSet):
         Scheduled sync
         """
         run_sync_schedule(kwargs['workspace_id'])
-        last_export_detail = LastExportDetail.objects.get(workspace_id=kwargs['workspace_id'])
-        last_export_detail.export_mode = 'AUTO'
-        last_export_detail.save()
         return Response(
             status=status.HTTP_200_OK
         )
@@ -486,17 +483,14 @@ class GeneralSettingsView(viewsets.ViewSet):
             )
 
 
-class SyncAndExportView(viewsets.ViewSet):
+class ExportToQBOView(viewsets.ViewSet):
     """
-    Sync and Export Expenses to QBO
+    Export Expenses to QBO
     """
 
     def post(self, request, *args, **kwargs):
 
-        run_sync_schedule(workspace_id=kwargs['workspace_id'])
-        last_export_detail = LastExportDetail.objects.get(workspace_id=kwargs['workspace_id'])
-        last_export_detail.export_mode = 'MANUAL'
-        last_export_detail.save()
+        export_to_qbo(workspace_id=kwargs['workspace_id'])
 
         return Response(
             status=status.HTTP_200_OK
