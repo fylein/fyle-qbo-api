@@ -30,11 +30,8 @@ def schedule_sync(workspace_id: int, schedule_enabled: bool, hours: int):
             }
         )
         ws_schedule.schedule = schedule
-        last_export_detail = LastExportDetail.objects.get(workspace_id=workspace_id)
-        last_export_detail.export_mode = 'AUTO'
 
         ws_schedule.save()
-        last_export_detail.save()
 
     elif not schedule_enabled:
         schedule = ws_schedule.schedule

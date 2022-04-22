@@ -378,6 +378,9 @@ class ScheduledSyncView(viewsets.ViewSet):
         Scheduled sync
         """
         run_sync_schedule(kwargs['workspace_id'])
+        last_export_detail = LastExportDetail.objects.get(workspace_id=kwargs['workspace_id'])
+        last_export_detail.export_mode = 'AUTO'
+        last_export_detail.save()
         return Response(
             status=status.HTTP_200_OK
         )
