@@ -806,18 +806,21 @@ class QBOConnector:
         card_objects = {}
         data = []
 
+        configuration = WorkspaceGeneralSettings.objects.get(workspace_id=self.workspace_id)
         for lineitem in journal_entry_lineitems:
+            tax_code = lineitem.tax_code if lineitem.tax_code else general_mappings.default_tax_code_id if \
+                (configuration.import_tax_codes and not lineitem.tax_code) else ""
             total_tax = self._get_total_tax(lineitem, general_mappings)
-            if lineitem.debit_account_id + lineitem.tax_code in card_objects:
-                card_objects[lineitem.debit_account_id + lineitem.tax_code]['amount'] = card_objects[lineitem.debit_account_id + lineitem.tax_code]['amount'] + lineitem.amount
-                card_objects[lineitem.debit_account_id + lineitem.tax_code]['total_tax'] = card_objects[lineitem.debit_account_id + lineitem.tax_code]['total_tax'] + self._get_total_tax(lineitem, general_mappings)
+            if (lineitem.debit_account_id + tax_code) in card_objects:
+                card_objects[lineitem.debit_account_id + tax_code]['amount'] = card_objects[lineitem.debit_account_id + tax_code]['amount'] + lineitem.amount
+                card_objects[lineitem.debit_account_id + tax_code]['total_tax'] = card_objects[lineitem.debit_account_id + tax_code]['total_tax'] + self._get_total_tax(lineitem, general_mappings)
             else:
-                card_objects[lineitem.debit_account_id + lineitem.tax_code] = {
+                card_objects[lineitem.debit_account_id + tax_code] = {
                     'debit_account_id': lineitem.debit_account_id,
                     'amount': lineitem.amount,
                     'entity_id': lineitem.entity_id,
                     'entity_type': lineitem.entity_type,
-                    'tax_code': lineitem.tax_code,
+                    'tax_code': tax_code,
                     'total_tax': total_tax
                 }
 
@@ -909,7 +912,7 @@ class QBOConnector:
             lineitem = {
                 'DetailType': 'JournalEntryLineDetail',
                 'Description': line.description,
-                'Amount': round(final_amount,2),
+                'Amount': round(final_amount, 2),
                 'JournalEntryLineDetail': {
                     'PostingType': posting_type,
                     'AccountRef': {
