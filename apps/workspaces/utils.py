@@ -207,9 +207,9 @@ def update_last_export_details(workspace_id):
         workspace_id=workspace_id, status='COMPLETE', updated_at__gt=last_export_detail.last_exported_at
     ).count()
 
-    last_export_detail.failed_expense_groups = failed_exports
-    last_export_detail.successful_expense_groups = successful_exports
-    last_export_detail.total_expense_groups = failed_exports + successful_exports
+    last_export_detail.failed_expense_groups_count = failed_exports
+    last_export_detail.successful_expense_groups_count = successful_exports
+    last_export_detail.total_expense_groups_count = failed_exports + successful_exports
     last_export_detail.save()
 
     return last_export_detail
