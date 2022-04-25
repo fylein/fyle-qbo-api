@@ -59,7 +59,6 @@ def run_sync_schedule(workspace_id):
     )
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
-    last_export_detail = LastExportDetail.objects.get(workspace_id=workspace_id)
 
     fund_source = []
     if general_settings.reimbursable_expenses_object:
@@ -71,65 +70,15 @@ def run_sync_schedule(workspace_id):
             workspace_id=workspace_id, fund_source=fund_source, task_log=task_log
         )
 
-    last_export_detail.last_exported_at = datetime.now()
-    last_export_detail.export_mode = 'AUTO'
-    last_export_detail.save()
-
     if task_log.status == 'COMPLETE':
-
-        if general_settings.reimbursable_expenses_object:
-
-            expense_group_ids = ExpenseGroup.objects.filter(fund_source='PERSONAL').values_list('id', flat=True)
-
-            if general_settings.reimbursable_expenses_object == 'BILL':
-                schedule_bills_creation(
-                    workspace_id=workspace_id, expense_group_ids=expense_group_ids
-                )
-
-            elif general_settings.reimbursable_expenses_object == 'EXPENSE':
-                schedule_qbo_expense_creation(
-                    workspace_id=workspace_id, expense_group_ids=expense_group_ids
-                )
-
-            elif general_settings.reimbursable_expenses_object == 'CHECK':
-                schedule_cheques_creation(
-                    workspace_id=workspace_id, expense_group_ids=expense_group_ids
-                )
-
-            elif general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY':
-                schedule_journal_entry_creation(
-                    workspace_id=workspace_id, expense_group_ids=expense_group_ids
-                )
-
-        if general_settings.corporate_credit_card_expenses_object:
-            expense_group_ids = ExpenseGroup.objects.filter(fund_source='CCC').values_list('id', flat=True)
-
-            if general_settings.corporate_credit_card_expenses_object == 'JOURNAL ENTRY':
-                schedule_journal_entry_creation(
-                    workspace_id=workspace_id, expense_group_ids=expense_group_ids
-                )
-
-            elif general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE':
-                schedule_credit_card_purchase_creation(
-                    workspace_id=workspace_id, expense_group_ids=expense_group_ids
-                )
-
-            elif general_settings.corporate_credit_card_expenses_object == 'DEBIT CARD EXPENSE':
-                schedule_qbo_expense_creation(
-                    workspace_id=workspace_id, expense_group_ids=expense_group_ids
-                )
-
-            elif general_settings.corporate_credit_card_expenses_object == 'BILL':
-                schedule_bills_creation(
-                    workspace_id=workspace_id, expense_group_ids=expense_group_ids
-                )
+        export_to_qbo(workspace_id, 'AUTO')
 
 
-def export_to_qbo(workspace_id):
+def export_to_qbo(workspace_id, export_mode=None):
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
     last_export_detail = LastExportDetail.objects.get(workspace_id=workspace_id)
     last_export_detail.last_exported_at = datetime.now()
-    last_export_detail.export_mode = 'MANUAL'
+    last_export_detail.export_mode = export_mode or 'MANUAL'
     last_export_detail.save()
 
     if general_settings.reimbursable_expenses_object:
