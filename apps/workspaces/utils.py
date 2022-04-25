@@ -16,8 +16,9 @@ from apps.quickbooks_online.tasks import schedule_bill_payment_creation, schedul
     schedule_reimbursements_sync
 
 from fyle_qbo_api.utils import assert_valid
-from .models import WorkspaceGeneralSettings
+from .models import WorkspaceGeneralSettings, LastExportDetail
 from ..fyle.models import ExpenseGroupSettings
+from ..tasks.models import TaskLog
 
 
 def generate_qbo_refresh_token(authorization_code: str, redirect_uri: str) -> str:
@@ -193,3 +194,22 @@ def delete_cards_mapping_settings(workspace_general_settings: WorkspaceGeneralSe
         ).first()
         if mapping_setting:
             mapping_setting.delete()
+
+
+def update_last_export_details(workspace_id):
+    last_export_detail = LastExportDetail.objects.get(workspace_id=workspace_id)
+
+    failed_exports = TaskLog.objects.filter(
+        workspace_id=workspace_id, status='FAILED'
+    ).count()
+
+    successful_exports = TaskLog.objects.filter(
+        workspace_id=workspace_id, status='COMPLETE', updated_at__gt=last_export_detail.last_exported_at
+    ).count()
+
+    last_export_detail.failed_expense_groups_count = failed_exports
+    last_export_detail.successful_expense_groups_count = successful_exports
+    last_export_detail.total_expense_groups_count = failed_exports + successful_exports
+    last_export_detail.save()
+
+    return last_export_detail

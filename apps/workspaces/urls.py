@@ -16,12 +16,13 @@ Including another URLconf
 from django.urls import path, include
 
 from .views import WorkspaceView, ReadyView, ConnectFyleView, ConnectQBOView, ScheduleView, GeneralSettingsView, \
-    ScheduledSyncView, SyncAndExportView
+    ScheduledSyncView, ExportToQBOView, LastExportDetailView
 
 urlpatterns = [
     path('', WorkspaceView.as_view({'get': 'get', 'post': 'post'}), name='workspace'),
     path('<int:workspace_id>/', WorkspaceView.as_view({'get': 'get_by_id'}), name='workspace-by-id'),
     path('<int:workspace_id>/schedule/', ScheduleView.as_view({'post': 'post', 'get': 'get'}), name='workspace-schedule'),
+    path('<int:workspace_id>/export_detail/', LastExportDetailView.as_view({'get': 'get'}), name='export-detail'),
     path('<int:workspace_id>/settings/general/', GeneralSettingsView.as_view({'post': 'post', 'get': 'get'}), name='workspace-general-settings'),
     path('<int:workspace_id>/schedule/trigger/', ScheduledSyncView.as_view({'post': 'post'})),
     path('<int:workspace_id>/connect_fyle/authorization_code/', ConnectFyleView.as_view({'post': 'post'})),
@@ -29,7 +30,7 @@ urlpatterns = [
     path('<int:workspace_id>/credentials/fyle/delete/', ConnectFyleView.as_view({'post': 'delete'}), name='delete-fyle-credentials'),
     path('<int:workspace_id>/connect_qbo/authorization_code/', ConnectQBOView.as_view({'post': 'post'})),
     path('<int:workspace_id>/credentials/qbo/', ConnectQBOView.as_view({'get': 'get'}), name='get-qbo-credentials'),
-    path('<int:workspace_id>/exports/trigger/', SyncAndExportView.as_view({'post': 'post'}), name='sync-export'),
+    path('<int:workspace_id>/exports/trigger/', ExportToQBOView.as_view({'post': 'post'}), name='export-to-qbo'),
     path('<int:workspace_id>/fyle/', include('apps.fyle.urls')),
     path('<int:workspace_id>/qbo/', include('apps.quickbooks_online.urls')),
     path('<int:workspace_id>/mappings/', include('apps.mappings.urls')),

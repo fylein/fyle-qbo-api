@@ -22,11 +22,12 @@ from fyle_qbo_api.utils import assert_valid
 from apps.quickbooks_online.utils import QBOConnector
 from apps.fyle.helpers import get_cluster_domain
 
-from .models import Workspace, FyleCredential, QBOCredential, WorkspaceGeneralSettings, WorkspaceSchedule
-from .utils import generate_qbo_refresh_token, create_or_update_general_settings
-from .tasks import schedule_sync, run_sync_schedule
+from .models import Workspace, FyleCredential, QBOCredential, WorkspaceGeneralSettings, WorkspaceSchedule, \
+    LastExportDetail
+from .utils import generate_qbo_refresh_token, create_or_update_general_settings, update_last_export_details
+from .tasks import schedule_sync, run_sync_schedule, export_to_qbo
 from .serializers import WorkspaceSerializer, FyleCredentialSerializer, QBOCredentialSerializer, \
-    WorkSpaceGeneralSettingsSerializer, WorkspaceScheduleSerializer
+    WorkSpaceGeneralSettingsSerializer, WorkspaceScheduleSerializer, LastExportDetailSerializer
 from .signals import post_delete_qbo_connection
 
 from apps.fyle.models import ExpenseGroupSettings
@@ -66,6 +67,8 @@ class WorkspaceView(viewsets.ViewSet):
             workspace = Workspace.objects.create(name=org_name, fyle_org_id=org_id, fyle_currency=org_currency)
 
             ExpenseGroupSettings.objects.create(workspace_id=workspace.id)
+
+            LastExportDetail.objects.create(workspace_id=workspace.id)
 
             workspace.user.add(User.objects.get(user_id=request.user))
 
@@ -480,15 +483,34 @@ class GeneralSettingsView(viewsets.ViewSet):
             )
 
 
-class SyncAndExportView(viewsets.ViewSet):
+class ExportToQBOView(viewsets.ViewSet):
     """
-    Sync and Export Expenses to QBO
+    Export Expenses to QBO
     """
 
     def post(self, request, *args, **kwargs):
 
-        run_sync_schedule(kwargs['workspace_id'])
+        export_to_qbo(workspace_id=kwargs['workspace_id'])
 
         return Response(
+            status=status.HTTP_200_OK
+        )
+
+
+class LastExportDetailView(viewsets.ViewSet):
+    """
+    Last Export Details
+    """
+    serializer_class = LastExportDetailSerializer
+
+    def get(self, request, *args, **kwargs):
+        """
+        last export detail
+        """
+
+        last_export_details = update_last_export_details(kwargs['workspace_id'])
+
+        return Response(
+            data=self.serializer_class(last_export_details).data,
             status=status.HTTP_200_OK
         )
