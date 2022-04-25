@@ -161,9 +161,9 @@ class LastExportDetail(models.Model):
     export_mode = models.CharField(
         max_length=50, help_text='Mode of the export Auto / Manual', choices=EXPORT_MODE_CHOICES, null=True
     )
-    total_expense_groups = models.IntegerField(help_text='Total count of expense groups exported', null=True)
-    successful_expense_groups = models.IntegerField(help_text='count of successful expense_groups ', null=True)
-    failed_expense_groups = models.IntegerField(help_text='count of failed expense_groups ', null=True)
+    total_expense_groups_count = models.IntegerField(help_text='Total count of expense groups exported', null=True)
+    successful_expense_groups_count = models.IntegerField(help_text='count of successful expense_groups ', null=True)
+    failed_expense_groups_count = models.IntegerField(help_text='count of failed expense_groups ', null=True)
     workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')
