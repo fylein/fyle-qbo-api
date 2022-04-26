@@ -36,7 +36,6 @@ class ExpenseGroupView(generics.ListCreateAPIView):
         end_date = self.request.query_params.get('end_date', None)
         expense_group_ids = self.request.query_params.get('expense_group_ids', None)
         exported_at = self.request.query_params.get('exported_at', None)
-        updated_at = self.request.query_params.get('updated_at', None)
 
         if expense_group_ids:
             return ExpenseGroup.objects.filter(
