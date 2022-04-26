@@ -65,10 +65,10 @@ def run_sync_schedule(workspace_id):
         fund_source.append('PERSONAL')
     if general_settings.corporate_credit_card_expenses_object:
         fund_source.append('CCC')
-    if general_settings.reimbursable_expenses_object:
-        async_create_expense_groups(
-            workspace_id=workspace_id, fund_source=fund_source, task_log=task_log
-        )
+
+    async_create_expense_groups(
+        workspace_id=workspace_id, fund_source=fund_source, task_log=task_log
+    )
 
     if task_log.status == 'COMPLETE':
         export_to_qbo(workspace_id, 'AUTO')
@@ -83,7 +83,9 @@ def export_to_qbo(workspace_id, export_mode=None):
 
     if general_settings.reimbursable_expenses_object:
 
-        expense_group_ids = ExpenseGroup.objects.filter(fund_source='PERSONAL').values_list('id', flat=True)
+        expense_group_ids = ExpenseGroup.objects.filter(
+            fund_source='PERSONAL', exported_at__isnull=True
+        ).values_list('id', flat=True)
 
         if general_settings.reimbursable_expenses_object == 'BILL':
             schedule_bills_creation(
@@ -106,7 +108,9 @@ def export_to_qbo(workspace_id, export_mode=None):
             )
 
     if general_settings.corporate_credit_card_expenses_object:
-        expense_group_ids = ExpenseGroup.objects.filter(fund_source='CCC').values_list('id', flat=True)
+        expense_group_ids = ExpenseGroup.objects.filter(
+            fund_source='CCC', exported_at__isnull=True
+        ).values_list('id', flat=True)
 
         if general_settings.corporate_credit_card_expenses_object == 'JOURNAL ENTRY':
             schedule_journal_entry_creation(

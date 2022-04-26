@@ -35,6 +35,7 @@ class ExpenseGroupView(generics.ListCreateAPIView):
         start_date = self.request.query_params.get('start_date', None)
         end_date = self.request.query_params.get('end_date', None)
         expense_group_ids = self.request.query_params.get('expense_group_ids', None)
+        exported_at = self.request.query_params.get('exported_at', None)
 
         if expense_group_ids:
             return ExpenseGroup.objects.filter(
@@ -57,6 +58,9 @@ class ExpenseGroupView(generics.ListCreateAPIView):
 
             if start_date and end_date:
                 filters['exported_at__range'] = [start_date, end_date]
+
+            if exported_at:
+                filters['exported_at__gte'] = exported_at
 
             return ExpenseGroup.objects.filter(**filters).order_by('-exported_at')
 
