@@ -60,7 +60,7 @@ class ExpenseGroupView(generics.ListCreateAPIView):
                 filters['exported_at__range'] = [start_date, end_date]
 
             if exported_at:
-                filters['exported_at__gt'] = exported_at
+                filters['exported_at__gte'] = exported_at
 
             return ExpenseGroup.objects.filter(**filters).order_by('-exported_at')
 
