@@ -5,6 +5,7 @@ from typing import Dict
 import requests
 
 from django.conf import settings
+from django.db.models import Q
 
 from future.moves.urllib.parse import urlencode
 from qbosdk import UnauthorizedClientError, NotFoundClientError, WrongParamsError, InternalServerError
@@ -200,11 +201,14 @@ def update_last_export_details(workspace_id):
     last_export_detail = LastExportDetail.objects.get(workspace_id=workspace_id)
 
     failed_exports = TaskLog.objects.filter(
-        workspace_id=workspace_id, status='FAILED'
+        ~Q(type='CREATING_BILL_PAYMENT'), workspace_id=workspace_id, status__in=['FAILED', 'FATAL']
     ).count()
 
     successful_exports = TaskLog.objects.filter(
-        workspace_id=workspace_id, status='COMPLETE', updated_at__gt=last_export_detail.last_exported_at
+        ~Q(type='CREATING_BILL_PAYMENT'),
+        workspace_id=workspace_id,
+        status='COMPLETE',
+        updated_at__gt=last_export_detail.last_exported_at
     ).count()
 
     last_export_detail.failed_expense_groups_count = failed_exports

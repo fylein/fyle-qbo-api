@@ -30,6 +30,13 @@ class MapEmployeesSerializer(serializers.ModelSerializer):
         workspace_id = instance.id
         workspace_general_settings = validated_data.pop('workspace_general_settings')
 
+        workspace_general_settings_instance = WorkspaceGeneralSettings.objects.filter(workspace_id=instance.id).first()
+
+        if workspace_general_settings_instance and (workspace_general_settings_instance.employee_field_mapping != workspace_general_settings['employee_field_mapping']):
+            if workspace_general_settings_instance.reimbursable_expenses_object in ('BILL', 'CHECK'):
+                workspace_general_settings_instance.reimbursable_expenses_object = None
+                workspace_general_settings_instance.save()
+
         workspace_general_settings_instance, _ = WorkspaceGeneralSettings.objects.update_or_create(
             workspace_id=workspace_id,
             defaults={
