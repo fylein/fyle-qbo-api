@@ -507,10 +507,17 @@ class LastExportDetailView(viewsets.ViewSet):
         """
         last export detail
         """
+        try:
+            last_export_detail = LastExportDetail.objects.get(workspace_id=kwargs['workspace_id'])
 
-        last_export_details = update_last_export_details(kwargs['workspace_id'])
-
-        return Response(
-            data=self.serializer_class(last_export_details).data,
-            status=status.HTTP_200_OK
-        )
+            return Response(
+                data=self.serializer_class(last_export_detail).data,
+                status=status.HTTP_200_OK
+            )
+        except LastExportDetail.DoesNotExist:
+            return Response(
+                data={
+                    'message': 'Last Export details not found in this workspace'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )

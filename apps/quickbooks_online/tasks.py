@@ -249,6 +249,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
             chain.append('apps.quickbooks_online.tasks.create_bill', expense_group, task_log.id)
 
         if chain.length():
+            chain.append('apps.workspaces.utils.update_last_export_details', workspace_id)
             chain.run()
 
 
@@ -600,6 +601,7 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
             chain.append('apps.quickbooks_online.tasks.create_cheque', expense_group, task_log.id)
 
         if chain.length():
+            chain.append('apps.workspaces.utils.update_last_export_details', workspace_id)
             chain.run()
 
 
@@ -712,6 +714,7 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
             chain.append('apps.quickbooks_online.tasks.create_qbo_expense', expense_group, task_log.id)
 
         if chain.length():
+            chain.append('apps.workspaces.utils.update_last_export_details', workspace_id)
             chain.run()
 
 
@@ -832,6 +835,7 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
             chain.append('apps.quickbooks_online.tasks.create_credit_card_purchase', expense_group, task_log.id)
 
         if chain.length():
+            chain.append('apps.workspaces.utils.update_last_export_details', workspace_id)
             chain.run()
 
 
@@ -955,6 +959,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
             chain.append('apps.quickbooks_online.tasks.create_journal_entry', expense_group, task_log.id)
 
         if chain.length():
+            chain.append('apps.workspaces.utils.update_last_export_details', workspace_id)
             chain.run()
 
 
