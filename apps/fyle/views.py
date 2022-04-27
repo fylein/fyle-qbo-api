@@ -57,6 +57,8 @@ class ExpenseGroupView(generics.ListCreateAPIView):
             }
 
             if start_date and end_date:
+                if start_date == end_date:
+                    end_date += 'T23:59:59'
                 filters['exported_at__range'] = [start_date, end_date]
 
             if exported_at:
