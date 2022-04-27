@@ -205,7 +205,7 @@ def update_last_export_details(workspace_id):
     ).count()
 
     successful_exports = TaskLog.objects.filter(
-        ~Q(type='CREATING_BILL_PAYMENT'),
+        ~Q(type__in=['CREATING_BILL_PAYMENT', 'FETCHING_EXPENSES']),
         workspace_id=workspace_id,
         status='COMPLETE',
         updated_at__gt=last_export_detail.last_exported_at
