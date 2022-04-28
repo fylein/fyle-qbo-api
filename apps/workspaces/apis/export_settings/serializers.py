@@ -146,12 +146,16 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
             }
         )
 
-        if not (expense_group_settings['reimbursable_expense_group_fields'] or expense_group_settings['corporate_credit_card_expense_group_fields']):
+        if not expense_group_settings['reimbursable_expense_group_fields']:
             expense_group_settings['reimbursable_expense_group_fields'] = ['employee_email', 'report_id', 'fund_source']
+
+        if not expense_group_settings['corporate_credit_card_expense_group_fields']:
             expense_group_settings['corporate_credit_card_expense_group_fields'] = ['employee_email', 'report_id', 'fund_source']
 
-        if not (expense_group_settings['reimbursable_export_date_type'] or expense_group_settings['ccc_export_date_type']):
+        if not expense_group_settings['reimbursable_export_date_type']:
             expense_group_settings['reimbursable_export_date_type'] = 'current_date'
+
+        if not expense_group_settings['ccc_export_date_type']:
             expense_group_settings['ccc_export_date_type'] = 'current_date'
 
         ExpenseGroupSettings.update_expense_group_settings(expense_group_settings, instance.id)
