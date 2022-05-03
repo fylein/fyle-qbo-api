@@ -1,7 +1,5 @@
 from rest_framework import serializers
 
-from django.db import transaction
-
 from fyle_accounting_mappings.models import MappingSetting
 
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
@@ -159,16 +157,15 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
         )
 
         if enable_cards_mapping:
-            with transaction.atomic():
-                MappingSetting.objects.update_or_create(
-                    destination_field='CREDIT_CARD_ACCOUNT',
-                    workspace_id=instance.id,
-                    defaults={
-                        'source_field': 'CORPORATE_CARD',
-                        'import_to_fyle': False,
-                        'is_custom': False
-                    }
-                )
+            MappingSetting.objects.update_or_create(
+                destination_field='CREDIT_CARD_ACCOUNT',
+                workspace_id=instance.id,
+                defaults={
+                    'source_field': 'CORPORATE_CARD',
+                    'import_to_fyle': False,
+                    'is_custom': False
+                }
+            )
 
         if not expense_group_settings['reimbursable_expense_group_fields']:
             expense_group_settings['reimbursable_expense_group_fields'] = ['employee_email', 'report_id', 'fund_source']
