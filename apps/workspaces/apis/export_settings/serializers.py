@@ -1,4 +1,7 @@
 from rest_framework import serializers
+
+from fyle_accounting_mappings.models import MappingSetting
+
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from apps.fyle.models import ExpenseGroupSettings
 from apps.mappings.models import GeneralMapping
@@ -135,6 +138,12 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
         category_sync_version = workspace_general_settings_instance.category_sync_version \
             if workspace_general_settings_instance.category_sync_version else 'v2'
 
+        enable_cards_mapping = False
+        if workspace_general_settings.get('corporate_credit_card_expenses_object') and \
+                (workspace_general_settings.get('corporate_credit_card_expenses_object') not in (
+                'BILL', 'DEBIT CARD EXPENSE')):
+            enable_cards_mapping = True
+
         WorkspaceGeneralSettings.objects.update_or_create(
             workspace=instance,
             defaults={
@@ -142,9 +151,21 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
                 'corporate_credit_card_expenses_object': workspace_general_settings.get(
                     'corporate_credit_card_expenses_object'),
                 'map_merchant_to_vendor': map_merchant_to_vendor,
-                'category_sync_version': category_sync_version
+                'category_sync_version': category_sync_version,
+                'map_fyle_cards_qbo_account': enable_cards_mapping
             }
         )
+
+        if enable_cards_mapping:
+            MappingSetting.objects.update_or_create(
+                destination_field='CREDIT_CARD_ACCOUNT',
+                workspace_id=instance.id,
+                defaults={
+                    'source_field': 'CORPORATE_CARD',
+                    'import_to_fyle': False,
+                    'is_custom': False
+                }
+            )
 
         if not expense_group_settings['reimbursable_expense_group_fields']:
             expense_group_settings['reimbursable_expense_group_fields'] = ['employee_email', 'report_id', 'fund_source']
