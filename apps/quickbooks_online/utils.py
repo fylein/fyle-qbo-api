@@ -1058,8 +1058,8 @@ class QBOConnector:
                 response = self.connection.attachments.post(
                     ref_id=ref_id,
                     ref_type=ref_type,
-                    content=attachment['content'],
-                    file_name=attachment['filename']
+                    content=attachment['download_url'],
+                    file_name=attachment['name']
                 )
                 responses.append(response)
             return responses
