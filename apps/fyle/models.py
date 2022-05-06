@@ -85,6 +85,7 @@ class Expense(models.Model):
     verified_at = models.DateTimeField(help_text='Report verified at', null=True)
     custom_properties = JSONField(null=True)
     paid_on_qbo = models.BooleanField(help_text='Expense Payment status on QBO', default=False)
+    payment_number = models.CharField(max_length=55, help_text='Expense payment number', null=True)
 
     class Meta:
         db_table = 'expenses'
@@ -130,7 +131,8 @@ class Expense(models.Model):
                     'expense_updated_at': expense['expense_updated_at'],
                     'fund_source': SOURCE_ACCOUNT_MAP[expense['source_account_type']],
                     'verified_at': expense['verified_at'],
-                    'custom_properties': expense['custom_properties']
+                    'custom_properties': expense['custom_properties'],
+                    'payment_number': expense['payment_number']
                 }
             )
 
