@@ -297,7 +297,7 @@ class BillLineitem(models.Model):
         bill_lineitem_objects = []
 
         for lineitem in expenses:
-            category = lineitem.category if lineitem.category == lineitem.sub_category else '{0} / {1}'.format(
+            category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category == None) else '{0} / {1}'.format(
                 lineitem.category, lineitem.sub_category)
 
             account: Mapping = Mapping.objects.filter(
@@ -420,7 +420,7 @@ class ChequeLineitem(models.Model):
         cheque_lineitem_objects = []
 
         for lineitem in expenses:
-            category = lineitem.category if lineitem.category == lineitem.sub_category else '{0} / {1}'.format(
+            category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category == None) else '{0} / {1}'.format(
                 lineitem.category, lineitem.sub_category)
 
             account: Mapping = Mapping.objects.filter(
@@ -568,7 +568,7 @@ class QBOExpenseLineitem(models.Model):
         qbo_expense_lineitem_objects = []
 
         for lineitem in expenses:
-            category = lineitem.category if lineitem.category == lineitem.sub_category else '{0} / {1}'.format(
+            category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category == None) else '{0} / {1}'.format(
                 lineitem.category, lineitem.sub_category)
 
             account: Mapping = Mapping.objects.filter(
@@ -722,7 +722,7 @@ class CreditCardPurchaseLineitem(models.Model):
         credit_card_purchase_lineitem_objects = []
 
         for lineitem in expenses:
-            category = lineitem.category if lineitem.category == lineitem.sub_category else '{0} / {1}'.format(
+            category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category == None) else '{0} / {1}'.format(
                 lineitem.category, lineitem.sub_category)
 
             account: Mapping = Mapping.objects.filter(
@@ -858,7 +858,7 @@ class JournalEntryLineitem(models.Model):
         journal_entry_lineitem_objects = []
 
         for lineitem in expenses:
-            category = lineitem.category if lineitem.category == lineitem.sub_category else '{0} / {1}'.format(
+            category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category == None) else '{0} / {1}'.format(
                 lineitem.category, lineitem.sub_category)
 
             if expense_group.fund_source == 'PERSONAL':
