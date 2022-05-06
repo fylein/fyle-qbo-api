@@ -503,7 +503,7 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
     expenses = expense_group.expenses.all()
 
     for lineitem in expenses:
-        category = lineitem.category if lineitem.category == lineitem.sub_category else '{0} / {1}'.format(
+        category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category == None) else '{0} / {1}'.format(
             lineitem.category, lineitem.sub_category)
 
         category_attribute = ExpenseAttribute.objects.filter(
