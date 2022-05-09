@@ -252,9 +252,8 @@ def create_fyle_categories_payload(categories: List[DestinationAttribute], works
         if category.value not in existing_category_names:
             payload.append({
                 'name': category.value,
-                'sub_category': ' ',
                 'code': category.destination_id,
-                'is_enabled': category.active,
+                'is_enabled': True if category.active is None else category.active,
                 'restricted_project_ids': []
             })
 
@@ -923,6 +922,8 @@ def upload_attributes_to_fyle(
         fyle_attribute=fyle_attribute_type,
         source_placeholder=source_placeholder
     )
+
+    print('sdfsdfsfd', fyle_custom_field_payload)
 
     if fyle_custom_field_payload:
         platform.expense_custom_fields.post(fyle_custom_field_payload)
