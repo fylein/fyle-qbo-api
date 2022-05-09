@@ -1,3 +1,4 @@
+import base64
 from typing import List, Dict
 from datetime import datetime, timedelta
 import logging
@@ -1058,7 +1059,7 @@ class QBOConnector:
                 response = self.connection.attachments.post(
                     ref_id=ref_id,
                     ref_type=ref_type,
-                    content=attachment['download_url'],
+                    content=base64.b64decode(attachment['download_url']),
                     file_name=attachment['name']
                 )
                 responses.append(response)

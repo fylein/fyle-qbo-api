@@ -92,16 +92,8 @@ def load_attachments(qbo_connection: QBOConnector, ref_id: str, ref_type: str, e
                 file_object = {'id': file_id[0]}
                 files_list.append(file_object)
 
-        if len(files_list):
-            payload = {
-                "data": files_list
-            }
-
-            attachments = platform.connection.v1beta.admin.files.bulk_generate_file_urls(payload=payload)['data']
-
-            if attachments:
-                for attachment in attachments:
-                    attachment['download_url'] = get_as_base64(attachment['download_url'])
+        if files_list:
+            attachments = platform.files.bulk_generate_file_urls(files_list)
 
         qbo_connection.post_attachments(ref_id, ref_type, attachments)
 
@@ -1284,7 +1276,12 @@ def process_reimbursements(workspace_id):
                 reimbursement_ids.append(reimbursement.reimbursement_id)
 
     if reimbursement_ids:
-        platform.reimbursements.bulk_post(reimbursement_ids)
+        reimbursements_list = []
+        for reimbursement_id in reimbursement_ids:
+            reimbursement_object = {'id': reimbursement_id}
+            reimbursements_list.append(reimbursement_object)
+
+        platform.reimbursements.bulk_post_reimbursements(reimbursements_list)
         platform.reimbursements.sync()
 
 

@@ -12,7 +12,6 @@ from fylesdk import WrongParamsError
 from fyle_accounting_mappings.models import MappingSetting, Mapping, DestinationAttribute, ExpenseAttribute,\
     EmployeeMapping
 
-from apps.fyle.utils import FyleConnector
 from fyle_integrations_platform_connector import PlatformConnector
 from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.utils import QBOConnector
@@ -789,9 +788,6 @@ def auto_create_cost_center_mappings(workspace_id):
     try:
         fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
 
-        fyle_connection = FyleConnector(
-            refresh_token=fyle_credentials.refresh_token
-        )
         platform = PlatformConnector(fyle_credentials)
 
         mapping_setting = MappingSetting.objects.get(
