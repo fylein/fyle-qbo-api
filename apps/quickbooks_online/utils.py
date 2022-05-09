@@ -436,8 +436,8 @@ class QBOConnector:
                 'value': purchase_object.department_id
             },
             'TxnDate': purchase_object.transaction_date,
-            "CurrencyRef": {
-               "value": purchase_object.currency
+            'CurrencyRef': {
+               'value': purchase_object.currency
             },
             'PrivateNote': purchase_object.private_note,
             'Credit': credit,

@@ -923,8 +923,6 @@ def upload_attributes_to_fyle(
         source_placeholder=source_placeholder
     )
 
-    print('sdfsdfsfd', fyle_custom_field_payload)
-
     if fyle_custom_field_payload:
         platform.expense_custom_fields.post(fyle_custom_field_payload)
         platform.expense_custom_fields.sync()

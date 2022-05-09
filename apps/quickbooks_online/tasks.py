@@ -1260,7 +1260,6 @@ def process_reimbursements(workspace_id):
     platform.reimbursements.sync()
 
     reimbursements = Reimbursement.objects.filter(state='PENDING', workspace_id=workspace_id).all()
-
     reimbursement_ids = []
 
     if reimbursements:
