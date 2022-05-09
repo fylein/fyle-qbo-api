@@ -2,8 +2,6 @@ import logging
 import json
 import traceback
 from typing import List
-import base64
-import requests
 from datetime import datetime, timedelta
 
 from django.db import transaction
@@ -68,9 +66,6 @@ def get_or_create_credit_card_or_debit_card_vendor(workspace_id: int, merchant: 
             vendor = qbo_connection.get_or_create_vendor('Credit Card Misc', create=True)
 
     return vendor
-
-def get_as_base64(url):
-    return base64.b64encode(requests.get(url).content).decode('ascii')
 
 def load_attachments(qbo_connection: QBOConnector, ref_id: str, ref_type: str, expense_group: ExpenseGroup):
     """
