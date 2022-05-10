@@ -8,11 +8,11 @@ from typing import List, Dict
 from django_q.models import Schedule
 
 from fylesdk import WrongParamsError
-
+from fyle_integrations_platform_connector import PlatformConnector
 from fyle_accounting_mappings.models import MappingSetting, Mapping, DestinationAttribute, ExpenseAttribute,\
     EmployeeMapping
 
-from fyle_integrations_platform_connector import PlatformConnector
+from apps.fyle.utils import FyleConnector
 from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.utils import QBOConnector
 from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGeneralSettings
@@ -885,18 +885,16 @@ def create_fyle_expense_custom_field_payload(
             new_placeholder = source_placeholder
 
         expense_custom_field_payload = {
-            'field_name': fyle_attribute,
-            'category_ids': [],
+            'id': custom_field_id,
+            'name': fyle_attribute,
             'type': 'SELECT',
-            'is_enabled': True,
-            'is_mandatory': False,
+            'active': True,
+            'mandatory': False,
             'placeholder': new_placeholder,
+            'default_value': None,
             'options': fyle_expense_custom_field_options,
             'code': None
         }
-
-        if custom_field_id:
-            expense_custom_field_payload['id'] = custom_field_id
 
         return expense_custom_field_payload
 
@@ -907,6 +905,10 @@ def upload_attributes_to_fyle(
     Upload attributes to Fyle
     """
     fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
+
+    fyle_connection = FyleConnector(
+        refresh_token=fyle_credentials.refresh_token
+    )
 
     platform = PlatformConnector(fyle_credentials)
 
@@ -924,7 +926,7 @@ def upload_attributes_to_fyle(
     )
 
     if fyle_custom_field_payload:
-        platform.expense_custom_fields.post(fyle_custom_field_payload)
+        fyle_connection.connection.ExpensesCustomFields.post(fyle_custom_field_payload)
         platform.expense_custom_fields.sync()
 
     return qbo_attributes

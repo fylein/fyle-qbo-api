@@ -84,8 +84,9 @@ def load_attachments(qbo_connection: QBOConnector, ref_id: str, ref_type: str, e
         attachments = []
         for file_id in file_ids:
             if file_id:
-                file_object = {'id': file_id[0]}
-                files_list.append(file_object)
+                for id in file_id:
+                    file_object = {'id': id}
+                    files_list.append(file_object)
 
         if files_list:
             attachments = platform.files.bulk_generate_file_urls(files_list)
