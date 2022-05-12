@@ -7,7 +7,8 @@ from apps.fyle.models import ExpenseGroupSettings
 from apps.workspaces.models import WorkspaceGeneralSettings
 
 from apps.mappings.tasks import schedule_cost_centers_creation, schedule_vendors_as_merchants_creation, \
-    schedule_fyle_attributes_creation, schedule_projects_creation, schedule_tax_groups_creation
+    schedule_fyle_attributes_creation, schedule_projects_creation, schedule_tax_groups_creation, \
+    schedule_categories_creation
 
 
 class ImportSettingsTrigger:
@@ -102,6 +103,11 @@ class ImportSettingsTrigger:
 
         schedule_vendors_as_merchants_creation(
             import_vendors_as_merchants=self.__workspace_general_settings.get('import_vendors_as_merchants'),
+            workspace_id=self.__workspace_id
+        )
+
+        schedule_categories_creation(
+            import_categories=self.__workspace_general_settings.get('import_categories'),
             workspace_id=self.__workspace_id
         )
 
