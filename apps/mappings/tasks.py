@@ -886,7 +886,7 @@ def create_fyle_expense_custom_field_payload(
         # placeholder is the field that's saved in the detail column of destination attributes
         # fyle_attribute is what we're constructing when both of these fields would not be available
 
-        if not (source_placeholder and placeholder):
+        if not (source_placeholder or placeholder):
             # If source_placeholder and placeholder are both None, then we're creating adding a self constructed placeholder
             new_placeholder = 'Select {0}'.format(fyle_attribute)
         elif not source_placeholder and placeholder:
