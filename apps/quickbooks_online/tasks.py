@@ -67,7 +67,6 @@ def get_or_create_credit_card_or_debit_card_vendor(workspace_id: int, merchant: 
 
     return vendor
 
-
 def load_attachments(qbo_connection: QBOConnector, ref_id: str, ref_type: str, expense_group: ExpenseGroup):
     """
     Get attachments from fyle
@@ -78,10 +77,22 @@ def load_attachments(qbo_connection: QBOConnector, ref_id: str, ref_type: str, e
     """
     try:
         fyle_credentials = FyleCredential.objects.get(workspace_id=expense_group.workspace_id)
-        expense_ids = expense_group.expenses.values_list('expense_id', flat=True)
-        fyle_connector = FyleConnector(fyle_credentials.refresh_token)
-        attachments = fyle_connector.get_attachments(expense_ids)
+        file_ids = expense_group.expenses.values_list('file_ids', flat=True)
+        platform = PlatformConnector(fyle_credentials)
+
+        files_list = []
+        attachments = []
+        for file_id in file_ids:
+            if file_id:
+                for id in file_id:
+                    file_object = {'id': id}
+                    files_list.append(file_object)
+
+        if files_list:
+            attachments = platform.files.bulk_generate_file_urls(files_list)
+
         qbo_connection.post_attachments(ref_id, ref_type, attachments)
+
     except Exception:
         error = traceback.format_exc()
         logger.error(
@@ -1241,13 +1252,10 @@ def schedule_qbo_objects_status_sync(sync_qbo_to_fyle_payments, workspace_id):
 def process_reimbursements(workspace_id):
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
 
-    fyle_connector = FyleConnector(fyle_credentials.refresh_token)
-
     platform = PlatformConnector(fyle_credentials)
     platform.reimbursements.sync()
 
     reimbursements = Reimbursement.objects.filter(state='PENDING', workspace_id=workspace_id).all()
-
     reimbursement_ids = []
 
     if reimbursements:
@@ -1263,7 +1271,12 @@ def process_reimbursements(workspace_id):
                 reimbursement_ids.append(reimbursement.reimbursement_id)
 
     if reimbursement_ids:
-        fyle_connector.post_reimbursement(reimbursement_ids)
+        reimbursements_list = []
+        for reimbursement_id in reimbursement_ids:
+            reimbursement_object = {'id': reimbursement_id}
+            reimbursements_list.append(reimbursement_object)
+
+        platform.reimbursements.bulk_post_reimbursements(reimbursements_list)
         platform.reimbursements.sync()
 
 

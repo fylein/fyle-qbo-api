@@ -1,3 +1,4 @@
+import base64
 from typing import List, Dict
 from datetime import datetime, timedelta
 import logging
@@ -435,8 +436,8 @@ class QBOConnector:
                 'value': purchase_object.department_id
             },
             'TxnDate': purchase_object.transaction_date,
-            "CurrencyRef": {
-               "value": purchase_object.currency
+            'CurrencyRef': {
+               'value': purchase_object.currency
             },
             'PrivateNote': purchase_object.private_note,
             'Credit': credit,
@@ -1058,8 +1059,8 @@ class QBOConnector:
                 response = self.connection.attachments.post(
                     ref_id=ref_id,
                     ref_type=ref_type,
-                    content=attachment['content'],
-                    file_name=attachment['filename']
+                    content=base64.b64decode(attachment['download_url']),
+                    file_name=attachment['name']
                 )
                 responses.append(response)
             return responses

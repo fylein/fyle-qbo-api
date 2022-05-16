@@ -8,12 +8,11 @@ from typing import List, Dict
 from django_q.models import Schedule
 
 from fylesdk import WrongParamsError
-
+from fyle_integrations_platform_connector import PlatformConnector
 from fyle_accounting_mappings.models import MappingSetting, Mapping, DestinationAttribute, ExpenseAttribute,\
     EmployeeMapping
 
 from apps.fyle.utils import FyleConnector
-from fyle_integrations_platform_connector import PlatformConnector
 from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.utils import QBOConnector
 from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGeneralSettings
@@ -95,14 +94,13 @@ def create_fyle_projects_payload(projects: List[DestinationAttribute], existing_
                     project.value,
                     project.destination_id
                 ),
-                'active': True if project.active is None else project.active
+                'is_enabled': True if project.active is None else project.active
             })
 
     return payload
 
 
-def post_projects_in_batches(fyle_connection: FyleConnector, platform: PlatformConnector,
-                             workspace_id: int, destination_field: str):
+def post_projects_in_batches(platform: PlatformConnector, workspace_id: int, destination_field: str):
     existing_project_names = ExpenseAttribute.objects.filter(
         attribute_type='PROJECT', workspace_id=workspace_id).values_list('value', flat=True)
     qbo_attributes_count = DestinationAttribute.objects.filter(
@@ -118,7 +116,7 @@ def post_projects_in_batches(fyle_connection: FyleConnector, platform: PlatformC
 
         fyle_payload: List[Dict] = create_fyle_projects_payload(paginated_qbo_attributes, existing_project_names)
         if fyle_payload:
-            fyle_connection.connection.Projects.post(fyle_payload)
+            platform.projects.post_bulk(fyle_payload)
             platform.projects.sync()
 
         Mapping.bulk_create_mappings(paginated_qbo_attributes, 'PROJECT', destination_field, workspace_id)
@@ -167,11 +165,6 @@ def auto_create_project_mappings(workspace_id: int):
     """
     try:
         fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
-
-        fyle_connection = FyleConnector(
-            refresh_token=fyle_credentials.refresh_token,
-        )
-
         platform = PlatformConnector(fyle_credentials)
 
         platform.projects.sync()
@@ -182,7 +175,7 @@ def auto_create_project_mappings(workspace_id: int):
 
         sync_qbo_attribute(mapping_setting.destination_field, workspace_id)
 
-        post_projects_in_batches(fyle_connection, platform, workspace_id, mapping_setting.destination_field)
+        post_projects_in_batches(platform, workspace_id, mapping_setting.destination_field)
 
     except WrongParamsError as exception:
         logger.error(
@@ -260,7 +253,8 @@ def create_fyle_categories_payload(categories: List[DestinationAttribute], works
             payload.append({
                 'name': category.value,
                 'code': category.destination_id,
-                'enabled': category.active
+                'is_enabled': True if category.active is None else category.active,
+                'restricted_project_ids': []
             })
 
     return payload
@@ -272,11 +266,6 @@ def upload_categories_to_fyle(workspace_id):
     """
     fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
     qbo_credentials: QBOCredential = QBOCredential.objects.get(workspace_id=workspace_id)
-
-    fyle_connection = FyleConnector(
-        refresh_token=fyle_credentials.refresh_token
-    )
-
     platform = PlatformConnector(fyle_credentials)
 
     qbo_connection = QBOConnector(
@@ -292,7 +281,7 @@ def upload_categories_to_fyle(workspace_id):
     fyle_payload: List[Dict] = create_fyle_categories_payload(qbo_attributes, workspace_id)
 
     if fyle_payload:
-        fyle_connection.connection.Categories.post(fyle_payload)
+        platform.categories.post_bulk(fyle_payload)
         platform.categories.sync()
 
     return qbo_attributes
@@ -735,7 +724,7 @@ def create_fyle_cost_centers_payload(qbo_attributes: List[DestinationAttribute],
         if qbo_attribute.value not in existing_fyle_cost_centers:
             fyle_cost_centers_payload.append({
                 'name': qbo_attribute.value,
-                'enabled': True if qbo_attribute.active is None else qbo_attribute.active,
+                'is_enabled': True if qbo_attribute.active is None else qbo_attribute.active,
                 'description': 'Cost Center - {0}, Id - {1}'.format(
                     qbo_attribute.value,
                     qbo_attribute.destination_id
@@ -765,8 +754,7 @@ def create_fyle_tax_group_payload(qbo_attributes: List[DestinationAttribute], ex
     return fyle_tax_group_payload
 
 
-def post_cost_centers_in_batches(fyle_connection: FyleConnector, platform: PlatformConnector,
-                                 workspace_id: int, qbo_attribute_type: str):
+def post_cost_centers_in_batches(platform: PlatformConnector, workspace_id: int, qbo_attribute_type: str):
     existing_cost_center_names = ExpenseAttribute.objects.filter(
         attribute_type='COST_CENTER', workspace_id=workspace_id).values_list('value', flat=True)
 
@@ -786,7 +774,7 @@ def post_cost_centers_in_batches(fyle_connection: FyleConnector, platform: Platf
             paginated_qbo_attributes, existing_cost_center_names)
 
         if fyle_payload:
-            fyle_connection.connection.CostCenters.post(fyle_payload)
+            platform.cost_centers.post_bulk(fyle_payload)
             platform.cost_centers.sync()
 
         Mapping.bulk_create_mappings(paginated_qbo_attributes, 'COST_CENTER', qbo_attribute_type, workspace_id)
@@ -799,9 +787,6 @@ def auto_create_cost_center_mappings(workspace_id):
     try:
         fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
 
-        fyle_connection = FyleConnector(
-            refresh_token=fyle_credentials.refresh_token
-        )
         platform = PlatformConnector(fyle_credentials)
 
         mapping_setting = MappingSetting.objects.get(
@@ -812,7 +797,7 @@ def auto_create_cost_center_mappings(workspace_id):
 
         sync_qbo_attribute(mapping_setting.destination_field, workspace_id)
 
-        post_cost_centers_in_batches(fyle_connection, platform, workspace_id, mapping_setting.destination_field)
+        post_cost_centers_in_batches(platform, workspace_id, mapping_setting.destination_field)
 
     except WrongParamsError as exception:
         logger.error(
@@ -921,7 +906,9 @@ def upload_attributes_to_fyle(
     """
     fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
 
-    fyle_connection = FyleConnector(refresh_token=fyle_credentials.refresh_token)
+    fyle_connection = FyleConnector(
+        refresh_token=fyle_credentials.refresh_token
+    )
 
     platform = PlatformConnector(fyle_credentials)
 
@@ -1044,8 +1031,7 @@ def post_merchants(platform_connection: PlatformConnector, workspace_id: int, fi
 
     if fyle_payload:
         platform_connection.merchants.post(fyle_payload)
-
-    platform_connection.merchants.sync(workspace_id)
+        platform_connection.merchants.sync(workspace_id)
 
 def auto_create_vendors_as_merchants(workspace_id):
     try:

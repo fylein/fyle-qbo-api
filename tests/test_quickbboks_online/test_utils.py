@@ -1,6 +1,6 @@
-from traceback import print_tb
-from fyle_accounting_mappings.models import DestinationAttribute
 import pytest
+
+from fyle_accounting_mappings.models import DestinationAttribute
 from apps.quickbooks_online.utils import QBOConnector, QBOCredential
 from .fixtures import data
 from tests.helper import dict_compare_keys
