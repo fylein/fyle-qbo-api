@@ -120,6 +120,20 @@ class WorkspaceView(viewsets.ViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+    def patch(self, request, **kwargs):
+        """
+        PATCH workspace
+        """
+        workspace_instance = Workspace.objects.get(pk=kwargs['workspace_id'])
+        serializer = WorkspaceSerializer(
+            workspace_instance, data=request.data, partial=True
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                data=serializer.data,
+                status=status.HTTP_200_OK
+            )
 
 class ReadyView(viewsets.ViewSet):
     """

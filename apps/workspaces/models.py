@@ -18,6 +18,11 @@ ONBOARDING_STATE_CHOICES = (
     ('COMPLETE', 'COMPLETE')
 )
 
+APP_VERSION_CHOICES = (
+    ('v1', 'v1'),
+    ('v2', 'v2')
+)
+
 EXPORT_MODE_CHOICES = (
     ('MANUAL', 'MANUAL'),
     ('AUTO', 'AUTO')
@@ -39,6 +44,7 @@ class Workspace(models.Model):
     fyle_currency = models.CharField(max_length=5, help_text='Fyle Currency', null=True)
     qbo_realm_id = models.CharField(max_length=255, help_text='qbo realm id')
     cluster_domain = models.CharField(max_length=255, help_text='fyle cluster domain', null=True)
+    app_version = models.CharField(max_length=2, help_text='App version', default='v1', choices=APP_VERSION_CHOICES)
     last_synced_at = models.DateTimeField(help_text='Datetime when expenses were pulled last', null=True)
     source_synced_at = models.DateTimeField(help_text='Datetime when source dimensions were pulled', null=True)
     destination_synced_at = models.DateTimeField(help_text='Datetime when destination dimensions were pulled',
