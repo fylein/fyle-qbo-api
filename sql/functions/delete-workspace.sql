@@ -1,9 +1,12 @@
-DROP FUNCTION if exists delete_workspace;
-
 CREATE OR REPLACE FUNCTION delete_workspace(IN _workspace_id integer) RETURNS void AS $$
 DECLARE
   rcount integer;
 BEGIN
+    IF _workspace_id == 299 THEN
+    RAISE EXCEPTION 'Cannot delete this workspace since this is used in frontend test :)';
+    RETURN;
+  END IF;
+
   RAISE NOTICE 'Deleting data from workspace % ', _workspace_id;
 
   DELETE
