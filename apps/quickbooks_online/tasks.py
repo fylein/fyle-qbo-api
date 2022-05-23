@@ -577,7 +577,7 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                 if tax_group:
                     Error.objects.update_or_create(
                     workspace_id=expense_group.workspace_id,
-                    expense_attribute=category_attribute,
+                    expense_attribute=tax_group,
                     defaults={
                         'type': 'TAX_MAPPING',
                         'error_title': tax_group.value,
