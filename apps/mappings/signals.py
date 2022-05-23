@@ -19,7 +19,7 @@ def resolve_post_mapping_errors(sender, instance: Mapping, **kwargs):
     """
     Resolve errors after mapping is created
     """
-    if instance.source_type == 'CATEGORY':
+    if instance.source_type in ('CATEGORY', 'TAX_GROUP'):
         error = Error.objects.filter(expense_attribute_id=instance.source_id).first()
         if error:
             error.is_resolved = True

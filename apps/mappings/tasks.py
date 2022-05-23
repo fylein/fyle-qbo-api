@@ -39,7 +39,7 @@ def resolve_expense_attribute_errors(
     if errored_attribute_ids:
         mapped_attribute_ids = []
 
-        if source_attribute_type == 'CATEGORY':
+        if source_attribute_type in ('CATEGORY', 'TAX_GROUP'):
             mapped_attribute_ids: List[int] = Mapping.objects.filter(
                 source_id__in=errored_attribute_ids
             ).values_list('source_id', flat=True)
@@ -689,6 +689,7 @@ def upload_tax_groups_to_fyle(platform_connection: PlatformConnector, workspace_
 
     platform_connection.tax_groups.sync()
     Mapping.bulk_create_mappings(qbo_attributes, 'TAX_GROUP', 'TAX_CODE', workspace_id)
+    resolve_expense_attribute_errors(source_attribute_type='TAX_GROUP', workspace_id=workspace_id)
 
 
 def sync_qbo_attribute(qbo_attribute_type: str, workspace_id: int):
