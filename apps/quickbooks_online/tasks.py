@@ -20,7 +20,6 @@ from apps.fyle.models import ExpenseGroup, Reimbursement, Expense
 from apps.tasks.models import Error, TaskLog
 from apps.mappings.models import GeneralMapping
 from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGeneralSettings
-from apps.fyle.utils import FyleConnector
 
 from .models import Bill, BillLineitem, Cheque, ChequeLineitem, CreditCardPurchase, CreditCardPurchaseLineitem, \
     JournalEntry, JournalEntryLineitem, BillPayment, BillPaymentLineitem, QBOExpense, QBOExpenseLineitem
