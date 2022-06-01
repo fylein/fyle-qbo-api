@@ -28,6 +28,9 @@ class ImportSettingsTrigger:
         """
         Should remove Department Source field from Reimbursable settings in case of deletion and updation
         """
+        workspace_general_settings: WorkspaceGeneralSettings = WorkspaceGeneralSettings.objects.filter(
+            workspace_id=self.__workspace_id).first()
+
         old_department_setting = current_mappings_settings.filter(
             destination_field='DEPARTMENT'
         ).first()
@@ -45,16 +48,18 @@ class ImportSettingsTrigger:
             )
 
             # Removing Department Source field from Reimbursable settings
-            reimbursable_settings = expense_group_settings.reimbursable_expense_group_fields
-            reimbursable_settings.remove(old_department_setting.source_field.lower())
-            expense_group_settings.reimbursable_expense_group_fields = list(set(reimbursable_settings))
+            if workspace_general_settings.reimbursable_expenses_object:
+                reimbursable_settings = expense_group_settings.reimbursable_expense_group_fields
+                reimbursable_settings.remove(old_department_setting.source_field.lower())
+                expense_group_settings.reimbursable_expense_group_fields = list(set(reimbursable_settings))
 
             # Removing Department Source field from Non reimbursable settings
-            corporate_credit_card_settings = list(expense_group_settings.corporate_credit_card_expense_group_fields)
-            corporate_credit_card_settings.remove(old_department_setting.source_field.lower())
-            expense_group_settings.corporate_credit_card_expense_group_fields = list(
-                set(corporate_credit_card_settings)
-            )
+            if workspace_general_settings.corporate_credit_card_expenses_object:
+                corporate_credit_card_settings = list(expense_group_settings.corporate_credit_card_expense_group_fields)
+                corporate_credit_card_settings.remove(old_department_setting.source_field.lower())
+                expense_group_settings.corporate_credit_card_expense_group_fields = list(
+                    set(corporate_credit_card_settings)
+                )
 
             expense_group_settings.save()
 

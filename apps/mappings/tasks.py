@@ -7,12 +7,11 @@ from typing import List, Dict
 
 from django_q.models import Schedule
 
-from fylesdk import WrongParamsError
+from fyle.platform.exceptions import WrongParamsError
 from fyle_integrations_platform_connector import PlatformConnector
 from fyle_accounting_mappings.models import MappingSetting, Mapping, DestinationAttribute, ExpenseAttribute,\
     EmployeeMapping
 
-from apps.fyle.utils import FyleConnector
 from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.utils import QBOConnector
 from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGeneralSettings
@@ -39,7 +38,7 @@ def resolve_expense_attribute_errors(
     if errored_attribute_ids:
         mapped_attribute_ids = []
 
-        if source_attribute_type == 'CATEGORY':
+        if source_attribute_type in ('CATEGORY', 'TAX_GROUP'):
             mapped_attribute_ids: List[int] = Mapping.objects.filter(
                 source_id__in=errored_attribute_ids
             ).values_list('source_id', flat=True)
@@ -254,7 +253,7 @@ def create_fyle_categories_payload(categories: List[DestinationAttribute], works
                 'name': category.value,
                 'code': category.destination_id,
                 'is_enabled': True if category.active is None else category.active,
-                'restricted_project_ids': []
+                'restricted_project_ids': None
             })
 
     return payload
@@ -689,6 +688,7 @@ def upload_tax_groups_to_fyle(platform_connection: PlatformConnector, workspace_
 
     platform_connection.tax_groups.sync()
     Mapping.bulk_create_mappings(qbo_attributes, 'TAX_GROUP', 'TAX_CODE', workspace_id)
+    resolve_expense_attribute_errors(source_attribute_type='TAX_GROUP', workspace_id=workspace_id)
 
 
 def sync_qbo_attribute(qbo_attribute_type: str, workspace_id: int):
@@ -885,16 +885,18 @@ def create_fyle_expense_custom_field_payload(
             new_placeholder = source_placeholder
 
         expense_custom_field_payload = {
-            'id': custom_field_id,
-            'name': fyle_attribute,
+            'field_name': fyle_attribute,
             'type': 'SELECT',
-            'active': True,
-            'mandatory': False,
-            'placeholder': new_placeholder,
-            'default_value': None,
+            'is_enabled': True,
+            'is_mandatory': False,
+            'placeholder': 'Select {0}'.format(fyle_attribute),
             'options': fyle_expense_custom_field_options,
             'code': None
         }
+
+
+        if custom_field_id:
+            expense_custom_field_payload['id'] = custom_field_id
 
         return expense_custom_field_payload
 
@@ -905,10 +907,6 @@ def upload_attributes_to_fyle(
     Upload attributes to Fyle
     """
     fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
-
-    fyle_connection = FyleConnector(
-        refresh_token=fyle_credentials.refresh_token
-    )
 
     platform = PlatformConnector(fyle_credentials)
 
@@ -926,7 +924,7 @@ def upload_attributes_to_fyle(
     )
 
     if fyle_custom_field_payload:
-        fyle_connection.connection.ExpensesCustomFields.post(fyle_custom_field_payload)
+        platform.expense_custom_fields.post(fyle_custom_field_payload)
         platform.expense_custom_fields.sync()
 
     return qbo_attributes

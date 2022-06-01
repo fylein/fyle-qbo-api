@@ -20,7 +20,6 @@ from apps.fyle.models import ExpenseGroup, Reimbursement, Expense
 from apps.tasks.models import Error, TaskLog
 from apps.mappings.models import GeneralMapping
 from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGeneralSettings
-from apps.fyle.utils import FyleConnector
 
 from .models import Bill, BillLineitem, Cheque, ChequeLineitem, CreditCardPurchase, CreditCardPurchaseLineitem, \
     JournalEntry, JournalEntryLineitem, BillPayment, BillPaymentLineitem, QBOExpense, QBOExpenseLineitem
@@ -216,8 +215,8 @@ def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: Ta
         Error.objects.update_or_create(
             workspace_id=expense_group.workspace_id,
             expense_group=expense_group,
-            error_title=error['type'],
             defaults={
+                'error_title': error['type'],
                 'type': 'QBO_ERROR',
                 'error_detail': error['long_description'],
                 'is_resolved': False
@@ -574,6 +573,17 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                     'message': 'Tax Group Mapping not found'
                 })
 
+                if tax_group:
+                    Error.objects.update_or_create(
+                    workspace_id=expense_group.workspace_id,
+                    expense_attribute=tax_group,
+                    defaults={
+                        'type': 'TAX_MAPPING',
+                        'error_title': tax_group.value,
+                        'error_detail': 'Tax mapping is missing',
+                        'is_resolved': False
+                    }
+                )
         row = row + 1
 
     if bulk_errors:
