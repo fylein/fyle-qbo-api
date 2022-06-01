@@ -8,10 +8,11 @@ from apps.workspaces.models import Workspace
 def create_temp_workspace(db):
 
     workspace = Workspace.objects.create(
-        id=99,
-        name = 'Fyle for Eren',
-        fyle_org_id = 'Eren',
-        qbo_realm_id = '4620816365007870290',
+        id=98,
+        name = 'Fyle for Testing',
+        fyle_org_id = 'Testing',
+        fyle_currency = 'USD',
+        qbo_realm_id = '4620816365007870291',
         cluster_domain = None,
         last_synced_at = None,
         source_synced_at = None,
@@ -26,6 +27,6 @@ def create_temp_workspace(db):
         reimbursable_expense_group_fields='{employee_email,report_id,claim_number,fund_source}',
         corporate_credit_card_expense_group_fields='{fund_source,employee_email,claim_number,expense_id,report_id}',
         expense_state='PAYMENT PROCESSING',
-        workspace_id=99,
+        workspace_id=98,
         import_card_credits=False
     )

@@ -52,7 +52,7 @@ def test_connection(db):
 @pytest.fixture()
 def add_qbo_credentials(db):
 
-    workspaces = [8,9]
+    workspaces = [1,2,3,4,5]
     QBOCredential.objects.create(
         workspace_id=workspaces[0],
         refresh_token = '',
@@ -75,7 +75,7 @@ def add_qbo_credentials(db):
 
 @pytest.fixture()
 def add_fyle_credentials(db):
-    workspaces = [8,9]
+    workspaces = [1,2,3,4,5]
 
     for workspace_id in workspaces:
         FyleCredential.objects.create(

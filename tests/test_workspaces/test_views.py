@@ -10,9 +10,12 @@ def test_get_workspace_by_id(api_client, test_connection):
 
     url = reverse(
         'workspace-by-id', kwargs={
-            'workspace_id': 9
+            'workspace_id': 3
         }
     )
+
+    print(url)
+    assert 1 == 3
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
     response = api_client.get(url)
@@ -41,7 +44,7 @@ def test_get_configuration_detail(api_client, test_connection):
 
     url = reverse(
         'workspace-general-settings', kwargs={
-            'workspace_id': 8
+            'workspace_id': 4
         }
     )
 
@@ -55,7 +58,7 @@ def test_get_configuration_detail(api_client, test_connection):
 def test_post_workspace_configurations(api_client, test_connection):
     url = reverse(
         'workspace-general-settings', kwargs={
-            'workspace_id': 8
+            'workspace_id': 4
         }
     )
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
@@ -73,7 +76,7 @@ def test_post_workspace_configurations(api_client, test_connection):
 def test_get_workspace_schedule(api_client, test_connection):
     url = reverse(
         'workspace-schedule', kwargs={
-            'workspace_id': 8
+            'workspace_id': 4
         }
     )
 
@@ -107,7 +110,7 @@ def test_ready_view(api_client, test_connection):
 def test_delete_fyle_credentials_view(api_client, test_connection):
     url = reverse(
         'delete-fyle-credentials', kwargs={
-            'workspace_id': 8
+            'workspace_id': 4
         }
     )
 
@@ -122,7 +125,7 @@ def test_delete_fyle_credentials_view(api_client, test_connection):
 def test_get_fyle_credentials_view(api_client, test_connection, add_fyle_credentials):
     url = reverse(
         'get-fyle-credentials', kwargs={
-            'workspace_id': 8
+            'workspace_id': 4
         }
     )
 
@@ -145,7 +148,7 @@ def test_get_fyle_credentials_view(api_client, test_connection, add_fyle_credent
 def test_get_qbo_credentials_view(api_client, test_connection, add_qbo_credentials):
     url = reverse(
         'get-qbo-credentials', kwargs={
-            'workspace_id': 8
+            'workspace_id': 4
         }
     )
 
@@ -160,7 +163,7 @@ def test_get_qbo_credentials_view(api_client, test_connection, add_qbo_credentia
 def test_delete_qbo_credentials_view(api_client, test_connection, add_qbo_credentials):
     url = reverse(
         'delete-qbo-credentials', kwargs={
-            'workspace_id': 8
+            'workspace_id': 4
         }
     )
 

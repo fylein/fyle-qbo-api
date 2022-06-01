@@ -111,7 +111,8 @@ WSGI_APPLICATION = 'fyle_qbo_api.wsgi.application'
 Q_CLUSTER = {
     'name': 'fyle_quickbooks_api',
     'save_limit': 0,
-    'workers': os.environ.get('NO_WORKERS', 4),
+    # 'workers': os.environ.get('NO_WORKERS', 4),
+    'workers': 4,
     'queue_limit': 30,
     'cached': False,
     'orm': 'default',
