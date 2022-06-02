@@ -82,14 +82,14 @@ class ImportSettingsTrigger:
             # Adding Department Source field to Reimbursable settings
             reimbursable_settings = expense_group_settings.reimbursable_expense_group_fields
 
-            if workspace_general_settings.reimbursable_expenses_object not in ('JOURNAL_ENTRY', None):
+            if workspace_general_settings.reimbursable_expenses_object != 'JOURNAL_ENTRY':
                 reimbursable_settings.append(department_setting['source_field'].lower())
                 expense_group_settings.reimbursable_expense_group_fields = list(set(reimbursable_settings))
 
             # Adding Department Source field to Non reimbursable settings
             corporate_credit_card_settings = list(expense_group_settings.corporate_credit_card_expense_group_fields)
 
-            if workspace_general_settings.corporate_credit_card_expenses_object not in ('JOURNAL_ENTRY', None):
+            if workspace_general_settings.corporate_credit_card_expenses_object != 'JOURNAL_ENTRY':
                 corporate_credit_card_settings.append(department_setting['source_field'].lower())
                 expense_group_settings.corporate_credit_card_expense_group_fields = list(
                     set(corporate_credit_card_settings)
