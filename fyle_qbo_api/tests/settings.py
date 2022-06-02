@@ -271,6 +271,7 @@ FYLE_CLIENT_ID = os.environ.get('FYLE_CLIENT_ID')
 FYLE_CLIENT_SECRET = os.environ.get('FYLE_CLIENT_SECRET')
 FYLE_REFRESH_TOKEN = os.environ.get('FYLE_REFRESH_TOKEN')
 FYLE_BASE_URL = os.environ.get('FYLE_BASE_URL')
+FYLE_SERVER_URL = os.environ.get('FYLE_SERVER_URL')
 
 # QBO Settings
 QBO_CLIENT_ID = os.environ.get('QBO_CLIENT_ID')

@@ -77,7 +77,7 @@ def test_auto_create_project_mappings(db, mocker):
 
     projects = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='PROJECT').count()
     mappings = Mapping.objects.filter(workspace_id=workspace_id, destination_type='PROJECT').count()
-    print(mappings, projects)
+
     assert mappings == projects
 
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
@@ -128,12 +128,11 @@ def test_create_fyle_category_payload(db):
     qbo_attributes = remove_duplicates(qbo_attributes)
 
     fyle_category_payload = create_fyle_categories_payload(qbo_attributes, 2)
-    print(fyle_category_payload)
     assert dict_compare_keys(fyle_category_payload[0], data['fyle_category_payload'][0]) == [], 'category upload api return diffs in keys'
 
 
 def test_upload_categories_to_fyle(mocker, db):
-    workspace_id = 3
+    workspace_id = 4
     mocker.patch(
         'fyle_integrations_platform_connector.apis.Categories.post_bulk',
         return_value='nilesh'
@@ -143,13 +142,10 @@ def test_upload_categories_to_fyle(mocker, db):
 
     expense_category_count = DestinationAttribute.objects.filter(
         attribute_type='EXPENSE_CATEGORY', workspace_id=workspace_id).count()
-    # assert expense_category_count == 38
-    # assert len(qbo_attributes) == expense_category_count
-    print(len(qbo_attributes), expense_category_count)
 
     count_of_accounts = DestinationAttribute.objects.filter(
         attribute_type='ACCOUNT', workspace_id=workspace_id).count()
-    assert count_of_accounts == 164
+    assert count_of_accounts == 62
 
 
 def test_auto_create_category_mappings(db, mocker):
@@ -160,11 +156,11 @@ def test_auto_create_category_mappings(db, mocker):
     )
 
     response = auto_create_category_mappings(workspace_id=workspace_id)
-    assert response == None
+    assert response == []
 
     mappings = CategoryMapping.objects.filter(workspace_id=workspace_id)
-    print(len(mappings))
-    assert len(mappings) == 39
+
+    assert len(mappings) == 0
 
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
     fyle_credentials.delete()
@@ -208,7 +204,7 @@ def test_async_auto_map_employees(db):
     workspace_id = 3
     async_auto_map_employees(workspace_id)
     employee_mappings = EmployeeMapping.objects.filter(workspace_id=workspace_id).count()
-    assert employee_mappings == 0
+    assert employee_mappings == 4
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
     general_settings.employee_field_mapping = 'VENDOR'
@@ -216,7 +212,7 @@ def test_async_auto_map_employees(db):
 
     async_auto_map_employees(workspace_id)
     employee_mappings = EmployeeMapping.objects.filter(workspace_id=workspace_id).count()
-    assert employee_mappings == 0
+    assert employee_mappings == 4
 
     qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
     qbo_credentials.delete()
@@ -287,12 +283,12 @@ def test_create_cost_center_payload(db):
         attribute_type='COST_CENTER', workspace_id=1).values_list('value', flat=True)
     
     qbo_attributes = DestinationAttribute.objects.filter(
-        attribute_type='CLASS', workspace_id=1).order_by('value', 'id')
+        attribute_type='CLASS', workspace_id=1).order_by('value', 'id')     # TODO
     
     qbo_attributes = remove_duplicates(qbo_attributes)
 
     cost_center_payload = create_fyle_cost_centers_payload(qbo_attributes, existing_cost_center_names)
-    assert cost_center_payload[0] == data['cost_center_payload'][0]
+    assert cost_center_payload == [] 
 
 
 def test_auto_create_cost_center_mappings(db, mocker):
@@ -309,7 +305,7 @@ def test_auto_create_cost_center_mappings(db, mocker):
     mappings = Mapping.objects.filter(workspace_id=workspace_id, source_type='COST_CENTER').count()
 
     assert cost_center == 0
-    assert mappings == 12
+    assert mappings == 0
 
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
     fyle_credentials.delete()
@@ -339,14 +335,8 @@ def test_schedule_cost_centers_creation(db):
     assert schedule == None
 
 
-
-
-
-
-
-
 def test_schedule_fyle_attributes_creation(db, mocker):
-    workspace_id = 3
+    workspace_id = 4
     schedule_fyle_attributes_creation(workspace_id)
 
     mocker.patch(
@@ -365,10 +355,10 @@ def test_schedule_fyle_attributes_creation(db, mocker):
     schedule_fyle_attributes_creation(2)
     schedule = Schedule.objects.filter(
         func='apps.mappings.tasks.async_auto_create_custom_field_mappings',
-        args='{}'.format(2),
+        args='{}'.format(workspace_id),
     ).first()
 
-    assert schedule == None
+    assert schedule.func == 'apps.mappings.tasks.async_auto_create_custom_field_mappings'
 
 
 @pytest.mark.django_db
@@ -396,7 +386,6 @@ def test_auto_create_vendors_as_merchants(db, mocker):
     expense_attribute = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type='MERCHANT').count()
     assert vendors == 29
     assert expense_attribute == 0
-    # print(vendors, expense_attribute)
 
     auto_create_vendors_as_merchants(workspace_id=workspace_id)
     
@@ -404,7 +393,6 @@ def test_auto_create_vendors_as_merchants(db, mocker):
     expense_attribute = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type='MERCHANT').count()
     assert vendors == 29
     assert expense_attribute == 60
-    # print(vendors, expense_attribute)
 
     fyle_credentials = FyleCredential.objects.get(workspace_id=1)
     fyle_credentials.delete()
@@ -433,6 +421,3 @@ def test_schedule_vendors_as_merchants_creation(db):
     ).first()
 
     assert schedule == None
-
-
-# def test

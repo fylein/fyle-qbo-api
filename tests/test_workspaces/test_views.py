@@ -14,7 +14,6 @@ def test_get_workspace_by_id(api_client, test_connection):
         }
     )
 
-    print(url)
     assert 1 == 3
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
@@ -88,7 +87,7 @@ def test_get_workspace_schedule(api_client, test_connection):
     assert response['message'] == 'Workspace schedule does not exist in workspace'
 
     WorkspaceSchedule.objects.get_or_create(
-        workspace_id=8
+        workspace_id=5
     )
 
     response = api_client.get(url)
@@ -136,7 +135,7 @@ def test_get_fyle_credentials_view(api_client, test_connection, add_fyle_credent
 
     assert response['refresh_token'] == settings.FYLE_REFRESH_TOKEN
 
-    fyle_credentials = FyleCredential.objects.get(workspace_id=8)
+    fyle_credentials = FyleCredential.objects.get(workspace_id=5)
     fyle_credentials.delete()
 
     response = api_client.get(url)

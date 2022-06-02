@@ -9,7 +9,7 @@ def test_quickbooks_fields_view(api_client, test_connection):
    access_token = test_connection.access_token
    url = reverse('quickbooks-fields', 
       kwargs={
-            'workspace_id': 8
+            'workspace_id': 3
          }
       )
 
@@ -19,14 +19,14 @@ def test_quickbooks_fields_view(api_client, test_connection):
    assert response.status_code == 200
    response = json.loads(response.content)
 
-   assert len(response) == 3
+   assert len(response) == 1
 
 def test_destination_attributes_view(api_client, test_connection):
 
     access_token = test_connection.access_token
     url = reverse('destination-attributes', 
         kwargs={
-                'workspace_id': 8
+                'workspace_id': 3
             }
         )
 
@@ -38,4 +38,4 @@ def test_destination_attributes_view(api_client, test_connection):
     assert response.status_code == 200
     response = json.loads(response.content)
 
-    assert len(response) == 34
+    assert len(response) == 29

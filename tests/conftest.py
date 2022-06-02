@@ -2,10 +2,11 @@ import os
 from datetime import datetime,timezone
 import pytest
 from fyle_rest_auth.models import User,AuthToken
-from fylesdk import FyleSDK
 from rest_framework.test import APIClient
-from fyle_qbo_api.tests import settings
+from fyle.platform import Platform
+from apps.fyle.helpers import get_access_token
 from apps.workspaces.models import QBOCredential, FyleCredential
+from fyle_qbo_api.tests import settings
 
 def pytest_configure():
     os.system('sh ./tests/sql_fixtures/reset_db_fixtures/reset_db.sh')
@@ -21,19 +22,23 @@ def test_connection(db):
     """
     client_id = settings.FYLE_CLIENT_ID
     client_secret = settings.FYLE_CLIENT_SECRET
-    base_url = settings.FYLE_BASE_URL
+    token_url = settings.FYLE_TOKEN_URI
     refresh_token = settings.FYLE_REFRESH_TOKEN
+    server_url = settings.FYLE_SERVER_URL
 
-    fyle_connection = FyleSDK(
-        base_url=base_url,
+    fyle_connection = Platform(
+        token_url=token_url,
         client_id=client_id,
         client_secret=client_secret,
-        refresh_token=refresh_token
+        refresh_token=refresh_token,
+        server_url=server_url
     )
 
-    user_profile = fyle_connection.Employees.get_my_profile()['data']
+    access_token = get_access_token(refresh_token)
+    fyle_connection.access_token = access_token
+    user_profile = fyle_connection.v1beta.spender.my_profile.get()['data']
     user = User(
-        password='', last_login=datetime.now(tz=timezone.utc), id=1, email=user_profile['employee_email'],
+        password='', last_login=datetime.now(tz=timezone.utc), id=1, email=user_profile['user']['email'],
         user_id=user_profile['user_id'], full_name='', active='t', staff='f', admin='t'
     )
 

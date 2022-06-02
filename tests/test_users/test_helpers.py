@@ -3,7 +3,9 @@ from datetime import datetime, timezone
 from fyle_rest_auth.models import User
 from apps.users.helpers import get_cluster_domain_and_refresh_token
 from fyle_qbo_api.tests import settings
-from fylesdk import FyleSDK
+from fyle.platform import Platform
+from fyle_integrations_platform_connector import PlatformConnector
+
 
 @pytest.mark.django_db
 def test_get_cluster_domain_and_refresh_token(add_users_to_database,add_fyle_credentials):
@@ -15,7 +17,7 @@ def test_get_cluster_domain_and_refresh_token(add_users_to_database,add_fyle_cre
     base_url = settings.FYLE_BASE_URL
     refresh_token = settings.FYLE_REFRESH_TOKEN
 
-    fyle_connection = FyleSDK(
+    fyle_connection = PlatformConnector(
         base_url=base_url,
         client_id=client_id,
         client_secret=client_secret,
