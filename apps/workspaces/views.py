@@ -305,16 +305,19 @@ class ConnectQBOView(viewsets.ViewSet):
                 workspace.qbo_realm_id = realm_id
                 workspace.save()
             else:
-                assert_valid(realm_id == qbo_credentials.realm_id,
-                             'Please choose the correct Quickbooks online account')
+                workspace.qbo_realm_id = realm_id
+                workspace.save()
                 qbo_credentials.refresh_token = refresh_token
+                qbo_credentials.realm_id = realm_id
                 qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
                 company_info = qbo_connector.get_company_info()
                 qbo_credentials.company_name = company_info['CompanyName']
+                qbo_credentials.country = company_info['Country']
                 qbo_credentials.save()
 
             if workspace.onboarding_state == 'CONNECTION':
                 workspace.onboarding_state = 'MAP_EMPLOYEES'
+                workspace.realm_id = realm_id
                 workspace.save()
 
             return Response(
@@ -354,6 +357,7 @@ class ConnectQBOView(viewsets.ViewSet):
         qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
         qbo_credentials.refresh_token = None
         qbo_credentials.is_expired = False
+        qbo_credentials.realm_id = None
         qbo_credentials.save()
 
         post_delete_qbo_connection(workspace_id)
