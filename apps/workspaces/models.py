@@ -42,7 +42,7 @@ class Workspace(models.Model):
     user = models.ManyToManyField(User, help_text='Reference to users table')
     fyle_org_id = models.CharField(max_length=255, help_text='org id', unique=True)
     fyle_currency = models.CharField(max_length=5, help_text='Fyle Currency', null=True)
-    qbo_realm_id = models.CharField(max_length=255, help_text='qbo realm id')
+    qbo_realm_id = models.CharField(max_length=255, help_text='qbo realm id', null=True)
     cluster_domain = models.CharField(max_length=255, help_text='fyle cluster domain', null=True)
     app_version = models.CharField(max_length=2, help_text='App version', default='v1', choices=APP_VERSION_CHOICES)
     last_synced_at = models.DateTimeField(help_text='Datetime when expenses were pulled last', null=True)
@@ -131,7 +131,7 @@ class QBOCredential(models.Model):
     """
     id = models.AutoField(primary_key=True)
     refresh_token = models.TextField(help_text='Stores QBO refresh token', null=True)
-    realm_id = models.CharField(max_length=40, help_text='QBO realm / company Id')
+    realm_id = models.CharField(max_length=40, help_text='QBO realm / company Id', null=True)
     is_expired = models.BooleanField(default=False, help_text='QBO token expiry flag')
     company_name = models.CharField(max_length=255, help_text='QBO Company Name', null=True)
     country = models.CharField(max_length=255, help_text='QBO Country Name', null=True)
