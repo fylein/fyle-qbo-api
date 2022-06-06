@@ -5,7 +5,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django_q.tasks import async_task
 
-from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping
+from fyle_accounting_mappings.models import DestinationAttribute
 
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from apps.workspaces.utils import delete_cards_mapping_settings
@@ -34,8 +34,6 @@ def post_delete_qbo_connection(workspace_id):
     """
     workspace = Workspace.objects.get(id=workspace_id)
     if workspace.onboarding_state in ('CONNECTION', 'MAP_EMPLOYEES', 'EXPORT_SETTINGS'):
-        EmployeeMapping.objects.filter(workspace_id=workspace_id).delete()
         DestinationAttribute.objects.filter(workspace_id=workspace_id).delete()
         workspace.onboarding_state = 'CONNECTION'
-        workspace.qbo_realm_id = None
         workspace.save()
