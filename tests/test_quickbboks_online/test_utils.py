@@ -35,6 +35,7 @@ def test_sync_employees(db):
 
     new_employee_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='EMPLOYEE').count()
     assert new_employee_count == 2
+    assert 1 == 2
 
 
 def test_post_vendor(db):
@@ -50,6 +51,7 @@ def test_post_vendor(db):
     vendor = qbo_connection.get_or_create_vendor(vendor_name=vendor_name, email=vendor_name+'@fyle.in', create=True)
 
     assert vendor.value == vendor_name
+    assert 1 == 2
 
 
 def test_sync_vendors(db):

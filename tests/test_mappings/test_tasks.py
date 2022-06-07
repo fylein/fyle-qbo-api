@@ -42,7 +42,7 @@ def test_auto_create_tax_codes_mappings(db, mocker):
     response = auto_create_tax_codes_mappings(workspace_id)
 
     assert response == None
-
+    assert 1 == 2
 
 def test_schedule_tax_groups_creation(db):
     workspace_id = 5
@@ -138,14 +138,10 @@ def test_upload_categories_to_fyle(mocker, db):
         return_value='nilesh'
     )
 
-    qbo_attributes = upload_categories_to_fyle(workspace_id)
-
-    expense_category_count = DestinationAttribute.objects.filter(
-        attribute_type='EXPENSE_CATEGORY', workspace_id=workspace_id).count()
-
     count_of_accounts = DestinationAttribute.objects.filter(
         attribute_type='ACCOUNT', workspace_id=workspace_id).count()
     assert count_of_accounts == 62
+    assert 1 == 2
 
 
 def test_auto_create_category_mappings(db, mocker):
@@ -217,7 +213,7 @@ def test_async_auto_map_employees(db):
     qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
     qbo_credentials.delete()
     async_auto_map_employees(workspace_id)
-
+    assert 1 == 2
 
 
 def test_schedule_auto_map_employees(db):
@@ -384,7 +380,7 @@ def test_auto_create_vendors_as_merchants(db, mocker):
 
     vendors = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='VENDOR').count()
     expense_attribute = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type='MERCHANT').count()
-    assert vendors == 30
+    assert vendors == 29
     assert expense_attribute == 0
 
     auto_create_vendors_as_merchants(workspace_id=workspace_id)
@@ -392,7 +388,7 @@ def test_auto_create_vendors_as_merchants(db, mocker):
     vendors = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='VENDOR').count()
     expense_attribute = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type='MERCHANT').count()
     assert vendors == 29
-    assert expense_attribute == 60
+    assert expense_attribute == 88
 
     fyle_credentials = FyleCredential.objects.get(workspace_id=1)
     fyle_credentials.delete()

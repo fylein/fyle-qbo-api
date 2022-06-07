@@ -23,7 +23,7 @@ class GeneralMappingView(generics.ListCreateAPIView):
         Create general mappings
         """
         general_mapping_payload = request.data
-
+        print('\n\n\n', general_mapping_payload)
         assert_valid(general_mapping_payload is not None, 'Request body is empty')
 
         mapping_utils = MappingUtils(kwargs['workspace_id'])

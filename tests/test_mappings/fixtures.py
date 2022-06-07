@@ -9,5 +9,28 @@ data = {
             "is_enabled": True,
             "description": "Cost Center - Accessories, Id - 10"
         },
-    ]
+    ],
+    "general_mapping_payload":   {
+        "id":3,
+        "accounts_payable_name":"Accounts Payable (A/P)",
+        "accounts_payable_id":"33",
+        "qbo_expense_account_name":"Checking",
+        "qbo_expense_account_id":"35",
+        "bank_account_name":"None",
+        "bank_account_id":"95",
+        "default_ccc_account_name":"Mastercard",
+        "default_ccc_account_id":"41",
+        "default_debit_card_account_name":"None",
+        "default_debit_card_account_id":"94",
+        "default_ccc_vendor_name":"None",
+        "default_ccc_vendor_id":"None",
+        "default_tax_code_name":"None",
+        "default_tax_code_id":"None",
+        "bill_payment_account_id":"35",
+        "bill_payment_account_name":"Checking",
+        "created_at":"2022-05-23T11:10:54.880804Z",
+        "updated_at":"2022-05-23T11:11:24.779971Z",
+        "workspace": 3
+    },
+    
 }
