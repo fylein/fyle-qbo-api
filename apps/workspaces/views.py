@@ -282,7 +282,6 @@ class ConnectQBOView(viewsets.ViewSet):
             qbo_credentials = QBOCredential.objects.filter(workspace=workspace).first()
             if qbo_credentials:
                 qbo_credentials.is_expired = False
-
             if not qbo_credentials:
                 if workspace.qbo_realm_id:
                     assert_valid(realm_id == workspace.qbo_realm_id,
@@ -320,6 +319,9 @@ class ConnectQBOView(viewsets.ViewSet):
                 if realm_id == workspace.qbo_realm_id:
                     qbo_credentials.save()
                 else:
+                    qbo_credentials.realm_id = None
+                    qbo_credentials.refresh_token = None
+                    qbo_credentials.save()
                     assert_valid(realm_id == workspace.qbo_realm_id,
                                  'Please choose the correct Quickbooks online account')
 
