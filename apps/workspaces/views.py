@@ -62,7 +62,9 @@ class WorkspaceView(viewsets.ViewSet):
             workspace.user.add(User.objects.get(user_id=request.user))
             cache.delete(str(workspace.id))
         else:
-            workspace = Workspace.objects.create(name=org_name, fyle_org_id=org_id, fyle_currency=org_currency)
+            workspace = Workspace.objects.create(
+                name=org_name, fyle_org_id=org_id, fyle_currency=org_currency, app_version='v2'
+            )
 
             ExpenseGroupSettings.objects.create(workspace_id=workspace.id)
 
