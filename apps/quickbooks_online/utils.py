@@ -1,9 +1,12 @@
 import base64
+from multiprocessing import connection
 from typing import List, Dict
 from datetime import datetime, timedelta
 import logging
 import json
 from django.conf import settings
+import ast
+import os
 
 from qbosdk import QuickbooksOnlineSDK
 from qbosdk.exceptions import WrongParamsError
@@ -49,11 +52,17 @@ class QBOConnector:
         client_id = settings.QBO_CLIENT_ID
         client_secret = settings.QBO_CLIENT_SECRET
         environment = settings.QBO_ENVIRONMENT
+        refresh_token = ''
+
+        if "QBO_REFRESH_TOKENS" in os.environ:              #TODO
+            refresh_token = ast.literal_eval(os.environ.get('QBO_REFRESH_TOKENS'))
+        else:
+            refresh_token=credentials_object.refresh_token,
 
         self.connection = QuickbooksOnlineSDK(
             client_id=client_id,
             client_secret=client_secret,
-            refresh_token=credentials_object.refresh_token,
+            refresh_token=refresh_token,
             realm_id=credentials_object.realm_id,
             environment=environment
         )
@@ -62,6 +71,14 @@ class QBOConnector:
 
         credentials_object.refresh_token = self.connection.refresh_token
         credentials_object.save()
+
+        if "QBO_REFRESH_TOKENS" in os.environ:          #TODO
+            QBO_REFRESH_TOKENS = ast.literal_eval(os.environ.get('QBO_REFRESH_TOKENS'))
+            QBO_REFRESH_TOKENS[workspace_id] = self.connection.refresh_token
+            os.environ['QBO_REFRESH_TOKENS'] = json.dumps(QBO_REFRESH_TOKENS)
+
+        print('\n\n\nself.connection.refresh_token\n\n', self.connection.refresh_token)
+        print('self.connection.refresh_token\n\n\n',)
 
     def get_or_create_vendor(self, vendor_name: str, email: str = None, create: bool = False):
         """

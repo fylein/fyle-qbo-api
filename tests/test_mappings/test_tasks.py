@@ -219,6 +219,7 @@ def test_async_auto_map_employees(db):
     async_auto_map_employees(workspace_id)
 
 
+
 def test_schedule_auto_map_employees(db):
     workspace_id = 3
     schedule_auto_map_employees(employee_mapping_preference=True, workspace_id=workspace_id)
@@ -360,7 +361,6 @@ def test_schedule_fyle_attributes_creation(db, mocker):
 
     assert schedule.func == 'apps.mappings.tasks.async_auto_create_custom_field_mappings'
 
-
 @pytest.mark.django_db
 def test_post_merchants(db, mocker):
     workspace_id = 1
@@ -371,7 +371,7 @@ def test_post_merchants(db, mocker):
     post_merchants(fyle_connection, workspace_id, False)
 
     expense_attribute = ExpenseAttribute.objects.filter(attribute_type='MERCHANT', workspace_id=workspace_id).count()
-    assert expense_attribute == 24
+    assert expense_attribute == 0
 
 
 
@@ -384,7 +384,7 @@ def test_auto_create_vendors_as_merchants(db, mocker):
 
     vendors = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='VENDOR').count()
     expense_attribute = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type='MERCHANT').count()
-    assert vendors == 29
+    assert vendors == 30
     assert expense_attribute == 0
 
     auto_create_vendors_as_merchants(workspace_id=workspace_id)

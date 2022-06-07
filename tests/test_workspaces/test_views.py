@@ -14,13 +14,12 @@ def test_get_workspace_by_id(api_client, test_connection):
         }
     )
 
-    assert 1 == 3
-
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
     response = api_client.get(url)
     assert response.status_code == 200
 
     response = json.loads(response.content)
+    print(response)
 
     assert dict_compare_keys(response, data['workspace']) == [], 'workspaces api returns a diff in the keys'
 
@@ -35,7 +34,6 @@ def test_post_of_workspace(api_client, test_connection):
     assert response.status_code == 200
 
     response = json.loads(response.content)
-    
     assert dict_compare_keys(response, data['workspace']) == [], 'workspaces api returns a diff in the keys'
 
 
@@ -83,6 +81,7 @@ def test_get_workspace_schedule(api_client, test_connection):
 
     response = api_client.get(url)
     response = json.loads(response.content)
+    print(response)
 
     assert response['message'] == 'Workspace schedule does not exist in workspace'
 
@@ -121,7 +120,7 @@ def test_delete_fyle_credentials_view(api_client, test_connection):
     assert response['message'] == 'Fyle credentials deleted'
 
 
-def test_get_fyle_credentials_view(api_client, test_connection, add_fyle_credentials):
+def test_get_fyle_credentials_view(api_client, test_connection):
     url = reverse(
         'get-fyle-credentials', kwargs={
             'workspace_id': 4
@@ -144,7 +143,7 @@ def test_get_fyle_credentials_view(api_client, test_connection, add_fyle_credent
     assert response['message'] == 'Fyle Credentials not found in this workspace'
 
 
-def test_get_qbo_credentials_view(api_client, test_connection, add_qbo_credentials):
+def test_get_qbo_credentials_view(api_client, test_connection):
     url = reverse(
         'get-qbo-credentials', kwargs={
             'workspace_id': 4
@@ -157,18 +156,18 @@ def test_get_qbo_credentials_view(api_client, test_connection, add_qbo_credentia
     response = json.loads(response.content)
 
     #Todo add a check with settings.realm_id 
-    assert response['realm_id'] == '4620816365031245740'
+    assert response['realm_id'] == '4620816365009870170'
     
-def test_delete_qbo_credentials_view(api_client, test_connection, add_qbo_credentials):
-    url = reverse(
-        'delete-qbo-credentials', kwargs={
-            'workspace_id': 4
-        }
-    )
+# def test_delete_qbo_credentials_view(api_client, test_connection):
+#     url = reverse(
+#         'delete-qbo-credentials', kwargs={
+#             'workspace_id': 4
+#         }
+#     )
 
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
+#     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
 
-    response = api_client.delete(url)
-    response = json.loads(response.content)
+#     response = api_client.delete(url)
+#     response = json.loads(response.content)
 
-    assert response['message'] == 'QBO credentials deleted'
+#     assert response['message'] == 'QBO credentials deleted'
