@@ -12,7 +12,6 @@ from rest_framework.permissions import IsAuthenticated
 from fyle.platform import exceptions as fyle_exc
 from qbosdk import exceptions as qbo_exc
 
-
 from fyle_rest_auth.utils import AuthUtils
 from fyle_rest_auth.models import AuthToken
 from fyle_rest_auth.helpers import get_fyle_admin
@@ -34,7 +33,6 @@ from apps.fyle.models import ExpenseGroupSettings
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
-
 
 User = get_user_model()
 auth_utils = AuthUtils()
@@ -64,7 +62,9 @@ class WorkspaceView(viewsets.ViewSet):
             workspace.user.add(User.objects.get(user_id=request.user))
             cache.delete(str(workspace.id))
         else:
-            workspace = Workspace.objects.create(name=org_name, fyle_org_id=org_id, fyle_currency=org_currency)
+            workspace = Workspace.objects.create(
+                name=org_name, fyle_org_id=org_id, fyle_currency=org_currency, app_version='v2'
+            )
 
             ExpenseGroupSettings.objects.create(workspace_id=workspace.id)
 
@@ -135,6 +135,7 @@ class WorkspaceView(viewsets.ViewSet):
                 status=status.HTTP_200_OK
             )
 
+
 class ReadyView(viewsets.ViewSet):
     """
     Ready call
@@ -160,6 +161,7 @@ class ConnectFyleView(viewsets.ViewSet):
     """
     Fyle Connect Oauth View
     """
+
     def post(self, request, **kwargs):
         """
         Post of QBO Credentials
@@ -264,6 +266,7 @@ class ConnectQBOView(viewsets.ViewSet):
     """
     QBO Connect Oauth View
     """
+
     def post(self, request, **kwargs):
         """
         Post of QBO Credentials
@@ -279,7 +282,6 @@ class ConnectQBOView(viewsets.ViewSet):
             qbo_credentials = QBOCredential.objects.filter(workspace=workspace).first()
             if qbo_credentials:
                 qbo_credentials.is_expired = False
-
             if not qbo_credentials:
                 if workspace.qbo_realm_id:
                     assert_valid(realm_id == workspace.qbo_realm_id,
@@ -305,16 +307,27 @@ class ConnectQBOView(viewsets.ViewSet):
                 workspace.qbo_realm_id = realm_id
                 workspace.save()
             else:
-                assert_valid(realm_id == qbo_credentials.realm_id,
-                             'Please choose the correct Quickbooks online account')
+                if workspace.onboarding_state in ('CONNECTION', 'MAP_EMPLOYEES', 'EXPORT_SETTINGS'):
+                    workspace.qbo_realm_id = realm_id
+                    workspace.save()
                 qbo_credentials.refresh_token = refresh_token
+                qbo_credentials.realm_id = realm_id
                 qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
                 company_info = qbo_connector.get_company_info()
                 qbo_credentials.company_name = company_info['CompanyName']
-                qbo_credentials.save()
+                qbo_credentials.country = company_info['Country']
+                if realm_id == workspace.qbo_realm_id:
+                    qbo_credentials.save()
+                else:
+                    qbo_credentials.realm_id = None
+                    qbo_credentials.refresh_token = None
+                    qbo_credentials.save()
+                    assert_valid(realm_id == workspace.qbo_realm_id,
+                                 'Please choose the correct Quickbooks online account')
 
             if workspace.onboarding_state == 'CONNECTION':
                 workspace.onboarding_state = 'MAP_EMPLOYEES'
+                workspace.qbo_realm_id = realm_id
                 workspace.save()
 
             return Response(
@@ -354,10 +367,11 @@ class ConnectQBOView(viewsets.ViewSet):
         qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
         qbo_credentials.refresh_token = None
         qbo_credentials.is_expired = False
+        qbo_credentials.realm_id = None
         qbo_credentials.save()
 
         post_delete_qbo_connection(workspace_id)
-            
+
         return Response(data={
             'workspace_id': workspace_id,
             'message': 'QBO Refresh Token deleted'
@@ -387,6 +401,7 @@ class ScheduledSyncView(viewsets.ViewSet):
     """
     Scheduled Sync
     """
+
     def post(self, request, **kwargs):
         """
         Scheduled sync
@@ -401,6 +416,7 @@ class ScheduleView(viewsets.ViewSet):
     """
     Settings View
     """
+
     def post(self, request, **kwargs):
         """
         Post Settings
@@ -410,7 +426,6 @@ class ScheduleView(viewsets.ViewSet):
 
         hours = request.data.get('hours')
         assert_valid(hours is not None, 'Hours cannot be left empty')
-
 
         workspace_schedule_settings = schedule_sync(
             workspace_id=kwargs['workspace_id'],
@@ -503,7 +518,6 @@ class ExportToQBOView(viewsets.ViewSet):
     """
 
     def post(self, request, *args, **kwargs):
-
         export_to_qbo(workspace_id=kwargs['workspace_id'])
 
         return Response(
