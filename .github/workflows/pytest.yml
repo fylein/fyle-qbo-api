@@ -37,7 +37,6 @@ jobs:
           FYLE_REFRESH_TOKEN: ${{ secrets.FYLE_REFRESH_TOKEN }}
           FYLE_TOKEN_URI: ${{ secrets.FYLE_TOKEN_URI }}
           FYLE_SERVER_URL: ${{ secrets.FYLE_SERVER_URL }}
-          FYLE_TOKEN_URI: ${{ secrets.FYLE_TOKEN_URI }}
           QBO_REFRESH_TOKENS: ${{ secrets.QBO_REFRESH_TOKENS }}
           QBO_CLIENT_ID: ${{ secrets.QBO_CLIENT_ID }}
           QBO_CLIENT_SECRET: ${{ secrets.QBO_CLIENT_SECRET }}
