@@ -345,7 +345,7 @@ def test_create_bill_payment(db):
     
     qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
     qbo_credentials.delete()
-    
+
     task_log = TaskLog.objects.filter(workspace_id=workspace_id).first()
     task_log.status = 'READY'
     task_log.save()
@@ -424,3 +424,4 @@ def test_async_sync_accounts(db):
     new_accounts = DestinationAttribute.objects.filter(
         attribute_type='ACCOUNT', workspace_id=3).count()
     assert new_accounts == 63
+    

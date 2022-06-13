@@ -64,6 +64,3 @@ def test_schedule_sync(db):
     ).first() 
 
     assert ws_schedule.schedule == None
-
-
-

@@ -378,3 +378,4 @@ def test_sync_expense_groups(api_client, test_connection):
 
     response = api_client.post(url)
     assert response.status_code == 200
+    

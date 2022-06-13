@@ -53,6 +53,4 @@ def test_create_expense_groups(db):
 
     task_log = TaskLog.objects.get(workspace_id=1)
     assert task_log.status == 'FATAL' 
-
-
-
+    

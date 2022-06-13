@@ -69,6 +69,3 @@ def test_create_expense_groups_by_report_id_fund_source(db):
 
     expense_groups = ExpenseGroup.objects.last()
     assert expense_groups.exported_at == None
-
-
-    
