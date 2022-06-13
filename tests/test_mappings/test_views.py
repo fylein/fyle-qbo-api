@@ -1,9 +1,11 @@
+from pkg_resources import working_set
 import pytest
 import json
 from django.urls import reverse
 
 from apps.mappings.models import GeneralMapping
 from apps.workspaces.models import WorkspaceGeneralSettings
+from apps.workspaces.models import Workspace
 from .fixtures import data
 
 
@@ -19,7 +21,6 @@ def test_get_general_mappings(api_client, test_connection):
     response = api_client.get(url)
     assert response.status_code == 200
     response = json.loads(response.content)
-    print(response)
     assert response['qbo_expense_account_name'] == 'Checking'
     assert response['default_ccc_vendor_name'] ==  None
 
@@ -32,7 +33,6 @@ def test_get_general_mappings(api_client, test_connection):
     GeneralMapping.objects.get(workspace_id=3).delete()
 
     response = api_client.get(url)
-    print(response)
 
     assert response.status_code == 400
     assert response.data['message'] == 'General mappings do not exist for the workspace'
@@ -47,75 +47,34 @@ def test_post_general_mappings(api_client, test_connection):
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
 
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
-
+    payload = data['general_mapping_payload']
     response = api_client.post(
         url,
-        data=data['general_mapping_payload']
+        data=payload,
     )
 
-    assert response.status_code == 201
+    assert response.status_code == 200
     response = json.loads(response.content)
-    assert response['use_employee_department'] == True
-    assert response['use_employee_class'] == True
+    assert response['accounts_payable_id'] == '33'
 
     invalid_data = data['general_mapping_payload']
 
-    invalid_data['accounts_payable_name'] = ''
-    response = api_client.post(
-        url,
-        data=invalid_data
-    )
+    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
 
-    assert response.status_code == 400
-    response = json.loads(response.content)
-    assert response['non_field_errors'][0] == 'Accounts payable is missing'
-
-    invalid_data['accounts_payable_name'] = 'Accounts Payable'
-    invalid_data['reimbursable_account_name'] = ''
-
-    response = api_client.post(
-        url,
-        data=invalid_data
-    )
-    
-    assert response.status_code == 400
-    response = json.loads(response.content)
-    assert response['non_field_errors'][0] == 'Reimbursable account is missing'
-
-    invalid_data['reimbursable_account_name'] = 'Unapproved Expense Reports'
-    invalid_data['default_ccc_vendor_name'] = ''
-
-    response = api_client.post(
-        url,
-        data=invalid_data
-    )
-    
-    assert response.status_code == 400
-    response = json.loads(response.content)
-    assert response['non_field_errors'][0] == 'Default CCC vendor is missing'
-
-    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
-
-    general_settings.corporate_credit_card_expenses_object = 'CREDIT CARD CHARGE'
+    general_settings.corporate_credit_card_expenses_object = 'BILL'
     general_settings.save()
 
-    invalid_data['default_ccc_vendor_name'] = 'Ashwin Vendor'
-    invalid_data['default_ccc_account_name'] = ''
-    
     response = api_client.post(
         url,
-        data=invalid_data
+        data=payload
     )
     
     assert response.status_code == 400
     response = json.loads(response.content)
-    assert response['non_field_errors'][0] == 'Default CCC account is missing'
+    assert response['message'] == 'default ccc vendor id field is blank'
 
-    invalid_data['default_ccc_account_name'] = 'sample'
-    invalid_data['default_ccc_account_id'] = '12'
-
-    general_settings.sync_fyle_to_netsuite_payments = True
+    general_settings.reimbursable_expenses_object = 'BILL'
+    general_settings.employee_field_mapping == 'EMPLOYEE'
     general_settings.save()
 
     response = api_client.post(
@@ -125,31 +84,46 @@ def test_post_general_mappings(api_client, test_connection):
     
     assert response.status_code == 400
     response = json.loads(response.content)
-    assert response['non_field_errors'][0] == 'Vendor payment account is missing'
+    assert response['message'] == 'default ccc vendor id field is blank'
 
-    general_settings.sync_fyle_to_netsuite_payments = False
+    general_settings.sync_fyle_to_qbo_payments = True
     general_settings.save()
-
-    invalid_data['default_ccc_account_name'] = 'sample'
-    invalid_data['default_ccc_account_id'] = '12'
-    invalid_data['department_level'] = ''
     
+    invalid_data['default_ccc_vendor_id'] = '10'
     response = api_client.post(
         url,
         data=invalid_data
     )
-    
-    assert response.status_code == 400
-    response = json.loads(response.content)
-    assert response['non_field_errors'][0] == 'department_level cannot be null'
 
-    general_settings.employee_field_mapping = 'VENDOR'
+    assert response.status_code == 200
+    response = json.loads(response.content)
+    assert response['default_ccc_vendor_id'] == '10'
+
+    general_settings.corporate_credit_card_expenses_object == 'DEBIT CARD EXPENSE'
     general_settings.save()
     
     response = api_client.post(
         url,
         data=invalid_data
     )
-    assert response.status_code == 400
+    assert response.status_code == 200
     response = json.loads(response.content)
-    assert response['non_field_errors'][0] == 'use_employee_department or use_employee_location or use_employee_class can be used only when employee is mapped to employee'
+    assert response['default_debit_card_account_name'] == 'Sample'
+
+
+def test_auto_map_employee(api_client, test_connection):
+
+    url = '/api/workspaces/3/mappings/auto_map_employees/trigger/'
+
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
+
+    response = api_client.post(url)
+
+    assert response.status_code == 200
+
+    general_mapping = GeneralMapping.objects.get(workspace_id=3)
+    general_mapping.delete()
+
+    response = api_client.post(url)
+
+    assert response.status_code == 400

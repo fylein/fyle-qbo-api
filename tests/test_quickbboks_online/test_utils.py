@@ -35,7 +35,6 @@ def test_sync_employees(db):
 
     new_employee_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='EMPLOYEE').count()
     assert new_employee_count == 2
-    assert 1 == 2
 
 
 def test_post_vendor(db):
@@ -51,7 +50,6 @@ def test_post_vendor(db):
     vendor = qbo_connection.get_or_create_vendor(vendor_name=vendor_name, email=vendor_name+'@fyle.in', create=True)
 
     assert vendor.value == vendor_name
-    assert 1 == 2
 
 
 def test_sync_vendors(db):
@@ -153,7 +151,6 @@ def test_get_effective_tax_rates(db):
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
     effective_tax_rate, tax_rate_refs = qbo_connection.get_effective_tax_rates([{'TaxRateRef': {'value': '5', 'name': 'NO TAX PURCHASE'}, 'TaxTypeApplicable': 'TaxOnAmount', 'TaxOrder': 0}])
     
-    print(effective_tax_rate, tax_rate_refs)
     assert effective_tax_rate == 0
     assert tax_rate_refs == [{'name': 'NO TAX PURCHASE', 'value': '5'}]
 

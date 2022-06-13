@@ -54,7 +54,7 @@ class QBOConnector:
         environment = settings.QBO_ENVIRONMENT
         refresh_token = ''
 
-        if "QBO_REFRESH_TOKENS" in os.environ:              #TODO
+        if 'QBO_REFRESH_TOKENS' in os.environ:
             refresh_tokens = ast.literal_eval(os.environ.get('QBO_REFRESH_TOKENS'))
             refresh_token = refresh_tokens[workspace_id]
         else:
@@ -73,11 +73,7 @@ class QBOConnector:
         credentials_object.refresh_token = self.connection.refresh_token
         credentials_object.save()
 
-        if refresh_token != self.connection.refresh_token: 
-            print('\n\n\nself.connection.refresh_token\n', self.connection.refresh_token)
-            print('self.connection.refresh_token\n\n\n',)
-
-        if "QBO_REFRESH_TOKENS" in os.environ:          #TODO
+        if 'QBO_REFRESH_TOKENS' in os.environ:
             QBO_REFRESH_TOKENS = ast.literal_eval(os.environ.get('QBO_REFRESH_TOKENS'))
             QBO_REFRESH_TOKENS[workspace_id] = self.connection.refresh_token
             os.environ['QBO_REFRESH_TOKENS'] = str(QBO_REFRESH_TOKENS)
