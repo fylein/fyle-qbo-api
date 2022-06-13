@@ -239,7 +239,7 @@ def test_get_class_id_or_none():
 @pytest.mark.django_db(databases=['default'])
 def test_get_expense_purpose():
 
-    expense_group = ExpenseGroup.objects.get(id=6)
+    expense_group = ExpenseGroup.objects.get(id=16)
     workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
     expenses = expense_group.expenses.all()
 
@@ -249,7 +249,7 @@ def test_get_expense_purpose():
     
         expense_purpose = get_expense_purpose(3,lineitem,category,workspace_general_settings)
 
-        assert expense_purpose == 'user4@fyleforgotham.in - Software / None - 2020-05-04 - C/2021/04/R/23 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txk9w63xZYyA?org_id=or79Cob97KSh'
+        assert expense_purpose == 'ashwin.t@fyle.in - Taxi / None - 2022-05-13 - C/2022/05/R/4 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txgUAIXUPQ8r?org_id=or79Cob97KSh'
 
 @pytest.mark.django_db(databases=['default'])
 def test_get_transaction_date():

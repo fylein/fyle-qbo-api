@@ -537,18 +537,6 @@ def test_post_bill_view(api_client, test_connection):
             'task_log_id': task_log.id
         })
     assert response.status_code == 200
-    response = json.loads(response.content)
-
-    assert len(response) == 0
-     
-    qbo_credential = QBOCredential.objects.get(workspace_id=3)
-    qbo_credential.delete()
-
-    response = api_client.post(url)
-    assert response.status_code == 400
-    response = json.loads(response.content)
-
-    assert response['message'] == 'QBO credentials not found in workspace'
 
 
 def test_bill_schedule(api_client, test_connection):
@@ -611,18 +599,6 @@ def test_post_cheque_view(api_client, test_connection):
             'task_log_id': task_log.id
         })
     assert response.status_code == 200
-    response = json.loads(response.content)
-
-    assert len(response) == 0
-     
-    qbo_credential = QBOCredential.objects.get(workspace_id=3)
-    qbo_credential.delete()
-
-    response = api_client.post(url)
-    assert response.status_code == 400
-    response = json.loads(response.content)
-
-    assert response['message'] == 'QBO credentials not found in workspace'
 
 
 def test_cheque_schedule(api_client, test_connection):
@@ -671,18 +647,6 @@ def test_post_credit_card_purchase_view(api_client, test_connection):
             'task_log_id': task_log.id
         })
     assert response.status_code == 200
-    response = json.loads(response.content)
-
-    assert len(response) == 0
-     
-    qbo_credential = QBOCredential.objects.get(workspace_id=3)
-    qbo_credential.delete()
-
-    response = api_client.post(url)
-    assert response.status_code == 400
-    response = json.loads(response.content)
-
-    assert response['message'] == 'QBO credentials not found in workspace'
 
 
 def test_credit_card_purchase_schedule(api_client, test_connection):
@@ -745,18 +709,6 @@ def test_post_journal_entrie_view(api_client, test_connection):
             'task_log_id': task_log.id
         })
     assert response.status_code == 200
-    response = json.loads(response.content)
-
-    assert len(response) == 0
-     
-    qbo_credential = QBOCredential.objects.get(workspace_id=3)
-    qbo_credential.delete()
-
-    response = api_client.post(url)
-    assert response.status_code == 400
-    response = json.loads(response.content)
-
-    assert response['message'] == 'QBO credentials not found in workspace'
 
 
 def test_journal_entrie_schedule(api_client, test_connection):
