@@ -10,13 +10,6 @@ import string
 import json
 
 vendor_name = ''
-QBO_REFRESH_TOKENS = ast.literal_eval(os.environ.get('QBO_REFRESH_TOKENS'))
-
-def update_qbo_refresh_token(workspace_id, refresh_token):
-    global QBO_REFRESH_TOKENS 
-    QBO_REFRESH_TOKENS[workspace_id] = refresh_token
-    os.environ['QBO_REFRESH_TOKENS'] = json.dumps(QBO_REFRESH_TOKENS)
-
 
 def random_string():
     result = ''.join((random.choice(string.ascii_lowercase) for x in range(15)))

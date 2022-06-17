@@ -26,7 +26,7 @@ jobs:
           FYLE_REFRESH_TOKEN: ${{ secrets.FYLE_REFRESH_TOKEN }}
           FYLE_TOKEN_URI: ${{ secrets.FYLE_TOKEN_URI }}
           FYLE_SERVER_URL: ${{ secrets.FYLE_SERVER_URL }}
-          QBO_REFRESH_TOKENS: ${{ secrets.QBO_REFRESH_TOKENS }}
+          QBO_TESTS_REFRESH_TOKENS: ${{ secrets.QBO_TESTS_REFRESH_TOKENS }}
           QBO_CLIENT_ID: ${{ secrets.QBO_CLIENT_ID }}
           QBO_CLIENT_SECRET: ${{ secrets.QBO_CLIENT_SECRET }}
           QBO_REDIRECT_URI: ${{ secrets.QBO_REDIRECT_URI }}
@@ -41,8 +41,8 @@ jobs:
       - name: Update QBO refresh token
         uses: hmanzur/actions-set-secret@v2.0.0
         with:
-          name: 'QBO_REFRESH_TOKENS'
-          value: ${{ env.QBO_REFRESH_TOKENS }}
+          name: 'QBO_TESTS_REFRESH_TOKENS'
+          value: ${{ env.QBO_TESTS_REFRESH_TOKENS }}
           repository: fylein/fyle-qbo-api
           token: ${{ secrets.REPO_ACCESS_TOKEN }}
       - name: Stop Services

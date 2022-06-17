@@ -54,8 +54,8 @@ class QBOConnector:
         environment = settings.QBO_ENVIRONMENT
         refresh_token = ''
 
-        if 'QBO_REFRESH_TOKENS' in os.environ:
-            refresh_tokens = ast.literal_eval(os.environ.get('QBO_REFRESH_TOKENS'))
+        if 'QBO_TESTS_REFRESH_TOKENS' in os.environ:
+            refresh_tokens = ast.literal_eval(os.environ.get('QBO_TESTS_REFRESH_TOKENS'))
             refresh_token = refresh_tokens[workspace_id]
         else:
             refresh_token = credentials_object.refresh_token,
@@ -73,10 +73,10 @@ class QBOConnector:
         credentials_object.refresh_token = self.connection.refresh_token
         credentials_object.save()
 
-        if 'QBO_REFRESH_TOKENS' in os.environ:
-            QBO_REFRESH_TOKENS = ast.literal_eval(os.environ.get('QBO_REFRESH_TOKENS'))
-            QBO_REFRESH_TOKENS[workspace_id] = self.connection.refresh_token
-            os.environ['QBO_REFRESH_TOKENS'] = str(QBO_REFRESH_TOKENS)
+        if 'QBO_TESTS_REFRESH_TOKENS' in os.environ:
+            QBO_TESTS_REFRESH_TOKENS = ast.literal_eval(os.environ.get('QBO_TESTS_REFRESH_TOKENS'))
+            QBO_TESTS_REFRESH_TOKENS[workspace_id] = self.connection.refresh_token
+            os.environ['QBO_TESTS_REFRESH_TOKENS'] = str(QBO_TESTS_REFRESH_TOKENS)
         
 
     def get_or_create_vendor(self, vendor_name: str, email: str = None, create: bool = False):
