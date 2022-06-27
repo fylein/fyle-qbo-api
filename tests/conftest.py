@@ -5,7 +5,6 @@ from fyle_rest_auth.models import User,AuthToken
 from rest_framework.test import APIClient
 from fyle.platform import Platform
 from apps.fyle.helpers import get_access_token
-from apps.workspaces.models import QBOCredential, FyleCredential
 from fyle_qbo_api.tests import settings
 
 def pytest_configure():
