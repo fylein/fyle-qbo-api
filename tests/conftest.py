@@ -52,39 +52,3 @@ def test_connection(db):
     auth_token.save()
 
     return fyle_connection
-
-
-@pytest.fixture()
-def add_qbo_credentials(db):
-
-    workspaces = [1,2,3,4,5]
-    QBOCredential.objects.create(
-        workspace_id=workspaces[0],
-        refresh_token = '',
-        realm_id = '4620816365031245740',
-        company_name = 'Sandbox Company_US_2',
-        country = 'US',
-        created_at = datetime.now(tz=timezone.utc),
-        updated_at = datetime.now(tz=timezone.utc),
-    )
-
-    QBOCredential.objects.create(
-        workspace_id=workspaces[1],
-        refresh_token = '',
-        realm_id = '4620816365071123640',
-        company_name = 'Sandbox Company_US_4',
-        country = 'US',
-        created_at = datetime.now(tz=timezone.utc),
-        updated_at = datetime.now(tz=timezone.utc),
-    )
-
-@pytest.fixture()
-def add_fyle_credentials(db):
-    workspaces = [1,2,3,4,5]
-
-    for workspace_id in workspaces:
-        FyleCredential.objects.create(
-            refresh_token=settings.FYLE_REFRESH_TOKEN,
-            workspace_id=workspace_id,
-            cluster_domain='https://staging.fyle.tech'
-        )
