@@ -19,6 +19,7 @@ jobs:
           docker-compose -f docker-compose-pipeline.yml exec -T api pytest tests/test_quickbooks_online/test_tasks.py --cov=. --junit-xml=test-reports/report.xml --cov-report=term-missing --cov-fail-under=90 | tee pytest-coverage.txt
           echo "STATUS=$(cat pytest-coverage.txt | grep 'Required test' | awk '{ print $1 }')" >> $GITHUB_ENV
           echo "FAILED=$(cat test-reports/report.xml | awk -F'=' '{print $5}' | awk -F' ' '{gsub(/"/, "", $1); print $1}')" >> $GITHUB_ENV
+          echo "QBO_TESTS_REFRESH_TOKENS = $QBO_TESTS_REFRESH_TOKENS"
         env:
           FYLE_BASE_URL: ${{ secrets.FYLE_BASE_URL }}
           FYLE_CLIENT_ID: ${{ secrets.FYLE_CLIENT_ID }}
@@ -64,11 +65,14 @@ jobs:
         uses: rtCamp/action-slack-notify@v2
         if: ${{ always() && github.ref != 'refs/heads/master' }}
         env:
-          QBO_TESTS_REFRESH_TOKENS: ${{ secrets.QBO_TESTS_REFRESH_TOKENS }}
           SLACK_COLOR: ${{ job.status }}
-          SLACK_MESSAGE: pytest job status - ${{ job.status }} - after update - ${{ env.QBO_TESTS_REFRESH_TOKENS }}
+          SLACK_MESSAGE: pytest job status - ${{ job.status }}
           SLACK_TITLE: Pytest Run Stats
           SLACK_ICON_EMOJI: ":terminator:"
           SLACK_USERNAME: Gandalf
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_FOOTER: ''
+      - run: 'echo "$QBO_TESTS_REFRESH_TOKENS" > key'
+        shell: bash
+        env:
+          QBO_TESTS_REFRESH_TOKENS: ${{secrets.QBO_TESTS_REFRESH_TOKENS}}
