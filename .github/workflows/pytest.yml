@@ -19,9 +19,8 @@ jobs:
           docker-compose -f docker-compose-pipeline.yml exec -T api pytest tests/test_quickbooks_online/test_tasks.py --cov=. --junit-xml=test-reports/report.xml --cov-report=term-missing --cov-fail-under=90 | tee pytest-coverage.txt
           echo "STATUS=$(cat pytest-coverage.txt | grep 'Required test' | awk '{ print $1 }')" >> $GITHUB_ENV
           echo "FAILED=$(cat test-reports/report.xml | awk -F'=' '{print $5}' | awk -F' ' '{gsub(/"/, "", $1); print $1}')" >> $GITHUB_ENV
-          echo "QBO_TESTS_REFRESH_TOKENS=$QBO_TESTS_REFRESH_TOKENS" >> $GITHUB_ENV
-          echo $GITHUB_ENV
-          echo "QBO_TESTS_REFRESH_TOKENS"
+          echo "UPDATED_QBO_TESTS_REFRESH_TOKENS=$QBO_TESTS_REFRESH_TOKENS" >> $GITHUB_ENV
+          cat test_refresh_token.txt
         env:
           FYLE_BASE_URL: ${{ secrets.FYLE_BASE_URL }}
           FYLE_CLIENT_ID: ${{ secrets.FYLE_CLIENT_ID }}
@@ -45,7 +44,7 @@ jobs:
         uses: hmanzur/actions-set-secret@v2.0.0
         with:
           name: 'QBO_TESTS_REFRESH_TOKENS'
-          value: ${{ env.QBO_TESTS_REFRESH_TOKENS }}
+          value: ${{ env.UPDATED_QBO_TESTS_REFRESH_TOKENS }}
           repository: fylein/fyle-qbo-api
           token: ${{ secrets.REPO_ACCESS_TOKEN }}
       - name: Stop Services

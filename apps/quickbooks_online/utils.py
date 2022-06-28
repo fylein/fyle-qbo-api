@@ -55,7 +55,6 @@ class QBOConnector:
         refresh_token = ''
 
         if 'QBO_TESTS_REFRESH_TOKENS' in os.environ:
-            print('QBO_TESTS_REFRESH_TOKENS - ', os.environ.get('QBO_TESTS_REFRESH_TOKENS'))
             refresh_tokens = ast.literal_eval(os.environ.get('QBO_TESTS_REFRESH_TOKENS'))
             refresh_token = refresh_tokens[workspace_id]
         else:
@@ -79,6 +78,9 @@ class QBOConnector:
             QBO_TESTS_REFRESH_TOKENS[workspace_id] = self.connection.refresh_token
             os.environ['QBO_TESTS_REFRESH_TOKENS'] = str(QBO_TESTS_REFRESH_TOKENS)
         
+        if 'WRITE_TESTS_REFRESH_TOKENS' in os.environ: #For saving the refresh tokens on local while running tests
+            with open('test_refresh_token.txt', 'w') as file:
+                file.write(str(QBO_TESTS_REFRESH_TOKENS))
 
     def get_or_create_vendor(self, vendor_name: str, email: str = None, create: bool = False):
         """
