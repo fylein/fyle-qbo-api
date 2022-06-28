@@ -35,6 +35,8 @@ jobs:
           QBO_CLIENT_SECRET: ${{ secrets.QBO_CLIENT_SECRET }}
           QBO_REDIRECT_URI: ${{ secrets.QBO_REDIRECT_URI }}
           QBO_TOKEN_URI: ${{ secrets.QBO_TOKEN_URI }}
+      - name: List of the GitHub Actions environment variables
+        run: env
       - name: Pytest coverage comment
         uses: MishaKav/pytest-coverage-comment@main
         if: ${{ always() && github.ref != 'refs/heads/master' }}
