@@ -20,6 +20,7 @@ jobs:
           echo "STATUS=$(cat pytest-coverage.txt | grep 'Required test' | awk '{ print $1 }')" >> $GITHUB_ENV
           echo "FAILED=$(cat test-reports/report.xml | awk -F'=' '{print $5}' | awk -F' ' '{gsub(/"/, "", $1); print $1}')" >> $GITHUB_ENV
           echo "QBO_TESTS_REFRESH_TOKENS=$QBO_TESTS_REFRESH_TOKENS" >> $GITHUB_ENV
+          echo $GITHUB_ENV
           echo "QBO_TESTS_REFRESH_TOKENS"
           echo $QBO_TESTS_REFRESH_TOKENS
         env:
@@ -68,5 +69,6 @@ jobs:
         shell: bash
         run: |
           echo "QBO_TESTS_REFRESH_TOKENS: $QBO_TESTS_REFRESH_TOKENS" 
+          echo "{{ env.QBO_TESTS_REFRESH_TOKENS }}"
         env:
           QBO_TESTS_REFRESH_TOKENS: ${{secrets.QBO_TESTS_REFRESH_TOKENS}}
