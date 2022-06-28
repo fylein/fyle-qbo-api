@@ -55,6 +55,7 @@ class QBOConnector:
         refresh_token = ''
 
         if 'QBO_TESTS_REFRESH_TOKENS' in os.environ:
+            print('QBO_TESTS_REFRESH_TOKENS - ', os.environ.get('QBO_TESTS_REFRESH_TOKENS'))
             refresh_tokens = ast.literal_eval(os.environ.get('QBO_TESTS_REFRESH_TOKENS'))
             refresh_token = refresh_tokens[workspace_id]
         else:
