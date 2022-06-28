@@ -22,7 +22,6 @@ jobs:
           echo "QBO_TESTS_REFRESH_TOKENS=$QBO_TESTS_REFRESH_TOKENS" >> $GITHUB_ENV
           echo $GITHUB_ENV
           echo "QBO_TESTS_REFRESH_TOKENS"
-          echo $QBO_TESTS_REFRESH_TOKENS
         env:
           FYLE_BASE_URL: ${{ secrets.FYLE_BASE_URL }}
           FYLE_CLIENT_ID: ${{ secrets.FYLE_CLIENT_ID }}
