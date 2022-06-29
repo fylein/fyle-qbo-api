@@ -20,7 +20,6 @@ jobs:
           echo "STATUS=$(cat pytest-coverage.txt | grep 'Required test' | awk '{ print $1 }')" >> $GITHUB_ENV
           echo "FAILED=$(cat test-reports/report.xml | awk -F'=' '{print $5}' | awk -F' ' '{gsub(/"/, "", $1); print $1}')" >> $GITHUB_ENV
           echo "UPDATED_QBO_TESTS_REFRESH_TOKENS=$QBO_TESTS_REFRESH_TOKENS" >> $GITHUB_ENV
-          cat test_refresh_token.txt
         env:
           FYLE_BASE_URL: ${{ secrets.FYLE_BASE_URL }}
           FYLE_CLIENT_ID: ${{ secrets.FYLE_CLIENT_ID }}
@@ -63,10 +62,3 @@ jobs:
           SLACK_USERNAME: Gandalf
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_FOOTER: ''
-      - name: Print QBO_TESTS_REFRESH_TOKENS
-        shell: bash
-        run: |
-          echo "QBO_TESTS_REFRESH_TOKENS: $QBO_TESTS_REFRESH_TOKENS" 
-          echo "{{ env.QBO_TESTS_REFRESH_TOKENS }}"
-        env:
-          QBO_TESTS_REFRESH_TOKENS: ${{secrets.QBO_TESTS_REFRESH_TOKENS}}
