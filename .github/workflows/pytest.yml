@@ -4,6 +4,11 @@ on:
   pull_request:
     types: [assigned, opened, synchronize, reopened]
 
+env:
+  pat_token: ${{ secrets.REPO_ACCESS_TOKEN }}
+  secret_name: QBO_TESTS_REFRESH_TOKENS
+  secret_body: ""
+
 jobs:
   pytest:
     runs-on: ubuntu-latest
@@ -19,7 +24,7 @@ jobs:
           docker-compose -f docker-compose-pipeline.yml exec -T api pytest tests/ --cov=. --junit-xml=test-reports/report.xml --cov-report=term-missing --cov-fail-under=90 | tee pytest-coverage.txt
           echo "STATUS=$(cat pytest-coverage.txt | grep 'Required test' | awk '{ print $1 }')" >> $GITHUB_ENV
           echo "FAILED=$(cat test-reports/report.xml | awk -F'=' '{print $5}' | awk -F' ' '{gsub(/"/, "", $1); print $1}')" >> $GITHUB_ENV
-          echo "UPDATED_QBO_TESTS_REFRESH_TOKENS=$QBO_TESTS_REFRESH_TOKENS" >> $GITHUB_ENV
+          secret_body=QBO_TESTS_REFRESH_TOKENS
         env:
           FYLE_BASE_URL: ${{ secrets.FYLE_BASE_URL }}
           FYLE_CLIENT_ID: ${{ secrets.FYLE_CLIENT_ID }}
@@ -32,6 +37,14 @@ jobs:
           QBO_CLIENT_SECRET: ${{ secrets.QBO_CLIENT_SECRET }}
           QBO_REDIRECT_URI: ${{ secrets.QBO_REDIRECT_URI }}
           QBO_TOKEN_URI: ${{ secrets.QBO_TOKEN_URI }}
+      - name: gh auth login
+        shell: bash
+        run: gh auth login --with-token <<< $pat_token
+      - name: gh update refresh token
+        shell: bash
+        run: |
+          repository='${{ github.repository }}'
+          gh secret set "$secret_name" --body "$secret_body" --repo $repository
       - name: Pytest coverage comment
         uses: MishaKav/pytest-coverage-comment@main
         if: ${{ always() && github.ref != 'refs/heads/master' }}
@@ -39,13 +52,6 @@ jobs:
           create-new-comment: true
           pytest-coverage-path: ./pytest-coverage.txt
           junitxml-path: ./test-reports/report.xml
-      - name: Update QBO refresh token
-        uses: hmanzur/actions-set-secret@v2.0.0
-        with:
-          name: 'QBO_TESTS_REFRESH_TOKENS'
-          value: ${{ env.UPDATED_QBO_TESTS_REFRESH_TOKENS }}
-          repository: fylein/fyle-qbo-api
-          token: ${{ secrets.REPO_ACCESS_TOKEN }}
       - name: Stop Services
         run: docker compose -f docker-compose-pipeline.yml down
       - name: Evaluate Coverage
