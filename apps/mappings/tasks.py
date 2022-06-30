@@ -24,7 +24,7 @@ logger.level = logging.INFO
 
 DEFAULT_FYLE_CATEGORIES = [
     'activity', 'train', 'fuel', 'snacks', 'office supplies', 'utility', 'entertainment', 'others', 'mileage', 'food',
-    'per Diem', 'bus', 'internet', 'taxi', 'courier', 'hotel', 'professional services', 'phone', 'office party',
+    'per diem', 'bus', 'internet', 'taxi', 'courier', 'hotel', 'professional services', 'phone', 'office party',
     'flight', 'software', 'parking', 'toll charge', 'tax', 'training', 'unspecified'
 ]
 
