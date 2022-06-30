@@ -23,9 +23,9 @@ logger = logging.getLogger(__name__)
 logger.level = logging.INFO
 
 DEFAULT_FYLE_CATEGORIES = [
-    'Activity', 'Train', 'Fuel', 'Snacks', 'Office Supplies', 'Utility', 'Entertainment', 'Others', 'Mileage', 'Food',
-    'Per Diem', 'Bus', 'Internet', 'Taxi', 'Courier', 'Hotel', 'Professional Services', 'Phone', 'Office Party',
-    'Flight', 'Software', 'Parking', 'Toll Charge', 'Tax', 'Training', 'Unspecified'
+    'activity', 'train', 'fuel', 'snacks', 'office supplies', 'utility', 'entertainment', 'others', 'mileage', 'food',
+    'per diem', 'bus', 'internet', 'taxi', 'courier', 'hotel', 'professional services', 'phone', 'office party',
+    'flight', 'software', 'parking', 'toll charge', 'tax', 'training', 'unspecified'
 ]
 
 
@@ -254,7 +254,7 @@ def create_fyle_categories_payload(categories: List[DestinationAttribute], works
         attribute_type='CATEGORY', workspace_id=workspace_id).values_list('value', flat=True)
 
     for category in categories:
-        if category.value not in existing_category_names and category.value not in DEFAULT_FYLE_CATEGORIES:
+        if category.value not in existing_category_names and category.value.lower() not in DEFAULT_FYLE_CATEGORIES:
             payload.append({
                 'name': category.value,
                 'code': category.destination_id,
