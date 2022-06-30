@@ -68,9 +68,9 @@ def remove_duplicates(qbo_attributes: List[DestinationAttribute]):
     attribute_values = []
 
     for attribute in qbo_attributes:
-        if attribute.value not in attribute_values:
+        if attribute.value.lower() not in attribute_values:
             unique_attributes.append(attribute)
-            attribute_values.append(attribute.value)
+            attribute_values.append(attribute.value.lower())
 
     return unique_attributes
 
