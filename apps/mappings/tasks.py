@@ -22,6 +22,12 @@ from .constants import FYLE_EXPENSE_SYSTEM_FIELDS
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
 
+DEFAULT_FYLE_CATEGORIES = [
+    'activity', 'train', 'fuel', 'snacks', 'office supplies', 'utility', 'entertainment', 'others', 'mileage', 'food',
+    'per diem', 'bus', 'internet', 'taxi', 'courier', 'hotel', 'professional services', 'phone', 'office party',
+    'flight', 'software', 'parking', 'toll charge', 'tax', 'training', 'unspecified'
+]
+
 
 def resolve_expense_attribute_errors(
     source_attribute_type: str, workspace_id: int, destination_attribute_type: str = None):
@@ -68,9 +74,9 @@ def remove_duplicates(qbo_attributes: List[DestinationAttribute]):
     attribute_values = []
 
     for attribute in qbo_attributes:
-        if attribute.value not in attribute_values:
+        if attribute.value.lower() not in attribute_values:
             unique_attributes.append(attribute)
-            attribute_values.append(attribute.value)
+            attribute_values.append(attribute.value.lower())
 
     return unique_attributes
 
@@ -248,7 +254,7 @@ def create_fyle_categories_payload(categories: List[DestinationAttribute], works
         attribute_type='CATEGORY', workspace_id=workspace_id).values_list('value', flat=True)
 
     for category in categories:
-        if category.value not in existing_category_names:
+        if category.value not in existing_category_names and category.value.lower() not in DEFAULT_FYLE_CATEGORIES:
             payload.append({
                 'name': category.value,
                 'code': category.destination_id,
