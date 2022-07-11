@@ -58,7 +58,7 @@ class QBOConnector:
             refresh_tokens = ast.literal_eval(os.environ.get('QBO_TESTS_REFRESH_TOKENS'))
             refresh_token = refresh_tokens[workspace_id]
         else:
-            refresh_token = credentials_object.refresh_token,
+            refresh_token = credentials_object.refresh_token
 
         self.connection = QuickbooksOnlineSDK(
             client_id=client_id,

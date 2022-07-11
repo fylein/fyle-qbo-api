@@ -1024,9 +1024,11 @@ def post_merchants(platform_connection: PlatformConnector, workspace_id: int, fi
     else:
         merchant = platform_connection.merchants.get()
         merchant_updated_at = parser.isoparse(merchant['updated_at']).strftime('%Y-%m-%d %H:%M:%S.%f')
-        today_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
-        qbo_attributes = DestinationAttribute.objects.filter(attribute_type='VENDOR', workspace_id=workspace_id,
-            updated_at__range=[merchant_updated_at, today_date]).order_by('value', 'id')
+        qbo_attributes = DestinationAttribute.objects.filter(
+            attribute_type='VENDOR',
+            workspace_id=workspace_id,
+            updated_at__gte=merchant_updated_at
+        ).order_by('value', 'id')
 
     qbo_attributes = remove_duplicates(qbo_attributes)
 
