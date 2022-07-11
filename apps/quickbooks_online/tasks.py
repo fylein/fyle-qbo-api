@@ -75,6 +75,7 @@ def load_attachments(qbo_connection: QBOConnector, ref_id: str, ref_type: str, e
     :param expense_group: Expense group
     """
     try:
+        print('load_attachments 1', datetime.now())
         fyle_credentials = FyleCredential.objects.get(workspace_id=expense_group.workspace_id)
         file_ids = expense_group.expenses.values_list('file_ids', flat=True)
         platform = PlatformConnector(fyle_credentials)
@@ -91,6 +92,7 @@ def load_attachments(qbo_connection: QBOConnector, ref_id: str, ref_type: str, e
             attachments = platform.files.bulk_generate_file_urls(files_list)
 
         qbo_connection.post_attachments(ref_id, ref_type, attachments)
+        print('load_attachments 2', datetime.now())
 
     except Exception:
         error = traceback.format_exc()
@@ -264,6 +266,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
 
 
 def create_bill(expense_group, task_log_id):
+    print('create_bill 1', datetime.now())
     task_log = TaskLog.objects.get(id=task_log_id)
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
         task_log.status = 'IN_PROGRESS'
@@ -286,11 +289,15 @@ def create_bill(expense_group, task_log_id):
         __validate_expense_group(expense_group, general_settings)
 
         with transaction.atomic():
+            print('start the process 1', datetime.now())
             bill_object = Bill.create_bill(expense_group)
+            print('top level done', datetime.now())
 
             bill_lineitems_objects = BillLineitem.create_bill_lineitems(expense_group, general_settings)
+            print('lines done', datetime.now())
 
             created_bill = qbo_connection.post_bill(bill_object, bill_lineitems_objects)
+            print('create_bill posted 1', datetime.now())
 
             task_log.detail = created_bill
             task_log.bill = bill_object
@@ -302,6 +309,8 @@ def create_bill(expense_group, task_log_id):
             expense_group.exported_at = datetime.now()
             expense_group.response_logs = created_bill
             expense_group.save()
+
+            print('saved 1', datetime.now())
 
             resolve_errors_for_exported_expense_group(expense_group)
 
