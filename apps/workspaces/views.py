@@ -20,6 +20,7 @@ from fyle_qbo_api.utils import assert_valid
 
 from apps.quickbooks_online.utils import QBOConnector
 from apps.fyle.helpers import get_cluster_domain
+from fyle_accounting_mappings.models import ExpenseAttribute
 
 from .models import Workspace, FyleCredential, QBOCredential, WorkspaceGeneralSettings, WorkspaceSchedule, \
     LastExportDetail
@@ -427,10 +428,15 @@ class ScheduleView(viewsets.ViewSet):
         hours = request.data.get('hours')
         assert_valid(hours is not None, 'Hours cannot be left empty')
 
+        email_added = request.data.get('added_email')
+        emails_selected = request.data.get('selected_email')
+
         workspace_schedule_settings = schedule_sync(
             workspace_id=kwargs['workspace_id'],
             schedule_enabled=schedule_enabled,
-            hours=hours
+            hours=hours,
+            email_added=email_added,
+            emails_selected=emails_selected
         )
 
         return Response(
@@ -547,4 +553,32 @@ class LastExportDetailView(viewsets.ViewSet):
                     'message': 'latest exported details does not exist in workspace'
                 },
                 status=status.HTTP_400_BAD_REQUEST
+            )
+class WorkspaceAdminsView(viewsets.ViewSet):
+
+    def get(self, request, *args, **kwargs):
+        """
+        Get Admins for the workspaces
+        """
+
+        workspace = Workspace.objects.get(pk=kwargs['workspace_id'])
+        
+        admin_email = []
+        users = workspace.user.all()
+        for user in users:
+            admin = User.objects.get(user_id=user)
+            name = ExpenseAttribute.objects.get(
+                value=admin.email, 
+                workspace_id=kwargs['workspace_id'],
+                attribute_type='EMPLOYEE'
+            ).detail['full_name']
+
+            admin_email.append({
+                'name': name,
+                'email': admin.email
+            })
+
+        return Response(
+                data=admin_email,
+                status=status.HTTP_200_OK
             )
