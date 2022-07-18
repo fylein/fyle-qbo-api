@@ -8,14 +8,17 @@ from django.db.models import Q
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from django_q.models import Schedule
+from django.utils.safestring import mark_safe
 
-from apps.fyle.models import ExpenseGroup
 from apps.fyle.tasks import async_create_expense_groups
+from apps.fyle.models import Expense, ExpenseGroup
+from apps.fyle.serializers import ExpenseSerializer
 from apps.quickbooks_online.tasks import schedule_bills_creation, schedule_cheques_creation, \
     schedule_journal_entry_creation, schedule_credit_card_purchase_creation, schedule_qbo_expense_creation
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import User, Workspace, WorkspaceSchedule, WorkspaceGeneralSettings, LastExportDetail, QBOCredential
-from fyle_accounting_mappings.models import MappingSetting, ExpenseAttribute
+from fyle_accounting_mappings.models import ExpenseAttribute
+
 
 def schedule_email_notification(workspace_id: int, schedule_enabled: bool, hours: int):
     if schedule_enabled:
@@ -24,8 +27,8 @@ def schedule_email_notification(workspace_id: int, schedule_enabled: bool, hours
             args='{}'.format(workspace_id),
             defaults={
                 'schedule_type': Schedule.MINUTES,
-                'minutes': hours * 60,
-                'next_run': datetime.now() + timedelta(minutes=10)
+                'minutes': 5,
+                'next_run': datetime.now() + timedelta(minutes=1)
             }
         )
     else:
@@ -168,7 +171,7 @@ def export_to_qbo(workspace_id, export_mode=None):
             )
 
 def run_email_notification(workspace_id):
-
+    expense_data=''
     ws_schedule, _ = WorkspaceSchedule.objects.get_or_create(
         workspace_id=workspace_id
     )
@@ -178,11 +181,29 @@ def run_email_notification(workspace_id):
         workspace_id=workspace_id,
         status='FAILED'
     )
-
     workspace = Workspace.objects.get(id=workspace_id)
     admin_data = WorkspaceSchedule.objects.get(workspace_id=workspace_id)
     qbo = QBOCredential.objects.get(workspace=workspace)
-
+    for task_log in task_logs:
+        expense_group = ExpenseGroup.objects.get(workspace_id=workspace_id, pk=task_log.expense_group_id)
+        expenses = Expense.objects.filter(id__in=expense_group.expenses.values_list('id', flat=True)).order_by('-updated_at')
+        expenses = ExpenseSerializer(expenses, many=True).data
+        for log in task_log.detail:
+            for expense in expenses:
+                expense = dict(expense)
+                link = 'https://app.fyle.tech/app/admin/#/reports/' + expense['report_id'] + 'org_id=' + expense['org_id']
+                html = '''<tr>
+                    <td>''' + expense["claim_number"] + '''</td>
+                    <td>''' + expense["expense_number"] + '''</td>
+                    <td>''' + log['message'] + '''</td>
+                    <td>
+                        <a href = "''' + link + '''">
+                        <img src="https://raw.githubusercontent.com/fylein/fyle-qbo-api/qbo-email-notification1/apps/workspaces/templates/images/redirect-icon.png" width="18" height="18">
+                        </a>
+                    </td>
+                    </tr>'''
+                expense_data = expense_data + html
+            
     if ws_schedule.enabled:
         for admin_email in admin_data.emails_selected:
             attribute = ExpenseAttribute.objects.filter(workspace_id=workspace_id, value=admin_email).first()
@@ -203,12 +224,13 @@ def run_email_notification(workspace_id):
                     'workspace_id': workspace_id,
                     'export_time': workspace.last_synced_at.date(),
                     'year': date.today().year,
-                    'app_url': "{0}/workspaces/{1}/expense_groups".format(settings.FYLE_APP_URL, workspace_id)
+                    'app_url': "{0}/workspaces/{1}/expense_groups".format(settings.FYLE_APP_URL, workspace_id),
+                    'task_logs': mark_safe(expense_data)
                     }
                 message = render_to_string("mail_template.html", context)
 
                 mail = EmailMessage(
-                    subject="Export To QuickBooks Failed",
+                    subject="Export To QuickBooks Online Failed",
                     body=message,
                     from_email=settings.EMAIL,
                     to=[admin_email],

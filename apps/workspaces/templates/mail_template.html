@@ -4,6 +4,31 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <title>Fyle</title>
+  <style>
+    #task-logs {
+      border-collapse: collapse;
+      table-layout: fixed;
+      width: 100%;
+      margin-bottom: 24px;
+    }
+
+    #task-logs th {
+      background-color: #F5F5F5;
+      padding: 13px 0px 12px 23px;
+      text-align: left;
+      border: 1px solid #DFDFE2;
+      border-radius: 4px;
+      width: 25%;
+    }
+
+    #task-logs td {
+      padding: 24px 0px 26px 23px;
+      text-align: left;
+      border-bottom: 1px solid #DFDFE2;
+      border-radius: 4px;
+      width: 25%;
+    }
+  </style>
 </head>
 
 <body style="margin: 0; padding: 0;">
@@ -22,22 +47,21 @@
           style="font-family: Helvetica,Arial; border-collapse: collapse; background-color: #ffffff; border-radius: 4px; border: solid 1px #d8d8d8;">
           <tr>
             <td bgcolor="#f3f5f6"
-              background="https://raw.githubusercontent.com/fylein/fyle-netsuite-api/b1ebe6c1db08c4e85cc34244f8bf5a1b3f1219ea/apps/workspaces/templates/images/background.png"
+              background="https://raw.githubusercontent.com/fylein/fyle-qbo-api/qbo-email-notification1/apps/workspaces/templates/images/background.png"
               style="padding: 10px 25px 10px 25px;" width="600" height="50">
 
               <table width="35%">
                 <tr>
                   <td>
-                    <img src="https://sage-intacct.fyleapps.tech/assets/images/pngs/fyle-logo.png" alt="Fyle" title="Fyle"
-                      style="display:block" height="23" width="67" />
+                    <img src="https://quickbooks.fyleapps.tech/assets/images/pngs/fyle-logo.png" alt="Fyle" title="Fyle"
+                      style="display:block" height="30" width="90" />
                   </td>
                   <td align="right">
-                    <span style="padding-left:8px">+</span>
+                    <span style="padding-left:8px;padding-right:6px">+</span>
                   </td>
                   <td align="right">
-                    <img
-                      src="https://sage-intacct.fyleapps.tech/assets/images/pngs/sage-intacct-logo.png"
-                      alt="{{org_logo.title}}" title="{{org_logo.title}}" height="35" />
+                    <img src="./images/qbo.png" alt="{{org_logo.title}}" title="{{org_logo.title}}" height="60"
+                      width="145px" style="padding-top:6px" />
                   </td>
                 </tr>
               </table>
@@ -49,7 +73,7 @@
                 <tr align="center">
                   <td>
                     <img style="height: 150px;"
-                      src="https://raw.githubusercontent.com/fylein/fyle-netsuite-api/e05abf142208368b88a530f3d8bb25456fef4d26/apps/workspaces/templates/images/icon.png">
+                      src="https://raw.githubusercontent.com/fylein/fyle-qbo-api/qbo-email-notification1/apps/workspaces/templates/images/icon.png">
                   </td>
                 </tr>
                 <tr align="center">
@@ -70,7 +94,7 @@
                           letter-spacing: 0.02em;
                           color: #5A5D72;">
                         <td>FYLE ORGANIZATION</td>
-                        <td>SAGE INTACCT ENTITY</td>
+                        <td>QUICKBOOKS ONLINE COMPANY</td>
                       </tr>
                       <tr style="font-family: Aktiv Grotesk;
                           font-style: normal;
@@ -79,7 +103,7 @@
                           line-height: 20px;   
                           color: #161528;">
                         <td>{{ fyle_company }}</td>
-                        <td>{{ intacct_company }}</td>
+                        <td>{{ qbo_company }}</td>
                       </tr>
                     </table>
                   </td>
@@ -96,7 +120,7 @@
                         <td style="font-size: 15px; line-height: 18px; padding-top: 15px; color: #2C304E;">
                           <span style="font-weight: bold">{{ errors }} expense groups</span> failed to export from your
                           Fyle org
-                          to Sage Intacct Entity
+                          to QuickBooks Online Company
                         </td>
                       </tr>
                       <tr>
@@ -107,75 +131,14 @@
                       </tr>
                       <tr>
                         <td style="font-size: 15px; line-height: 18px; padding-top: 15px; color: #2C304E;">
-                          Typically, expenses fail to export because of missing mapping or Sage Intacct authorization issues
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="font-size: 15px; line-height: 18px; padding-top: 15px; color: #2C304E;">
                           However, you can resolve the errors by checking the message details of the failed expenses
                           from the integration and retry export
                         </td>
                       </tr>
-                    </table>
-                  </td>
-                </tr>
-                <tr align="center">
-                  <td>
-                    <table style="width: 250px" border="0" cellspacing="0" cellpadding="0">
-                      <tr align="center">
-                        <td align="center" style="border-radius: 4px;" bgcolor="#ff3366">
-                          <a href="{{app_url}}"
-                            target="_blank"
-                            style="font-size: 12px; color: #ffffff; text-decoration: none; text-decoration: none;border-radius: 4px; padding: 12px 18px; border: 1px solid #ff3366; display: inline-block;">
-                            <b>Visit Integration</b>
-                          </a>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-                <tr align="center">
-                  <td>
-                    <table style="padding: 0;" cellspacing="10">
                       <tr>
                         <td
-                          style="font-size: 12px; font-weight: normal; font-stretch: normal; font-style: normal; line-height: normal; letter-spacing: normal; text-align: center; color: #a5a5a5; padding: 20px 0px 0px 0px"
-                          colspan=5>
-                          Experience One Click Easy Fyling
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 0px 5px;">
-                          <a href="https://itunes.apple.com/in/app/fyle-track-report-expenses/id1137906166">
-                            <img alt="Appstore" title="Appstore"
-                              src="https://raw.githubusercontent.com/fylein/fyle-intacct-api/e71f1048163d79e6780258a553f3b931c60c317f/apps/workspaces/templates/images/Apple_logo_grey.svg.png"
-                              height="18" width="16">
-                          </a>
-                        <td style="padding: 0px 5px;">
-                          <a href="https://play.google.com/store/apps/details?id=com.ionicframework.fyle595781">
-                            <img alt="Playstore" title="Playstore"
-                              src="https://raw.githubusercontent.com/fylein/fyle-netsuite-api/b1ebe6c1db08c4e85cc34244f8bf5a1b3f1219ea/apps/workspaces/templates/images/playstore.png"
-                              height="16" width="16">
-                          </a>
-
-                        </td>
-                        <td style="height: 20px; border-left: 1px solid #d8d8d8; padding: 0px 5px;">
-                        </td>
-                        <td style="padding: 0px 5px;">
-                          <a
-                            href="https://chrome.google.com/webstore/detail/fyle-expense-tracking-rep/abggpefphmldapcoknbcaadbpdjjmjgk">
-                            <img alt="Gmail" title="Gmail"
-                              src="https://raw.githubusercontent.com/fylein/fyle-netsuite-api/b1ebe6c1db08c4e85cc34244f8bf5a1b3f1219ea/apps/workspaces/templates/images/gmail.png"
-                              height="18" width="20">
-                          </a>
-
-                        </td>
-                        <td style="padding: 0px 5px;">
-                          <a href="https://appsource.microsoft.com/en-us/product/office/WA104380673">
-                            <img alt="Outlook" title="Outlook"
-                              src="https://raw.githubusercontent.com/fylein/fyle-netsuite-api/b1ebe6c1db08c4e85cc34244f8bf5a1b3f1219ea/apps/workspaces/templates/images/outlool.png"
-                              height="18" width="16">
-                          </a>
+                          style="font-style: normal;font-weight: 500;font-size: 14px;line-height: 18px;padding-top: 15px; color: #2C304E;">
+                          This is the list of expenses that could not be exported
                         </td>
                       </tr>
                     </table>
@@ -185,11 +148,110 @@
             </td>
           </tr>
           <tr>
+            <td>
+              <table id="task-logs">
+                <tr>
+                  <th>Expense ID</th>
+                  <th>Report Number</th>
+                  <th>Error</th>
+                  <th>Link to Fyle</th>
+                </tr>
+                <tr>
+                  <td>Alfreds Futterkiste</td>
+                  <td>Maria Anders</td>
+                  <td>Germany</td>
+                  <td>Germany</td>
+                </tr>
+                <tr>
+                  <td>Centro comercial Moctezuma</td>
+                  <td>Francisco Chang</td>
+                  <td>Mexico</td>
+                  <td><img src="./images/redirect-black-icon.png" alt="" srcset="" width="18" height="18"></td>
+                </tr>
+                {{ task_logs }}
+              </table>
+            </td>
+          </tr>
+          <tr align="center">
+            <td>
+              <table border="0" cellspacing="0" cellpadding="0">
+                <tr align="center">
+                  <td align="center" style="background: linear-gradient(162.38deg, #FF3366 3.01%, #FE5196 111.5%);
+                  border-radius: 4px;">
+                    <a href="{{app_url}}" target="_blank"
+                      style="font-weight: 500;font-size: 14px;line-height: 18px; color: #ffffff; text-decoration: none; display: flex;flex-direction: row;
+                      justify-content: center;align-items: center;padding: 12px 24px;gap: 8px;border-radius: 4px;">
+                      <b style="margin-right: 10px;">Visit Integration</b>
+                      <img src="https://raw.githubusercontent.com/fylein/fyle-qbo-api/qbo-email-notification1/apps/workspaces/templates/images/redirect-icon.png">
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="font-size: 12px; line-height: 18px; padding: 35px 24px 15px; color: #5A5D72;text-align: left;">
+              You are receiving this email because your email address has been selected in the integration under Automated Import/Export.
+            </td>
+          </tr>
+          <tr align="center">
+            <td>
+              <table style="padding: 0;" cellspacing="10">
+                <tr>
+                  <td
+                    style="font-size: 12px; font-weight: normal; font-stretch: normal; font-style: normal; line-height: normal; letter-spacing: normal; text-align: center; color: #a5a5a5; padding: 20px 0px 0px 0px"
+                    colspan=5>
+                    Experience One Click Easy Fyling
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 0px 5px;">
+                    <a href="https://itunes.apple.com/in/app/fyle-track-report-expenses/id1137906166">
+                      <img alt="Appstore" title="Appstore"
+                        src="https://raw.githubusercontent.com/fylein/fyle-qbo-api/qbo-email-notification1/apps/workspaces/templates/images/Apple_logo_grey.svg.png"
+                        height="18" width="16">
+                    </a>
+                  <td style="padding: 0px 5px;">
+                    <a href="https://play.google.com/store/apps/details?id=com.ionicframework.fyle595781">
+                      <img alt="Playstore" title="Playstore"
+                        src="https://raw.githubusercontent.com/fylein/fyle-qbo-api/qbo-email-notification1/apps/workspaces/templates/images/playstore.png"
+                        height="16" width="16">
+                    </a>
+
+                  </td>
+                  <td style="height: 20px; border-left: 1px solid #d8d8d8; padding: 0px 5px;">
+                  </td>
+                  <td style="padding: 0px 5px;">
+                    <a
+                      href="https://chrome.google.com/webstore/detail/fyle-expense-tracking-rep/abggpefphmldapcoknbcaadbpdjjmjgk">
+                      <img alt="Gmail" title="Gmail"
+                        src="https://raw.githubusercontent.com/fylein/fyle-qbo-api/qbo-email-notification1/apps/workspaces/templates/images/gmail.png"
+                        height="18" width="20">
+                    </a>
+
+                  </td>
+                  <td style="padding: 0px 5px;">
+                    <a href="https://appsource.microsoft.com/en-us/product/office/WA104380673">
+                      <img alt="Outlook" title="Outlook"
+                        src="https://raw.githubusercontent.com/fylein/fyle-qbo-api/qbo-email-notification1/apps/workspaces/templates/images/outlool.png"
+                        height="18" width="16">
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
             <td
-              background="https://raw.githubusercontent.com/fylein/fyle-netsuite-api/b1ebe6c1db08c4e85cc34244f8bf5a1b3f1219ea/apps/workspaces/templates/images/background.png"
+              background="https://raw.githubusercontent.com/fylein/fyle-qbo-api/qbo-email-notification1/apps/workspaces/templates/images/background.png"
               style="padding: 10px 10px 8px 5px; background-color: #f3f5f6;">
               <table align="center">
-                <tr style="color: #4A4A4A; font-size: 12px; text-align: center; line-height: 20px;">
+                <tr>
+                  <td style="color: #4A4A4A; font-size: 12px; text-align: center; line-height: 15px;padding-bottom: 17px;">
+                    Made with ❤️ in Bangalore
+                  </td>
+                </tr>
+                <tr style="color: #4A4A4A; font-size: 12px; text-align: center; line-height: 15px;">
                   <td>
                     {{ year }} Fyle. All Rights Reserved.
                   </td>
