@@ -198,7 +198,7 @@ def run_email_notification(workspace_id):
                     <td>''' + log['message'] + '''</td>
                     <td>
                         <a href = "''' + link + '''">
-                        <img src="https://raw.githubusercontent.com/fylein/fyle-qbo-api/qbo-email-notification1/apps/workspaces/templates/images/redirect-icon.png" width="18" height="18">
+                        <img src="https://raw.githubusercontent.com/fylein/fyle-qbo-api/qbo-email-notification1/apps/workspaces/templates/images/redirect-black-icon.png" width="18" height="18">
                         </a>
                     </td>
                     </tr>'''

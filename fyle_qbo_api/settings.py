@@ -253,6 +253,7 @@ FYLE_TOKEN_URI = os.environ.get('FYLE_TOKEN_URI')
 FYLE_CLIENT_ID = os.environ.get('FYLE_CLIENT_ID')
 FYLE_CLIENT_SECRET = os.environ.get('FYLE_CLIENT_SECRET')
 FYLE_BASE_URL = os.environ.get('FYLE_BASE_URL')
+FYLE_APP_URL = os.environ.get('APP_URL')
 
 # QBO Settings
 QBO_CLIENT_ID = os.environ.get('QBO_CLIENT_ID')
@@ -262,6 +263,16 @@ QBO_TOKEN_URI = os.environ.get('QBO_TOKEN_URI')
 QBO_ENVIRONMENT = os.environ.get('QBO_ENVIRONMENT')
 
 # Cache Settings
+SENDGRID_SANDBOX_MODE_IN_DEBUG=False
+
+# echo to stdout or any other file-like object that is passed to the backend via the stream kwarg.
+SENDGRID_ECHO_TO_STDOUT=True
+SI_SENDER_ID = os.environ.get('SI_SENDER_ID')
+SI_SENDER_PASSWORD = os.environ.get('SI_SENDER_PASSWORD')
+SENDGRID_API_KEY = os.environ.get('SENDGRID_KEY')
+EMAIL = os.environ.get('SENDGRID_EMAIL')
+EMAIL_BACKEND = 'sendgrid_backend.SendgridBackend'
+
 CACHE_EXPIRY = 3600
 
 CORS_ORIGIN_ALLOW_ALL = True
