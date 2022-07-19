@@ -77,15 +77,17 @@ def run_sync_schedule(workspace_id):
 def export_to_qbo(workspace_id, export_mode=None):
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
     last_export_detail = LastExportDetail.objects.get(workspace_id=workspace_id)
-    last_export_detail.last_exported_at = datetime.now()
-    last_export_detail.export_mode = export_mode or 'MANUAL'
-    last_export_detail.save()
+    last_exported_at = datetime.now()
+    is_expenses_exported = False
 
     if general_settings.reimbursable_expenses_object:
 
         expense_group_ids = ExpenseGroup.objects.filter(
             fund_source='PERSONAL', exported_at__isnull=True
         ).values_list('id', flat=True)
+
+        if len(expense_group_ids):
+            is_expenses_exported = True
 
         if general_settings.reimbursable_expenses_object == 'BILL':
             schedule_bills_creation(
@@ -112,6 +114,9 @@ def export_to_qbo(workspace_id, export_mode=None):
             fund_source='CCC', exported_at__isnull=True
         ).values_list('id', flat=True)
 
+        if len(expense_group_ids):
+            is_expenses_exported = True
+
         if general_settings.corporate_credit_card_expenses_object == 'JOURNAL ENTRY':
             schedule_journal_entry_creation(
                 workspace_id=workspace_id, expense_group_ids=expense_group_ids
@@ -131,3 +136,8 @@ def export_to_qbo(workspace_id, export_mode=None):
             schedule_bills_creation(
                 workspace_id=workspace_id, expense_group_ids=expense_group_ids
             )
+
+    if is_expenses_exported:
+        last_export_detail.last_exported_at = last_exported_at
+        last_export_detail.export_mode = export_mode or 'MANUAL'
+        last_export_detail.save()
