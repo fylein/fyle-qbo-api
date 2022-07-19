@@ -422,14 +422,14 @@ class ScheduleView(viewsets.ViewSet):
         """
         Post Settings
         """
-        schedule_enabled = request.data.get('schedulEnabled')
+        schedule_enabled = request.data.get('schedule_enabled')
         assert_valid(schedule_enabled is not None, 'Schedule enabled cannot be null')
 
         hours = request.data.get('hours')
         assert_valid(hours is not None, 'Hours cannot be left empty')
 
-        email_added = request.data.get('addedEmail')
-        emails_selected = request.data.get('selectedEmails')
+        email_added = request.data.get('email_added')
+        emails_selected = request.data.get('emails_selected')
 
         workspace_schedule_settings = schedule_sync(
             workspace_id=kwargs['workspace_id'],
