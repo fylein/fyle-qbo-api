@@ -71,8 +71,8 @@ def test_sync_departments(db):
     assert new_department_count == 0
 
 def test_construct_bill(create_bill, db):
-    qbo_credentials = QBOCredential.objects.get(workspace_id=4)
-    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=4)
+    qbo_credentials = QBOCredential.objects.get(workspace_id=3)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
 
     bill, bill_lineitems = create_bill
     bill_object = qbo_connection._QBOConnector__construct_bill(bill=bill,bill_lineitems=bill_lineitems)
