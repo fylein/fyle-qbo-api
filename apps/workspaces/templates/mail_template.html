@@ -4,20 +4,31 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <title>Fyle</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;500&display=swap" rel="stylesheet">
   <style>
+    body{
+      font-family:'Roboto', sans-serif !important;
+      font-weight: 300;
+    }
     #task-logs {
       border-collapse: collapse;
       table-layout: fixed;
       width: 100%;
       margin-bottom: 24px;
+      border-radius: 4px;
     }
 
-    #task-logs th {
+    #task-logs #header{
       background-color: #F5F5F5;
+      border: 1px solid #DFDFE2;
+      border-radius: 8px;
+    }
+    #task-logs th {
       padding: 13px 0px 12px 23px;
       text-align: left;
-      border: 1px solid #DFDFE2;
-      border-radius: 4px;
+      border-right: 1px solid #DFDFE2;
       width: 25%;
     }
 
@@ -44,7 +55,7 @@
     <tr>
       <td>
         <table align="center" border="0" cellpadding="0" cellspacing="0" width="600"
-          style="font-family: Helvetica,Arial; border-collapse: collapse; background-color: #ffffff; border-radius: 4px; border: solid 1px #d8d8d8;">
+          style=" border-collapse: collapse; background-color: #ffffff; border-radius: 4px; border: solid 1px #d8d8d8;">
           <tr>
             <td bgcolor="#f3f5f6"
               background="https://raw.githubusercontent.com/fylein/fyle-qbo-api/qbo-email-notification1/apps/workspaces/templates/images/background.png"
@@ -78,14 +89,14 @@
                 </tr>
                 <tr align="center">
                   <td
-                    style="font-size: 20px; padding-bottom: 30px; font-family: Aktiv Grotesk; color: #161528; font-weight: bold; padding-top: 40px;">
+                    style="font-size: 20px; padding-bottom: 30px; color: #161528; font-weight:900; padding-top: 40px;">
                     {{ errors }} Expense Group Failed To Export
                   </td>
                 </tr>
                 <tr>
                   <td>
                     <table
-                      style="font-family: Aktiv Grotesk; padding-left: 10px;  background:#F5F5F5; border-radius: 8px;"
+                      style=" padding-left: 10px; padding-right: 10px; background:#F5F5F5; border-radius: 8px;"
                       width="100%" cellspacing="10">
                       <tr style="font-style: normal;
                           font-weight: 500;
@@ -96,7 +107,7 @@
                         <td>FYLE ORGANIZATION</td>
                         <td>QUICKBOOKS ONLINE COMPANY</td>
                       </tr>
-                      <tr style="font-family: Aktiv Grotesk;
+                      <tr style="
                           font-style: normal;
                           font-weight: 500;
                           font-size: 14px;
@@ -105,12 +116,25 @@
                         <td>{{ fyle_company }}</td>
                         <td>{{ qbo_company }}</td>
                       </tr>
+                      <tr>
+                        <td colspan="2"><hr style="border: 1px solid #DFDFE2;"></td>
+                      </tr>
+                      <tr>
+                        <td
+                          style="font-size: 14px; font-weight: bold; line-height: 18px; color: #414562;">
+                          Export time - {{ export_time }}
+                        </td>
+                        <td
+                          style="font-size: 14px; font-weight: bold; line-height: 18px; color: #414562;">
+                          Error Type - Fyle Error
+                        </td>
+                      </tr>
                     </table>
                   </td>
                 </tr>
                 <tr>
                   <td>
-                    <table style="padding: 24px 0px 24px 0px; font-family: Aktiv Grotesk">
+                    <table style="padding: 24px 0px 24px 0px;">
                       <tr align="left">
                         <td style="font-size: 15px; line-height: 18px; color: #2C304E;">
                           Dear {{ name }},
@@ -118,15 +142,9 @@
                       </tr>
                       <tr>
                         <td style="font-size: 15px; line-height: 18px; padding-top: 15px; color: #2C304E;">
-                          <span style="font-weight: bold">{{ errors }} expense groups</span> failed to export from your
+                          <span><b>{{ errors }} expense groups</b></span> failed to export from your
                           Fyle org
                           to QuickBooks Online Company
-                        </td>
-                      </tr>
-                      <tr>
-                        <td
-                          style="font-size: 15px; font-weight: bold; padding-top: 15px; line-height: 18px; color: #2C304E;">
-                          Export time - {{ export_time }}
                         </td>
                       </tr>
                       <tr>
@@ -150,11 +168,10 @@
           <tr>
             <td>
               <table id="task-logs">
-                <tr>
+                <tr id="header">
                   <th>Expense ID</th>
-                  <th>Report Number</th>
-                  <th>Error</th>
-                  <th>Link to Fyle</th>
+                  <th>Error Message</th>
+                  <th>Error Type</th>
                 </tr>
                 {{ task_logs }}
               </table>
@@ -169,7 +186,7 @@
                     <a href="{{app_url}}" target="_blank"
                       style="font-weight: 500;font-size: 14px;line-height: 18px; color: #ffffff; text-decoration: none; display: flex;flex-direction: row;
                       justify-content: center;align-items: center;padding: 12px 24px;gap: 8px;border-radius: 4px;">
-                      <b style="margin-right: 10px;">Visit Integration</b>
+                      <b style="margin-right: 10px;">Visit Integration to view all</b>
                       <img src="https://raw.githubusercontent.com/fylein/fyle-qbo-api/qbo-email-notification1/apps/workspaces/templates/images/redirect-icon.png">
                     </a>
                   </td>

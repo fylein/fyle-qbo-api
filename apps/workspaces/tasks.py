@@ -1,4 +1,3 @@
-import time
 from datetime import datetime, timedelta, date
 from typing import List
 
@@ -27,7 +26,7 @@ def schedule_email_notification(workspace_id: int, schedule_enabled: bool, hours
             args='{}'.format(workspace_id),
             defaults={
                 'schedule_type': Schedule.MINUTES,
-                'minutes': 1,
+                'minutes': hours * 60,
                 'next_run': datetime.now() + timedelta(minutes=10)
             }
         )
@@ -191,25 +190,19 @@ def run_email_notification(workspace_id):
         for log in task_log.detail:
             for expense in expenses:
                 expense_data[expense.expense_number] = {
-                    'claim_number': expense.claim_number,
-                    'org_id': expense.org_id,
-                    'report_id': expense.report_id,
-                    'message': log['message']
+                    'message': log['message'],
+                    'error_type': log['type']
                 }
-   
+    count = 0
     for data in expense_data:
-        link = 'https://app.fyle.tech/app/admin/#/reports/' + expense_data[data]['report_id'] + '?org_id=' + expense_data[data]['org_id']
-        html = '''<tr>
-                    <td>''' + data + '''</td>
-                    <td>''' + expense_data[data]["claim_number"] + '''</td>
-                    <td>''' + expense_data[data]['message'] + '''</td>
-                    <td>
-                        <a href = "''' + link + '''">
-                        <img src="https://raw.githubusercontent.com/fylein/fyle-qbo-api/qbo-email-notification1/apps/workspaces/templates/images/redirect-black-icon.png" width="18" height="18">
-                        </a>
-                    </td>
-                </tr>'''
-        expence_html = expence_html + html       
+        if count < 5:
+            html = '''<tr>
+                        <td>''' + data + '''</td>
+                        <td>''' + expense_data[data]['message'] + '''</td>
+                        <td>''' + expense_data[data]["error_type"] + '''</td>
+                    </tr>'''
+            expence_html = expence_html + html 
+            count = count+1
     if ws_schedule.enabled:
         for admin_email in admin_data.emails_selected:
             attribute = ExpenseAttribute.objects.filter(workspace_id=workspace_id, value=admin_email).first()
@@ -228,10 +221,11 @@ def run_email_notification(workspace_id):
                     'fyle_company': workspace.name,
                     'qbo_company': qbo.company_name,
                     'workspace_id': workspace_id,
-                    'export_time': workspace.last_synced_at.date(),
+                    'export_time': workspace.last_synced_at.strftime("%d %b %Y | %H:%M"),
                     'year': date.today().year,
                     'app_url': "{0}/workspaces/main/dashboard".format(settings.FYLE_APP_URL),
-                    'task_logs': mark_safe(expence_html)
+                    'task_logs': mark_safe(expence_html),
+                    'length': len(expense_data)
                     }
                 message = render_to_string("mail_template.html", context)
 
