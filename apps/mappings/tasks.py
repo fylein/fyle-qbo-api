@@ -845,7 +845,7 @@ def schedule_cost_centers_creation(import_to_fyle, workspace_id):
 
 def create_fyle_expense_custom_field_payload(
     qbo_attributes: List[DestinationAttribute], workspace_id: int,
-    fyle_attribute: str, source_placeholder: str = None
+    fyle_attribute: str, platform: PlatformConnector, source_placeholder: str = None
 ):
     """
     Create Fyle Expense Custom Field Payload from QBO Objects
@@ -856,8 +856,6 @@ def create_fyle_expense_custom_field_payload(
     """
     fyle_expense_custom_field_options = []
 
-    [fyle_expense_custom_field_options.append(qbo_attribute.value) for qbo_attribute in qbo_attributes]
-
     if fyle_attribute.lower() not in FYLE_EXPENSE_SYSTEM_FIELDS:
         existing_attribute = ExpenseAttribute.objects.filter(
             attribute_type=fyle_attribute, workspace_id=workspace_id).values_list('detail', flat=True).first()
@@ -867,7 +865,13 @@ def create_fyle_expense_custom_field_payload(
         if existing_attribute is not None:
             custom_field_id = existing_attribute['custom_field_id']
             placeholder = existing_attribute['placeholder'] if 'placeholder' in existing_attribute else None
+            expense_field = platform.expense_custom_fields.get_by_id(custom_field_id)
+            fyle_expense_custom_field_options = expense_field['options']
+            last_imported_at = expense_field['updated_at']
+            qbo_attributes = [qbo_attribute for qbo_attribute in qbo_attributes if qbo_attribute.updated_at > parser.parse(last_imported_at)]
 
+        [fyle_expense_custom_field_options.append(qbo_attribute.value) for qbo_attribute in qbo_attributes]
+        fyle_expense_custom_field_options = list(set(fyle_expense_custom_field_options))
         fyle_attribute = fyle_attribute.replace('_', ' ').title()
 
         new_placeholder = None
@@ -926,6 +930,7 @@ def upload_attributes_to_fyle(
         qbo_attributes=qbo_attributes,
         workspace_id=workspace_id,
         fyle_attribute=fyle_attribute_type,
+        platform=platform,
         source_placeholder=source_placeholder
     )
 
