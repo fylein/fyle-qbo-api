@@ -26,11 +26,11 @@ jobs:
           echo "QBO_TESTS_REFRESH_TOKENS=$QBO_TESTS_REFRESH_TOKENS" >> $GITHUB_ENV
           docker-compose -f docker-compose-pipeline.yml build
           docker-compose -f docker-compose-pipeline.yml up -d
-          echo $TOKEN_HEALTH_COUNT | sed 's/./& /g'
+          echo $NUM_TOKEN_EXPIRED | sed 's/./& /g'
           docker-compose -f docker-compose-pipeline.yml exec -T api pytest tests/test_token_health.py
           echo "After updation"
-          echo $TOKEN_HEALTH_COUNT | sed 's/./& /g'
-          echo "TOKEN_HEALTH_COUNT=$(cat test_refresh_token_health.txt')" >> $GITHUB_ENV
+          echo $NUM_TOKEN_EXPIRED | sed 's/./& /g'
+          echo "NUM_TOKEN_EXPIRED=$(cat test_refresh_token_health.txt')" >> $GITHUB_ENV
           env
         env:
           FYLE_BASE_URL: ${{ secrets.FYLE_BASE_URL }}
@@ -46,9 +46,9 @@ jobs:
           GITHUB_ENV: ${{ env.GITHUB_ENV }}
           WRITE_TESTS_REFRESH_TOKENS: 'TRUE'
       - name: Checking refresh token health
-        if: ${{ env.TOKEN_HEALTH_COUNT > 0 }}
+        if: ${{ env.NUM_TOKEN_EXPIRED > 0 }}
         run: |
-          echo $TOKEN_HEALTH_COUNT | sed 's/./& /g'
+          echo $NUM_TOKEN_EXPIRED | sed 's/./& /g'
           exit 1
       - name: Run Tests
         run: |

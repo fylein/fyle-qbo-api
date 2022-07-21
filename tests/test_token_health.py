@@ -26,8 +26,8 @@ def test_token_health():
             print('error for workspace id - ', workspace_id)
             print(error)
 
-    os.environ['TOKEN_HEALTH_COUNT'] = str(counter)
-    print("os.environ['TOKEN_HEALTH_COUNT']", os.environ['TOKEN_HEALTH_COUNT'])
+    os.environ['NUM_TOKEN_EXPIRED'] = str(counter)
+    print("os.environ['NUM_TOKEN_EXPIRED']", os.environ['NUM_TOKEN_EXPIRED'])
     with open('test_refresh_token_health.txt', 'w') as file:
         file.write(str(counter))
 
@@ -54,8 +54,8 @@ def test_token_health_again():
             print('error for workspace id - ', workspace_id)
             print(error)
 
-    os.environ['TOKEN_HEALTH_COUNT'] = str(counter)
-    print("os.environ['TOKEN_HEALTH_COUNT']", os.environ['TOKEN_HEALTH_COUNT'])
+    os.environ['NUM_TOKEN_EXPIRED'] = str(counter)
+    print("os.environ['NUM_TOKEN_EXPIRED']", os.environ['NUM_TOKEN_EXPIRED'])
 
     with open('test_refresh_token_health.txt', 'w') as file:
         file.write(str(counter))
