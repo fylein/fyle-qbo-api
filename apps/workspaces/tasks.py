@@ -83,7 +83,7 @@ def export_to_qbo(workspace_id, export_mode=None):
     if general_settings.reimbursable_expenses_object:
 
         expense_group_ids = ExpenseGroup.objects.filter(
-            fund_source='PERSONAL', exported_at__isnull=True
+            fund_source='PERSONAL', exported_at__isnull=True, workspace_id=workspace_id
         ).values_list('id', flat=True)
 
         if len(expense_group_ids):
@@ -111,7 +111,7 @@ def export_to_qbo(workspace_id, export_mode=None):
 
     if general_settings.corporate_credit_card_expenses_object:
         expense_group_ids = ExpenseGroup.objects.filter(
-            fund_source='CCC', exported_at__isnull=True
+            fund_source='CCC', exported_at__isnull=True, workspace_id=workspace_id
         ).values_list('id', flat=True)
 
         if len(expense_group_ids):
