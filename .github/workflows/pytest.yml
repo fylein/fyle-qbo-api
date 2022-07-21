@@ -9,6 +9,7 @@ env:
   secret_name: QBO_TESTS_REFRESH_TOKENS
   secret_body: ""
   QBO_TESTS_REFRESH_TOKENS: ${{ secrets.QBO_TESTS_REFRESH_TOKENS }}
+  GITHUB_ENV: $GITHUB_ENV
 
 jobs:
   pytest:

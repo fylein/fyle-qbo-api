@@ -8,6 +8,7 @@ from apps.quickbooks_online.utils import QBOConnector, QBOCredential
 def test_token_health():
     refresh_tokens = ast.literal_eval(os.environ.get('QBO_TESTS_REFRESH_TOKENS'))
     print(refresh_tokens)
+    print(os.environ)
 
     env_path = os.environ.get('GITHUB_ENV')
     print(env_path)
