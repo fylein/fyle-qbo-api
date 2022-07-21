@@ -10,7 +10,7 @@ def test_token_health():
     print(refresh_tokens)
     print(os.environ)
 
-    counter = os.environ.get('NUM_TOKEN_EXPIRED')
+    counter = int(os.environ.get('NUM_TOKEN_EXPIRED'))
     print(counter)
     print(type(counter))
 
@@ -28,5 +28,3 @@ def test_token_health():
 
     os.environ['TOKEN_HEALTH_COUNT'] = str(counter)
     print("os.environ['TOKEN_HEALTH_COUNT']", os.environ['TOKEN_HEALTH_COUNT'])
-
-    assert 1 == 2
