@@ -24,12 +24,14 @@ jobs:
       - name: Bring up Services and check for token health
         run: |
           echo "QBO_TESTS_REFRESH_TOKENS=$QBO_TESTS_REFRESH_TOKENS" >> $GITHUB_ENV
+          echo "num_token_expired=1" >> $GITHUB_ENV
           docker-compose -f docker-compose-pipeline.yml build
           docker-compose -f docker-compose-pipeline.yml up -d
           echo $num_token_expired | sed 's/./& /g'
           docker-compose -f docker-compose-pipeline.yml exec -T api pytest tests/test_token_health.py
           echo "After updation"
           echo $num_token_expired | sed 's/./& /g'
+          env
         env:
           FYLE_BASE_URL: ${{ secrets.FYLE_BASE_URL }}
           FYLE_CLIENT_ID: ${{ secrets.FYLE_CLIENT_ID }}
