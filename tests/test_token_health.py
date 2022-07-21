@@ -3,10 +3,6 @@ import ast
 import os
 from apps.quickbooks_online.utils import QBOConnector, QBOCredential
 
-github_env_file = os.getenv('GITHUB_ENV')
-print(github_env_file)
-
-
 counter = 0
 
 refresh_tokens = ast.literal_eval(os.environ.get('QBO_TESTS_REFRESH_TOKENS'))
@@ -24,5 +20,4 @@ for workspace_id in refresh_tokens.keys():
         print('error for workspace id - ', workspace_id)
         print(error)
 
-with open(github_env_file, "a") as env_file:
-    env_file.write("num_token_expired=" + counter)
+os.environ['num_token_expired'] = str(counter)

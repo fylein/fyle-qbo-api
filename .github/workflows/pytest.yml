@@ -20,6 +20,7 @@ jobs:
         continue-on-error: true
       - name: Bring up Services and check for token health
         run: |
+          echo "num_token_expired=0" >> $GITHUB_ENV
           echo "QBO_TESTS_REFRESH_TOKENS=$QBO_TESTS_REFRESH_TOKENS" >> $GITHUB_ENV
           docker-compose -f docker-compose-pipeline.yml build
           docker-compose -f docker-compose-pipeline.yml up -d
