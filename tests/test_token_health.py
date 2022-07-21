@@ -10,10 +10,10 @@ def test_token_health():
     print(refresh_tokens)
     print(os.environ)
 
-    env_path = os.environ.get('GITHUB_ENV')
-    print(env_path)
+    counter = os.environ.get('NUM_TOKEN_EXPIRED')
+    print(counter)
+    print(type(counter))
 
-    counter = 0
     for workspace_id in refresh_tokens.keys():
         try:
             qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
@@ -26,10 +26,7 @@ def test_token_health():
             print('error for workspace id - ', workspace_id)
             print(error)
 
-    os.environ['num_token_expired'] = str(counter)
-    print("os.environ['num_token_expired']", os.environ['num_token_expired'])
-    if env_path:
-        with open(env_path, "a") as env_file:
-            env_file.write("num_token_expired=" + counter)
+    os.environ['TOKEN_HEALTH_COUNT'] = str(counter)
+    print("os.environ['TOKEN_HEALTH_COUNT']", os.environ['TOKEN_HEALTH_COUNT'])
 
     assert 1 == 2

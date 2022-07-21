@@ -37,6 +37,7 @@ services:
       WRITE_TESTS_REFRESH_TOKENS: ${WRITE_TESTS_REFRESH_TOKENS}
       QBO_ENVIRONMENT: SANDBOX
       GITHUB_ENV: ${GITHUB_ENV_PATH}
+      NUM_TOKEN_EXPIRED: 0
   db:
     image: "postgres:latest"
     environment: 
