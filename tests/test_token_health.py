@@ -10,13 +10,9 @@ def test_token_health():
     print(refresh_tokens)
 
     env_path = os.environ['PATH']
-    print(env_path)
     print(os.environ)
-    print(os.environ['PATH'])
+    print(os.environ['QBO_TESTS_REFRESH_TOKENS'])
 
-    github_env_file = os.getenv('GITHUB_ENV')
-    if github_env_file:
-        print('Looks like GitHub!')
     counter = 0
     for workspace_id in refresh_tokens.keys():
         try:
@@ -32,7 +28,7 @@ def test_token_health():
 
     os.environ['num_token_expired'] = str(counter)
     print("os.environ['num_token_expired']", os.environ['num_token_expired'])
-    # if github_env_file:
+    # if env_path:
     #     with open(env_path, "a") as env_file:
     #         env_file.write("num_token_expired=" + counter)
 
