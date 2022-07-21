@@ -1,6 +1,7 @@
 
 import ast
 import os
+import pytest
 from apps.quickbooks_online.utils import QBOConnector, QBOCredential
 
 counter = 0
@@ -8,16 +9,20 @@ counter = 0
 refresh_tokens = ast.literal_eval(os.environ.get('QBO_TESTS_REFRESH_TOKENS'))
 print(refresh_tokens)
 
-for workspace_id in refresh_tokens.keys():
-    try:
-        qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
-        qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
+@pytest.mark.django_db
+def test_token_health():
+    global counter
+    for workspace_id in refresh_tokens.keys():
+        try:
+            qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
+            qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
-        print('qbo_connection succeded')
+            print('qbo_connection succeded')
 
-    except Exception as error:
-        counter += 1
-        print('error for workspace id - ', workspace_id)
-        print(error)
+        except Exception as error:
+            counter += 1
+            print('error for workspace id - ', workspace_id)
+            print(error)
 
-os.environ['num_token_expired'] = str(counter)
+    os.environ['num_token_expired'] = str(counter)
+    print(counter)
