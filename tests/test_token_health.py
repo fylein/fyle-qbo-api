@@ -10,6 +10,8 @@ def test_token_health():
     print(refresh_tokens)
 
     print(os.environ.get('GITHUB_ENV'))
+    env_path = os.environ.get('GITHUB_ENV')
+    print(env_path)
     print(os.environ['GITHUB_ENV'])
 
     github_env_file = os.getenv('GITHUB_ENV')
@@ -31,7 +33,7 @@ def test_token_health():
     os.environ['num_token_expired'] = str(counter)
     print("os.environ['num_token_expired']", os.environ['num_token_expired'])
     if github_env_file:
-        with open(github_env_file, "a") as env_file:
+        with open('/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin', "a") as env_file:
             env_file.write("num_token_expired=" + counter)
 
     assert 1 == 2
