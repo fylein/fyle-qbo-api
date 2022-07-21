@@ -11,7 +11,7 @@ counter = 0
 refresh_tokens = ast.literal_eval(os.environ.get('QBO_TESTS_REFRESH_TOKENS'))
 print(refresh_tokens)
 
-for workspace_id, refresh_token in refresh_tokens:
+for workspace_id in refresh_tokens.keys():
     try:
         qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
         qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
@@ -25,4 +25,3 @@ for workspace_id, refresh_token in refresh_tokens:
             env_file.write("num_token_expired=" + counter)
         print('error for workspace id - ', workspace_id)
         print(error)
-        

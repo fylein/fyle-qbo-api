@@ -80,10 +80,10 @@ class QBOConnector:
             QBO_TESTS_REFRESH_TOKENS = ast.literal_eval(os.environ.get('QBO_TESTS_REFRESH_TOKENS'))
             QBO_TESTS_REFRESH_TOKENS[workspace_id] = self.connection.refresh_token
             os.environ['QBO_TESTS_REFRESH_TOKENS'] = str(QBO_TESTS_REFRESH_TOKENS)
-            print('\n refresh token from connection callfor wokspaceid - ', workspace_id)
+            print('\n refresh token from connection call for wokspaceid - ', workspace_id)
             print(QBO_TESTS_REFRESH_TOKENS)
             new_refresh_token = ast.literal_eval(os.environ.get('QBO_TESTS_REFRESH_TOKENS'))
-            print('\n refresh token store in env after updating itfor wokspaceid - ', workspace_id)
+            print('\n refresh token store in env after updating it for wokspaceid - ', workspace_id)
             print(new_refresh_token)
         
         if 'WRITE_TESTS_REFRESH_TOKENS' in os.environ: #For saving the refresh tokens on local while running tests
