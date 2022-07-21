@@ -21,5 +21,5 @@ def test_token_health():
             print('error for workspace id - ', workspace_id)
             print(error)
 
-    with open('test_refresh_token_health.txt', 'w') as file:
+    with open('test_refresh_token.txt', 'w') as file:
         file.write(str(counter))
