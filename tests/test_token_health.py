@@ -9,17 +9,11 @@ def test_token_health():
     refresh_tokens = ast.literal_eval(os.environ.get('QBO_TESTS_REFRESH_TOKENS'))
     print(refresh_tokens)
 
-    env_path = os.environ['PATH']
-    print(env_path)
-    print(os.environ)
-    print(os.environ['QBO_TESTS_REFRESH_TOKENS'])
-
     counter = 0
     for workspace_id in refresh_tokens.keys():
         try:
             qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
             qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
-
             print('qbo_connection succeded', qbo_connection)
 
         except Exception as error:
@@ -28,10 +22,6 @@ def test_token_health():
             print(error)
 
     os.environ['num_token_expired'] = str(counter)
-    print("os.environ['num_token_expired']", os.environ['num_token_expired'])
-    if env_path:
-        with open(env_path, "a") as env_file:
-            env_file.write("num_token_expired=" + counter)
-
+    print(os.environ)
     assert 1 == 2
     
