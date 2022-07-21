@@ -9,7 +9,7 @@ def test_token_health():
     refresh_tokens = ast.literal_eval(os.environ.get('QBO_TESTS_REFRESH_TOKENS'))
     print(refresh_tokens)
 
-    print(ast.literal_eval(os.environ.get('GITHUB_ENV')))
+    print(os.environ.get('GITHUB_ENV'))
     github_env_path = ast.literal_eval(os.environ.get('GITHUB_ENV'))
     print(github_env_path)
 
