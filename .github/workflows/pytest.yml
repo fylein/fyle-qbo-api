@@ -26,10 +26,10 @@ jobs:
           echo "QBO_TESTS_REFRESH_TOKENS=$QBO_TESTS_REFRESH_TOKENS" >> $GITHUB_ENV
           docker-compose -f docker-compose-pipeline.yml build
           docker-compose -f docker-compose-pipeline.yml up -d
-          echo $NUM_TOKEN_EXPIRED | sed 's/./& /g'
+          echo $NUM_TOKEN_EXPIRED
           docker-compose -f docker-compose-pipeline.yml exec -T api pytest tests/test_token_health.py
           echo "After updation"
-          echo $NUM_TOKEN_EXPIRED | sed 's/./& /g'
+          echo $NUM_TOKEN_EXPIRED
           echo "NUM_TOKEN_EXPIRED=$(cat test_refresh_token_health.txt')" >> $GITHUB_ENV
           env
         env:
@@ -48,15 +48,15 @@ jobs:
       - name: Checking refresh token health
         if: ${{ env.NUM_TOKEN_EXPIRED > 0 }}
         run: |
-          echo $NUM_TOKEN_EXPIRED | sed 's/./& /g'
+          echo $NUM_TOKEN_EXPIRED
           exit 1
       - name: Run Tests
         run: |
           docker-compose -f docker-compose-pipeline.yml exec -T api pytest tests/ --cov=. --junit-xml=test-reports/report.xml --cov-report=term-missing --cov-fail-under=90 | tee pytest-coverage.txt
           echo "STATUS=$(cat pytest-coverage.txt | grep 'Required test' | awk '{ print $1 }')" >> $GITHUB_ENV
           echo "FAILED=$(cat test-reports/report.xml | awk -F'=' '{print $5}' | awk -F' ' '{gsub(/"/, "", $1); print $1}')" >> $GITHUB_ENV
-          echo "secret_body=$QBO_TESTS_REFRESH_TOKENS" >> $GITHUB_ENV
-          echo $secret_body | sed 's/./& /g'
+          echo "secret_body=$(cat test_refresh_token.txt)" >> $GITHUB_ENV
+          echo $secret_body
       - name: echo secret_body
         if: ${{ (env.secret_body) == (env.QBO_TESTS_REFRESH_TOKENS) }}
         run: |
