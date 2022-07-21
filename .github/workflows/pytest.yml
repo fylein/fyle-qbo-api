@@ -30,7 +30,7 @@ jobs:
           docker-compose -f docker-compose-pipeline.yml exec -T api pytest tests/test_token_health.py
           echo "After updation"
           echo $NUM_TOKEN_EXPIRED
-          echo "NUM_TOKEN_EXPIRED=$(cat test_refresh_token_health.txt')" >> $GITHUB_ENV
+          echo "NUM_TOKEN_EXPIRED=$(cat test_refresh_token_health.txt)" >> $GITHUB_ENV
           env
         env:
           FYLE_BASE_URL: ${{ secrets.FYLE_BASE_URL }}
