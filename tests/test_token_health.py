@@ -32,9 +32,9 @@ def test_token_health():
 
     os.environ['num_token_expired'] = str(counter)
     print("os.environ['num_token_expired']", os.environ['num_token_expired'])
-    if github_env_file:
-        with open(env_path, "a") as env_file:
-            env_file.write("num_token_expired=" + counter)
+    # if github_env_file:
+    #     with open(env_path, "a") as env_file:
+    #         env_file.write("num_token_expired=" + counter)
 
-    assert 1 == 2
+    # assert 1 == 2
     
