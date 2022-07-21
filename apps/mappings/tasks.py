@@ -22,6 +22,12 @@ from .constants import FYLE_EXPENSE_SYSTEM_FIELDS
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
 
+DEFAULT_FYLE_CATEGORIES = [
+    'activity', 'train', 'fuel', 'snacks', 'office supplies', 'utility', 'entertainment', 'others', 'mileage', 'food',
+    'per diem', 'bus', 'internet', 'taxi', 'courier', 'hotel', 'professional services', 'phone', 'office party',
+    'flight', 'software', 'parking', 'toll charge', 'tax', 'training', 'unspecified'
+]
+
 
 def resolve_expense_attribute_errors(
     source_attribute_type: str, workspace_id: int, destination_attribute_type: str = None):
@@ -68,9 +74,9 @@ def remove_duplicates(qbo_attributes: List[DestinationAttribute]):
     attribute_values = []
 
     for attribute in qbo_attributes:
-        if attribute.value not in attribute_values:
+        if attribute.value.lower() not in attribute_values:
             unique_attributes.append(attribute)
-            attribute_values.append(attribute.value)
+            attribute_values.append(attribute.value.lower())
 
     return unique_attributes
 
@@ -248,7 +254,7 @@ def create_fyle_categories_payload(categories: List[DestinationAttribute], works
         attribute_type='CATEGORY', workspace_id=workspace_id).values_list('value', flat=True)
 
     for category in categories:
-        if category.value not in existing_category_names:
+        if category.value not in existing_category_names and category.value.lower() not in DEFAULT_FYLE_CATEGORIES:
             payload.append({
                 'name': category.value,
                 'code': category.destination_id,
@@ -839,7 +845,7 @@ def schedule_cost_centers_creation(import_to_fyle, workspace_id):
 
 def create_fyle_expense_custom_field_payload(
     qbo_attributes: List[DestinationAttribute], workspace_id: int,
-    fyle_attribute: str, source_placeholder: str = None
+    fyle_attribute: str, platform: PlatformConnector, source_placeholder: str = None
 ):
     """
     Create Fyle Expense Custom Field Payload from QBO Objects
@@ -850,8 +856,6 @@ def create_fyle_expense_custom_field_payload(
     """
     fyle_expense_custom_field_options = []
 
-    [fyle_expense_custom_field_options.append(qbo_attribute.value) for qbo_attribute in qbo_attributes]
-
     if fyle_attribute.lower() not in FYLE_EXPENSE_SYSTEM_FIELDS:
         existing_attribute = ExpenseAttribute.objects.filter(
             attribute_type=fyle_attribute, workspace_id=workspace_id).values_list('detail', flat=True).first()
@@ -861,7 +865,13 @@ def create_fyle_expense_custom_field_payload(
         if existing_attribute is not None:
             custom_field_id = existing_attribute['custom_field_id']
             placeholder = existing_attribute['placeholder'] if 'placeholder' in existing_attribute else None
+            expense_field = platform.expense_custom_fields.get_by_id(custom_field_id)
+            fyle_expense_custom_field_options = expense_field['options']
+            last_imported_at = expense_field['updated_at']
+            qbo_attributes = [qbo_attribute for qbo_attribute in qbo_attributes if qbo_attribute.updated_at > parser.parse(last_imported_at)]
 
+        [fyle_expense_custom_field_options.append(qbo_attribute.value) for qbo_attribute in qbo_attributes]
+        fyle_expense_custom_field_options = list(set(fyle_expense_custom_field_options))
         fyle_attribute = fyle_attribute.replace('_', ' ').title()
 
         new_placeholder = None
@@ -920,6 +930,7 @@ def upload_attributes_to_fyle(
         qbo_attributes=qbo_attributes,
         workspace_id=workspace_id,
         fyle_attribute=fyle_attribute_type,
+        platform=platform,
         source_placeholder=source_placeholder
     )
 
@@ -1018,9 +1029,11 @@ def post_merchants(platform_connection: PlatformConnector, workspace_id: int, fi
     else:
         merchant = platform_connection.merchants.get()
         merchant_updated_at = parser.isoparse(merchant['updated_at']).strftime('%Y-%m-%d %H:%M:%S.%f')
-        today_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
-        qbo_attributes = DestinationAttribute.objects.filter(attribute_type='VENDOR', workspace_id=workspace_id,
-            updated_at__range=[merchant_updated_at, today_date]).order_by('value', 'id')
+        qbo_attributes = DestinationAttribute.objects.filter(
+            attribute_type='VENDOR',
+            workspace_id=workspace_id,
+            updated_at__gte=merchant_updated_at
+        ).order_by('value', 'id')
 
     qbo_attributes = remove_duplicates(qbo_attributes)
 

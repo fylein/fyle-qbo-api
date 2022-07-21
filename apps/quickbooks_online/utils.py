@@ -61,7 +61,7 @@ class QBOConnector:
             print(refresh_token)
 
         else:
-            refresh_token = credentials_object.refresh_token,
+            refresh_token = credentials_object.refresh_token
 
         self.connection = QuickbooksOnlineSDK(
             client_id=client_id,
