@@ -25,6 +25,7 @@ jobs:
           docker-compose -f docker-compose-pipeline.yml up -d
           echo $num_token_expired | sed 's/./& /g'
           docker-compose -f docker-compose-pipeline.yml exec -T api pytest tests/test_token_health.py
+          echo "After updation"
           echo $num_token_expired | sed 's/./& /g'
         env:
           FYLE_BASE_URL: ${{ secrets.FYLE_BASE_URL }}
