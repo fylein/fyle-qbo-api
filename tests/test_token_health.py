@@ -23,5 +23,4 @@ def test_token_health():
 
     os.environ['num_token_expired'] = str(counter)
     print(os.environ)
-    assert 1 == 2
     
