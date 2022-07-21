@@ -9,9 +9,8 @@ def test_token_health():
     refresh_tokens = ast.literal_eval(os.environ.get('QBO_TESTS_REFRESH_TOKENS'))
     print(refresh_tokens)
 
-    env_path = os.environ['GITHUB_ENV']
+    env_path = os.environ.get('GITHUB_ENV')
     print(env_path)
-    print(os.environ)
 
     counter = 0
     for workspace_id in refresh_tokens.keys():
