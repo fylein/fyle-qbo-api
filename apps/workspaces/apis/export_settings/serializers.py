@@ -179,6 +179,10 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
         if not expense_group_settings['ccc_export_date_type']:
             expense_group_settings['ccc_export_date_type'] = 'current_date'
 
+        if  workspace_general_settings.get('corporate_credit_card_expenses_object') == 'JOURNAL ENTRY' or \
+            workspace_general_settings.get('reimbursable_expenses_object') in ('JOURNAL ENTRY', 'EXPENSE'):
+            expense_group_settings['import_card_credits'] = True
+        
         ExpenseGroupSettings.update_expense_group_settings(expense_group_settings, instance.id)
 
         GeneralMapping.objects.update_or_create(

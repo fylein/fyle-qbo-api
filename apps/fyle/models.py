@@ -11,7 +11,8 @@ from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.db import models
 from django.db.models import Count, Q, JSONField
 
-from apps.workspaces.models import Workspace
+from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
+
 from fyle_accounting_mappings.models import ExpenseAttribute
 
 ALLOWED_FIELDS = [
@@ -244,6 +245,10 @@ class ExpenseGroupSettings(models.Model):
         if 'claim_number' in corporate_credit_card_expenses_grouped_by:
             corporate_credit_card_expenses_grouped_by.append('report_id')
 
+        import_card_credits = settings.import_card_credits
+        if 'import_card_credits' in expense_group_settings.keys():
+            import_card_credits = expense_group_settings['import_card_credits']
+            
         return ExpenseGroupSettings.objects.update_or_create(
             workspace_id=workspace_id,
             defaults={
@@ -251,7 +256,8 @@ class ExpenseGroupSettings(models.Model):
                 'corporate_credit_card_expense_group_fields': corporate_credit_card_expenses_grouped_by,
                 'expense_state': expense_group_settings['expense_state'],
                 'reimbursable_export_date_type': expense_group_settings['reimbursable_export_date_type'],
-                'ccc_export_date_type': expense_group_settings['ccc_export_date_type']
+                'ccc_export_date_type': expense_group_settings['ccc_export_date_type'],
+                'import_card_credits': import_card_credits
             }
         )
 
@@ -302,6 +308,19 @@ class ExpenseGroup(models.Model):
 
         reimbursable_expense_group_fields = expense_group_settings.reimbursable_expense_group_fields
         reimbursable_expenses = list(filter(lambda expense: expense.fund_source == 'PERSONAL', expense_objects))
+        general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+
+        if general_settings.reimbursable_expenses_object == 'EXPENSE' and 'expense_id' not in reimbursable_expense_group_fields:
+            total_amount = 0
+            for expense in reimbursable_expenses:
+                total_amount += expense.amount
+
+            if total_amount < 0:
+                reimbursable_expenses = list(filter(lambda expense: expense.amount > 0, reimbursable_expenses))
+                
+        elif  general_settings.reimbursable_expenses_object  != 'JOURNAL ENTRY':
+            reimbursable_expenses = list(filter(lambda expense: expense.amount > 0, reimbursable_expenses))
+
         expense_groups = _group_expenses(reimbursable_expenses, reimbursable_expense_group_fields, workspace_id)
 
         corporate_credit_card_expense_group_field = expense_group_settings.corporate_credit_card_expense_group_fields
