@@ -59,5 +59,3 @@ def test_token_health_again():
 
     with open('test_refresh_token_health.txt', 'w') as file:
         file.write(str(counter))
-
-    assert 1 == 2
