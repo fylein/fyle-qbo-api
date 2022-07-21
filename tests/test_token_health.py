@@ -17,7 +17,7 @@ def test_token_health():
             qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
             qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
-            print('qbo_connection succeded')
+            print('qbo_connection succeded', qbo_connection)
 
         except Exception as error:
             counter += 1
