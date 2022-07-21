@@ -20,11 +20,22 @@ jobs:
         continue-on-error: true
       - name: Bring up Services and check for token health
         run: |
-          echo "num_token_expired=0" >> $GITHUB_ENV
           echo "QBO_TESTS_REFRESH_TOKENS=$QBO_TESTS_REFRESH_TOKENS" >> $GITHUB_ENV
           docker-compose -f docker-compose-pipeline.yml build
           docker-compose -f docker-compose-pipeline.yml up -d
           docker-compose -f docker-compose-pipeline.yml exec -T api pytest tests/test_token_health.py
+        env:
+          FYLE_BASE_URL: ${{ secrets.FYLE_BASE_URL }}
+          FYLE_CLIENT_ID: ${{ secrets.FYLE_CLIENT_ID }}
+          FYLE_CLIENT_SECRET: ${{ secrets.FYLE_CLIENT_SECRET }}
+          FYLE_REFRESH_TOKEN: ${{ secrets.FYLE_REFRESH_TOKEN }}
+          FYLE_TOKEN_URI: ${{ secrets.FYLE_TOKEN_URI }}
+          FYLE_SERVER_URL: ${{ secrets.FYLE_SERVER_URL }}
+          QBO_CLIENT_ID: ${{ secrets.QBO_CLIENT_ID }}
+          QBO_CLIENT_SECRET: ${{ secrets.QBO_CLIENT_SECRET }}
+          QBO_REDIRECT_URI: ${{ secrets.QBO_REDIRECT_URI }}
+          QBO_TOKEN_URI: ${{ secrets.QBO_TOKEN_URI }}
+          num_token_expired: 0
       - name: Checking refresh token health
         if: ${{ env.num_token_expired > 0 }}
         run: |
@@ -37,17 +48,6 @@ jobs:
           echo "FAILED=$(cat test-reports/report.xml | awk -F'=' '{print $5}' | awk -F' ' '{gsub(/"/, "", $1); print $1}')" >> $GITHUB_ENV
           echo "secret_body=$QBO_TESTS_REFRESH_TOKENS" >> $GITHUB_ENV
           echo $secret_body | sed 's/./& /g'
-        env:
-          FYLE_BASE_URL: ${{ secrets.FYLE_BASE_URL }}
-          FYLE_CLIENT_ID: ${{ secrets.FYLE_CLIENT_ID }}
-          FYLE_CLIENT_SECRET: ${{ secrets.FYLE_CLIENT_SECRET }}
-          FYLE_REFRESH_TOKEN: ${{ secrets.FYLE_REFRESH_TOKEN }}
-          FYLE_TOKEN_URI: ${{ secrets.FYLE_TOKEN_URI }}
-          FYLE_SERVER_URL: ${{ secrets.FYLE_SERVER_URL }}
-          QBO_CLIENT_ID: ${{ secrets.QBO_CLIENT_ID }}
-          QBO_CLIENT_SECRET: ${{ secrets.QBO_CLIENT_SECRET }}
-          QBO_REDIRECT_URI: ${{ secrets.QBO_REDIRECT_URI }}
-          QBO_TOKEN_URI: ${{ secrets.QBO_TOKEN_URI }}
       - name: echo secret_body
         if: ${{ (env.secret_body) == (env.QBO_TESTS_REFRESH_TOKENS) }}
         run: |
