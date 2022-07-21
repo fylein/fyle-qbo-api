@@ -7,6 +7,10 @@ from apps.quickbooks_online.utils import QBOConnector, QBOCredential
 refresh_tokens = ast.literal_eval(os.environ.get('QBO_TESTS_REFRESH_TOKENS'))
 print(refresh_tokens)
 
+github_env_file = os.getenv('GITHUB_ENV')
+if github_env_file:
+    print('Looks like GitHub!')
+
 @pytest.mark.django_db
 def test_token_health():
     counter = 0
@@ -23,5 +27,7 @@ def test_token_health():
             print(error)
 
     os.environ['num_token_expired'] = str(counter)
-    print(counter)
-    assert 1 == 2
+    print("os.environ['num_token_expired']", os.environ['num_token_expired'])
+    if github_env_file:
+        with open(github_env_file, "a") as env_file:
+            env_file.write("num_token_expired=" + counter)

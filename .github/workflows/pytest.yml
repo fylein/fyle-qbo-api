@@ -16,6 +16,9 @@ jobs:
     environment: CI Environment
     steps:
       - uses: actions/checkout@v2 
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.7'
       - uses: satackey/action-docker-layer-caching@v0.0.11
         continue-on-error: true
       - name: Bring up Services and check for token health
