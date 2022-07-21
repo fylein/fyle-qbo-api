@@ -10,7 +10,7 @@ def test_token_health():
     print(refresh_tokens)
     print(os.environ)
 
-    env_path = os.environ['GITHUB_ENV']
+    env_path = os.environ.get('GITHUB_ENV')
     print(env_path)
 
     counter = 0
