@@ -30,3 +30,5 @@ def test_token_health():
     if env_path:
         with open(env_path, "a") as env_file:
             env_file.write("num_token_expired=" + counter)
+    
+    assert 1 == 2
