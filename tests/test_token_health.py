@@ -25,4 +25,3 @@ for workspace_id in refresh_tokens.keys():
 
 with open(github_env_file, "a") as env_file:
     env_file.write("num_token_expired=" + counter)
-
