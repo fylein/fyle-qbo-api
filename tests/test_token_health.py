@@ -4,6 +4,7 @@ import os
 from apps.quickbooks_online.utils import QBOConnector, QBOCredential
 
 github_env_file = os.getenv('GITHUB_ENV')
+print(github_env_file)
 
 
 counter = 0
