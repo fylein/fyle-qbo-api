@@ -36,7 +36,7 @@ services:
       QBO_TOKEN_URI: ${QBO_TOKEN_URI}
       WRITE_TESTS_REFRESH_TOKENS: ${WRITE_TESTS_REFRESH_TOKENS}
       QBO_ENVIRONMENT: SANDBOX
-      GITHUB_ENV_PATH: ${GITHUB_ENV_PATH}
+      GITHUB_ENV: ${GITHUB_ENV_PATH}
   db:
     image: "postgres:latest"
     environment: 

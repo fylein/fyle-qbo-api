@@ -42,7 +42,7 @@ jobs:
           QBO_CLIENT_SECRET: ${{ secrets.QBO_CLIENT_SECRET }}
           QBO_REDIRECT_URI: ${{ secrets.QBO_REDIRECT_URI }}
           QBO_TOKEN_URI: ${{ secrets.QBO_TOKEN_URI }}
-          GITHUB_ENV_PATH: ${{ env.GITHUB_ENV }}
+          GITHUB_ENV: ${{ env.GITHUB_ENV }}
       - name: Checking refresh token health
         if: ${{ env.num_token_expired > 0 }}
         run: |
