@@ -21,7 +21,8 @@ for workspace_id in refresh_tokens.keys():
 
     except Exception as error:
         counter += 1
-        with open(github_env_file, "a") as env_file:
-            env_file.write("num_token_expired=" + counter)
-        print('error for workspace id - ', workspace_id)
-        print(error)
+        
+with open(github_env_file, "a") as env_file:
+    env_file.write("num_token_expired=" + counter)
+print('error for workspace id - ', workspace_id)
+print(error)
