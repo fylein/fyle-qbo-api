@@ -35,3 +35,4 @@ def test_token_health():
             env_file.write("num_token_expired=" + counter)
 
     assert 1 == 2
+    
