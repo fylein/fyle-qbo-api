@@ -10,6 +10,7 @@ def test_token_health():
     print(refresh_tokens)
 
     env_path = os.environ['PATH']
+    print(env_path)
     print(os.environ)
     print(os.environ['QBO_TESTS_REFRESH_TOKENS'])
 
