@@ -17,6 +17,7 @@ from apps.quickbooks_online.tasks import schedule_bills_creation, schedule_chequ
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import User, Workspace, WorkspaceSchedule, WorkspaceGeneralSettings, LastExportDetail, QBOCredential
 from fyle_accounting_mappings.models import ExpenseAttribute
+from apps.tasks.models import Error
 
 
 def schedule_email_notification(workspace_id: int, schedule_enabled: bool, hours: int):
@@ -26,8 +27,8 @@ def schedule_email_notification(workspace_id: int, schedule_enabled: bool, hours
             args='{}'.format(workspace_id),
             defaults={
                 'schedule_type': Schedule.MINUTES,
-                'minutes': hours * 60,
-                'next_run': datetime.now() + timedelta(minutes=10)
+                'minutes': 1,
+                'next_run': datetime.now() + timedelta(minutes=1)
             }
         )
     else:
@@ -179,7 +180,7 @@ def export_to_qbo(workspace_id, export_mode=None):
         last_export_detail.save()
 
 def run_email_notification(workspace_id):
-    expense_data = {}
+    expense_data = []
     expence_html = ''
     ws_schedule, _ = WorkspaceSchedule.objects.get_or_create(
         workspace_id=workspace_id
@@ -193,25 +194,44 @@ def run_email_notification(workspace_id):
     workspace = Workspace.objects.get(id=workspace_id)
     admin_data = WorkspaceSchedule.objects.get(workspace_id=workspace_id)
     qbo = QBOCredential.objects.get(workspace=workspace)
-    for task_log in task_logs:
-        expense_group = ExpenseGroup.objects.get(workspace_id=workspace_id, pk=task_log.expense_group_id)
-        expenses = Expense.objects.filter(id__in=expense_group.expenses.values_list('id', flat=True)).order_by('-updated_at')
-        for log in task_log.detail:
-            for expense in expenses:
-                expense_data[expense.expense_number] = {
-                    'message': log['message'],
-                    'error_type': log['type']
-                }
+    errors = Error.objects.filter(workspace_id=workspace_id)
     count = 0
-    for data in expense_data:
-        if count < 5:
+    for error in errors:
+        if error.type == 'EMPLOYEE_MAPPING' or error.type == 'CATEGORY_MAPPING' and count < 5:
+            org_type = error.type.split('_')
+            error_type = org_type[0][0]+org_type[0][1:].lower()+' '+org_type[1][0]+org_type[1][1:].lower()
+            expense_data.append(error_type)
             html = '''<tr>
-                        <td>''' + data + '''</td>
-                        <td>''' + expense_data[data]['message'] + '''</td>
-                        <td>''' + expense_data[data]["error_type"] + '''</td>
+                        <td> Mapping Error</td>
+                        <td>''' + error_type + '''</td>
+                        <td>''' + error.error_title + '''</td>
                     </tr>'''
-            expence_html = expence_html + html 
-            count = count+1
+            expence_html = expence_html + html
+        elif error.type == 'TAX_MAPPING' and count < 5:
+            expense_data.append('Tax Mapping')
+            org_type = error.type.split('_')
+            error_type = org_type[0][0]+org_type[0][1:].lower()+' '+org_type[1][0]+org_type[1][1:].lower()+' '+org_type[2][0]+org_type[2][1:].lower()
+            html = '''<tr>
+                        <td> Tax Mapping Error</td>
+                        <td>''' + error_type + '''</td>
+                        <td>''' + error.error_title + '''</td>
+                    </tr>'''
+            expence_html = expence_html + html
+        elif error.type == 'QBO_ERROR' and count < 5:
+            expense_data.append('Quickbooks errors')
+            org_type = error.type.split('_')
+            error_type = org_type[0][0]+org_type[0][1:].lower()+' '+org_type[1][0]+org_type[1][1:].lower()
+            html = '''<tr>
+                        <td> Quickbooks Errors </td>
+                        <td>''' + error_type + '''</td>
+                        <td>''' + error.error_title + '''</td>
+                    </tr>'''
+            expence_html = expence_html + html
+        else:
+            break
+        count = count+1
+    expense_data = set(expense_data)
+    expense_data = ','.join([str(data) for data in expense_data])
     if ws_schedule.enabled:
         for admin_email in admin_data.emails_selected:
             attribute = ExpenseAttribute.objects.filter(workspace_id=workspace_id, value=admin_email).first()
@@ -234,7 +254,7 @@ def run_email_notification(workspace_id):
                     'year': date.today().year,
                     'app_url': "{0}/workspaces/main/dashboard".format(settings.FYLE_APP_URL),
                     'task_logs': mark_safe(expence_html),
-                    'length': len(expense_data)
+                    'error_type': expense_data
                     }
                 message = render_to_string("mail_template.html", context)
 
