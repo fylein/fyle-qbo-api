@@ -27,8 +27,8 @@ def schedule_email_notification(workspace_id: int, schedule_enabled: bool, hours
             args='{}'.format(workspace_id),
             defaults={
                 'schedule_type': Schedule.MINUTES,
-                'minutes': 1,
-                'next_run': datetime.now() + timedelta(minutes=1)
+                'minutes': hours * 60,
+                'next_run': datetime.now() + timedelta(minutes=10)
             }
         )
     else:
