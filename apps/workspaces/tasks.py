@@ -9,13 +9,13 @@ from django.template.loader import render_to_string
 from django_q.models import Schedule
 from django.utils.safestring import mark_safe
 
+from apps.workspaces.models import User, Workspace, WorkspaceSchedule, WorkspaceGeneralSettings, LastExportDetail, QBOCredential
 from apps.fyle.tasks import async_create_expense_groups
 from apps.fyle.models import Expense, ExpenseGroup
 from apps.fyle.serializers import ExpenseSerializer, ExpenseGroupSerializer
 from apps.quickbooks_online.tasks import schedule_bills_creation, schedule_cheques_creation, \
     schedule_journal_entry_creation, schedule_credit_card_purchase_creation, schedule_qbo_expense_creation
 from apps.tasks.models import TaskLog
-from apps.workspaces.models import User, Workspace, WorkspaceSchedule, WorkspaceGeneralSettings, LastExportDetail, QBOCredential
 from fyle_accounting_mappings.models import ExpenseAttribute
 from apps.tasks.models import Error
 
@@ -181,7 +181,7 @@ def export_to_qbo(workspace_id, export_mode=None):
 
 def run_email_notification(workspace_id):
     expense_data = []
-    expence_html = ''
+    expense_html = ''
     ws_schedule, _ = WorkspaceSchedule.objects.get_or_create(
         workspace_id=workspace_id
     )
@@ -199,34 +199,34 @@ def run_email_notification(workspace_id):
     for error in errors:
         if error.type == 'EMPLOYEE_MAPPING' or error.type == 'CATEGORY_MAPPING' and count < 5:
             org_type = error.type.split('_')
-            error_type = org_type[0][0]+org_type[0][1:].lower()+' '+org_type[1][0]+org_type[1][1:].lower()
+            error_type = '{0} {1}'.format(org_type[0][0]+org_type[0][1:].lower(), org_type[1][0]+org_type[1][1:].lower())
             expense_data.append(error_type)
             html = '''<tr>
                         <td> Mapping Error</td>
                         <td>''' + error_type + '''</td>
                         <td>''' + error.error_title + '''</td>
                     </tr>'''
-            expence_html = expence_html + html
+            expense_html = '{0} {1}'.format(expense_html, html)
         elif error.type == 'TAX_MAPPING' and count < 5:
             expense_data.append('Tax Mapping')
             org_type = error.type.split('_')
-            error_type = org_type[0][0]+org_type[0][1:].lower()+' '+org_type[1][0]+org_type[1][1:].lower()+' '+org_type[2][0]+org_type[2][1:].lower()
+            error_type = '{0} {1} {2}'.format(org_type[0][0]+org_type[0][1:].lower(), org_type[1][0]+org_type[1][1:].lower(), org_type[2][0]+org_type[2][1:].lower())
             html = '''<tr>
                         <td> Tax Mapping Error</td>
                         <td>''' + error_type + '''</td>
                         <td>''' + error.error_title + '''</td>
                     </tr>'''
-            expence_html = expence_html + html
+            expense_html = '{0} {1}'.format(expense_html, html)
         elif error.type == 'QBO_ERROR' and count < 5:
             expense_data.append('Quickbooks errors')
             org_type = error.type.split('_')
-            error_type = org_type[0][0]+org_type[0][1:].lower()+' '+org_type[1][0]+org_type[1][1:].lower()
+            error_type = '{0} {1}'.format(org_type[0][0]+org_type[0][1:].lower(), org_type[1][0]+org_type[1][1:].lower())
             html = '''<tr>
                         <td> Quickbooks Errors </td>
                         <td>''' + error_type + '''</td>
                         <td>''' + error.error_title + '''</td>
                     </tr>'''
-            expence_html = expence_html + html
+            expense_html = '{0} {1}'.format(expense_html, html)
         else:
             break
         count = count+1
@@ -253,7 +253,7 @@ def run_email_notification(workspace_id):
                     'export_time': workspace.last_synced_at.strftime("%d %b %Y | %H:%M"),
                     'year': date.today().year,
                     'app_url': "{0}/workspaces/main/dashboard".format(settings.FYLE_APP_URL),
-                    'task_logs': mark_safe(expence_html),
+                    'task_logs': mark_safe(expense_html),
                     'error_type': expense_data
                     }
                 message = render_to_string("mail_template.html", context)
