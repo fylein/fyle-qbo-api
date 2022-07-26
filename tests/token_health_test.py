@@ -3,6 +3,10 @@ import ast
 import os
 import pytest
 from apps.quickbooks_online.utils import QBOConnector, QBOCredential
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 @pytest.mark.django_db
 def test_token_health():
@@ -14,11 +18,11 @@ def test_token_health():
             qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
             qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
-            print('qbo_connection succeded', qbo_connection)
+            logger.info('qbo_connection succeded - %s', qbo_connection)
 
         except Exception as error:
             num_token_expired += 1
-            print('error for workspace id - ', workspace_id)
-            print(error)
+            logger.info('error for workspace id - %s', workspace_id)
+            logger.info('Error message - %s', error)
 
     assert num_token_expired == 0
