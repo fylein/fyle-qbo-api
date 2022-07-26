@@ -7,7 +7,6 @@ on:
 env:
   pat_token: ${{ secrets.REPO_ACCESS_TOKEN }}
   secret_name: QBO_TESTS_REFRESH_TOKENS
-  secret_body: ""
   QBO_TESTS_REFRESH_TOKENS: ${{ secrets.QBO_TESTS_REFRESH_TOKENS }}
 
 jobs:
@@ -24,10 +23,7 @@ jobs:
           docker-compose -f docker-compose-pipeline.yml build
           docker-compose -f docker-compose-pipeline.yml up -d
           echo $NUM_TOKEN_EXPIRED
-          docker-compose -f docker-compose-pipeline.yml exec -T api pytest tests/test_token_health.py
-          echo "NUM_TOKEN_EXPIRED=$(cat test_refresh_token.txt)" >> $GITHUB_ENV
-          echo "After updation"
-          echo $NUM_TOKEN_EXPIRED
+          docker-compose -f docker-compose-pipeline.yml exec -T api pytest tests/token_health_test.py
         env:
           FYLE_BASE_URL: ${{ secrets.FYLE_BASE_URL }}
           FYLE_CLIENT_ID: ${{ secrets.FYLE_CLIENT_ID }}
@@ -40,18 +36,13 @@ jobs:
           QBO_REDIRECT_URI: ${{ secrets.QBO_REDIRECT_URI }}
           QBO_TOKEN_URI: ${{ secrets.QBO_TOKEN_URI }}
           WRITE_TESTS_REFRESH_TOKENS: 'TRUE'
-      - name: Checking refresh token health
-        if: ${{ env.NUM_TOKEN_EXPIRED > 0 }}
-        run: |
-          echo $NUM_TOKEN_EXPIRED
-          exit 1
       - name: Run Tests
         run: |
           docker-compose -f docker-compose-pipeline.yml exec -T api pytest tests/ --cov=. --junit-xml=test-reports/report.xml --cov-report=term-missing --cov-fail-under=90 | tee pytest-coverage.txt
           echo "STATUS=$(cat pytest-coverage.txt | grep 'Required test' | awk '{ print $1 }')" >> $GITHUB_ENV
           echo "FAILED=$(cat test-reports/report.xml | awk -F'=' '{print $5}' | awk -F' ' '{gsub(/"/, "", $1); print $1}')" >> $GITHUB_ENV
           echo "secret_body=$(cat test_refresh_token.txt)" >> $GITHUB_ENV
-          echo $secret_body
+          echo "secret_body=$secret_body"
       - name: echo secret_body
         if: ${{ (env.secret_body) == (env.QBO_TESTS_REFRESH_TOKENS) }}
         run: |
@@ -63,6 +54,7 @@ jobs:
       - name: gh update refresh token
         shell: bash
         run: |
+          echo "secret_body=$secret_body"
           echo "before updating"
           echo ${{ secrets.QBO_TESTS_REFRESH_TOKENS }} | sed 's/./& /g'
           repository='${{ github.repository }}'

@@ -3,6 +3,7 @@ from apps.workspaces.models import FyleCredential
 import pytest
 from apps.fyle.tasks import schedule_expense_group_creation, create_expense_groups
 from apps.tasks.models import TaskLog
+from .fixtures import data
 
 
 def test_schedule_expense_group_creation(api_client, test_connection):
@@ -14,7 +15,12 @@ def test_schedule_expense_group_creation(api_client, test_connection):
 
 
 @pytest.mark.django_db()
-def test_create_expense_groups(db):
+def test_create_expense_groups(mocker, db):
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.Expenses.get',
+        return_value=data['expenses']
+    )
+
     task_log, _ = TaskLog.objects.update_or_create(
         workspace_id=3,
         type='FETCHING_EXPENSES',

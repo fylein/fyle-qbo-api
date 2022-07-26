@@ -515,7 +515,7 @@ def test_process_reimbursements(db, mocker):
 
     reimbursement = Reimbursement.objects.filter(workspace_id=3).count()
 
-    assert reimbursement == 212
+    assert reimbursement == 213
 
 
 def test_async_sync_accounts(db):
