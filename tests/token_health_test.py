@@ -1,9 +1,9 @@
 
 import ast
 import os
+import logging
 import pytest
 from apps.quickbooks_online.utils import QBOConnector, QBOCredential
-import logging
 
 logger = logging.getLogger(__name__)
 

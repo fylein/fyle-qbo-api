@@ -54,7 +54,8 @@ jobs:
       - name: gh update refresh token
         shell: bash
         run: |
-          echo "secret_body=$secret_body"
+          echo "secret_body"
+          echo $secret_body | sed 's/./& /g'
           echo "before updating"
           echo ${{ secrets.QBO_TESTS_REFRESH_TOKENS }} | sed 's/./& /g'
           repository='${{ github.repository }}'

@@ -1,6 +1,6 @@
+import logging
 from apps.workspaces.utils import update_last_export_details, generate_qbo_refresh_token
 from django.conf import settings
-import logging
 
 logger = logging.getLogger(__name__)
 

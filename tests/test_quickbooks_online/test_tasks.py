@@ -1,7 +1,7 @@
 import ast
 import os
-import pytest
 import logging
+import pytest
 import random
 from django_q.models import Schedule
 from apps.tasks.models import TaskLog
