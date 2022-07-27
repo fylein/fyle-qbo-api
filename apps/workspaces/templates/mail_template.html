@@ -18,7 +18,6 @@
       table-layout: fixed;
       width: 100%;
       margin-bottom: 24px;
-      border-radius: 4px;
     }
 
     #task-logs #header {
@@ -32,6 +31,9 @@
       text-align: left;
       border-right: 1px solid #DFDFE2;
       width: 25%;
+      font-weight: 500;
+      font-size: 12px;
+      color: #2C304E;
     }
 
     #task-logs td {
@@ -40,6 +42,9 @@
       border-bottom: 1px solid #DFDFE2;
       border-radius: 4px;
       width: 25%;
+      font-weight: 300;
+      font-size: 14px;
+      color: #414562;
     }
   </style>
 </head>
@@ -137,13 +142,13 @@
                         </td>
                       </tr>
                       <tr>
-                        <td style="font-size: 14px; font-weight: bold; padding-top: 15px;line-height: 18px; color: #414562;">
-                          Error Type - {{error_type}}
+                        <td style="font-size: 14px; padding-top: 15px;line-height: 18px; color: #414562;">
+                          <b>Error Type</b> - {{error_type}}
                         </td>
                       </tr>
                       <tr>
-                        <td style="font-size: 14px; font-weight: bold; padding-top: 15px;line-height: 18px; color: #414562;">
-                          Export time - {{ export_time }}
+                        <td style="font-size: 14px; padding-top: 15px;line-height: 18px; color: #414562;">
+                          <b>Export time</b> - {{ export_time }}
                         </td>
                       </tr>
                       <tr>
@@ -158,7 +163,7 @@
                       </tr>
                       <tr>
                         <td
-                          style="font-style: normal;font-weight: 500;font-size: 14px;line-height: 18px;padding-top: 15px; color: #2C304E;">
+                          style="font-style: normal;font-weight: 500;font-size: 14px;line-height: 18px;padding-top: 15px; color: #414562;">
                           A detailed breakup of the error can be found in the table below-
                         </td>
                       </tr>
@@ -169,12 +174,12 @@
             </td>
           </tr>
           <tr>
-            <td>
+            <td style="padding-left: 1px;padding-right:1px;border-radius: 15px !important;">
               <table id="task-logs">
-                <tr id="header">
+                <tr id="header" style="border: radius 10px;">
                   <th>Error Type</th>
-                  <th>Error Message</th>
-                  <th>Value</th>
+                  <th>Error </th>
+                  <th>Message</th>
                 </tr>
                 {{ task_logs }}
               </table>
