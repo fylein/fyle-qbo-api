@@ -1,5 +1,6 @@
 import ast
 import os
+import logging
 import pytest
 import random
 from django_q.models import Schedule
@@ -15,6 +16,8 @@ from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMappin
 from apps.mappings.models import GeneralMapping
 from apps.fyle.models import ExpenseGroup, Reimbursement, Expense
 from apps.quickbooks_online.utils import QBOConnector
+
+logger = logging.getLogger(__name__)
 
 
 def test_post_bill_success(create_task_logs, db):
@@ -438,7 +441,7 @@ def test_create_bill_payment(db):
     try:
         create_bill_payment(workspace_id)
     except:
-        print('QBO Account not connected')
+        logger.info('QBO Account not connected')
 
 
 def test_schedule_bill_payment_creation(db):
@@ -515,7 +518,7 @@ def test_process_reimbursements(db, mocker):
 
     reimbursement = Reimbursement.objects.filter(workspace_id=3).count()
 
-    assert reimbursement == 212
+    assert reimbursement == 213
 
 
 def test_async_sync_accounts(db):
