@@ -187,7 +187,7 @@ def run_email_notification(workspace_id):
     )
 
     task_logs = TaskLog.objects.filter(
-        ~Q(type__in=['CREATING_REIMBURSEMENT', 'FETCHING_EXPENSES', 'CREATING_AP_PAYMENT']),
+        ~Q(type__in=['CREATING_BILL_PAYMENT', 'FETCHING_EXPENSES']),
         workspace_id=workspace_id,
         status='FAILED'
     )
