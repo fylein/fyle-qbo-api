@@ -1,11 +1,16 @@
 from apps.tasks.models import TaskLog
 from apps.workspaces.tasks import run_sync_schedule, schedule_sync
 from apps.workspaces.models import WorkspaceSchedule, WorkspaceGeneralSettings
+from .fixtures import data
 
-def test_run_sync_schedule(db):
+
+def test_run_sync_schedule(mocker,db):
     workspace_id = 3
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
-    
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.Expenses.get',
+        return_value=data['expenses']
+    )
     run_sync_schedule(workspace_id)
     task_log = TaskLog.objects.filter(
         workspace_id=3
