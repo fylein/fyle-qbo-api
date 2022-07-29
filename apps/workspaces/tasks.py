@@ -182,64 +182,47 @@ def export_to_qbo(workspace_id, export_mode=None):
 def run_email_notification(workspace_id):
     expense_data = []
     expense_html = ''
-    ws_schedule, _ = WorkspaceSchedule.objects.get_or_create(
-        workspace_id=workspace_id
+    ws_schedule = WorkspaceSchedule.objects.get(
+        workspace_id=workspace_id, enabled=True
     )
 
     task_logs = TaskLog.objects.filter(
         ~Q(type__in=['CREATING_BILL_PAYMENT', 'FETCHING_EXPENSES']),
         workspace_id=workspace_id,
-        status='FAILED'
+        status='FAILED',
     )
     workspace = Workspace.objects.get(id=workspace_id)
-    admin_data = WorkspaceSchedule.objects.get(workspace_id=workspace_id)
     qbo = QBOCredential.objects.get(workspace=workspace)
-    errors = Error.objects.filter(workspace_id=workspace_id)
-    count = 0
+    errors = Error.objects.filter(workspace_id=workspace_id,is_resolved=False)        
     for error in errors:
-        if error.type == 'EMPLOYEE_MAPPING' or error.type == 'CATEGORY_MAPPING' and count < 5:
-            org_type = error.type.split('_')
-            error_type = '{0} {1}'.format(org_type[0][0]+org_type[0][1:].lower(), org_type[1][0]+org_type[1][1:].lower())
-            expense_data.append(error_type)
+        if error.type == 'EMPLOYEE_MAPPING' or error.type == 'CATEGORY_MAPPING':
             html = '''<tr>
-                        <td> Mapping Error</td>
-                        <td>''' + error_type + '''</td>
-                        <td>''' + error.error_title + '''</td>
-                    </tr>'''
-            expense_html = '{0} {1}'.format(expense_html, html)
-        elif error.type == 'TAX_MAPPING' and count < 5:
-            expense_data.append('Tax Mapping')
-            org_type = error.type.split('_')
-            error_type = '{0} {1} {2}'.format(org_type[0][0]+org_type[0][1:].lower(), org_type[1][0]+org_type[1][1:].lower(), org_type[2][0]+org_type[2][1:].lower())
+                        <td> Mapping Error </td>'''
+        elif error.type == 'TAX_MAPPING':
             html = '''<tr>
-                        <td> Tax Mapping Error</td>
-                        <td>''' + error_type + '''</td>
-                        <td>''' + error.error_title + '''</td>
-                    </tr>'''
-            expense_html = '{0} {1}'.format(expense_html, html)
+                        <td> Tax Mapping Error </td>'''
         elif error.type == 'QBO_ERROR' and count < 5:
-            expense_data.append('Quickbooks errors')
-            org_type = error.type.split('_')
-            error_type = '{0} {1}'.format(org_type[0][0]+org_type[0][1:].lower(), org_type[1][0]+org_type[1][1:].lower())
-            html = '''<tr>
-                        <td> Quickbooks Errors </td>
-                        <td>''' + error_type + '''</td>
+                html = '''<tr>
+                            <td> Quickbooks Error </td>'''
+        org_type = error.type.split('_')
+        error_type = '{0} {1}'.format(org_type[0][0]+org_type[0][1:].lower(), org_type[1][0]+org_type[1][1:].lower())
+        expense_data = list(expense_data)
+        expense_data.append(error_type)
+        html_data = '''<td>''' + error_type + '''</td>
                         <td>''' + error.error_title + '''</td>
                     </tr>'''
-            expense_html = '{0} {1}'.format(expense_html, html)
-        else:
-            break
-        count = count+1
+        html = '{0} {1}'.format(html,html_data)
+        expense_html = '{0} {1}'.format(expense_html, html)
     expense_data = set(expense_data)
     expense_data = ','.join([str(data) for data in expense_data])
     if ws_schedule.enabled:
-        for admin_email in admin_data.emails_selected:
+        for admin_email in ws_schedule.emails_selected:
             attribute = ExpenseAttribute.objects.filter(workspace_id=workspace_id, value=admin_email).first()
 
             if attribute:
                 admin_name = attribute.detail['full_name']
             else:
-                for data in admin_data.additional_email_options:
+                for data in ws_schedule.additional_email_options:
                     if data['email'] == admin_email:
                         admin_name = data['name']
 
@@ -249,7 +232,6 @@ def run_email_notification(workspace_id):
                     'errors': len(task_logs),
                     'fyle_company': workspace.name,
                     'qbo_company': qbo.company_name,
-                    'workspace_id': workspace_id,
                     'export_time': workspace.last_synced_at.strftime("%d %b %Y | %H:%M"),
                     'year': date.today().year,
                     'app_url': "{0}/workspaces/main/dashboard".format(settings.FYLE_APP_URL),
