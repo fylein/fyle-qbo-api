@@ -112,12 +112,26 @@ Django Rest Framework API for Fyle Quickbooks Online Integration
     export QBO_REDIRECT_URI=<qbo redirect uri>
     export QBO_TOKEN_URI=<qbo token uri>
     export QBO_ENVIRONMENT=<qbo environment>
+    export WRITE_TESTS_REFRESH_TOKENS='TRUE'
+    export QBO_TESTS_REFRESH_TOKENS=$(cat test_refresh_token.txt)
     ```
+
+* While generating refresh token for first run, the workspace id's 1, 2 and 3 must be connected to Sandbox Company_US_4, workspace id 4 must be coneected to Sandbox Company_US_1 and workspace id 5 must be connected to Sandbox Company_FAE company
+
+* Create a file test_refresh_token.txt and add the generated refresh tokens in dictionary format as given below
+    ```
+    {1: "", 2: "", 3: "", 4: "", 5: ""}
+    ```
+
 * Run the following commands
 
-    1. docker-compose -f docker-compose-pipeline.yml build
-    2. docker-compose -f docker-compose-pipeline.yml up -d
-    3. docker-compose -f docker-compose-pipeline.yml exec api pytest tests/
+    1. source setup.sh
+    2. docker-compose -f docker-compose-pipeline.yml build
+    3. docker-compose -f docker-compose-pipeline.yml up -d
+    4. docker-compose -f docker-compose-pipeline.yml exec api pytest tests/
+
+    If the test_check_toekn_health() test fails then generate new refresh tokens and place them in
+    test_refresh_token.txt file
 
 * Run the following command to update tests SQL fixture (`tests/sql_fixtures/reset_db_fixtures/reset_db.sql`)
     ```

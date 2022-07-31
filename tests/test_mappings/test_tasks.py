@@ -1,3 +1,4 @@
+import os
 from asyncio.log import logger
 import imp
 import pytest
@@ -385,7 +386,7 @@ def test_auto_create_vendors_as_merchants(db, mocker):
     vendors = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='VENDOR').count()
     expense_attribute = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type='MERCHANT').count()
     assert vendors == 32
-    assert expense_attribute == 57
+    assert expense_attribute == 109
 
     fyle_credentials = FyleCredential.objects.get(workspace_id=1)
     fyle_credentials.delete()
