@@ -25,4 +25,7 @@ def test_token_health():
             logger.info('error for workspace id - %s', workspace_id)
             logger.info('Error message - %s', error)
 
-    assert num_token_expired == 0
+    logger.info('refresh tokens - %s', ast.literal_eval(os.environ.get('QBO_TESTS_REFRESH_TOKENS')))
+
+    if num_token_expired != 0:
+        pytest.exit("Refresh token expired")
