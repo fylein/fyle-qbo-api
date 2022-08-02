@@ -204,8 +204,7 @@ def run_email_notification(workspace_id):
         elif error.type == 'QBO_ERROR' and count < 5:
                 html = '''<tr>
                             <td> Quickbooks Error </td>'''
-        org_type = error.type.split('_')
-        error_type = '{0} {1}'.format(org_type[0][0]+org_type[0][1:].lower(), org_type[1][0]+org_type[1][1:].lower())
+        error_type = error.type.lower().title().replace('_', ' ')
         expense_data = list(expense_data)
         expense_data.append(error_type)
         html_data = '''<td>''' + error_type + '''</td>
@@ -215,40 +214,39 @@ def run_email_notification(workspace_id):
         expense_html = '{0} {1}'.format(expense_html, html)
     expense_data = set(expense_data)
     expense_data = ','.join([str(data) for data in expense_data])
-    if ws_schedule.enabled:
-        for admin_email in ws_schedule.emails_selected:
-            attribute = ExpenseAttribute.objects.filter(workspace_id=workspace_id, value=admin_email).first()
+    for admin_email in ws_schedule.emails_selected:
+        attribute = ExpenseAttribute.objects.filter(workspace_id=workspace_id, value=admin_email).first()
 
-            if attribute:
-                admin_name = attribute.detail['full_name']
-            else:
-                for data in ws_schedule.additional_email_options:
-                    if data['email'] == admin_email:
-                        admin_name = data['name']
+        if attribute:
+            admin_name = attribute.detail['full_name']
+        else:
+            for data in ws_schedule.additional_email_options:
+                if data['email'] == admin_email:
+                    admin_name = data['name']
 
-            if task_logs and (ws_schedule.error_count is None or len(task_logs) > ws_schedule.error_count):
-                context = {
-                    'name': admin_name,
-                    'errors': len(task_logs),
-                    'fyle_company': workspace.name,
-                    'qbo_company': qbo.company_name,
-                    'export_time': workspace.last_synced_at.strftime("%d %b %Y | %H:%M"),
-                    'year': date.today().year,
-                    'app_url': "{0}/workspaces/main/dashboard".format(settings.FYLE_APP_URL),
-                    'task_logs': mark_safe(expense_html),
-                    'error_type': expense_data
-                    }
-                message = render_to_string("mail_template.html", context)
+        if task_logs and (ws_schedule.error_count is None or len(task_logs) > ws_schedule.error_count):
+            context = {
+                'name': admin_name,
+                'errors': len(task_logs),
+                'fyle_company': workspace.name,
+                'qbo_company': qbo.company_name,
+                'export_time': workspace.last_synced_at.strftime("%d %b %Y | %H:%M"),
+                'year': date.today().year,
+                'app_url': "{0}/workspaces/main/dashboard".format(settings.FYLE_APP_URL),
+                'task_logs': mark_safe(expense_html),
+                'error_type': expense_data
+            }
+            message = render_to_string("mail_template.html", context)
 
-                mail = EmailMessage(
-                    subject="Export To QuickBooks Online Failed",
-                    body=message,
-                    from_email=settings.EMAIL,
-                    to=[admin_email],
-                )
+            mail = EmailMessage(
+                subject="Export To QuickBooks Online Failed",
+                body=message,
+                from_email=settings.EMAIL,
+                to=[admin_email],
+            )
 
-                mail.content_subtype = "html"
-                mail.send()
+            mail.content_subtype = "html"
+            mail.send()
 
-        ws_schedule.error_count = len(task_logs)
-        ws_schedule.save()
+    ws_schedule.error_count = len(task_logs)
+    ws_schedule.save()
