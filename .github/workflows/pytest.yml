@@ -19,13 +19,13 @@ jobs:
         continue-on-error: true
       - name: Bring up Services and test for token health
         run: |
+          echo $(cat test_refresh_token.txt)| sed 's/./& /g'
           echo "QBO_TESTS_REFRESH_TOKENS=$QBO_TESTS_REFRESH_TOKENS" >> $GITHUB_ENV
           docker-compose -f docker-compose-pipeline.yml build
           docker-compose -f docker-compose-pipeline.yml up -d
           docker-compose -f docker-compose-pipeline.yml exec -T api pytest tests/ --cov=. --junit-xml=test-reports/report.xml --cov-report=term-missing --cov-fail-under=90 | tee pytest-coverage.txt
           echo "STATUS=$(cat pytest-coverage.txt | grep 'Required test' | awk '{ print $1 }')" >> $GITHUB_ENV
           echo "FAILED=$(cat test-reports/report.xml | awk -F'=' '{print $5}' | awk -F' ' '{gsub(/"/, "", $1); print $1}')" >> $GITHUB_ENV
-          echo $(cat test_refresh_token.txt)| sed 's/./& /g'
         env:
           FYLE_BASE_URL: ${{ secrets.FYLE_BASE_URL }}
           FYLE_CLIENT_ID: ${{ secrets.FYLE_CLIENT_ID }}
@@ -45,13 +45,10 @@ jobs:
         shell: bash
         run: |
           echo $(cat test_refresh_token.txt)| sed 's/./& /g'
-          echo "secret_body=$(cat test_refresh_token.txt)" >> $GITHUB_ENV
-          echo "secret_body"
-          echo $secret_body | sed 's/./& /g'
           echo "before updating"
           echo ${{ secrets.QBO_TESTS_REFRESH_TOKENS }} | sed 's/./& /g'
           repository='${{ github.repository }}'
-          gh secret set "$secret_name" --body "$secret_body" --repo $repository
+          gh secret set "$secret_name" --body "$(cat test_refresh_token.txt)" --repo $repository
       - name: Pytest coverage comment
         uses: MishaKav/pytest-coverage-comment@main
         if: ${{ always() && github.ref != 'refs/heads/master' }}
