@@ -6,7 +6,7 @@
   <title>Fyle</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400&display=swap" rel="stylesheet">
   <style>
     body {
       font-family: 'Roboto', sans-serif !important;
@@ -29,7 +29,7 @@
     #task-logs th {
       padding: 13px 0px 12px 23px;
       text-align: left;
-      border-right: 1px solid #DFDFE2;
+      border: 1px solid #DFDFE2;
       width: 25%;
       font-weight: 500;
       font-size: 12px;
@@ -45,6 +45,7 @@
       font-weight: 300;
       font-size: 14px;
       color: #414562;
+      border: 1px solid #DFDFE2;
     }
   </style>
 </head>
@@ -99,12 +100,12 @@
                 <tr align="center">
                   <td
                     style="font-size: 20px; padding-bottom: 30px; color: #161528; font-weight:900; padding-top: 40px;">
-                    {{ errors }} Expense Group Failed To Export
+                    {{ errors }} Transactions Failed To Export
                   </td>
                 </tr>
                 <tr>
                   <td>
-                    <table style=" padding-left: 10px; padding-right: 10px; background:#F5F5F5; border-radius: 8px;"
+                    <table style=" padding: 10px; background:#F5F5F5; border-radius: 8px;"
                       width="100%" cellspacing="10">
                       <tr style="font-style: normal;
                           font-weight: 500;
@@ -112,8 +113,8 @@
                           line-height: 15px;
                           letter-spacing: 0.02em;
                           color: #5A5D72;">
-                        <td>FYLE ORGANIZATION</td>
-                        <td>QUICKBOOKS ONLINE COMPANY</td>
+                        <td style="width: 50%;">FYLE ORGANIZATION</td>
+                        <td style="width: 50%;">QUICKBOOKS ONLINE COMPANY</td>
                       </tr>
                       <tr style="
                           font-style: normal;
@@ -121,8 +122,8 @@
                           font-size: 14px;
                           line-height: 20px;   
                           color: #161528;">
-                        <td>{{ fyle_company }}</td>
-                        <td>{{ qbo_company }}</td>
+                        <td style="width: 50%;">{{ fyle_company }}</td>
+                        <td style="width: 50%;">{{ qbo_company }}</td>
                       </tr>
                     </table>
                   </td>
@@ -158,8 +159,8 @@
                       </tr>
                       <tr>
                         <td
-                          style="font-style: normal;font-weight: 500;font-size: 14px;line-height: 18px;padding-top: 15px; color: #414562;">
-                          A detailed breakup of the error can be found in the table below-
+                          style="font-style: normal;font-size: 14px;line-height: 18px;padding-top: 15px; color: #414562;">
+                          A detailed breakup of the error can be found in the table below
                         </td>
                       </tr>
                     </table>
@@ -169,28 +170,38 @@
             </td>
           </tr>
           <tr>
-            <td style="padding-left: 1px;padding-right:1px;border-radius: 15px !important;">
+            <td style="padding-left: 8px;padding-right:8px;border-radius: 15px !important;">
               <table id="task-logs">
                 <tr id="header" style="border: radius 10px;">
                   <th>Error Type</th>
                   <th>Error </th>
-                  <th>Message</th>
+                  <th>Error value / Message</th>
+                </tr>
+                <tr>
+                  <td>Ernst Handel</td>
+                  <td>Roland Mendel</td>
+                  <td>Austria</td>
+                </tr>
+                <tr>
+                  <td>Island Trading</td>
+                  <td>Helen Bennett</td>
+                  <td>UK</td>
                 </tr>
                 {{ task_logs }}
               </table>
             </td>
           </tr>
           <tr align="center">
-            <td>
+            <td style="padding-top: 20px;">
               <table border="0" cellspacing="0" cellpadding="0">
                 <tr align="center">
                   <td align="center" style="background: linear-gradient(162.38deg, #FF3366 3.01%, #FE5196 111.5%);
                   border-radius: 4px;">
-                    <a href="{{app_url}}" target="_blank" style="font-weight: 500;font-size: 14px;line-height: 18px; color: #ffffff; text-decoration: none; display: flex;flex-direction: row;
+                    <a href="{{app_url}}" target="_blank" style="font-weight: 400; font-size: 14px;line-height: 18px; color: #ffffff; text-decoration: none; display: flex;flex-direction: row;
                       justify-content: center;align-items: center;padding: 12px 24px;gap: 8px;border-radius: 4px;">
-                      <b style="margin-right: 10px;">Visit Integrations to Resolve</b>
+                      <span>Visit Integrations to Resolve</span>
                       <img
-                        src="https://raw.githubusercontent.com/fylein/fyle-qbo-api/qbo-email-notification1/apps/workspaces/templates/images/redirect-icon.png">
+                        src="./images/redirect.svg">
                     </a>
                   </td>
                 </tr>
@@ -199,12 +210,7 @@
           </tr>
           <tr>
             <td style="font-size: 14px;line-height: 18px;padding: 35px 24px 0px;color: #2C304E;">
-              You can, however, easily fix these errors from your integration dashboard.
-            </td>
-          </tr>
-          <tr>
-            <td style="font-size: 14px;line-height: 18px;color: #2C304E; padding: 15px 24px 0px;">
-              Here's a quick <a href="https://help.fylehq.com/en/articles/6240421-how-to-export-expenses-from-fyle-to-qbo-via-the-integration#h_52f186fcbc"><u style="color: #2C304E;">guide</u></a> on how to resolve errors in the integrations.
+              You can, easily fix these errors from your integration dashboard. Here's a quick <a href="https://help.fylehq.com/en/articles/6240421-how-to-export-expenses-from-fyle-to-qbo-via-the-integration#h_52f186fcbc"><u style="color: #2C304E;">guide</u></a> on how to resolve errors in the integrations.
             </td>
           </tr>
           <tr>

@@ -213,7 +213,7 @@ def run_email_notification(workspace_id):
         html = '{0} {1}'.format(html,html_data)
         expense_html = '{0} {1}'.format(expense_html, html)
     expense_data = set(expense_data)
-    expense_data = ','.join([str(data) for data in expense_data])
+    expense_data = ', '.join([str(data) for data in expense_data])
     for admin_email in ws_schedule.emails_selected:
         attribute = ExpenseAttribute.objects.filter(workspace_id=workspace_id, value=admin_email).first()
 
