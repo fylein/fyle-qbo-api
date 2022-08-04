@@ -201,7 +201,7 @@ def run_email_notification(workspace_id):
         elif error.type == 'TAX_MAPPING':
             html = '''<tr>
                         <td> Tax Mapping Error </td>'''
-        elif error.type == 'QBO_ERROR' and count < 5:
+        elif error.type == 'QBO_ERROR':
                 html = '''<tr>
                             <td> Quickbooks Error </td>'''
         error_type = error.type.lower().title().replace('_', ' ')
