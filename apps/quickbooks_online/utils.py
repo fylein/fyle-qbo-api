@@ -142,6 +142,18 @@ class QBOConnector:
             'bank_account': [],
             'accounts_payable': []
         }
+        
+        general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+        destination_attributes = DestinationAttribute.objects.filter(workspace_id=self.workspace_id,attribute_type='ACCOUNT',\
+            detail__account_type__in=general_settings.charts_of_accounts).values('destination_id', 'value', 'detail')
+
+        primary_key_map = {}
+
+        for destination_attribute in destination_attributes:
+            primary_key_map[destination_attribute['destination_id']] = {
+                'value': destination_attribute['value'],
+                'detail': destination_attribute['detail']
+            }
 
         for account in accounts:
             value = format_special_characters(
@@ -154,12 +166,14 @@ class QBOConnector:
                     'display_name': 'Account',
                     'value': value,
                     'destination_id': account['Id'],
-                    'active': account['Active'],
+                    'active': True,
                     'detail': {
                         'fully_qualified_name': account['FullyQualifiedName'],
                         'account_type': account['AccountType']
                     }
                 })
+                if account['Id'] in primary_key_map:
+                        primary_key_map.pop(account['Id'])
 
             elif account['AccountType'] == 'Credit Card' and value:
                 account_attributes['credit_card_account'].append({
@@ -199,6 +213,19 @@ class QBOConnector:
                         'account_type': account['AccountType']
                     }
                 })
+
+        for destination_id in primary_key_map:
+            account_attributes['account'].append({
+                'attribute_type': 'ACCOUNT',
+                'display_name': 'Account',
+                'value': primary_key_map[destination_id]['value'],
+                'destination_id': destination_id,
+                'active': False,
+                'detail': {
+                    'fully_qualified_name': primary_key_map[destination_id]['detail']['fully_qualified_name'],
+                    'account_type': primary_key_map[destination_id]['detail']['account_type']
+                }
+            })
 
         for attribute_type, attribute in account_attributes.items():
             if attribute:
@@ -381,10 +408,18 @@ class QBOConnector:
             customers = self.connection.customers.get()
 
             customer_attributes = []
+            destination_attributes = DestinationAttribute.objects.filter(workspace_id=self.workspace_id,\
+                attribute_type= 'CUSTOMER', display_name='customer').values('destination_id', 'value')
+            primary_key_map = {}
+
+            for destination_attribute in destination_attributes:
+                primary_key_map[destination_attribute['destination_id']] = {
+                    'value': destination_attribute['value']
+                }
 
             for customer in customers:
                 value = format_special_characters(customer['FullyQualifiedName'])
-                if customer['Active'] and value:
+                if  customer['Active'] and value:
                     customer_attributes.append({
                         'attribute_type': 'CUSTOMER',
                         'display_name': 'customer',
@@ -392,6 +427,18 @@ class QBOConnector:
                         'destination_id': customer['Id'],
                         'active': True
                     })
+                    if customer['Id'] in primary_key_map:
+                        primary_key_map.pop(customer['Id'])
+            
+            #For setting active to False
+            for destination_id in primary_key_map:
+                customer_attributes.append({
+                    'attribute_type': 'CUSTOMER',
+                    'display_name': 'customer',
+                    'value': primary_key_map[destination_id]['value'],
+                    'destination_id': destination_id,
+                    'active': False
+                })
 
             DestinationAttribute.bulk_create_or_update_destination_attributes(
                 customer_attributes, 'CUSTOMER', self.workspace_id, True)
