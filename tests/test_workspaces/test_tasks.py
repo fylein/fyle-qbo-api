@@ -54,7 +54,7 @@ def test_run_sync_schedule(mocker,db):
 def test_schedule_sync(db):
     workspace_id = 3
     
-    schedule_sync(workspace_id, True, 1)
+    schedule_sync(workspace_id, True, 1, {}, [])
 
     ws_schedule = WorkspaceSchedule.objects.filter( 
         workspace_id=workspace_id 
@@ -62,7 +62,7 @@ def test_schedule_sync(db):
     
     assert ws_schedule.schedule.func == 'apps.workspaces.tasks.run_sync_schedule'
 
-    schedule_sync(workspace_id, False, 1)
+    schedule_sync(workspace_id, False, 1, {}, [])
 
     ws_schedule = WorkspaceSchedule.objects.filter( 
         workspace_id=workspace_id 
