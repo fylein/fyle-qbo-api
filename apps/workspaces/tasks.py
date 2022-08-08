@@ -193,35 +193,30 @@ def run_email_notification(workspace_id):
     )
     workspace = Workspace.objects.get(id=workspace_id)
     qbo = QBOCredential.objects.get(workspace=workspace)
-    errors = Error.objects.filter(workspace_id=workspace_id,is_resolved=False).order_by('id')
-    count = 0  
+    errors = Error.objects.filter(workspace_id=workspace_id,is_resolved=False).order_by('id')[:10]
     for error in errors:
-        if count < 10:
-            if error.type == 'EMPLOYEE_MAPPING' or error.type == 'CATEGORY_MAPPING':
-                html = '''<tr>
+        if error.type == 'EMPLOYEE_MAPPING' or error.type == 'CATEGORY_MAPPING':
+            html = '''<tr>
                         <td> Mapping Error </td>'''
-            elif error.type == 'TAX_MAPPING':
-                html = '''<tr>
-                            <td> Tax Mapping Error </td>'''
-            elif error.type == 'QBO_ERROR':
-                html = '''<tr>
-                                <td> Quickbooks Error </td>'''
-            error_type = error.type.lower().title().replace('_', ' ')
-            expense_data = list(expense_data)
-            expense_data.append(error_type)
-            if error.type == 'QBO_ERROR':
-                html_data = '''<td>''' + error.error_title + '''</td>
+        elif error.type == 'TAX_MAPPING':
+            html = '''<tr>
+                        <td> Tax Mapping Error </td>'''
+        elif error.type == 'QBO_ERROR':
+            html = '''<tr>
+                       <td> Quickbooks Error </td>'''
+        error_type = error.type.lower().title().replace('_', ' ')
+        expense_data = list(expense_data)
+        expense_data.append(error_type)
+        if error.type == 'QBO_ERROR':
+            html_data = '''<td>''' + error.error_title + '''</td>
                             <td>''' + error.error_detail + '''</td>
                         </tr>'''
-            else:
-                html_data = '''<td>''' + error_type + '''</td>
+        else:
+            html_data = '''<td>''' + error_type + '''</td>
                             <td style="padding-right: 8px">''' + error.error_title + '''</td>
                         </tr>'''
-            html = '{0} {1}'.format(html,html_data)
-            expense_html = '{0} {1}'.format(expense_html, html)
-            count = count + 1
-        else:
-            break
+        html = '{0} {1}'.format(html,html_data)
+        expense_html = '{0} {1}'.format(expense_html, html)
     expense_data = set(expense_data)
     expense_data = ', '.join([str(data) for data in expense_data])
     for admin_email in ws_schedule.emails_selected:
