@@ -195,3 +195,16 @@ def test_post_connect_qbo_view(api_client, test_connection):
 
     response = json.loads(response.content)
     assert response['error_description'] == 'Invalid authorization code'
+
+
+def test_prepare_e2e_test_view(api_client, test_connection):
+
+    url = reverse(
+        'setup-e2e-test', kwargs={
+            'workspace_id': 1
+        }
+    )
+
+    api_client.credentials(HTTP_X_E2E_Tests_Client_ID='dummy_id')
+    response = api_client.post(url)
+    assert response.status_code == 403

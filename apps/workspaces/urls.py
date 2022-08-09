@@ -37,5 +37,5 @@ urlpatterns = [
     path('<int:workspace_id>/tasks/', include('apps.tasks.urls')),
     path('<int:workspace_id>/admins/', WorkspaceAdminsView.as_view({'get': 'get'}), name='admin'),
     path('ready/', ReadyView.as_view({'get': 'get'}), name='ready'),
-    path('<int:workspace_id>/setup_e2e_test/', SetupE2ETestView.as_view({'post': 'post'})),
+    path('<int:workspace_id>/setup_e2e_test/', SetupE2ETestView.as_view({'post': 'post'}), name='setup-e2e-test'),
 ]
