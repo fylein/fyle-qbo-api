@@ -208,3 +208,11 @@ def test_prepare_e2e_test_view(api_client, test_connection):
     api_client.credentials(HTTP_X_E2E_Tests_Client_ID='dummy_id')
     response = api_client.post(url)
     assert response.status_code == 403
+
+    api_client.credentials(HTTP_X_E2E_Tests_Client_ID='gAAAAABi8oXHBll3lEUPGpMDXnZDhVgSl_LMOkIF0ilfmSCL3wFxZnoTIbpdzwPoOFzS0vFO4qaX51JtAqCG2RBHZaf1e98hug==')
+    response = api_client.post(url)
+    assert response.status_code == 403
+
+    api_client.credentials(HTTP_X_E2E_Tests_Client_ID='gAAAAABi8oWVoonxF0K_g2TQnFdlpOJvGsBYa9rPtwfgM-puStki_qYbi0PdipWHqIBIMip94MDoaTP4MXOfERDeEGrbARCxPw==')
+    response = api_client.post(url)
+    assert response.status_code == 400
