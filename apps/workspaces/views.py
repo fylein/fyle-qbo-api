@@ -611,18 +611,18 @@ class SetupE2ETestView(viewsets.ViewSet):
                     is_expired=False,
                     realm_id=settings.E2E_TESTS_REALM_ID
                 ).order_by('-updated_at')
-                logger.info('Found {} healthy tokens', healthy_tokens.count())
+                logger.info('Found {} healthy tokens'.format(healthy_tokens.count()))
 
                 for healthy_token in healthy_tokens:
-                    logger.info('Checking token health for workspace: {}', healthy_token.workspace_id)
+                    logger.info('Checking token health for workspace: {}'.format(healthy_token.workspace_id))
                     # Token Health check
                     try:
                         qbo_connector = QBOConnector(healthy_token, workspace_id=workspace.id)
                         qbo_connector.get_company_preference()
-                        logger.info('Yaay, token is healthly for workspace: {}', healthy_token.workspace_id)
+                        logger.info('Yaay, token is healthly for workspace: {}'.format(healthy_token.workspace_id))
                     except Exception:
                         # If the token is expired, setting is_expired = True so that they are not used for future runs
-                        logger.info('Oops, token is dead for workspace: {}', healthy_token.workspace_id)
+                        logger.error('Oops, token is dead for workspace: {}'.format(healthy_token.workspace_id))
                         healthy_token.is_expired = True
                         healthy_token.save()
                         # Stop the execution here for the token since it's expired
