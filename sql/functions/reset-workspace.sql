@@ -270,6 +270,10 @@ BEGIN
 --   GET DIAGNOSTICS rcount = ROW_COUNT;
 --   RAISE NOTICE 'Deleted % workspaces', rcount;
 
+    UPDATE workspaces
+    SET onboarding_state = 'CONNECTION'
+    WHERE id = _workspace_id;
+
 RETURN;
 END
 $$ LANGUAGE plpgsql;
