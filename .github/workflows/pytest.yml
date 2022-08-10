@@ -37,6 +37,9 @@ jobs:
           QBO_REDIRECT_URI: ${{ secrets.QBO_REDIRECT_URI }}
           QBO_TOKEN_URI: ${{ secrets.QBO_TOKEN_URI }}
           WRITE_TESTS_REFRESH_TOKENS: 'TRUE'
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+          E2E_TESTS_CLIENT_SECRET: ${{ secrets.E2E_TESTS_CLIENT_SECRET }}
+          E2E_TESTS_REALM_ID: ${{ secrets.E2E_TESTS_REALM_ID }}
       - name: gh auth login
         shell: bash
         run: gh auth login --with-token <<< $pat_token
