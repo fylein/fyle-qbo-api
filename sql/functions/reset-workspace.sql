@@ -198,11 +198,11 @@ BEGIN
   GET DIAGNOSTICS rcount = ROW_COUNT;
   RAISE NOTICE 'Deleted % workspace_general_settings', rcount;
 
-  DELETE
-  FROM expense_group_settings egs
-  WHERE egs.workspace_id = _workspace_id;
-  GET DIAGNOSTICS rcount = ROW_COUNT;
-  RAISE NOTICE 'Deleted % expense_group_settings', rcount;
+--   DELETE
+--   FROM expense_group_settings egs
+--   WHERE egs.workspace_id = _workspace_id;
+--   GET DIAGNOSTICS rcount = ROW_COUNT;
+--   RAISE NOTICE 'Deleted % expense_group_settings', rcount;
 
 --   DELETE
 --   FROM fyle_credentials fc
