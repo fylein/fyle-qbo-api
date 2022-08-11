@@ -644,6 +644,10 @@ class SetupE2ETestView(viewsets.ViewSet):
                                 country=healthy_token.country
                             )
 
+                            # Set onboarding state to MAP_EMPLOYEES
+                            workspace.onboarding_state = 'MAP_EMPLOYEES'
+                            workspace.save()
+
                             return Response(status=status.HTTP_200_OK)
 
                 error_message = 'No healthy tokens found, please try again later.'
