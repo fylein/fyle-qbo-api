@@ -1,5 +1,6 @@
 import json
 import logging
+from datetime import datetime
 
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
@@ -619,6 +620,8 @@ class SetupE2ETestView(viewsets.ViewSet):
                     try:
                         qbo_connector = QBOConnector(healthy_token, workspace_id=workspace.id)
                         qbo_connector.get_company_preference()
+
+                        qbo_connector.sync_dimensions()
                         logger.info('Yaay, token is healthly for workspace: {}'.format(healthy_token.workspace_id))
                     except Exception:
                         # If the token is expired, setting is_expired = True so that they are not used for future runs
@@ -646,6 +649,7 @@ class SetupE2ETestView(viewsets.ViewSet):
 
                             # Set onboarding state to MAP_EMPLOYEES
                             workspace.onboarding_state = 'MAP_EMPLOYEES'
+                            workspace.destination_synced_at = datetime.now()
                             workspace.save()
 
                             return Response(status=status.HTTP_200_OK)
