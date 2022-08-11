@@ -601,46 +601,54 @@ class SetupE2ETestView(viewsets.ViewSet):
         """
         try:
             workspace = Workspace.objects.get(pk=kwargs['workspace_id'])
+            error_message = 'Something unexpected has happened. Please try again later.'
 
             # Filter out prod orgs
             if 'fyle for' in workspace.name.lower():
                 # Grab the latest healthy refresh token, from a demo org with the specified realm id
-                healthy_token = QBOCredential.objects.filter(
+                healthy_tokens = QBOCredential.objects.filter(
                     workspace__name__icontains='fyle for',
                     is_expired=False,
                     realm_id=settings.E2E_TESTS_REALM_ID
-                ).order_by('-updated_at').first()
+                ).order_by('-updated_at')
+                logger.info('Found {} healthy tokens'.format(healthy_tokens.count()))
 
-                # Token Health check
-                try:
-                    qbo_connector = QBOConnector(healthy_token, workspace_id=workspace.id)
-                    qbo_connector.get_company_preference()
-                except Exception:
-                    # If the token is expired, setting is_expired = True so that they are not used for future runs
-                    healthy_token.is_expired = True
-                    healthy_token.save()
-                    raise
+                for healthy_token in healthy_tokens:
+                    logger.info('Checking token health for workspace: {}'.format(healthy_token.workspace_id))
+                    # Token Health check
+                    try:
+                        qbo_connector = QBOConnector(healthy_token, workspace_id=workspace.id)
+                        qbo_connector.get_company_preference()
+                        logger.info('Yaay, token is healthly for workspace: {}'.format(healthy_token.workspace_id))
+                    except Exception:
+                        # If the token is expired, setting is_expired = True so that they are not used for future runs
+                        logger.error('Oops, token is dead for workspace: {}'.format(healthy_token.workspace_id))
+                        healthy_token.is_expired = True
+                        healthy_token.save()
+                        # Stop the execution here for the token since it's expired
+                        continue
 
-                with transaction.atomic():
-                    if healthy_token:
-                        # Reset the workspace completely
-                        with connection.cursor() as cursor:
-                            cursor.execute('select reset_workspace(%s)', [workspace.id])
+                    with transaction.atomic():
+                        if healthy_token:
+                            # Reset the workspace completely
+                            with connection.cursor() as cursor:
+                                cursor.execute('select reset_workspace(%s)', [workspace.id])
 
-                        # Store the latest healthy refresh token for the workspace
-                        QBOCredential.objects.create(
-                            workspace=workspace,
-                            refresh_token=qbo_connector.connection.refresh_token,
-                            realm_id=healthy_token.realm_id,
-                            is_expired=False,
-                            company_name=healthy_token.company_name,
-                            country=healthy_token.country
-                        )
+                            # Store the latest healthy refresh token for the workspace
+                            QBOCredential.objects.create(
+                                workspace=workspace,
+                                refresh_token=qbo_connector.connection.refresh_token,
+                                realm_id=healthy_token.realm_id,
+                                is_expired=False,
+                                company_name=healthy_token.company_name,
+                                country=healthy_token.country
+                            )
 
-                        return Response(status=status.HTTP_200_OK)
+                            return Response(status=status.HTTP_200_OK)
 
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+                error_message = 'No healthy tokens found, please try again later.'
+            return Response(status=status.HTTP_400_BAD_REQUEST, data={'message': error_message})
 
         except Exception as error:
             logger.error(error)
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response(status=status.HTTP_400_BAD_REQUEST, data={'message': error_message})
