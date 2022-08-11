@@ -271,7 +271,7 @@ BEGIN
 --   RAISE NOTICE 'Deleted % workspaces', rcount;
 
     UPDATE workspaces
-    SET onboarding_state = 'CONNECTION', last_synced_at = null, destination_synced_at =  null, source_synced_at = null
+    SET onboarding_state = 'CONNECTION', last_synced_at = null, destination_synced_at =  null, source_synced_at = null, qbo_realm_id = null
     WHERE id = _workspace_id;
 
 RETURN;
