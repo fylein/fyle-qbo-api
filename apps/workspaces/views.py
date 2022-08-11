@@ -621,7 +621,6 @@ class SetupE2ETestView(viewsets.ViewSet):
                         qbo_connector = QBOConnector(healthy_token, workspace_id=workspace.id)
                         qbo_connector.get_company_preference()
 
-                        qbo_connector.sync_dimensions()
                         logger.info('Yaay, token is healthly for workspace: {}'.format(healthy_token.workspace_id))
                     except Exception:
                         # If the token is expired, setting is_expired = True so that they are not used for future runs
@@ -646,6 +645,8 @@ class SetupE2ETestView(viewsets.ViewSet):
                                 company_name=healthy_token.company_name,
                                 country=healthy_token.country
                             )
+
+                            qbo_connector.sync_dimensions()
 
                             # Set onboarding state to MAP_EMPLOYEES
                             workspace.onboarding_state = 'MAP_EMPLOYEES'
