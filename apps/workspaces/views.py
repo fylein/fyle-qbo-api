@@ -19,7 +19,7 @@ from fyle_rest_auth.utils import AuthUtils
 from fyle_rest_auth.models import AuthToken
 from fyle_rest_auth.helpers import get_fyle_admin
 
-from cryptography.fernet import Fernet
+from fyle_integrations_platform_connector import PlatformConnector
 
 from fyle_qbo_api.utils import assert_valid
 
@@ -645,10 +645,16 @@ class SetupE2ETestView(viewsets.ViewSet):
                                 country=healthy_token.country
                             )
 
+                            # Sync dimension for QBO and Fyle
                             qbo_connector.sync_dimensions()
+
+                            fyle_credentials = FyleCredential.objects.get(workspace_id=workspace.id)
+                            platform = PlatformConnector(fyle_credentials)
+                            platform.import_fyle_dimensions(import_taxes=True)
 
                             # Set onboarding state to MAP_EMPLOYEES
                             workspace.onboarding_state = 'MAP_EMPLOYEES'
+                            workspace.source_synced_at = datetime.now()
                             workspace.destination_synced_at = datetime.now()
                             workspace.save()
 
