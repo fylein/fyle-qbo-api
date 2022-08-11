@@ -620,7 +620,6 @@ class SetupE2ETestView(viewsets.ViewSet):
                     try:
                         qbo_connector = QBOConnector(healthy_token, workspace_id=workspace.id)
                         qbo_connector.get_company_preference()
-
                         logger.info('Yaay, token is healthly for workspace: {}'.format(healthy_token.workspace_id))
                     except Exception:
                         # If the token is expired, setting is_expired = True so that they are not used for future runs
