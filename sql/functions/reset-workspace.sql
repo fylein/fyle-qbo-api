@@ -198,11 +198,11 @@ BEGIN
   GET DIAGNOSTICS rcount = ROW_COUNT;
   RAISE NOTICE 'Deleted % workspace_general_settings', rcount;
 
-  DELETE
-  FROM expense_group_settings egs
-  WHERE egs.workspace_id = _workspace_id;
-  GET DIAGNOSTICS rcount = ROW_COUNT;
-  RAISE NOTICE 'Deleted % expense_group_settings', rcount;
+--   DELETE
+--   FROM expense_group_settings egs
+--   WHERE egs.workspace_id = _workspace_id;
+--   GET DIAGNOSTICS rcount = ROW_COUNT;
+--   RAISE NOTICE 'Deleted % expense_group_settings', rcount;
 
 --   DELETE
 --   FROM fyle_credentials fc
@@ -271,7 +271,7 @@ BEGIN
 --   RAISE NOTICE 'Deleted % workspaces', rcount;
 
     UPDATE workspaces
-    SET onboarding_state = 'CONNECTION', last_synced_at = null, destination_synced_at =  null, source_synced_at = null, qbo_realm_id = null
+    SET onboarding_state = 'CONNECTION', last_synced_at = null, destination_synced_at =  null, source_synced_at = null
     WHERE id = _workspace_id;
 
 RETURN;
