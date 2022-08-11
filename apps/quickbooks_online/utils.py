@@ -143,10 +143,15 @@ class QBOConnector:
             'bank_account': [],
             'accounts_payable': []
         }
-        
-        general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
-        destination_attributes = DestinationAttribute.objects.filter(workspace_id=self.workspace_id,attribute_type='ACCOUNT',\
-            detail__account_type__in=general_settings.charts_of_accounts).values('destination_id', 'value', 'detail')
+
+        filters = {
+            'workspace_id': self.workspace_id,
+            'attribute_type': 'ACCOUNT'
+        }
+        if general_settings:
+            filters['detail__account_type__in'] = general_settings.charts_of_accounts
+
+        destination_attributes = DestinationAttribute.objects.filter(**filters).values('destination_id', 'value', 'detail')
 
         disabled_fields_map = {}
 
