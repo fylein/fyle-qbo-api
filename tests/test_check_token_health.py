@@ -32,5 +32,3 @@ def test_token_health():
                 pytest.exit("Refresh token expired")
     except:
         pytest.exit("Invalid Refresh token")
-
-    
