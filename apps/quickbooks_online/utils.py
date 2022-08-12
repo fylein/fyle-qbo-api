@@ -57,8 +57,6 @@ class QBOConnector:
         if 'QBO_TESTS_REFRESH_TOKENS' in os.environ:
             refresh_tokens = ast.literal_eval(os.environ.get('QBO_TESTS_REFRESH_TOKENS'))
             refresh_token = refresh_tokens[workspace_id]
-            logger.info('\nWokspace id - %s', workspace_id)
-            logger.info('\nRefresh_token for testing fetching from env for - %s',refresh_token)
 
         else:
             refresh_token = credentials_object.refresh_token
@@ -80,9 +78,6 @@ class QBOConnector:
             QBO_TESTS_REFRESH_TOKENS = ast.literal_eval(os.environ.get('QBO_TESTS_REFRESH_TOKENS'))
             QBO_TESTS_REFRESH_TOKENS[workspace_id] = self.connection.refresh_token
             os.environ['QBO_TESTS_REFRESH_TOKENS'] = str(QBO_TESTS_REFRESH_TOKENS)
-            logger.info('\nRefresh token from connection call - %s', QBO_TESTS_REFRESH_TOKENS)
-            new_refresh_token = ast.literal_eval(os.environ.get('QBO_TESTS_REFRESH_TOKENS'))
-            logger.info('\nRefresh token stored in env after updating  - %s', new_refresh_token)
         
         if 'WRITE_TESTS_REFRESH_TOKENS' in os.environ: #For saving the refresh tokens on local while running tests
             with open('test_refresh_token.txt', 'w') as file:
@@ -149,6 +144,23 @@ class QBOConnector:
             'accounts_payable': []
         }
 
+        filters = {
+            'workspace_id': self.workspace_id,
+            'attribute_type': 'ACCOUNT'
+        }
+        if general_settings:
+            filters['detail__account_type__in'] = general_settings.charts_of_accounts
+
+        destination_attributes = DestinationAttribute.objects.filter(**filters).values('destination_id', 'value', 'detail')
+
+        disabled_fields_map = {}
+
+        for destination_attribute in destination_attributes:
+            disabled_fields_map[destination_attribute['destination_id']] = {
+                'value': destination_attribute['value'],
+                'detail': destination_attribute['detail']
+            }
+
         for account in accounts:
             value = format_special_characters(
                 account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName']
@@ -160,12 +172,14 @@ class QBOConnector:
                     'display_name': 'Account',
                     'value': value,
                     'destination_id': account['Id'],
-                    'active': account['Active'],
+                    'active': True,
                     'detail': {
                         'fully_qualified_name': account['FullyQualifiedName'],
                         'account_type': account['AccountType']
                     }
                 })
+                if account['Id'] in disabled_fields_map:
+                        disabled_fields_map.pop(account['Id'])
 
             elif account['AccountType'] == 'Credit Card' and value:
                 account_attributes['credit_card_account'].append({
@@ -205,6 +219,19 @@ class QBOConnector:
                         'account_type': account['AccountType']
                     }
                 })
+
+        for destination_id in disabled_fields_map:
+            account_attributes['account'].append({
+                'attribute_type': 'ACCOUNT',
+                'display_name': 'Account',
+                'value': disabled_fields_map[destination_id]['value'],
+                'destination_id': destination_id,
+                'active': False,
+                'detail': {
+                    'fully_qualified_name': disabled_fields_map[destination_id]['detail']['fully_qualified_name'],
+                    'account_type': disabled_fields_map[destination_id]['detail']['account_type']
+                }
+            })
 
         for attribute_type, attribute in account_attributes.items():
             if attribute:
@@ -387,10 +414,18 @@ class QBOConnector:
             customers = self.connection.customers.get()
 
             customer_attributes = []
+            destination_attributes = DestinationAttribute.objects.filter(workspace_id=self.workspace_id,\
+                attribute_type= 'CUSTOMER', display_name='customer').values('destination_id', 'value')
+            disabled_fields_map = {}
+
+            for destination_attribute in destination_attributes:
+                disabled_fields_map[destination_attribute['destination_id']] = {
+                    'value': destination_attribute['value']
+                }
 
             for customer in customers:
                 value = format_special_characters(customer['FullyQualifiedName'])
-                if customer['Active'] and value:
+                if  customer['Active'] and value:
                     customer_attributes.append({
                         'attribute_type': 'CUSTOMER',
                         'display_name': 'customer',
@@ -398,6 +433,18 @@ class QBOConnector:
                         'destination_id': customer['Id'],
                         'active': True
                     })
+                    if customer['Id'] in disabled_fields_map:
+                        disabled_fields_map.pop(customer['Id'])
+            
+            #For setting active to False
+            for destination_id in disabled_fields_map:
+                customer_attributes.append({
+                    'attribute_type': 'CUSTOMER',
+                    'display_name': 'customer',
+                    'value': disabled_fields_map[destination_id]['value'],
+                    'destination_id': destination_id,
+                    'active': False
+                })
 
             DestinationAttribute.bulk_create_or_update_destination_attributes(
                 customer_attributes, 'CUSTOMER', self.workspace_id, True)

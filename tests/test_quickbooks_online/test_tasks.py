@@ -529,7 +529,7 @@ def test_async_sync_accounts(db):
     async_sync_accounts(3)
     new_accounts = DestinationAttribute.objects.filter(
         attribute_type='ACCOUNT', workspace_id=3).count()
-    assert new_accounts == 63
+    assert new_accounts == 64
 
 
 def test_schedule_qbo_objects_status_sync(db):
