@@ -40,6 +40,7 @@ jobs:
           ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
           E2E_TESTS_CLIENT_SECRET: ${{ secrets.E2E_TESTS_CLIENT_SECRET }}
           E2E_TESTS_REALM_ID: ${{ secrets.E2E_TESTS_REALM_ID }}
+        continue-on-error: true
       - name: gh auth login
         shell: bash
         run: gh auth login --with-token <<< $pat_token
