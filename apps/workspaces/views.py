@@ -1,8 +1,11 @@
 import json
 import logging
+from datetime import datetime
 
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
+from django.db import transaction, connection
+from django.conf import settings
 
 from rest_framework.response import Response
 from rest_framework.views import status
@@ -16,10 +19,13 @@ from fyle_rest_auth.utils import AuthUtils
 from fyle_rest_auth.models import AuthToken
 from fyle_rest_auth.helpers import get_fyle_admin
 
+from fyle_integrations_platform_connector import PlatformConnector
+
 from fyle_qbo_api.utils import assert_valid
 
 from apps.quickbooks_online.utils import QBOConnector
 from apps.fyle.helpers import get_cluster_domain
+from fyle_accounting_mappings.models import ExpenseAttribute
 
 from .models import Workspace, FyleCredential, QBOCredential, WorkspaceGeneralSettings, WorkspaceSchedule, \
     LastExportDetail
@@ -28,6 +34,7 @@ from .tasks import schedule_sync, run_sync_schedule, export_to_qbo
 from .serializers import WorkspaceSerializer, FyleCredentialSerializer, QBOCredentialSerializer, \
     WorkSpaceGeneralSettingsSerializer, WorkspaceScheduleSerializer, LastExportDetailSerializer
 from .signals import post_delete_qbo_connection
+from .permissions import IsAuthenticatedForTest
 
 from apps.fyle.models import ExpenseGroupSettings
 
@@ -427,10 +434,15 @@ class ScheduleView(viewsets.ViewSet):
         hours = request.data.get('hours')
         assert_valid(hours is not None, 'Hours cannot be left empty')
 
+        email_added = request.data.get('email_added')
+        emails_selected = request.data.get('emails_selected')
+
         workspace_schedule_settings = schedule_sync(
             workspace_id=kwargs['workspace_id'],
             schedule_enabled=schedule_enabled,
-            hours=hours
+            hours=hours,
+            email_added=email_added,
+            emails_selected=emails_selected
         )
 
         return Response(
@@ -548,3 +560,109 @@ class LastExportDetailView(viewsets.ViewSet):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
+class WorkspaceAdminsView(viewsets.ViewSet):
+
+    def get(self, request, *args, **kwargs):
+        """
+        Get Admins for the workspaces
+        """
+
+        workspace = Workspace.objects.get(pk=kwargs['workspace_id'])
+        
+        admin_email = []
+        users = workspace.user.all()
+        for user in users:
+            admin = User.objects.get(user_id=user)
+            name = ExpenseAttribute.objects.get(
+                value=admin.email, 
+                workspace_id=kwargs['workspace_id'],
+                attribute_type='EMPLOYEE'
+            ).detail['full_name']
+
+            admin_email.append({
+                'name': name,
+                'email': admin.email
+            })
+
+        return Response(
+                data=admin_email,
+                status=status.HTTP_200_OK
+            )
+
+class SetupE2ETestView(viewsets.ViewSet):
+    """
+    QBO Workspace
+    """
+    authentication_classes = []
+    permission_classes = [IsAuthenticatedForTest]
+
+    def post(self, request, **kwargs):
+        """
+        Setup end to end test for a given workspace
+        """
+        try:
+            workspace = Workspace.objects.get(pk=kwargs['workspace_id'])
+            error_message = 'Something unexpected has happened. Please try again later.'
+
+            # Filter out prod orgs
+            if 'fyle for' in workspace.name.lower():
+                # Grab the latest healthy refresh token, from a demo org with the specified realm id
+                healthy_tokens = QBOCredential.objects.filter(
+                    workspace__name__icontains='fyle for',
+                    is_expired=False,
+                    realm_id=settings.E2E_TESTS_REALM_ID
+                ).order_by('-updated_at')
+                logger.info('Found {} healthy tokens'.format(healthy_tokens.count()))
+
+                for healthy_token in healthy_tokens:
+                    logger.info('Checking token health for workspace: {}'.format(healthy_token.workspace_id))
+                    # Token Health check
+                    try:
+                        qbo_connector = QBOConnector(healthy_token, workspace_id=workspace.id)
+                        qbo_connector.get_company_preference()
+                        logger.info('Yaay, token is healthly for workspace: {}'.format(healthy_token.workspace_id))
+                    except Exception:
+                        # If the token is expired, setting is_expired = True so that they are not used for future runs
+                        logger.error('Oops, token is dead for workspace: {}'.format(healthy_token.workspace_id))
+                        healthy_token.is_expired = True
+                        healthy_token.save()
+                        # Stop the execution here for the token since it's expired
+                        continue
+
+                    with transaction.atomic():
+                        if healthy_token:
+                            # Reset the workspace completely
+                            with connection.cursor() as cursor:
+                                cursor.execute('select reset_workspace(%s)', [workspace.id])
+
+                            # Store the latest healthy refresh token for the workspace
+                            QBOCredential.objects.create(
+                                workspace=workspace,
+                                refresh_token=qbo_connector.connection.refresh_token,
+                                realm_id=healthy_token.realm_id,
+                                is_expired=False,
+                                company_name=healthy_token.company_name,
+                                country=healthy_token.country
+                            )
+
+                            # Sync dimension for QBO and Fyle
+                            qbo_connector.sync_dimensions()
+
+                            fyle_credentials = FyleCredential.objects.get(workspace_id=workspace.id)
+                            platform = PlatformConnector(fyle_credentials)
+                            platform.import_fyle_dimensions(import_taxes=True)
+
+                            # Set onboarding state to MAP_EMPLOYEES
+                            workspace.onboarding_state = 'MAP_EMPLOYEES'
+                            workspace.source_synced_at = datetime.now()
+                            workspace.destination_synced_at = datetime.now()
+                            workspace.save()
+
+                            return Response(status=status.HTTP_200_OK)
+
+                error_message = 'No healthy tokens found, please try again later.'
+            return Response(status=status.HTTP_400_BAD_REQUEST, data={'message': error_message})
+
+        except Exception as error:
+            logger.error(error)
+            return Response(status=status.HTTP_400_BAD_REQUEST, data={'message': error_message})

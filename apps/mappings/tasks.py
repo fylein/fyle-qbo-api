@@ -1,5 +1,6 @@
 import logging
 import traceback
+from django.db.models import Q
 from dateutil import parser
 from datetime import datetime, timedelta
 
@@ -80,8 +81,43 @@ def remove_duplicates(qbo_attributes: List[DestinationAttribute]):
 
     return unique_attributes
 
+def disable_or_enable_expense_attributes(source_field: str, destination_field: str, workspace_id: int):
 
-def create_fyle_projects_payload(projects: List[DestinationAttribute], existing_project_names: list):
+    # Get All the inactive destination attribute ids
+    destination_attribute_ids = DestinationAttribute.objects.filter(
+		attribute_type=destination_field, 
+		mapping__isnull=False,
+		mapping__destination_type=destination_field,
+		active=False,
+		workspace_id=workspace_id
+	).values_list('id', flat=True)
+
+    # Get all the expense attributes that are mapped to these destination_attribute_ids
+    expense_attributes_to_disable = ExpenseAttribute.objects.filter(
+		attribute_type=source_field, 
+		mapping__destination_id__in=destination_attribute_ids,
+		active=True
+	)
+
+    expense_attributes_to_enable = ExpenseAttribute.objects.filter(
+        ~Q(mapping__destination_id__in=destination_attribute_ids),
+        mapping__isnull=False,
+        mapping__source_type=source_field,
+        attribute_type=source_field,
+        active=False,
+        workspace_id=workspace_id
+	)
+
+    # if there are any expense attributes present, set active to False
+    if expense_attributes_to_disable or expense_attributes_to_enable:
+        expense_attributes_ids = [expense_attribute.id for expense_attribute in expense_attributes_to_disable]
+        expense_attributes_ids = expense_attributes_ids + [expense_attribute.id for expense_attribute in expense_attributes_to_enable]
+        expense_attributes_to_disable.update(active=False)
+        expense_attributes_to_enable.update(active=True)
+        return expense_attributes_ids
+
+def create_fyle_projects_payload(projects: List[DestinationAttribute], existing_project_names: list, 
+                                    updated_projects: List[ExpenseAttribute] = None):
     """
     Create Fyle Projects Payload from QBO Customer / Projects
     :param projects: QBO Projects
@@ -89,18 +125,31 @@ def create_fyle_projects_payload(projects: List[DestinationAttribute], existing_
     :return: Fyle Projects Payload
     """
     payload = []
-
-    for project in projects:
-        if project.value not in existing_project_names:
+    if updated_projects:
+        for project in updated_projects:
+            destination_id_of_project = project.mapping.first().destination.destination_id
             payload.append({
+                'id': project.source_id,
                 'name': project.value,
-                'code': project.destination_id,
+                'code': destination_id_of_project,
                 'description': 'Project - {0}, Id - {1}'.format(
                     project.value,
-                    project.destination_id
+                    destination_id_of_project
                 ),
-                'is_enabled': True if project.active is None else project.active
+                'is_enabled': project.active
             })
+    else:
+        for project in projects:
+            if project.value not in existing_project_names:
+                payload.append({
+                    'name': project.value,
+                    'code': project.destination_id,
+                    'description': 'Project - {0}, Id - {1}'.format(
+                        project.value,
+                        project.destination_id
+                    ),
+                    'is_enabled': True if project.active else project.active
+                })
 
     return payload
 
@@ -125,6 +174,14 @@ def post_projects_in_batches(platform: PlatformConnector, workspace_id: int, des
             platform.projects.sync()
 
         Mapping.bulk_create_mappings(paginated_qbo_attributes, 'PROJECT', destination_field, workspace_id)
+
+    if destination_field == 'CUSTOMER':
+        project_ids_to_be_changed = disable_or_enable_expense_attributes('PROJECT', 'CUSTOMER', workspace_id)
+        if project_ids_to_be_changed:
+            expense_attributes = ExpenseAttribute.objects.filter(id__in=project_ids_to_be_changed)
+            fyle_payload: List[Dict] = create_fyle_projects_payload(projects=[], existing_project_names=[], updated_projects=expense_attributes)
+            platform.projects.post_bulk(fyle_payload)
+            platform.projects.sync()
 
 
 def auto_create_tax_codes_mappings(workspace_id: int):
@@ -241,7 +298,8 @@ def schedule_projects_creation(import_to_fyle, workspace_id):
             schedule.delete()
 
 
-def create_fyle_categories_payload(categories: List[DestinationAttribute], workspace_id: int):
+def create_fyle_categories_payload(categories: List[DestinationAttribute], workspace_id: int,\
+        updated_categories: List[ExpenseAttribute] = None):
     """
     Create Fyle Categories Payload from QBO Customer / Categories
     :param workspace_id: Workspace integer id
@@ -250,17 +308,30 @@ def create_fyle_categories_payload(categories: List[DestinationAttribute], works
     """
     payload = []
 
-    existing_category_names = ExpenseAttribute.objects.filter(
-        attribute_type='CATEGORY', workspace_id=workspace_id).values_list('value', flat=True)
-
-    for category in categories:
-        if category.value not in existing_category_names and category.value.lower() not in DEFAULT_FYLE_CATEGORIES:
+    if updated_categories:
+        for category in updated_categories:
+            destination_id_of_category = category.mapping.first().destination.destination_id
             payload.append({
+                'id': category.source_id,
                 'name': category.value,
-                'code': category.destination_id,
-                'is_enabled': True if category.active is None else category.active,
+                'code': destination_id_of_category,
+                'is_enabled': category.active,
                 'restricted_project_ids': None
             })
+    else:
+        existing_category_names = ExpenseAttribute.objects.filter(
+            attribute_type='CATEGORY', workspace_id=workspace_id).values_list('value', flat=True)
+        
+        existing_category_names_lower_case = [existing_category_name.lower() for existing_category_name in existing_category_names]
+
+        for category in categories:
+            if category.value.lower() not in existing_category_names_lower_case and category.value.lower() not in DEFAULT_FYLE_CATEGORIES:
+                payload.append({
+                    'name': category.value,
+                    'code': category.destination_id,
+                    'is_enabled': True if category.active is None else category.active,
+                    'restricted_project_ids': None
+                })
 
     return payload
 
@@ -298,8 +369,20 @@ def auto_create_category_mappings(workspace_id):
     :return: mappings
     """
     try:
+        fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
+        platform = PlatformConnector(fyle_credentials)
         fyle_categories = upload_categories_to_fyle(workspace_id=workspace_id)
         category_mappings = Mapping.bulk_create_mappings(fyle_categories, 'CATEGORY', 'ACCOUNT', workspace_id)
+
+        #disabling fields
+        category_ids_to_be_changed = disable_or_enable_expense_attributes('CATEGORY', 'ACCOUNT', workspace_id)
+        if category_ids_to_be_changed:
+            expense_attributes = ExpenseAttribute.objects.filter(id__in=category_ids_to_be_changed)
+            fyle_payload: List[Dict] = create_fyle_categories_payload(categories=[],\
+                workspace_id=workspace_id,updated_categories=expense_attributes)
+            platform.categories.post_bulk(fyle_payload)
+            platform.categories.sync()
+        
         resolve_expense_attribute_errors(
             source_attribute_type='CATEGORY',
             workspace_id=workspace_id

@@ -155,3 +155,5 @@ docker_run.sh
 # Cache db
 cache.db
 cache.db-journal
+fyle_integrations_platform_connector/
+qbosdk/
