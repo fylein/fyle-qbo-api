@@ -253,6 +253,7 @@ FYLE_TOKEN_URI = os.environ.get('FYLE_TOKEN_URI')
 FYLE_CLIENT_ID = os.environ.get('FYLE_CLIENT_ID')
 FYLE_CLIENT_SECRET = os.environ.get('FYLE_CLIENT_SECRET')
 FYLE_BASE_URL = os.environ.get('FYLE_BASE_URL')
+FYLE_APP_URL = os.environ.get('APP_URL')
 
 # QBO Settings
 QBO_CLIENT_ID = os.environ.get('QBO_CLIENT_ID')
@@ -260,8 +261,17 @@ QBO_CLIENT_SECRET = os.environ.get('QBO_CLIENT_SECRET')
 QBO_REDIRECT_URI = os.environ.get('QBO_REDIRECT_URI')
 QBO_TOKEN_URI = os.environ.get('QBO_TOKEN_URI')
 QBO_ENVIRONMENT = os.environ.get('QBO_ENVIRONMENT')
+ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY')
+E2E_TESTS_CLIENT_SECRET = os.environ.get('E2E_TESTS_CLIENT_SECRET')
+E2E_TESTS_REALM_ID = os.environ.get('E2E_TESTS_REALM_ID')
 
 # Cache Settings
+SENDGRID_SANDBOX_MODE_IN_DEBUG=False
+
+SENDGRID_API_KEY = os.environ.get('SENDGRID_KEY')
+EMAIL = os.environ.get('SENDGRID_EMAIL')
+EMAIL_BACKEND = 'sendgrid_backend.SendgridBackend'
+
 CACHE_EXPIRY = 3600
 
 CORS_ORIGIN_ALLOW_ALL = True

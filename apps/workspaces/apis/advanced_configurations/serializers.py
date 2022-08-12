@@ -52,11 +52,15 @@ class GeneralMappingsSerializer(serializers.ModelSerializer):
 
 
 class WorkspaceScheduleSerializer(serializers.ModelSerializer):
+    emails_selected = serializers.ListField(allow_null=True, required=False)
+
     class Meta:
         model = WorkspaceSchedule
         fields = [
             'enabled',
-            'interval_hours'
+            'interval_hours',
+            'additional_email_options',
+            'emails_selected'
         ]
 
 
@@ -110,7 +114,9 @@ class AdvancedConfigurationsSerializer(serializers.ModelSerializer):
         schedule_sync(
             workspace_id=instance.id,
             schedule_enabled=workspace_schedules.get('enabled'),
-            hours=workspace_schedules.get('interval_hours')
+            hours=workspace_schedules.get('interval_hours'),
+            email_added=workspace_schedules.get('additional_email_options'),
+            emails_selected=workspace_schedules.get('emails_selected')
         )
 
         AdvancedConfigurationsTriggers.run_workspace_general_settings_triggers(workspace_general_settings_instance)

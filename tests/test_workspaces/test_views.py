@@ -95,7 +95,7 @@ def test_get_workspace_schedule(api_client, test_connection):
     response = api_client.get(url)
     response = json.loads(response.content)
 
-    assert response == {'id': 3, 'enabled': False, 'start_datetime': None, 'interval_hours': None, 'workspace': 4, 'schedule': None}
+    assert response == {'id': 3, 'enabled': False, 'start_datetime': None, 'interval_hours': None, 'workspace': 4, 'schedule': None, 'additional_email_options': [], 'emails_selected': None, 'error_count': None}
 
 def test_ready_view(api_client, test_connection):
     url = reverse('ready')
@@ -195,3 +195,24 @@ def test_post_connect_qbo_view(api_client, test_connection):
 
     response = json.loads(response.content)
     assert response['error_description'] == 'Invalid authorization code'
+
+
+def test_prepare_e2e_test_view(api_client, test_connection):
+
+    url = reverse(
+        'setup-e2e-test', kwargs={
+            'workspace_id': 1
+        }
+    )
+
+    api_client.credentials(HTTP_X_E2E_Tests_Client_ID='dummy_id')
+    response = api_client.post(url)
+    assert response.status_code == 403
+
+    api_client.credentials(HTTP_X_E2E_Tests_Client_ID='gAAAAABi8oXHBll3lEUPGpMDXnZDhVgSl_LMOkIF0ilfmSCL3wFxZnoTIbpdzwPoOFzS0vFO4qaX51JtAqCG2RBHZaf1e98hug==')
+    response = api_client.post(url)
+    assert response.status_code == 403
+
+    api_client.credentials(HTTP_X_E2E_Tests_Client_ID='gAAAAABi8oWVoonxF0K_g2TQnFdlpOJvGsBYa9rPtwfgM-puStki_qYbi0PdipWHqIBIMip94MDoaTP4MXOfERDeEGrbARCxPw==')
+    response = api_client.post(url)
+    assert response.status_code == 400
