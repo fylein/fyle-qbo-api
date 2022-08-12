@@ -2,6 +2,7 @@ arrow==0.15.4
 asgiref==3.4.1
 astroid==2.6.6
 blessed==1.16.1
+Babel==2.9.1
 certifi==2019.11.28
 chardet==3.0.4
 cryptography==3.3.2

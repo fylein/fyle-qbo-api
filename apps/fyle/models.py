@@ -4,6 +4,7 @@ Fyle Models
 from dateutil import parser
 from datetime import datetime
 from typing import List, Dict
+from babel.numbers import get_currency_precision
 
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.fields import ArrayField
@@ -43,6 +44,13 @@ def _format_date(date_string) -> datetime:
     if date_string:
         date_string = parser.parse(date_string)
     return date_string
+
+
+def _round_to_currency_fraction(amount: float, currency: str) -> float:
+    fraction = get_currency_precision(currency) or 2
+    rounded_amount = round(amount, fraction)
+
+    return rounded_amount
 
 
 class Expense(models.Model):
@@ -110,7 +118,7 @@ class Expense(models.Model):
                     'expense_number': expense['expense_number'],
                     'org_id': expense['org_id'],
                     'claim_number': expense['claim_number'],
-                    'amount': round(expense['amount'], 2),
+                    'amount': _round_to_currency_fraction(expense['amount'], expense['currency']),
                     'currency': expense['currency'],
                     'foreign_amount': expense['foreign_amount'],
                     'foreign_currency': expense['foreign_currency'],
