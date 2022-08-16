@@ -30,6 +30,6 @@ def test_token_health():
 
         if num_token_expired != 0:
             pytest.exit("Refresh token expired")
-            
+
     except Exception as error:
         pytest.exit("Invalid Refresh token")
