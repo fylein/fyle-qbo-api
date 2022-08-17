@@ -18,11 +18,11 @@ BEGIN
   GET DIAGNOSTICS rcount = ROW_COUNT;
   RAISE NOTICE 'Deleted % errors', rcount;
 
-  DELETE
-  FROM last_export_details l
-  where l.workspace_id = _workspace_id;
-  GET DIAGNOSTICS rcount = ROW_COUNT;
-  RAISE NOTICE 'Deleted % errors', rcount;
+--   DELETE
+--   FROM last_export_details l
+--   where l.workspace_id = _workspace_id;
+--   GET DIAGNOSTICS rcount = ROW_COUNT;
+--   RAISE NOTICE 'Deleted % errors', rcount;
 
   DELETE
   FROM bill_lineitems bl
@@ -273,6 +273,10 @@ BEGIN
     UPDATE workspaces
     SET onboarding_state = 'CONNECTION', last_synced_at = null, destination_synced_at =  null, source_synced_at = null, qbo_realm_id = null
     WHERE id = _workspace_id;
+
+    UPDATE last_export_details
+    SET last_exported_at = null, export_mode = null, total_expense_groups_count = null, successful_expense_groups_count = null, failed_expense_groups_count = null
+    WHERE workspace_id = _workspace_id;
 
 RETURN;
 END
