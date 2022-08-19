@@ -656,7 +656,7 @@ class SetupE2ETestView(viewsets.ViewSet):
                             workspace.onboarding_state = 'MAP_EMPLOYEES'
                             workspace.source_synced_at = datetime.now()
                             workspace.destination_synced_at = datetime.now()
-                            workspace.qbo_realm_id = None
+                            workspace.qbo_realm_id = healthy_token.realm_id
                             workspace.last_synced_at = None
                             workspace.save()
 
