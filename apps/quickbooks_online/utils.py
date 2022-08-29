@@ -4,7 +4,6 @@ from typing import List, Dict
 from datetime import datetime, timedelta
 import logging
 import json
-from xml.etree.ElementTree import QName
 from django.conf import settings
 import ast
 import os
