@@ -652,10 +652,12 @@ class SetupE2ETestView(viewsets.ViewSet):
                             platform = PlatformConnector(fyle_credentials)
                             platform.import_fyle_dimensions(import_taxes=True)
 
-                            # Set onboarding state to MAP_EMPLOYEES
+                            # Reset workspace details
                             workspace.onboarding_state = 'MAP_EMPLOYEES'
                             workspace.source_synced_at = datetime.now()
                             workspace.destination_synced_at = datetime.now()
+                            workspace.qbo_realm_id = healthy_token.realm_id
+                            workspace.last_synced_at = None
                             workspace.save()
 
                             return Response(status=status.HTTP_200_OK)
