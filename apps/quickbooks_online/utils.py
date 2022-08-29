@@ -4,6 +4,7 @@ from typing import List, Dict
 from datetime import datetime, timedelta
 import logging
 import json
+from xml.etree.ElementTree import QName
 from django.conf import settings
 import ast
 import os
@@ -253,7 +254,7 @@ class QBOConnector:
                 'display_name': 'Department',
                 'value': department['FullyQualifiedName'],
                 'destination_id': department['Id'],
-                'active' : True 
+                'active' : department['Active']
             })
 
         DestinationAttribute.bulk_create_or_update_destination_attributes(
@@ -400,7 +401,7 @@ class QBOConnector:
                 'display_name': 'class',
                 'value': qbo_class['FullyQualifiedName'],
                 'destination_id': qbo_class['Id'],
-                'active' : True
+                'active' : qbo_class['Active']
             })
 
         DestinationAttribute.bulk_create_or_update_destination_attributes(
