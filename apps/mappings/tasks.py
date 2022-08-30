@@ -153,7 +153,7 @@ def create_fyle_projects_payload(projects: List[DestinationAttribute], existing_
                         project.value,
                         project.destination_id
                     ),
-                    'is_enabled': True if project.active else project.active
+                    'is_enabled': project.active
                 })
 
     return payload
@@ -334,7 +334,7 @@ def create_fyle_categories_payload(categories: List[DestinationAttribute], works
                 payload.append({
                     'name': category.value,
                     'code': category.destination_id,
-                    'is_enabled': True if category.active is None else category.active,
+                    'is_enabled': category.active,
                     'restricted_project_ids': None
                 })
 

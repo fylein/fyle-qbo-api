@@ -252,7 +252,8 @@ class QBOConnector:
                 'attribute_type': 'DEPARTMENT',
                 'display_name': 'Department',
                 'value': department['FullyQualifiedName'],
-                'destination_id': department['Id']
+                'destination_id': department['Id'],
+                'active' : department['Active']
             })
 
         DestinationAttribute.bulk_create_or_update_destination_attributes(
@@ -398,7 +399,8 @@ class QBOConnector:
                 'attribute_type': 'CLASS',
                 'display_name': 'class',
                 'value': qbo_class['FullyQualifiedName'],
-                'destination_id': qbo_class['Id']
+                'destination_id': qbo_class['Id'],
+                'active' : qbo_class['Active']
             })
 
         DestinationAttribute.bulk_create_or_update_destination_attributes(
