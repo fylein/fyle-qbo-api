@@ -5,8 +5,6 @@ from datetime import datetime, timedelta
 import logging
 import json
 from django.conf import settings
-import ast
-import os
 
 from qbosdk import QuickbooksOnlineSDK
 from qbosdk.exceptions import WrongParamsError
@@ -52,14 +50,7 @@ class QBOConnector:
         client_id = settings.QBO_CLIENT_ID
         client_secret = settings.QBO_CLIENT_SECRET
         environment = settings.QBO_ENVIRONMENT
-        refresh_token = ''
-
-        if 'QBO_TESTS_REFRESH_TOKENS' in os.environ:
-            refresh_tokens = ast.literal_eval(os.environ.get('QBO_TESTS_REFRESH_TOKENS'))
-            refresh_token = refresh_tokens[workspace_id]
-
-        else:
-            refresh_token = credentials_object.refresh_token
+        refresh_token = credentials_object.refresh_token
 
         self.connection = QuickbooksOnlineSDK(
             client_id=client_id,
@@ -74,14 +65,6 @@ class QBOConnector:
         credentials_object.refresh_token = self.connection.refresh_token
         credentials_object.save()
 
-        if 'QBO_TESTS_REFRESH_TOKENS' in os.environ:
-            QBO_TESTS_REFRESH_TOKENS = ast.literal_eval(os.environ.get('QBO_TESTS_REFRESH_TOKENS'))
-            QBO_TESTS_REFRESH_TOKENS[workspace_id] = self.connection.refresh_token
-            os.environ['QBO_TESTS_REFRESH_TOKENS'] = str(QBO_TESTS_REFRESH_TOKENS)
-        
-        if 'WRITE_TESTS_REFRESH_TOKENS' in os.environ: #For saving the refresh tokens on local while running tests
-            with open('test_refresh_token.txt', 'w') as file:
-                file.write(str(QBO_TESTS_REFRESH_TOKENS))
 
     def get_or_create_vendor(self, vendor_name: str, email: str = None, create: bool = False):
         """
@@ -252,7 +235,8 @@ class QBOConnector:
                 'attribute_type': 'DEPARTMENT',
                 'display_name': 'Department',
                 'value': department['FullyQualifiedName'],
-                'destination_id': department['Id']
+                'destination_id': department['Id'],
+                'active' : department['Active']
             })
 
         DestinationAttribute.bulk_create_or_update_destination_attributes(
@@ -398,7 +382,8 @@ class QBOConnector:
                 'attribute_type': 'CLASS',
                 'display_name': 'class',
                 'value': qbo_class['FullyQualifiedName'],
-                'destination_id': qbo_class['Id']
+                'destination_id': qbo_class['Id'],
+                'active' : qbo_class['Active']
             })
 
         DestinationAttribute.bulk_create_or_update_destination_attributes(

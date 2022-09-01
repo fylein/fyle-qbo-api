@@ -2,8 +2,11 @@ from fyle_qbo_api.tests import settings
 import pytest
 import json
 from django.urls import reverse
+from unittest import mock
 from tests.helper import dict_compare_keys
-from apps.workspaces.models import FyleCredential, WorkspaceSchedule, WorkspaceGeneralSettings, QBOCredential
+from fyle.platform import exceptions as fyle_exc
+from qbosdk import exceptions as qbo_exc
+from apps.workspaces.models import FyleCredential, WorkspaceSchedule, WorkspaceGeneralSettings, QBOCredential, Workspace
 from .fixtures import data
 
 def test_get_workspace_by_id(api_client, test_connection):
@@ -22,6 +25,44 @@ def test_get_workspace_by_id(api_client, test_connection):
 
     assert dict_compare_keys(response, data['workspace']) == [], 'workspaces api returns a diff in the keys'
 
+    with mock.patch('apps.workspaces.models.Workspace.objects.get') as mock_call:
+        mock_call.side_effect = Workspace.DoesNotExist()
+
+        response = api_client.get(url)
+        assert response.status_code == 400
+
+
+def test_get_workspace(api_client, test_connection):
+
+    url = reverse(
+        'workspace'
+    )
+
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
+    response = api_client.get(url)
+    assert response.status_code == 200
+
+    response = json.loads(response.content)
+
+    assert dict_compare_keys(response, data['workspace']) == [], 'workspaces api returns a diff in the keys'
+
+
+def test_patch_of_workspace(api_client, test_connection):
+
+    url = reverse(
+        'workspace-by-id', kwargs={
+            'workspace_id': 3
+        }
+    )
+
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
+    response = api_client.patch(url)
+    assert response.status_code == 200
+
+    response = json.loads(response.content)
+    assert dict_compare_keys(response, data['workspace']) == [], 'workspaces api returns a diff in the keys'
+
+
 def test_post_of_workspace(api_client, test_connection):
 
     url = reverse(
@@ -34,6 +75,13 @@ def test_post_of_workspace(api_client, test_connection):
 
     response = json.loads(response.content)
     assert dict_compare_keys(response, data['workspace']) == [], 'workspaces api returns a diff in the keys'
+    
+    workspace = Workspace.objects.filter(fyle_org_id='or79Cob97KSh').first()
+    workspace.fyle_org_id = 'asdfghj'
+    workspace.save()
+
+    response = api_client.post(url)
+    assert response.status_code == 200
 
 
 def test_get_configuration_detail(api_client, test_connection):
@@ -169,32 +217,155 @@ def test_get_qbo_credentials_view(api_client, test_connection):
     assert response['message'] == 'QBO Credentials not found in this workspace'
     
 
-def test_post_connect_fyle_view(api_client, test_connection):
-    code = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJjbGllbnRfaWQiOiJ0cGFWVVhtd2FZWGVRIiwicmVzcG9uc2VfdHlwZSI6ImNvZGUiLCJjbHVzdGVyX2RvbWFpbiI6Imh0dHBzOi8vc3RhZ2luZy5meWxlLnRlY2giLCJvcmdfdXNlcl9pZCI6Im91NDV2ekhFWUJGUyIsImV4cCI6MTY1MjI2MzMwMH0.D6WdXnkUcKMU98VjZEMz6OH1kGtRXVj1uLGsTeIo0IQ'
+def test_post_connect_fyle_view(mocker, api_client, test_connection):
+    mocker.patch(
+        'fyle_rest_auth.utils.AuthUtils.generate_fyle_refresh_token',
+        return_value={'refresh_token': 'asdfghjk', 'access_token': 'qwertyuio'}
+    )
+    mocker.patch(
+        'apps.workspaces.views.get_fyle_admin',
+        return_value={'data': {'org': {'name': 'Test Trip', 'id': 'orZu2yrz7zdy', 'currency': 'USD'}}}
+    )
+    mocker.patch(
+        'apps.workspaces.views.get_cluster_domain',
+        return_value='https://staging.fyle.tech'
+    )
+    code = 'asd'
     url = '/api/workspaces/5/connect_fyle/authorization_code/'
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
     response = api_client.post(
         url,
-        data={code: code}    
+        data={'code': code}    
     )
     response = api_client.post(url)
-    assert response.status_code == 500
+    assert response.status_code == 200
 
 
-def test_post_connect_qbo_view(api_client, test_connection):
-    code = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJjbGllbnRfaWQiOiJ0cGFWVVhtd2FZWGVRIiwicmVzcG9uc2VfdHlwZSI6ImNvZGUiLCJjbHVzdGVyX2RvbWFpbiI6Imh0dHBzOi8vc3RhZ2luZy5meWxlLnRlY2giLCJvcmdfdXNlcl9pZCI6Im91NDV2ekhFWUJGUyIsImV4cCI6MTY1MjI2MzMwMH0.D6WdXnkUcKMU98VjZEMz6OH1kGtRXVj1uLGsTeIo0IQ'
+def test_connect_fyle_view_exceptions(api_client, test_connection):
+    workspace_id = 5
+    
+    code = 'qwertyu'
+    url = '/api/workspaces/{}/connect_fyle/authorization_code/'.format(workspace_id)
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
+    
+    with mock.patch('fyle_rest_auth.utils.AuthUtils.generate_fyle_refresh_token') as mock_call:
+        mock_call.side_effect = fyle_exc.UnauthorizedClientError(msg='Invalid Authorization Code', response='Invalid Authorization Code')
+        
+        response = api_client.post(
+            url,
+            data={'code': code}    
+        )
+        assert response.status_code == 403
+
+        mock_call.side_effect = fyle_exc.NotFoundClientError(msg='Fyle Application not found', response='Fyle Application not found')
+        
+        response = api_client.post(
+            url,
+            data={'code': code}    
+        )
+        assert response.status_code == 404
+
+        mock_call.side_effect = fyle_exc.WrongParamsError(msg='Some of the parameters are wrong', response='Some of the parameters are wrong')
+        
+        response = api_client.post(
+            url,
+            data={'code': code}    
+        )
+        assert response.status_code == 400
+
+        mock_call.side_effect = fyle_exc.InternalServerError(msg='Wrong/Expired Authorization code', response='Wrong/Expired Authorization code')
+        
+        response = api_client.post(
+            url,
+            data={'code': code}    
+        )
+        assert response.status_code == 401
+
+
+def test_post_connect_qbo_view(mocker, api_client, test_connection):
+    mocker.patch(
+        'apps.workspaces.views.generate_qbo_refresh_token',
+        return_value='asdfghjk'
+    )
+    mocker.patch(
+        'qbosdk.apis.CompanyInfo.get',
+        return_value=data['company_info']
+    )
+    code = 'sdfg'
     url = '/api/workspaces/5/connect_qbo/authorization_code/'
+
+    qbo_credentials = QBOCredential.objects.filter(workspace=5).first()
+    qbo_credentials.delete()
+
+    workspace = Workspace.objects.get(id=5)
+    workspace.onboarding_state = 'CONNECTION'
+    workspace.save()
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
     response = api_client.post(
         url,
-        data={code: code}    
+        data={
+            'code': code,
+            'realm_id': '123146326950399',
+        }    
     )
     response = api_client.post(url)
+    assert response.status_code == 200
 
+
+def test_patch_connect_qbo_view(mocker, api_client, test_connection):
+
+    url = '/api/workspaces/5/connect_qbo/authorization_code/'
+
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
+
+    response = api_client.patch(url)
     response = json.loads(response.content)
-    assert response['error_description'] == 'Invalid authorization code'
+
+    assert response['message'] == 'QBO Refresh Token deleted'
+
+
+def test_connect_qbo_view_exceptions(api_client, test_connection):
+    workspace_id = 1
+    
+    code = 'qwertyu'
+    url = '/api/workspaces/{}/connect_qbo/authorization_code/'.format(workspace_id)
+
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
+    
+    with mock.patch('apps.workspaces.views.generate_qbo_refresh_token') as mock_call:
+        mock_call.side_effect = qbo_exc.UnauthorizedClientError(msg='Invalid Authorization Code', response='Invalid Authorization Code')
+        
+        response = api_client.post(
+            url,
+            data={'code': code}    
+        )
+        assert response.status_code == 401
+
+        mock_call.side_effect = qbo_exc.NotFoundClientError(msg='Fyle Application not found', response='Fyle Application not found')
+        
+        response = api_client.post(
+            url,
+            data={'code': code}    
+        )
+        assert response.status_code == 404
+
+        mock_call.side_effect = qbo_exc.WrongParamsError(msg='Some of the parameters are wrong', response='Some of the parameters are wrong')
+        
+        response = api_client.post(
+            url,
+            data={'code': code}    
+        )
+        assert response.status_code == 500
+
+        mock_call.side_effect = qbo_exc.InternalServerError(msg='Wrong/Expired Authorization code', response='Wrong/Expired Authorization code')
+        
+        response = api_client.post(
+            url,
+            data={'code': code}    
+        )
+        assert response.status_code == 401
 
 
 def test_prepare_e2e_test_view(api_client, test_connection):

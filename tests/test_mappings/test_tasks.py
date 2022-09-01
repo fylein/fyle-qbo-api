@@ -21,7 +21,15 @@ from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGener
 def test_auto_create_tax_codes_mappings(db, mocker):
     workspace_id = 5
     mocker.patch(
+        'qbosdk.apis.TaxCodes.get',
+        return_value=[]
+    )
+    mocker.patch(
         'fyle_integrations_platform_connector.apis.TaxGroups.post_bulk',
+        return_value=[]
+    )
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.TaxGroups.sync',
         return_value=[]
     )
 
@@ -29,12 +37,12 @@ def test_auto_create_tax_codes_mappings(db, mocker):
     mappings = Mapping.objects.filter(workspace_id=workspace_id, destination_type='TAX_CODE').count()
     
     assert tax_groups == 24
-    assert mappings == 24
+    assert mappings == 23
     auto_create_tax_codes_mappings(workspace_id=workspace_id)
 
     tax_groups = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='TAX_CODE').count()
     mappings = Mapping.objects.filter(workspace_id=workspace_id, destination_type='TAX_CODE').count()
-    assert mappings == 24
+    assert mappings == 23
 
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
     fyle_credentials.delete()
@@ -145,6 +153,10 @@ def test_upload_categories_to_fyle(mocker, db):
 def test_auto_create_category_mappings(db, mocker):
     workspace_id = 3
     mocker.patch(
+        'qbosdk.apis.Accounts.get',
+        return_value=[]
+    )
+    mocker.patch(
         'fyle_integrations_platform_connector.apis.Categories.post_bulk',
         return_value=[]
     )
@@ -194,7 +206,15 @@ def test_auto_map_employees(db):
     assert mappings == None
 
 
-def test_async_auto_map_employees(db):
+def test_async_auto_map_employees(mocker, db):
+    mocker.patch(
+        'qbosdk.apis.Employees.get',
+        return_value=[]
+    )
+    mocker.patch(
+        'qbosdk.apis.Vendors.get',
+        return_value=[]
+    )
     workspace_id = 3
     async_auto_map_employees(workspace_id)
     employee_mappings = EmployeeMapping.objects.filter(workspace_id=workspace_id).count()
@@ -330,12 +350,16 @@ def test_schedule_cost_centers_creation(db):
 
 
 def test_schedule_fyle_attributes_creation(db, mocker):
+    mocker.patch(
+        'apps.quickbooks_online.utils.QBOConnector.sync_customers',
+        return_value=None
+    )
     workspace_id = 4
     schedule_fyle_attributes_creation(workspace_id)
 
     mocker.patch(
-            'fyle_integrations_platform_connector.apis.ExpenseCustomFields.post',
-            return_value=[]
+        'fyle_integrations_platform_connector.apis.ExpenseCustomFields.post',
+        return_value=[]
     )
 
     schedule = Schedule.objects.filter(
@@ -371,7 +395,11 @@ def test_post_merchants(db, mocker):
 def test_auto_create_vendors_as_merchants(db, mocker):
     workspace_id = 1
     mocker.patch(
-        'fyle_integrations_platform_connector.apis.Merchants.post_bulk',
+        'fyle_integrations_platform_connector.apis.Merchants.post',
+        return_value=[]
+    )
+    mocker.patch(
+        'qbosdk.apis.Vendors.get',
         return_value=[]
     )
 
@@ -384,7 +412,7 @@ def test_auto_create_vendors_as_merchants(db, mocker):
     
     vendors = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='VENDOR').count()
     expense_attribute = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type='MERCHANT').count()
-    assert vendors == 32
+    assert vendors == 29
     assert expense_attribute == 109
 
     fyle_credentials = FyleCredential.objects.get(workspace_id=1)
