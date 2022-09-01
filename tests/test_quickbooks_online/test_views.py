@@ -2,9 +2,12 @@ from os import access
 from django.urls import reverse
 import pytest
 import json
+from unittest import mock
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import QBOCredential
 from apps.fyle.models import Reimbursement
+from .fixtures import data
+from qbosdk.exceptions import WrongParamsError, InvalidTokenError
 
 #  Will use paramaterize decorator of python later
 def test_quickbooks_fields_view(api_client, test_connection):
@@ -64,8 +67,11 @@ def test_qbo_attributes_view(api_client, test_connection):
     assert len(response) == 1
 
 
-def test_get_company_preference(api_client, test_connection):
-
+def test_get_company_preference(mocker, api_client, test_connection):
+    mocker.patch(
+        'qbosdk.apis.Preferences.get',
+        return_value=data['company_info']
+    )
     access_token = test_connection.access_token
     url = '/api/workspaces/3/qbo/preferences/'
 
@@ -87,8 +93,35 @@ def test_get_company_preference(api_client, test_connection):
     assert response['message'] == 'QBO credentials not found in workspace'
 
 
-def test_post_company_preference(api_client, test_connection):
+def test_get_company_preference_exception(api_client, test_connection):
+    access_token = test_connection.access_token
+    url = '/api/workspaces/3/qbo/preferences/'
 
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
+
+    with mock.patch('qbosdk.apis.Preferences.get') as mock_call:
+        mock_call.side_effect = InvalidTokenError(msg='Invalid token, try to refresh it', response='Invalid token, try to refresh it')
+        response = api_client.get(url)
+        assert response.status_code == 400
+
+
+def test_get_company_preference_exceptions(api_client, test_connection):
+    access_token = test_connection.access_token
+    url = '/api/workspaces/3/qbo/preferences/'
+
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
+
+    with mock.patch('qbosdk.apis.Preferences.get') as mock_call:
+        mock_call.side_effect = WrongParamsError(msg='Invalid token, try to refresh it', response='Invalid token, try to refresh it')
+        response = api_client.get(url)
+        assert response.status_code == 400
+
+
+def test_post_company_preference(mocker, api_client, test_connection):
+    mocker.patch(
+        'qbosdk.apis.CompanyInfo.get',
+        return_value=data['company_info']
+    )
     access_token = test_connection.access_token
     url = '/api/workspaces/3/qbo/preferences/'
 
@@ -98,8 +131,23 @@ def test_post_company_preference(api_client, test_connection):
     assert response.status_code == 200
 
 
-def test_get_company_info(api_client, test_connection):
+def test_post_company_preference_exception(api_client, test_connection):
+    access_token = test_connection.access_token
+    url = '/api/workspaces/3/qbo/preferences/'
 
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
+
+    with mock.patch('qbosdk.apis.CompanyInfo.get') as mock_call:
+        mock_call.side_effect = WrongParamsError(msg='wrong params', response='invalid_params')
+        response = api_client.post(url)
+        assert response.status_code == 400
+
+
+def test_get_company_info(mocker, api_client, test_connection):
+    mocker.patch(
+        'qbosdk.apis.CompanyInfo.get',
+        return_value=data['company_info']
+    )
     access_token = test_connection.access_token
     url = '/api/workspaces/3/qbo/company_info/'
 
@@ -135,7 +183,11 @@ def test_get_vendor_view(api_client, test_connection):
     assert len(response) == 29
 
 
-def test_post_vendor_view(api_client, test_connection):
+def test_post_vendor_view(mocker, api_client, test_connection):
+    mocker.patch(
+        'apps.quickbooks_online.utils.QBOConnector.sync_vendors',
+        return_value=None
+    )
 
     access_token = test_connection.access_token
     url = '/api/workspaces/3/qbo/vendors/'
@@ -172,7 +224,11 @@ def test_get_employee_view(api_client, test_connection):
     assert len(response) == 2
 
 
-def test_post_employee_view(api_client, test_connection):
+def test_post_employee_view(mocker, api_client, test_connection):
+    mocker.patch(
+        'apps.quickbooks_online.utils.QBOConnector.sync_employees',
+        return_value=None
+    )
 
     access_token = test_connection.access_token
     url = '/api/workspaces/3/qbo/employees/'
@@ -209,7 +265,11 @@ def test_get_account_view(api_client, test_connection):
     assert len(response) == 63
 
 
-def test_post_account_view(api_client, test_connection):
+def test_post_account_view(mocker, api_client, test_connection):
+    mocker.patch(
+        'apps.quickbooks_online.utils.QBOConnector.sync_accounts',
+        return_value=None
+    )
 
     access_token = test_connection.access_token
     url = '/api/workspaces/3/qbo/accounts/'
@@ -246,7 +306,11 @@ def test_get_credit_card_account_view(api_client, test_connection):
     assert len(response) == 2
 
 
-def test_post_credit_card_account_view(api_client, test_connection):
+def test_post_credit_card_account_view(mocker, api_client, test_connection):
+    mocker.patch(
+        'apps.quickbooks_online.utils.QBOConnector.sync_accounts',
+        return_value=None
+    )
 
     access_token = test_connection.access_token
     url = '/api/workspaces/3/qbo/credit_card_accounts/'
@@ -283,7 +347,11 @@ def test_get_bank_account_view(api_client, test_connection):
     assert len(response) == 2
 
 
-def test_post_bank_account_view(api_client, test_connection):
+def test_post_bank_account_view(mocker, api_client, test_connection):
+    mocker.patch(
+        'apps.quickbooks_online.utils.QBOConnector.sync_accounts',
+        return_value=None
+    )
 
     access_token = test_connection.access_token
     url = '/api/workspaces/3/qbo/bank_accounts/'
@@ -320,7 +388,11 @@ def test_get_accounts_payable_view(api_client, test_connection):
     assert len(response) == 87
 
 
-def test_post_accounts_payable_view(api_client, test_connection):
+def test_post_accounts_payable_view(mocker, api_client, test_connection):
+    mocker.patch(
+        'apps.quickbooks_online.utils.QBOConnector.sync_accounts',
+        return_value=None
+    )
 
     access_token = test_connection.access_token
     url = '/api/workspaces/3/qbo/accounts_payables/'
@@ -357,7 +429,11 @@ def test_get_bill_payment_account_view(api_client, test_connection):
     assert len(response) == 2
 
 
-def test_post_bill_payment_account_view(api_client, test_connection):
+def test_post_bill_payment_account_view(mocker, api_client, test_connection):
+    mocker.patch(
+        'apps.quickbooks_online.utils.QBOConnector.sync_accounts',
+        return_value=None
+    )
 
     access_token = test_connection.access_token
     url = '/api/workspaces/3/qbo/bill_payment_accounts/'
@@ -394,7 +470,11 @@ def test_get_classe_view(api_client, test_connection):
     assert len(response) == 0
 
 
-def test_post_classe_view(api_client, test_connection):
+def test_post_classe_view(mocker, api_client, test_connection):
+    mocker.patch(
+        'apps.quickbooks_online.utils.QBOConnector.sync_classes',
+        return_value=None
+    )
 
     access_token = test_connection.access_token
     url = '/api/workspaces/3/qbo/classes/'
@@ -431,7 +511,11 @@ def test_get_department_view(api_client, test_connection):
     assert len(response) == 0
 
 
-def test_post_department_view(api_client, test_connection):
+def test_post_department_view(mocker, api_client, test_connection):
+    mocker.patch(
+        'apps.quickbooks_online.utils.QBOConnector.sync_departments',
+        return_value=None
+    )
 
     access_token = test_connection.access_token
     url = '/api/workspaces/3/qbo/departments/'
@@ -468,7 +552,11 @@ def test_get_customer_view(api_client, test_connection):
     assert len(response) == 29
 
 
-def test_post_customer_view(api_client, test_connection):
+def test_post_customer_view(mocker, api_client, test_connection):
+    mocker.patch(
+        'apps.quickbooks_online.utils.QBOConnector.sync_customers',
+        return_value=None
+    )
 
     access_token = test_connection.access_token
     url = '/api/workspaces/3/qbo/customers/'

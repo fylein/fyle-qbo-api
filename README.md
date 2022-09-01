@@ -112,15 +112,6 @@ Django Rest Framework API for Fyle Quickbooks Online Integration
     export QBO_REDIRECT_URI=<qbo redirect uri>
     export QBO_TOKEN_URI=<qbo token uri>
     export QBO_ENVIRONMENT=<qbo environment>
-    export WRITE_TESTS_REFRESH_TOKENS='TRUE'
-    export QBO_TESTS_REFRESH_TOKENS=$(cat test_refresh_token.txt)
-    ```
-
-* While generating refresh token for first run, the workspace id's 1, 2 and 3 must be connected to Sandbox Company_US_4, workspace id 4 must be coneected to Sandbox Company_US_1 and workspace id 5 must be connected to Sandbox Company_FAE company
-
-* Create a file test_refresh_token.txt and add the generated refresh tokens in dictionary format as given below
-    ```
-    {1: "", 2: "", 3: "", 4: "", 5: ""}
     ```
 
 * Run the following commands
