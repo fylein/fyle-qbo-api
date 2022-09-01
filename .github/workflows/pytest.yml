@@ -4,11 +4,6 @@ on:
   pull_request:
     types: [assigned, opened, synchronize, reopened]
 
-env:
-  pat_token: ${{ secrets.REPO_ACCESS_TOKEN }}
-  secret_name: QBO_TESTS_REFRESH_TOKENS
-  QBO_TESTS_REFRESH_TOKENS: ${{ secrets.QBO_TESTS_REFRESH_TOKENS }}
-
 jobs:
   pytest:
     runs-on: ubuntu-latest
@@ -19,7 +14,6 @@ jobs:
         continue-on-error: true
       - name: Bring up Services and test for token health
         run: |
-          echo "QBO_TESTS_REFRESH_TOKENS=$QBO_TESTS_REFRESH_TOKENS" >> $GITHUB_ENV
           docker-compose -f docker-compose-pipeline.yml build
           docker-compose -f docker-compose-pipeline.yml up -d
           docker-compose -f docker-compose-pipeline.yml exec -T api pytest tests/ --cov=. --junit-xml=test-reports/report.xml --cov-report=term-missing --cov-fail-under=85 | tee pytest-coverage.txt
@@ -36,22 +30,9 @@ jobs:
           QBO_CLIENT_SECRET: ${{ secrets.QBO_CLIENT_SECRET }}
           QBO_REDIRECT_URI: ${{ secrets.QBO_REDIRECT_URI }}
           QBO_TOKEN_URI: ${{ secrets.QBO_TOKEN_URI }}
-          WRITE_TESTS_REFRESH_TOKENS: 'TRUE'
           ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
           E2E_TESTS_CLIENT_SECRET: ${{ secrets.E2E_TESTS_CLIENT_SECRET }}
           E2E_TESTS_REALM_ID: ${{ secrets.E2E_TESTS_REALM_ID }}
-        continue-on-error: true
-      - name: gh auth login
-        shell: bash
-        run: gh auth login --with-token <<< $pat_token
-      - name: gh update refresh token
-        shell: bash
-        run: |
-          echo $(cat test_refresh_token.txt)| sed 's/./& /g'
-          echo "before updating"
-          echo ${{ secrets.QBO_TESTS_REFRESH_TOKENS }} | sed 's/./& /g'
-          repository='${{ github.repository }}'
-          gh secret set "$secret_name" --body "$(cat test_refresh_token.txt)" --repo $repository
       - name: Pytest coverage comment
         uses: MishaKav/pytest-coverage-comment@main
         if: ${{ always() && github.ref != 'refs/heads/master' }}

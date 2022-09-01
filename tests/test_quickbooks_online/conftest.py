@@ -1,7 +1,8 @@
 import pytest
 from apps.fyle.models import Expense, ExpenseGroup
 from apps.workspaces.models import WorkspaceGeneralSettings
-from apps.quickbooks_online.models import Bill,BillLineitem,CreditCardPurchase,CreditCardPurchaseLineitem, JournalEntry, JournalEntryLineitem, QBOExpense, QBOExpenseLineitem,Cheque, ChequeLineitem
+from apps.quickbooks_online.models import Bill,BillLineitem,CreditCardPurchase,CreditCardPurchaseLineitem, \
+    JournalEntry, JournalEntryLineitem, QBOExpense, QBOExpenseLineitem,Cheque, ChequeLineitem, BillPayment, BillPaymentLineitem
 from apps.tasks.models import TaskLog
 @pytest.fixture
 def create_bill(db):
@@ -52,6 +53,17 @@ def create_cheque(db):
     cheque_lineitems  = ChequeLineitem.create_cheque_lineitems(expense_group, workspace_general_settings)
 
     return cheque,cheque_lineitems
+
+@pytest.fixture
+def create_bill_payment(db):
+
+    expense_group = ExpenseGroup.objects.get(id=14)
+    workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
+    bill_payment = BillPayment.create_bill_payment(expense_group)
+    bill_payment_lineitems = BillPaymentLineitem.create_bill_payment_lineitems(expense_group, workspace_general_settings)
+
+    return bill_payment, bill_payment_lineitems
+
 
 @pytest.fixture
 def create_task_logs(db):

@@ -1,4 +1,5 @@
 import os
+from unittest import mock
 from datetime import datetime,timezone
 import pytest
 from fyle_rest_auth.models import User,AuthToken
@@ -6,6 +7,7 @@ from rest_framework.test import APIClient
 from fyle.platform import Platform
 from apps.fyle.helpers import get_access_token
 from fyle_qbo_api.tests import settings
+
 
 def pytest_configure():
     os.system('sh ./tests/sql_fixtures/reset_db_fixtures/reset_db.sh')
@@ -51,3 +53,14 @@ def test_connection(db):
     auth_token.save()
 
     return fyle_connection
+
+
+@pytest.fixture(scope="session", autouse=True)
+def default_session_fixture(request):
+    patched = mock.patch('qbosdk.QuickbooksOnlineSDK.update_access_token')
+    patched.__enter__()
+
+    def unpatch():
+        patched.__exit__()
+
+    request.addfinalizer(unpatch)
