@@ -7,8 +7,19 @@ from apps.workspaces.models import FyleCredential, WorkspaceSchedule
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from .fixtures import data
 
-def test_import_settings(api_client, test_connection):
-
+def test_import_settings(mocker, api_client, test_connection):
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.ExpenseCustomFields.get_by_id',
+        return_value={'options': ['samp'], 'updated_at': '2020-06-11T13:14:55.201598+00:00'}
+    )
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.ExpenseCustomFields.post',
+        return_value=None
+    )
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.ExpenseCustomFields.sync',
+        return_value=None
+    )
     workspace = Workspace.objects.get(id=3)
     workspace.onboarding_state = 'IMPORT_SETTINGS'
     workspace.save()
@@ -33,5 +44,3 @@ def test_import_settings(api_client, test_connection):
     )
 
     assert response.status_code == 400
-
-# {'mapping_settings': [{'source_placeholder': [ErrorDetail(string='This field may not be blank.', code='blank')]}, {'source_placeholder': [ErrorDetail(string='This field may not be blank.', code='blank')]}, {'source_placeholder': [ErrorDetail(string='This field may not be blank.', code='blank')]}

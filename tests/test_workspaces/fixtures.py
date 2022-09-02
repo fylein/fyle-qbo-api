@@ -57,5 +57,30 @@ data = {
         "LastUpdatedTime": "2015-07-06T08:51:50-07:00"
         }
     },
-    'admin_user':{'data': {'org': {'currency': 'USD', 'domain': 'fyleforgotham.in', 'id': 'or79Cob97KSh', 'name': 'Fyle For Arkham Asylum'}, 'org_id': 'or79Cob97KSh', 'roles': ['VERIFIER', 'FYLER', 'FINANCE', 'PAYMENT_PROCESSOR', 'ADMIN', 'APPROVER', 'AUDITOR'], 'user': {'email': 'ashwin.t@fyle.in', 'full_name': 'Joanna', 'id': 'usqywo0f3nBY'}, 'user_id': 'usqywo0f3nBY'}}
+    'admin_user':{
+        'data': {
+            "org":{
+                "currency":"USD",
+                "domain":"fyleforgotham.in",
+                "id":"or79Cob97KSh",
+                "name":"Fyle For Arkham Asylum"
+            },
+            "org_id":"or79Cob97KSh",
+            "roles":[
+                "VERIFIER",
+                "FYLER",
+                "FINANCE",
+                "PAYMENT_PROCESSOR",
+                "ADMIN",
+                "APPROVER",
+                "AUDITOR"
+            ],
+            "user":{
+                "email":"ashwin.t@fyle.in",
+                "full_name":"Joanna",
+                "id":"usqywo0f3nBY"
+            },
+            "user_id":"usqywo0f3nBY"
+        }
+    }
 }
