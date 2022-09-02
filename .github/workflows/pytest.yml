@@ -21,8 +21,13 @@ jobs:
           echo "FAILED=$(cat test-reports/report.xml | awk -F'=' '{print $5}' | awk -F' ' '{gsub(/"/, "", $1); print $1}')" >> $GITHUB_ENV
         env:
           FYLE_BASE_URL: ${{ secrets.FYLE_BASE_URL }}
+          FYLE_CLIENT_ID: ${{ secrets.FYLE_CLIENT_ID }}
+          FYLE_CLIENT_SECRET: ${{ secrets.FYLE_CLIENT_SECRET }}
+          FYLE_REFRESH_TOKEN: ${{ secrets.FYLE_REFRESH_TOKEN }}
           FYLE_TOKEN_URI: ${{ secrets.FYLE_TOKEN_URI }}
           FYLE_SERVER_URL: ${{ secrets.FYLE_SERVER_URL }}
+          QBO_CLIENT_ID: ${{ secrets.QBO_CLIENT_ID }}
+          QBO_CLIENT_SECRET: ${{ secrets.QBO_CLIENT_SECRET }}
           QBO_REDIRECT_URI: ${{ secrets.QBO_REDIRECT_URI }}
           QBO_TOKEN_URI: ${{ secrets.QBO_TOKEN_URI }}
           ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
