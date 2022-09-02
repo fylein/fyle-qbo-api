@@ -1,21 +1,24 @@
 from asyncio.log import logger
-import imp
 import pytest
+from unittest import mock
 from django_q.models import Schedule
+from qbosdk.exceptions import WrongParamsError
 from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute, CategoryMapping, \
     Mapping, MappingSetting, EmployeeMapping
 from apps.mappings.tasks import auto_create_tax_codes_mappings, schedule_tax_groups_creation,auto_create_project_mappings, \
-    schedule_projects_creation, remove_duplicates, create_fyle_categories_payload, upload_categories_to_fyle, \
+    schedule_projects_creation, remove_duplicates, create_fyle_categories_payload, resolve_expense_attribute_errors, \
         schedule_categories_creation, auto_create_category_mappings, schedule_cost_centers_creation, auto_map_employees, \
             async_auto_map_employees, schedule_auto_map_employees, auto_map_ccc_employees, async_auto_map_ccc_account, \
                 schedule_auto_map_ccc_employees, create_fyle_cost_centers_payload, auto_create_cost_center_mappings, \
                     post_merchants, auto_create_vendors_as_merchants, schedule_vendors_as_merchants_creation,\
-                        schedule_fyle_attributes_creation, async_auto_create_custom_field_mappings
+                        schedule_fyle_attributes_creation, async_auto_create_custom_field_mappings, create_mappings_and_update_flag, \
+                            disable_or_enable_expense_attributes
 from fyle_integrations_platform_connector import PlatformConnector
 from apps.mappings.models import GeneralMapping
 from .fixtures import data
 from tests.helper import dict_compare_keys
 from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGeneralSettings 
+from apps.tasks.models import Error
 
 
 def test_auto_create_tax_codes_mappings(db, mocker):
@@ -75,10 +78,26 @@ def test_schedule_tax_groups_creation(db):
 def test_auto_create_project_mappings(db, mocker):
     workspace_id = 3
     mocker.patch(
+        'fyle_integrations_platform_connector.apis.Projects.sync',
+        return_value=[]
+    )
+    mocker.patch(
         'fyle_integrations_platform_connector.apis.Projects.post_bulk',
         return_value=[]
     )
+    mocker.patch(
+        'qbosdk.apis.Customers.count',
+        return_value=5
+    )
+    mocker.patch(
+        'qbosdk.apis.Customers.get',
+        return_value=[]
+    )
     
+    mapping_setting = MappingSetting.objects.get(source_field='PROJECT', workspace_id=workspace_id)
+    mapping_setting.destination_field = 'CUSTOMER'
+    mapping_setting.save()
+
     response = auto_create_project_mappings(workspace_id=workspace_id)
     assert response == None
 
@@ -93,6 +112,13 @@ def test_auto_create_project_mappings(db, mocker):
     response = auto_create_project_mappings(workspace_id=workspace_id)
 
     assert response == None
+
+    with mock.patch('qbosdk.apis.Customers.get') as mock_call:
+        mock_call.side_effect = WrongParamsError(msg='invalid params', response='invalid params')
+        auto_create_project_mappings(workspace_id=workspace_id)
+
+        mock_call.side_effect = Exception
+        auto_create_project_mappings(workspace_id=workspace_id)
 
 
 @pytest.mark.django_db
@@ -138,22 +164,14 @@ def test_create_fyle_category_payload(db):
     assert dict_compare_keys(fyle_category_payload[0], data['fyle_category_payload'][0]) == [], 'category upload api return diffs in keys'
 
 
-def test_upload_categories_to_fyle(mocker, db):
-    workspace_id = 4
-    mocker.patch(
-        'fyle_integrations_platform_connector.apis.Categories.post_bulk',
-        return_value='nilesh'
-    )
-
-    count_of_accounts = DestinationAttribute.objects.filter(
-        attribute_type='ACCOUNT', workspace_id=workspace_id).count()
-    assert count_of_accounts == 62
-
-
 def test_auto_create_category_mappings(db, mocker):
     workspace_id = 3
     mocker.patch(
         'qbosdk.apis.Accounts.get',
+        return_value=[]
+    )
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.Categories.sync',
         return_value=[]
     )
     mocker.patch(
@@ -215,6 +233,10 @@ def test_async_auto_map_employees(mocker, db):
         'qbosdk.apis.Vendors.get',
         return_value=[]
     )
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.Employees.sync',
+        return_value=[]
+    )
     workspace_id = 3
     async_auto_map_employees(workspace_id)
     employee_mappings = EmployeeMapping.objects.filter(workspace_id=workspace_id).count()
@@ -262,7 +284,11 @@ def test_auto_map_ccc_employees(db):
     assert employee_mappings == 17
 
 
-def test_async_auto_map_ccc_account(db):
+def test_async_auto_map_ccc_account(mocker, db):
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.Employees.sync',
+        return_value=[]
+    )
     workspace_id = 3
     async_auto_map_ccc_account(workspace_id)
 
@@ -308,14 +334,20 @@ def test_create_cost_center_payload(db):
 def test_auto_create_cost_center_mappings(db, mocker):
     workspace_id = 3
     mocker.patch(
+        'qbosdk.apis.Classes.get',
+        return_value=[]
+    )
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.CostCenters.sync',
+        return_value=[]
+    )
+    mocker.patch(
             'fyle_integrations_platform_connector.apis.CostCenters.post_bulk',
             return_value=[]
         )
     
     response = auto_create_cost_center_mappings(workspace_id=workspace_id)
-    assert response == None
-
-    cost_center = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='DEPARTMENT').count()
+    cost_center = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='CLASSES').count()
     mappings = Mapping.objects.filter(workspace_id=workspace_id, source_type='COST_CENTER').count()
 
     assert cost_center == 0
@@ -354,6 +386,10 @@ def test_schedule_fyle_attributes_creation(db, mocker):
         'apps.quickbooks_online.utils.QBOConnector.sync_customers',
         return_value=None
     )
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.ExpenseCustomFields.get_by_id',
+        return_value={'options': ['samp'], 'updated_at': '2020-06-11T13:14:55.201598+00:00'}
+    )
     workspace_id = 4
     schedule_fyle_attributes_creation(workspace_id)
 
@@ -378,9 +414,21 @@ def test_schedule_fyle_attributes_creation(db, mocker):
 
     assert schedule.func == 'apps.mappings.tasks.async_auto_create_custom_field_mappings'
 
-@pytest.mark.django_db
+
 def test_post_merchants(db, mocker):
-    workspace_id = 1
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.Merchants.get',
+        return_value=data['get_merchants']
+    )
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.Merchants.post',
+        return_value=[]
+    )
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.Merchants.sync',
+        return_value=[]
+    )
+    workspace_id = 5
     fyle_credentials = FyleCredential.objects.all()
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id) 
     fyle_connection = PlatformConnector(fyle_credentials)
@@ -388,12 +436,15 @@ def test_post_merchants(db, mocker):
     post_merchants(fyle_connection, workspace_id, False)
 
     expense_attribute = ExpenseAttribute.objects.filter(attribute_type='MERCHANT', workspace_id=workspace_id).count()
-    assert expense_attribute == 0
-
+    assert expense_attribute == 44
 
 
 def test_auto_create_vendors_as_merchants(db, mocker):
     workspace_id = 1
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.Merchants.sync',
+        return_value=[]
+    )
     mocker.patch(
         'fyle_integrations_platform_connector.apis.Merchants.post',
         return_value=[]
@@ -413,7 +464,7 @@ def test_auto_create_vendors_as_merchants(db, mocker):
     vendors = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='VENDOR').count()
     expense_attribute = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type='MERCHANT').count()
     assert vendors == 29
-    assert expense_attribute == 109
+    assert expense_attribute == 0
 
     fyle_credentials = FyleCredential.objects.get(workspace_id=1)
     fyle_credentials.delete()
@@ -442,3 +493,14 @@ def test_schedule_vendors_as_merchants_creation(db):
     ).first()
 
     assert schedule == None
+
+
+def test_resolve_expense_attribute_errors(db):
+    workspace_id = 3
+    errors = Error.objects.filter(workspace_id=workspace_id, type='EMPLOYEE_MAPPING', expense_attribute_id=5327, is_resolved=False).count()
+    assert errors == 1
+
+    resolve_expense_attribute_errors('EMPLOYEE', workspace_id, 'VENDOR')
+
+    errors = Error.objects.filter(workspace_id=workspace_id, type='EMPLOYEE_MAPPING', expense_attribute_id=5327, is_resolved=False).count()
+    assert errors == 0
