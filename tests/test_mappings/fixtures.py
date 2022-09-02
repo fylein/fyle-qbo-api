@@ -30,5 +30,12 @@ data = {
         'created_at':'2022-05-23T11:10:54.880804Z',
         'updated_at':'2022-05-23T11:11:24.779971Z',
     },
+    'get_merchants': {
+        "id": 1234,
+        "created_at": "2020-06-01T13:14:54.804+00:00",
+        "updated_at": "2020-06-11T13:14:55.201598+00:00",
+        "display_name": "Andrew Haberbosch"
+    }
+
     
 }

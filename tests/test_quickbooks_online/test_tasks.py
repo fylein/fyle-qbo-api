@@ -528,6 +528,14 @@ def test_post_create_cheque_exceptions(create_task_logs, db):
 
 def test_create_bill_payment(mocker, db):
     mocker.patch(
+        'apps.quickbooks_online.tasks.load_attachments',
+        return_value=[]
+    )
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.Reimbursements.sync',
+        return_value=None
+    )
+    mocker.patch(
         'qbosdk.apis.Bills.post',
         return_value=data['post_bill']
     )
@@ -564,6 +572,9 @@ def test_create_bill_payment(mocker, db):
     task_log.expense_group=bill.expense_group
     task_log.save()
 
+    reimbursements = data['reimbursements']
+
+    Reimbursement.create_or_update_reimbursement_objects(reimbursements=reimbursements, workspace_id=workspace_id)
     create_bill_payment(workspace_id)
 
     assert task_log.status == 'COMPLETE'
@@ -571,6 +582,14 @@ def test_create_bill_payment(mocker, db):
 
 def test_post_bill_payment_exceptions(mocker, db):
     mocker.patch(
+        'apps.quickbooks_online.tasks.load_attachments',
+        return_value=[]
+    )
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.Reimbursements.sync',
+        return_value=None
+    )
+    mocker.patch(
         'qbosdk.apis.Bills.post',
         return_value=data['post_bill']
     )
@@ -607,6 +626,9 @@ def test_post_bill_payment_exceptions(mocker, db):
     task_log.expense_group=bill.expense_group
     task_log.save()
 
+    reimbursements = data['reimbursements']
+    Reimbursement.create_or_update_reimbursement_objects(reimbursements=reimbursements, workspace_id=workspace_id)
+    
     with mock.patch('apps.quickbooks_online.models.BillPayment.create_bill_payment') as mock_call:
         mock_call.side_effect = BulkError(msg='employess not found', response='mapping error')
         create_bill_payment(workspace_id)

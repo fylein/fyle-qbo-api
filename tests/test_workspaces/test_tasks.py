@@ -1,5 +1,5 @@
 from apps.tasks.models import TaskLog
-from apps.workspaces.tasks import run_sync_schedule, schedule_sync
+from apps.workspaces.tasks import run_sync_schedule, schedule_sync, run_email_notification
 from apps.workspaces.models import WorkspaceSchedule, WorkspaceGeneralSettings
 from .fixtures import data
 
@@ -69,3 +69,15 @@ def test_schedule_sync(db):
     ).first() 
 
     assert ws_schedule.schedule == None
+
+
+def test_email_notification(db):
+    workspace_id = 4
+    ws_schedule = WorkspaceSchedule.objects.filter( 
+        workspace_id=workspace_id 
+    ).first() 
+    ws_schedule.enabled = True
+    ws_schedule.emails_selected = ['ashwin.t@fyle.in']
+    ws_schedule.save()
+
+    run_email_notification(workspace_id=workspace_id)

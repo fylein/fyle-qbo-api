@@ -63,8 +63,11 @@ def test_patch_of_workspace(api_client, test_connection):
     assert dict_compare_keys(response, data['workspace']) == [], 'workspaces api returns a diff in the keys'
 
 
-def test_post_of_workspace(api_client, test_connection):
-
+def test_post_of_workspace(mocker, api_client, test_connection):
+    mocker.patch(
+        'apps.workspaces.views.get_fyle_admin',
+        return_value={'data': {'org': {'name': 'Test Trip', 'id': 'orZu2yrz7zdy', 'currency': 'USD'}}}
+    )
     url = reverse(
         'workspace'
     )
@@ -84,11 +87,26 @@ def test_post_of_workspace(api_client, test_connection):
     assert response.status_code == 200
 
 
+def test_post_of_new_workspace(mocker, api_client, test_connection):
+    mocker.patch(
+        'apps.workspaces.views.get_fyle_admin',
+        return_value={'data': {'org': {'name': 'Test Trip', 'id': 'orZu2y7zdy', 'currency': 'USD'}}}
+    )
+    url = reverse(
+        'workspace'
+    )
+
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
+    response = api_client.post(url)
+    assert response.status_code == 200
+
+
 def test_get_configuration_detail(api_client, test_connection):
+    workspace_id = 4
 
     url = reverse(
         'workspace-general-settings', kwargs={
-            'workspace_id': 4
+            'workspace_id': workspace_id
         }
     )
 
@@ -98,6 +116,12 @@ def test_get_configuration_detail(api_client, test_connection):
 
     response = json.loads(response.content)
     assert dict_compare_keys(response, data['general_settings']) == [], 'configuration api returns a diff in keys'
+
+    workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first() 
+    workspace_general_settings.delete()
+
+    response = api_client.get(url)
+    assert response.status_code == 400
 
 
 def test_post_workspace_configurations(api_client, test_connection):
@@ -118,7 +142,13 @@ def test_post_workspace_configurations(api_client, test_connection):
         data=data['workspace_general_settings_payload'],
         format='json'
     )
+    assert response.status_code==200
 
+    response = api_client.patch(
+        url,
+        data=data['workspace_general_settings_payload'],
+        format='json'
+    )
     assert response.status_code==200
 
 
@@ -210,7 +240,7 @@ def test_get_qbo_credentials_view(api_client, test_connection):
     assert response['realm_id'] == '4620816365009870170'
 
     qbo_credentials = QBOCredential.objects.get(workspace=4)
-    qbo_credentials.delete() 
+    qbo_credentials.delete()
     response = api_client.get(url)
     response = json.loads(response.content)
 
@@ -368,22 +398,121 @@ def test_connect_qbo_view_exceptions(api_client, test_connection):
         assert response.status_code == 401
 
 
-def test_prepare_e2e_test_view(api_client, test_connection):
+@mock.patch('apps.workspaces.views.connection')
+def test_prepare_e2e_test_view(mock_db, mocker, api_client, test_connection):
+   
+    mocker.patch(
+        'apps.quickbooks_online.utils.QBOConnector.sync_dimensions',
+        return_value=None
+    )
+    mocker.patch(
+        'fyle_integrations_platform_connector.fyle_integrations_platform_connector.PlatformConnector.import_fyle_dimensions',
+        return_value=[]
+    )
+    mocker.patch(
+        'apps.workspaces.models.QBOCredential.objects.create',
+        return_value=None
+    )
 
     url = reverse(
         'setup-e2e-test', kwargs={
-            'workspace_id': 1
+            'workspace_id': 3
         }
     )
 
     api_client.credentials(HTTP_X_E2E_Tests_Client_ID='dummy_id')
     response = api_client.post(url)
-    assert response.status_code == 403
+    assert response.status_code == 400
+
+    mocker.patch(
+        'apps.quickbooks_online.utils.QBOConnector.get_company_preference',
+        return_value=None
+    )
+    healthy_token = QBOCredential.objects.get(workspace_id=3)
+    healthy_token.is_expired = False
+    healthy_token.save()
 
     api_client.credentials(HTTP_X_E2E_Tests_Client_ID='gAAAAABi8oXHBll3lEUPGpMDXnZDhVgSl_LMOkIF0ilfmSCL3wFxZnoTIbpdzwPoOFzS0vFO4qaX51JtAqCG2RBHZaf1e98hug==')
     response = api_client.post(url)
-    assert response.status_code == 403
+    assert response.status_code == 200
 
+    url = reverse(
+        'setup-e2e-test', kwargs={
+            'workspace_id': 6
+        }
+    )
     api_client.credentials(HTTP_X_E2E_Tests_Client_ID='gAAAAABi8oWVoonxF0K_g2TQnFdlpOJvGsBYa9rPtwfgM-puStki_qYbi0PdipWHqIBIMip94MDoaTP4MXOfERDeEGrbARCxPw==')
     response = api_client.post(url)
-    assert response.status_code == 400
+    assert response.status_code == 500
+
+
+def test_schedule_sync_view(mocker, api_client, test_connection):
+    mocker.patch(
+        'apps.workspaces.views.run_sync_schedule',
+        return_value=None
+    )
+
+    workspace_id = 3
+    url = '/api/workspaces/{}/schedule/trigger/'.format(workspace_id)
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
+
+    response = api_client.post(url)
+    assert response.status_code == 200
+
+
+def test_schedule_view(mocker, db, api_client, test_connection):
+    mocker.patch(
+        'apps.workspaces.views.run_sync_schedule',
+        return_value=None
+    )
+
+    workspace_id = 3
+    url = '/api/workspaces/{}/schedule/'.format(workspace_id)
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
+
+    response = api_client.get(url)
+    assert response.status_code == 200
+
+    response = api_client.post(
+        url,
+        data={
+            'schedule_enabled': True,
+            'hours': 1
+        },
+        format='json'
+    )
+    assert response.status_code == 200
+
+
+def test_export_to_qbo(mocker, api_client, test_connection):
+    mocker.patch(
+        'apps.workspaces.views.export_to_qbo',
+        return_value=None
+    )
+
+    workspace_id = 3
+    url = '/api/workspaces/{}/exports/trigger/'.format(workspace_id)
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
+
+    response = api_client.post(url)
+    assert response.status_code == 200
+
+
+def test_last_export_detail_view(mocker, db, api_client, test_connection):
+
+    workspace_id = 3
+    url = '/api/workspaces/{}/export_detail/'.format(workspace_id)
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
+
+    response = api_client.get(url)
+    assert response.status_code == 200
+
+
+def test_workspace_admin_view(mocker, db, api_client, test_connection):
+
+    workspace_id = 3
+    url = '/api/workspaces/{}/admins/'.format(workspace_id)
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
+
+    response = api_client.get(url)
+    assert response.status_code == 200

@@ -140,5 +140,6 @@ data = {
             "updated_at":"2022-05-23T13:01:49.587946Z",
             "workspace":3
         }
-    ]
+    ],
+    'error_response': [{'id': 20, 'expense_attribute': {'id': 5327, 'attribute_type': 'EMPLOYEE', 'display_name': 'Employee', 'value': 'user8@fyleforgotham.in', 'source_id': 'ouZF0bfmC1DV', 'auto_mapped': False, 'auto_created': False, 'active': None, 'detail': {'user_id': 'us9jthy9XTZE', 'location': None, 'full_name': 'Jessica Lane', 'department': 'Department 2', 'department_id': 'deptgZF9aUB0tH', 'employee_code': None, 'department_code': None}, 'created_at': '2022-05-23T11:10:04.521875Z', 'updated_at': '2022-05-23T13:01:51.477319Z', 'workspace': 3}, 'expense_group': None, 'type': 'EMPLOYEE_MAPPING', 'is_resolved': False, 'error_title': 'user8@fyleforgotham.in', 'error_detail': 'Employee mapping is missing', 'created_at': '2022-05-23T13:01:08.705786Z', 'updated_at': '2022-05-23T13:01:51.513084Z', 'workspace': 3}]
 }
