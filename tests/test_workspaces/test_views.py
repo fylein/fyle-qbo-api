@@ -400,6 +400,10 @@ def test_connect_qbo_view_exceptions(api_client, test_connection):
 
 @mock.patch('apps.workspaces.views.connection')
 def test_prepare_e2e_test_view(mock_db, mocker, api_client, test_connection):
+    mocker.patch(
+        'apps.workspaces.permissions.IsAuthenticatedForTest.has_permission',
+        return_value=True
+    )
    
     mocker.patch(
         'apps.quickbooks_online.utils.QBOConnector.sync_dimensions',
