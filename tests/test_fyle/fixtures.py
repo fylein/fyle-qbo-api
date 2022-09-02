@@ -75,4 +75,201 @@ data = {
         {'id': 'orHVw3ikkCxJ', 'created_at': '2018-12-18T10:50:36.506Z', 'updated_at': '2018-12-18T10:51:53.352Z', 'name': 'Anagha Org', 'domain': 'afyle.in', 'currency': 'EUR', 'branch_ifsc': None, 'branch_account': None, 'tally_bank_ledger': None, 'tally_default_category': None, 'tally_default_user': None, 'corporate_credit_card_details': {'bank_name': None, 'number_of_cards': None}, 'verified': True, 'lite': False, 'dwolla_customers_metadata_id': None}
     ],
 
+    'get_all_employees': [{'data': [
+        {
+            'approver_user_ids': [],
+            'approver_users': [],
+            'branch_account': None,
+            'branch_ifsc': None,
+            'business_unit': None,
+            'code': None,
+            'cost_center_ids': [
+                6580,
+                6581,
+                6582,
+                6583,
+                6584,
+                6585,
+                9305,
+                6586,
+                9306,
+                6587,
+                9307,
+                6588,
+                9308,
+                6589,
+                9309,
+            ],
+            'cost_centers': [
+                {'code': '38594', 'id': 6580, 'name': 'Sales and Cross'},
+                {'code': '48163', 'id': 6581, 'name': 'Treasury'},
+                {'code': '00207', 'id': 6582, 'name': 'Administration'},
+                {'code': '14530', 'id': 6583, 'name': 'OPS & Retail'},
+                {'code': '52111', 'id': 6584, 'name': 'Head'},
+                {'code': '35260', 'id': 6585, 'name': 'Office'},
+                {'code': None, 'id': 9305, 'name': 'Avenged Sevenfold'},
+                {'code': '62958', 'id': 6586, 'name': 'Sales'},
+                {'code': None, 'id': 9306, 'name': 'Lamb of God'},
+                {'code': '77240', 'id': 6587, 'name': 'Corporate'},
+                {'code': None, 'id': 9307, 'name': 'Megadeth'},
+                {'code': '30868', 'id': 6588, 'name': 'Internal'},
+                {'code': None, 'id': 9308, 'name': 'Metallica'},
+                {'code': '82758', 'id': 6589, 'name': 'F & A'},
+                {'code': None, 'id': 9309, 'name': 'Opeth'},
+            ],
+            'created_at': '2020-10-22T07:56:10.136000+00:00',
+            'custom_fields': [{'name': 'Custom Field 1', 'value': None}],
+            'department': None,
+            'department_id': None,
+            'has_accepted_invite': True,
+            'id': 'ouJSY9XI9s9k',
+            'is_enabled': True,
+            'joined_at': None,
+            'level': None,
+            'level_id': None,
+            'location': None,
+            'mileage_rate_ids': [],
+            'mileage_rates': [],
+            'mobile': None,
+            'org_id': 'orNoatdUnm1w',
+            'per_diem_rate_ids': [],
+            'per_diem_rates': [],
+            'project_ids': [],
+            'projects': [],
+            'roles': [
+                'FYLER',
+                'VERIFIER',
+                'PAYMENT_PROCESSOR',
+                'FINANCE',
+                'ADMIN',
+                'AUDITOR',
+            ],
+            'special_email': 'receipts+ashwin_t_gs2r@fyle.ai',
+            'title': None,
+            'updated_at': '2021-10-26T15:16:15.898098+00:00',
+            'user': {'email': 'ashwin.t@fyle.in', 'full_name': 'Joanna',
+                     'id': 'usqywo0f3nBY'},
+            'user_id': 'usqywo0f3nBY',
+        }],
+    }],
+    'get_all_categories':  
+    [{'data': [
+        {
+            'code': '16200',
+            'created_at': '2022-08-12T16:50:53.658771+00:00',
+            'display_name': 'Patents & Licenses',
+            'id': 207983,
+            'is_enabled': True,
+            'name': 'Patents & Licenses',
+            'org_id': 'orNoatdUnm1w',
+            'restricted_project_ids': None,
+            'sub_category': None,
+            'system_category': None,
+            'updated_at': '2022-08-30T16:50:44.671684+00:00',
+        }]
+    }],
+    'get_all_projects':
+    [{'data': [
+        {
+            'approver_user_ids': [],
+            'approver_users': [],
+            'code': 'Template-FF',
+            'created_at': '2022-08-10T16:50:50.914909+00:00',
+            'description': 'Sage Intacct Project - Fixed Fee Project with Five Tasks, Id - Template-FF',
+            'display_name': 'Fixed Fee Project with Five Tasks',
+            'id': 300177,
+            'is_enabled': True,
+            'name': 'Fixed Fee Project with Five Tasks',
+            'org_id': 'orNoatdUnm1w',
+            'restricted_spender_user_ids': None,
+            'sub_project': None,
+            'updated_at': '2022-08-10T16:50:50.914909+00:00',
+        }]
+    }],
+    'get_all_cost_centers':
+    [{'data': [
+        {
+            'code': None,
+            'created_at': '2022-05-09T10:49:26.333255+00:00',
+            'description': 'Cost Center - 01: San Francisco, Id - 2',
+            'id': 9587,
+            'is_enabled': True,
+            'name': '01: San Francisco',
+            'org_id': 'orNoatdUnm1w',
+            'restricted_spender_user_ids': None,
+            'updated_at': '2022-05-09T10:49:26.333255+00:00',
+        }]
+    }],
+    'get_all_expense_fields':
+    [{'data': [
+    {
+            'category_ids': [],
+            'code': None,
+            'column_name': 'category_id',
+            'created_at': '2022-03-08T11:37:18.493620+00:00',
+            'default_value': None,
+            'field_name': 'Category',
+            'id': 203016,
+            'is_custom': False,
+            'is_enabled': True,
+            'is_mandatory': False,
+            'options': [],
+            'org_id': 'orNoatdUnm1w',
+            'placeholder': 'Select Category',
+            'seq': 1,
+            'type': 'SELECT',
+            'updated_at': '2022-08-30T16:50:44.671684+00:00',
+        }]
+    }],
+    'get_all_corporate_cards':
+    [{'data': [
+        {
+            'assignor_user_id': 'usqywo0f3nBY',
+            'bank_name': 'Bank of America',
+            'card_number': '8084',
+            'cardholder_name': None,
+            'code': None,
+            'created_at': '2020-09-02T08:48:43.633229+00:00',
+            'data_feed_source': None,
+            'id': 'bacczhYCLDUZ7I',
+            'is_dummy': False,
+            'is_visa_enrolled': False,
+            'last_assigned_at': '2021-09-07T08:14:53.668178+00:00',
+            'last_ready_for_verification_at': None,
+            'last_synced_at': '2020-09-02T08:48:44.452298+00:00',
+            'last_verification_attempt_at': None,
+            'last_verified_at': None,
+            'org_id': 'orNoatdUnm1w',
+            'updated_at': '2020-09-02T08:48:48.452274+00:00',
+            'user_id': 'usqywo0f3nBY',
+            'verification_status': 'NOT_VERIFIED',
+        }]
+    }],
+    'admin_user':{
+        'data': {
+            "org":{
+                "currency":"USD",
+                "domain":"fyleforgotham.in",
+                "id":"or79Cob97KSh",
+                "name":"Fyle For Arkham Asylum"
+            },
+            "org_id":"or79Cob97KSh",
+            "roles":[
+                "VERIFIER",
+                "FYLER",
+                "FINANCE",
+                "PAYMENT_PROCESSOR",
+                "ADMIN",
+                "APPROVER",
+                "AUDITOR"
+            ],
+            "user":{
+                "email":"ashwin.t@fyle.in",
+                "full_name":"Joanna",
+                "id":"usqywo0f3nBY"
+            },
+            "user_id":"usqywo0f3nBY"
+        }
+    }
+
 }

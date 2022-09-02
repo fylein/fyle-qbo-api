@@ -144,7 +144,19 @@ def test_create_cheque(db):
 
 
 @pytest.mark.django_db(databases=['default'])
-def test_get_department_id_or_none():
+def test_get_department_id_or_none(mocker):
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.ExpenseCustomFields.get_by_id',
+        return_value={'options': ['samp'], 'updated_at': '2020-06-11T13:14:55.201598+00:00'}
+    )
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.ExpenseCustomFields.post',
+        return_value=[]
+    )
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.ExpenseCustomFields.sync',
+        return_value=None
+    )
     expense_group = ExpenseGroup.objects.get(id=8)
     expenses = expense_group.expenses.all()
 
@@ -206,7 +218,19 @@ def test_get_customer_id_or_none():
         assert location_id == None
 
 @pytest.mark.django_db(databases=['default'])
-def test_get_class_id_or_none():
+def test_get_class_id_or_none(mocker):
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.ExpenseCustomFields.get_by_id',
+        return_value={'options': ['samp'], 'updated_at': '2020-06-11T13:14:55.201598+00:00'}
+    )
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.ExpenseCustomFields.post',
+        return_value=[]
+    )
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.ExpenseCustomFields.sync',
+        return_value=None
+    )
     expense_group = ExpenseGroup.objects.get(id=8)
     expenses = expense_group.expenses.all()
 

@@ -29,5 +29,4 @@ def test_errors(api_client, test_connection):
     assert response.status_code == 200
 
     response = json.loads(response.content)
-
-    assert response == []
+    assert response == data['error_response']

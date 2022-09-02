@@ -123,8 +123,12 @@ def test_expense_group_settings(api_client, test_connection):
     
     
 
-def test_fyle_refresh_dimension(api_client, test_connection):
-    
+def test_fyle_refresh_dimension(mocker, api_client, test_connection):
+    mocker.patch(
+        'fyle_integrations_platform_connector.fyle_integrations_platform_connector.PlatformConnector.import_fyle_dimensions',
+        return_value=[]
+    )
+
     access_token = test_connection.access_token
 
     url = reverse('refresh-fyle-dimensions', 
@@ -147,8 +151,12 @@ def test_fyle_refresh_dimension(api_client, test_connection):
 
 
 @pytest.mark.django_db(databases=['default'])
-def test_fyle_sync_dimension(api_client, test_connection):
-    
+def test_fyle_sync_dimension(mocker, api_client, test_connection):
+    mocker.patch(
+        'fyle_integrations_platform_connector.fyle_integrations_platform_connector.PlatformConnector.import_fyle_dimensions',
+        return_value=[]
+    )
+
     access_token = test_connection.access_token
 
     url = reverse('sync-fyle-dimensions', 
@@ -170,8 +178,6 @@ def test_fyle_sync_dimension(api_client, test_connection):
     assert response.status_code == 200
 
 
-
-# Todo : merge the two sync functions
 def test_fyle_sync_dimension_fail(api_client, test_connection):
     
     access_token = test_connection.access_token
