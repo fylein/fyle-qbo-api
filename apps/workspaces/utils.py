@@ -123,6 +123,7 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
             'charts_of_accounts': general_settings_payload['charts_of_accounts'],
             'auto_map_employees': general_settings_payload['auto_map_employees'],
             'auto_create_destination_entity': general_settings_payload['auto_create_destination_entity'],
+            'auto_create_merchants_as_vendors': general_settings_payload['auto_create_merchants_as_vendors'],
             'reimbursable_expenses_object':
                 general_settings_payload['reimbursable_expenses_object']
                 if 'reimbursable_expenses_object' in general_settings_payload
