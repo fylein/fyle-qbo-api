@@ -33,14 +33,15 @@ def test_get_or_create_credit_card_or_debit_card_vendor(mocker, db):
     )
     workspace_id = 1
 
-    contact = get_or_create_credit_card_or_debit_card_vendor(workspace_id, 'samp_merchant', True)
+    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+    contact = get_or_create_credit_card_or_debit_card_vendor(workspace_id, 'samp_merchant', True, general_settings)
 
     assert contact != None
 
     try:
         with mock.patch('apps.quickbooks_online.utils.QBOConnector.get_or_create_vendor') as mock_call:
             mock_call.side_effect = WrongParamsError(msg='wrong parameters', response='wrong parameters')
-            contact = get_or_create_credit_card_or_debit_card_vendor(workspace_id, 'samp_merchant', False)
+            contact = get_or_create_credit_card_or_debit_card_vendor(workspace_id, 'samp_merchant', False, general_settings)
     except:
         logger.info('wrong parameters')
 
