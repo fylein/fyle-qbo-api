@@ -179,10 +179,7 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
         if not expense_group_settings['ccc_export_date_type']:
             expense_group_settings['ccc_export_date_type'] = 'current_date'
 
-        if map_merchant_to_vendor and \
-            workspace_general_settings['corporate_credit_card_expenses_object'] == 'DEBIT CARD EXPENSE':
-            expense_group_settings['import_card_credits'] = False
-            
+        expense_group_settings['import_card_credits'] = False
 
         if  workspace_general_settings.get('corporate_credit_card_expenses_object') == 'JOURNAL ENTRY' or \
             (map_merchant_to_vendor and \
