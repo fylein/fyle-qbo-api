@@ -180,19 +180,16 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
             expense_group_settings['ccc_export_date_type'] = 'current_date'
 
         if map_merchant_to_vendor and \
-            workspace_general_settings['corporate_credit_card_expenses_object'] in ('CREDIT CARD PURCHASE', 'DEBIT CARD EXPENSE'):
-            expense_group_settings['import_card_credits'] = True if \
-                workspace_general_settings['corporate_credit_card_expenses_object'] == 'CREDIT CARD PURCHASE' else False
-
-            ccc_expense_group_fields = expense_group_settings['corporate_credit_card_expense_group_fields']
-            ccc_expense_group_fields.append('expense_id')
-            expense_group_settings['corporate_credit_card_expense_group_fields'] = list(set(ccc_expense_group_fields))
-            expense_group_settings['ccc_export_date_type'] = 'spent_at'
+            workspace_general_settings['corporate_credit_card_expenses_object'] == 'DEBIT CARD EXPENSE':
+            expense_group_settings['import_card_credits'] = False
+            
 
         if  workspace_general_settings.get('corporate_credit_card_expenses_object') == 'JOURNAL ENTRY' or \
-            workspace_general_settings.get('reimbursable_expenses_object') in ('JOURNAL ENTRY', 'EXPENSE'):
+            (map_merchant_to_vendor and \
+                workspace_general_settings['corporate_credit_card_expenses_object'] == 'CREDIT CARD PURCHASE') or\
+            (workspace_general_settings.get('reimbursable_expenses_object') in ('JOURNAL ENTRY', 'EXPENSE')):
             expense_group_settings['import_card_credits'] = True
-        
+
         ExpenseGroupSettings.update_expense_group_settings(expense_group_settings, instance.id)
 
         GeneralMapping.objects.update_or_create(
