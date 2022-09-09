@@ -20,6 +20,7 @@ from apps.fyle.models import ExpenseGroup, Reimbursement, Expense
 from apps.tasks.models import Error, TaskLog
 from apps.mappings.models import GeneralMapping
 from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGeneralSettings
+from apps.workspaces.utils import update_last_export_details
 
 from .models import Bill, BillLineitem, Cheque, ChequeLineitem, CreditCardPurchase, CreditCardPurchaseLineitem, \
     JournalEntry, JournalEntryLineitem, BillPayment, BillPaymentLineitem, QBOExpense, QBOExpenseLineitem
@@ -605,7 +606,7 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
 
         chain = Chain()
 
-        for expense_group in expense_groups:
+        for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(
                 workspace_id=expense_group.workspace_id,
                 expense_group=expense_group,
@@ -619,14 +620,17 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
                 task_log.status = 'ENQUEUED'
                 task_log.save()
 
-            chain.append('apps.quickbooks_online.tasks.create_cheque', expense_group, task_log.id)
+            last_export = False
+            if expense_groups.count() == index + 1:
+                last_export = True
+
+            chain.append('apps.quickbooks_online.tasks.create_cheque', expense_group, task_log.id, last_export)
 
         if chain.length():
-            chain.append('apps.workspaces.utils.update_last_export_details', workspace_id)
             chain.run()
 
 
-def create_cheque(expense_group, task_log_id):
+def create_cheque(expense_group, task_log_id, last_export: bool):
     task_log = TaskLog.objects.get(id=task_log_id)
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
         task_log.status = 'IN_PROGRESS'
@@ -702,6 +706,8 @@ def create_cheque(expense_group, task_log_id):
         task_log.save()
         logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
 
+    if last_export:
+        update_last_export_details()
 
 def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str]):
     """
