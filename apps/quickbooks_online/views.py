@@ -347,12 +347,12 @@ class PreferencesView(generics.RetrieveAPIView):
         try:
             qbo_credentials = QBOCredential.objects.get(workspace=kwargs['workspace_id'], refresh_token__isnull=False)
 
-            qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
+            # qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
-            preferences = qbo_connector.get_company_preference()
+            # preferences = qbo_connector.get_company_preference()
 
             return Response(
-                data=preferences,
+                data={},
                 status=status.HTTP_200_OK
             )
         except QBOCredential.DoesNotExist:
