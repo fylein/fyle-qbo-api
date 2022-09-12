@@ -262,7 +262,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
 
         chain = Chain()
 
-        for expense_group in expense_groups:
+        for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(
                 workspace_id=expense_group.workspace_id,
                 expense_group=expense_group,
@@ -276,7 +276,11 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
                 task_log.status = 'ENQUEUED'
                 task_log.save()
 
-            chain.append('apps.quickbooks_online.tasks.create_bill', expense_group, task_log.id)
+            last_export = False
+            if expense_groups.count() == index + 1:
+                last_export = True
+
+            chain.append('apps.quickbooks_online.tasks.create_bill', expense_group, task_log.id, last_export)
 
         if chain.length():
             chain.run()
@@ -744,7 +748,7 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
 
         chain = Chain()
 
-        for expense_group in expense_groups:
+        for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(
                 workspace_id=expense_group.workspace_id,
                 expense_group=expense_group,
@@ -758,7 +762,11 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
                 task_log.status = 'ENQUEUED'
                 task_log.save()
 
-            chain.append('apps.quickbooks_online.tasks.create_qbo_expense', expense_group, task_log.id)
+            last_export = False
+            if expense_groups.count() == index + 1:
+                last_export = True
+
+            chain.append('apps.quickbooks_online.tasks.create_qbo_expense', expense_group, task_log.id, last_export)
 
         if chain.length():
             chain.run()
@@ -866,7 +874,7 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
 
         chain = Chain()
 
-        for expense_group in expense_groups:
+        for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(
                 workspace_id=expense_group.workspace_id,
                 expense_group=expense_group,
@@ -880,7 +888,11 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
                 task_log.status = 'ENQUEUED'
                 task_log.save()
 
-            chain.append('apps.quickbooks_online.tasks.create_credit_card_purchase', expense_group, task_log.id)
+            last_export = False
+            if expense_groups.count() == index + 1:
+                last_export = True
+
+            chain.append('apps.quickbooks_online.tasks.create_credit_card_purchase', expense_group, task_log.id, last_export)
 
         if chain.length():
             chain.run()
@@ -991,7 +1003,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
 
         chain = Chain()
 
-        for expense_group in expense_groups:
+        for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(
                 workspace_id=expense_group.workspace_id,
                 expense_group=expense_group,
@@ -1005,7 +1017,11 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
                 task_log.status = 'ENQUEUED'
                 task_log.save()
 
-            chain.append('apps.quickbooks_online.tasks.create_journal_entry', expense_group, task_log.id)
+            last_export = False
+            if expense_groups.count() == index + 1:
+                last_export = True
+
+            chain.append('apps.quickbooks_online.tasks.create_journal_entry', expense_group, task_log.id, last_export)
 
         if chain.length():
             chain.run()
