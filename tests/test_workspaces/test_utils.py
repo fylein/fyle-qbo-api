@@ -1,14 +1,8 @@
 import logging
-from apps.workspaces.utils import update_last_export_details, generate_qbo_refresh_token
+from apps.workspaces.utils import generate_qbo_refresh_token
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
-
-
-def test_update_last_export_details(db):
-    workspace_id = 3
-    last_export_detail = update_last_export_details(workspace_id)
-    assert last_export_detail.export_mode == 'MANUAL'
 
 def test_generate_qbo_refresh_token(db):
     try:

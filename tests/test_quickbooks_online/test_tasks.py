@@ -12,7 +12,7 @@ from apps.quickbooks_online.models import Bill, BillLineitem, Cheque, QBOExpense
 from apps.quickbooks_online.tasks import create_bill, create_qbo_expense, create_credit_card_purchase, create_journal_entry, get_or_create_credit_card_or_debit_card_vendor, create_cheque, \
     create_bill_payment, check_qbo_object_status, schedule_reimbursements_sync, process_reimbursements, async_sync_accounts, \
         schedule_bill_payment_creation, schedule_qbo_objects_status_sync, get_or_create_credit_card_or_debit_card_vendor, \
-            create_or_update_employee_mapping, schedule_bills_creation
+            create_or_update_employee_mapping, schedule_bills_creation, update_last_export_details
 from fyle_qbo_api.exceptions import BulkError
 from qbosdk.exceptions import WrongParamsError
 from fyle_accounting_mappings.models import EmployeeMapping, Mapping
@@ -108,7 +108,7 @@ def test_post_bill_success(mocker, create_task_logs, db):
     
     expense_group.expenses.set(expenses)
     
-    create_bill(expense_group, task_log.id)
+    create_bill(expense_group, task_log.id, False)
     
     task_log = TaskLog.objects.get(pk=task_log.id)
     bill = Bill.objects.get(expense_group_id=expense_group.id)
@@ -140,19 +140,19 @@ def test_create_bill_exceptions(db, create_task_logs):
     
     with mock.patch('apps.quickbooks_online.models.Bill.create_bill') as mock_call:
         mock_call.side_effect = QBOCredential.DoesNotExist()
-        create_bill(expense_group, task_log.id)
+        create_bill(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
 
         mock_call.side_effect = BulkError(msg='employess not found', response='mapping error')
-        create_bill(expense_group, task_log.id)
+        create_bill(expense_group, task_log.id, True)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
 
         mock_call.side_effect = Exception()
-        create_bill(expense_group, task_log.id)
+        create_bill(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FATAL'
@@ -166,7 +166,7 @@ def test_create_bill_exceptions(db, create_task_logs):
                     'type': 'Invalid_params'
                 }
             }))
-        create_bill(expense_group, task_log.id)
+        create_bill(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
@@ -199,7 +199,7 @@ def test_post_qbo_expenses_success(mocker, create_task_logs, db):
     qbo_expense_lineitem.expense_id=24
     qbo_expense_lineitem.save()
 
-    create_qbo_expense(expense_group, task_log.id)
+    create_qbo_expense(expense_group, task_log.id, True)
 
     task_log = TaskLog.objects.get(pk=task_log.id)
     qbo_expense = QBOExpense.objects.get(expense_group_id=expense_group.id)
@@ -234,19 +234,19 @@ def test_post_qbo_expenses_exceptions(create_task_logs, db):
 
     with mock.patch('apps.quickbooks_online.models.QBOExpense.create_qbo_expense') as mock_call:
         mock_call.side_effect = QBOCredential.DoesNotExist()
-        create_qbo_expense(expense_group, task_log.id)
+        create_qbo_expense(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
 
         mock_call.side_effect = BulkError(msg='employess not found', response='mapping error')
-        create_qbo_expense(expense_group, task_log.id)
+        create_qbo_expense(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
 
         mock_call.side_effect = Exception()
-        create_qbo_expense(expense_group, task_log.id)
+        create_qbo_expense(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FATAL'
@@ -260,7 +260,7 @@ def test_post_qbo_expenses_exceptions(create_task_logs, db):
                     'type': 'Invalid_params'
                 }
         }))
-        create_qbo_expense(expense_group, task_log.id)
+        create_qbo_expense(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
@@ -291,7 +291,7 @@ def test_post_credit_card_purchase_success(mocker, create_task_logs, db):
     
     expense_group.expenses.set(expenses)
     
-    create_credit_card_purchase(expense_group, task_log.id)
+    create_credit_card_purchase(expense_group, task_log.id, True)
     
     task_log = TaskLog.objects.get(pk=task_log.id)
     credit_card_purchase = CreditCardPurchase.objects.get(expense_group_id=expense_group.id)
@@ -325,19 +325,19 @@ def test_post_credit_card_exceptions(mocker, create_task_logs, db):
 
     with mock.patch('apps.quickbooks_online.models.CreditCardPurchase.create_credit_card_purchase') as mock_call:
         mock_call.side_effect = QBOCredential.DoesNotExist()
-        create_credit_card_purchase(expense_group, task_log.id)
+        create_credit_card_purchase(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
 
         mock_call.side_effect = BulkError(msg='employess not found', response='mapping error')
-        create_credit_card_purchase(expense_group, task_log.id)
+        create_credit_card_purchase(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
 
         mock_call.side_effect = Exception()
-        create_credit_card_purchase(expense_group, task_log.id)
+        create_credit_card_purchase(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FATAL'
@@ -351,7 +351,7 @@ def test_post_credit_card_exceptions(mocker, create_task_logs, db):
                     'type': 'Invalid_params'
                 }
         }))
-        create_credit_card_purchase(expense_group, task_log.id)
+        create_credit_card_purchase(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
@@ -387,7 +387,7 @@ def test_post_journal_entry_success(mocker, create_task_logs, db):
     expense_group.expenses.set(expenses)
     expense_group.save()
     
-    create_journal_entry(expense_group, task_log.id)
+    create_journal_entry(expense_group, task_log.id, True)
     
     task_log = TaskLog.objects.get(id=task_log.id)
     journal_entry = JournalEntry.objects.get(expense_group_id=expense_group.id)
@@ -417,19 +417,19 @@ def test_post_create_journal_entry_exceptions(create_task_logs, db):
 
     with mock.patch('apps.quickbooks_online.models.JournalEntry.create_journal_entry') as mock_call:
         mock_call.side_effect = QBOCredential.DoesNotExist()
-        create_journal_entry(expense_group, task_log.id)
+        create_journal_entry(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
 
         mock_call.side_effect = BulkError(msg='employess not found', response='mapping error')
-        create_journal_entry(expense_group, task_log.id)
+        create_journal_entry(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
 
         mock_call.side_effect = Exception()
-        create_journal_entry(expense_group, task_log.id)
+        create_journal_entry(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FATAL'
@@ -443,7 +443,7 @@ def test_post_create_journal_entry_exceptions(create_task_logs, db):
                     'type': 'Invalid_params'
                 }
         }))
-        create_journal_entry(expense_group, task_log.id)
+        create_journal_entry(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
@@ -463,7 +463,7 @@ def test_post_cheque_success(mocker, create_task_logs, db):
     task_log.save()
 
     expense_group = ExpenseGroup.objects.get(id=14)
-    create_cheque(expense_group, task_log.id)
+    create_cheque(expense_group, task_log.id, True)
     
     task_log = TaskLog.objects.get(id=task_log.id)
     cheque = Cheque.objects.get(expense_group_id=expense_group.id)
@@ -494,19 +494,19 @@ def test_post_create_cheque_exceptions(create_task_logs, db):
 
     with mock.patch('apps.quickbooks_online.models.Cheque.create_cheque') as mock_call:
         mock_call.side_effect = QBOCredential.DoesNotExist()
-        create_cheque(expense_group, task_log.id)
+        create_cheque(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
 
         mock_call.side_effect = BulkError(msg='employess not found', response='mapping error')
-        create_cheque(expense_group, task_log.id)
+        create_cheque(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
 
         mock_call.side_effect = Exception()
-        create_cheque(expense_group, task_log.id)
+        create_cheque(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FATAL'
@@ -520,7 +520,7 @@ def test_post_create_cheque_exceptions(create_task_logs, db):
                     'type': 'Invalid_params'
                 }
         }))
-        create_cheque(expense_group, task_log.id)
+        create_cheque(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
@@ -565,7 +565,7 @@ def test_create_bill_payment(mocker, db):
     expense_group.expenses.set(expenses)
     expense_group.save()
     
-    create_bill(expense_group, task_log.id)
+    create_bill(expense_group, task_log.id, False)
 
     bill = Bill.objects.last()
     task_log = TaskLog.objects.get(id=task_log.id)
@@ -619,7 +619,7 @@ def test_post_bill_payment_exceptions(mocker, db):
     expense_group.expenses.set(expenses)
     expense_group.save()
     
-    create_bill(expense_group, task_log.id)
+    create_bill(expense_group, task_log.id, False)
 
     bill = Bill.objects.last()
     task_log = TaskLog.objects.get(id=task_log.id)
@@ -687,7 +687,7 @@ def test_check_qbo_object_status(db):
     task_log.expense_group = expense_group
     task_log.save()
     
-    create_bill(expense_group, task_log.id)
+    create_bill(expense_group, task_log.id, False)
     task_log = TaskLog.objects.get(id=task_log.id)
     
     check_qbo_object_status(3)
@@ -773,3 +773,8 @@ def test_schedule_qbo_objects_status_sync(db):
 
 #     schedule_count = Schedule.objects.filter(func='apps.quickbooks_online.tasks.create_bill', args=3).count()
 #     assert schedule_count == 0
+
+def test_update_last_export_details(db):
+    workspace_id = 3
+    last_export_detail = update_last_export_details(workspace_id)
+    assert last_export_detail.export_mode == 'MANUAL'
