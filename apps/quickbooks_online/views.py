@@ -522,7 +522,7 @@ class BillView(generics.ListCreateAPIView):
         expense_group = ExpenseGroup.objects.get(pk=expense_group_id)
         task_log = TaskLog.objects.get(pk=task_log_id)
 
-        create_bill(expense_group, task_log_id)
+        create_bill(expense_group, task_log_id, False)
 
         return Response(
             data={},
@@ -586,7 +586,7 @@ class ChequeView(generics.ListCreateAPIView):
         expense_group = ExpenseGroup.objects.get(pk=expense_group_id)
         task_log = TaskLog.objects.get(pk=task_log_id)
 
-        create_cheque(expense_group, task_log_id)
+        create_cheque(expense_group, task_log_id, False)
 
         return Response(
             data={},
@@ -634,7 +634,7 @@ class CreditCardPurchaseView(generics.ListCreateAPIView):
         expense_group = ExpenseGroup.objects.get(pk=expense_group_id)
         task_log = TaskLog.objects.get(pk=task_log_id)
 
-        create_credit_card_purchase(expense_group, task_log_id)
+        create_credit_card_purchase(expense_group, task_log_id, False)
 
         return Response(
             data={},
@@ -698,7 +698,7 @@ class JournalEntryView(generics.ListCreateAPIView):
         expense_group = ExpenseGroup.objects.get(pk=expense_group_id)
         task_log = TaskLog.objects.get(pk=task_log_id)
 
-        create_journal_entry(expense_group, task_log_id)
+        create_journal_entry(expense_group, task_log_id, False)
 
         return Response(
             data={},
