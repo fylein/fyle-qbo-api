@@ -83,7 +83,7 @@ def test_get_company_preference(mocker, api_client, test_connection):
 
     assert response['Id'] == '1'
 
-    qbo_credential = QBOCredential.objects.get(workspace_id=3)
+    qbo_credential = QBOCredential.objects.get(is_expired=False, workspace_id=3)
     qbo_credential.delete()
 
     response = api_client.get(url)
@@ -152,7 +152,7 @@ def test_get_company_info(mocker, api_client, test_connection):
 
     assert response['CompanyName'] == 'Sandbox Company_US_4'
 
-    qbo_credential = QBOCredential.objects.get(workspace_id=3)
+    qbo_credential = QBOCredential.objects.get(is_expired=False, workspace_id=3)
     qbo_credential.delete()
 
     response = api_client.get(url)
@@ -185,7 +185,7 @@ def test_vendor_view(mocker, api_client, test_connection):
 
     assert len(response) == 0
 
-    qbo_credential = QBOCredential.objects.get(workspace_id=3)
+    qbo_credential = QBOCredential.objects.get(is_expired=False, workspace_id=3)
     qbo_credential.delete()
 
     response = api_client.post(url)
@@ -218,7 +218,7 @@ def test_employee_view(mocker, api_client, test_connection):
 
     assert len(response) == 0
      
-    qbo_credential = QBOCredential.objects.get(workspace_id=3)
+    qbo_credential = QBOCredential.objects.get(is_expired=False, workspace_id=3)
     qbo_credential.delete()
 
     response = api_client.post(url)
@@ -251,7 +251,7 @@ def test_account_view(mocker, api_client, test_connection):
 
     assert len(response) == 0
      
-    qbo_credential = QBOCredential.objects.get(workspace_id=3)
+    qbo_credential = QBOCredential.objects.get(is_expired=False, workspace_id=3)
     qbo_credential.delete()
 
     response = api_client.post(url)
@@ -284,7 +284,7 @@ def test_credit_card_account_view(mocker, api_client, test_connection):
 
     assert len(response) == 0
      
-    qbo_credential = QBOCredential.objects.get(workspace_id=3)
+    qbo_credential = QBOCredential.objects.get(is_expired=False, workspace_id=3)
     qbo_credential.delete()
 
     response = api_client.post(url)
@@ -317,7 +317,7 @@ def test_bank_account_view(mocker, api_client, test_connection):
 
     assert len(response) == 0
      
-    qbo_credential = QBOCredential.objects.get(workspace_id=3)
+    qbo_credential = QBOCredential.objects.get(is_expired=False, workspace_id=3)
     qbo_credential.delete()
 
     response = api_client.post(url)
@@ -350,7 +350,7 @@ def test_accounts_payable_view(mocker, api_client, test_connection):
 
     assert len(response) == 0
      
-    qbo_credential = QBOCredential.objects.get(workspace_id=3)
+    qbo_credential = QBOCredential.objects.get(is_expired=False, workspace_id=3)
     qbo_credential.delete()
 
     response = api_client.post(url)
@@ -383,7 +383,7 @@ def test_bill_payment_account_view(mocker, api_client, test_connection):
 
     assert len(response) == 0
      
-    qbo_credential = QBOCredential.objects.get(workspace_id=3)
+    qbo_credential = QBOCredential.objects.get(is_expired=False, workspace_id=3)
     qbo_credential.delete()
 
     response = api_client.post(url)
@@ -416,7 +416,7 @@ def test_classe_view(mocker, api_client, test_connection):
 
     assert len(response) == 0
      
-    qbo_credential = QBOCredential.objects.get(workspace_id=3)
+    qbo_credential = QBOCredential.objects.get(is_expired=False, workspace_id=3)
     qbo_credential.delete()
 
     response = api_client.post(url)
@@ -449,7 +449,7 @@ def test_department_view(mocker, api_client, test_connection):
 
     assert len(response) == 0
      
-    qbo_credential = QBOCredential.objects.get(workspace_id=3)
+    qbo_credential = QBOCredential.objects.get(is_expired=False, workspace_id=3)
     qbo_credential.delete()
 
     response = api_client.post(url)
@@ -482,7 +482,7 @@ def test_customer_view(mocker, api_client, test_connection):
 
     assert len(response) == 0
      
-    qbo_credential = QBOCredential.objects.get(workspace_id=3)
+    qbo_credential = QBOCredential.objects.get(is_expired=False, workspace_id=3)
     qbo_credential.delete()
 
     response = api_client.post(url)
@@ -749,7 +749,7 @@ def test_post_refresh_dimensions(api_client, test_connection):
     
     assert response.status_code == 200
          
-    qbo_credential = QBOCredential.objects.get(workspace_id=3)
+    qbo_credential = QBOCredential.objects.get(is_expired=False, workspace_id=3)
     qbo_credential.delete()
 
     response = api_client.post(url)
