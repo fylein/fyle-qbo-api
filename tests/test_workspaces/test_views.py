@@ -432,7 +432,7 @@ def test_prepare_e2e_test_view(mock_db, mocker, api_client, test_connection):
         'apps.quickbooks_online.utils.QBOConnector.get_company_preference',
         return_value=None
     )
-    healthy_token = QBOCredential.objects.get(workspace_id=3, is_expired=False)
+    healthy_token = QBOCredential.objects.get(workspace_id=3)
     healthy_token.is_expired = False
     healthy_token.save()
 
