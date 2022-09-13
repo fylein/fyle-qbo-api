@@ -68,7 +68,7 @@ def get_or_create_credit_card_or_debit_card_vendor(workspace_id: int, merchant: 
     :param merchant: Fyle Expense Merchant
     :return:
     """
-    qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
+    qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id, is_expired=False)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
     vendor = None
 
@@ -297,7 +297,7 @@ def create_bill(expense_group, task_log_id, last_export: bool):
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
     try:
-        qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
+        qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id, is_expired=False)
 
         qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
@@ -664,7 +664,7 @@ def create_cheque(expense_group, task_log_id, last_export: bool):
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
     try:
-        qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
+        qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id, is_expired=False)
 
         qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
@@ -782,7 +782,7 @@ def create_qbo_expense(expense_group, task_log_id, last_export: bool):
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
     try:
-        qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
+        qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id, is_expired=False)
 
         qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
         
@@ -909,7 +909,7 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id, last_e
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
     try:
-        qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
+        qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id, is_expired=False)
 
         qbo_connection = QBOConnector(qbo_credentials, int(expense_group.workspace_id))
 
@@ -1038,7 +1038,7 @@ def create_journal_entry(expense_group, task_log_id, last_export: bool):
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
     try:
-        qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
+        qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id, is_expired=False)
 
         qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
@@ -1148,7 +1148,7 @@ def create_bill_payment(workspace_id):
                     }
                 )
                 try:
-                    qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
+                    qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id, is_expired=False)
                     qbo_connection = QBOConnector(qbo_credentials, workspace_id)
 
                     with transaction.atomic():
@@ -1256,7 +1256,7 @@ def get_all_qbo_object_ids(qbo_objects):
 
 
 def check_qbo_object_status(workspace_id):
-    qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
+    qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id, is_expired=False)
 
     qbo_connection = QBOConnector(qbo_credentials, workspace_id)
 
@@ -1358,7 +1358,7 @@ def schedule_reimbursements_sync(sync_qbo_to_fyle_payments, workspace_id):
 
 
 def async_sync_accounts(workspace_id):
-    qbo_credentials: QBOCredential = QBOCredential.objects.get(workspace_id=workspace_id)
+    qbo_credentials: QBOCredential = QBOCredential.objects.get(workspace_id=workspace_id, is_expired=False)
 
     qbo_connection = QBOConnector(
         credentials_object=qbo_credentials,
