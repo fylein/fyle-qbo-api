@@ -292,7 +292,7 @@ class ConnectQBOView(viewsets.ViewSet):
             if not qbo_credentials:
                 if workspace.qbo_realm_id:
                     assert_valid(realm_id == workspace.qbo_realm_id,
-                                 'Please choose the correct Quickbooks online account')
+                                 'Please choose the correct QuickBooks Online account')
 
                 qbo_credentials = QBOCredential.objects.create(
                     refresh_token=refresh_token,
@@ -330,7 +330,7 @@ class ConnectQBOView(viewsets.ViewSet):
                     qbo_credentials.refresh_token = None
                     qbo_credentials.save()
                     assert_valid(realm_id == workspace.qbo_realm_id,
-                                 'Please choose the correct Quickbooks online account')
+                                 'Please choose the correct QuickBooks Online account')
 
             if workspace.onboarding_state == 'CONNECTION':
                 workspace.onboarding_state = 'MAP_EMPLOYEES'
