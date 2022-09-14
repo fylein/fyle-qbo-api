@@ -19,7 +19,7 @@ from fyle_qbo_api.exceptions import BulkError
 from apps.fyle.models import ExpenseGroup, Reimbursement, Expense
 from apps.tasks.models import Error, TaskLog
 from apps.mappings.models import GeneralMapping
-from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGeneralSettings
+from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGeneralSettings, LastExportDetail
 
 from .models import Bill, BillLineitem, Cheque, ChequeLineitem, CreditCardPurchase, CreditCardPurchaseLineitem, \
     JournalEntry, JournalEntryLineitem, BillPayment, BillPaymentLineitem, QBOExpense, QBOExpenseLineitem
@@ -28,6 +28,26 @@ from .utils import QBOConnector
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
 
+def update_last_export_details(workspace_id):
+    last_export_detail = LastExportDetail.objects.get(workspace_id=workspace_id)
+
+    failed_exports = TaskLog.objects.filter(
+        ~Q(type='CREATING_BILL_PAYMENT'), workspace_id=workspace_id, status__in=['FAILED', 'FATAL']
+    ).count()
+
+    successful_exports = TaskLog.objects.filter(
+        ~Q(type__in=['CREATING_BILL_PAYMENT', 'FETCHING_EXPENSES']),
+        workspace_id=workspace_id,
+        status='COMPLETE',
+        updated_at__gt=last_export_detail.last_exported_at
+    ).count()
+
+    last_export_detail.failed_expense_groups_count = failed_exports
+    last_export_detail.successful_expense_groups_count = successful_exports
+    last_export_detail.total_expense_groups_count = failed_exports + successful_exports
+    last_export_detail.save()
+
+    return last_export_detail
 
 def resolve_errors_for_exported_expense_group(expense_group: ExpenseGroup):
     """
@@ -48,7 +68,7 @@ def get_or_create_credit_card_or_debit_card_vendor(workspace_id: int, merchant: 
     :param merchant: Fyle Expense Merchant
     :return:
     """
-    qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
+    qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id, is_expired=False)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
     vendor = None
 
@@ -247,7 +267,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
 
         chain = Chain()
 
-        for expense_group in expense_groups:
+        for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(
                 workspace_id=expense_group.workspace_id,
                 expense_group=expense_group,
@@ -261,14 +281,17 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
                 task_log.status = 'ENQUEUED'
                 task_log.save()
 
-            chain.append('apps.quickbooks_online.tasks.create_bill', expense_group, task_log.id)
+            last_export = False
+            if expense_groups.count() == index + 1:
+                last_export = True
+
+            chain.append('apps.quickbooks_online.tasks.create_bill', expense_group, task_log.id, last_export)
 
         if chain.length():
-            chain.append('apps.workspaces.utils.update_last_export_details', workspace_id)
             chain.run()
 
 
-def create_bill(expense_group, task_log_id):
+def create_bill(expense_group, task_log_id, last_export: bool):
     task_log = TaskLog.objects.get(id=task_log_id)
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
         task_log.status = 'IN_PROGRESS'
@@ -279,7 +302,7 @@ def create_bill(expense_group, task_log_id):
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
     try:
-        qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
+        qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id, is_expired=False)
 
         qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
@@ -348,6 +371,8 @@ def create_bill(expense_group, task_log_id):
         task_log.save()
         logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
 
+    if last_export:
+        update_last_export_details(expense_group.workspace_id)
 
 def __validate_expense_group(expense_group: ExpenseGroup, general_settings: WorkspaceGeneralSettings):
     bulk_errors = []
@@ -610,7 +635,7 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
 
         chain = Chain()
 
-        for expense_group in expense_groups:
+        for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(
                 workspace_id=expense_group.workspace_id,
                 expense_group=expense_group,
@@ -624,14 +649,17 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
                 task_log.status = 'ENQUEUED'
                 task_log.save()
 
-            chain.append('apps.quickbooks_online.tasks.create_cheque', expense_group, task_log.id)
+            last_export = False
+            if expense_groups.count() == index + 1:
+                last_export = True
+
+            chain.append('apps.quickbooks_online.tasks.create_cheque', expense_group, task_log.id, last_export)
 
         if chain.length():
-            chain.append('apps.workspaces.utils.update_last_export_details', workspace_id)
             chain.run()
 
 
-def create_cheque(expense_group, task_log_id):
+def create_cheque(expense_group, task_log_id, last_export: bool):
     task_log = TaskLog.objects.get(id=task_log_id)
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
         task_log.status = 'IN_PROGRESS'
@@ -641,7 +669,7 @@ def create_cheque(expense_group, task_log_id):
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
     try:
-        qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
+        qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id, is_expired=False)
 
         qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
@@ -707,6 +735,8 @@ def create_cheque(expense_group, task_log_id):
         task_log.save()
         logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
 
+    if last_export:
+        update_last_export_details(expense_group.workspace_id)
 
 def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str]):
     """
@@ -723,7 +753,7 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
 
         chain = Chain()
 
-        for expense_group in expense_groups:
+        for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(
                 workspace_id=expense_group.workspace_id,
                 expense_group=expense_group,
@@ -737,14 +767,17 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
                 task_log.status = 'ENQUEUED'
                 task_log.save()
 
-            chain.append('apps.quickbooks_online.tasks.create_qbo_expense', expense_group, task_log.id)
+            last_export = False
+            if expense_groups.count() == index + 1:
+                last_export = True
+
+            chain.append('apps.quickbooks_online.tasks.create_qbo_expense', expense_group, task_log.id, last_export)
 
         if chain.length():
-            chain.append('apps.workspaces.utils.update_last_export_details', workspace_id)
             chain.run()
 
 
-def create_qbo_expense(expense_group, task_log_id):
+def create_qbo_expense(expense_group, task_log_id, last_export: bool):
     task_log = TaskLog.objects.get(id=task_log_id)
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
         task_log.status = 'IN_PROGRESS'
@@ -754,7 +787,7 @@ def create_qbo_expense(expense_group, task_log_id):
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
     try:
-        qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
+        qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id, is_expired=False)
 
         qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
         
@@ -827,6 +860,8 @@ def create_qbo_expense(expense_group, task_log_id):
         task_log.save()
         logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
 
+    if last_export:
+        update_last_export_details(expense_group.workspace_id)
 
 def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids: List[str]):
     """
@@ -844,7 +879,7 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
 
         chain = Chain()
 
-        for expense_group in expense_groups:
+        for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(
                 workspace_id=expense_group.workspace_id,
                 expense_group=expense_group,
@@ -858,14 +893,17 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
                 task_log.status = 'ENQUEUED'
                 task_log.save()
 
-            chain.append('apps.quickbooks_online.tasks.create_credit_card_purchase', expense_group, task_log.id)
+            last_export = False
+            if expense_groups.count() == index + 1:
+                last_export = True
+
+            chain.append('apps.quickbooks_online.tasks.create_credit_card_purchase', expense_group, task_log.id, last_export)
 
         if chain.length():
-            chain.append('apps.workspaces.utils.update_last_export_details', workspace_id)
             chain.run()
 
 
-def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id):
+def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id, last_export: bool):
     task_log = TaskLog.objects.get(id=task_log_id)
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
         task_log.status = 'IN_PROGRESS'
@@ -876,7 +914,7 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id):
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
     try:
-        qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
+        qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id, is_expired=False)
 
         qbo_connection = QBOConnector(qbo_credentials, int(expense_group.workspace_id))
 
@@ -952,6 +990,8 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id):
         task_log.save()
         logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
 
+    if last_export:
+        update_last_export_details(expense_group.workspace_id)
 
 def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[str]):
     """
@@ -968,7 +1008,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
 
         chain = Chain()
 
-        for expense_group in expense_groups:
+        for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(
                 workspace_id=expense_group.workspace_id,
                 expense_group=expense_group,
@@ -982,14 +1022,17 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
                 task_log.status = 'ENQUEUED'
                 task_log.save()
 
-            chain.append('apps.quickbooks_online.tasks.create_journal_entry', expense_group, task_log.id)
+            last_export = False
+            if expense_groups.count() == index + 1:
+                last_export = True
+
+            chain.append('apps.quickbooks_online.tasks.create_journal_entry', expense_group, task_log.id, last_export)
 
         if chain.length():
-            chain.append('apps.workspaces.utils.update_last_export_details', workspace_id)
             chain.run()
 
 
-def create_journal_entry(expense_group, task_log_id):
+def create_journal_entry(expense_group, task_log_id, last_export: bool):
     task_log = TaskLog.objects.get(id=task_log_id)
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
         task_log.status = 'IN_PROGRESS'
@@ -1000,7 +1043,7 @@ def create_journal_entry(expense_group, task_log_id):
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
     try:
-        qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
+        qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id, is_expired=False)
 
         qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
@@ -1070,6 +1113,8 @@ def create_journal_entry(expense_group, task_log_id):
         task_log.save()
         logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
 
+    if last_export:
+        update_last_export_details(expense_group.workspace_id)
 
 def check_expenses_reimbursement_status(expenses):
     all_expenses_paid = True
@@ -1108,7 +1153,7 @@ def create_bill_payment(workspace_id):
                     }
                 )
                 try:
-                    qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
+                    qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id, is_expired=False)
                     qbo_connection = QBOConnector(qbo_credentials, workspace_id)
 
                     with transaction.atomic():
@@ -1216,7 +1261,7 @@ def get_all_qbo_object_ids(qbo_objects):
 
 
 def check_qbo_object_status(workspace_id):
-    qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
+    qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id, is_expired=False)
 
     qbo_connection = QBOConnector(qbo_credentials, workspace_id)
 
@@ -1318,7 +1363,7 @@ def schedule_reimbursements_sync(sync_qbo_to_fyle_payments, workspace_id):
 
 
 def async_sync_accounts(workspace_id):
-    qbo_credentials: QBOCredential = QBOCredential.objects.get(workspace_id=workspace_id)
+    qbo_credentials: QBOCredential = QBOCredential.objects.get(workspace_id=workspace_id, is_expired=False)
 
     qbo_connection = QBOConnector(
         credentials_object=qbo_credentials,

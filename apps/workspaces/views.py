@@ -29,7 +29,7 @@ from fyle_accounting_mappings.models import ExpenseAttribute
 
 from .models import Workspace, FyleCredential, QBOCredential, WorkspaceGeneralSettings, WorkspaceSchedule, \
     LastExportDetail
-from .utils import generate_qbo_refresh_token, create_or_update_general_settings, update_last_export_details
+from .utils import generate_qbo_refresh_token, create_or_update_general_settings
 from .tasks import schedule_sync, run_sync_schedule, export_to_qbo
 from .serializers import WorkspaceSerializer, FyleCredentialSerializer, QBOCredentialSerializer, \
     WorkSpaceGeneralSettingsSerializer, WorkspaceScheduleSerializer, LastExportDetailSerializer
@@ -389,7 +389,7 @@ class ConnectQBOView(viewsets.ViewSet):
         Get QBO Credentials in Workspace
         """
         try:
-            qbo_credentials = QBOCredential.objects.get(workspace=kwargs['workspace_id'])
+            qbo_credentials = QBOCredential.objects.get(workspace=kwargs['workspace_id'], is_expired=False)
 
             return Response(
                 data=QBOCredentialSerializer(qbo_credentials).data,
