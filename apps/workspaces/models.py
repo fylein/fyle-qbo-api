@@ -115,6 +115,7 @@ class WorkspaceGeneralSettings(models.Model):
     auto_map_employees = models.CharField(
         max_length=50, help_text='Auto Map Employees type from QBO to Fyle', null=True)
     auto_create_destination_entity = models.BooleanField(default=False, help_text='Auto create vendor / employee')
+    auto_create_merchants_as_vendors = models.BooleanField(default=False, help_text='Auto create Fyle Merchants as QBO vendors')
     sync_fyle_to_qbo_payments = models.BooleanField(default=False, help_text='Auto Sync Payments from Fyle to QBO')
     sync_qbo_to_fyle_payments = models.BooleanField(default=False, help_text='Auto Sync Payments from QBO to Fyle')
     category_sync_version = models.CharField(default='v1', max_length=50, help_text='Category sync version')

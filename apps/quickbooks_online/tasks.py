@@ -61,7 +61,7 @@ def resolve_errors_for_exported_expense_group(expense_group: ExpenseGroup):
     ).update(is_resolved=True)
 
 
-def get_or_create_credit_card_or_debit_card_vendor(workspace_id: int, merchant: str, debit_card_expense: bool):
+def get_or_create_credit_card_or_debit_card_vendor(workspace_id: int, merchant: str, debit_card_expense: bool, general_settings: WorkspaceGeneralSettings):
     """
     Get or create car default vendor
     :param workspace_id: Workspace Id
@@ -78,7 +78,12 @@ def get_or_create_credit_card_or_debit_card_vendor(workspace_id: int, merchant: 
         except WrongParamsError as bad_request:
             logger.error(bad_request.response)
 
-    if not vendor:
+        if not vendor and general_settings.auto_create_merchants_as_vendors:
+            try:
+                vendor = qbo_connection.get_or_create_vendor(merchant, create=True)
+            except WrongParamsError as bad_request:
+                logger.error(bad_request.response)
+    else:
         if debit_card_expense:
             vendor = qbo_connection.get_or_create_vendor('Debit Card Misc', create=True)
         else:
@@ -792,7 +797,7 @@ def create_qbo_expense(expense_group, task_log_id, last_export: bool):
 
         else:
             merchant = expense_group.expenses.first().vendor
-            get_or_create_credit_card_or_debit_card_vendor(expense_group.workspace_id, merchant, True)
+            get_or_create_credit_card_or_debit_card_vendor(expense_group.workspace_id, merchant, True, general_settings)
 
         __validate_expense_group(expense_group, general_settings)
 
@@ -919,7 +924,7 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id, last_e
                 create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
         else:
             merchant = expense_group.expenses.first().vendor
-            get_or_create_credit_card_or_debit_card_vendor(expense_group.workspace_id, merchant, False)
+            get_or_create_credit_card_or_debit_card_vendor(expense_group.workspace_id, merchant, False, general_settings)
 
         __validate_expense_group(expense_group, general_settings)
 
