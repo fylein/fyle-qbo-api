@@ -146,6 +146,9 @@ class QBOCredential(models.Model):
     class Meta:
         db_table = 'qbo_credentials'
 
+    @staticmethod
+    def active_qbo_credentials(workspace_id):
+        return QBOCredential.objects.get(workspace_id=workspace_id, is_expired=False, refresh_token__isnull=False)
 
 class FyleCredential(models.Model):
     """

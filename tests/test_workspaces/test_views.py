@@ -239,7 +239,7 @@ def test_get_qbo_credentials_view(api_client, test_connection):
 
     assert response['realm_id'] == '4620816365009870170'
 
-    qbo_credentials = QBOCredential.objects.get(workspace=4, is_expired=False)
+    qbo_credentials = QBOCredential.active_qbo_credentials(4)
     qbo_credentials.delete()
     response = api_client.get(url)
     response = json.loads(response.content)

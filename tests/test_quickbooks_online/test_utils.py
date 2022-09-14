@@ -23,7 +23,7 @@ def test_sync_employees(mocker, db):
         'qbosdk.apis.Employees.get',
         return_value=data['employee_response']
     )
-    qbo_credentials = QBOCredential.objects.get(is_expired=False, workspace_id=3)
+    qbo_credentials = QBOCredential.active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
 
     employee_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='EMPLOYEE').count()
@@ -44,7 +44,7 @@ def test_post_vendor(mocker, db):
         'qbosdk.apis.Vendors.post',
         return_value=data['post_vendor_resp']
     )
-    qbo_credentials = QBOCredential.objects.get(is_expired=False, workspace_id=4)
+    qbo_credentials = QBOCredential.active_qbo_credentials(4)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=4)
 
     vendor = qbo_connection.get_or_create_vendor(vendor_name='test Sharma',email='test@fyle.in', create=True)
@@ -57,7 +57,7 @@ def test_sync_vendors(mocker, db):
         'qbosdk.apis.Vendors.get',
         return_value=data['vendor_response']
     )
-    qbo_credentials = QBOCredential.objects.get(is_expired=False, workspace_id=4)
+    qbo_credentials = QBOCredential.active_qbo_credentials(4)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=4)
 
     vendor_count = DestinationAttribute.objects.filter(workspace_id=4, attribute_type='VENDOR').count()
@@ -74,7 +74,7 @@ def test_sync_departments(mocker, db):
         'qbosdk.apis.Departments.get',
         return_value=data['department_response']
     )
-    qbo_credentials = QBOCredential.objects.get(is_expired=False, workspace_id=3)
+    qbo_credentials = QBOCredential.active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
 
     department_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='DEPARTMENT').count()
@@ -87,7 +87,7 @@ def test_sync_departments(mocker, db):
 
 
 def test_construct_bill(create_bill, db):
-    qbo_credentials = QBOCredential.objects.get(is_expired=False, workspace_id=3)
+    qbo_credentials = QBOCredential.active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
 
     bill, bill_lineitems = create_bill
@@ -98,7 +98,7 @@ def test_construct_bill(create_bill, db):
 
 
 def test_construct_credit_card_purchase(create_credit_card_purchase, db):
-    qbo_credentials = QBOCredential.objects.get(is_expired=False, workspace_id=3)
+    qbo_credentials = QBOCredential.active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
 
     credit_card_purchase,credit_card_purchase_lineitems = create_credit_card_purchase
@@ -110,7 +110,7 @@ def test_construct_credit_card_purchase(create_credit_card_purchase, db):
 
 
 def test_construct_journal_entry(create_journal_entry, db):
-    qbo_credentials = QBOCredential.objects.get(is_expired=False, workspace_id=3)
+    qbo_credentials = QBOCredential.active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
 
     general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=3).first()
@@ -128,7 +128,7 @@ def test_construct_journal_entry(create_journal_entry, db):
 
 
 def test_construct_qbo_expense(create_qbo_expense, db):
-    qbo_credentials = QBOCredential.objects.get(is_expired=False, workspace_id=3)
+    qbo_credentials = QBOCredential.active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
 
     qbo_expense,qbo_expense_lineitems = create_qbo_expense
@@ -140,7 +140,7 @@ def test_construct_qbo_expense(create_qbo_expense, db):
 
 
 def test_construct_cheque(create_cheque, db):
-    qbo_credentials = QBOCredential.objects.get(is_expired=False, workspace_id=3)
+    qbo_credentials = QBOCredential.active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
 
     cheque,cheque_lineitems = create_cheque
@@ -156,7 +156,7 @@ def test_get_bill(mocker, db):
         'qbosdk.apis.Bills.get_by_id',
         return_value=data['bill_response']
     )
-    qbo_credentials = QBOCredential.objects.get(is_expired=False, workspace_id=3)
+    qbo_credentials = QBOCredential.active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
 
     bill = qbo_connection.get_bill(146)
@@ -169,7 +169,7 @@ def test_get_effective_tax_rates(mocker, db):
         'qbosdk.apis.TaxRates.get_by_id',
         return_value=data['tax_rate_get_by_id']
     )
-    qbo_credentials = QBOCredential.objects.get(is_expired=False, workspace_id=3)
+    qbo_credentials = QBOCredential.active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
     effective_tax_rate, tax_rate_refs = qbo_connection.get_effective_tax_rates([{'TaxRateRef': {'value': '5', 'name': 'NO TAX PURCHASE'}, 'TaxTypeApplicable': 'TaxOnAmount', 'TaxOrder': 0}])
     
@@ -178,7 +178,7 @@ def test_get_effective_tax_rates(mocker, db):
 
 
 def test_get_tax_inclusive_amount(db):
-    qbo_credentials = QBOCredential.objects.get(is_expired=False, workspace_id=3)
+    qbo_credentials = QBOCredential.active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
     tax_inclusive_amount = qbo_connection.get_tax_inclusive_amount(100, 4)
     
@@ -194,7 +194,7 @@ def test_sync_tax_codes(mocker, db):
         'qbosdk.apis.TaxRates.get_by_id',
         return_value=data['tax_rate_get_by_id']
     )
-    qbo_credentials = QBOCredential.objects.get(is_expired=False, workspace_id=3)
+    qbo_credentials = QBOCredential.active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
 
     tax_code_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='TAX_CODE').count()
@@ -212,7 +212,7 @@ def tests_sync_accounts(mocker, db):
         return_value=data['account_response']
     )
 
-    qbo_credentials = QBOCredential.objects.get(is_expired=False, workspace_id=3)
+    qbo_credentials = QBOCredential.active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
 
     account_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='ACCOUNT').count()
@@ -241,7 +241,7 @@ def test_sync_dimensions(mocker, db):
     assert accounts_count == 63
     assert vendors_count == 29
 
-    qbo_credentials = QBOCredential.objects.get(is_expired=False, workspace_id=3)
+    qbo_credentials = QBOCredential.active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
     qbo_connection.sync_dimensions()
 
@@ -259,7 +259,7 @@ def test_sync_classes(mocker, db):
         'qbosdk.apis.Classes.get',
         return_value=data['class_response']
     )
-    qbo_credentials = QBOCredential.objects.get(is_expired=False, workspace_id=3)
+    qbo_credentials = QBOCredential.active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
 
     class_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='CLASS').count()
@@ -280,7 +280,7 @@ def test_sync_customers(mocker, db):
         'qbosdk.apis.Customers.get',
         return_value=data['class_response']
     )
-    qbo_credentials = QBOCredential.objects.get(is_expired=False, workspace_id=3)
+    qbo_credentials = QBOCredential.active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
 
     customer_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='CUSTOMER').count()
@@ -303,7 +303,7 @@ def test_post_bill_exception(mocker, db, create_bill):
     )
     workspace_id = 4
 
-    qbo_credentials = QBOCredential.objects.get(is_expired=False, workspace_id=workspace_id)
+    qbo_credentials = QBOCredential.active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
     bill, bill_lineitems = create_bill
@@ -330,7 +330,7 @@ def test_post_qbo_expense_exception(mocker, db, create_qbo_expense):
     )
     workspace_id = 4
 
-    qbo_credentials = QBOCredential.objects.get(is_expired=False, workspace_id=workspace_id)
+    qbo_credentials = QBOCredential.active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
     qbo_expense, qbo_expense_lineitems = create_qbo_expense
@@ -359,7 +359,7 @@ def test_post_cheque_exception(mocker, db, create_cheque):
     )
     workspace_id = 4
 
-    qbo_credentials = QBOCredential.objects.get(is_expired=False, workspace_id=workspace_id)
+    qbo_credentials = QBOCredential.active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
     cheque, cheque_lineitems = create_cheque
@@ -388,7 +388,7 @@ def test_post_credit_card_purchase_exception(mocker, db, create_credit_card_purc
     )
     workspace_id = 4
 
-    qbo_credentials = QBOCredential.objects.get(is_expired=False, workspace_id=workspace_id)
+    qbo_credentials = QBOCredential.active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
     credit_card_purchase, credit_card_purchase_lineitems = create_credit_card_purchase
@@ -417,7 +417,7 @@ def test_post_journal_entry_exception(mocker, db, create_journal_entry):
     )
     workspace_id = 4
 
-    qbo_credentials = QBOCredential.objects.get(is_expired=False, workspace_id=workspace_id)
+    qbo_credentials = QBOCredential.active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
     journal_entry, journal_entry_lineitems = create_journal_entry
@@ -446,7 +446,7 @@ def tests_post_bill_payment(mocker, db, create_bill_payment):
     )
     workspace_id = 3
 
-    qbo_credentials = QBOCredential.objects.get(is_expired=False, workspace_id=workspace_id)
+    qbo_credentials = QBOCredential.active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
     bill_payment, bill_payment_lineitems = create_bill_payment
@@ -462,7 +462,7 @@ def test_post_attachments(mocker, db):
     )
     workspace_id = 3
 
-    qbo_credentials = QBOCredential.objects.get(is_expired=False, workspace_id=workspace_id)
+    qbo_credentials = QBOCredential.active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
     qbo_connection.post_attachments('asd', 'dfg', [{'download_url': 'sdfghj', 'name': 'ert'}])
@@ -471,7 +471,7 @@ def test_post_attachments(mocker, db):
 def test_sync_dimensions_exception(db):
     workspace_id = 3
 
-    qbo_credentials = QBOCredential.objects.get(is_expired=False, workspace_id=workspace_id)
+    qbo_credentials = QBOCredential.active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
     with mock.patch('apps.quickbooks_online.utils.QBOConnector.sync_accounts') as mock_call:
