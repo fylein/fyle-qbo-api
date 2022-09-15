@@ -618,7 +618,8 @@ class SetupE2ETestView(viewsets.ViewSet):
                 healthy_tokens = QBOCredential.objects.filter(
                     workspace__name__icontains='fyle for',
                     is_expired=False,
-                    realm_id=settings.E2E_TESTS_REALM_ID
+                    realm_id=settings.E2E_TESTS_REALM_ID,
+                    refresh_token__isnull=False
                 ).order_by('-updated_at')
                 logger.info('Found {} healthy tokens'.format(healthy_tokens.count()))
 
