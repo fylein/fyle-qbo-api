@@ -29,6 +29,7 @@ class WorkspaceGeneralSettingsSerializer(serializers.ModelSerializer):
             'sync_fyle_to_qbo_payments',
             'sync_qbo_to_fyle_payments',
             'auto_create_destination_entity',
+            'auto_create_merchants_as_vendors',
             'je_single_credit_line',
             'change_accounting_period',
             'memo_structure'
@@ -97,6 +98,7 @@ class AdvancedConfigurationsSerializer(serializers.ModelSerializer):
                 'sync_fyle_to_qbo_payments': workspace_general_settings.get('sync_fyle_to_qbo_payments'),
                 'sync_qbo_to_fyle_payments': workspace_general_settings.get('sync_qbo_to_fyle_payments'),
                 'auto_create_destination_entity': workspace_general_settings.get('auto_create_destination_entity'),
+                'auto_create_merchants_as_vendors': workspace_general_settings.get('auto_create_merchants_as_vendors'),
                 'je_single_credit_line': workspace_general_settings.get('je_single_credit_line'),
                 'change_accounting_period': workspace_general_settings.get('change_accounting_period'),
                 'memo_structure': workspace_general_settings.get('memo_structure')
