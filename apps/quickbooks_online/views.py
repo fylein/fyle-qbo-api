@@ -46,7 +46,7 @@ class VendorView(generics.ListCreateAPIView):
         Get vendors from QBO
         """
         try:
-            qbo_credentials = QBOCredential.active_qbo_credentials(kwargs['workspace_id'])
+            qbo_credentials = QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
 
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
@@ -81,7 +81,7 @@ class EmployeeView(generics.ListCreateAPIView):
         Get employees from QBO
         """
         try:
-            qbo_credentials = QBOCredential.active_qbo_credentials(kwargs['workspace_id'])
+            qbo_credentials = QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
 
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
@@ -116,7 +116,7 @@ class AccountView(generics.ListCreateAPIView):
         Get accounts from QBO
         """
         try:
-            qbo_credentials = QBOCredential.active_qbo_credentials(kwargs['workspace_id'])
+            qbo_credentials = QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
 
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
@@ -151,7 +151,7 @@ class CreditCardAccountView(generics.ListCreateAPIView):
         Get accounts from QBO
         """
         try:
-            qbo_credentials = QBOCredential.active_qbo_credentials(kwargs['workspace_id'])
+            qbo_credentials = QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
 
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
@@ -186,7 +186,7 @@ class BankAccountView(generics.ListCreateAPIView):
         Get accounts from QBO
         """
         try:
-            qbo_credentials = QBOCredential.active_qbo_credentials(kwargs['workspace_id'])
+            qbo_credentials = QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
 
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
@@ -221,7 +221,7 @@ class AccountsPayableView(generics.ListCreateAPIView):
         Get accounts from QBO
         """
         try:
-            qbo_credentials = QBOCredential.active_qbo_credentials(kwargs['workspace_id'])
+            qbo_credentials = QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
 
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
@@ -256,7 +256,7 @@ class BillPaymentAccountView(generics.ListCreateAPIView):
         Get bill payment accounts from QBO
         """
         try:
-            qbo_credentials = QBOCredential.active_qbo_credentials(kwargs['workspace_id'])
+            qbo_credentials = QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
 
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
@@ -292,7 +292,7 @@ class ClassView(generics.ListCreateAPIView):
         Get classes from QBO
         """
         try:
-            qbo_credentials = QBOCredential.active_qbo_credentials(kwargs['workspace_id'])
+            qbo_credentials = QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
 
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
@@ -317,7 +317,7 @@ class PreferencesView(generics.RetrieveAPIView):
     """
     def post(self, request, **kwargs):
         try:
-            qbo_credentials = QBOCredential.active_qbo_credentials(kwargs['workspace_id'])
+            qbo_credentials = QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
             company_info = qbo_connector.get_company_info()
@@ -345,7 +345,7 @@ class PreferencesView(generics.RetrieveAPIView):
 
     def get(self, request, *args, **kwargs):
         try:
-            qbo_credentials = QBOCredential.active_qbo_credentials(kwargs['workspace_id'])
+            qbo_credentials = QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
 
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
@@ -392,7 +392,7 @@ class CompanyInfoView(generics.RetrieveAPIView):
     """
     def get(self, request, *args, **kwargs):
         try:
-            qbo_credentials = QBOCredential.active_qbo_credentials(kwargs['workspace_id'])
+            qbo_credentials = QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
 
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
@@ -434,7 +434,7 @@ class DepartmentView(generics.ListCreateAPIView):
         Get departments from QBO
         """
         try:
-            qbo_credentials = QBOCredential.active_qbo_credentials(kwargs['workspace_id'])
+            qbo_credentials = QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
 
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
@@ -481,7 +481,7 @@ class CustomerView(generics.ListCreateAPIView):
         Get customers from QBO
         """
         try:
-            qbo_credentials = QBOCredential.active_qbo_credentials(kwargs['workspace_id'])
+            qbo_credentials = QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
 
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
 
@@ -819,7 +819,7 @@ class SyncQuickbooksDimensionView(generics.ListCreateAPIView):
                 time_interval = datetime.now(timezone.utc) - workspace.destination_synced_at
 
             if workspace.destination_synced_at is None or time_interval.days > 0:
-                quickbooks_credentials = QBOCredential.active_qbo_credentials(kwargs['workspace_id'])
+                quickbooks_credentials = QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
                 quickbooks_connector = QBOConnector(quickbooks_credentials, workspace_id=kwargs['workspace_id'])
 
                 quickbooks_connector.sync_dimensions()
@@ -858,7 +858,7 @@ class RefreshQuickbooksDimensionView(generics.ListCreateAPIView):
         Sync data from quickbooks
         """
         try:
-            quickbooks_credentials = QBOCredential.active_qbo_credentials(kwargs['workspace_id'])
+            quickbooks_credentials = QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
             quickbooks_connector = QBOConnector(quickbooks_credentials, workspace_id=kwargs['workspace_id'])
 
             quickbooks_connector.sync_dimensions()

@@ -250,7 +250,7 @@ def test_async_auto_map_employees(mocker, db):
     employee_mappings = EmployeeMapping.objects.filter(workspace_id=workspace_id).count()
     assert employee_mappings == 4
 
-    qbo_credentials = QBOCredential.active_qbo_credentials(workspace_id)
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
     qbo_credentials.delete()
     async_auto_map_employees(workspace_id)
 

@@ -53,7 +53,7 @@ def test_create_or_update_employee_mapping(mocker, db):
     )
     workspace_id = 3
 
-    qbo_credentials = QBOCredential.active_qbo_credentials(workspace_id)
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
     expense_group = ExpenseGroup.objects.get(id=14)
