@@ -1,3 +1,4 @@
+from apps.fyle.models import ExpenseGroupSettings
 import pytest
 from django_q.models import Schedule
 from fyle_accounting_mappings.models import MappingSetting, Mapping, ExpenseAttribute, EmployeeMapping
@@ -105,3 +106,35 @@ def test_run_post_mapping_settings_triggers(test_connection):
 
     assert schedule.func == 'apps.mappings.tasks.auto_create_cost_center_mappings'
     assert schedule.args == '1'
+
+    mapping_setting = MappingSetting(
+        source_field='PROJECT',
+        destination_field='DEPARTMENT',
+        workspace_id=1,
+        import_to_fyle=False,
+        is_custom=False
+    )
+
+    mapping_setting.save()
+
+    expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=1)
+    assert 'project' in expense_group_settings.reimbursable_expense_group_fields
+    assert 'project' in expense_group_settings.corporate_credit_card_expense_group_fields
+
+@pytest.mark.django_db()
+def test_run_post_delete_mapping_settings_triggers(test_connection):
+    mapping_setting = MappingSetting(
+        source_field='COST_CENTER',
+        destination_field='DEPARTMENT',
+        workspace_id=1,
+        import_to_fyle=False,
+        is_custom=False
+    )
+
+    mapping_setting.save()
+
+    mapping_setting.delete()
+
+    expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=1)
+    assert 'cost_center' not in expense_group_settings.reimbursable_expense_group_fields
+    assert 'cost_center' not in expense_group_settings.corporate_credit_card_expense_group_fields

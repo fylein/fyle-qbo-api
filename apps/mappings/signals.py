@@ -1,7 +1,7 @@
 """
 Mapping Signals
 """
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 from django_q.tasks import async_task
 
@@ -12,6 +12,8 @@ from apps.mappings.tasks import upload_attributes_to_fyle, schedule_cost_centers
     schedule_fyle_attributes_creation, schedule_projects_creation
 from apps.workspaces.utils import delete_cards_mapping_settings
 from apps.workspaces.models import WorkspaceGeneralSettings
+
+from apps.workspaces.apis.import_settings.triggers import ImportSettingsTrigger
 
 
 @receiver(post_save, sender=Mapping)
@@ -57,6 +59,14 @@ def run_post_mapping_settings_triggers(sender, instance: MappingSetting, **kwarg
     if workspace_general_settings:
         delete_cards_mapping_settings(workspace_general_settings)
 
+    if instance.destination_field == 'DEPARTMENT':
+        # add_department_grouping() doesn't require workspace_general_settings and mapping_settings, hence sending them as None
+        trigger: ImportSettingsTrigger = ImportSettingsTrigger(
+            workspace_general_settings=None,
+            mapping_settings=None,
+            workspace_id=instance.workspace_id
+        )
+        trigger.add_department_grouping(instance.source_field)
 
 @receiver(pre_save, sender=MappingSetting)
 def run_pre_mapping_settings_triggers(sender, instance: MappingSetting, **kwargs):
@@ -83,3 +93,19 @@ def run_pre_mapping_settings_triggers(sender, instance: MappingSetting, **kwargs
             instance.destination_field,
             instance.source_field
         )
+
+@receiver(post_delete, sender=MappingSetting)
+def run_post_delete_mapping_settings_triggers(sender, instance: MappingSetting, **kwargs):
+    """
+    :param sender: Sender Class
+    :param instance: Row Instance of Sender Class
+    :return: None
+    """
+    if instance.destination_field == 'DEPARTMENT':
+        # remove_department_grouping() doesn't require workspace_general_settings and mapping_settings, hence sending them as None
+        trigger: ImportSettingsTrigger = ImportSettingsTrigger(
+            workspace_general_settings=None,
+            mapping_settings=None,
+            workspace_id=instance.workspace_id
+        )
+        trigger.remove_department_grouping(instance.source_field.lower())
