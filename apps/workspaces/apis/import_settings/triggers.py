@@ -94,6 +94,27 @@ class ImportSettingsTrigger:
             workspace_id=self.__workspace_id
         )
 
+    def __remove_old_department_source_field(
+            self,
+            current_mappings_settings: List[MappingSetting],
+            new_mappings_settings: List[Dict]
+        ):
+        """
+        Should remove Department Source field from Reimbursable settings in case of deletion and updation
+        """
+        old_department_setting = current_mappings_settings.filter(
+            destination_field='DEPARTMENT'
+        ).first()
+
+        new_department_setting = list(filter(
+            lambda setting: setting['destination_field'] == 'DEPARTMENT',
+            new_mappings_settings
+        ))
+
+        if (old_department_setting and new_department_setting and old_department_setting.source_field != new_department_setting[0]['source_field']):
+            self.remove_department_grouping(old_department_setting.source_field.lower())
+
+
     def pre_save_mapping_settings(self):
         """
         Post save action for mapping settings
@@ -118,6 +139,14 @@ class ImportSettingsTrigger:
         schedule_fyle_attributes_creation(self.__workspace_id)
 
         # Removal of department grouping will be taken care from post_delete() signal
+
+        # Update department mapping to some other Fyle field
+        current_mapping_settings = MappingSetting.objects.filter(workspace_id=self.__workspace_id).all()
+
+        self.__remove_old_department_source_field(
+            current_mappings_settings=current_mapping_settings,
+            new_mappings_settings=mapping_settings
+        )
 
     def post_save_mapping_settings(self):
         """
