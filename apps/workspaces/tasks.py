@@ -192,7 +192,7 @@ def run_email_notification(workspace_id):
         status='FAILED',
     )
     workspace = Workspace.objects.get(id=workspace_id)
-    qbo = QBOCredential.objects.get(workspace=workspace)
+    qbo = QBOCredential.get_active_qbo_credentials(workspace_id)
     errors = Error.objects.filter(workspace_id=workspace_id,is_resolved=False).order_by('id')[:10]
     for error in errors:
         if error.type == 'EMPLOYEE_MAPPING' or error.type == 'CATEGORY_MAPPING':
@@ -203,7 +203,7 @@ def run_email_notification(workspace_id):
                         <td> Tax Mapping Error </td>'''
         elif error.type == 'QBO_ERROR':
             html = '''<tr>
-                       <td> Quickbooks Error </td>'''
+                       <td> QuickBooks Online Error </td>'''
         error_type = error.type.lower().title().replace('_', ' ')
         expense_data = list(expense_data)
         expense_data.append(error_type)

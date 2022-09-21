@@ -125,7 +125,7 @@ class ImportSettingsSerializer(serializers.ModelSerializer):
             mapping_settings=mapping_settings,
             workspace_id=instance.id
         )
-        
+
         trigger.post_save_workspace_general_settings()
         trigger.pre_save_mapping_settings()
 

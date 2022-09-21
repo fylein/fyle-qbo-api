@@ -20,82 +20,60 @@ class ImportSettingsTrigger:
         self.__mapping_settings = mapping_settings
         self.__workspace_id = workspace_id
 
-    def __remove_old_department_source_field(
-            self,
-            current_mappings_settings: List[MappingSetting],
-            new_mappings_settings: List[Dict]
-        ):
-        """
-        Should remove Department Source field from Reimbursable settings in case of deletion and updation
-        """
-        workspace_general_settings: WorkspaceGeneralSettings = WorkspaceGeneralSettings.objects.filter(
-            workspace_id=self.__workspace_id).first()
+    def remove_department_grouping(self, source_field: str):
+        workspace_general_settings: WorkspaceGeneralSettings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.__workspace_id).first()
+        expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=self.__workspace_id)
 
-        old_department_setting = current_mappings_settings.filter(
-            destination_field='DEPARTMENT'
-        ).first()
+        # Removing Department Source field from Reimbursable settings
+        if workspace_general_settings.reimbursable_expenses_object:
+            reimbursable_settings = expense_group_settings.reimbursable_expense_group_fields
+            reimbursable_settings.remove(source_field.lower())
+            expense_group_settings.reimbursable_expense_group_fields = list(set(reimbursable_settings))
 
-        new_department_setting = list(filter(
-            lambda setting: setting['destination_field'] == 'DEPARTMENT',
-            new_mappings_settings
-        ))
-
-        if (old_department_setting and new_department_setting and \
-            old_department_setting.source_field != new_department_setting[0]['source_field']) or \
-                (old_department_setting and not new_department_setting):
-            expense_group_settings = ExpenseGroupSettings.objects.get(
-                workspace_id=self.__workspace_id
+        # Removing Department Source field from Non reimbursable settings
+        if workspace_general_settings.corporate_credit_card_expenses_object:
+            corporate_credit_card_settings = list(expense_group_settings.corporate_credit_card_expense_group_fields)
+            corporate_credit_card_settings.remove(source_field.lower())
+            expense_group_settings.corporate_credit_card_expense_group_fields = list(
+                set(corporate_credit_card_settings)
             )
 
-            # Removing Department Source field from Reimbursable settings
-            if workspace_general_settings.reimbursable_expenses_object:
-                reimbursable_settings = expense_group_settings.reimbursable_expense_group_fields
-                reimbursable_settings.remove(old_department_setting.source_field.lower())
-                expense_group_settings.reimbursable_expense_group_fields = list(set(reimbursable_settings))
+        expense_group_settings.save()
 
-            # Removing Department Source field from Non reimbursable settings
-            if workspace_general_settings.corporate_credit_card_expenses_object:
-                corporate_credit_card_settings = list(expense_group_settings.corporate_credit_card_expense_group_fields)
-                corporate_credit_card_settings.remove(old_department_setting.source_field.lower())
-                expense_group_settings.corporate_credit_card_expense_group_fields = list(
-                    set(corporate_credit_card_settings)
-                )
+    def add_department_grouping(self, source_field: str):
+        workspace_general_settings: WorkspaceGeneralSettings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.__workspace_id).first()
 
-            expense_group_settings.save()
+        expense_group_settings: ExpenseGroupSettings = ExpenseGroupSettings.objects.get(workspace_id=self.__workspace_id)
+
+        # Adding Department Source field to Reimbursable settings
+        reimbursable_settings = expense_group_settings.reimbursable_expense_group_fields
+
+        if workspace_general_settings.reimbursable_expenses_object != 'JOURNAL_ENTRY':
+            reimbursable_settings.append(source_field.lower())
+            expense_group_settings.reimbursable_expense_group_fields = list(set(reimbursable_settings))
+
+        # Adding Department Source field to Non reimbursable settings
+        corporate_credit_card_settings = list(expense_group_settings.corporate_credit_card_expense_group_fields)
+
+        if workspace_general_settings.corporate_credit_card_expenses_object != 'JOURNAL_ENTRY':
+            corporate_credit_card_settings.append(source_field.lower())
+            expense_group_settings.corporate_credit_card_expense_group_fields = list(
+                set(corporate_credit_card_settings)
+            )
+
+        expense_group_settings.save()
 
     def __update_expense_group_settings_for_departments(self):
         """
         Should group expenses by department source field in case the export is journal entries
         """
-        workspace_general_settings: WorkspaceGeneralSettings = WorkspaceGeneralSettings.objects.filter(
-            workspace_id=self.__workspace_id).first()
-
-        expense_group_settings: ExpenseGroupSettings = ExpenseGroupSettings.objects.get(
-            workspace_id=self.__workspace_id
-        )
         department_setting = list(filter(
             lambda setting: setting['destination_field'] == 'DEPARTMENT', self.__mapping_settings))
 
         if department_setting:
             department_setting = department_setting[0]
 
-            # Adding Department Source field to Reimbursable settings
-            reimbursable_settings = expense_group_settings.reimbursable_expense_group_fields
-
-            if workspace_general_settings.reimbursable_expenses_object != 'JOURNAL_ENTRY':
-                reimbursable_settings.append(department_setting['source_field'].lower())
-                expense_group_settings.reimbursable_expense_group_fields = list(set(reimbursable_settings))
-
-            # Adding Department Source field to Non reimbursable settings
-            corporate_credit_card_settings = list(expense_group_settings.corporate_credit_card_expense_group_fields)
-
-            if workspace_general_settings.corporate_credit_card_expenses_object != 'JOURNAL_ENTRY':
-                corporate_credit_card_settings.append(department_setting['source_field'].lower())
-                expense_group_settings.corporate_credit_card_expense_group_fields = list(
-                    set(corporate_credit_card_settings)
-                )
-
-            expense_group_settings.save()
+            self.add_department_grouping(department_setting['source_field'])
 
     def post_save_workspace_general_settings(self):
         """
@@ -115,6 +93,27 @@ class ImportSettingsTrigger:
             import_categories=self.__workspace_general_settings.get('import_categories'),
             workspace_id=self.__workspace_id
         )
+
+    def __remove_old_department_source_field(
+            self,
+            current_mappings_settings: List[MappingSetting],
+            new_mappings_settings: List[Dict]
+        ):
+        """
+        Should remove Department Source field from Reimbursable settings in case of deletion and updation
+        """
+        old_department_setting = current_mappings_settings.filter(
+            destination_field='DEPARTMENT'
+        ).first()
+
+        new_department_setting = list(filter(
+            lambda setting: setting['destination_field'] == 'DEPARTMENT',
+            new_mappings_settings
+        ))
+
+        if (old_department_setting and new_department_setting and old_department_setting.source_field != new_department_setting[0]['source_field']):
+            self.remove_department_grouping(old_department_setting.source_field.lower())
+
 
     def pre_save_mapping_settings(self):
         """
@@ -139,6 +138,9 @@ class ImportSettingsTrigger:
         
         schedule_fyle_attributes_creation(self.__workspace_id)
 
+        # Removal of department grouping will be taken care from post_delete() signal
+
+        # Update department mapping to some other Fyle field
         current_mapping_settings = MappingSetting.objects.filter(workspace_id=self.__workspace_id).all()
 
         self.__remove_old_department_source_field(

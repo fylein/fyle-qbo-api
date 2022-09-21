@@ -14,6 +14,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from fyle.platform import exceptions as fyle_exc
 from qbosdk import exceptions as qbo_exc
+from qbosdk import revoke_refresh_token
 
 from fyle_rest_auth.utils import AuthUtils
 from fyle_rest_auth.models import AuthToken
@@ -29,7 +30,7 @@ from fyle_accounting_mappings.models import ExpenseAttribute
 
 from .models import Workspace, FyleCredential, QBOCredential, WorkspaceGeneralSettings, WorkspaceSchedule, \
     LastExportDetail
-from .utils import generate_qbo_refresh_token, create_or_update_general_settings, update_last_export_details
+from .utils import generate_qbo_refresh_token, create_or_update_general_settings
 from .tasks import schedule_sync, run_sync_schedule, export_to_qbo
 from .serializers import WorkspaceSerializer, FyleCredentialSerializer, QBOCredentialSerializer, \
     WorkSpaceGeneralSettingsSerializer, WorkspaceScheduleSerializer, LastExportDetailSerializer
@@ -292,7 +293,7 @@ class ConnectQBOView(viewsets.ViewSet):
             if not qbo_credentials:
                 if workspace.qbo_realm_id:
                     assert_valid(realm_id == workspace.qbo_realm_id,
-                                 'Please choose the correct Quickbooks online account')
+                                 'Please choose the correct QuickBooks Online account')
 
                 qbo_credentials = QBOCredential.objects.create(
                     refresh_token=refresh_token,
@@ -330,7 +331,7 @@ class ConnectQBOView(viewsets.ViewSet):
                     qbo_credentials.refresh_token = None
                     qbo_credentials.save()
                     assert_valid(realm_id == workspace.qbo_realm_id,
-                                 'Please choose the correct Quickbooks online account')
+                                 'Please choose the correct QuickBooks Online account')
 
             if workspace.onboarding_state == 'CONNECTION':
                 workspace.onboarding_state = 'MAP_EMPLOYEES'
@@ -372,12 +373,19 @@ class ConnectQBOView(viewsets.ViewSet):
         """Delete QBO refresh_token"""
         workspace_id = kwargs['workspace_id']
         qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
+        refresh_token = qbo_credentials.refresh_token
         qbo_credentials.refresh_token = None
         qbo_credentials.is_expired = False
         qbo_credentials.realm_id = None
         qbo_credentials.save()
 
         post_delete_qbo_connection(workspace_id)
+
+        try:
+            revoke_refresh_token(refresh_token, settings.QBO_CLIENT_ID, settings.QBO_CLIENT_SECRET)
+        except Exception as exception:
+            logger.error(exception)
+            pass
 
         return Response(data={
             'workspace_id': workspace_id,
@@ -389,7 +397,7 @@ class ConnectQBOView(viewsets.ViewSet):
         Get QBO Credentials in Workspace
         """
         try:
-            qbo_credentials = QBOCredential.objects.get(workspace=kwargs['workspace_id'])
+            qbo_credentials = QBOCredential.objects.get(workspace=kwargs['workspace_id'], is_expired=False)
 
             return Response(
                 data=QBOCredentialSerializer(qbo_credentials).data,
@@ -610,7 +618,8 @@ class SetupE2ETestView(viewsets.ViewSet):
                 healthy_tokens = QBOCredential.objects.filter(
                     workspace__name__icontains='fyle for',
                     is_expired=False,
-                    realm_id=settings.E2E_TESTS_REALM_ID
+                    realm_id=settings.E2E_TESTS_REALM_ID,
+                    refresh_token__isnull=False
                 ).order_by('-updated_at')
                 logger.info('Found {} healthy tokens'.format(healthy_tokens.count()))
 

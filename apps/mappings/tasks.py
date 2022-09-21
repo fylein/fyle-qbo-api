@@ -346,7 +346,7 @@ def upload_categories_to_fyle(workspace_id):
     Upload categories to Fyle
     """
     fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
-    qbo_credentials: QBOCredential = QBOCredential.objects.get(workspace_id=workspace_id)
+    qbo_credentials: QBOCredential = QBOCredential.get_active_qbo_credentials(workspace_id)
     platform = PlatformConnector(fyle_credentials)
 
     qbo_connection = QBOConnector(
@@ -633,7 +633,7 @@ def async_auto_map_employees(workspace_id: int):
     platform = PlatformConnector(fyle_credentials)
 
     try:
-        qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
+        qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
         qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
         platform.employees.sync()
@@ -786,7 +786,7 @@ def upload_tax_groups_to_fyle(platform_connection: PlatformConnector, workspace_
 
 
 def sync_qbo_attribute(qbo_attribute_type: str, workspace_id: int):
-    qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
     if qbo_attribute_type == 'CUSTOMER':

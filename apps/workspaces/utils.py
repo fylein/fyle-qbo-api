@@ -123,6 +123,7 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
             'charts_of_accounts': general_settings_payload['charts_of_accounts'],
             'auto_map_employees': general_settings_payload['auto_map_employees'],
             'auto_create_destination_entity': general_settings_payload['auto_create_destination_entity'],
+            'auto_create_merchants_as_vendors': general_settings_payload['auto_create_merchants_as_vendors'],
             'reimbursable_expenses_object':
                 general_settings_payload['reimbursable_expenses_object']
                 if 'reimbursable_expenses_object' in general_settings_payload
@@ -195,25 +196,3 @@ def delete_cards_mapping_settings(workspace_general_settings: WorkspaceGeneralSe
         ).first()
         if mapping_setting:
             mapping_setting.delete()
-
-
-def update_last_export_details(workspace_id):
-    last_export_detail = LastExportDetail.objects.get(workspace_id=workspace_id)
-
-    failed_exports = TaskLog.objects.filter(
-        ~Q(type='CREATING_BILL_PAYMENT'), workspace_id=workspace_id, status__in=['FAILED', 'FATAL']
-    ).count()
-
-    successful_exports = TaskLog.objects.filter(
-        ~Q(type__in=['CREATING_BILL_PAYMENT', 'FETCHING_EXPENSES']),
-        workspace_id=workspace_id,
-        status='COMPLETE',
-        updated_at__gt=last_export_detail.last_exported_at
-    ).count()
-
-    last_export_detail.failed_expense_groups_count = failed_exports
-    last_export_detail.successful_expense_groups_count = successful_exports
-    last_export_detail.total_expense_groups_count = failed_exports + successful_exports
-    last_export_detail.save()
-
-    return last_export_detail
