@@ -992,7 +992,6 @@ def create_fyle_expense_custom_field_payload(
             'code': None
         }
 
-
         if custom_field_id:
             expense_custom_field_payload['id'] = custom_field_id
 
