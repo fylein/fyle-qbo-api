@@ -987,7 +987,7 @@ def create_fyle_expense_custom_field_payload(
             'type': 'SELECT',
             'is_enabled': True,
             'is_mandatory': False,
-            'placeholder': 'Select {0}'.format(fyle_attribute),
+            'placeholder': new_placeholder,
             'options': fyle_expense_custom_field_options,
             'code': None
         }
