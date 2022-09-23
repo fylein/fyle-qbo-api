@@ -32,6 +32,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          KUBERNETES_MANIFEST_FILE_PATH: deployment/staging/controller.yml
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
         env:
