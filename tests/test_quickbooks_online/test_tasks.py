@@ -85,7 +85,7 @@ def test_create_or_update_employee_mapping(mocker, db):
         try:
             create_or_update_employee_mapping(expense_group=expense_group, qbo_connection=qbo_connection, auto_map_employees_preference='NAME')
         except:
-            logger.info('Emplooyee mapping not found')
+            logger.info('Employee mapping not found')
 
 def test_post_bill_success(mocker, create_task_logs, db):
     mocker.patch(

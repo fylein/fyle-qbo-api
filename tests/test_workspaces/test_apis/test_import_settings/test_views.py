@@ -1,11 +1,13 @@
-from fyle_qbo_api.tests import settings
-import pytest
+from datetime import timedelta
 import json
-from django.urls import reverse
+
+from django_q.models import Schedule
+
 from tests.helper import dict_compare_keys
-from apps.workspaces.models import FyleCredential, WorkspaceSchedule
-from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
+
+from apps.workspaces.models import Workspace
 from .fixtures import data
+
 
 def test_import_settings(mocker, api_client, test_connection):
     mocker.patch(
@@ -33,6 +35,20 @@ def test_import_settings(mocker, api_client, test_connection):
     )
 
     assert response.status_code == 200
+
+    merchant_import_schedule = Schedule.objects.filter(
+        func='apps.mappings.tasks.auto_create_vendors_as_merchants',
+        args='3'
+    ).first()
+
+    category_import_schedule = Schedule.objects.filter(
+        func='apps.mappings.tasks.auto_create_category_mappings',
+        args=str(3)
+    ).first()
+
+    assert (
+        category_import_schedule.next_run - merchant_import_schedule.next_run 
+    ) >= timedelta(minutes=10), 'Next Run for category import is not correct'
 
     response = json.loads(response.content)
     assert dict_compare_keys(response, data['response']) == [], 'workspaces api returns a diff in the keys'
