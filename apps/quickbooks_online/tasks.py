@@ -78,16 +78,17 @@ def get_or_create_credit_card_or_debit_card_vendor(workspace_id: int, merchant: 
         except WrongParamsError as bad_request:
             logger.error(bad_request.response)
 
-        if not vendor and general_settings.auto_create_merchants_as_vendors:
-            try:
-                vendor = qbo_connection.get_or_create_vendor(merchant, create=True)
-            except WrongParamsError as bad_request:
-                logger.error(bad_request.response)
-    else:
-        if debit_card_expense:
-            vendor = qbo_connection.get_or_create_vendor('Debit Card Misc', create=True)
-        else:
-            vendor = qbo_connection.get_or_create_vendor('Credit Card Misc', create=True)
+        if not vendor:
+            if general_settings.auto_create_merchants_as_vendors:
+                try:
+                    vendor = qbo_connection.get_or_create_vendor(merchant, create=True)
+                except WrongParamsError as bad_request:
+                    logger.error(bad_request.response)
+            if not vendor:
+                if debit_card_expense:
+                    vendor = qbo_connection.get_or_create_vendor('Debit Card Misc', create=True)
+                else:
+                    vendor = qbo_connection.get_or_create_vendor('Credit Card Misc', create=True)
 
     return vendor
 
