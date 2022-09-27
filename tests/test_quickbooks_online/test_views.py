@@ -5,7 +5,7 @@ import json
 from unittest import mock
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import QBOCredential
-from apps.fyle.models import Reimbursement
+from apps.fyle.models import Reimbursement, ExpenseGroup
 from .fixtures import data
 from qbosdk.exceptions import WrongParamsError, InvalidTokenError
 
