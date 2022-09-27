@@ -1,6 +1,8 @@
 from typing import Dict, List
-from django.db.models import Q
+from datetime import timedelta
 
+from django.db.models import Q
+from django_q.models import Schedule
 from fyle_accounting_mappings.models import MappingSetting
 
 from apps.fyle.models import ExpenseGroupSettings
@@ -93,6 +95,23 @@ class ImportSettingsTrigger:
             import_categories=self.__workspace_general_settings.get('import_categories'),
             workspace_id=self.__workspace_id
         )
+
+        merchant_import_schedule = Schedule.objects.filter(
+            func='apps.mappings.tasks.auto_create_vendors_as_merchants',
+            args=str(self.__workspace_id)
+        ).first()
+
+        if merchant_import_schedule:
+            category_import_schedule = Schedule.objects.filter(
+                func='apps.mappings.tasks.auto_create_category_mappings',
+                args=str(self.__workspace_id)
+            ).first()
+
+            if category_import_schedule:
+                category_import_schedule.next_run = merchant_import_schedule.next_run + timedelta(minutes=10)
+                category_import_schedule.save()
+
+
 
     def __remove_old_department_source_field(
             self,
