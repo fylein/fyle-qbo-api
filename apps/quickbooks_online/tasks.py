@@ -60,6 +60,13 @@ def resolve_errors_for_exported_expense_group(expense_group: ExpenseGroup):
         is_resolved=False
     ).update(is_resolved=True)
 
+def get_or_create_misc_vendor(debit_card_expense: bool, qbo_connection: QBOConnector):
+    if debit_card_expense:
+        vendor = qbo_connection.get_or_create_vendor('Debit Card Misc', create=True)
+    else:
+        vendor = qbo_connection.get_or_create_vendor('Credit Card Misc', create=True)
+
+    return vendor
 
 def get_or_create_credit_card_or_debit_card_vendor(workspace_id: int, merchant: str, debit_card_expense: bool, general_settings: WorkspaceGeneralSettings):
     """
@@ -85,10 +92,10 @@ def get_or_create_credit_card_or_debit_card_vendor(workspace_id: int, merchant: 
                 except WrongParamsError as bad_request:
                     logger.error(bad_request.response)
             if not vendor:
-                if debit_card_expense:
-                    vendor = qbo_connection.get_or_create_vendor('Debit Card Misc', create=True)
-                else:
-                    vendor = qbo_connection.get_or_create_vendor('Credit Card Misc', create=True)
+                vendor = get_or_create_misc_vendor(debit_card_expense, qbo_connection)
+
+    else:
+        vendor = get_or_create_misc_vendor(debit_card_expense, qbo_connection)
 
     return vendor
 
