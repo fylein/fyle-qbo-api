@@ -28,24 +28,40 @@ logger = logging.getLogger(__name__)
 
 def test_get_or_create_credit_card_or_debit_card_vendor(mocker, db):
     mocker.patch(
-        'apps.quickbooks_online.utils.QBOConnector.get_or_create_vendor',
-        return_value=[]
+        'qbosdk.apis.Vendors.post',
+        return_value=data['post_vendor_resp']
+    )
+    mocker.patch(
+        'qbosdk.apis.Vendors.search_vendor_by_display_name',
+        return_value=None
     )
     workspace_id = 1
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
 
-    contact = get_or_create_credit_card_or_debit_card_vendor(workspace_id, 'samp_merchant', True, general_settings)
-    assert contact != None
+    contact = get_or_create_credit_card_or_debit_card_vendor(workspace_id, 'samp_merchant', False, general_settings)
+    assert contact.value == 'samp_merchant'
+
+    try:
+        with mock.patch('apps.quickbooks_online.utils.QBOConnector.get_or_create_vendor') as mock_call:
+            mock_call.side_effect = [None, WrongParamsError(msg='wrong parameters', response='wrong parameters')]
+            contact = get_or_create_credit_card_or_debit_card_vendor(workspace_id, 'samp_merchant', False, general_settings)
+    except:
+        logger.info('wrong parameters')
 
     general_settings.auto_create_merchants_as_vendors = False
     general_settings.save()
 
     contact = get_or_create_credit_card_or_debit_card_vendor(workspace_id, '', True, general_settings)
-    assert contact != None
+    assert contact.value == 'samp_merchant'
 
-    contact = get_or_create_credit_card_or_debit_card_vendor(workspace_id, 'samp_merchant', True, general_settings)
-    assert contact != None
+    mocker.patch(
+        'qbosdk.apis.Vendors.search_vendor_by_display_name',
+        return_value=data['vendor_response'][0]
+    )
+
+    contact = get_or_create_credit_card_or_debit_card_vendor(workspace_id, 'Books by Bessie', True, general_settings)
+    assert contact.value == 'Books by Bessie'
 
     try:
         with mock.patch('apps.quickbooks_online.utils.QBOConnector.get_or_create_vendor') as mock_call:
