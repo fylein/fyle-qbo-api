@@ -9,10 +9,10 @@ from django_q.models import Schedule
 from apps.tasks.models import TaskLog
 from apps.quickbooks_online.models import Bill, BillLineitem, Cheque, QBOExpense, QBOExpenseLineitem, CreditCardPurchase, JournalEntry, \
     JournalEntryLineitem, ChequeLineitem
-from apps.quickbooks_online.tasks import create_bill, create_qbo_expense, create_credit_card_purchase, create_journal_entry, get_or_create_credit_card_or_debit_card_vendor, create_cheque, \
+from apps.quickbooks_online.tasks import create_bill, create_qbo_expense, create_credit_card_purchase, create_journal_entry, create_cheque, \
     create_bill_payment, check_qbo_object_status, schedule_reimbursements_sync, process_reimbursements, async_sync_accounts, \
         schedule_bill_payment_creation, schedule_qbo_objects_status_sync, get_or_create_credit_card_or_debit_card_vendor, \
-            create_or_update_employee_mapping, schedule_bills_creation, update_last_export_details
+            create_or_update_employee_mapping, update_last_export_details
 from fyle_qbo_api.exceptions import BulkError
 from qbosdk.exceptions import WrongParamsError
 from fyle_accounting_mappings.models import EmployeeMapping, Mapping
@@ -28,15 +28,40 @@ logger = logging.getLogger(__name__)
 
 def test_get_or_create_credit_card_or_debit_card_vendor(mocker, db):
     mocker.patch(
-        'apps.quickbooks_online.utils.QBOConnector.get_or_create_vendor',
-        return_value=[]
+        'qbosdk.apis.Vendors.post',
+        return_value=data['post_vendor_resp']
+    )
+    mocker.patch(
+        'qbosdk.apis.Vendors.search_vendor_by_display_name',
+        return_value=None
     )
     workspace_id = 1
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
-    contact = get_or_create_credit_card_or_debit_card_vendor(workspace_id, 'samp_merchant', True, general_settings)
 
-    assert contact != None
+    contact = get_or_create_credit_card_or_debit_card_vendor(workspace_id, 'samp_merchant', False, general_settings)
+    assert contact.value == 'samp_merchant'
+
+    try:
+        with mock.patch('apps.quickbooks_online.utils.QBOConnector.get_or_create_vendor') as mock_call:
+            mock_call.side_effect = [None, WrongParamsError(msg='wrong parameters', response='wrong parameters')]
+            contact = get_or_create_credit_card_or_debit_card_vendor(workspace_id, 'samp_merchant', False, general_settings)
+    except:
+        logger.info('wrong parameters')
+
+    general_settings.auto_create_merchants_as_vendors = False
+    general_settings.save()
+
+    contact = get_or_create_credit_card_or_debit_card_vendor(workspace_id, '', True, general_settings)
+    assert contact.value == 'samp_merchant'
+
+    mocker.patch(
+        'qbosdk.apis.Vendors.search_vendor_by_display_name',
+        return_value=data['vendor_response'][0]
+    )
+
+    contact = get_or_create_credit_card_or_debit_card_vendor(workspace_id, 'Books by Bessie', True, general_settings)
+    assert contact.value == 'Books by Bessie'
 
     try:
         with mock.patch('apps.quickbooks_online.utils.QBOConnector.get_or_create_vendor') as mock_call:
@@ -668,35 +693,31 @@ def test_schedule_bill_payment_creation(db):
     assert schedule == 0
 
 
-def test_check_qbo_object_status(db):
+def test_check_qbo_object_status(mocker, db):
+    mocker.patch(
+        'qbosdk.apis.Bills.get_by_id',
+        return_value=data['bill_response']
+    )
     
-    expense_group = ExpenseGroup.objects.get(id=14)
-    expenses = expense_group.expenses.all()
+    expense_group = ExpenseGroup.objects.get(id=8)
+    workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
+    bill = Bill.create_bill(expense_group)
+    bill_lineitems = BillLineitem.create_bill_lineitems(expense_group, workspace_general_settings)
 
-    expense_group.id = random.randint(100, 1500000)
-    expense_group.save()
-
-    for expense in expenses:
-        expense.expense_group_id = expense_group.id
-        expense.save()
-    
-    expense_group.expenses.set(expenses)
-    expense_group.save()
-
-    task_log = TaskLog.objects.filter(workspace_id=3).first()
-    task_log.status = 'READY'
-    task_log.expense_group = expense_group
+    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+    task_log.expense_group = bill.expense_group
+    task_log.detail = data['post_bill']
+    task_log.bill = bill
+    task_log.quickbooks_errors = None
+    task_log.status = 'COMPLETE'
     task_log.save()
-    
-    create_bill(expense_group, task_log.id, False)
-    task_log = TaskLog.objects.get(id=task_log.id)
-    
+
     check_qbo_object_status(3)
     bills = Bill.objects.filter(expense_group__workspace_id=3)
 
     for bill in bills: 
-        assert bill.paid_on_qbo == False
-        assert bill.payment_synced == False
+        assert bill.paid_on_qbo == True
+        assert bill.payment_synced == True
 
 
 def test_schedule_reimbursements_sync(db):
@@ -723,17 +744,28 @@ def test_process_reimbursements(db, mocker):
     )
     mocker.patch(
         'fyle_integrations_platform_connector.apis.Reimbursements.sync',
-        return_value=None
+        return_value=[],
     )
+    workspace_id = 3
 
-    reimbursement_count = Reimbursement.objects.filter(workspace_id=3).count()
-    assert reimbursement_count == 0
+    reimbursements = data['reimbursements']
 
-    process_reimbursements(3)
+    expenses = Expense.objects.filter(fund_source='PERSONAL')
+    for expense in expenses:
+        expense.paid_on_qbo=True
+        expense.save()
 
-    reimbursement = Reimbursement.objects.filter(workspace_id=3).count()
+    Reimbursement.create_or_update_reimbursement_objects(reimbursements=reimbursements, workspace_id=workspace_id)
 
-    assert reimbursement == 0
+    reimbursement = Reimbursement.objects.filter(workspace_id=workspace_id).first()
+    reimbursement.state = 'PENDING'
+    reimbursement.save()
+
+    process_reimbursements(workspace_id)
+
+    reimbursement = Reimbursement.objects.filter(workspace_id=workspace_id).count()
+
+    assert reimbursement == 1
 
 
 def test_async_sync_accounts(mocker, db):
@@ -762,18 +794,6 @@ def test_schedule_qbo_objects_status_sync(db):
     schedule_count = Schedule.objects.filter(func='apps.quickbooks_online.tasks.check_qbo_object_status', args=3).count()
     assert schedule_count == 0
 
-
-# def test_schedule_bills_creation(db):
-
-#     schedule_bills_creation(sync_qbo_to_fyle_payments=True, workspace_id=3)
-
-#     schedule_count = Schedule.objects.filter(func='apps.quickbooks_online.tasks.create_bill', args=3).count()
-#     assert schedule_count == 1
-
-#     schedule_bills_creation(sync_qbo_to_fyle_payments=False, workspace_id=3)
-
-#     schedule_count = Schedule.objects.filter(func='apps.quickbooks_online.tasks.create_bill', args=3).count()
-#     assert schedule_count == 0
 
 def test_update_last_export_details(db):
     workspace_id = 3
