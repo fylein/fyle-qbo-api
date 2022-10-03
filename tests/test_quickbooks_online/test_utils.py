@@ -49,7 +49,7 @@ def test_post_vendor(mocker, db):
 
     vendor = qbo_connection.get_or_create_vendor(vendor_name='test Sharma',email='test@fyle.in', create=True)
 
-    assert vendor.value == 'Books by Bessie'
+    assert vendor.value == 'samp_merchant'
 
 
 def test_sync_vendors(mocker, db):
