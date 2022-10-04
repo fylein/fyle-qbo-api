@@ -231,6 +231,8 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
 def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: TaskLog, export_type: str):
     logger.info(exception.response)
     response = json.loads(exception.response)
+    if 'Fault' not in response:
+        logger.error(response)
     quickbooks_errors = response['Fault']['Error']
     
     error_msg = 'Failed to create {0}'.format(export_type)
