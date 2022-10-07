@@ -115,7 +115,7 @@ spec:
       containers:
         - name: qbo-api
           image: docker.io/{{DOCKERHUB_USERNAME}}/fyle_qbo-api:{{RELEASE_VERSION}}
-          command: [ '/bin/bash', 'start_qcluster.sh', 'export']
+          command: [ '/bin/bash', 'start_qcluster.sh', 'import']
           resources:
             limits:
               memory: 600Mi
