@@ -2,6 +2,7 @@ from django_q.tasks import Chain
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import status
+from apps.named_broker.brokers import ImportBroker
 
 from fyle_qbo_api.utils import assert_valid
 
@@ -67,6 +68,7 @@ class AutoMapEmployeeView(generics.CreateAPIView):
             general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
 
             chain = Chain()
+            chain.broker = ImportBroker()
 
             if not general_settings.auto_map_employees:
                 return Response(

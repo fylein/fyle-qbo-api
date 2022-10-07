@@ -13,6 +13,7 @@ from qbosdk.exceptions import WrongParamsError
 
 from fyle_accounting_mappings.models import Mapping, ExpenseAttribute, DestinationAttribute, EmployeeMapping
 from fyle_integrations_platform_connector import PlatformConnector
+from apps.named_broker.brokers import ExportBroker
 
 from fyle_qbo_api.exceptions import BulkError
 
@@ -276,6 +277,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
         ).all()
 
         chain = Chain()
+        chain.broker = ExportBroker()
 
         for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(
@@ -644,6 +646,7 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
         ).all()
 
         chain = Chain()
+        chain.broker = ExportBroker()
 
         for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(
@@ -762,6 +765,7 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
         ).all()
 
         chain = Chain()
+        chain.broker = ExportBroker()
 
         for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(
@@ -888,6 +892,7 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
         ).all()
 
         chain = Chain()
+        chain.broker = ExportBroker()
 
         for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(
@@ -1017,6 +1022,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
         ).all()
 
         chain = Chain()
+        chain.broker = ExportBroker()
 
         for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(
