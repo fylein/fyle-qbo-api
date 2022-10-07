@@ -59,7 +59,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: qbo-api-qcluster
+  name: qbo-api-qcluster-export
   namespace: integrations
   labels:
     app: qbo-api-qcluster
@@ -78,7 +78,44 @@ spec:
       containers:
         - name: qbo-api
           image: docker.io/{{DOCKERHUB_USERNAME}}/fyle_qbo-api:{{RELEASE_VERSION}}
-          command: [ '/bin/bash', 'start_qcluster.sh' ]
+          command: [ '/bin/bash', 'start_qcluster.sh', 'export']
+          resources:
+            limits:
+              memory: 600Mi
+            requests:
+              memory: 600Mi
+          env:
+            - name: GET_HOSTS_FROM
+              value: dns
+          envFrom:
+            - secretRef:
+                name: qbo-api-secrets
+      imagePullSecrets:
+        - name: myregistrykey2
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qbo-api-qcluster-import
+  namespace: integrations
+  labels:
+    app: qbo-api-qcluster
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qbo-api-qcluster
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: qbo-api-qcluster
+    spec:
+      containers:
+        - name: qbo-api
+          image: docker.io/{{DOCKERHUB_USERNAME}}/fyle_qbo-api:{{RELEASE_VERSION}}
+          command: [ '/bin/bash', 'start_qcluster.sh', 'export']
           resources:
             limits:
               memory: 600Mi

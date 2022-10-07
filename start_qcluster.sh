@@ -4,4 +4,4 @@
 python manage.py createcachetable --database cache_db
 
 # Running qcluster server
-python manage.py qcluster
+python manage.py qcluster --settings fyle_qbo_api.settings.${1}
