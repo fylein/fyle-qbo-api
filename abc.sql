@@ -1,0 +1,1 @@
+alter table workspace_general_settings drop column auto_create_merchants_as_vendors;

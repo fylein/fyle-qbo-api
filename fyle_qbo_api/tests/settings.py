@@ -52,7 +52,8 @@ INSTALLED_APPS = [
     'apps.mappings',
     'apps.fyle',
     'apps.quickbooks_online',
-    'apps.tasks'
+    'apps.tasks',
+    'apps.named_broker'
 ]
 
 MIDDLEWARE = [
