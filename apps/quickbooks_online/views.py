@@ -73,8 +73,12 @@ class EmployeeView(generics.ListCreateAPIView):
     pagination_class = None
 
     def get_queryset(self):
+        search_term = self.request.query_params.get('search_term')
+        if search_term:
+            return DestinationAttribute.objects.filter(
+                attribute_type='EMPLOYEE', workspace_id=self.kwargs['workspace_id'],value__icontains=search_term).order_by('value')[:10]
         return DestinationAttribute.objects.filter(
-            attribute_type='EMPLOYEE', workspace_id=self.kwargs['workspace_id']).order_by('value')
+                attribute_type='EMPLOYEE', workspace_id=self.kwargs['workspace_id']).order_by('value')[:10]
 
     def post(self, request, *args, **kwargs):
         """
@@ -908,6 +912,30 @@ class DestinationAttributesView(generics.ListAPIView):
             filters['active'] = True
 
         return DestinationAttribute.objects.filter(**filters).order_by('value')
+
+class SearchedDestinationAttributesView(generics.ListAPIView):
+    """
+    Destination Attributes view
+    """
+    serializer_class = DestinationAttributeSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        attribute_type = self.request.query_params.get('attribute_type').split(',')
+        active = self.request.query_params.get('active')
+        search_term = self.request.query_params.get('search_term')
+        filters = {
+            'attribute_type__in' : attribute_type,
+            'workspace_id': self.kwargs['workspace_id'],
+        }
+        if search_term:
+            filters['value__icontains'] = search_term
+
+        if active and active.lower() == 'true':
+            filters['active'] = True
+
+        return DestinationAttribute.objects.filter(**filters).order_by('value')[:10]
+
 
 
 class QBOAttributesView(generics.ListCreateAPIView):
