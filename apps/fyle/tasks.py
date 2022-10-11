@@ -67,7 +67,7 @@ def create_expense_groups(workspace_id: int, fund_source: List[str], task_log: T
     task_log.detail = {
         'message': 'Creating expense groups'
     }
-    task_log.save()             #TODO: doubt
+    task_log.save()
 
     return task_log
 
