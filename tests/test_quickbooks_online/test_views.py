@@ -46,6 +46,24 @@ def test_destination_attributes_view(api_client, test_connection):
 
     assert len(response) == 29
 
+def test_searched_destination_attributes_view(api_client, test_connection):
+
+    access_token = test_connection.access_token
+    url = reverse('searching-destination-attributes', 
+        kwargs={
+                'workspace_id': 3
+            }
+        )
+
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
+
+    response = api_client.get(url,{
+        'attribute_type':'CUSTOMER'
+    })
+    assert response.status_code == 200
+    response = json.loads(response.content)
+    assert len(response) == 10
+
 
 def test_qbo_attributes_view(api_client, test_connection):
 
