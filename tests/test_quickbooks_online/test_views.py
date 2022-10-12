@@ -195,7 +195,7 @@ def test_vendor_view(mocker, api_client, test_connection):
     assert response.status_code == 200
     response = json.loads(response.content)
 
-    assert len(response) == 29
+    assert len(response) == 10
 
     response = api_client.post(url)
     assert response.status_code == 200
