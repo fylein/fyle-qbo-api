@@ -38,9 +38,13 @@ class VendorView(generics.ListCreateAPIView):
     pagination_class = None
 
     def get_queryset(self):
+        search_term = self.request.query_params.get('search_term')
+        if search_term:
+            return DestinationAttribute.objects.filter(
+                attribute_type='VENDOR', workspace_id=self.kwargs['workspace_id'],value__icontains=search_term).order_by('value')[:10]
         return DestinationAttribute.objects.filter(
-            attribute_type='VENDOR', workspace_id=self.kwargs['workspace_id']).order_by('value')
-
+                attribute_type='VENDOR', workspace_id=self.kwargs['workspace_id']).order_by('value')[:10]
+                
     def post(self, request, *args, **kwargs):
         """
         Get vendors from QBO
