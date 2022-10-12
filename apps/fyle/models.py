@@ -278,11 +278,14 @@ def _group_expenses(expenses, group_fields, workspace_id):
 
     for field in group_fields:
         if field.lower() not in ALLOWED_FIELDS:
-            group_fields.pop(group_fields.index(field))
+            # Removing fields that are not present in Expenses table
+            group_fields[group_fields.index(field)] = ''
             field = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type=field.upper()).first()
             if field:
                 custom_fields[field.attribute_type.lower()] = KeyTextTransform(field.display_name, 'custom_properties')
 
+    # Removing all occurences of '' from group_fields
+    group_fields = list(filter(lambda field: field != '', group_fields))
     expense_groups = list(expenses.values(*group_fields, **custom_fields).annotate(
         total=Count('*'), expense_ids=ArrayAgg('id')))
     return expense_groups
