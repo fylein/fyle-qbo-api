@@ -20,7 +20,7 @@ from .views import VendorView, EmployeeView, AccountView, CreditCardAccountView,
     CreditCardPurchaseScheduleView, JournalEntryView, JournalEntryScheduleView, BankAccountView, AccountsPayableView, \
     PreferencesView, CompanyInfoView, QuickbooksFieldsView, DepartmentGroupUpdate, ReimburseQuickbooksPaymentsView, \
     BillPaymentView, BillPaymentAccountView, SyncQuickbooksDimensionView, RefreshQuickbooksDimensionView, \
-    QBOExpenseScheduleView, TaxCodeView, DestinationAttributesView, DebitCardExpenseScheduleView, QBOAttributesView, SearchedDestinationAttributesView
+    QBOExpenseScheduleView, TaxCodeView, DestinationAttributesView, DebitCardExpenseScheduleView, QBOAttributesView
 
 urlpatterns = [
     path('preferences/', PreferencesView.as_view()),
@@ -53,6 +53,5 @@ urlpatterns = [
     path('sync_dimensions/', SyncQuickbooksDimensionView.as_view()),
     path('refresh_dimensions/', RefreshQuickbooksDimensionView.as_view()),
     path('destination_attributes/', DestinationAttributesView.as_view(), name='destination-attributes'),
-    path('mapping_options/', SearchedDestinationAttributesView.as_view(), name='searching-destination-attributes'),
     path('qbo_attributes/', QBOAttributesView.as_view(), name='qbo-attributes')
 ]
