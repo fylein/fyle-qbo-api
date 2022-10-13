@@ -282,6 +282,7 @@ class QBOConnector:
             attribute_type='VENDOR').values('destination_id', 'value')
         disabled_fields_map = {}
 
+
         for destination_attribute in destination_attributes:
             disabled_fields_map[destination_attribute['destination_id']] = {
                 'value': destination_attribute['value']
