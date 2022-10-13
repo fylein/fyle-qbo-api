@@ -278,25 +278,48 @@ class QBOConnector:
         vendors = self.connection.vendors.get()
 
         vendor_attributes = []
+        destination_attributes = DestinationAttribute.objects.filter(workspace_id=self.workspace_id,\
+            attribute_type='VENDOR').values('destination_id', 'value')
+        disabled_fields_map = {}
 
-        for vendor in vendors:
-            detail = {
-                'email': vendor['PrimaryEmailAddr']['Address']
-                if (
-                        'PrimaryEmailAddr' in vendor and
-                        vendor['PrimaryEmailAddr'] and
-                        'Address' in vendor['PrimaryEmailAddr'] and
-                        vendor['PrimaryEmailAddr']['Address']
-                ) else None,
-                'active': vendor['Active']
+
+        for destination_attribute in destination_attributes:
+            disabled_fields_map[destination_attribute['destination_id']] = {
+                'value': destination_attribute['value']
             }
 
+        for vendor in vendors:
+            if vendor['Active']:
+                detail = {
+                    'email': vendor['PrimaryEmailAddr']['Address']
+                    if (
+                            'PrimaryEmailAddr' in vendor and
+                            vendor['PrimaryEmailAddr'] and
+                            'Address' in vendor['PrimaryEmailAddr'] and
+                            vendor['PrimaryEmailAddr']['Address']
+                    ) else None,
+                }
+
+                vendor_attributes.append({
+                    'attribute_type': 'VENDOR',
+                    'display_name': 'vendor',
+                    'value': vendor['DisplayName'],
+                    'destination_id': vendor['Id'],
+                    'detail': detail,
+                    'active': vendor['Active']
+                })
+
+                if vendor['Id'] in disabled_fields_map:
+                    disabled_fields_map.pop(vendor['Id'])
+
+        #For setting active to False
+        for destination_id in disabled_fields_map:
             vendor_attributes.append({
                 'attribute_type': 'VENDOR',
                 'display_name': 'vendor',
-                'value': vendor['DisplayName'],
-                'destination_id': vendor['Id'],
-                'detail': detail
+                'value': disabled_fields_map[destination_id]['value'],
+                'destination_id': destination_id,
+                'active': False
             })
 
         DestinationAttribute.bulk_create_or_update_destination_attributes(
