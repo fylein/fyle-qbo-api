@@ -287,7 +287,8 @@ class QBOConnector:
                         vendor['PrimaryEmailAddr'] and
                         'Address' in vendor['PrimaryEmailAddr'] and
                         vendor['PrimaryEmailAddr']['Address']
-                ) else None
+                ) else None,
+                'active': vendor['Active']
             }
 
             vendor_attributes.append({
