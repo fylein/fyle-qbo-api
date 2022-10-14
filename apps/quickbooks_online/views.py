@@ -43,7 +43,7 @@ class VendorView(generics.ListCreateAPIView):
             return DestinationAttribute.objects.filter(
                 attribute_type='VENDOR', workspace_id=self.kwargs['workspace_id'],value__icontains=search_term).order_by('value')[:10]
         return DestinationAttribute.objects.filter(
-                attribute_type='VENDOR', workspace_id=self.kwargs['workspace_id']).order_by('value')[:10]
+            attribute_type='VENDOR', workspace_id=self.kwargs['workspace_id']).order_by('value')[:10]
                 
     def post(self, request, *args, **kwargs):
         """
