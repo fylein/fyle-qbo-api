@@ -1106,21 +1106,12 @@ def create_fyle_merchants_payload(vendors, existing_merchants_name):
 
     return payload
 
-def post_merchants(platform_connection: PlatformConnector, workspace_id: int, first_run: bool):
+def post_merchants(platform_connection: PlatformConnector, workspace_id: int):
     existing_merchants_name = ExpenseAttribute.objects.filter(
         attribute_type='MERCHANT', workspace_id=workspace_id).values_list('value', flat=True)
 
-    if first_run:
-        qbo_attributes = DestinationAttribute.objects.filter(
-            attribute_type='VENDOR', workspace_id=workspace_id).order_by('value', 'id')
-    else:
-        merchant = platform_connection.merchants.get()
-        merchant_updated_at = parser.isoparse(merchant['updated_at']).strftime('%Y-%m-%d %H:%M:%S.%f')
-        qbo_attributes = DestinationAttribute.objects.filter(
-            attribute_type='VENDOR',
-            workspace_id=workspace_id,
-            updated_at__gte=merchant_updated_at
-        ).order_by('value', 'id')
+    qbo_attributes = DestinationAttribute.objects.filter(
+        attribute_type='VENDOR', active=True, workspace_id=workspace_id).order_by('value', 'id')
 
     qbo_attributes = remove_duplicates(qbo_attributes)
 
@@ -1137,13 +1128,10 @@ def auto_create_vendors_as_merchants(workspace_id):
 
         fyle_connection = PlatformConnector(fyle_credentials)
 
-        existing_merchants_name = ExpenseAttribute.objects.filter(attribute_type='MERCHANT', workspace_id=workspace_id)
-        first_run = False if existing_merchants_name else True
-
         fyle_connection.merchants.sync(workspace_id)
 
         sync_qbo_attribute('VENDOR', workspace_id)
-        post_merchants(fyle_connection, workspace_id, first_run)
+        post_merchants(fyle_connection, workspace_id)
 
     except WrongParamsError as exception:
         logger.error(
