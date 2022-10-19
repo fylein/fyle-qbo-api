@@ -234,7 +234,8 @@ def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: Ta
     if 'Fault' not in response:
         logger.error(response)
         if 'error' in response and response['error'] == 'invalid_grant':
-            qbo_credentials: QBOCredential.objects.filter(workspace_id=expense_group.workspace_id).first()
+            qbo_credentials: QBOCredential = QBOCredential.objects.filter(
+                workspace_id=expense_group.workspace_id).first()
             if qbo_credentials:
                 qbo_credentials.is_expired = True
                 qbo_credentials.refresh_token = None
