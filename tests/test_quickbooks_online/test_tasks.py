@@ -7,18 +7,16 @@ import random
 from unittest import mock
 from django_q.models import Schedule
 from apps.tasks.models import TaskLog
-from apps.quickbooks_online.models import Bill, BillLineitem, Cheque, QBOExpense, QBOExpenseLineitem, CreditCardPurchase, JournalEntry, \
-    JournalEntryLineitem, ChequeLineitem
+from apps.quickbooks_online.models import Bill, BillLineitem, Cheque, QBOExpense, QBOExpenseLineitem, CreditCardPurchase, JournalEntry
 from apps.quickbooks_online.tasks import create_bill, create_qbo_expense, create_credit_card_purchase, create_journal_entry, create_cheque, \
     create_bill_payment, check_qbo_object_status, schedule_reimbursements_sync, process_reimbursements, async_sync_accounts, \
         schedule_bill_payment_creation, schedule_qbo_objects_status_sync, get_or_create_credit_card_or_debit_card_vendor, \
-            create_or_update_employee_mapping, update_last_export_details
+            create_or_update_employee_mapping, update_last_export_details, handle_quickbooks_error
 from fyle_qbo_api.exceptions import BulkError
 from qbosdk.exceptions import WrongParamsError
-from fyle_accounting_mappings.models import EmployeeMapping, Mapping
+from fyle_accounting_mappings.models import EmployeeMapping
 from apps.workspaces.models import WorkspaceGeneralSettings, QBOCredential
-from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, CategoryMapping, ExpenseAttribute
-from apps.mappings.models import GeneralMapping
+from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute
 from apps.fyle.models import ExpenseGroup, Reimbursement, Expense
 from apps.quickbooks_online.utils import QBOConnector
 from .fixtures import data
@@ -691,6 +689,46 @@ def test_schedule_bill_payment_creation(db):
     schedule = Schedule.objects.filter(func='apps.quickbooks_online.tasks.create_bill_payment').count()
 
     assert schedule == 0
+
+def test_handle_quickbooks_errors(db):
+    expense_group = ExpenseGroup.objects.get(id=8)
+    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+
+    handle_quickbooks_error(
+        exception=WrongParamsError(
+            msg='Some Parameters are wrong',
+            response=json.dumps(
+                {
+                    'error': 'invalid_grant'
+                }
+            )
+        ),
+        expense_group=expense_group,
+        task_log=task_log,
+        export_type='Bill'
+    )
+
+    qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
+
+    assert qbo_credentials.refresh_token == None
+    assert qbo_credentials.is_expired == True
+    assert task_log.quickbooks_errors['error'] == 'invalid_grant'
+
+    handle_quickbooks_error(
+        exception=WrongParamsError(
+            msg='Some Parameters are wrong',
+            response=json.dumps(
+                {
+                    'blewblew': 'invalid_grant'
+                }
+            )
+        ),
+        expense_group=expense_group,
+        task_log=task_log,
+        export_type='Bill'
+    )
+
+    assert 'error' not in task_log.quickbooks_errors
 
 
 def test_check_qbo_object_status(mocker, db):
