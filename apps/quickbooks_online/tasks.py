@@ -265,6 +265,7 @@ def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: Ta
                     'is_resolved': False
                 }
             )
+
     task_log.status = 'FAILED'
     task_log.detail = None
     task_log.quickbooks_errors = errors
