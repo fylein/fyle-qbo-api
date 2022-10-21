@@ -498,7 +498,7 @@ class QBOExpense(models.Model):
             merchant = expense.vendor if expense.vendor else ''
 
             entity = DestinationAttribute.objects.filter(
-                value__iexact=merchant, attribute_type='VENDOR', workspace_id=expense_group.workspace_id
+                value__iexact=merchant, attribute_type='VENDOR', workspace_id=expense_group.workspace_id, active=True
             ).first()
 
             expense_group.description['spent_at'] = expense.spent_at.strftime("%Y-%m-%d")
@@ -646,7 +646,7 @@ class CreditCardPurchase(models.Model):
             merchant = expense.vendor if expense.vendor else ''
 
             entity = DestinationAttribute.objects.filter(
-                value__iexact=merchant, attribute_type='VENDOR', workspace_id=expense_group.workspace_id
+                value__iexact=merchant, attribute_type='VENDOR', workspace_id=expense_group.workspace_id, active=True
             ).first()
 
             expense_group.description['spent_at'] = expense.spent_at.strftime("%Y-%m-%d")
