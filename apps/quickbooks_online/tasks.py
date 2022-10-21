@@ -161,6 +161,7 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
                     'value__iexact': source_employee.detail['full_name'],
                     'attribute_type': 'VENDOR'
                 }
+            filters['active'] = True
 
             entity = DestinationAttribute.objects.filter(
                 workspace_id=expense_group.workspace_id,

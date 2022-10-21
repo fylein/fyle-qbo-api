@@ -8,6 +8,7 @@ from apps.workspaces.models import QBOCredential
 from apps.fyle.models import Reimbursement, ExpenseGroup
 from .fixtures import data
 from qbosdk.exceptions import WrongParamsError, InvalidTokenError
+from fyle_accounting_mappings.models import DestinationAttribute
 
 #  Will use paramaterize decorator of python later
 def test_quickbooks_fields_view(api_client, test_connection):
@@ -175,14 +176,25 @@ def test_vendor_view(mocker, api_client, test_connection):
 
     response = api_client.get(url)
     assert response.status_code == 200
-    response = json.loads(response.content)
 
+    response = json.loads(response.content)
     assert len(response) == 29
+
+    vendor = DestinationAttribute.objects.filter(
+            attribute_type='VENDOR', active=True, workspace_id=3).first()
+    vendor.active = False
+    vendor.save()
+
+    response = api_client.get(url)
+    assert response.status_code == 200
+
+    response = json.loads(response.content)
+    assert len(response) == 28
 
     response = api_client.post(url)
     assert response.status_code == 200
-    response = json.loads(response.content)
 
+    response = json.loads(response.content)
     assert len(response) == 0
 
     qbo_credential = QBOCredential.get_active_qbo_credentials(3)
@@ -190,8 +202,8 @@ def test_vendor_view(mocker, api_client, test_connection):
 
     response = api_client.post(url)
     assert response.status_code == 400
-    response = json.loads(response.content)
 
+    response = json.loads(response.content)
     assert response['message'] == 'QBO credentials not found in workspace'
 
 
