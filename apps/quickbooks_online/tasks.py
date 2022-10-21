@@ -232,34 +232,47 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
 def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: TaskLog, export_type: str):
     logger.info(exception.response)
     response = json.loads(exception.response)
-    quickbooks_errors = response['Fault']['Error']
-    
-    error_msg = 'Failed to create {0}'.format(export_type)
-    errors = []
+    if 'Fault' not in response:
+        logger.error(response)
+        if 'error' in response and response['error'] == 'invalid_grant':
+            qbo_credentials: QBOCredential = QBOCredential.objects.filter(
+                workspace_id=expense_group.workspace_id).first()
+            if qbo_credentials:
+                qbo_credentials.is_expired = True
+                qbo_credentials.refresh_token = None
+                qbo_credentials.save()
+        errors = response
+    else:
+        quickbooks_errors = response['Fault']['Error']
 
-    for error in quickbooks_errors:
-        error = {
-            'expense_group_id': expense_group.id,
-            'type': '{0} / {1}'.format(response['Fault']['type'], error['code']),
-            'short_description': error['Message'] if error['Message'] else '{0} error'.format(export_type),
-            'long_description': error['Detail'] if error['Detail'] else error_msg
-        }
-        errors.append(error)
+        error_msg = 'Failed to create {0}'.format(export_type)
+        errors = []
 
-        Error.objects.update_or_create(
-            workspace_id=expense_group.workspace_id,
-            expense_group=expense_group,
-            defaults={
-                'error_title': error['type'],
-                'type': 'QBO_ERROR',
-                'error_detail': error['long_description'],
-                'is_resolved': False
+        for error in quickbooks_errors:
+            error = {
+                'expense_group_id': expense_group.id,
+                'type': '{0} / {1}'.format(response['Fault']['type'], error['code']),
+                'short_description': error['Message'] if error['Message'] else '{0} error'.format(export_type),
+                'long_description': error['Detail'] if error['Detail'] else error_msg
             }
-        )
+            errors.append(error)
+
+            Error.objects.update_or_create(
+                workspace_id=expense_group.workspace_id,
+                expense_group=expense_group,
+                defaults={
+                    'error_title': error['type'],
+                    'type': 'QBO_ERROR',
+                    'error_detail': error['long_description'],
+                    'is_resolved': False
+                }
+            )
+
     task_log.status = 'FAILED'
     task_log.detail = None
     task_log.quickbooks_errors = errors
     task_log.save()
+
 
 def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
     """
