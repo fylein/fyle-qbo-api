@@ -104,7 +104,7 @@ def test_post_general_mappings(api_client, test_connection):
     
     response = api_client.post(
         url,
-        data=invalid_data
+        data=payload
     )
     assert response.status_code == 200
     response = json.loads(response.content)
@@ -118,13 +118,17 @@ def test_auto_map_employee(api_client, test_connection):
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
 
     response = api_client.post(url)
-
     assert response.status_code == 200
+
+    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
+    general_settings.auto_map_employees = ''
+
+    response = api_client.post(url)
+    assert response.status_code == 400
 
     general_mapping = GeneralMapping.objects.get(workspace_id=3)
     general_mapping.delete()
 
     response = api_client.post(url)
-
     assert response.status_code == 400
     

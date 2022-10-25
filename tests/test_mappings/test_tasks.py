@@ -390,6 +390,7 @@ def test_schedule_fyle_attributes_creation(db, mocker):
         'fyle_integrations_platform_connector.apis.ExpenseCustomFields.get_by_id',
         return_value={'options': ['samp'], 'updated_at': '2020-06-11T13:14:55.201598+00:00'}
     )
+
     workspace_id = 4
     schedule_fyle_attributes_creation(workspace_id)
 
@@ -406,13 +407,18 @@ def test_schedule_fyle_attributes_creation(db, mocker):
 
     async_auto_create_custom_field_mappings(workspace_id)
 
-    schedule_fyle_attributes_creation(2)
+    mapping_settings = MappingSetting.objects.filter(
+        is_custom=True, import_to_fyle=True, workspace_id=workspace_id
+    )
+    mapping_settings.delete()
+
+    schedule_fyle_attributes_creation(workspace_id)
     schedule = Schedule.objects.filter(
         func='apps.mappings.tasks.async_auto_create_custom_field_mappings',
         args='{}'.format(workspace_id),
     ).first()
 
-    assert schedule.func == 'apps.mappings.tasks.async_auto_create_custom_field_mappings'
+    assert schedule == None
 
 
 def test_post_merchants(db, mocker):

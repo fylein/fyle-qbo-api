@@ -67,5 +67,8 @@ data = {
             }
         },
         'workspace_id':9
-    }
+    },
+    'validate': {
+        'workspace_general_settings':{}
+    } 
 }

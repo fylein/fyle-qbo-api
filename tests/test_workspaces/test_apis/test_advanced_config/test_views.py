@@ -15,6 +15,7 @@ def test_advanced_config(api_client, test_connection):
 
     url = '/api/v2/workspaces/3/advanced_configurations/'
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
+
     response = api_client.put(
         url,
         data=data['advanced_config'],
@@ -25,3 +26,12 @@ def test_advanced_config(api_client, test_connection):
 
     response = json.loads(response.content)
     assert dict_compare_keys(response, data['response']) == [], 'workspaces api returns a diff in the keys'
+
+    response = api_client.put(
+        url,
+        data=data['validate'],
+        format='json'
+    )
+
+    assert response.status_code == 200
+    
