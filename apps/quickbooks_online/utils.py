@@ -260,6 +260,7 @@ class QBOConnector:
                             'display_name': 'Tax Code',
                             'value': '{0} @{1}%'.format(tax_code['Name'], effective_tax_rate),
                             'destination_id': tax_code['Id'],
+                            'active': True,
                             'detail': {
                                 'tax_rate': effective_tax_rate,
                                 'tax_refs': tax_rates
@@ -333,6 +334,7 @@ class QBOConnector:
             'display_name': 'vendor',
             'value': vendor['DisplayName'],
             'destination_id': vendor['Id'],
+            'active': vendor['Active'],
             'detail': {
                 'email': vendor['PrimaryEmailAddr']['Address'] if 'PrimaryEmailAddr' in vendor else None
             }
@@ -386,7 +388,8 @@ class QBOConnector:
                 'display_name': 'employee',
                 'value': employee['DisplayName'],
                 'destination_id': employee['Id'],
-                'detail': detail
+                'detail': detail,
+                'active': True
             })
 
         DestinationAttribute.bulk_create_or_update_destination_attributes(
