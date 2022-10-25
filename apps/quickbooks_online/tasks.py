@@ -538,7 +538,16 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
             if general_settings.employee_field_mapping == 'EMPLOYEE':
                 entity = entity.destination_employee
             else:
-                entity = entity.destination_vendor
+                if not entity.destination_vendor.active:
+                    bulk_errors.append({
+                        'row': None,
+                        'expense_group_id': expense_group.id,
+                        'value': expense_group.description.get('employee_email'),
+                        'type': 'Employee Mapping',
+                        'message': 'Employee is mappend to inactive vendor on QuickBooks'
+                    })
+                else:
+                    entity = entity.destination_vendor
 
             if not entity:
                 raise EmployeeMapping.DoesNotExist
