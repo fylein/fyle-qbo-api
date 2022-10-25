@@ -538,16 +538,7 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
             if general_settings.employee_field_mapping == 'EMPLOYEE':
                 entity = entity.destination_employee
             else:
-                if not entity.destination_vendor.active:
-                    bulk_errors.append({
-                        'row': None,
-                        'expense_group_id': expense_group.id,
-                        'value': expense_group.description.get('employee_email'),
-                        'type': 'Employee Mapping',
-                        'message': 'Employee mapping not found'
-                    })
-                else:
-                    entity = entity.destination_vendor
+                entity = entity.destination_vendor if entity.destination_vendor.active else None
 
             if not entity:
                 raise EmployeeMapping.DoesNotExist
