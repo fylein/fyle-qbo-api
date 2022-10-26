@@ -74,7 +74,7 @@ class EmployeeView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         return DestinationAttribute.objects.filter(
-            attribute_type='EMPLOYEE', workspace_id=self.kwargs['workspace_id']).order_by('value')
+            attribute_type='EMPLOYEE',active=True, workspace_id=self.kwargs['workspace_id']).order_by('value')
 
     def post(self, request, *args, **kwargs):
         """
