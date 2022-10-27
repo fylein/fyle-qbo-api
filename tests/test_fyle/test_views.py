@@ -2,6 +2,7 @@ from apps.fyle.models import ExpenseGroup
 from apps.workspaces.models import FyleCredential, Workspace
 import pytest
 import json
+from fyle_accounting_mappings.models import DestinationAttribute
 from django.urls import reverse
 from .fixtures import data
 from tests.helper import dict_compare_keys
@@ -297,9 +298,6 @@ def test_employees_view(api_client, test_connection):
 
     response = api_client.get(url)
     assert response.status_code == 200
-
-    response = json.loads(response.content)
-    assert response[0] == data['employee_view'][0]
 
 def test_categories_view(api_client, test_connection):
     
