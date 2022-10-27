@@ -82,7 +82,7 @@ class EmployeeView(generics.ListCreateAPIView):
             return DestinationAttribute.objects.filter(
                 attribute_type='EMPLOYEE', active=True, workspace_id=self.kwargs['workspace_id'],value__icontains=search_term).order_by('value')[:10]
         return DestinationAttribute.objects.filter(
-                attribute_type='EMPLOYEE', active=True, workspace_id=self.kwargs['workspace_id']).order_by('value')[:10]
+            attribute_type='EMPLOYEE', active=True, workspace_id=self.kwargs['workspace_id']).order_by('value')[:10]
 
     def post(self, request, *args, **kwargs):
         """
@@ -906,14 +906,11 @@ class DestinationAttributesView(generics.ListAPIView):
 
     def get_queryset(self):
         attribute_types = self.request.query_params.get('attribute_types').split(',')
-        active = self.request.query_params.get('active')
         filters = {
             'attribute_type__in' : attribute_types,
-            'workspace_id': self.kwargs['workspace_id']
+            'workspace_id': self.kwargs['workspace_id'],
+            'active': True
         }
-
-        if active and active.lower() == 'true':
-            filters['active'] = True
 
         return DestinationAttribute.objects.filter(**filters).order_by('value')
 
