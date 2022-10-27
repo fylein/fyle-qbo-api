@@ -80,9 +80,9 @@ class EmployeeView(generics.ListCreateAPIView):
         search_term = self.request.query_params.get('search_term')
         if search_term:
             return DestinationAttribute.objects.filter(
-                attribute_type='EMPLOYEE', workspace_id=self.kwargs['workspace_id'],value__icontains=search_term).order_by('value')[:10]
+                attribute_type='EMPLOYEE', active=True, workspace_id=self.kwargs['workspace_id'],value__icontains=search_term).order_by('value')[:10]
         return DestinationAttribute.objects.filter(
-                attribute_type='EMPLOYEE', workspace_id=self.kwargs['workspace_id']).order_by('value')[:10]
+                attribute_type='EMPLOYEE', active=True, workspace_id=self.kwargs['workspace_id']).order_by('value')[:10]
 
     def post(self, request, *args, **kwargs):
         """
@@ -931,6 +931,7 @@ class SearchedDestinationAttributesView(generics.ListAPIView):
         filters = {
             'attribute_type__in' : attribute_type,
             'workspace_id': self.kwargs['workspace_id'],
+            'active': True
         }
         if search_term:
             filters['value__icontains'] = search_term
