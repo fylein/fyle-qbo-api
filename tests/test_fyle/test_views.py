@@ -2,7 +2,6 @@ from apps.fyle.models import ExpenseGroup
 from apps.workspaces.models import FyleCredential, Workspace
 import pytest
 import json
-from fyle_accounting_mappings.models import DestinationAttribute
 from django.urls import reverse
 from .fixtures import data
 from tests.helper import dict_compare_keys
