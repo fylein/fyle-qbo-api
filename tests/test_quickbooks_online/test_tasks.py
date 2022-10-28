@@ -926,22 +926,8 @@ def test__validate_expense_group(mocker, db):
     general_settings.import_tax_codes = True
     general_settings.save()
 
-    general_mapping = GeneralMapping.objects.get(workspace_id=workspace_id)
-    general_mapping.default_ccc_vendor_id = ''
-    general_mapping.default_ccc_vendor_name = ''
-    general_mapping.accounts_payable_name = ''
-    general_mapping.accounts_payable_id = ''
-    general_mapping.bank_account_name = ''
-    general_mapping.bank_account_id = ''
-    general_mapping.qbo_expense_account_name = ''
-    general_mapping.qbo_expense_account_id = ''
-    general_mapping.default_debit_card_account_name = ''
-    general_mapping.default_debit_card_account_id = ''
-    general_mapping.default_tax_code_id = ''
-    general_mapping.default_tax_code_name = ''
-    general_mapping.default_ccc_account_id = ''
-    general_mapping.default_ccc_account_name = ''
-    general_mapping.save()
+    general_mapping = GeneralMapping.objects.filter(workspace_id=workspace_id)
+    general_mapping.update(**data['empty_general_maapings'])
 
     try:
         __validate_expense_group(expense_group, general_settings)

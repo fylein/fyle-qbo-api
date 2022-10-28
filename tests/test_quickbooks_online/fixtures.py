@@ -580,4 +580,20 @@ data = {
             "user_id": "usqywo0f3nBY",
         }
     ],
+    'empty_general_maapings': {
+        'default_ccc_vendor_id': '',
+        'default_ccc_vendor_name': '',
+        'accounts_payable_name': '',
+        'accounts_payable_id': '',
+        'bank_account_name': '',
+        'bank_account_id': '',
+        'qbo_expense_account_name': '',
+        'qbo_expense_account_id': '',
+        'default_debit_card_account_name': '',
+        'default_debit_card_account_id': '',
+        'default_tax_code_id': '',
+        'default_tax_code_name': '',
+        'default_ccc_account_id': '',
+        'default_ccc_account_name': '',
+    }
 }
