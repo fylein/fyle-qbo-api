@@ -1,4 +1,3 @@
-import pytest
 from datetime import datetime, timezone
 from fyle_rest_auth.models import User
 from apps.users.helpers import get_cluster_domain_and_refresh_token
@@ -7,8 +6,7 @@ from fyle.platform import Platform
 from apps.workspaces.models import FyleCredential
 
 
-@pytest.mark.django_db
-def test_get_cluster_domain_and_refresh_token(add_users_to_database):
+def test_get_cluster_domain_and_refresh_token(db, add_users_to_database):
     '''
     Test Post of User Profile
     '''
@@ -36,3 +34,9 @@ def test_get_cluster_domain_and_refresh_token(add_users_to_database):
 
     assert cluster_domain == 'https://staging.fyle.tech'
     assert refresh_token == fyle_credentials.refresh_token
+
+    FyleCredential.objects.filter(workspace__user=user).delete()
+    cluster_domain, refresh_token = get_cluster_domain_and_refresh_token(user)
+
+    assert cluster_domain == 'https://staging.fyle.tech'
+    

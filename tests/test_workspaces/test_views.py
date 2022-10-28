@@ -6,7 +6,7 @@ from unittest import mock
 from tests.helper import dict_compare_keys
 from fyle.platform import exceptions as fyle_exc
 from qbosdk import exceptions as qbo_exc
-from apps.workspaces.models import FyleCredential, WorkspaceSchedule, WorkspaceGeneralSettings, QBOCredential, Workspace
+from apps.workspaces.models import *
 from .fixtures import data
 
 def test_get_workspace_by_id(api_client, test_connection):
@@ -147,6 +147,17 @@ def test_post_workspace_configurations(api_client, test_connection):
     response = api_client.patch(
         url,
         data=data['workspace_general_settings_payload'],
+        format='json'
+    )
+    assert response.status_code==200
+
+    updated_data = data['workspace_general_settings_payload']
+    updated_data['je_single_credit_line'] = True
+    updated_data['corporate_credit_card_expenses_object'] = 'JOURNAL ENTRY'
+
+    response = api_client.post(
+        url,
+        data=updated_data,
         format='json'
     )
     assert response.status_code==200
@@ -324,6 +335,7 @@ def test_post_connect_qbo_view(mocker, api_client, test_connection):
     )
     code = 'sdfg'
     url = '/api/workspaces/5/connect_qbo/authorization_code/'
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
 
     qbo_credentials = QBOCredential.objects.filter(workspace=5).first()
     qbo_credentials.delete()
@@ -332,7 +344,6 @@ def test_post_connect_qbo_view(mocker, api_client, test_connection):
     workspace.onboarding_state = 'CONNECTION'
     workspace.save()
 
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
     response = api_client.post(
         url,
         data={
@@ -400,9 +411,19 @@ def test_connect_qbo_view_exceptions(api_client, test_connection):
 
 @mock.patch('apps.workspaces.views.connection')
 def test_prepare_e2e_test_view(mock_db, mocker, api_client, test_connection):
+    url = reverse(
+        'setup-e2e-test', kwargs={
+            'workspace_id': 3
+        }
+    )
+
+    api_client.credentials(HTTP_X_E2E_Tests_Client_ID='dummy_id')
+    response = api_client.post(url)
+    assert response.status_code == 403
+
     mocker.patch(
-        'apps.workspaces.permissions.IsAuthenticatedForTest.has_permission',
-        return_value=True
+        'cryptography.fernet.Fernet.decrypt',
+        return_value=settings.E2E_TESTS_CLIENT_SECRET.encode('utf-8')
     )
    
     mocker.patch(
@@ -416,12 +437,6 @@ def test_prepare_e2e_test_view(mock_db, mocker, api_client, test_connection):
     mocker.patch(
         'apps.workspaces.models.QBOCredential.objects.create',
         return_value=None
-    )
-
-    url = reverse(
-        'setup-e2e-test', kwargs={
-            'workspace_id': 3
-        }
     )
 
     api_client.credentials(HTTP_X_E2E_Tests_Client_ID='dummy_id')
@@ -487,6 +502,12 @@ def test_schedule_view(mocker, db, api_client, test_connection):
     )
     assert response.status_code == 200
 
+    workspace_schedule = WorkspaceSchedule.objects.filter(workspace_id=workspace_id).first() 
+    workspace_schedule.delete()
+
+    response = api_client.get(url)
+    assert response.status_code == 400
+
 
 def test_export_to_qbo(mocker, api_client, test_connection):
     mocker.patch(
@@ -510,6 +531,13 @@ def test_last_export_detail_view(mocker, db, api_client, test_connection):
 
     response = api_client.get(url)
     assert response.status_code == 200
+
+    last_export_detail = LastExportDetail.objects.filter(workspace_id=workspace_id).first()
+    last_export_detail.total_expense_groups_count = 0
+    last_export_detail.save()
+
+    response = api_client.get(url)
+    assert response.status_code == 400
 
 
 def test_workspace_admin_view(mocker, db, api_client, test_connection):
