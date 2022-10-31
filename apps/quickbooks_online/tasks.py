@@ -257,16 +257,17 @@ def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: Ta
             }
             errors.append(error)
 
-            Error.objects.update_or_create(
-                workspace_id=expense_group.workspace_id,
-                expense_group=expense_group,
-                defaults={
-                    'error_title': error['type'],
-                    'type': 'QBO_ERROR',
-                    'error_detail': error['long_description'],
-                    'is_resolved': False
-                }
-            )
+            if export_type != 'Bill Payment':
+                Error.objects.update_or_create(
+                    workspace_id=expense_group.workspace_id,
+                    expense_group=expense_group,
+                    defaults={
+                        'error_title': error['type'],
+                        'type': 'QBO_ERROR',
+                        'error_detail': error['long_description'],
+                        'is_resolved': False
+                    }
+                )
 
     task_log.status = 'FAILED'
     task_log.detail = None
@@ -346,7 +347,6 @@ def create_bill(expense_group, task_log_id, last_export: bool):
             task_log.bill = bill_object
             task_log.quickbooks_errors = None
             task_log.status = 'COMPLETE'
-
             task_log.save()
 
             expense_group.exported_at = datetime.now()
