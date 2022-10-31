@@ -36,7 +36,7 @@ services:
       E2E_TESTS_CLIENT_SECRET: ${E2E_TESTS_CLIENT_SECRET}
       E2E_TESTS_REALM_ID: ${E2E_TESTS_REALM_ID}
   db:
-    image: "postgres:15"
+    image: "postgres:latest"
     environment: 
       POSTGRES_DB: dummy
       POSTGRES_USER: postgres

@@ -6,7 +6,7 @@ import pytest
 import random
 from unittest import mock
 from django_q.models import Schedule
-from apps.tasks.models import TaskLog
+from apps.tasks.models import Error, TaskLog
 from apps.quickbooks_online.models import Bill, BillLineitem, Cheque, QBOExpense, QBOExpenseLineitem, CreditCardPurchase, JournalEntry
 from apps.quickbooks_online.tasks import create_bill, create_qbo_expense, create_credit_card_purchase, create_journal_entry, create_cheque, \
     create_bill_payment, check_qbo_object_status, schedule_reimbursements_sync, process_reimbursements, async_sync_accounts, \
@@ -110,6 +110,7 @@ def test_create_or_update_employee_mapping(mocker, db):
         except:
             logger.info('Employee mapping not found')
 
+
 def test_post_bill_success(mocker, create_task_logs, db):
     mocker.patch(
         'qbosdk.apis.Bills.post',
@@ -194,6 +195,115 @@ def test_create_bill_exceptions(db, create_task_logs):
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
+
+
+def test_changing_accounting_period(mocker, db, create_task_logs):
+    workspace_id = 3
+
+    task_log = TaskLog.objects.filter(workspace_id=workspace_id).first()
+    task_log.status = 'READY'
+    task_log.type = 'CREATING_BILL'
+    task_log.save()
+
+    expense_group = ExpenseGroup.objects.get(id=14)
+    expenses = expense_group.expenses.all()
+
+    expense_group.id = random.randint(100, 1500000)
+    expense_group.save()
+
+    for expense in expenses:
+        expense.expense_group_id = expense_group.id
+        expense.save()
+
+    expense_group.expenses.set(expenses)
+
+    with mock.patch('qbosdk.apis.bills.Bills.post') as mock_call:
+        mock_call.side_effect = [
+            WrongParamsError(
+                msg={
+                    'Message': 'Invalid Parameters'
+                },
+                response=json.dumps(
+                    {
+                        'Fault': {
+                            'type': 'ValidationFault',
+                            'Error': [
+                                {
+                                    'code': 6210,
+                                    'Message': 'Account Period Closed, Cannot Update Through Services API',
+                                    'Detail': 'The account period has closed and the account books cannot be updated \
+                                        through through the QBO Services API. \
+                                            Please use the QBO website to make these changes.'
+                                }
+                            ]
+                        }
+                    }
+                )
+            ),
+            data['post_bill']
+        ]
+
+        workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=task_log.workspace_id)
+        workspace_general_settings.change_accounting_period = False
+        workspace_general_settings.save()
+
+        create_bill(expense_group, task_log.id, False)
+        errors = Error.objects.filter(
+            workspace_id=task_log.workspace_id, is_resolved=False, error_title='ValidationFault / 6210'
+        ).all()
+
+        task_log = TaskLog.objects.get(id=task_log.id)
+        assert errors.count() == 1
+        assert task_log.status == 'FAILED'
+
+        mock_call.side_effect = [
+            WrongParamsError(
+                msg={
+                    'Message': 'Invalid Parameters'
+                },
+                response=json.dumps(
+                    {
+                        'Fault': {
+                            'type': 'ValidationFault',
+                            'Error': [
+                                {
+                                    'code': 6210,
+                                    'Message': 'Account Period Closed, Cannot Update Through Services API',
+                                    'Detail': 'The account period has closed and the account books cannot be updated \
+                                        through through the QBO Services API. \
+                                            Please use the QBO website to make these changes.'
+                                }
+                            ]
+                        }
+                    }
+                )
+            ),
+            data['post_bill']
+        ]
+
+        mocker.patch(
+            'qbosdk.apis.Preferences.get',
+            return_value=data['preference_response']
+        )
+
+        errors = Error.objects.filter(
+            workspace_id=task_log.workspace_id, is_resolved=False, error_title='ValidationFault / 6210'
+        ).all()
+
+        assert errors.count() == 1
+
+        workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=task_log.workspace_id)
+        workspace_general_settings.change_accounting_period = True
+        workspace_general_settings.save()
+
+        create_bill(expense_group, task_log.id, False)
+        errors = Error.objects.filter(
+            workspace_id=task_log.workspace_id, is_resolved=False, error_title='ValidationFault / 6210'
+        ).all()
+
+        task_log = TaskLog.objects.get(id=task_log.id)
+        assert errors.count() == 0
+        assert task_log.status == 'COMPLETE'
 
 
 def test_post_qbo_expenses_success(mocker, create_task_logs, db):
@@ -729,6 +839,37 @@ def test_handle_quickbooks_errors(db):
     )
 
     assert 'error' not in task_log.quickbooks_errors
+
+    handle_quickbooks_error(
+        exception=WrongParamsError(
+            msg='Some Parameters are wrong',
+            response=json.dumps(
+                {
+                    'Fault': {
+                        'type': 'ValidationFault',
+                        'Error': [
+                            {
+                                'code': 6210,
+                                'Message': 'Account Period Closed, Cannot Update Through Services API',
+                                'Detail': 'The account period has closed and the account books cannot be updated \
+                                    through through the QBO Services API. \
+                                        Please use the QBO website to make these changes.'
+                            }
+                        ]
+                    }
+                }
+            )
+        ),
+        expense_group=expense_group,
+        task_log=task_log,
+        export_type='Bill Payment'
+    )
+    
+    errors = Error.objects.filter(
+        workspace_id=task_log.workspace_id, is_resolved=False, error_title='ValidationFault / 6210'
+    ).all()
+
+    assert errors.count() == 0
 
 
 def test_check_qbo_object_status(mocker, db):
