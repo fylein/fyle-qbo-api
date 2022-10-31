@@ -47,6 +47,24 @@ def test_destination_attributes_view(api_client, test_connection):
 
     assert len(response) == 29
 
+def test_searched_destination_attributes_view(api_client, test_connection):
+
+    access_token = test_connection.access_token
+    url = reverse('searching-destination-attributes', 
+        kwargs={
+                'workspace_id': 3
+            }
+        )
+
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
+
+    response = api_client.get(url,{
+        'attribute_type':'CUSTOMER'
+    })
+    assert response.status_code == 200
+    response = json.loads(response.content)
+    assert len(response) == 10
+
 
 def test_qbo_attributes_view(api_client, test_connection):
 
@@ -178,7 +196,7 @@ def test_vendor_view(mocker, api_client, test_connection):
     assert response.status_code == 200
 
     response = json.loads(response.content)
-    assert len(response) == 29
+    assert len(response) == 10
 
     vendor = DestinationAttribute.objects.filter(
             attribute_type='VENDOR', active=True, workspace_id=3).first()
@@ -189,7 +207,7 @@ def test_vendor_view(mocker, api_client, test_connection):
     assert response.status_code == 200
 
     response = json.loads(response.content)
-    assert len(response) == 28
+    assert len(response) == 10
 
     response = api_client.post(url)
     assert response.status_code == 200
