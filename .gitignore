@@ -1,6 +1,3 @@
-# Debugging
-debugger
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -15,6 +12,7 @@ __pycache__/
 
 # Test files
 test.py
+debugger
 
 # Cache
 demo_cache.sqlite
