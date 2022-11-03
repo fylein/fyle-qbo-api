@@ -1,5 +1,4 @@
 from django.urls import reverse
-import pytest
 
 #  Will use paramaterize decorator of python later
 def test_get_profile_view(api_client, test_connection):

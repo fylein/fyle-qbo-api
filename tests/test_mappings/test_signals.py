@@ -3,10 +3,10 @@ import pytest
 from django_q.models import Schedule
 from fyle_accounting_mappings.models import MappingSetting, Mapping, ExpenseAttribute, EmployeeMapping
 from apps.tasks.models import Error
+from tests.test_fyle.fixtures import data as fyle_data
 
 
-@pytest.mark.django_db()
-def test_resolve_post_mapping_errors(test_connection):
+def test_resolve_post_mapping_errors(test_connection, mocker, db):
     category_attribute = ExpenseAttribute.objects.filter(
         value='WET Paid',
         workspace_id=3,
@@ -70,7 +70,17 @@ def test_resolve_post_employees_mapping_errors(test_connection):
 
 
 @pytest.mark.django_db()
-def test_run_post_mapping_settings_triggers(test_connection):
+def test_run_post_mapping_settings_triggers(test_connection, mocker):
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.ExpenseCustomFields.post',
+        return_value=[]
+    )
+
+    mocker.patch(
+        'fyle.platform.apis.v1beta.admin.ExpenseFields.list_all',
+        return_value=fyle_data['get_all_expense_fields']
+    )
+
     mapping_setting = MappingSetting(
         source_field='PROJECT',
         destination_field='PROJECT',
@@ -121,6 +131,23 @@ def test_run_post_mapping_settings_triggers(test_connection):
     assert 'project' in expense_group_settings.reimbursable_expense_group_fields
     assert 'project' in expense_group_settings.corporate_credit_card_expense_group_fields
 
+    mapping_setting = MappingSetting(
+        source_field='SAMPLEs',
+        destination_field='SAMPLEs',
+        workspace_id=1,
+        import_to_fyle=True,
+        is_custom=True
+    )
+    mapping_setting.save()
+
+    schedule = Schedule.objects.filter(
+        func='apps.mappings.tasks.async_auto_create_custom_field_mappings',
+        args='{}'.format(1),
+    ).first()
+
+    assert schedule.func == 'apps.mappings.tasks.async_auto_create_custom_field_mappings'
+    assert schedule.args == '1'
+
 @pytest.mark.django_db()
 def test_run_post_delete_mapping_settings_triggers(test_connection):
     mapping_setting = MappingSetting(
@@ -138,3 +165,34 @@ def test_run_post_delete_mapping_settings_triggers(test_connection):
     expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=1)
     assert 'cost_center' not in expense_group_settings.reimbursable_expense_group_fields
     assert 'cost_center' not in expense_group_settings.corporate_credit_card_expense_group_fields
+
+
+def test_run_pre_mapping_settings_triggers(db, mocker, test_connection):
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.ExpenseCustomFields.post',
+        return_value=[]
+    )
+
+    mocker.patch(
+        'fyle.platform.apis.v1beta.admin.ExpenseFields.list_all',
+        return_value=fyle_data['get_all_expense_fields']
+    )
+
+    workspace_id = 1
+
+    custom_mappings = Mapping.objects.filter(workspace_id=workspace_id, source_type='CUSTOM_INTENTs').count()
+    assert custom_mappings == 0
+
+    mapping_setting = MappingSetting(
+        source_field='CUSTOM_INTENTs',
+        destination_field='CUSTOM_INTENTs',
+        workspace_id=workspace_id,
+        import_to_fyle=True,
+        is_custom=True
+    )
+    mapping_setting.save()
+
+    custom_mappings = Mapping.objects.last()
+    
+    custom_mappings = Mapping.objects.filter(workspace_id=workspace_id, source_type='CUSTOM_INTENTs').count()
+    assert custom_mappings == 0
