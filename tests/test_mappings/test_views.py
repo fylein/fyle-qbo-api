@@ -57,9 +57,21 @@ def test_post_general_mappings(api_client, test_connection):
     response = json.loads(response.content)
     assert response['accounts_payable_id'] == '33'
 
-    invalid_data = data['general_mapping_payload']
-
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
+
+    general_settings.corporate_credit_card_expenses_object = 'DEBIT CARD EXPENSE'
+    general_settings.save()
+
+    response = api_client.post(
+        url,
+        data=payload
+    )
+    assert response.status_code == 200
+
+    response = json.loads(response.content)
+    assert response['default_debit_card_account_name'] == 'Sample'
+
+    invalid_data = data['general_mapping_payload']
 
     general_settings.corporate_credit_card_expenses_object = 'BILL'
     general_settings.save()
@@ -99,18 +111,7 @@ def test_post_general_mappings(api_client, test_connection):
     response = json.loads(response.content)
     assert response['default_ccc_vendor_id'] == '10'
 
-    general_settings.corporate_credit_card_expenses_object == 'DEBIT CARD EXPENSE'
-    general_settings.save()
     
-    response = api_client.post(
-        url,
-        data=invalid_data
-    )
-    assert response.status_code == 200
-    response = json.loads(response.content)
-    assert response['default_debit_card_account_name'] == 'Sample'
-
-
 def test_auto_map_employee(api_client, test_connection):
 
     url = '/api/workspaces/3/mappings/auto_map_employees/trigger/'
@@ -118,13 +119,22 @@ def test_auto_map_employee(api_client, test_connection):
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
 
     response = api_client.post(url)
-
     assert response.status_code == 200
+
+    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
+    general_settings.auto_map_employees = ''
+    general_settings.save()
+
+    response = api_client.post(url)
+    assert response.status_code == 400
 
     general_mapping = GeneralMapping.objects.get(workspace_id=3)
     general_mapping.delete()
 
-    response = api_client.post(url)
+    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
+    general_settings.auto_map_employees = 'EMAIL'
+    general_settings.save()
 
+    response = api_client.post(url)
     assert response.status_code == 400
     

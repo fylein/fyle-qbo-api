@@ -32,6 +32,7 @@ def test_create_expense_groups(mocker, db):
     expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=3)
     expense_group_settings.reimbursable_export_date_type = 'last_spent_at'
     expense_group_settings.ccc_export_date_type = 'last_spent_at'
+    expense_group_settings.import_card_credits = True
     expense_group_settings.save()
 
     create_expense_groups(3, ['PERSONAL', 'CCC'], task_log)

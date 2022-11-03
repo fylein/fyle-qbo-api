@@ -1,7 +1,7 @@
 data = {
     'workspace_general_settings_payload':{
         'id':4,
-        'reimbursable_expenses_object':'JOURNAL ENTRY',
+        'reimbursable_expenses_object':'BILL',
         'corporate_credit_card_expenses_object':'CREDIT CARD PURCHASE',
         'employee_field_mapping':'VENDOR',
         'map_merchant_to_vendor':True,
@@ -21,9 +21,9 @@ data = {
             'expense_link'
         ],
         'auto_map_employees':'EMAIL',
-        'auto_create_destination_entity':False,
+        'auto_create_destination_entity':True,
         'auto_create_merchants_as_vendors':False,
-        'sync_fyle_to_qbo_payments':False,
+        'sync_fyle_to_qbo_payments':True,
         'sync_qbo_to_fyle_payments':False,
         'category_sync_version':'v1',
         'je_single_credit_line':False,

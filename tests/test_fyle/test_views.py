@@ -1,6 +1,6 @@
 from apps.fyle.models import ExpenseGroup
 from apps.workspaces.models import FyleCredential, Workspace
-import pytest
+from unittest import mock
 import json
 from fyle_accounting_mappings.models import DestinationAttribute
 from django.urls import reverse
@@ -120,8 +120,7 @@ def test_expense_group_settings(api_client, test_connection):
 
     assert dict_compare_keys(response, data['expense_groups_settings_response']) == [], 'expense group api return diffs in keys'
     assert response['expense_state'] == 'PAID'
-    assert response['reimbursable_export_date_type'] == 'current_date'
-    
+    assert response['reimbursable_export_date_type'] == 'spent_at'
     
 
 def test_fyle_refresh_dimension(mocker, api_client, test_connection):
@@ -150,9 +149,13 @@ def test_fyle_refresh_dimension(mocker, api_client, test_connection):
     assert response.status_code == 400
     assert response.data['message'] == 'Fyle credentials not found in workspace'
 
+    with mock.patch('apps.workspaces.models.FyleCredential.objects.get') as mock_call:
+        mock_call.side_effect = Exception()
+        response = api_client.post(url)
+        assert response.status_code == 400
 
-@pytest.mark.django_db(databases=['default'])
-def test_fyle_sync_dimension(mocker, api_client, test_connection):
+
+def test_fyle_sync_dimension(mocker, api_client, test_connection, db):
     mocker.patch(
         'fyle_integrations_platform_connector.fyle_integrations_platform_connector.PlatformConnector.import_fyle_dimensions',
         return_value=[]
@@ -199,6 +202,12 @@ def test_fyle_sync_dimension_fail(api_client, test_connection):
     new_response = api_client.post(url)
     assert new_response.status_code == 400
     assert new_response.data['message'] == 'Fyle credentials not found in workspace'
+
+    with mock.patch('apps.workspaces.models.FyleCredential.objects.get') as mock_call:
+        mock_call.side_effect = Exception()
+        response = api_client.post(url)
+        assert response.status_code == 400
+
 
 def test_expense_group_id_view(api_client, test_connection):
     
@@ -382,4 +391,30 @@ def test_sync_expense_groups(api_client, test_connection):
 
     response = api_client.post(url)
     assert response.status_code == 200
-    
+
+
+
+def test_expense_custom_fields(db, api_client, test_connection):
+    workspace_id = 3
+    access_token = test_connection.access_token
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
+
+    url = '/api/workspaces/{}/fyle/expense_custom_fields/'.format(workspace_id)
+
+    response = api_client.get(
+        url,
+        {'attribute_type': 'COOL'}
+        )
+    assert response.status_code == 200
+
+
+def test_expense_groups_trigger(db, api_client, test_connection):
+    workspace_id = 3
+    access_token = test_connection.access_token
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
+
+    url = '/api/workspaces/{}/fyle/expense_groups/trigger/'.format(workspace_id)
+
+    response = api_client.post(url)
+    assert response.status_code == 200
+

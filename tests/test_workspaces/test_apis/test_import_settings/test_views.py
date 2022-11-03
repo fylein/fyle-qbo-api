@@ -55,8 +55,14 @@ def test_import_settings(mocker, api_client, test_connection):
 
     response = api_client.put(
         url,
+        data=data['import_settings_without_mapping'],
+        format='json'
+    )
+    assert response.status_code == 200
+
+    response = api_client.put(
+        url,
         data=data['import_settings_missing_values'],
         format='json'
     )
-
     assert response.status_code == 400

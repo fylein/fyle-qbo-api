@@ -331,6 +331,20 @@ data = {
                 "CreateTime": "2015-07-22T13:57:27-07:00",
                 "LastUpdatedTime": "2015-07-22T13:57:27-07:00",
             },
+        },
+        {
+            "FullyQualifiedName": "France",
+            "domain": "QBO",
+            "Name": "France",
+            "SyncToken": "0",
+            "SubClass": False,
+            "sparse": False,
+            "Active": True,
+            "Id": "9",
+            "MetaData": {
+                "CreateTime": "2015-07-22T13:57:27-07:00",
+                "LastUpdatedTime": "2015-07-22T13:57:27-07:00",
+            },
         }
     ],
     "department_response": [
@@ -383,7 +397,7 @@ data = {
             "CurrentBalance": -1091.23,
             "Active": True,
             "SyncToken": "0",
-            "Id": "33",
+            "Id": "7",
             "SubAccount": False,
         },
         {
@@ -422,6 +436,25 @@ data = {
             "Active": True,
             "SyncToken": "0",
             "Id": "33",
+            "SubAccount": False,
+        },
+        {
+            "FullyQualifiedName": "Credit Card",
+            "domain": "QBO",
+            "Name": "Credit Card",
+            "Classification": "Liability",
+            "AccountSubType": "AccountsPayable",
+            "CurrentBalanceWithSubAccounts": -1091.23,
+            "sparse": False,
+            "MetaData": {
+                "CreateTime": "2014-09-12T10:12:02-07:00",
+                "LastUpdatedTime": "2015-06-30T15:09:07-07:00",
+            },
+            "AccountType": "Credit Cards",
+            "CurrentBalance": -1091.23,
+            "Active": True,
+            "SyncToken": "0",
+            "Id": "34",
             "SubAccount": False,
         },
     ],
@@ -547,4 +580,20 @@ data = {
             "user_id": "usqywo0f3nBY",
         }
     ],
+    'empty_general_maapings': {
+        'default_ccc_vendor_id': '',
+        'default_ccc_vendor_name': '',
+        'accounts_payable_name': '',
+        'accounts_payable_id': '',
+        'bank_account_name': '',
+        'bank_account_id': '',
+        'qbo_expense_account_name': '',
+        'qbo_expense_account_id': '',
+        'default_debit_card_account_name': '',
+        'default_debit_card_account_id': '',
+        'default_tax_code_id': '',
+        'default_tax_code_name': '',
+        'default_ccc_account_id': '',
+        'default_ccc_account_name': '',
+    }
 }
