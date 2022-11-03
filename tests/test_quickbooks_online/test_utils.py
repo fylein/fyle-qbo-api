@@ -212,16 +212,16 @@ def tests_sync_accounts(mocker, db):
         return_value=data['account_response']
     )
 
-    qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
-    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(1)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=1)
 
-    account_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='ACCOUNT').count()
+    account_count = DestinationAttribute.objects.filter(workspace_id=1, attribute_type='ACCOUNT').count()
     assert account_count == 63
 
     qbo_connection.sync_accounts()
 
-    new_account_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='ACCOUNT').count()
-    assert new_account_count == 64
+    new_account_count = DestinationAttribute.objects.filter(workspace_id=1, attribute_type='ACCOUNT').count()
+    assert new_account_count == 63
     
 
 def test_sync_dimensions(mocker, db):
@@ -268,7 +268,7 @@ def test_sync_classes(mocker, db):
     qbo_connection.sync_classes()
 
     new_class_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='CLASS').count()
-    assert new_class_count == 1
+    assert new_class_count == 2
 
 
 def test_sync_customers(mocker, db):
@@ -311,6 +311,10 @@ def test_post_bill_exception(mocker, db, create_bill):
     workspace_general_setting = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
     workspace_general_setting.change_accounting_period = True
     workspace_general_setting.save()
+
+    general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
+    general_settings.import_tax_codes = True
+    general_settings.save()
 
     with mock.patch('qbosdk.apis.Bills.post') as mock_call:
         mock_call.return_value = data['construct_bill']

@@ -6,12 +6,10 @@ import pytest
 import random
 from unittest import mock
 from django_q.models import Schedule
-from apps.tasks.models import Error, TaskLog
-from apps.quickbooks_online.models import Bill, BillLineitem, Cheque, QBOExpense, QBOExpenseLineitem, CreditCardPurchase, JournalEntry
-from apps.quickbooks_online.tasks import create_bill, create_qbo_expense, create_credit_card_purchase, create_journal_entry, create_cheque, \
-    create_bill_payment, check_qbo_object_status, schedule_reimbursements_sync, process_reimbursements, async_sync_accounts, \
-        schedule_bill_payment_creation, schedule_qbo_objects_status_sync, get_or_create_credit_card_or_debit_card_vendor, \
-            create_or_update_employee_mapping, update_last_export_details, handle_quickbooks_error
+from apps.tasks.models import TaskLog
+from apps.quickbooks_online.models import *
+from apps.quickbooks_online.tasks import __validate_expense_group
+from apps.quickbooks_online.tasks import *
 from fyle_qbo_api.exceptions import BulkError
 from qbosdk.exceptions import WrongParamsError
 from fyle_accounting_mappings.models import EmployeeMapping
@@ -132,6 +130,12 @@ def test_post_bill_success(mocker, create_task_logs, db):
         expense.save()
     
     expense_group.expenses.set(expenses)
+
+    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
+
+    general_settings.auto_map_employees = 'NAME'
+    general_settings.auto_create_destination_entity = True
+    general_settings.save()
     
     create_bill(expense_group, task_log.id, False)
     
@@ -312,6 +316,16 @@ def test_post_qbo_expenses_success(mocker, create_task_logs, db):
         return_value=data['post_purchase']
     )
 
+    mocker.patch(
+        'apps.quickbooks_online.utils.QBOConnector.get_or_create_vendor',
+        return_value=[]
+    )
+
+    mocker.patch(
+        'apps.quickbooks_online.tasks.load_attachments',
+        return_value=None
+    )
+
     task_log = TaskLog.objects.filter(workspace_id=3).first()
     task_log.status = 'READY'
     task_log.save()
@@ -333,6 +347,19 @@ def test_post_qbo_expenses_success(mocker, create_task_logs, db):
     qbo_expense_lineitem.expense_id=24
     qbo_expense_lineitem.save()
 
+    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
+
+    general_settings.auto_map_employees = 'NAME'
+    general_settings.auto_create_destination_entity = True
+    general_settings.import_tax_codes = True
+    general_settings.save()
+
+    general_mapping = GeneralMapping.objects.get(workspace_id=3)
+
+    general_mapping.default_tax_code_id = 'tggu76WXIdjY'
+    general_mapping.default_tax_code_name = 'GST-free capital - 0%'
+    general_mapping.save()
+
     create_qbo_expense(expense_group, task_log.id, True)
 
     task_log = TaskLog.objects.get(pk=task_log.id)
@@ -341,6 +368,20 @@ def test_post_qbo_expenses_success(mocker, create_task_logs, db):
     assert qbo_expense.currency == 'USD'
     assert qbo_expense.expense_account_id == '35'
     assert qbo_expense.entity_id == '55'
+
+    task_log = TaskLog.objects.filter(workspace_id=3).first()
+    task_log.status = 'READY'
+    task_log.save()
+
+    expense_group = ExpenseGroup.objects.get(id=18)
+
+    create_qbo_expense(expense_group, task_log.id, True)
+
+    task_log = TaskLog.objects.get(pk=task_log.id)
+    qbo_expense = QBOExpense.objects.get(expense_group_id=expense_group.id)
+
+    assert task_log.status=='COMPLETE'
+    assert qbo_expense.currency == 'USD'
 
 
 def test_post_qbo_expenses_exceptions(create_task_logs, db):
@@ -424,6 +465,13 @@ def test_post_credit_card_purchase_success(mocker, create_task_logs, db):
         expense.save()
     
     expense_group.expenses.set(expenses)
+
+    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
+
+    general_settings.map_merchant_to_vendor = False
+    general_settings.auto_map_employees = 'NAME'
+    general_settings.auto_create_destination_entity = True
+    general_settings.save()
     
     create_credit_card_purchase(expense_group, task_log.id, True)
     
@@ -433,7 +481,7 @@ def test_post_credit_card_purchase_success(mocker, create_task_logs, db):
     assert task_log.status=='COMPLETE'
     assert credit_card_purchase.currency == 'USD'
     assert credit_card_purchase.ccc_account_id == '41'
-    assert credit_card_purchase.entity_id == '58'
+    assert credit_card_purchase.entity_id == '55'
 
 
 def test_post_credit_card_exceptions(mocker, create_task_logs, db):
@@ -521,6 +569,12 @@ def test_post_journal_entry_success(mocker, create_task_logs, db):
     expense_group.expenses.set(expenses)
     expense_group.save()
     
+    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
+
+    general_settings.auto_map_employees = 'NAME'
+    general_settings.auto_create_destination_entity = True
+    general_settings.save()
+
     create_journal_entry(expense_group, task_log.id, True)
     
     task_log = TaskLog.objects.get(id=task_log.id)
@@ -528,6 +582,21 @@ def test_post_journal_entry_success(mocker, create_task_logs, db):
 
     assert task_log.status=='COMPLETE'
     assert journal_entry.currency == 'GBP'
+    assert journal_entry.private_note =='Reimbursable expense by ashwin.t@fyle.in on 2022-04-06 '
+
+    expense_group = ExpenseGroup.objects.get(id=51)
+
+    task_log = TaskLog.objects.filter(workspace_id=5).first()
+    task_log.status = 'READY'
+    task_log.save()
+
+    create_journal_entry(expense_group, task_log.id, True)
+    
+    task_log = TaskLog.objects.get(id=task_log.id)
+    journal_entry = JournalEntry.objects.get(expense_group_id=expense_group.id)
+
+    assert task_log.status=='COMPLETE'
+    assert journal_entry.currency == 'INR'
     assert journal_entry.private_note =='Reimbursable expense by ashwin.t@fyle.in on 2022-04-06 '
 
 
@@ -597,6 +666,12 @@ def test_post_cheque_success(mocker, create_task_logs, db):
     task_log.save()
 
     expense_group = ExpenseGroup.objects.get(id=14)
+    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
+
+    general_settings.auto_map_employees = 'EMPLOYEE_CODE'
+    general_settings.auto_create_destination_entity = True
+    general_settings.save()
+
     create_cheque(expense_group, task_log.id, True)
     
     task_log = TaskLog.objects.get(id=task_log.id)
@@ -978,3 +1053,167 @@ def test_update_last_export_details(db):
     workspace_id = 3
     last_export_detail = update_last_export_details(workspace_id)
     assert last_export_detail.export_mode == 'MANUAL'
+
+
+def test__validate_expense_group(mocker, db):
+    workspace_id = 3
+
+    expense_group = ExpenseGroup.objects.get(id=17)
+
+    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+    general_settings.corporate_credit_card_expenses_object = 'BILL'
+    general_settings.reimbursable_expenses_object = 'CHECK'
+    general_settings.import_tax_codes = True
+    general_settings.save()
+
+    general_mapping = GeneralMapping.objects.filter(workspace_id=workspace_id)
+    general_mapping.update(**data['empty_general_maapings'])
+
+    try:
+        __validate_expense_group(expense_group, general_settings)
+    except BulkError as exception:
+        logger.info(exception.response)
+
+    general_settings.reimbursable_expenses_object = 'EXPENSE'
+    general_settings.save()
+
+    try:
+        __validate_expense_group(expense_group, general_settings)
+    except:
+        logger.info('Mappings are missing')
+
+    expense_group.description.update({'employee_email': 'ashwin.t@fyle.in'})
+    expense_group.save()
+
+    general_settings.corporate_credit_card_expenses_object = 'CREDIT CARD PURCHASE'
+    general_settings.save()
+
+    try:
+        __validate_expense_group(expense_group, general_settings)
+    except:
+        logger.info('Mappings are missing')
+
+    general_settings.corporate_credit_card_expenses_object = 'DEBIT CARD EXPENSE'
+    general_settings.map_merchant_to_vendor = False
+    general_settings.employee_field_mapping = 'VENDOR'
+    general_settings.save()
+
+    entity = EmployeeMapping.objects.get(
+        source_employee__value=expense_group.description.get('employee_email'),
+        workspace_id=expense_group.workspace_id
+    )
+    entity.destination_vendor = None
+    entity.save()
+
+    try:
+        __validate_expense_group(expense_group, general_settings)
+    except:
+        logger.info('Mappings are missing')
+    
+    account = Mapping.objects.filter(
+        source_type='CATEGORY',
+        destination_type='ACCOUNT',
+        source__value='Food',
+        workspace_id=expense_group.workspace_id
+    ).delete()
+
+    try:
+        __validate_expense_group(expense_group, general_settings)
+    except:
+        logger.info('Mappings are missing')
+
+    general_mapping = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
+    general_mapping.delete()
+    try:
+        __validate_expense_group(expense_group, general_settings)
+    except:
+        logger.info('Mappings are missing')
+
+
+def test_schedule_credit_card_purchase_creation(db):
+    workspace_id = 3
+
+    expense_group = ExpenseGroup.objects.get(id=17)
+    expense_group.exported_at = None
+    expense_group.save()
+
+    credit_card_purchase = CreditCardPurchase.objects.filter(expense_group__id=expense_group.id).first()
+    credit_card_purchase.expense_group = ExpenseGroup.objects.get(id=19)
+    credit_card_purchase.save()
+
+    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+    task_log.status = 'READY'
+    task_log.save()
+
+    schedule_credit_card_purchase_creation(workspace_id, [17])
+
+    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+    assert task_log.type == 'CREATING_CREDIT_CARD_PURCHASE'
+
+
+def test_schedule_bills_creation(db):
+    workspace_id = 4
+
+    expense_group = ExpenseGroup.objects.get(id=23)
+    expense_group.exported_at = None
+    expense_group.save()
+
+    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+    task_log.status = 'READY'
+    task_log.save()
+
+    schedule_bills_creation(workspace_id, [23])
+
+    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+    assert task_log.type == 'CREATING_BILL'
+
+
+def test_schedule_cheques_creation(db):
+    workspace_id = 4
+
+    expense_group = ExpenseGroup.objects.get(id=23)
+    expense_group.exported_at = None
+    expense_group.save()
+
+    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+    task_log.status = 'READY'
+    task_log.save()
+
+    schedule_cheques_creation(workspace_id, [23])
+
+    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+    assert task_log.type == 'CREATING_CHECK'
+
+
+def test_schedule_qbo_expense_creation(db):
+    workspace_id = 4
+
+    expense_group = ExpenseGroup.objects.get(id=23)
+    expense_group.exported_at = None
+    expense_group.save()
+
+    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+    task_log.status = 'READY'
+    task_log.save()
+
+    schedule_qbo_expense_creation(workspace_id, [23])
+
+    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+    assert task_log.type == 'CREATING_EXPENSE'
+
+
+def test_schedule_journal_entry_creation(db):
+    workspace_id = 4
+
+    expense_group = ExpenseGroup.objects.get(id=23)
+    expense_group.exported_at = None
+    expense_group.save()
+
+    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+    task_log.status = 'READY'
+    task_log.save()
+
+    schedule_journal_entry_creation(workspace_id, [23])
+
+    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+    assert task_log.type == 'CREATING_JOURNAL_ENTRY'
