@@ -1,9 +1,8 @@
-import random
 import pytest
-from apps.fyle.models import _format_date, _group_expenses
-from apps.fyle.models import *
+from apps.fyle.models import get_default_expense_state, get_default_expense_group_fields, ExpenseGroupSettings, Expense, Reimbursement, \
+    ExpenseGroup, _group_expenses
+from fyle_accounting_mappings.models import ExpenseAttribute
 from .fixtures import data
-import datetime
 
 def test_default_fields():
     expense_group_field = get_default_expense_group_fields()
@@ -13,15 +12,16 @@ def test_default_fields():
     assert expense_state == 'PAYMENT_PROCESSING'
 
 
-def test_create_expense_objects(db):
+@pytest.mark.django_db
+def test_create_expense_objects():
     payload = data['expenses']
     Expense.create_expense_objects(payload, 3)
-
     expense = Expense.objects.last()
     assert expense.expense_id == 'txLAP0oIB5Yb'
 
 
-def test_expense_group_settings(create_temp_workspace, db):
+@pytest.mark.django_db
+def test_expense_group_settings(create_temp_workspace):
     payload = data['expense_group_settings_payload']
 
     ExpenseGroupSettings.update_expense_group_settings(
@@ -52,7 +52,6 @@ def test_create_reimbursement(db):
     paid_reimbursement = Reimbursement.objects.get(reimbursement_id='reimgCW1Og0BcM')
     paid_reimbursement.state == 'PAID'
 
-
 def test_create_expense_groups_by_report_id_fund_source(db):
     workspace_id = 4
     payload = data['expenses']
@@ -64,36 +63,16 @@ def test_create_expense_groups_by_report_id_fund_source(db):
     expense_group_settings.ccc_export_date_type = 'last_spent_at'
     expense_group_settings.save()
     
-    field = ExpenseAttribute.objects.filter(workspace_id=workspace_id).first()
-    field.attribute_type = 'COOL'
+    field = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type='PROJECT').last()
+    field.attribute_type = 'KILLUA'
     field.save()
 
-    expense_groups = _group_expenses([], ['claim_number', 'fund_source', 'projects', 'employee_email', 'report_id', 'cool'], 4)
-    assert expense_groups == []
+    expenses = Expense.objects.filter(id=33).all()
 
-    expense_groups = ExpenseGroup.create_expense_groups_by_report_id_fund_source([expense_objects], workspace_id)
-    assert len(expense_groups) == 1
-
-    expense_groups = ExpenseGroup.objects.last()
-    assert expense_groups.exported_at == None
-
-    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
-    general_settings.reimbursable_expenses_object = 'BILL'
-    general_settings.save()
-
-    expenses = expense_groups.expenses.all()
-    for expense in expenses:
-        if expense.amount > 50:
-            expense.amount = -100
-        expense.save()
+    expense_groups = _group_expenses(expenses, ['claim_number', 'fund_source', 'project', 'employee_email', 'report_id', 'Killua'], 4)
+    assert expense_groups == [{'claim_number': 'C/2022/05/R/6', 'fund_source': 'PERSONAL', 'project': 'Bebe Rexha', 'employee_email': 'sravan.kumar@fyle.in', 'report_id': 'rpawE81idoYo', 'killua': '', 'total': 1, 'expense_ids': [33]}]
 
     ExpenseGroup.create_expense_groups_by_report_id_fund_source([expense_objects], workspace_id)
 
     expense_groups = ExpenseGroup.objects.last()
     assert expense_groups.exported_at == None
-
-
-def test_format_date():
-    date_string = _format_date('2022-05-13T09:32:06.643941Z')
-
-    assert date_string == parser.parse('2022-05-13T09:32:06.643941Z')
