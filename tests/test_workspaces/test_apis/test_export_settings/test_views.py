@@ -31,9 +31,25 @@ def test_export_settings(api_client, test_connection):
     response = json.loads(response.content)
     assert dict_compare_keys(response, data['response']) == [], 'workspaces api returns a diff in the keys'
 
+    invalid_workspace_general_settings = data['export_settings']
+    invalid_workspace_general_settings['workspace_general_settings'] = {}
     response = api_client.put(
         url,
-        data=data['export_settings_missing_values'],
+        data=invalid_workspace_general_settings,
+        format='json'
+    )
+
+    assert response.status_code == 400
+
+    invalid_expense_group_settings = data['export_settings']
+    invalid_expense_group_settings['expense_group_settings'] = {}
+    invalid_expense_group_settings['workspace_general_settings'] = {'reimbursable_expenses_object': 'EXPENSE',
+        'corporate_credit_card_expenses_object': 'BILL'
+    }
+
+    response = api_client.put(
+        url,
+        data=invalid_expense_group_settings,
         format='json'
     )
 
