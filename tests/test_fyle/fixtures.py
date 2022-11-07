@@ -270,6 +270,24 @@ data = {
             },
             "user_id":"usqywo0f3nBY"
         }
-    }
-
+    },
+    'get_all_orgs': [
+        {
+            'id': 'orHVw3ikkCxJ',
+            'created_at': '2018-12-18T10:50:36.506Z',
+            'updated_at': '2018-12-18T10:51:53.352Z',
+            'name': 'Anagha Org',
+            'domain': 'afyle.in',
+            'currency': 'EUR',
+            'branch_ifsc': None,
+            'branch_account': None,
+            'tally_bank_ledger': None,
+            'tally_default_category': None,
+            'tally_default_user': None,
+            'corporate_credit_card_details': {'bank_name': None,
+                                              'number_of_cards': None},
+            'verified': True,
+            'lite': False,
+            'dwolla_customers_metadata_id': None,
+        },],
 }
