@@ -1140,13 +1140,15 @@ class QBOConnector:
         if len(attachments):
             responses = []
             for attachment in attachments:
-                response = self.connection.attachments.post(
-                    ref_id=ref_id,
-                    ref_type=ref_type,
-                    content=attachment['download_url'],
-                    file_name=attachment['name']
-                )
-                responses.append(response)
+                # Ignoring html attachments from chrome extension, QBO API will throw error if we upload an html
+                if attachment['content_type'] != 'text/html':
+                    response = self.connection.attachments.post(
+                        ref_id=ref_id,
+                        ref_type=ref_type,
+                        content=attachment['download_url'],
+                        file_name=attachment['name']
+                    )
+                    responses.append(response)
             return responses
         return []
 
