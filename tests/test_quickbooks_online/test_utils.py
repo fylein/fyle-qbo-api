@@ -469,7 +469,7 @@ def test_post_attachments(mocker, db):
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
-    qbo_connection.post_attachments('asd', 'dfg', [{'download_url': 'sdfghj', 'name': 'ert'}])
+    qbo_connection.post_attachments('asd', 'dfg', [{'download_url': 'sdfghj', 'name': 'ert', 'content_type': 'application/pdf'}])
 
 
 def test_sync_dimensions_exception(db):
