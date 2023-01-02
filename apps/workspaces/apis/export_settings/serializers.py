@@ -40,6 +40,7 @@ class ExpenseGroupSettingsSerializer(serializers.ModelSerializer):
             'reimbursable_expense_group_fields',
             'corporate_credit_card_expense_group_fields',
             'expense_state',
+            'ccc_expense_state',
             'reimbursable_export_date_type',
             'ccc_export_date_type'
         ]

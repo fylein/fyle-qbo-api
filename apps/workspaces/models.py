@@ -47,6 +47,7 @@ class Workspace(models.Model):
     cluster_domain = models.CharField(max_length=255, help_text='fyle cluster domain', null=True)
     app_version = models.CharField(max_length=2, help_text='App version', default='v1', choices=APP_VERSION_CHOICES)
     last_synced_at = models.DateTimeField(help_text='Datetime when expenses were pulled last', null=True)
+    ccc_last_synced_at = models.DateTimeField(help_text='Datetime when ccc expenses were pulled last', null=True)
     source_synced_at = models.DateTimeField(help_text='Datetime when source dimensions were pulled', null=True)
     destination_synced_at = models.DateTimeField(help_text='Datetime when destination dimensions were pulled',
                                                  null=True)
@@ -118,6 +119,7 @@ class WorkspaceGeneralSettings(models.Model):
     auto_create_merchants_as_vendors = models.BooleanField(default=False, help_text='Auto create Fyle Merchants as QBO vendors')
     sync_fyle_to_qbo_payments = models.BooleanField(default=False, help_text='Auto Sync Payments from Fyle to QBO')
     sync_qbo_to_fyle_payments = models.BooleanField(default=False, help_text='Auto Sync Payments from QBO to Fyle')
+    is_simplify_report_closure_enabled = models.BooleanField(default=False, help_text='Simplify report closure is enabled')
     category_sync_version = models.CharField(default='v1', max_length=50, help_text='Category sync version')
     je_single_credit_line = models.BooleanField(default=False, help_text='Single Credit Line for Journal Entries')
     map_fyle_cards_qbo_account = models.BooleanField(default=True, help_text='Map Fyle Cards to QBO Accounts')
