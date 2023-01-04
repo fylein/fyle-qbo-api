@@ -233,7 +233,7 @@ def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: Ta
     logger.info(exception.response)
     response = json.loads(exception.response)
     if 'Fault' not in response:
-        logger.error(response)
+        logger.info(response)
         if 'error' in response and response['error'] == 'invalid_grant':
             qbo_credentials: QBOCredential = QBOCredential.objects.filter(
                 workspace_id=expense_group.workspace_id).first()
@@ -1283,30 +1283,33 @@ def get_all_qbo_object_ids(qbo_objects):
 
 
 def check_qbo_object_status(workspace_id):
-    qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
+    try:
+        qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
 
-    qbo_connection = QBOConnector(qbo_credentials, workspace_id)
+        qbo_connection = QBOConnector(qbo_credentials, workspace_id)
 
-    bills = Bill.objects.filter(
-        expense_group__workspace_id=workspace_id, paid_on_qbo=False, expense_group__fund_source='PERSONAL'
-    ).all()
+        bills = Bill.objects.filter(
+            expense_group__workspace_id=workspace_id, paid_on_qbo=False, expense_group__fund_source='PERSONAL'
+        ).all()
 
-    if bills:
-        bill_ids = get_all_qbo_object_ids(bills)
+        if bills:
+            bill_ids = get_all_qbo_object_ids(bills)
 
-        for bill in bills:
-            bill_object = qbo_connection.get_bill(bill_ids[bill.expense_group.id]['qbo_object_id'])
+            for bill in bills:
+                bill_object = qbo_connection.get_bill(bill_ids[bill.expense_group.id]['qbo_object_id'])
 
-            if 'LinkedTxn' in bill_object:
-                line_items = BillLineitem.objects.filter(bill_id=bill.id)
-                for line_item in line_items:
-                    expense = line_item.expense
-                    expense.paid_on_qbo = True
-                    expense.save()
+                if 'LinkedTxn' in bill_object:
+                    line_items = BillLineitem.objects.filter(bill_id=bill.id)
+                    for line_item in line_items:
+                        expense = line_item.expense
+                        expense.paid_on_qbo = True
+                        expense.save()
 
-                bill.paid_on_qbo = True
-                bill.payment_synced = True
-                bill.save()
+                    bill.paid_on_qbo = True
+                    bill.payment_synced = True
+                    bill.save()
+    except WrongParamsError as exception:
+        logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
 
 
 def schedule_qbo_objects_status_sync(sync_qbo_to_fyle_payments, workspace_id):
@@ -1385,10 +1388,13 @@ def schedule_reimbursements_sync(sync_qbo_to_fyle_payments, workspace_id):
 
 
 def async_sync_accounts(workspace_id):
-    qbo_credentials: QBOCredential = QBOCredential.get_active_qbo_credentials(workspace_id)
+    try:
+        qbo_credentials: QBOCredential = QBOCredential.get_active_qbo_credentials(workspace_id)
 
-    qbo_connection = QBOConnector(
-        credentials_object=qbo_credentials,
-        workspace_id=workspace_id
-    )
-    qbo_connection.sync_accounts()
+        qbo_connection = QBOConnector(
+            credentials_object=qbo_credentials,
+            workspace_id=workspace_id
+        )
+        qbo_connection.sync_accounts()
+    except WrongParamsError as exception:
+        logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
