@@ -41,7 +41,7 @@ data = {
     },
     'response': {
         'workspace_general_settings': {
-            'reimbursable_expenses_object':'EXPENSE','corporate_credit_card_expenses_object':'BILL'
+            'reimbursable_expenses_object':'EXPENSE','corporate_credit_card_expenses_object':'BILL', 'is_simplify_report_closure_enabled': True
         },
         'expense_group_settings': {
             'reimbursable_expense_group_fields':['fund_source','claim_number','employee_email','report_id'],'corporate_credit_card_expense_group_fields':['fund_source','claim_number','employee_email','report_id'],'expense_state':'PAYMENT_PROCESSING','ccc_expense_state':'PAID','reimbursable_export_date_type':'current_date','ccc_export_date_type':'current_date'
