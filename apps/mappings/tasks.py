@@ -103,7 +103,7 @@ def disable_or_enable_expense_attributes(source_field: str, destination_field: s
 
     expense_attributes_to_enable = []
 
-    if source_field != 'CATEGORY':
+    if source_field not in ('CATEGORY', 'PROJECT'):
         expense_attributes_to_enable = ExpenseAttribute.objects.filter(
             ~Q(mapping__destination_id__in=destination_attribute_ids),
             mapping__isnull=False,
@@ -117,7 +117,7 @@ def disable_or_enable_expense_attributes(source_field: str, destination_field: s
     if expense_attributes_to_disable or expense_attributes_to_enable:
         expense_attributes_ids = [expense_attribute.id for expense_attribute in expense_attributes_to_disable]
         expense_attributes_to_disable.update(active=False)
-        if source_field != 'CATEGORY':
+        if source_field not in ('CATEGORY', 'PROJECT'):
             expense_attributes_ids = expense_attributes_ids + [expense_attribute.id for expense_attribute in expense_attributes_to_enable]
             expense_attributes_to_enable.update(active=True)
 
