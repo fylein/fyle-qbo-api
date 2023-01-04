@@ -25,7 +25,8 @@ class ReadWriteSerializerMethodField(serializers.SerializerMethodField):
 class WorkspaceGeneralSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkspaceGeneralSettings
-        fields = ['reimbursable_expenses_object', 'corporate_credit_card_expenses_object']
+        fields = ['reimbursable_expenses_object', 'corporate_credit_card_expenses_object', 'is_simplify_report_closure_enabled']
+        read_only_fields = ['is_simplify_report_closure_enabled']
 
 
 class ExpenseGroupSettingsSerializer(serializers.ModelSerializer):
