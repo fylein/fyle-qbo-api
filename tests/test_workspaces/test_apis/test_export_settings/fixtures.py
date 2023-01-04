@@ -42,7 +42,7 @@ data = {
     'response': {
         'workspace_general_settings': {
             'reimbursable_expenses_object':'EXPENSE',
-            'corporate_credit_card_expenses_object':'BILL', 
+            'corporate_credit_card_expenses_object':'BILL',
             'is_simplify_report_closure_enabled': True
         },
         'expense_group_settings': {
