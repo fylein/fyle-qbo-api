@@ -109,6 +109,7 @@ def test_expense_group_settings(api_client, test_connection):
     assert response['reimbursable_expense_group_fields'] == ['employee_email', 'report_id', 'project', 'fund_source', 'claim_number']
     assert response['expense_state'] == 'PAYMENT_PROCESSING'
     assert response['reimbursable_export_date_type'] == 'current_date'
+    assert response['ccc_expense_state'] == 'PAID'
 
     response = api_client.post(
         url,
