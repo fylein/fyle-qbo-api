@@ -123,16 +123,17 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
                 workspace.last_synced_at = datetime.now()
                 reimbursable_expense_count += len(expenses)
 
-            if expense_group_settings.ccc_expense_state == 'PAYMENT_PROCESSING':
-                settled_at = ccc_last_synced_at
-
-            if expense_group_settings.ccc_expense_state == 'APPROVED':
-                approved_at = ccc_last_synced_at
-
-            if expense_group_settings.ccc_expense_state == 'PAID':
-                last_paid_at = ccc_last_synced_at
-
             if 'CCC' in fund_source:
+                
+                if expense_group_settings.ccc_expense_state == 'PAYMENT_PROCESSING':
+                    settled_at = ccc_last_synced_at
+
+                if expense_group_settings.ccc_expense_state == 'APPROVED':
+                    approved_at = ccc_last_synced_at
+
+                if expense_group_settings.ccc_expense_state == 'PAID':
+                    last_paid_at = ccc_last_synced_at
+
                 expenses.extend(platform.expenses.get(
                     source_account_type=['PERSONAL_CORPORATE_CREDIT_CARD_ACCOUNT'],
                     state=expense_group_settings.ccc_expense_state,
