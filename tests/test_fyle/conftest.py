@@ -27,6 +27,7 @@ def create_temp_workspace(db):
         reimbursable_expense_group_fields='{employee_email,report_id,claim_number,fund_source}',
         corporate_credit_card_expense_group_fields='{fund_source,employee_email,claim_number,expense_id,report_id}',
         expense_state='PAYMENT PROCESSING',
+        ccc_expense_state='PAID',
         workspace_id=98,
         import_card_credits=False
     )
