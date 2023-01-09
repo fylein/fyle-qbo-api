@@ -101,32 +101,45 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
 
             expenses = []
             reimbursable_expense_count = 0
+            settled_at, approved_at, last_paid_at = None, None, None
 
             if 'PERSONAL' in fund_source:
+
+                if expense_group_settings.expense_state == 'PAYMENT_PROCESSING':
+                    settled_at = last_synced_at
+
+                if expense_group_settings.expense_state == 'PAID':
+                    last_paid_at = last_synced_at
+
                 expenses.extend(platform.expenses.get(
                     source_account_type=['PERSONAL_CASH_ACCOUNT'],
                     state=expense_group_settings.expense_state,
-                    settled_at=last_synced_at if expense_group_settings.expense_state == 'PAYMENT_PROCESSING' else None,
+                    settled_at=settled_at,
                     filter_credit_expenses=filter_credit_expenses,
-                    last_paid_at=last_synced_at if expense_group_settings.expense_state == 'PAID' else None
+                    last_paid_at=last_paid_at
                 ))
 
             if expenses:
                 workspace.last_synced_at = datetime.now()
                 reimbursable_expense_count += len(expenses)
 
-            settled_at = None
             if expense_group_settings.ccc_expense_state == 'PAYMENT_PROCESSING':
                 settled_at = ccc_last_synced_at
+
+            if expense_group_settings.ccc_expense_state == 'APPROVED':
+                approved_at = ccc_last_synced_at
+
+            if expense_group_settings.ccc_expense_state == 'PAID':
+                last_paid_at = ccc_last_synced_at
 
             if 'CCC' in fund_source:
                 expenses.extend(platform.expenses.get(
                     source_account_type=['PERSONAL_CORPORATE_CREDIT_CARD_ACCOUNT'],
                     state=expense_group_settings.ccc_expense_state,
                     settled_at=settled_at,
-                    approved_at=ccc_last_synced_at if expense_group_settings.ccc_expense_state == 'APPROVED' else None,
+                    approved_at=approved_at,
                     filter_credit_expenses=filter_credit_expenses,
-                    last_paid_at=ccc_last_synced_at if expense_group_settings.ccc_expense_state == 'PAID' else None
+                    last_paid_at=last_paid_at
                 ))
 
             if len(expenses) != reimbursable_expense_count:
