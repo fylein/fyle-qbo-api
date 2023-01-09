@@ -43,6 +43,7 @@ data = {
         'cluster_domain':None,
         'app_version':'v1',
         'last_synced_at':'2022-05-23T17:35:13.674387Z',
+        'ccc_last_synced_at':'2022-05-23T17:35:13.674387Z',
         'source_synced_at':'2022-05-25T14:35:34.196373Z',
         'destination_synced_at':'2022-05-25T14:35:50.437019Z',
         'onboarding_state':'COMPLETE',
@@ -85,6 +86,7 @@ data = {
         'import_vendors_as_merchants':True,
         'created_at':'2022-05-23T11:34:12.831875Z',
         'updated_at':'2022-05-23T12:58:43.146006Z',
+        'is_simplify_report_closure_enabled': True,
         'workspace':4
     },
     'expenses':[
