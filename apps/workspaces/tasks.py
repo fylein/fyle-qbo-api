@@ -9,7 +9,7 @@ from django.template.loader import render_to_string
 from django_q.models import Schedule
 from django.utils.safestring import mark_safe
 
-from apps.workspaces.models import User, Workspace, WorkspaceSchedule, WorkspaceGeneralSettings, LastExportDetail, QBOCredential
+from apps.workspaces.models import User, Workspace, WorkspaceSchedule, WorkspaceGeneralSettings, LastExportDetail, QBOCredential, FyleCredential
 from apps.fyle.tasks import async_create_expense_groups
 from apps.fyle.models import Expense, ExpenseGroup
 from apps.fyle.serializers import ExpenseSerializer, ExpenseGroupSerializer
@@ -255,3 +255,9 @@ def run_email_notification(workspace_id):
 
     ws_schedule.error_count = len(task_logs)
     ws_schedule.save()
+
+def async_update_fyle_credentials(fyle_org_id: str, refresh_token: str):
+    fyle_credentials = FyleCredential.objects.get(workspace__fyle_org_id=fyle_org_id)
+    if fyle_credentials:
+        fyle_credentials.refresh_token = refresh_token
+        fyle_credentials.save()
