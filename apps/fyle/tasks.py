@@ -122,11 +122,11 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
             if expenses:
                 workspace.last_synced_at = datetime.now()
                 reimbursable_expense_count += len(expenses)
-                
+
             settled_at, approved_at, last_paid_at = None, None, None
 
             if 'CCC' in fund_source:
-                
+
                 if expense_group_settings.ccc_expense_state == 'PAYMENT_PROCESSING':
                     settled_at = ccc_last_synced_at
 
