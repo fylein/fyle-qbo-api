@@ -182,7 +182,7 @@ class ExpenseGroupSettings(models.Model):
         help_text='list of fields ccc expenses grouped by'
     )
 
-    expense_state = models.CharField(max_length=100, default=get_default_expense_state,
+    expense_state = models.CharField(max_length=100, default=get_default_expense_state, null = True,
                                      help_text='state at which the expenses are fetched ( PAYMENT_PENDING / '
                                                'PAYMENT_PROCESSING, PAID)')
     ccc_expense_state = models.CharField(max_length=100, default=get_default_ccc_expense_state,
