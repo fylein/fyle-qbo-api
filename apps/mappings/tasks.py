@@ -8,6 +8,8 @@ from typing import List, Dict
 
 from django_q.models import Schedule
 
+from qbosdk.exceptions import WrongParamsError as QBOWrongParamsError
+
 from fyle.platform.exceptions import WrongParamsError
 from fyle_integrations_platform_connector import PlatformConnector
 from fyle_accounting_mappings.models import MappingSetting, Mapping, DestinationAttribute, ExpenseAttribute,\
@@ -214,6 +216,9 @@ def auto_create_tax_codes_mappings(workspace_id: int):
             workspace_id, exception.message, {'error': exception.response}
         )
 
+    except QBOWrongParamsError as exception:
+        logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
+
     except Exception:
         error = traceback.format_exc()
         error = {
@@ -398,6 +403,9 @@ def auto_create_category_mappings(workspace_id):
             'Error while creating categories workspace_id - %s in Fyle %s %s',
             workspace_id, exception.message, {'error': exception.response}
         )
+
+    except QBOWrongParamsError as exception:
+        logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
 
     except Exception:
         error = traceback.format_exc()
@@ -654,6 +662,8 @@ def async_auto_map_employees(workspace_id: int):
             'QBO Credentials not found for workspace_id %s', workspace_id
         )
 
+    except QBOWrongParamsError as exception:
+        logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
 
 def schedule_auto_map_employees(employee_mapping_preference: str, workspace_id: int):
     if employee_mapping_preference:
@@ -899,6 +909,9 @@ def auto_create_cost_center_mappings(workspace_id):
             workspace_id, exception.message, {'error': exception.response}
         )
 
+    except QBOWrongParamsError as exception:
+        logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
+
     except Exception:
         error = traceback.format_exc()
         error = {
@@ -1067,11 +1080,14 @@ def async_auto_create_custom_field_mappings(workspace_id):
     if mapping_settings:
         for mapping_setting in mapping_settings:
             if mapping_setting.import_to_fyle:
-                sync_qbo_attribute(mapping_setting.destination_field, workspace_id)
-                auto_create_expense_fields_mappings(
-                    workspace_id, mapping_setting.destination_field, mapping_setting.source_field,
-                    mapping_setting.source_placeholder
-                )
+                try:
+                    sync_qbo_attribute(mapping_setting.destination_field, workspace_id)
+                    auto_create_expense_fields_mappings(
+                        workspace_id, mapping_setting.destination_field, mapping_setting.source_field,
+                        mapping_setting.source_placeholder
+                    )
+                except QBOWrongParamsError as exception:
+                    logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
 
 
 def schedule_fyle_attributes_creation(workspace_id: int):
@@ -1138,6 +1154,9 @@ def auto_create_vendors_as_merchants(workspace_id):
             'Error while posting vendors as merchants to fyle for workspace_id - %s in Fyle %s %s',
             workspace_id, exception.message, {'error': exception.response}
         )
+
+    except QBOWrongParamsError as exception:
+        logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
 
     except Exception:
         error = traceback.format_exc()
