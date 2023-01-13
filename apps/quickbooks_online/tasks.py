@@ -290,6 +290,9 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
 
         chain = Chain()
 
+        fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials, workspace_id)
+
         for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(
                 workspace_id=expense_group.workspace_id,
@@ -310,7 +313,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
 
             chain.append('apps.quickbooks_online.tasks.create_bill', expense_group, task_log.id, last_export)
 
-        if chain.length():
+        if chain.length() > 1:
             chain.run()
 
 
@@ -657,6 +660,9 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
 
         chain = Chain()
 
+        fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials, workspace_id)
+
         for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(
                 workspace_id=expense_group.workspace_id,
@@ -677,7 +683,7 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
 
             chain.append('apps.quickbooks_online.tasks.create_cheque', expense_group, task_log.id, last_export)
 
-        if chain.length():
+        if chain.length() > 1:
             chain.run()
 
 
@@ -775,6 +781,9 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
 
         chain = Chain()
 
+        fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials, workspace_id)
+
         for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(
                 workspace_id=expense_group.workspace_id,
@@ -795,7 +804,7 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
 
             chain.append('apps.quickbooks_online.tasks.create_qbo_expense', expense_group, task_log.id, last_export)
 
-        if chain.length():
+        if chain.length() > 1:
             chain.run()
 
 
@@ -901,6 +910,9 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
 
         chain = Chain()
 
+        fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials, workspace_id)
+
         for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(
                 workspace_id=expense_group.workspace_id,
@@ -921,7 +933,7 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
 
             chain.append('apps.quickbooks_online.tasks.create_credit_card_purchase', expense_group, task_log.id, last_export)
 
-        if chain.length():
+        if chain.length() > 1:
             chain.run()
 
 
@@ -1030,6 +1042,9 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
 
         chain = Chain()
 
+        fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials, workspace_id)
+
         for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(
                 workspace_id=expense_group.workspace_id,
@@ -1050,7 +1065,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
 
             chain.append('apps.quickbooks_online.tasks.create_journal_entry', expense_group, task_log.id, last_export)
 
-        if chain.length():
+        if chain.length() > 1:
             chain.run()
 
 
