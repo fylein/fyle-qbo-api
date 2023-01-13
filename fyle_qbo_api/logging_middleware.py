@@ -21,10 +21,10 @@ class ErrorHandlerMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        # TODO: request.url != api/workspaces/282/credentials/qbo/
         response = self.get_response(request)
         if response.status_code >= 400:
-            if 'data' in response.__dict__ and not any(message in str(response.data) for message in VALID_ERROR_MESSAGES):
+            if 'data' in response.__dict__ and not any(message in str(response.data) for message in VALID_ERROR_MESSAGES) \
+                and '/credentials/qbo/' not in request.build_absolute_uri():
                 logger.error('%s %s', request.build_absolute_uri(), str(response.data).replace('\n', ''))
         return response
 
