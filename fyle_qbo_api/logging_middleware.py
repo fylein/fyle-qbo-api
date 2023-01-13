@@ -6,6 +6,13 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
+VALID_ERROR_MESSAGES = [
+    'Invalid access token',
+    'QBO Credentials not found in this workspace',
+    'Invalid authorization code',
+    'Please choose the correct QuickBooks Online account'
+]
+
 
 class ErrorHandlerMiddleware:
 
@@ -13,9 +20,10 @@ class ErrorHandlerMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        # TODO: request.url != api/workspaces/282/credentials/qbo/
         response = self.get_response(request)
         if response.status_code >= 400:
-            if 'data' in response.__dict__ and 'Invalid access token' not in str(response.data):
+            if 'data' in response.__dict__ and not any(message in str(response.data) for message in VALID_ERROR_MESSAGES):
                 logger.error('%s %s', request.build_absolute_uri(), str(response.data).replace('\n', ''))
         return response
 

@@ -217,7 +217,7 @@ def auto_create_tax_codes_mappings(workspace_id: int):
         )
 
     except QBOWrongParamsError as exception:
-        logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
+        logger.info('QBO token expired workspace_id - %s', workspace_id)
 
     except Exception:
         error = traceback.format_exc()
@@ -254,6 +254,9 @@ def auto_create_project_mappings(workspace_id: int):
             'Error while creating projects workspace_id - %s in Fyle %s %s',
             workspace_id, exception.message, {'error': exception.response}
         )
+
+    except QBOWrongParamsError as exception:
+        logger.info('QBO token expired workspace_id - %s', workspace_id)
 
     except Exception:
         error = traceback.format_exc()
@@ -398,6 +401,10 @@ def auto_create_category_mappings(workspace_id):
             workspace_id=workspace_id
         )
         return category_mappings
+
+    except QBOCredential.DoesNotExist:
+        logger.info('QBO credentials not found workspace_id - %s', workspace_id)
+
     except WrongParamsError as exception:
         logger.error(
             'Error while creating categories workspace_id - %s in Fyle %s %s',
@@ -405,7 +412,7 @@ def auto_create_category_mappings(workspace_id):
         )
 
     except QBOWrongParamsError as exception:
-        logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
+        logger.info('QBO token expired workspace_id - %s', workspace_id)
 
     except Exception:
         error = traceback.format_exc()
@@ -658,12 +665,12 @@ def async_auto_map_employees(workspace_id: int):
             destination_attribute_type=destination_type
         )
     except QBOCredential.DoesNotExist:
-        logger.error(
+        logger.info(
             'QBO Credentials not found for workspace_id %s', workspace_id
         )
 
     except QBOWrongParamsError as exception:
-        logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
+        logger.info('QBO token expired workspace_id - %s', workspace_id)
 
 def schedule_auto_map_employees(employee_mapping_preference: str, workspace_id: int):
     if employee_mapping_preference:
@@ -903,6 +910,9 @@ def auto_create_cost_center_mappings(workspace_id):
 
         post_cost_centers_in_batches(platform, workspace_id, mapping_setting.destination_field)
 
+    except QBOCredential.DoesNotExist:
+        logger.info('QBO credentials not found workspace_id - %s', workspace_id)
+
     except WrongParamsError as exception:
         logger.error(
             'Error while creating cost centers workspace_id - %s in Fyle %s %s',
@@ -910,7 +920,7 @@ def auto_create_cost_center_mappings(workspace_id):
         )
 
     except QBOWrongParamsError as exception:
-        logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
+        logger.info('QBO token expired workspace_id - %s', workspace_id)
 
     except Exception:
         error = traceback.format_exc()
@@ -1086,8 +1096,10 @@ def async_auto_create_custom_field_mappings(workspace_id):
                         workspace_id, mapping_setting.destination_field, mapping_setting.source_field,
                         mapping_setting.source_placeholder
                     )
+                except QBOCredential.DoesNotExist:
+                    logger.info('QBO credentials not found workspace_id - %s', workspace_id)
                 except QBOWrongParamsError as exception:
-                    logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
+                    logger.info('QBO token expired workspace_id - %s', workspace_id)
 
 
 def schedule_fyle_attributes_creation(workspace_id: int):
@@ -1149,6 +1161,9 @@ def auto_create_vendors_as_merchants(workspace_id):
         sync_qbo_attribute('VENDOR', workspace_id)
         post_merchants(fyle_connection, workspace_id)
 
+    except QBOCredential.DoesNotExist:
+        logger.info('QBO credentials not found workspace_id - %s', workspace_id)
+
     except WrongParamsError as exception:
         logger.error(
             'Error while posting vendors as merchants to fyle for workspace_id - %s in Fyle %s %s',
@@ -1156,7 +1171,7 @@ def auto_create_vendors_as_merchants(workspace_id):
         )
 
     except QBOWrongParamsError as exception:
-        logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
+        logger.info('QBO token expired workspace_id - %s', workspace_id)
 
     except Exception:
         error = traceback.format_exc()
