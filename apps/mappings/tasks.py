@@ -219,7 +219,7 @@ def auto_create_tax_codes_mappings(workspace_id: int):
             workspace_id, exception.message, {'error': exception.response}
         )
 
-    except QBOWrongParamsError as exception:
+    except QBOWrongParamsError:
         logger.info('QBO token expired workspace_id - %s', workspace_id)
 
     except Exception:
@@ -261,7 +261,7 @@ def auto_create_project_mappings(workspace_id: int):
             workspace_id, exception.message, {'error': exception.response}
         )
 
-    except QBOWrongParamsError as exception:
+    except QBOWrongParamsError:
         logger.info('QBO token expired workspace_id - %s', workspace_id)
 
     except Exception:
@@ -417,7 +417,7 @@ def auto_create_category_mappings(workspace_id):
             workspace_id, exception.message, {'error': exception.response}
         )
 
-    except QBOWrongParamsError as exception:
+    except QBOWrongParamsError:
         logger.info('QBO token expired workspace_id - %s', workspace_id)
 
     except Exception:
@@ -925,7 +925,7 @@ def auto_create_cost_center_mappings(workspace_id):
             workspace_id, exception.message, {'error': exception.response}
         )
 
-    except QBOWrongParamsError as exception:
+    except QBOWrongParamsError:
         logger.info('QBO token expired workspace_id - %s', workspace_id)
 
     except Exception:
