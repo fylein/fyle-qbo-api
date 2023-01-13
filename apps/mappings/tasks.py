@@ -210,6 +210,9 @@ def auto_create_tax_codes_mappings(workspace_id: int):
         sync_qbo_attribute(mapping_setting.destination_field, workspace_id)
         upload_tax_groups_to_fyle(platform, workspace_id)
 
+    except QBOCredential.DoesNotExist:
+        logger.info('QBO credentials not found workspace_id - %s', workspace_id)
+
     except WrongParamsError as exception:
         logger.error(
             'Error while creating tax groups workspace_id - %s in Fyle %s %s',
@@ -248,6 +251,9 @@ def auto_create_project_mappings(workspace_id: int):
         sync_qbo_attribute(mapping_setting.destination_field, workspace_id)
 
         post_projects_in_batches(platform, workspace_id, mapping_setting.destination_field)
+
+    except QBOCredential.DoesNotExist:
+        logger.info('QBO credentials not found workspace_id - %s', workspace_id)
 
     except WrongParamsError as exception:
         logger.error(
@@ -669,7 +675,7 @@ def async_auto_map_employees(workspace_id: int):
             'QBO Credentials not found for workspace_id %s', workspace_id
         )
 
-    except QBOWrongParamsError as exception:
+    except QBOWrongParamsError:
         logger.info('QBO token expired workspace_id - %s', workspace_id)
 
 def schedule_auto_map_employees(employee_mapping_preference: str, workspace_id: int):
@@ -1098,7 +1104,7 @@ def async_auto_create_custom_field_mappings(workspace_id):
                     )
                 except QBOCredential.DoesNotExist:
                     logger.info('QBO credentials not found workspace_id - %s', workspace_id)
-                except QBOWrongParamsError as exception:
+                except QBOWrongParamsError:
                     logger.info('QBO token expired workspace_id - %s', workspace_id)
 
 
@@ -1170,7 +1176,7 @@ def auto_create_vendors_as_merchants(workspace_id):
             workspace_id, exception.message, {'error': exception.response}
         )
 
-    except QBOWrongParamsError as exception:
+    except QBOWrongParamsError:
         logger.info('QBO token expired workspace_id - %s', workspace_id)
 
     except Exception:
