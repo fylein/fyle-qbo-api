@@ -12,7 +12,8 @@ VALID_ERROR_MESSAGES = [
     'QBO credentials not found in workspace',
     'Invalid authorization code',
     'Please choose the correct QuickBooks Online account',
-    'Quickbooks Online connection expired'
+    'Quickbooks Online connection expired',
+    'Authorization code incorrect'
 ]
 
 
