@@ -310,7 +310,7 @@ class ConnectQBOView(viewsets.ViewSet):
                     qbo_credentials.save()
 
                 except qbo_exc.WrongParamsError as exception:
-                    logger.error(exception.response)
+                    logger.info(exception.response)
 
                 workspace.qbo_realm_id = realm_id
                 workspace.save()
@@ -632,7 +632,7 @@ class SetupE2ETestView(viewsets.ViewSet):
                         logger.info('Yaay, token is healthly for workspace: {}'.format(healthy_token.workspace_id))
                     except Exception:
                         # If the token is expired, setting is_expired = True so that they are not used for future runs
-                        logger.error('Oops, token is dead for workspace: {}'.format(healthy_token.workspace_id))
+                        logger.info('Oops, token is dead for workspace: {}'.format(healthy_token.workspace_id))
                         healthy_token.is_expired = True
                         healthy_token.save()
                         # Stop the execution here for the token since it's expired
