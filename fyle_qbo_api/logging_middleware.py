@@ -10,10 +10,12 @@ VALID_ERROR_MESSAGES = [
     'Invalid access token',
     'QBO Credentials not found in this workspace',
     'QBO credentials not found in workspace',
+    'Quickbooks Credentials not found in workspace',
     'Invalid authorization code',
     'Please choose the correct QuickBooks Online account',
     'Quickbooks Online connection expired',
-    'Authorization code incorrect'
+    'Authorization code incorrect',
+    'Error in syncing Dimensions'
 ]
 
 
