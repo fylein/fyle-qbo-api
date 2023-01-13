@@ -15,7 +15,7 @@ class ErrorHandlerMiddleware:
     def __call__(self, request):
         response = self.get_response(request)
         if response.status_code >= 400:
-            if 'data' in response.__dict__:
+            if 'data' in response.__dict__ and 'Invalid access token' not in str(response.data):
                 logger.error('%s %s', request.build_absolute_uri(), str(response.data).replace('\n', ''))
         return response
 

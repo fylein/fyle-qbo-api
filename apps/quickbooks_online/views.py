@@ -29,6 +29,7 @@ from .serializers import BillSerializer, ChequeSerializer, CreditCardPurchaseSer
     QuickbooksFieldSerializer
 
 logger = logging.getLogger(__name__)
+logger.level = logging.INFO
 
 class VendorView(generics.ListCreateAPIView):
     """
@@ -340,13 +341,10 @@ class PreferencesView(generics.RetrieveAPIView):
             )
 
         except WrongParamsError as exception:
-            logger.error(
-                'Something unexpected happened workspace_id: %s %s',
-                kwargs['workspace_id'], exception.message
-            )
+            logger.info('QBO token expired workspace_id - %s %s', kwargs['workspace_id'], {'error': exception.response})
             return Response(
                 data={
-                    'message': 'Something unexpected happened while making the request'
+                    'message': 'QBO token expired workspace_id'
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
@@ -846,6 +844,16 @@ class SyncQuickbooksDimensionView(generics.ListCreateAPIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        except WrongParamsError as exception:
+            logger.info('QBO token expired workspace_id - %s %s', workspace.id, {'error': exception.response})
+            return Response(
+                data={
+                    'message': 'Error in syncing Dimensions'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         except Exception as exception:
             logger.exception(exception)
             return Response(
@@ -883,6 +891,15 @@ class RefreshQuickbooksDimensionView(generics.ListCreateAPIView):
             return Response(
                 data={
                     'message': 'Quickbooks credentials not found in workspace'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        except WrongParamsError as exception:
+            logger.info('QBO token expired workspace_id - %s %s', workspace.id, {'error': exception.response})
+            return Response(
+                data={
+                    'message': 'Error in refreshing Dimensions'
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
