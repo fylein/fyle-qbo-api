@@ -291,7 +291,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
         chain = Chain()
 
         fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials, workspace_id)
+        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials)
 
         for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(
@@ -661,7 +661,7 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
         chain = Chain()
 
         fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials, workspace_id)
+        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials)
 
         for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(
@@ -782,7 +782,7 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
         chain = Chain()
 
         fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials, workspace_id)
+        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials)
 
         for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(
@@ -911,7 +911,7 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
         chain = Chain()
 
         fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials, workspace_id)
+        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials)
 
         for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(
@@ -1043,7 +1043,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
         chain = Chain()
 
         fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials, workspace_id)
+        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials)
 
         for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(
