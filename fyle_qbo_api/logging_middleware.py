@@ -5,6 +5,7 @@ from django.http import HttpResponse
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
+logger.level = logging.WARNING
 
 
 class ErrorHandlerMiddleware:
@@ -13,11 +14,7 @@ class ErrorHandlerMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        response = self.get_response(request)
-        if response.status_code >= 400:
-            if 'data' in response.__dict__:
-                logger.info('%s %s', request.build_absolute_uri(), str(response.data).replace('\n', ''))
-        return response
+        return self.get_response(request)
 
     def process_exception(self, request, exception):
         if not settings.DEBUG:
