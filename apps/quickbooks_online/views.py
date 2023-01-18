@@ -890,7 +890,7 @@ class RefreshQuickbooksDimensionView(generics.ListCreateAPIView):
         except (QBOCredential.DoesNotExist, InvalidTokenError):
             return Response(
                 data={
-                    'message': 'Quickbooks credentials not found in workspace'
+                    'message': 'Quickbooks Credentials not found / expired in workspace'
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
