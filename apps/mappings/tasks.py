@@ -8,7 +8,7 @@ from typing import List, Dict
 
 from django_q.models import Schedule
 
-from qbosdk.exceptions import WrongParamsError as QBOWrongParamsError
+from qbosdk.exceptions import WrongParamsError as QBOWrongParamsError, InvalidTokenError
 
 from fyle.platform.exceptions import WrongParamsError
 from fyle_integrations_platform_connector import PlatformConnector
@@ -219,7 +219,7 @@ def auto_create_tax_codes_mappings(workspace_id: int):
             workspace_id, exception.message, {'error': exception.response}
         )
 
-    except QBOWrongParamsError:
+    except (QBOWrongParamsError, InvalidTokenError):
         logger.info('QBO token expired workspace_id - %s', workspace_id)
 
     except Exception:
@@ -261,7 +261,7 @@ def auto_create_project_mappings(workspace_id: int):
             workspace_id, exception.message, {'error': exception.response}
         )
 
-    except QBOWrongParamsError:
+    except (QBOWrongParamsError, InvalidTokenError):
         logger.info('QBO token expired workspace_id - %s', workspace_id)
 
     except Exception:
@@ -417,7 +417,7 @@ def auto_create_category_mappings(workspace_id):
             workspace_id, exception.message, {'error': exception.response}
         )
 
-    except QBOWrongParamsError:
+    except (QBOWrongParamsError, InvalidTokenError):
         logger.info('QBO token expired workspace_id - %s', workspace_id)
 
     except Exception:
@@ -675,7 +675,7 @@ def async_auto_map_employees(workspace_id: int):
             'QBO Credentials not found for workspace_id %s', workspace_id
         )
 
-    except QBOWrongParamsError:
+    except (QBOWrongParamsError, InvalidTokenError):
         logger.info('QBO token expired workspace_id - %s', workspace_id)
 
 def schedule_auto_map_employees(employee_mapping_preference: str, workspace_id: int):
@@ -925,7 +925,7 @@ def auto_create_cost_center_mappings(workspace_id):
             workspace_id, exception.message, {'error': exception.response}
         )
 
-    except QBOWrongParamsError:
+    except (QBOWrongParamsError, InvalidTokenError):
         logger.info('QBO token expired workspace_id - %s', workspace_id)
 
     except Exception:
@@ -1104,7 +1104,7 @@ def async_auto_create_custom_field_mappings(workspace_id):
                     )
                 except QBOCredential.DoesNotExist:
                     logger.info('QBO credentials not found workspace_id - %s', workspace_id)
-                except QBOWrongParamsError:
+                except (QBOWrongParamsError, InvalidTokenError):
                     logger.info('QBO token expired workspace_id - %s', workspace_id)
 
 
@@ -1176,7 +1176,7 @@ def auto_create_vendors_as_merchants(workspace_id):
             workspace_id, exception.message, {'error': exception.response}
         )
 
-    except QBOWrongParamsError:
+    except (QBOWrongParamsError, InvalidTokenError):
         logger.info('QBO token expired workspace_id - %s', workspace_id)
 
     except Exception:
