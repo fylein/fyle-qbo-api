@@ -837,7 +837,7 @@ class SyncQuickbooksDimensionView(generics.ListCreateAPIView):
                 status=status.HTTP_200_OK
             )
 
-        except (WrongParamsError, InvalidTokenError):
+        except (QBOCredential.DoesNotExist, InvalidTokenError):
             return Response(
                 data={
                     'message': 'Quickbooks Credentials not found / expired in workspace'
@@ -887,7 +887,7 @@ class RefreshQuickbooksDimensionView(generics.ListCreateAPIView):
                 status=status.HTTP_200_OK
             )
 
-        except QBOCredential.DoesNotExist:
+        except (QBOCredential.DoesNotExist, InvalidTokenError):
             return Response(
                 data={
                     'message': 'Quickbooks credentials not found in workspace'
