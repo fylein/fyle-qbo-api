@@ -1227,7 +1227,6 @@ def create_bill_payment(workspace_id):
                         bill.expense_group
                     )
                     detail = {
-                        'expense_group_id': bill.expense_group,
                         'message': 'QBO Account not connected / token expired'
                     }
 
