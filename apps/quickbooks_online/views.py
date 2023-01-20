@@ -340,7 +340,7 @@ class PreferencesView(generics.RetrieveAPIView):
                 status=status.HTTP_200_OK
             )
 
-        except WrongParamsError as exception:
+        except (WrongParamsError, InvalidTokenError) as exception:
             logger.info('QBO token expired workspace_id - %s %s', kwargs['workspace_id'], {'error': exception.response})
             return Response(
                 data={
@@ -837,10 +837,10 @@ class SyncQuickbooksDimensionView(generics.ListCreateAPIView):
                 status=status.HTTP_200_OK
             )
 
-        except QBOCredential.DoesNotExist:
+        except (QBOCredential.DoesNotExist, InvalidTokenError):
             return Response(
                 data={
-                    'message': 'Quickbooks Credentials not found in workspace'
+                    'message': 'Quickbooks Credentials not found / expired in workspace'
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
@@ -887,10 +887,10 @@ class RefreshQuickbooksDimensionView(generics.ListCreateAPIView):
                 status=status.HTTP_200_OK
             )
 
-        except QBOCredential.DoesNotExist:
+        except (QBOCredential.DoesNotExist, InvalidTokenError):
             return Response(
                 data={
-                    'message': 'Quickbooks credentials not found in workspace'
+                    'message': 'Quickbooks Credentials not found / expired in workspace'
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
