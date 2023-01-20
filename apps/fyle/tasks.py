@@ -67,7 +67,7 @@ def create_expense_groups(workspace_id: int, fund_source: List[str], task_log: T
     task_log.detail = {
         'message': 'Creating expense groups'
     }
-    task_log.save()             #TODO: doubt
+    task_log.save()
 
     return task_log
 
@@ -152,11 +152,9 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
 
             expense_objects = Expense.create_expense_objects(expenses, workspace_id)
 
-            expense_group_objects = ExpenseGroup.create_expense_groups_by_report_id_fund_source(
+            ExpenseGroup.create_expense_groups_by_report_id_fund_source(
                 expense_objects, workspace_id
             )
-
-            task_log.detail = ExpenseGroupSerializer(expense_group_objects, many=True).data
 
             task_log.status = 'COMPLETE'
 

@@ -9,7 +9,7 @@ from django.db.models import Q
 from django_q.tasks import Chain
 from django_q.models import Schedule
 
-from qbosdk.exceptions import WrongParamsError
+from qbosdk.exceptions import WrongParamsError, InvalidTokenError
 
 from fyle_accounting_mappings.models import Mapping, ExpenseAttribute, DestinationAttribute, EmployeeMapping
 from fyle_integrations_platform_connector import PlatformConnector
@@ -360,15 +360,15 @@ def create_bill(expense_group, task_log_id, last_export: bool):
 
         load_attachments(qbo_connection, created_bill['Bill']['Id'], 'Bill', expense_group)
 
-    except QBOCredential.DoesNotExist:
+    except (QBOCredential.DoesNotExist, InvalidTokenError):
         logger.info(
-            'QBO Credentials not found for workspace_id %s / expense group %s',
+            'QBO Account not connected / token expired for workspace_id %s / expense group %s',
             expense_group.workspace_id,
             expense_group.id
         )
         detail = {
             'expense_group_id': expense_group.id,
-            'message': 'QBO Account not connected'
+            'message': 'QBO Account not connected / token expired'
         }
         task_log.status = 'FAILED'
         task_log.detail = detail
@@ -728,15 +728,15 @@ def create_cheque(expense_group, task_log_id, last_export: bool):
 
         load_attachments(qbo_connection, created_cheque['Purchase']['Id'], 'Purchase', expense_group)
 
-    except QBOCredential.DoesNotExist:
+    except (QBOCredential.DoesNotExist, InvalidTokenError):
         logger.info(
-            'QBO Credentials not found for workspace_id %s / expense group %s',
-            expense_group.id,
-            expense_group.workspace_id
+            'QBO Account not connected / token expired for workspace_id %s / expense group %s',
+            expense_group.workspace_id,
+            expense_group.id
         )
         detail = {
             'expense_group_id': expense_group.id,
-            'message': 'QBO Account not connected'
+            'message': 'QBO Account not connected / token expired'
         }
         task_log.status = 'FAILED'
         task_log.detail = detail
@@ -856,15 +856,15 @@ def create_qbo_expense(expense_group, task_log_id, last_export: bool):
 
         load_attachments(qbo_connection, created_qbo_expense['Purchase']['Id'], 'Purchase', expense_group)
 
-    except QBOCredential.DoesNotExist:
+    except (QBOCredential.DoesNotExist, InvalidTokenError):
         logger.info(
-            'QBO Credentials not found for workspace_id %s / expense group %s',
-            expense_group.id,
-            expense_group.workspace_id
+            'QBO Account not connected / token expired for workspace_id %s / expense group %s',
+            expense_group.workspace_id,
+            expense_group.id
         )
         detail = {
             'expense_group_id': expense_group.id,
-            'message': 'QBO Account not connected'
+            'message': 'QBO Account not connected / token expired'
         }
         task_log.status = 'FAILED'
         task_log.detail = detail
@@ -989,15 +989,15 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id, last_e
 
         load_attachments(qbo_connection, created_credit_card_purchase['Purchase']['Id'], 'Purchase', expense_group)
 
-    except QBOCredential.DoesNotExist:
+    except (QBOCredential.DoesNotExist, InvalidTokenError):
         logger.info(
-            'QBO Credentials not found for workspace_id %s / expense group %s',
-            expense_group.id,
-            expense_group.workspace_id
+            'QBO Account not connected / token expired for workspace_id %s / expense group %s',
+            expense_group.workspace_id,
+            expense_group.id
         )
         detail = {
             'expense_group_id': expense_group.id,
-            'message': 'QBO Account not connected'
+            'message': 'QBO Account not connected / token expired'
         }
         task_log.status = 'FAILED'
         task_log.detail = detail
@@ -1115,15 +1115,15 @@ def create_journal_entry(expense_group, task_log_id, last_export: bool):
 
         load_attachments(qbo_connection, created_journal_entry['JournalEntry']['Id'], 'JournalEntry', expense_group)
 
-    except QBOCredential.DoesNotExist:
+    except (QBOCredential.DoesNotExist, InvalidTokenError):
         logger.info(
-            'QBO Credentials not found for workspace_id %s / expense group %s',
-            expense_group.id,
-            expense_group.workspace_id
+            'QBO Account not connected / token expired for workspace_id %s / expense group %s',
+            expense_group.workspace_id,
+            expense_group.id
         )
         detail = {
             'expense_group_id': expense_group.id,
-            'message': 'QBO Account not connected'
+            'message': 'QBO Account not connected / token expired'
         }
         task_log.status = 'FAILED'
         task_log.detail = detail
@@ -1220,16 +1220,16 @@ def create_bill_payment(workspace_id):
 
                         task_log.save()
 
-                except QBOCredential.DoesNotExist:
+                except (QBOCredential.DoesNotExist, InvalidTokenError):
                     logger.info(
-                        'QBO Credentials not found for workspace_id %s / expense group %s',
+                        'QBO Account not connected / token expired for workspace_id %s / expense group %s',
                         workspace_id,
                         bill.expense_group
                     )
                     detail = {
-                        'expense_group_id': bill.expense_group,
-                        'message': 'QBO Account not connected'
+                        'message': 'QBO Account not connected / token expired'
                     }
+
                     task_log.status = 'FAILED'
                     task_log.detail = detail
 
@@ -1323,7 +1323,7 @@ def check_qbo_object_status(workspace_id):
                     bill.paid_on_qbo = True
                     bill.payment_synced = True
                     bill.save()
-    except WrongParamsError as exception:
+    except (WrongParamsError, InvalidTokenError) as exception:
         logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
 
 
@@ -1411,5 +1411,5 @@ def async_sync_accounts(workspace_id):
             workspace_id=workspace_id
         )
         qbo_connection.sync_accounts()
-    except WrongParamsError as exception:
+    except (WrongParamsError, InvalidTokenError) as exception:
         logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})

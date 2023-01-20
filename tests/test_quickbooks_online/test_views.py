@@ -803,7 +803,7 @@ def test_post_refresh_dimensions(api_client, test_connection):
     assert response.status_code == 400
     response = json.loads(response.content)
 
-    assert response['message'] == 'Quickbooks credentials not found in workspace'
+    assert response['message'] == 'Quickbooks Credentials not found / expired in workspace'
 
 
 def test_post_update_grouping_on_department(api_client, test_connection):
