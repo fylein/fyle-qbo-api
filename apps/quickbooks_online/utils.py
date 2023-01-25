@@ -76,6 +76,7 @@ class QBOConnector:
         """
         vendor_name = vendor_name.replace("'", "\\'")  # Replacing ' with \\'
         vendor_name = vendor_name.replace('#', '%23')  # Replace '#' with %23
+        vendor_name = vendor_name.replace('&', '%26')  # Replace '&' with %26
 
         vendor = self.connection.vendors.search_vendor_by_display_name(vendor_name)
 
