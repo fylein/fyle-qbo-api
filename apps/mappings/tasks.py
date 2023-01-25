@@ -26,9 +26,9 @@ logger = logging.getLogger(__name__)
 logger.level = logging.INFO
 
 DEFAULT_FYLE_CATEGORIES = [
-    'activity', 'train', 'fuel', 'snacks', 'office supplies', 'utility', 'entertainment', 'others', 'mileage', 'food',
-    'per diem', 'bus', 'internet', 'taxi', 'courier', 'hotel', 'professional services', 'phone', 'office party',
-    'flight', 'software', 'parking', 'toll charge', 'tax', 'training', 'unspecified'
+    'train', 'fuel', 'office supplies', 'utility', 'entertainment', 'others', 'mileage', 'food',
+    'per diem', 'bus', 'taxi', 'mail', 'lodging', 'professional services', 'airlines', 'software',
+    'parking', 'unspecified', 'rental', 'groceries'
 ]
 
 
