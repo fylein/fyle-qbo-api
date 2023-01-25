@@ -32,9 +32,6 @@ class MapEmployeesSerializer(serializers.ModelSerializer):
 
         workspace_general_settings_instance = WorkspaceGeneralSettings.objects.filter(workspace_id=instance.id).first()
 
-        category_sync_version = workspace_general_settings_instance.category_sync_version \
-            if workspace_general_settings_instance and workspace_general_settings_instance.category_sync_version else 'v2'
-
         if workspace_general_settings_instance and (workspace_general_settings_instance.employee_field_mapping != workspace_general_settings['employee_field_mapping']):
             workspace_general_settings_instance.reimbursable_expenses_object = None
             workspace_general_settings_instance.save()
@@ -43,8 +40,7 @@ class MapEmployeesSerializer(serializers.ModelSerializer):
             workspace_id=workspace_id,
             defaults={
                 'employee_field_mapping': workspace_general_settings['employee_field_mapping'],
-                'auto_map_employees': workspace_general_settings['auto_map_employees'],
-                'category_sync_version': category_sync_version
+                'auto_map_employees': workspace_general_settings['auto_map_employees']
             }
         )
 
