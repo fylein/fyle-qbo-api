@@ -132,6 +132,7 @@ def create_fyle_projects_payload(projects: List[DestinationAttribute], existing_
     :return: Fyle Projects Payload
     """
     payload = []
+    existing_project_names = [project_name.lower() for project_name in existing_project_names]
     if updated_projects:
         for project in updated_projects:
             destination_id_of_project = project.mapping.first().destination.destination_id
@@ -147,7 +148,7 @@ def create_fyle_projects_payload(projects: List[DestinationAttribute], existing_
             })
     else:
         for project in projects:
-            if project.value not in existing_project_names:
+            if project.value.lower() not in existing_project_names:
                 payload.append({
                     'name': project.value,
                     'code': project.destination_id,
