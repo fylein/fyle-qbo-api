@@ -127,7 +127,7 @@ def load_attachments(qbo_connection: QBOConnector, ref_id: str, ref_type: str, e
 
     except Exception:
         error = traceback.format_exc()
-        logger.error(
+        logger.info(
             'Attachment failed for expense group id %s / workspace id %s \n Error: %s',
             expense_group.id, expense_group.workspace_id, {'error': error}
         )
