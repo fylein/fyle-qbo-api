@@ -26,7 +26,6 @@ from .models import Bill, BillLineitem, Cheque, ChequeLineitem, CreditCardPurcha
 from .utils import QBOConnector
 
 logger = logging.getLogger(__name__)
-logger.level = logging.INFO
 
 def update_last_export_details(workspace_id):
     last_export_detail = LastExportDetail.objects.get(workspace_id=workspace_id)
