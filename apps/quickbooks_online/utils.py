@@ -618,20 +618,23 @@ class QBOConnector:
 
         except WrongParamsError as bad_request:
             general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
-            error_response = json.loads(bad_request.response)['Fault']['Error'][0]
 
-            if general_settings.change_accounting_period and 'account period closed' in error_response['Message'].lower():
-                book_closed_date = self.connection.preferences.get()['AccountingInfoPrefs']['BookCloseDate']
-                txn_date = datetime.strptime(book_closed_date, '%Y-%m-%d') + timedelta(days=1)
+            response = json.loads(bad_request.response)
+            if 'Fault' in response:
+                error_response = response['Fault']['Error'][0]
 
-                bills_payload['TxnDate'] = txn_date.strftime("%Y-%m-%d")
-                created_bill = self.connection.bills.post(bills_payload)
+                if general_settings.change_accounting_period and 'account period closed' in error_response['Message'].lower():
+                    book_closed_date = self.connection.preferences.get()['AccountingInfoPrefs']['BookCloseDate']
+                    txn_date = datetime.strptime(book_closed_date, '%Y-%m-%d') + timedelta(days=1)
 
-                bill.transaction_date = txn_date
-                bill.save()
-                return created_bill
-            else:
-                raise
+                    bills_payload['TxnDate'] = txn_date.strftime("%Y-%m-%d")
+                    created_bill = self.connection.bills.post(bills_payload)
+
+                    bill.transaction_date = txn_date
+                    bill.save()
+                    return created_bill
+
+            raise
 
     def get_bill(self, bill_id):
         """
