@@ -468,37 +468,37 @@ class QBOConnector:
         try:
             self.sync_accounts()
         except Exception as exception:
-            logger.exception(exception)
+            logger.info(exception)
 
         try:
             self.sync_employees()
         except Exception as exception:
-            logger.exception(exception)
+            logger.info(exception)
 
         try:
             self.sync_vendors()
         except Exception as exception:
-            logger.exception(exception)
+            logger.info(exception)
 
         try:
             self.sync_customers()
         except Exception as exception:
-            logger.exception(exception)
+            logger.info(exception)
 
         try:
             self.sync_classes()
         except Exception as exception:
-            logger.exception(exception)
+            logger.info(exception)
         
         try:
             self.sync_tax_codes()
         except Exception as exception:
-            logger.exception(exception)
+            logger.info(exception)
 
         try:
             self.sync_departments()
         except Exception as exception:
-            logger.exception(exception)
+            logger.info(exception)
 
 
     def purchase_object_payload(self, purchase_object, line, payment_type, account_ref, doc_number: str = None, credit=None):
@@ -618,20 +618,23 @@ class QBOConnector:
 
         except WrongParamsError as bad_request:
             general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
-            error_response = json.loads(bad_request.response)['Fault']['Error'][0]
 
-            if general_settings.change_accounting_period and 'account period closed' in error_response['Message'].lower():
-                book_closed_date = self.connection.preferences.get()['AccountingInfoPrefs']['BookCloseDate']
-                txn_date = datetime.strptime(book_closed_date, '%Y-%m-%d') + timedelta(days=1)
+            response = json.loads(bad_request.response)
+            if 'Fault' in response:
+                error_response = response['Fault']['Error'][0]
 
-                bills_payload['TxnDate'] = txn_date.strftime("%Y-%m-%d")
-                created_bill = self.connection.bills.post(bills_payload)
+                if general_settings.change_accounting_period and 'account period closed' in error_response['Message'].lower():
+                    book_closed_date = self.connection.preferences.get()['AccountingInfoPrefs']['BookCloseDate']
+                    txn_date = datetime.strptime(book_closed_date, '%Y-%m-%d') + timedelta(days=1)
 
-                bill.transaction_date = txn_date
-                bill.save()
-                return created_bill
-            else:
-                raise
+                    bills_payload['TxnDate'] = txn_date.strftime("%Y-%m-%d")
+                    created_bill = self.connection.bills.post(bills_payload)
+
+                    bill.transaction_date = txn_date
+                    bill.save()
+                    return created_bill
+
+            raise
 
     def get_bill(self, bill_id):
         """
@@ -701,19 +704,21 @@ class QBOConnector:
 
         except WrongParamsError as bad_request:
             general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
-            error_response = json.loads(bad_request.response)['Fault']['Error'][0]
+            response = json.loads(bad_request.response)
+            if 'Fault' in response:
+                error_response = response['Fault']['Error'][0]
 
-            if general_settings.change_accounting_period and 'account period closed' in error_response['Message'].lower():
-                book_closed_date = self.connection.preferences.get()['AccountingInfoPrefs']['BookCloseDate']
-                txn_date = datetime.strptime(book_closed_date, '%Y-%m-%d') + timedelta(days=1)
-                qbo_expenses_payload['TxnDate'] = txn_date.strftime("%Y-%m-%d")
-                created_qbo_expense = self.connection.purchases.post(qbo_expenses_payload)
+                if general_settings.change_accounting_period and 'account period closed' in error_response['Message'].lower():
+                    book_closed_date = self.connection.preferences.get()['AccountingInfoPrefs']['BookCloseDate']
+                    txn_date = datetime.strptime(book_closed_date, '%Y-%m-%d') + timedelta(days=1)
+                    qbo_expenses_payload['TxnDate'] = txn_date.strftime("%Y-%m-%d")
+                    created_qbo_expense = self.connection.purchases.post(qbo_expenses_payload)
 
-                qbo_expense.transaction_date = txn_date
-                qbo_expense.save()
-                return created_qbo_expense
-            else:
-                raise
+                    qbo_expense.transaction_date = txn_date
+                    qbo_expense.save()
+                    return created_qbo_expense
+
+            raise
 
     def __construct_cheque_lineitems(self, cheque_lineitems: List[ChequeLineitem], general_mappings: GeneralMapping) -> List[Dict]:
         """
@@ -775,19 +780,21 @@ class QBOConnector:
 
         except WrongParamsError as bad_request:
             general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
-            error_response = json.loads(bad_request.response)['Fault']['Error'][0]
+            response = json.loads(bad_request.response)
+            if 'Fault' in response:
+                error_response = json.loads(bad_request.response)['Fault']['Error'][0]
 
-            if general_settings.change_accounting_period and 'account period closed' in error_response['Message'].lower():
-                book_closed_date = self.connection.preferences.get()['AccountingInfoPrefs']['BookCloseDate']
-                txn_date = datetime.strptime(book_closed_date, '%Y-%m-%d') + timedelta(days=1)
-                cheques_payload['TxnDate'] = txn_date.strftime("%Y-%m-%d")
-                created_cheque = self.connection.purchases.post(cheques_payload)
+                if general_settings.change_accounting_period and 'account period closed' in error_response['Message'].lower():
+                    book_closed_date = self.connection.preferences.get()['AccountingInfoPrefs']['BookCloseDate']
+                    txn_date = datetime.strptime(book_closed_date, '%Y-%m-%d') + timedelta(days=1)
+                    cheques_payload['TxnDate'] = txn_date.strftime("%Y-%m-%d")
+                    created_cheque = self.connection.purchases.post(cheques_payload)
 
-                cheque.transaction_date = txn_date
-                cheque.save()
-                return created_cheque
-            else:
-                raise
+                    cheque.transaction_date = txn_date
+                    cheque.save()
+                    return created_cheque
+
+            raise
 
 
     def __construct_credit_card_purchase_lineitems(self,
@@ -864,19 +871,21 @@ class QBOConnector:
 
         except WrongParamsError as bad_request:
             general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
-            error_response = json.loads(bad_request.response)['Fault']['Error'][0]
+            response = json.loads(bad_request.response)
+            if 'Fault' in response:
+                error_response = json.loads(bad_request.response)['Fault']['Error'][0]
 
-            if general_settings.change_accounting_period and 'account period closed' in error_response['Message'].lower():
-                book_closed_date = self.connection.preferences.get()['AccountingInfoPrefs']['BookCloseDate']
-                txn_date = datetime.strptime(book_closed_date, '%Y-%m-%d') + timedelta(days=1)
-                credit_card_purchase_payload['TxnDate'] = txn_date.strftime("%Y-%m-%d")
-                created_credit_card_purchase = self.connection.purchases.post(credit_card_purchase_payload)
+                if general_settings.change_accounting_period and 'account period closed' in error_response['Message'].lower():
+                    book_closed_date = self.connection.preferences.get()['AccountingInfoPrefs']['BookCloseDate']
+                    txn_date = datetime.strptime(book_closed_date, '%Y-%m-%d') + timedelta(days=1)
+                    credit_card_purchase_payload['TxnDate'] = txn_date.strftime("%Y-%m-%d")
+                    created_credit_card_purchase = self.connection.purchases.post(credit_card_purchase_payload)
 
-                credit_card_purchase.transaction_date = txn_date
-                credit_card_purchase.save()
-                return created_credit_card_purchase
-            else:
-                raise
+                    credit_card_purchase.transaction_date = txn_date
+                    credit_card_purchase.save()
+                    return created_credit_card_purchase
+
+            raise
 
     def _get_total_tax(self, lineitem, general_mappings):
         total_tax = 0
@@ -1101,19 +1110,21 @@ class QBOConnector:
 
         except WrongParamsError as bad_request:
             general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
-            error_response = json.loads(bad_request.response)['Fault']['Error'][0]
+            response = json.loads(bad_request.response)
+            if 'Fault' in response:
+                error_response = json.loads(bad_request.response)['Fault']['Error'][0]
 
-            if general_settings.change_accounting_period and 'account period closed' in error_response['Message'].lower():
-                book_closed_date = self.connection.preferences.get()['AccountingInfoPrefs']['BookCloseDate']
-                txn_date = datetime.strptime(book_closed_date, '%Y-%m-%d') + timedelta(days=1)
-                journal_entry_payload['TxnDate'] = txn_date.strftime("%Y-%m-%d")
-                created_journal_entry = self.connection.journal_entries.post(journal_entry_payload)
+                if general_settings.change_accounting_period and 'account period closed' in error_response['Message'].lower():
+                    book_closed_date = self.connection.preferences.get()['AccountingInfoPrefs']['BookCloseDate']
+                    txn_date = datetime.strptime(book_closed_date, '%Y-%m-%d') + timedelta(days=1)
+                    journal_entry_payload['TxnDate'] = txn_date.strftime("%Y-%m-%d")
+                    created_journal_entry = self.connection.journal_entries.post(journal_entry_payload)
 
-                journal_entry.transaction_date = txn_date
-                journal_entry.save()
-                return created_journal_entry
-            else:
-                raise
+                    journal_entry.transaction_date = txn_date
+                    journal_entry.save()
+                    return created_journal_entry
+
+            raise
 
     def get_company_preference(self):
         """
