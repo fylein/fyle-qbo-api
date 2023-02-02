@@ -468,37 +468,37 @@ class QBOConnector:
         try:
             self.sync_accounts()
         except Exception as exception:
-            logger.exception(exception)
+            logger.info(exception)
 
         try:
             self.sync_employees()
         except Exception as exception:
-            logger.exception(exception)
+            logger.info(exception)
 
         try:
             self.sync_vendors()
         except Exception as exception:
-            logger.exception(exception)
+            logger.info(exception)
 
         try:
             self.sync_customers()
         except Exception as exception:
-            logger.exception(exception)
+            logger.info(exception)
 
         try:
             self.sync_classes()
         except Exception as exception:
-            logger.exception(exception)
+            logger.info(exception)
         
         try:
             self.sync_tax_codes()
         except Exception as exception:
-            logger.exception(exception)
+            logger.info(exception)
 
         try:
             self.sync_departments()
         except Exception as exception:
-            logger.exception(exception)
+            logger.info(exception)
 
 
     def purchase_object_payload(self, purchase_object, line, payment_type, account_ref, doc_number: str = None, credit=None):
