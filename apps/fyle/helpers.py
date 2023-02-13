@@ -114,7 +114,7 @@ def construct_expense_filter_query(expense_filters: List[ExpenseFilter]):
 def construct_expense_filter(expense_filter: ExpenseFilter):
     constructed_expense_filter = {}
     if expense_filter.is_custom and expense_filter.operator != 'isnull':
-        #This block is for custom-field with not null check
+        #custom-field for equals to, dynamic value
         if expense_filter.custom_field_type == 'SELECT' and expense_filter.operator == 'not_in':
             filter1 = {
                 'custom_properties__{0}__{1}'.format(
