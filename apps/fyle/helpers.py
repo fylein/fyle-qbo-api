@@ -1,9 +1,10 @@
 import json
-
 import requests
 
 from django.conf import settings
-
+from django.db.models import Q
+from apps.fyle.models import ExpenseFilter
+from typing import List
 
 def post_request(url, body, refresh_token=None):
     """
@@ -94,3 +95,73 @@ def get_cluster_domain(refresh_token: str) -> str:
     cluster_api_url = '{0}/oauth/cluster/'.format(settings.FYLE_BASE_URL)
 
     return post_request(cluster_api_url, {}, refresh_token)['cluster_domain']
+
+def construct_expense_filter_query(expense_filters: List[ExpenseFilter]):
+    final_filter = None
+    for expense_filter in expense_filters:
+        constructed_expense_filter = construct_expense_filter(expense_filter)
+        if expense_filter.rank == 1:
+            final_filter = (constructed_expense_filter)
+        elif expense_filter.rank != 1 and join_by == 'AND':
+            final_filter = final_filter & (constructed_expense_filter)
+        elif expense_filter.rank != 1 and join_by == 'OR':
+            final_filter = final_filter | (constructed_expense_filter)
+
+        join_by = expense_filter.join_by
+
+    return final_filter
+
+def construct_expense_filter(expense_filter: ExpenseFilter):
+    constructed_expense_filter = {}
+    if expense_filter.is_custom and expense_filter.operator != 'isnull':
+        #This block is for custom-field with not null check
+        if expense_filter.custom_field_type == 'SELECT' and expense_filter.operator == 'not_in':
+            filter1 = {
+                'custom_properties__{0}__{1}'.format(
+                    expense_filter.condition,
+                    'in'
+                ): expense_filter.values
+            }
+            constructed_expense_filter = ~Q(**filter1)
+        else:
+            if expense_filter.custom_field_type == 'NUMBER':
+                expense_filter.values = [int(expense_filter_value) for expense_filter_value in expense_filter.values]
+
+            filter1 = {
+                'custom_properties__{0}__{1}'.format(
+                    expense_filter.condition,
+                    expense_filter.operator
+                ): expense_filter.values if len(expense_filter.values) > 1 or expense_filter.operator == 'in' else expense_filter.values[0]
+            }
+            constructed_expense_filter = Q(**filter1)
+
+    elif expense_filter.is_custom and expense_filter.operator == 'isnull':
+        #custom_field is_null
+        expense_filter_value: bool = True if expense_filter.values[0].lower() == 'true' else False
+        filter1 = {
+            'custom_properties__{0}__{1}'.format(
+                expense_filter.condition,
+                expense_filter.operator
+            ): expense_filter_value
+        }
+        filter2 = {
+            'custom_properties__{0}__exact'.format(expense_filter.condition): None
+        }
+        if expense_filter_value == True:
+            #if isnull=True
+            constructed_expense_filter = Q(**filter1) | Q(**filter2)
+        else:
+            #if isnull=False
+            constructed_expense_filter = ~Q(**filter2)
+
+    else:
+        #Default_fields
+        filter1 = {
+            '{0}__{1}'.format(
+                expense_filter.condition,
+                expense_filter.operator
+            ):expense_filter.values if len(expense_filter.values) > 1 or expense_filter.operator == 'in' else expense_filter.values[0]
+        }
+        constructed_expense_filter = Q(**filter1)
+
+    return constructed_expense_filter
