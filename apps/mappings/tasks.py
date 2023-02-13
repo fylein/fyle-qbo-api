@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from typing import List, Dict
 
 from django_q.models import Schedule
+from django_q.tasks import Chain
 
 from qbosdk.exceptions import WrongParamsError as QBOWrongParamsError, InvalidTokenError
 
@@ -297,27 +298,6 @@ def schedule_tax_groups_creation(import_tax_codes, workspace_id):
             schedule.delete()
 
 
-def schedule_projects_creation(import_to_fyle, workspace_id):
-    if import_to_fyle:
-        schedule, _ = Schedule.objects.update_or_create(
-            func='apps.mappings.tasks.auto_create_project_mappings',
-            args='{}'.format(workspace_id),
-            defaults={
-                'schedule_type': Schedule.MINUTES,
-                'minutes': 6 * 60,
-                'next_run': datetime.now()
-            }
-        )
-    else:
-        schedule: Schedule = Schedule.objects.filter(
-            func='apps.mappings.tasks.auto_create_project_mappings',
-            args='{}'.format(workspace_id)
-        ).first()
-
-        if schedule:
-            schedule.delete()
-
-
 def create_fyle_categories_payload(categories: List[DestinationAttribute], workspace_id: int,\
         updated_categories: List[ExpenseAttribute] = None):
     """
@@ -430,28 +410,6 @@ def auto_create_category_mappings(workspace_id):
             'Error while creating categories workspace_id - %s error: %s',
             workspace_id, error
         )
-
-
-def schedule_categories_creation(import_categories, workspace_id):
-    if import_categories:
-        start_datetime = datetime.now()
-        schedule, _ = Schedule.objects.update_or_create(
-            func='apps.mappings.tasks.auto_create_category_mappings',
-            args='{}'.format(workspace_id),
-            defaults={
-                'schedule_type': Schedule.MINUTES,
-                'minutes': 24 * 60,
-                'next_run': start_datetime
-            }
-        )
-    else:
-        schedule: Schedule = Schedule.objects.filter(
-            func='apps.mappings.tasks.auto_create_category_mappings',
-            args='{}'.format(workspace_id)
-        ).first()
-
-        if schedule:
-            schedule.delete()
 
 
 def get_existing_source_and_mappings(destination_type: str, workspace_id: int):
@@ -1189,22 +1147,23 @@ def auto_create_vendors_as_merchants(workspace_id):
             'Error while posting vendors as merchants to fyle for workspace_id - %s error: %s',
             workspace_id, error)
 
-def schedule_vendors_as_merchants_creation(import_vendors_as_merchants, workspace_id):
-    if import_vendors_as_merchants:
-        schedule, _ = Schedule.objects.update_or_create(
-            func='apps.mappings.tasks.auto_create_vendors_as_merchants',
-            args='{}'.format(workspace_id),
-            defaults={
-                'schedule_type': Schedule.MINUTES,
-                'minutes': 24 * 60,
-                'next_run': datetime.now()
-            }
-        )
-    else:
-        schedule: Schedule = Schedule.objects.filter(
-            func='apps.mappings.tasks.auto_create_vendors_as_merchants',
-            args='{}'.format(workspace_id),
-        ).first()
+def auto_import_and_map_fyle_fields(workspace_id):
+    """
+    Auto import and map fyle fields
+    """
+    workspace_general_settings: WorkspaceGeneralSettings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+    project_mapping = MappingSetting.objects.filter(source_field='PROJECT', workspace_id=workspace_general_settings.workspace_id).first()
 
-        if schedule:
-            schedule.delete()
+    chain = Chain()
+
+    if workspace_general_settings.import_vendors_as_merchants:
+        chain.append('apps.mappings.tasks.auto_create_vendors_as_merchants', workspace_id)
+
+    if workspace_general_settings.import_categories:
+        chain.append('apps.mappings.tasks.auto_create_category_mappings', workspace_id)
+
+    if project_mapping and project_mapping.import_to_fyle:
+        chain.append('apps.mappings.tasks.auto_create_project_mappings', workspace_id)
+
+    if chain.length() > 0:
+        chain.run()
