@@ -38,6 +38,32 @@ CCC_EXPENSE_STATE = (
     ('PAYMENT_PROCESSING', 'PAYMENT_PROCESSING')
 )
 
+EXPENSE_FILTER_RANK = (
+    (1, 1),
+    (2, 2)
+)
+
+EXPENSE_FILTER_JOIN_BY = (
+    ('AND', 'AND'),
+    ('OR', 'OR')
+)
+
+EXPENSE_FILTER_CUSTOM_FIELD_TYPE = (
+    ('SELECT', 'SELECT'),
+    ('NUMBER', 'NUMBER'),
+    ('TEXT','TEXT')
+)
+
+EXPENSE_FILTER_OPERATOR = (
+	('isnull', 'isnull'),
+	('in', 'in'),
+	('iexact' , 'iexact'),
+	('icontains', 'icontains'),
+	('lt', 'lt'),
+	('lte', 'lte'),
+    ('not_in', 'not_in')
+)
+
 def get_default_ccc_expense_state():
     return 'PAID'
 
@@ -59,7 +85,6 @@ def _round_to_currency_fraction(amount: float, currency: str) -> float:
     rounded_amount = round(amount, fraction)
 
     return rounded_amount
-
 
 class Expense(models.Model):
     """
@@ -90,6 +115,7 @@ class Expense(models.Model):
     cost_center = models.CharField(max_length=255, null=True, blank=True, help_text='Fyle Expense Cost Center')
     purpose = models.TextField(null=True, blank=True, help_text='Purpose')
     report_id = models.CharField(max_length=255, help_text='Report ID')
+    report_title = models.TextField(null=True, blank=True, help_text='Report title')
     corporate_card_id = models.CharField(max_length=255, null=True, blank=True, help_text='Corporate Card ID')
     file_ids = ArrayField(base_field=models.CharField(max_length=255), null=True, help_text='File IDs')
     spent_at = models.DateTimeField(null=True, help_text='Expense spent at')
@@ -103,6 +129,7 @@ class Expense(models.Model):
     custom_properties = JSONField(null=True)
     paid_on_qbo = models.BooleanField(help_text='Expense Payment status on QBO', default=False)
     payment_number = models.CharField(max_length=55, help_text='Expense payment number', null=True)
+    is_skipped = models.BooleanField(null=True, default=False, help_text='Expense is skipped or not')
 
     class Meta:
         db_table = 'expenses'
@@ -115,6 +142,9 @@ class Expense(models.Model):
         expense_objects = []
 
         for expense in expenses:
+            for custom_property_field in expense['custom_properties']:
+                if expense['custom_properties'][custom_property_field] == '':
+                    expense['custom_properties'][custom_property_field] = None
             expense_object, _ = Expense.objects.update_or_create(
                 expense_id=expense['id'],
                 defaults={
@@ -140,6 +170,7 @@ class Expense(models.Model):
                     'cost_center': expense['cost_center'],
                     'purpose': expense['purpose'],
                     'report_id': expense['report_id'],
+                    'report_title': expense['report_title'],
                     'corporate_card_id': expense['corporate_card_id'],
                     'file_ids': expense['file_ids'],
                     'spent_at': expense['spent_at'],
@@ -470,3 +501,36 @@ class Reimbursement(models.Model):
         return Reimbursement.objects.filter(
             workspace_id=workspace_id
         ).order_by('-updated_at').first()
+
+class ExpenseFilter(models.Model):
+    """
+    Reimbursements
+    """
+    id = models.AutoField(primary_key=True)
+    condition = models.CharField(max_length=255, help_text='Condition for the filter')
+    operator = models.CharField(max_length=255, choices=EXPENSE_FILTER_OPERATOR, help_text='Operator for the filter')
+    values = ArrayField(base_field=models.CharField(max_length=255), null=True, help_text='Values for the operator')
+    rank = models.IntegerField(choices=EXPENSE_FILTER_RANK, help_text='Rank for the filter')
+    join_by = models.CharField(
+        max_length=3,
+        null=True,
+        choices=EXPENSE_FILTER_JOIN_BY,
+        help_text='Used to join the filter (AND/OR)'
+    )
+    is_custom = models.BooleanField(default=False, help_text='Custom Field or not')
+    custom_field_type = models.CharField(
+        max_length=255,
+        null=True,
+        help_text='Custom field type',
+        choices=EXPENSE_FILTER_CUSTOM_FIELD_TYPE
+    )
+    workspace = models.ForeignKey(
+        Workspace, 
+        on_delete=models.PROTECT,
+        help_text='To which workspace these filters belongs to'
+    )
+    created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
+    updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
+
+    class Meta:
+        db_table = 'expense_filters'
