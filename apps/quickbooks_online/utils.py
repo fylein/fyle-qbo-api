@@ -22,7 +22,7 @@ from .models import BillLineitem, Bill, ChequeLineitem, Cheque, CreditCardPurcha
 logger = logging.getLogger(__name__)
 
 SYNC_UPPER_LIMIT = {
-    'customers': 15000
+    'customers': 17000
 }
 
 def format_special_characters(value: str) -> str:
