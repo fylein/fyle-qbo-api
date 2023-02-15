@@ -86,6 +86,7 @@ def _round_to_currency_fraction(amount: float, currency: str) -> float:
 
     return rounded_amount
 
+
 class Expense(models.Model):
     """
     Expense
@@ -501,6 +502,7 @@ class Reimbursement(models.Model):
         return Reimbursement.objects.filter(
             workspace_id=workspace_id
         ).order_by('-updated_at').first()
+
 
 class ExpenseFilter(models.Model):
     """
