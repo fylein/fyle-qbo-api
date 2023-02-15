@@ -61,7 +61,7 @@ EXPENSE_FILTER_OPERATOR = (
 	('icontains', 'icontains'),
 	('lt', 'lt'),
 	('lte', 'lte'),
-    ('not_in', 'not_in')
+	('not_in', 'not_in')
 )
 
 def get_default_ccc_expense_state():
