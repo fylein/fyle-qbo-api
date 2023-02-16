@@ -96,6 +96,30 @@ def get_cluster_domain(refresh_token: str) -> str:
 
     return post_request(cluster_api_url, {}, refresh_token)['cluster_domain']
 
+
+def construct_expense_filter_query(expense_filters: List[ExpenseFilter]):
+    final_filter = None
+    for expense_filter in expense_filters:
+        constructed_expense_filter = construct_expense_filter(expense_filter)
+        
+        # If this is the first filter, set it as the final filter
+        if expense_filter.rank == 1:
+            final_filter = (constructed_expense_filter)
+        
+        # If not first filter and join type is "AND", add to filter1 using "and" operator
+        elif expense_filter.rank != 1 and join_by == 'AND':
+            final_filter = final_filter & (constructed_expense_filter)
+        
+        # If not first filter and join type is "OR", add to filter1 using "or" operator
+        elif expense_filter.rank != 1 and join_by == 'OR':
+            final_filter = final_filter | (constructed_expense_filter)
+
+        # Set the join type for the additonal filter
+        join_by = expense_filter.join_by
+
+    return final_filter
+
+
 def construct_expense_filter(expense_filter):
     constructed_expense_filter = {}
 
