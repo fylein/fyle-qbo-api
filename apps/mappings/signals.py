@@ -9,11 +9,13 @@ from fyle_accounting_mappings.models import MappingSetting, Mapping, EmployeeMap
 
 from apps.tasks.models import Error
 from apps.mappings.tasks import upload_attributes_to_fyle, schedule_cost_centers_creation,\
-    schedule_fyle_attributes_creation, schedule_projects_creation
+    schedule_fyle_attributes_creation
 from apps.workspaces.utils import delete_cards_mapping_settings
 from apps.workspaces.models import WorkspaceGeneralSettings
 
 from apps.workspaces.apis.import_settings.triggers import ImportSettingsTrigger
+
+from .helpers import schedule_or_delete_fyle_import_tasks
 
 
 @receiver(post_save, sender=Mapping)
@@ -46,8 +48,10 @@ def run_post_mapping_settings_triggers(sender, instance: MappingSetting, **kwarg
     :param instance: Row Instance of Sender Class
     :return: None
     """
+    workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=instance.workspace_id).first()
+
     if instance.source_field == 'PROJECT':
-        schedule_projects_creation(instance.import_to_fyle, int(instance.workspace_id))
+        schedule_or_delete_fyle_import_tasks(workspace_general_settings)
 
     if instance.source_field == 'COST_CENTER':
         schedule_cost_centers_creation(instance.import_to_fyle, int(instance.workspace_id))
@@ -55,7 +59,6 @@ def run_post_mapping_settings_triggers(sender, instance: MappingSetting, **kwarg
     if instance.is_custom:
         schedule_fyle_attributes_creation(int(instance.workspace_id))
 
-    workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=instance.workspace_id).first()
     if workspace_general_settings:
         delete_cards_mapping_settings(workspace_general_settings)
 

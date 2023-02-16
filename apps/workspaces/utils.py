@@ -11,8 +11,8 @@ from future.moves.urllib.parse import urlencode
 from qbosdk import UnauthorizedClientError, NotFoundClientError, WrongParamsError, InternalServerError
 
 from fyle_accounting_mappings.models import MappingSetting
-from apps.mappings.tasks import schedule_categories_creation, schedule_auto_map_employees, schedule_auto_map_ccc_employees, \
-    schedule_tax_groups_creation, schedule_vendors_as_merchants_creation
+from apps.mappings.tasks import schedule_auto_map_employees, schedule_auto_map_ccc_employees, \
+    schedule_tax_groups_creation
 from apps.quickbooks_online.tasks import schedule_bill_payment_creation, schedule_qbo_objects_status_sync,\
     schedule_reimbursements_sync
 
@@ -160,17 +160,11 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
         expense_group_settings.import_card_credits = True
         expense_group_settings.save()
 
-    schedule_categories_creation(import_categories=general_settings.import_categories, workspace_id=workspace_id)
-
     schedule_tax_groups_creation(import_tax_codes=general_settings.import_tax_codes, workspace_id=workspace_id)
 
     schedule_auto_map_employees(general_settings_payload['auto_map_employees'], workspace_id)
 
     schedule_auto_map_ccc_employees(workspace_id)
-
-    schedule_vendors_as_merchants_creation(
-            import_vendors_as_merchants=general_settings_payload['import_vendors_as_merchants'],
-            workspace_id = workspace_id)
 
     schedule_bill_payment_creation(general_settings.sync_fyle_to_qbo_payments, workspace_id)
 
