@@ -495,6 +495,7 @@ class ExpenseView(generics.ListAPIView):
 
         return queryset
 
+
 class CustomFieldView(generics.RetrieveAPIView):
     """
     Custom Field view
@@ -505,20 +506,19 @@ class CustomFieldView(generics.RetrieveAPIView):
         """
         try:
             workspace_id = self.kwargs['workspace_id']
+
             fyle_credentails = FyleCredential.objects.get(workspace_id=workspace_id)
+
             platform = PlatformConnector(fyle_credentails)
+
             custom_fields = platform.expense_custom_fields.list_all()
 
+            # Creating a list to hold the custom fields, and adding some default values to it
             response = [] 
             response.extend(DEFAULT_FYLE_CONDITIONS)
 
-            for custom_field in custom_fields:
-                if custom_field['type'] in ('SELECT', 'NUMBER', 'TEXT'):
-                    response.append({
-                        'field_name': custom_field['field_name'],
-                        'type': custom_field['type'],
-                        'is_custom': custom_field['is_custom']
-                    })
+            filtered_fields = [field for field in custom_fields if field['type'] in ('SELECT', 'NUMBER', 'TEXT')]
+            response = [{'field_name': field['field_name'], 'type': field['type'], 'is_custom': field['is_custom']} for field in filtered_fields]
 
             return Response(
                 data=response,
@@ -539,3 +539,4 @@ class CustomFieldView(generics.RetrieveAPIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
+
