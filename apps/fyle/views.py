@@ -511,12 +511,17 @@ class CustomFieldView(generics.RetrieveAPIView):
 
             platform = PlatformConnector(fyle_credentails)
 
-            custom_fields = platform.expense_custom_fields.filter(type=["SELECT", "TEXT", "NUMBER"])
+            custom_fields = platform.expense_custom_fields.list_all()
 
-            # Creating a list to hold the custom fields, and adding some default values to it
             response = [] 
             response.extend(DEFAULT_FYLE_CONDITIONS)
-            response.extend(custom_fields)
+            for custom_field in custom_fields:
+                if custom_field['type'] in ('SELECT', 'NUMBER', 'TEXT'):
+                    response.append({
+                        'field_name': custom_field['field_name'],
+                        'type': custom_field['type'],
+                        'is_custom': custom_field['is_custom']
+                    })
             
             return Response(
                 data=response,
