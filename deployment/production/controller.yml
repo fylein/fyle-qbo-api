@@ -38,7 +38,7 @@ spec:
             limits:
               memory: 250Mi
             requests:
-              memory: 250Mi
+              memory: 200Mi
           env:
             - name: GET_HOSTS_FROM
               value: dns
@@ -81,9 +81,9 @@ spec:
           command: ['/bin/bash', 'start_qcluster.sh']
           resources:
             limits:
-              memory: 800Mi
+              memory: 550Mi
             requests:
-              memory: 800Mi
+              memory: 420Mi
           env:
             - name: GET_HOSTS_FROM
               value: dns
