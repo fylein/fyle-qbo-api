@@ -15,10 +15,11 @@ def test_default_fields():
 def test_create_expense_objects(db):
     payload = data['expenses']
     Expense.create_expense_objects(payload, 3)
-
+    expense_count = len(Expense.objects.filter(org_id='or79Cob97KSh'))
     expense = Expense.objects.last()
     assert expense.expense_id == 'txLAP0oIB5Yb'
-
+    expense = Expense.objects.filter(org_id='or79Cob97KSh').order_by('created_at')
+    assert len(expense) == expense_count+2
 
 def test_expense_group_settings(create_temp_workspace, db):
     payload = data['expense_group_settings_payload']
