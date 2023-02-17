@@ -106,13 +106,12 @@ def construct_expense_filter_query(expense_filters: List[ExpenseFilter]):
         if expense_filter.rank == 1:
             final_filter = (constructed_expense_filter)
         
-        # If not first filter and join type is "AND", add to filter1 using "and" operator
-        elif expense_filter.rank != 1 and join_by == 'AND':
-            final_filter = final_filter & (constructed_expense_filter)
-        
-        # If not first filter and join type is "OR", add to filter1 using "or" operator
-        elif expense_filter.rank != 1 and join_by == 'OR':
-            final_filter = final_filter | (constructed_expense_filter)
+        # If join by is AND, OR
+        elif expense_filter.rank != 1:
+            if join_by == 'AND':
+                final_filter = final_filter & (constructed_expense_filter)
+            else:
+                final_filter = final_filter | (constructed_expense_filter)
 
         # Set the join type for the additonal filter
         join_by = expense_filter.join_by
