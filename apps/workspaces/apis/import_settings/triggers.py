@@ -6,11 +6,10 @@ from django_q.models import Schedule
 from fyle_accounting_mappings.models import MappingSetting
 
 from apps.fyle.models import ExpenseGroupSettings
+from apps.mappings.helpers import schedule_or_delete_fyle_import_tasks
 from apps.workspaces.models import WorkspaceGeneralSettings
 
-from apps.mappings.tasks import schedule_cost_centers_creation, schedule_vendors_as_merchants_creation, \
-    schedule_fyle_attributes_creation, schedule_projects_creation, schedule_tax_groups_creation, \
-    schedule_categories_creation
+from apps.mappings.tasks import schedule_cost_centers_creation, schedule_fyle_attributes_creation, schedule_tax_groups_creation
 
 
 class ImportSettingsTrigger:
@@ -77,7 +76,7 @@ class ImportSettingsTrigger:
 
             self.add_department_grouping(department_setting['source_field'])
 
-    def post_save_workspace_general_settings(self):
+    def post_save_workspace_general_settings(self, workspace_general_settings_instance: WorkspaceGeneralSettings):
         """
         Post save action for workspace general settings
         """
@@ -86,31 +85,7 @@ class ImportSettingsTrigger:
             workspace_id=self.__workspace_id
         )
 
-        schedule_vendors_as_merchants_creation(
-            import_vendors_as_merchants=self.__workspace_general_settings.get('import_vendors_as_merchants'),
-            workspace_id=self.__workspace_id
-        )
-
-        schedule_categories_creation(
-            import_categories=self.__workspace_general_settings.get('import_categories'),
-            workspace_id=self.__workspace_id
-        )
-
-        merchant_import_schedule = Schedule.objects.filter(
-            func='apps.mappings.tasks.auto_create_vendors_as_merchants',
-            args=str(self.__workspace_id)
-        ).first()
-
-        if merchant_import_schedule:
-            category_import_schedule = Schedule.objects.filter(
-                func='apps.mappings.tasks.auto_create_category_mappings',
-                args=str(self.__workspace_id)
-            ).first()
-
-            if category_import_schedule:
-                category_import_schedule.next_run = merchant_import_schedule.next_run + timedelta(minutes=10)
-                category_import_schedule.save()
-
+        schedule_or_delete_fyle_import_tasks(workspace_general_settings_instance)
 
 
     def __remove_old_department_source_field(
@@ -140,17 +115,11 @@ class ImportSettingsTrigger:
         """
         mapping_settings = self.__mapping_settings
 
-        projects_mapping_available = False
         cost_center_mapping_available = False
 
         for setting in mapping_settings:
-            if setting['source_field'] == 'PROJECT':
-                projects_mapping_available = True
-            elif setting['source_field'] == 'COST_CENTER':
+            if setting['source_field'] == 'COST_CENTER':
                 cost_center_mapping_available = True
-
-        if not projects_mapping_available:
-            schedule_projects_creation(False, self.__workspace_id)
         
         if not cost_center_mapping_available:
             schedule_cost_centers_creation(False, self.__workspace_id)
@@ -167,10 +136,11 @@ class ImportSettingsTrigger:
             new_mappings_settings=mapping_settings
         )
 
-    def post_save_mapping_settings(self):
+    def post_save_mapping_settings(self, workspace_general_settings_instance: WorkspaceGeneralSettings):
         """
         Post save actions for mapping settings
         """
+        print('post save mapping settings')
         destination_fields = []
         for setting in self.__mapping_settings:
             destination_fields.append(setting['destination_field'])
@@ -182,3 +152,5 @@ class ImportSettingsTrigger:
         ).delete()
 
         self.__update_expense_group_settings_for_departments()
+
+        schedule_or_delete_fyle_import_tasks(workspace_general_settings_instance)
