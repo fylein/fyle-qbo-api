@@ -450,6 +450,7 @@ def test_expense_filters(api_client, test_connection):
 
    assert dict_compare_keys(response, data['expense_filters_response']) == [], 'expense group api return diffs in keys'
 
+
 @pytest.mark.django_db(databases=['default'])
 def test_custom_fields(mocker, api_client, test_connection):
    access_token=test_connection.access_token
