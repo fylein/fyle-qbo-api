@@ -163,6 +163,7 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
                     expensegroup__isnull=True,
                     org_id=workspace.fyle_org_id
                 ).update(is_skipped=True)
+                
                 filtered_expenses = Expense.objects.filter(
                     is_skipped=False,
                     id__in=expenses_object_ids,

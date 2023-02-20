@@ -448,28 +448,15 @@ class ExpenseFilterView(generics.ListCreateAPIView, generics.DestroyAPIView):
         return queryset
 
     def delete(self, request, *args, **kwargs):
-        try:
-            workspace_id = self.kwargs['workspace_id']
-            rank = self.request.query_params.getlist('rank')
-            ExpenseFilter.objects.filter(workspace_id=workspace_id, rank__in=rank).delete()
+        workspace_id = self.kwargs['workspace_id']
+        rank = self.request.query_params.getlist('rank')
+        ExpenseFilter.objects.filter(workspace_id=workspace_id, rank__in=rank).delete()
 
-            return Response(data={
-                'workspace_id': workspace_id,
-                'rank' : rank, 
-                'message': 'Expense filter deleted'
-            })
-
-        except Exception as exception:
-            logger.error(
-                'Something went wrong - %s in Fyle %s %s',
-                workspace_id, exception.message, {'error': exception.response}
-            )
-            return Response(
-                data={
-                    'message': 'Something went wrong'
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        return Response(data={
+            'workspace_id': workspace_id,
+            'rank' : rank,
+            'message': 'Expense filter deleted'
+        })
 
 class ExpenseView(generics.ListAPIView):
     """
@@ -504,42 +491,26 @@ class CustomFieldView(generics.RetrieveAPIView):
         """
         Get Custom Fields
         """
-        try:
-            workspace_id = self.kwargs['workspace_id']
+        workspace_id = self.kwargs['workspace_id']
 
-            fyle_credentails = FyleCredential.objects.get(workspace_id=workspace_id)
+        fyle_credentails = FyleCredential.objects.get(workspace_id=workspace_id)
 
-            platform = PlatformConnector(fyle_credentails)
+        platform = PlatformConnector(fyle_credentails)
 
-            custom_fields = platform.expense_custom_fields.list_all()
+        custom_fields = platform.expense_custom_fields.list_all()
 
-            response = [] 
-            response.extend(DEFAULT_FYLE_CONDITIONS)
-            for custom_field in custom_fields:
-                if custom_field['type'] in ('SELECT', 'NUMBER', 'TEXT'):
-                    response.append({
-                        'field_name': custom_field['field_name'],
-                        'type': custom_field['type'],
-                        'is_custom': custom_field['is_custom']
-                    })
+        response = []
+        response.extend(DEFAULT_FYLE_CONDITIONS)
+        for custom_field in custom_fields:
+            if custom_field['type'] in ('SELECT', 'NUMBER', 'TEXT'):
+                response.append({
+                    'field_name': custom_field['field_name'],
+                    'type': custom_field['type'],
+                    'is_custom': custom_field['is_custom']
+                })
             
-            return Response(
-                data=response,
-                status=status.HTTP_200_OK
-            )
-
-        except InvalidTokenError:
-            logger.info('Invalid Fyle refresh token for workspace %s', workspace_id)
-
-        except Exception as exception:
-            logger.error(
-                'Something went wrong - %s in Fyle %s %s',
-                workspace_id, exception.message, {'error': exception.response}
-            )
-            return Response(
-                data={
-                    'message': 'Something went wrong'
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        return Response(
+            data=response,
+            status=status.HTTP_200_OK
+        )
 
