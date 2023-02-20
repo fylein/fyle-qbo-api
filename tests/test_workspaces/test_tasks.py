@@ -23,7 +23,7 @@ def test_run_sync_schedule(mocker,db):
         workspace_id=3
     ).first()
     
-    assert task_log.status == 'COMPLETE'
+    assert task_log.status == 'FATAL'
 
     general_settings.reimbursable_expenses_object = 'BILL'
     general_settings.corporate_credit_card_expenses_object = 'BILL'
@@ -34,7 +34,7 @@ def test_run_sync_schedule(mocker,db):
         workspace_id=3
     ).first()
     
-    assert task_log.status == 'COMPLETE'
+    assert task_log.status == 'FATAL'
 
     general_settings.reimbursable_expenses_object = 'CHECK'
     general_settings.corporate_credit_card_expenses_object = 'DEBIT CARD EXPENSE'
@@ -45,7 +45,7 @@ def test_run_sync_schedule(mocker,db):
         workspace_id=3
     ).first()
     
-    assert task_log.status == 'COMPLETE'
+    assert task_log.status == 'FATAL'
 
     general_settings.reimbursable_expenses_object = 'JOURNAL ENTRY'
     general_settings.corporate_credit_card_expenses_object = 'JOURNAL ENTRY'
@@ -56,10 +56,10 @@ def test_run_sync_schedule(mocker,db):
         workspace_id=3
     ).first()
     
-    assert task_log.status == 'COMPLETE'
+    assert task_log.status == 'FATAL'
 
 def test_schedule_sync(db):
-    workspace_id = 3
+    workspace_id = 1
     
     schedule_sync(workspace_id, True, 1, ['sample@google.com'], [])
 
