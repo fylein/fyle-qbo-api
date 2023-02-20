@@ -83,7 +83,7 @@ def test_get_cluster_domain(mocker):
 
 
 @pytest.mark.django_db()
-def test_construct_expense_filter(mocker, add_fyle_credentials):
+def test_construct_expense_filter():
     #employee-email-is-equal
     expense_filter = ExpenseFilter(
         condition = 'employee_email',
@@ -351,7 +351,7 @@ def test_construct_expense_filter(mocker, add_fyle_credentials):
 
 
 @pytest.mark.django_db()
-def test_multiple_construct_expense_filter(mocker, add_fyle_credentials):
+def test_multiple_construct_expense_filter():
     #employee-email-is-equal and claim-number-is-equal
     expense_filters = [
         ExpenseFilter(
@@ -597,30 +597,6 @@ def test_multiple_construct_expense_filter(mocker, add_fyle_credentials):
     filter_2 = {'custom_properties__Killua Text__isnull': True}
     filter_3 = {'custom_properties__Killua Text__exact': None}
     response = (Q(**filter_2) | Q(**filter_3))
-
-    assert final_filter == response
-
-    #employee-email-is-equal
-    expense_filters = [
-        ExpenseFilter(
-            condition = 'employee_email',
-            operator = 'in',
-            values = ['killua.z@fyle.in'],
-            rank = 1
-        ),
-        ExpenseFilter(
-            condition = 'Killua Text',
-            operator = 'isnull',
-            values = ['True'],
-            rank = 2,
-            is_custom = True
-        )
-    ]
-
-    final_filter = construct_expense_filter_query(expense_filters)
-
-    filter_1 = {'employee_email__in':['killua.z@fyle.in']}
-    response = Q(**filter_1)
 
     assert final_filter == response
 

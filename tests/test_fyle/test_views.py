@@ -421,8 +421,8 @@ def test_expense_groups_trigger(db, api_client, test_connection):
     assert response.status_code == 200
 
 
-@pytest.mark.django_db(databases=['default'])
-def test_expense_filters(api_client, access_token):
+def test_expense_filters(api_client, test_connection):
+   access_token=test_connection.access_token
 
    url = reverse('expense-filters', 
       kwargs={
@@ -451,7 +451,8 @@ def test_expense_filters(api_client, access_token):
    assert dict_compare_keys(response, data['expense_filters_response']) == [], 'expense group api return diffs in keys'
 
 @pytest.mark.django_db(databases=['default'])
-def test_custom_fields(mocker, api_client, access_token):
+def test_custom_fields(mocker, api_client, test_connection):
+   access_token=test_connection.access_token
 
    url = reverse('custom-field', 
       kwargs={
@@ -474,7 +475,8 @@ def test_custom_fields(mocker, api_client, access_token):
 
 
 @pytest.mark.django_db(databases=['default'])
-def test_expenses(mocker, api_client, access_token):
+def test_expenses(mocker, api_client, test_connection):
+   access_token=test_connection.access_token
 
    url = reverse('expenses', 
       kwargs={
