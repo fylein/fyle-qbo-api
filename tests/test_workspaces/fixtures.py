@@ -92,6 +92,7 @@ data = {
     'expenses':[
         {
             'id':'txBfCOgcuYE4',
+            'report_title': 'title1',
             'employee_email':'ashwin.t@fyle.in',
             'employee_name':'Joanna',
             'category':'Flight',
