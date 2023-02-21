@@ -153,7 +153,7 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
 
             expense_objects = Expense.create_expense_objects(expenses, workspace_id)
             expense_filters = ExpenseFilter.objects.filter(workspace_id=workspace_id).order_by('rank')
-
+            filtered_expenses = expense_objects
             if expense_filters:
                 expenses_object_ids = [expense_object.id for expense_object in expense_objects]
                 final_query = construct_expense_filter_query(expense_filters)
@@ -168,9 +168,7 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
                     is_skipped=False,
                     id__in=expenses_object_ids,
                     expensegroup__isnull=True,
-                    org_id=workspace.fyle_org_id)
-            else:
-                filtered_expenses = expense_objects
+                    org_id=workspace.fyle_org_id)     
                 
             ExpenseGroup.create_expense_groups_by_report_id_fund_source(
                 filtered_expenses, workspace_id
