@@ -1,5 +1,5 @@
 import pytest
-from apps.workspaces.models import Workspace
+from apps.workspaces.models import Workspace, get_default_chart_of_accounts, get_default_memo_fields
 from fyle_rest_auth.models import User
 from datetime import datetime, timezone
 
@@ -40,3 +40,14 @@ def test_get_of_workspace(add_workspace_to_database):
     workspace = Workspace.objects.filter(name='Fyle for labhvam2').first()
 
     assert workspace.fyle_org_id == 'l@bhv@m2'
+
+
+def test_get_default_chart_of_accounts():
+    expected_accounts = ['Expense']
+    actual_accounts = get_default_chart_of_accounts()
+    assert actual_accounts == expected_accounts
+
+def test_get_default_memo_fields():
+    expected_fields = ['employee_email', 'category', 'spent_on', 'report_number', 'purpose', 'expense_link']
+    actual_fields = get_default_memo_fields()
+    assert actual_fields == expected_fields
