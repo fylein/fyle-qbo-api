@@ -1,6 +1,7 @@
 from asyncio.log import logger
 import pytest
 from unittest import mock
+from unittest.mock import Mock
 from django_q.models import Schedule
 from qbosdk.exceptions import WrongParamsError
 from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute, CategoryMapping, \
@@ -12,6 +13,8 @@ from .fixtures import data
 from tests.helper import dict_compare_keys
 from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGeneralSettings 
 from apps.tasks.models import Error
+from django.test import TestCase
+from django.utils import timezone
 
 
 def test_auto_create_tax_codes_mappings(db, mocker):
@@ -365,9 +368,6 @@ def test_auto_create_cost_center_mappings(db, mocker):
     assert response == None
 
 
-
-
-
 def test_schedule_cost_centers_creation(db):
     workspace_id = 3
     schedule_cost_centers_creation(import_to_fyle=True, workspace_id=workspace_id)
@@ -510,3 +510,28 @@ def test_resolve_expense_attribute_errors(db):
 
     errors = Error.objects.filter(workspace_id=workspace_id, type='EMPLOYEE_MAPPING', expense_attribute_id=5327, is_resolved=False).count()
     assert errors == 0
+
+
+def test_auto_import_and_map_fyle(db, mocker):
+    workspace_id = 3
+    mocker.patch.object(WorkspaceGeneralSettings.objects, 'get', return_value=WorkspaceGeneralSettings(workspace_id=workspace_id))
+    mocker.patch.object(MappingSetting.objects, 'filter', return_value=MappingSetting.objects.none())
+
+    chain_mock = mocker.Mock(Chain)
+    mocker.patch.object(Chain, 'append', return_value=chain_mock)
+    mocker.patch.object(chain_mock, 'length', return_value=0)
+
+    vendors = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='VENDOR').count()
+    expense_attribute = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type='MERCHANT').count()
+    assert vendors == 29
+    assert expense_attribute == 89
+
+    auto_import_and_map_fyle_fields(workspace_id=workspace_id)
+
+    vendors = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='VENDOR').count()
+    expense_attribute = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type='MERCHANT').count()
+    assert vendors == 29
+    assert expense_attribute == 89
+
+    mocker.patch.object(MappingSetting.objects, 'filter', return_value=MappingSetting.objects.all()[:1])
+    mocker.patch.object(Chain, 'run')
