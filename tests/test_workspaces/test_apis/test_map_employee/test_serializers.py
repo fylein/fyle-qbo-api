@@ -1,6 +1,26 @@
 import unittest
+from pytest import fail
 from rest_framework import serializers
 from apps.workspaces.apis.map_employees.serializers import MapEmployeesSerializer
+
+
+def test_employee_field_mapping_required():
+    invalid_data = {'workspace_general_settings': {}}
+    serializer = MapEmployeesSerializer(data=invalid_data)
+    try:
+        serializer.is_valid(raise_exception=True)
+        fail('Expected a ValidationError')
+    except serializers.ValidationError:
+        pass
+
+def test_auto_map_employees_value():
+    invalid_data = {'workspace_general_settings': {'auto_map_employees': 'INVALID_VALUE'}}
+    serializer = MapEmployeesSerializer(data=invalid_data)
+    try:
+        serializer.is_valid(raise_exception=True)
+        fail('Expected a ValidationError')
+    except serializers.ValidationError:
+        pass
 
 
 def test_valid_data():
