@@ -512,7 +512,7 @@ def test_resolve_expense_attribute_errors(db):
     assert errors == 0
 
 
-def test_auto_import_and_map_fyle(db, mocker):
+def test_auto_import_and_map_fyle_field(db, mocker):
     workspace_id = 3
     mocker.patch.object(WorkspaceGeneralSettings.objects, 'get', return_value=WorkspaceGeneralSettings(workspace_id=workspace_id))
     mocker.patch.object(MappingSetting.objects, 'filter', return_value=MappingSetting.objects.none())
