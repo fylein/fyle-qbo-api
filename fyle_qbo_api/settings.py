@@ -108,6 +108,10 @@ REST_FRAMEWORK = {
 
 WSGI_APPLICATION = 'fyle_qbo_api.wsgi.application'
 
+FYLE_REST_AUTH_SETTINGS = {
+    'async_update_user': True
+}
+
 Q_CLUSTER = {
     'name': 'fyle_quickbooks_api',
     'save_limit': 0,
@@ -184,6 +188,10 @@ LOGGING = {
             'handlers': ['request_logs'],
             'level': 'INFO',
             'propagate': False
+        },
+        'fyle_rest_auth': {
+            'handlers': ['debug_logs'],
+            'propagate': True,
         }
     }
 }
