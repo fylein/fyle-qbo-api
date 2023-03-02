@@ -474,7 +474,7 @@ class ExpenseView(generics.ListAPIView):
         }
         is_skipped = self.request.query_params.get('is_skipped')
         if is_skipped:
-            filters['is_skipped'] = is_skipped
+            filters['is_skipped'] = True
         if start_date and end_date:
             filters['updated_at__range'] = [start_date, end_date]
         queryset = Expense.objects.filter(**filters).order_by('-updated_at')
