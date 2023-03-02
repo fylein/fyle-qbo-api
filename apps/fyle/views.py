@@ -473,7 +473,7 @@ class ExpenseView(generics.ListAPIView):
             'org_id': Workspace.objects.get(id=self.kwargs['workspace_id']).fyle_org_id
         }
         is_skipped = self.request.query_params.get('is_skipped')
-        if is_skipped:
+        if is_skipped == 'true':
             filters['is_skipped'] = True
         if start_date and end_date:
             filters['updated_at__range'] = [start_date, end_date]
