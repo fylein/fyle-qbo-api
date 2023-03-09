@@ -315,8 +315,7 @@ def create_fyle_categories_payload(categories: List[DestinationAttribute], works
                 'id': category.source_id,
                 'name': category.value,
                 'code': destination_id_of_category,
-                'is_enabled': category.active,
-                'restricted_project_ids': None
+                'is_enabled': category.active
             })
     else:
         existing_category_names = ExpenseAttribute.objects.filter(
@@ -329,8 +328,7 @@ def create_fyle_categories_payload(categories: List[DestinationAttribute], works
                 payload.append({
                     'name': category.value,
                     'code': category.destination_id,
-                    'is_enabled': category.active,
-                    'restricted_project_ids': None
+                    'is_enabled': category.active
                 })
 
     return payload
