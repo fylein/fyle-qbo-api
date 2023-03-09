@@ -358,7 +358,7 @@ class PreferencesView(generics.RetrieveAPIView):
             preferences = qbo_connector.get_company_preference()
 
             return Response(
-                data={preferences},
+                data=preferences,
                 status=status.HTTP_200_OK
             )
         except QBOCredential.DoesNotExist:
