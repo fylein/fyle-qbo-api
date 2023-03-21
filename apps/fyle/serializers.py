@@ -18,7 +18,7 @@ class ExpenseSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Expense
-        fields = ['updated_at', 'claim_number', 'employee_email', 'employee_name', 'fund_source']
+        fields = ['updated_at', 'claim_number', 'employee_email', 'employee_name', 'fund_source', 'expense_number', 'payment_number']
 
 class ExpenseGroupSerializer(serializers.ModelSerializer):
     """
