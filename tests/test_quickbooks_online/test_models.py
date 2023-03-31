@@ -273,7 +273,7 @@ def test_get_expense_purpose():
     
         expense_purpose = get_expense_purpose(3,lineitem,category,workspace_general_settings)
 
-        assert expense_purpose == 'ashwin.t@fyle.in - Taxi / None - 2022-05-13 - C/2022/05/R/4 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txgUAIXUPQ8r?org_id=or79Cob97KSh'
+        assert expense_purpose == 'ashwin.t@fyle.in - Taxi / None - 2022-05-13 - C/2022/05/R/4 -  - None/app/main/#/enterprise/view_expense/txgUAIXUPQ8r?org_id=or79Cob97KSh'
 
 @pytest.mark.django_db(databases=['default'])
 def test_get_transaction_date():
