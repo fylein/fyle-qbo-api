@@ -936,9 +936,11 @@ def create_fyle_expense_custom_field_payload(
 
         custom_field_id = None
         placeholder = None
+        is_mandatory = False
         if existing_attribute is not None:
             custom_field_id = existing_attribute['custom_field_id']
             placeholder = existing_attribute['placeholder'] if 'placeholder' in existing_attribute else None
+            is_mandatory = existing_attribute['is_mandatory'] if 'is_mandatory' in existing_attribute else False
             expense_field = platform.expense_custom_fields.get_by_id(custom_field_id)
             fyle_expense_custom_field_options = expense_field['options']
             last_imported_at = expense_field['updated_at']
@@ -972,7 +974,7 @@ def create_fyle_expense_custom_field_payload(
             'field_name': fyle_attribute,
             'type': 'SELECT',
             'is_enabled': True,
-            'is_mandatory': False,
+            'is_mandatory': is_mandatory ,
             'placeholder': new_placeholder,
             'options': fyle_expense_custom_field_options,
             'code': None
