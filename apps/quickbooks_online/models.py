@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import List
 
 from django.db import models
+from django.conf import settings
 
 from fyle_accounting_mappings.models import Mapping, MappingSetting, ExpenseAttribute, DestinationAttribute,\
     EmployeeMapping
@@ -40,7 +41,7 @@ def get_expense_purpose(workspace_id, lineitem, category, workspace_general_sett
         'report_number': '{0}'.format(lineitem.claim_number),
         'spent_on': '{0}'.format(lineitem.spent_at.date()) if lineitem.spent_at else '',
         'expense_link': '{0}/app/main/#/enterprise/view_expense/{1}?org_id={2}'.format(
-            fyle_credentials.cluster_domain, lineitem.expense_id, org_id
+            settings.FYLE_EXPENSE_URL, lineitem.expense_id, org_id
         )
     }
 
