@@ -63,7 +63,7 @@ def test_searched_destination_attributes_view(api_client, test_connection):
     })
     assert response.status_code == 200
     response = json.loads(response.content)
-    assert len(response) == 10
+    assert len(response) == 29
 
 
 def test_qbo_attributes_view(api_client, test_connection):
