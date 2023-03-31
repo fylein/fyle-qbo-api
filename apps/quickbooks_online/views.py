@@ -953,7 +953,7 @@ class SearchedDestinationAttributesView(generics.ListAPIView):
         if active and active.lower() == 'true':
             filters['active'] = True
 
-        return DestinationAttribute.objects.filter(**filters).order_by('value')[:10]
+        return DestinationAttribute.objects.filter(**filters).order_by('value')[:30]
 
 
 
