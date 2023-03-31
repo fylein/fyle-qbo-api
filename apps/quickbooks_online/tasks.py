@@ -81,7 +81,7 @@ def get_or_create_credit_card_or_debit_card_vendor(workspace_id: int, merchant: 
 
     if merchant:
         try:
-            vendor = qbo_connection.get_or_create_vendor(merchant, create=False)
+            vendor = qbo_connection.get_or_create_vendor(merchant, create=False)  #"Amazon.com's"
         except WrongParamsError as bad_request:
             logger.error(bad_request.response)
 
