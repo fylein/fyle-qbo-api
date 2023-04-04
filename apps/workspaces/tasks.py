@@ -226,12 +226,18 @@ def run_email_notification(workspace_id):
         for admin_email in ws_schedule.emails_selected:
             attribute = ExpenseAttribute.objects.filter(workspace_id=workspace_id, value=admin_email).first()
 
+            admin_name = 'Admin'
             if attribute:
                 admin_name = attribute.detail['full_name']
             else:
                 for data in ws_schedule.additional_email_options:
                     if data['email'] == admin_email:
                         admin_name = data['name']
+            
+            if workspace.last_synced_at and workspace.ccc_last_synced_at:
+                export_time = max(workspace.last_synced_at, workspace.ccc_last_synced_at)
+            else:
+                export_time =  workspace.last_synced_at or workspace.ccc_last_synced_at
 
             if task_logs and (ws_schedule.error_count is None or len(task_logs) > ws_schedule.error_count):
                 context = {
@@ -239,7 +245,7 @@ def run_email_notification(workspace_id):
                     'errors': len(task_logs),
                     'fyle_company': workspace.name,
                     'qbo_company': qbo.company_name,
-                    'export_time': workspace.last_synced_at.strftime("%d %b %Y | %H:%M"),
+                    'export_time': export_time.strftime("%d %b %Y | %H:%M"),
                     'year': date.today().year,
                     'app_url': "{0}/workspaces/main/dashboard".format(settings.FYLE_APP_URL),
                     'task_logs': mark_safe(expense_html),

@@ -11,7 +11,7 @@ from django_q.tasks import Chain
 
 from qbosdk.exceptions import WrongParamsError as QBOWrongParamsError, InvalidTokenError
 
-from fyle.platform.exceptions import WrongParamsError
+from fyle.platform.exceptions import WrongParamsError, InvalidTokenError as FyleInvalidTokenError
 from fyle_integrations_platform_connector import PlatformConnector
 from fyle_accounting_mappings.models import MappingSetting, Mapping, DestinationAttribute, ExpenseAttribute,\
     EmployeeMapping
@@ -214,6 +214,9 @@ def auto_create_tax_codes_mappings(workspace_id: int):
 
     except QBOCredential.DoesNotExist:
         logger.info('QBO credentials not found workspace_id - %s', workspace_id)
+    
+    except FyleInvalidTokenError:
+        logger.info('Invalid Token for fyle')
 
     except WrongParamsError as exception:
         logger.error(
@@ -256,6 +259,9 @@ def auto_create_project_mappings(workspace_id: int):
 
     except QBOCredential.DoesNotExist:
         logger.info('QBO credentials not found workspace_id - %s', workspace_id)
+
+    except FyleInvalidTokenError:
+        logger.info('Invalid Token for fyle')
 
     except WrongParamsError as exception:
         logger.error(
@@ -389,12 +395,12 @@ def auto_create_category_mappings(workspace_id):
 
     except QBOCredential.DoesNotExist:
         logger.info('QBO credentials not found workspace_id - %s', workspace_id)
+    
+    except FyleInvalidTokenError:
+        logger.info('Invalid Token for fyle')
 
     except WrongParamsError as exception:
-        logger.error(
-            'Error while creating categories workspace_id - %s in Fyle %s %s',
-            workspace_id, exception.message, {'error': exception.response}
-        )
+        logger.error( 'Error while creating categories workspace_id - %s in Fyle %s %s', workspace_id, exception.message, {'error': exception.response} )
 
     except (QBOWrongParamsError, InvalidTokenError):
         logger.info('QBO token expired workspace_id - %s', workspace_id)
@@ -445,9 +451,9 @@ def check_exact_matches(employee_mapping_preference: str, source_attribute: Expe
     destination = {}
     if employee_mapping_preference == 'EMAIL':
         source_value = source_attribute.value
-    elif employee_mapping_preference == 'NAME':
+    elif source_attribute.detail and employee_mapping_preference == 'NAME':
         source_value = source_attribute.detail['full_name']
-    elif employee_mapping_preference == 'EMPLOYEE_CODE':
+    elif source_attribute.detail and employee_mapping_preference == 'EMPLOYEE_CODE':
         source_value = source_attribute.detail['employee_code']
 
     # Handling employee_code or full_name null case
@@ -607,10 +613,10 @@ def async_auto_map_employees(workspace_id: int):
     employee_mapping_preference = general_settings.auto_map_employees
     destination_type = general_settings.employee_field_mapping
 
-    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-    platform = PlatformConnector(fyle_credentials)
 
     try:
+        fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+        platform = PlatformConnector(fyle_credentials)
         qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
         qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
@@ -631,6 +637,9 @@ def async_auto_map_employees(workspace_id: int):
         logger.info(
             'QBO Credentials not found for workspace_id %s', workspace_id
         )
+    
+    except FyleInvalidTokenError:
+        logger.info('Invalid Token for fyle')
 
     except (QBOWrongParamsError, InvalidTokenError):
         logger.info('QBO token expired workspace_id - %s', workspace_id)
@@ -875,6 +884,9 @@ def auto_create_cost_center_mappings(workspace_id):
 
     except QBOCredential.DoesNotExist:
         logger.info('QBO credentials not found workspace_id - %s', workspace_id)
+
+    except FyleInvalidTokenError:
+        logger.info('Invalid Token for fyle')
 
     except WrongParamsError as exception:
         logger.error(
@@ -1128,6 +1140,9 @@ def auto_create_vendors_as_merchants(workspace_id):
 
     except QBOCredential.DoesNotExist:
         logger.info('QBO credentials not found workspace_id - %s', workspace_id)
+    
+    except FyleInvalidTokenError:
+        logger.info('Invalid Token for fyle')
 
     except WrongParamsError as exception:
         logger.error(
