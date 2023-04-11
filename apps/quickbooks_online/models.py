@@ -278,6 +278,8 @@ class BillLineitem(models.Model):
     tax_code = models.CharField(max_length=255, help_text='Tax Group ID', null=True)
     billable = models.BooleanField(null=True, help_text='Expense Billable or not')
     description = models.TextField(help_text='QBO bill lineitem description', null=True)
+    detail_type = models.CharField(max_length=255, help_text='Detail type for the lineitem')
+    item_id = models.CharField(max_length=255, help_text='QBO item id')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
@@ -401,6 +403,8 @@ class ChequeLineitem(models.Model):
     tax_code = models.CharField(max_length=255, help_text='Tax Group ID', null=True)
     billable = models.BooleanField(null=True, help_text='Expense Billable or not')
     description = models.TextField(help_text='QBO cheque lineitem description', null=True)
+    detail_type = models.CharField(max_length=255, help_text='Detail type for the lineitem')
+    item_id = models.CharField(max_length=255, help_text='QBO item id')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
@@ -549,6 +553,8 @@ class QBOExpenseLineitem(models.Model):
     tax_code = models.CharField(max_length=255, help_text='Tax Group ID', null=True)
     billable = models.BooleanField(null=True, help_text='Expense Billable or not')
     description = models.TextField(help_text='QBO expense lineitem description', null=True)
+    detail_type = models.CharField(max_length=255, help_text='Detail type for the lineitem')
+    item_id = models.CharField(max_length=255, help_text='QBO item id')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
@@ -700,6 +706,8 @@ class CreditCardPurchaseLineitem(models.Model):
     tax_code = models.CharField(max_length=255, help_text='Tax Group ID', null=True)
     billable = models.BooleanField(null=True, help_text='Expense Billable or not')
     description = models.TextField(help_text='QBO credit card purchase lineitem description', null=True)
+    detail_type = models.CharField(max_length=255, help_text='Detail type for the lineitem')
+    item_id = models.CharField(max_length=255, help_text='QBO item id')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
