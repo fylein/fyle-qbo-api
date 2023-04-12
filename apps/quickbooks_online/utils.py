@@ -269,7 +269,7 @@ class QBOConnector:
         for attribute_type, attribute in account_attributes.items():
             if attribute:
                 DestinationAttribute.bulk_create_or_update_destination_attributes(
-                    attribute, attribute_type.upper(), self.workspace_id, attribute_type.title().replace('_',' '))
+                    attribute, attribute_type.upper(), self.workspace_id, True, attribute_type.title().replace('_',' '))
         return []
 
     def sync_departments(self):
