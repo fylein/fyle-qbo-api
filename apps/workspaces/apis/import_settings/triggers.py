@@ -140,7 +140,6 @@ class ImportSettingsTrigger:
         """
         Post save actions for mapping settings
         """
-        print('post save mapping settings')
         destination_fields = []
         for setting in self.__mapping_settings:
             destination_fields.append(setting['destination_field'])

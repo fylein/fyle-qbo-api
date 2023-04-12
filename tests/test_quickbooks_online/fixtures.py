@@ -553,7 +553,7 @@ data = {
         "LegalName": "Larry's Bakery",
         "CompanyStartDate": "2015-06-05",
         "Email": {"Address": "donotreply@intuit.com"},
-        "NameValue": [{"Name": "NeoEnabled", "Value": "true"}],
+        "NameValue": [{"Name": "NeoEnabled", "Value": "True"}],
         "MetaData": {
             "CreateTime": "2015-06-05T13:55:54-07:00",
             "LastUpdatedTime": "2015-07-06T08:51:50-07:00",
@@ -595,5 +595,147 @@ data = {
         'default_tax_code_name': '',
         'default_ccc_account_id': '',
         'default_ccc_account_name': '',
-    }
+    },
+    'items_response_with_inactive_values': [
+        {
+            "Name":"Concrete",
+            "Description":"Concrete for fountain installation",
+            "Active":True,
+            "FullyQualifiedName":"Concrete",
+            "Taxable":True,
+            "UnitPrice":0,
+            "Type":"Service",
+            "IncomeAccountRef":{
+                "value":"48",
+                "name":"Fountains and Garden Lighting"
+            },
+            "PurchaseCost":0,
+            "TrackQtyOnHand":False,
+            "domain":"QBO",
+            "sparse":False,
+            "Id":"3",
+            "SyncToken":"1",
+            "MetaData":{
+                "CreateTime":"2019-12-16T10:36:03-08:00",
+                "LastUpdatedTime":"2019-12-19T12:47:47-08:00"
+            }
+        },
+        {
+            "Name":"Maintenance & Repair",
+            "Description":"Maintenance & Repair",
+            "Active":True,
+            "FullyQualifiedName":"Maintenance & Repair",
+            "Taxable":False,
+            "UnitPrice":0,
+            "Type":"Service",
+            "IncomeAccountRef":{
+                "value":"53",
+                "name":"Maintenance and Repair"
+            },
+            "PurchaseCost":0,
+            "TrackQtyOnHand":False,
+            "domain":"QBO",
+            "sparse":False,
+            "Id":"9",
+            "SyncToken":"0",
+            "MetaData":{
+                "CreateTime":"2019-12-16T10:45:18-08:00",
+                "LastUpdatedTime":"2019-12-16T10:45:18-08:00"
+            }
+        }
+    ],
+    'items_response': [
+        {
+            "Name":"Concrete",
+            "Description":"Concrete for fountain installation",
+            "Active":True,
+            "FullyQualifiedName":"Concrete",
+            "Taxable":True,
+            "UnitPrice":0,
+            "Type":"Service",
+            "IncomeAccountRef":{
+                "value":"48",
+                "name":"Fountains and Garden Lighting"
+            },
+            "PurchaseCost":0,
+            "TrackQtyOnHand":False,
+            "domain":"QBO",
+            "sparse":False,
+            "Id":"3",
+            "SyncToken":"1",
+            "MetaData":{
+                "CreateTime":"2019-12-16T10:36:03-08:00",
+                "LastUpdatedTime":"2019-12-19T12:47:47-08:00"
+            }
+        },
+        {
+            "Name":"Lighting",
+            "Description":"Garden Lighting",
+            "Active":True,
+            "FullyQualifiedName":"Lighting",
+            "Taxable":True,
+            "UnitPrice":0,
+            "Type":"Service",
+            "IncomeAccountRef":{
+                "value":"48",
+                "name":"Fountains and Garden Lighting"
+            },
+            "PurchaseCost":0,
+            "TrackQtyOnHand":False,
+            "domain":"QBO",
+            "sparse":False,
+            "Id":"8",
+            "SyncToken":"1",
+            "MetaData":{
+                "CreateTime":"2019-12-16T10:44:40-08:00",
+                "LastUpdatedTime":"2019-12-19T12:47:38-08:00"
+            }
+        },
+        {
+            "Name":"Maintenance & Repair",
+            "Description":"Maintenance & Repair",
+            "Active":True,
+            "FullyQualifiedName":"Maintenance & Repair",
+            "Taxable":False,
+            "UnitPrice":0,
+            "Type":"Service",
+            "IncomeAccountRef":{
+                "value":"53",
+                "name":"Maintenance and Repair"
+            },
+            "PurchaseCost":0,
+            "TrackQtyOnHand":False,
+            "domain":"QBO",
+            "sparse":False,
+            "Id":"9",
+            "SyncToken":"0",
+            "MetaData":{
+                "CreateTime":"2019-12-16T10:45:18-08:00",
+                "LastUpdatedTime":"2019-12-16T10:45:18-08:00"
+            }
+        },
+        {
+            "Name":"Pest Control",
+            "Description":"Pest Control Services",
+            "Active":True,
+            "FullyQualifiedName":"Pest Control",
+            "Taxable":False,
+            "UnitPrice":35,
+            "Type":"Service",
+            "IncomeAccountRef":{
+                "value":"54",
+                "name":"Pest Control Services"
+            },
+            "PurchaseCost":0,
+            "TrackQtyOnHand":False,
+            "domain":"QBO",
+            "sparse":False,
+            "Id":"10",
+            "SyncToken":"0",
+            "MetaData":{
+                "CreateTime":"2019-12-16T10:45:49-08:00",
+                "LastUpdatedTime":"2019-12-16T10:45:49-08:00"
+            }
+        }
+    ]
 }

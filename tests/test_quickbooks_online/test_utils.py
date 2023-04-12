@@ -85,6 +85,34 @@ def test_sync_departments(mocker, db):
     new_department_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='DEPARTMENT').count()
     assert new_department_count == 1
 
+def test_sync_items(mocker, db):
+    
+    with mock.patch('qbosdk.apis.Items.get') as mock_call:
+        mock_call.return_value = data['items_response']
+
+        item_count_to_be_created = len(data['items_response'])
+
+        qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
+        qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+
+        item_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='ACCOUNT', display_name='Item').count()
+        assert item_count == 0
+
+        qbo_connection.sync_items()
+
+        new_item_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='ACCOUNT', display_name='Item').count()
+        assert new_item_count == item_count+item_count_to_be_created
+
+        mock_call.return_value = data['items_response_with_inactive_values']
+
+        qbo_connection.sync_items()
+
+        active_item_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='ACCOUNT', display_name='Item', active=True).count()
+        assert active_item_count == 2
+        inactive_item_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='ACCOUNT', display_name='Item', active=False).count()
+        assert inactive_item_count == 2
+
+
 
 def test_construct_bill(create_bill, db):
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)

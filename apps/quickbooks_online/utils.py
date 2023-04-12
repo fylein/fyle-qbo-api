@@ -112,6 +112,53 @@ class QBOConnector:
 
         return tax_inclusive_amount
 
+    def sync_items(self):
+        """
+        Get items
+        """
+        items = self.connection.items.get()
+        category_sync_version = 'v2'
+        general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+        if general_settings:
+            category_sync_version = general_settings.category_sync_version
+        item_attributes = []
+        destination_attributes = DestinationAttribute.objects.filter(workspace_id=self.workspace_id, attribute_type= 'ACCOUNT', display_name='Item').values('destination_id', 'value')
+        disabled_fields_map = {}
+
+        for destination_attribute in destination_attributes:
+            disabled_fields_map[destination_attribute['destination_id']] = {
+                'value': destination_attribute['value']
+            }
+
+        for item in items:
+            value = format_special_characters(
+                item['Name'] if category_sync_version == 'v1' else item['FullyQualifiedName']
+            )
+            if  item['Active'] and value:
+                item_attributes.append({
+                    'attribute_type': 'ACCOUNT',
+                    'display_name': 'Item',
+                    'value': value,
+                    'destination_id': item['Id'],
+                    'active': True
+                })
+                if item['Id'] in disabled_fields_map:
+                    disabled_fields_map.pop(item['Id'])
+        
+        #For setting active to False
+        for destination_id in disabled_fields_map:
+            item_attributes.append({
+                'attribute_type': 'ACCOUNT',
+                'display_name': 'Item',
+                'value': disabled_fields_map[destination_id]['value'],
+                'destination_id': destination_id,
+                'active': False
+            })
+
+        DestinationAttribute.bulk_create_or_update_destination_attributes(
+            item_attributes, 'ACCOUNT', self.workspace_id, True, 'Item')
+        return []
+
 
     def sync_accounts(self):
         """
@@ -222,7 +269,7 @@ class QBOConnector:
         for attribute_type, attribute in account_attributes.items():
             if attribute:
                 DestinationAttribute.bulk_create_or_update_destination_attributes(
-                    attribute, attribute_type.upper(), self.workspace_id, True)
+                    attribute, attribute_type.upper(), self.workspace_id, attribute_type.title().replace('_',' '))
         return []
 
     def sync_departments(self):
@@ -502,6 +549,10 @@ class QBOConnector:
         except Exception as exception:
             logger.info(exception)
 
+        try:
+            self.sync_items()
+        except Exception as exception:
+            logger.info(exception)
 
     def purchase_object_payload(self, purchase_object, line, payment_type, account_ref, doc_number: str = None, credit=None):
         """
