@@ -81,8 +81,10 @@ class QBOConnector:
         vendor_name = vendor_name.replace('&', '%26')  # Replace '&' with %26
 
         vendor = self.connection.vendors.search_vendor_by_display_name(vendor_name)
+        employee = DestinationAttribute.objects.filter(display_name='employee', value=vendor_name, workspace_id=self.workspace_id).count()
+        customer = DestinationAttribute.objects.filter(display_name='customer', value=vendor_name, workspace_id=self.workspace_id).count()
 
-        if not vendor:
+        if not vendor and not employee and not customer:
             if create:
                 created_vendor = self.post_vendor(vendor_name, email)
                 return self.create_vendor_destionation_attribute(created_vendor)
