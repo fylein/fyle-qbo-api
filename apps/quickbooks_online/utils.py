@@ -512,7 +512,7 @@ class QBOConnector:
                 customer_attributes, 'CUSTOMER', self.workspace_id, True)
         return []
 
-    def sync_dimensions(self):
+    def sync_dimensions(self,workspace_general_settings: WorkspaceGeneralSettings):
 
         try:
             self.sync_accounts()
@@ -550,7 +550,8 @@ class QBOConnector:
             logger.info(exception)
 
         try:
-            self.sync_items()
+            if workspace_general_settings.import_items:
+                self.sync_items()
         except Exception as exception:
             logger.info(exception)
 
@@ -598,28 +599,52 @@ class QBOConnector:
         lines = []
 
         for line in bill_lineitems:
-            lineitem = {
-                'Description': line.description,
-                'DetailType': 'AccountBasedExpenseLineDetail',
-                'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None) else \
-                        self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
-                'AccountBasedExpenseLineDetail': {
-                    'AccountRef': {
-                        'value': line.account_id
-                    },
-                    'CustomerRef': {
-                        'value': line.customer_id
-                    },
-                    'ClassRef': {
-                        'value': line.class_id
-                    },
-                    'TaxCodeRef': {
-                        'value': line.tax_code if (line.tax_code and line.tax_amount is not None) else general_mappings.default_tax_code_id
-                    },
-                    'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2),
-                    'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable',
+            if line.detail_type == 'ItemBasedExpenseLineDetail':
+                lineitem = {
+                    'Description': line.description,
+                    'DetailType': line.detail_type,
+                    'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None ) else \
+                            self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
+                    'ItemBasedExpenseLineDetail': {
+                        'ItemRef': {
+                            'value': line.item_id
+                        },
+                        'Qty': 1,
+                        'CustomerRef': {
+                            'value': line.customer_id
+                        },
+                        'ClassRef': {
+                            'value': line.class_id
+                        },
+                        'TaxCodeRef': {
+                            'value': line.tax_code if (line.tax_code and line.tax_amount is not None) else general_mappings.default_tax_code_id
+                        },
+                        'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
+                    }
                 }
-            }
+            else:
+                lineitem = {
+                    'Description': line.description,
+                    'DetailType': line.detail_type,
+                    'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None) else \
+                            self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
+                    'AccountBasedExpenseLineDetail': {
+                        'AccountRef': {
+                            'value': line.account_id
+                        },
+                        'CustomerRef': {
+                            'value': line.customer_id
+                        },
+                        'ClassRef': {
+                            'value': line.class_id
+                        },
+                        'TaxCodeRef': {
+                            'value': line.tax_code if (line.tax_code and line.tax_amount is not None) else general_mappings.default_tax_code_id
+                        },
+                        'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2),
+                        'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable',
+                    }
+                }
 
             lines.append(lineitem)
 
@@ -704,31 +729,55 @@ class QBOConnector:
         """
         lines = []
 
-        for lineitem in qbo_expense_lineitems:
-            line = {
-                'Description': lineitem.description,
-                'DetailType': 'AccountBasedExpenseLineDetail',
-                'Amount': lineitem.amount - lineitem.tax_amount if (lineitem.tax_code and lineitem.tax_amount is not None ) else \
-                        self.get_tax_inclusive_amount(lineitem.amount, general_mappings.default_tax_code_id),
-                'AccountBasedExpenseLineDetail': {
-                    'AccountRef': {
-                        'value': lineitem.account_id
-                    },
-                    'CustomerRef': {
-                        'value': lineitem.customer_id
-                    },
-                    'ClassRef': {
-                        'value': lineitem.class_id
-                    },
-                    'TaxCodeRef': {
-                        'value': lineitem.tax_code if (lineitem.tax_code and lineitem.tax_amount is not None) else general_mappings.default_tax_code_id
-                    },
-                    'TaxAmount': lineitem.tax_amount if (lineitem.tax_code and lineitem.tax_amount is not None) else round(lineitem.amount - self.get_tax_inclusive_amount(lineitem.amount, general_mappings.default_tax_code_id), 2),
-                    'BillableStatus': 'Billable' if lineitem.billable and lineitem.customer_id else 'NotBillable'
+        for line in qbo_expense_lineitems:
+            if line.detail_type == 'ItemBasedExpenseLineDetail':
+                lineitem = {
+                    'Description': line.description,
+                    'DetailType': line.detail_type,
+                    'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None ) else \
+                            self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
+                    'ItemBasedExpenseLineDetail': {
+                        'ItemRef': {
+                            'value': line.item_id
+                        },
+                        'Qty': 1,
+                        'CustomerRef': {
+                            'value': line.customer_id
+                        },
+                        'ClassRef': {
+                            'value': line.class_id
+                        },
+                        'TaxCodeRef': {
+                            'value': line.tax_code if (line.tax_code and line.tax_amount is not None) else general_mappings.default_tax_code_id
+                        },
+                        'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
+                    }
                 }
-            }
+            else:
+                lineitem = {
+                    'Description': line.description,
+                    'DetailType': line.detail_type,
+                    'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None ) else \
+                            self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
+                    'AccountBasedExpenseLineDetail': {
+                        'AccountRef': {
+                            'value': line.account_id
+                        },
+                        'CustomerRef': {
+                            'value': line.customer_id
+                        },
+                        'ClassRef': {
+                            'value': line.class_id
+                        },
+                        'TaxCodeRef': {
+                            'value': line.tax_code if (line.tax_code and line.tax_amount is not None) else general_mappings.default_tax_code_id
+                        },
+                        'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2),
+                        'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
+                    }
+                }
 
-            lines.append(line)
+            lines.append(lineitem)
 
         return lines
 
@@ -781,28 +830,52 @@ class QBOConnector:
         """
         lines = []
         for line in cheque_lineitems:
-            lineitem = {
-                'Description': line.description,
-                'DetailType': 'AccountBasedExpenseLineDetail',
-                'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None) else \
-                        self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
-                'AccountBasedExpenseLineDetail': {
-                    'AccountRef': {
-                        'value': line.account_id
-                    },
-                    'ClassRef': {
-                        'value': line.class_id
-                    },
-                    'CustomerRef': {
-                        'value': line.customer_id
-                    },
-                    'TaxCodeRef': {
-                        'value': line.tax_code if (line.tax_code and line.tax_amount is not None) else general_mappings.default_tax_code_id
-                    },
-                    'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
-                    'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
+            if line.detail_type == 'ItemBasedExpenseLineDetail':
+                lineitem = {
+                    'Description': line.description,
+                    'DetailType': line.detail_type,
+                    'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None ) else \
+                            self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
+                    'ItemBasedExpenseLineDetail': {
+                        'ItemRef': {
+                            'value': line.item_id
+                        },
+                        'Qty': 1,
+                        'CustomerRef': {
+                            'value': line.customer_id
+                        },
+                        'ClassRef': {
+                            'value': line.class_id
+                        },
+                        'TaxCodeRef': {
+                            'value': line.tax_code if (line.tax_code and line.tax_amount is not None) else general_mappings.default_tax_code_id
+                        },
+                        'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
+                    }
                 }
-            }
+            else:
+                lineitem = {
+                    'Description': line.description,
+                    'DetailType': line.detail_type,
+                    'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None) else \
+                            self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
+                    'AccountBasedExpenseLineDetail': {
+                        'AccountRef': {
+                            'value': line.account_id
+                        },
+                        'ClassRef': {
+                            'value': line.class_id
+                        },
+                        'CustomerRef': {
+                            'value': line.customer_id
+                        },
+                        'TaxCodeRef': {
+                            'value': line.tax_code if (line.tax_code and line.tax_amount is not None) else general_mappings.default_tax_code_id
+                        },
+                        'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
+                        'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
+                    }
+                }
 
             lines.append(lineitem)
 
@@ -860,28 +933,52 @@ class QBOConnector:
         lines = []
 
         for line in credit_card_purchase_lineitems:
-            lineitem = {
-                'Description': line.description,
-                'DetailType': 'AccountBasedExpenseLineDetail',
-                'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None) else \
-                        self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
-                'AccountBasedExpenseLineDetail': {
-                    'AccountRef': {
-                        'value': line.account_id
+            if line.detail_type == 'ItemBasedExpenseLineDetail':
+                lineitem = {
+                    'Description': line.description,
+                    'DetailType': line.detail_type,
+                    'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None ) else \
+                            self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
+                    'ItemBasedExpenseLineDetail': {
+                        'ItemRef': {
+                            'value': line.item_id
+                        },
+                        'Qty': 1,
+                        'CustomerRef': {
+                            'value': line.customer_id
+                        },
+                        'ClassRef': {
+                            'value': line.class_id
+                        },
+                        'TaxCodeRef': {
+                            'value': line.tax_code if (line.tax_code and line.tax_amount is not None) else general_mappings.default_tax_code_id
+                        },
+                        'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
+                    }
+                }
+            else:
+                lineitem = {
+                    'Description': line.description,
+                    'DetailType': line.detail_type,
+                    'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None) else \
+                            self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
+                    'AccountBasedExpenseLineDetail': {
+                        'AccountRef': {
+                            'value': line.account_id
+                        },
+                        'CustomerRef': {
+                            'value': line.customer_id
+                        },
+                        'ClassRef': {
+                            'value': line.class_id
+                        },
+                        'TaxCodeRef': {
+                            'value': line.tax_code if (line.tax_code and line.tax_amount is not None) else general_mappings.default_tax_code_id
+                        },
+                        'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2),
+                        'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
                     },
-                    'CustomerRef': {
-                        'value': line.customer_id
-                    },
-                    'ClassRef': {
-                        'value': line.class_id
-                    },
-                    'TaxCodeRef': {
-                        'value': line.tax_code if (line.tax_code and line.tax_amount is not None) else general_mappings.default_tax_code_id
-                    },
-                    'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2),
-                    'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
-                },
-            }
+                }
 
             lines.append(lineitem)
 
@@ -914,7 +1011,7 @@ class QBOConnector:
                                   credit_card_purchase_lineitems: List[CreditCardPurchaseLineitem]):
 
         """
-        Post bills to QBO
+        Post Credit Card Purchase  to QBO
         """
         try:
             credit_card_purchase_payload = self.__construct_credit_card_purchase(credit_card_purchase,

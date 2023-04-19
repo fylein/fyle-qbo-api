@@ -35,7 +35,53 @@ data = {
         "created_at": "2020-06-01T13:14:54.804+00:00",
         "updated_at": "2020-06-11T13:14:55.201598+00:00",
         "display_name": "Andrew Haberbosch"
-    }
-
-    
+    },
+    'items_response_with_inactive_values': [
+        {
+            "Name":"Concrete",
+            "Description":"Concrete for fountain installation",
+            "Active":True,
+            "FullyQualifiedName":"Concrete",
+            "Taxable":True,
+            "UnitPrice":0,
+            "Type":"Service",
+            "IncomeAccountRef":{
+                "value":"48",
+                "name":"Fountains and Garden Lighting"
+            },
+            "PurchaseCost":0,
+            "TrackQtyOnHand":False,
+            "domain":"QBO",
+            "sparse":False,
+            "Id":"3",
+            "SyncToken":"1",
+            "MetaData":{
+                "CreateTime":"2019-12-16T10:36:03-08:00",
+                "LastUpdatedTime":"2019-12-19T12:47:47-08:00"
+            }
+        },
+        {
+            "Name":"Maintenance & Repair",
+            "Description":"Maintenance & Repair",
+            "Active":True,
+            "FullyQualifiedName":"Maintenance & Repair",
+            "Taxable":False,
+            "UnitPrice":0,
+            "Type":"Service",
+            "IncomeAccountRef":{
+                "value":"53",
+                "name":"Maintenance and Repair"
+            },
+            "PurchaseCost":0,
+            "TrackQtyOnHand":False,
+            "domain":"QBO",
+            "sparse":False,
+            "Id":"9",
+            "SyncToken":"0",
+            "MetaData":{
+                "CreateTime":"2019-12-16T10:45:18-08:00",
+                "LastUpdatedTime":"2019-12-16T10:45:18-08:00"
+            }
+        }
+    ]
 }

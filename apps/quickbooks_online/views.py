@@ -827,8 +827,8 @@ class SyncQuickbooksDimensionView(generics.ListCreateAPIView):
             if workspace.destination_synced_at is None or time_interval.days > 0:
                 quickbooks_credentials = QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
                 quickbooks_connector = QBOConnector(quickbooks_credentials, workspace_id=kwargs['workspace_id'])
-
-                quickbooks_connector.sync_dimensions()
+                workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=kwargs['workspace_id'])
+                quickbooks_connector.sync_dimensions(workspace_general_settings=workspace_general_settings)
 
                 workspace.destination_synced_at = datetime.now()
                 workspace.save(update_fields=['destination_synced_at'])
@@ -876,8 +876,8 @@ class RefreshQuickbooksDimensionView(generics.ListCreateAPIView):
         try:
             quickbooks_credentials = QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
             quickbooks_connector = QBOConnector(quickbooks_credentials, workspace_id=kwargs['workspace_id'])
-
-            quickbooks_connector.sync_dimensions()
+            workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=kwargs['workspace_id'])
+            quickbooks_connector.sync_dimensions(workspace_general_settings=workspace_general_settings)
 
             workspace = Workspace.objects.get(id=kwargs['workspace_id'])
             workspace.destination_synced_at = datetime.now()

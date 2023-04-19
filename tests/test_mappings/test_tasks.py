@@ -166,6 +166,35 @@ def test_create_fyle_category_payload(db):
     fyle_category_payload = create_fyle_categories_payload(qbo_attributes, 2)
     assert dict_compare_keys(fyle_category_payload[0], data['fyle_category_payload'][0]) == [], 'category upload api return diffs in keys'
 
+def test_auto_create_category_mappings_with_items(db, mocker):
+    workspace_id=4
+    WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(import_items=True)
+    mappings = Mapping.objects.filter(destination_type='ACCOUNT', source_type='CATEGORY', workspace_id=workspace_id).count()
+    assert mappings == 46
+
+    mocker.patch(
+        'qbosdk.apis.Accounts.get',
+        return_value=[]
+    )
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.Categories.sync',
+        return_value=[]
+    )
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.Categories.post_bulk',
+        return_value=[]
+    )
+    mocker.patch(
+        'qbosdk.apis.Items.get',
+        return_value=[]
+    )
+
+    response = auto_create_category_mappings(workspace_id=workspace_id)
+    assert response == []
+
+    item_count = Mapping.objects.filter(destination_type='ACCOUNT', source_type='CATEGORY', destination__display_name='Item', workspace_id=workspace_id).count()
+    assert item_count == 0
+    
 
 def test_auto_create_category_mappings(db, mocker):
     workspace_id = 3

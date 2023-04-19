@@ -340,23 +340,29 @@ def create_fyle_categories_payload(categories: List[DestinationAttribute], works
     return payload
 
 
-def upload_categories_to_fyle(workspace_id):
+def upload_categories_to_fyle(platform: PlatformConnector, workspace_id):
     """
     Upload categories to Fyle
     """
-    fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
     qbo_credentials: QBOCredential = QBOCredential.get_active_qbo_credentials(workspace_id)
-    platform = PlatformConnector(fyle_credentials)
-
     qbo_connection = QBOConnector(
         credentials_object=qbo_credentials,
         workspace_id=workspace_id
     )
+    general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
+
     platform.categories.sync()
     qbo_connection.sync_accounts()
-    general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
-    qbo_attributes: List[DestinationAttribute] = DestinationAttribute.objects.filter(
+
+    accounts: List[DestinationAttribute] = DestinationAttribute.objects.filter(
         workspace_id=workspace_id, attribute_type='ACCOUNT', detail__account_type__in=general_settings.charts_of_accounts).all()
+    qbo_attributes = accounts
+    if general_settings.import_items:
+        qbo_connection.sync_items()
+        items: List[DestinationAttribute] = DestinationAttribute.objects.filter(workspace_id=workspace_id, display_name='Item', attribute_type='ACCOUNT')
+        if items:
+            qbo_attributes = qbo_attributes | items
+
     qbo_attributes = remove_duplicates(qbo_attributes)
     fyle_payload: List[Dict] = create_fyle_categories_payload(qbo_attributes, workspace_id)
 
@@ -375,7 +381,7 @@ def auto_create_category_mappings(workspace_id):
     try:
         fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
         platform = PlatformConnector(fyle_credentials)
-        fyle_categories = upload_categories_to_fyle(workspace_id=workspace_id)
+        fyle_categories = upload_categories_to_fyle(platform, workspace_id=workspace_id)
         category_mappings = Mapping.bulk_create_mappings(fyle_categories, 'CATEGORY', 'ACCOUNT', workspace_id)
 
         #disabling fields
