@@ -302,7 +302,7 @@ class ConnectQBOView(viewsets.ViewSet):
 
             # Check if the realm_id matches the one associated with the workspace
             if workspace.qbo_realm_id:
-                assert_valid(realm_id == workspace.qbo_realm_id, 'Please choose the correct QuickBooks Online account')
+                assert_valid(realm_id != workspace.qbo_realm_id, 'Please choose the correct QuickBooks Online account')
 
             # Use the QBO credentials to get the company info and preferences
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
@@ -319,7 +319,9 @@ class ConnectQBOView(viewsets.ViewSet):
             qbo_credentials.realm_id = realm_id
             qbo_credentials.save()            
             
-            # Update the workspace onboarding state
+            # Update the workspace onboarding state and realm_id
+            workspace.qbo_realm_id = realm_id
+
             if workspace.onboarding_state == 'CONNECTION':
                 workspace.onboarding_state = 'MAP_EMPLOYEES'
             workspace.save()

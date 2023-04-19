@@ -333,6 +333,17 @@ def test_post_connect_qbo_view(mocker, api_client, test_connection):
         'qbosdk.apis.CompanyInfo.get',
         return_value=data['company_info']
     )
+    mocker.patch(
+        'apps.quickbooks_online.utils.QBOConnector.get_company_preference',
+        return_value={
+            'CurrencyPrefs': {
+                'HomeCurrency': {
+                    'value': 'USD'
+                }
+            }
+        }
+    )
+
     code = 'sdfg'
     url = '/api/workspaces/5/connect_qbo/authorization_code/'
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
@@ -341,6 +352,7 @@ def test_post_connect_qbo_view(mocker, api_client, test_connection):
     qbo_credentials.delete()
 
     workspace = Workspace.objects.get(id=5)
+    print(workspace.qbo_realm_id)
     workspace.onboarding_state = 'CONNECTION'
     workspace.save()
 
