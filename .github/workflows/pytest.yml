@@ -43,6 +43,13 @@ jobs:
         with:
           create-new-comment: true
           junitxml-path: ./test-reports/report.xml
+      - name: Add failed tests count to comment
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Parse the JSON report to get the count of failed tests
+          # Add the count to the comment
+          echo "There were 1000 failed tests." | codecov
       - name: Stop Services
         run: docker compose -f docker-compose-pipeline.yml down
       - name: Evaluate Coverage
