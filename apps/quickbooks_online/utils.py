@@ -586,6 +586,8 @@ class QBOConnector:
 
         general_mappings = GeneralMapping.objects.filter(workspace_id=self.workspace_id).first()
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+        qbo_home_currency = QBOCredential.objects.get(workspace_id=self.workspace_id).currency
+        fyle_home_currency = bill.currency
 
         bill_payload = {
             'VendorRef': {
@@ -604,6 +606,12 @@ class QBOConnector:
             'PrivateNote': bill.private_note,
             'Line': self.__construct_bill_lineitems(bill_lineitems, general_mappings)
         }
+
+        if fyle_home_currency != qbo_home_currency and qbo_home_currency:
+            exchange_rate = self.connection.exchange_rates.get_by_source(
+                source_currency_code=fyle_home_currency
+            )
+            bill_payload['ExchangeRate'] = exchange_rate['Rate']
 
         if general_settings.import_tax_codes:
             bill_payload.update({

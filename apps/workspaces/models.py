@@ -143,6 +143,7 @@ class QBOCredential(models.Model):
     is_expired = models.BooleanField(default=False, help_text='QBO token expiry flag')
     company_name = models.CharField(max_length=255, help_text='QBO Company Name', null=True)
     country = models.CharField(max_length=255, help_text='QBO Country Name', null=True)
+    currency = models.CharField(max_length=255, help_text='QBO Currency', null=True)
     workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')
