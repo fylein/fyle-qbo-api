@@ -16,11 +16,11 @@ jobs:
         run: |
           npm install -g codecov
           docker-compose -f docker-compose-pipeline.yml build
+          echo "Failed tests: XYZYXYXYYXYXYYZYYXH" | codecov --flags=failed-tests --debug
           docker-compose -f docker-compose-pipeline.yml up -d
           docker-compose -f docker-compose-pipeline.yml exec -T api pytest tests/ --cov --cov-report=xml --cov-fail-under=97 --junit-xml=test-reports/report.xml
           echo "STATUS=$(cat pytest-coverage.txt | grep 'Required test' | awk '{ print $1 }')" >> $GITHUB_ENV
           echo "FAILED=$(cat test-reports/report.xml | awk -F'=' '{print $5}' | awk -F' ' '{gsub(/"/, "", $1); print $1}')" >> $GITHUB_ENV
-          echo "Failed tests: XYZYXYXYYXYXYYZYYXH" | codecov --flags=failed-tests --debug
         env:
           FYLE_BASE_URL: ${{ secrets.FYLE_BASE_URL }}
           FYLE_CLIENT_ID: ${{ secrets.FYLE_CLIENT_ID }}

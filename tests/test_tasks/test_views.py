@@ -24,7 +24,7 @@ def test_get_task_by_id(api_client, test_connection):
     response = api_client.get(url, {
         'id': '8'
     })
-    assert response.status_code==300
+    assert response.status_code==200
 
 
 def test_get_task_by_expense_group_id(api_client, test_connection):
