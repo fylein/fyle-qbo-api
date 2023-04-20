@@ -285,8 +285,6 @@ class ConnectQBOView(viewsets.ViewSet):
             # Generate a refresh token from the authorization code
             refresh_token = generate_qbo_refresh_token(authorization_code, redirect_uri)
 
-            print(refresh_token)
-
             # Get the workspace associated with the request
             workspace = Workspace.objects.get(pk=kwargs['workspace_id'])
 
@@ -338,7 +336,6 @@ class ConnectQBOView(viewsets.ViewSet):
             return Response({'message': 'QBO Application not found'}, status=status.HTTP_404_NOT_FOUND)
 
         except qbo_exc.WrongParamsError as e:
-            print(e.response)
             return Response(json.loads(e.response), status=status.HTTP_400_BAD_REQUEST)
 
         except qbo_exc.InternalServerError:
