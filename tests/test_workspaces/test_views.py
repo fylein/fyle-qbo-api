@@ -352,7 +352,6 @@ def test_post_connect_qbo_view(mocker, api_client, test_connection):
     qbo_credentials.delete()
 
     workspace = Workspace.objects.get(id=5)
-    print(workspace.qbo_realm_id)
     workspace.onboarding_state = 'CONNECTION'
     workspace.save()
 
@@ -363,8 +362,17 @@ def test_post_connect_qbo_view(mocker, api_client, test_connection):
             'realm_id': '123146326950399',
         }    
     )
-    response = api_client.post(url)
+
     assert response.status_code == 200
+
+    response = api_client.post(
+        url,
+        data={
+            'code': code,
+            'realm_id': '12248888999009'
+        }
+    )
+    assert response.status_code == 400
 
 
 def test_patch_connect_qbo_view(mocker, api_client, test_connection):
