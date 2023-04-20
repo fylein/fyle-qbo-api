@@ -616,7 +616,10 @@ class QBOConnector:
             exchange_rate = self.connection.exchange_rates.get_by_source(
                 source_currency_code=fyle_home_currency
             )
-            bill_payload['ExchangeRate'] = exchange_rate['Rate']
+            bill_payload['ExchangeRate'] = exchange_rate['Rate'] if "Rate" in exchange_rate else 1
+
+            bill.exchange_rate = bill_payload['ExchangeRate']
+            bill.save(update_fields=['exchange_rate'])
 
         if general_settings.import_tax_codes:
             bill_payload.update({
