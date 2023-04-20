@@ -333,6 +333,17 @@ def test_post_connect_qbo_view(mocker, api_client, test_connection):
         'qbosdk.apis.CompanyInfo.get',
         return_value=data['company_info']
     )
+    mocker.patch(
+        'apps.quickbooks_online.utils.QBOConnector.get_company_preference',
+        return_value={
+            'CurrencyPrefs': {
+                'HomeCurrency': {
+                    'value': 'USD'
+                }
+            }
+        }
+    )
+
     code = 'sdfg'
     url = '/api/workspaces/5/connect_qbo/authorization_code/'
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
@@ -351,8 +362,17 @@ def test_post_connect_qbo_view(mocker, api_client, test_connection):
             'realm_id': '123146326950399',
         }    
     )
-    response = api_client.post(url)
+
     assert response.status_code == 200
+
+    response = api_client.post(
+        url,
+        data={
+            'code': code,
+            'realm_id': '12248888999009'
+        }
+    )
+    assert response.status_code == 400
 
 
 def test_patch_connect_qbo_view(mocker, api_client, test_connection):

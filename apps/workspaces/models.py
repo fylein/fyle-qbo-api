@@ -126,6 +126,7 @@ class WorkspaceGeneralSettings(models.Model):
     map_fyle_cards_qbo_account = models.BooleanField(default=True, help_text='Map Fyle Cards to QBO Accounts')
     skip_cards_mapping = models.BooleanField(default=False, help_text='Skip cards mapping')
     import_vendors_as_merchants = models.BooleanField(default=False, help_text='Auto import vendors from qbo as merchants to Fyle')
+    is_multi_currency_allowed = models.BooleanField(default=False, help_text='Multi Currency Allowed')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
@@ -143,6 +144,7 @@ class QBOCredential(models.Model):
     is_expired = models.BooleanField(default=False, help_text='QBO token expiry flag')
     company_name = models.CharField(max_length=255, help_text='QBO Company Name', null=True)
     country = models.CharField(max_length=255, help_text='QBO Country Name', null=True)
+    currency = models.CharField(max_length=255, help_text='QBO Currency', null=True)
     workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')

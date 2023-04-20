@@ -13,7 +13,7 @@ import unidecode
 
 from fyle_accounting_mappings.models import DestinationAttribute
 
-from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings
+from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSettings
 from apps.mappings.models import GeneralMapping
 
 from .models import BillLineitem, Bill, ChequeLineitem, Cheque, CreditCardPurchase, CreditCardPurchaseLineitem, \
@@ -300,11 +300,12 @@ class QBOConnector:
                 detail = {
                     'email': vendor['PrimaryEmailAddr']['Address']
                     if (
-                            'PrimaryEmailAddr' in vendor and
-                            vendor['PrimaryEmailAddr'] and
-                            'Address' in vendor['PrimaryEmailAddr'] and
-                            vendor['PrimaryEmailAddr']['Address']
+                        'PrimaryEmailAddr' in vendor and
+                        vendor['PrimaryEmailAddr'] and
+                        'Address' in vendor['PrimaryEmailAddr'] and
+                        vendor['PrimaryEmailAddr']['Address']
                     ) else None,
+                    'currency': vendor['CurrencyRef']['value'] if 'CurrencyRef' in vendor else None,
                 }
 
                 vendor_attributes.append({
@@ -355,6 +356,7 @@ class QBOConnector:
         :param vendor_name: vendor attribute to be created
         :return: Vendor Desination Atribute
         """
+        currency = Workspace.objects.get(id=self.workspace_id).fyle_currency
 
         vendor = {
             'GivenName': vendor_name.split(' ')[0] if email else None,
@@ -364,6 +366,9 @@ class QBOConnector:
             'DisplayName': vendor_name,
             'PrimaryEmailAddr': {
                 'Address': email
+            },
+            'CurrencyRef': {
+                'value': currency
             }
         }
         created_vendor = self.connection.vendors.post(vendor)['Vendor']
@@ -586,6 +591,8 @@ class QBOConnector:
 
         general_mappings = GeneralMapping.objects.filter(workspace_id=self.workspace_id).first()
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+        qbo_home_currency = QBOCredential.objects.get(workspace_id=self.workspace_id).currency
+        fyle_home_currency = bill.currency
 
         bill_payload = {
             'VendorRef': {
@@ -604,6 +611,12 @@ class QBOConnector:
             'PrivateNote': bill.private_note,
             'Line': self.__construct_bill_lineitems(bill_lineitems, general_mappings)
         }
+
+        if general_settings.is_multi_currency_allowed and fyle_home_currency != qbo_home_currency and qbo_home_currency:
+            exchange_rate = self.connection.exchange_rates.get_by_source(
+                source_currency_code=fyle_home_currency
+            )
+            bill_payload['ExchangeRate'] = exchange_rate['Rate']
 
         if general_settings.import_tax_codes:
             bill_payload.update({
