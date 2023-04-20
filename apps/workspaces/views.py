@@ -295,17 +295,17 @@ class ConnectQBOView(viewsets.ViewSet):
                     refresh_token=refresh_token,
                     realm_id=realm_id,
                     workspace=workspace
-                )
+                ) 
+
+            # Check if the realm_id matches the one associated with the workspace
+            if workspace.qbo_realm_id:
+                assert_valid(realm_id == workspace.qbo_realm_id, 'Please choose the correct QuickBooks Online account')
 
             # Update the workspace with the realm_id and refresh_token
             qbo_credentials.is_expired = False
             qbo_credentials.refresh_token = refresh_token
             qbo_credentials.realm_id = realm_id
-            qbo_credentials.save()    
-
-            # Check if the realm_id matches the one associated with the workspace
-            if workspace.qbo_realm_id:
-                assert_valid(realm_id == workspace.qbo_realm_id, 'Please choose the correct QuickBooks Online account')
+            qbo_credentials.save()
 
             # Use the QBO credentials to get the company info and preferences
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
