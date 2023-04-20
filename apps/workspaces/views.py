@@ -315,7 +315,7 @@ class ConnectQBOView(viewsets.ViewSet):
             # Update the QBO credentials with the retrieved company info and preferences
             qbo_credentials.country = company_info['Country']
             qbo_credentials.company_name = company_info['CompanyName']
-            qbo_credentials.currency = preferences['CurrencyPrefs']['HomeCurrency']['value']   
+            qbo_credentials.currency = preferences['CurrencyPrefs']['HomeCurrency']['value']
 
             qbo_credentials.save()     
             
