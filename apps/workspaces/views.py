@@ -285,6 +285,8 @@ class ConnectQBOView(viewsets.ViewSet):
             # Generate a refresh token from the authorization code
             refresh_token = generate_qbo_refresh_token(authorization_code, redirect_uri)
 
+            print(refresh_token)
+
             # Get the workspace associated with the request
             workspace = Workspace.objects.get(pk=kwargs['workspace_id'])
 
@@ -297,8 +299,11 @@ class ConnectQBOView(viewsets.ViewSet):
                     workspace=workspace
                 )
 
-            # Set the is_expired flag to false for the QBO credentials
+            # Update the workspace with the realm_id and refresh_token
             qbo_credentials.is_expired = False
+            qbo_credentials.refresh_token = refresh_token
+            qbo_credentials.realm_id = realm_id
+            qbo_credentials.save()    
 
             # Check if the realm_id matches the one associated with the workspace
             if workspace.qbo_realm_id:
@@ -312,12 +317,9 @@ class ConnectQBOView(viewsets.ViewSet):
             # Update the QBO credentials with the retrieved company info and preferences
             qbo_credentials.country = company_info['Country']
             qbo_credentials.company_name = company_info['CompanyName']
-            qbo_credentials.currency = preferences['CurrencyPrefs']['HomeCurrency']['value']
+            qbo_credentials.currency = preferences['CurrencyPrefs']['HomeCurrency']['value']   
 
-            # Update the workspace with the realm_id and refresh_token
-            qbo_credentials.refresh_token = refresh_token
-            qbo_credentials.realm_id = realm_id
-            qbo_credentials.save()            
+            qbo_credentials.save()     
             
             # Update the workspace onboarding state and realm_id
             workspace.qbo_realm_id = realm_id
@@ -336,6 +338,7 @@ class ConnectQBOView(viewsets.ViewSet):
             return Response({'message': 'QBO Application not found'}, status=status.HTTP_404_NOT_FOUND)
 
         except qbo_exc.WrongParamsError as e:
+            print(e.response)
             return Response(json.loads(e.response), status=status.HTTP_400_BAD_REQUEST)
 
         except qbo_exc.InternalServerError:
