@@ -295,14 +295,17 @@ class ConnectQBOView(viewsets.ViewSet):
                     refresh_token=refresh_token,
                     realm_id=realm_id,
                     workspace=workspace
-                )
-
-            # Set the is_expired flag to false for the QBO credentials
-            qbo_credentials.is_expired = False
+                ) 
 
             # Check if the realm_id matches the one associated with the workspace
             if workspace.qbo_realm_id:
                 assert_valid(realm_id == workspace.qbo_realm_id, 'Please choose the correct QuickBooks Online account')
+
+            # Update the workspace with the realm_id and refresh_token
+            qbo_credentials.is_expired = False
+            qbo_credentials.refresh_token = refresh_token
+            qbo_credentials.realm_id = realm_id
+            qbo_credentials.save()
 
             # Use the QBO credentials to get the company info and preferences
             qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
@@ -314,10 +317,7 @@ class ConnectQBOView(viewsets.ViewSet):
             qbo_credentials.company_name = company_info['CompanyName']
             qbo_credentials.currency = preferences['CurrencyPrefs']['HomeCurrency']['value']
 
-            # Update the workspace with the realm_id and refresh_token
-            qbo_credentials.refresh_token = refresh_token
-            qbo_credentials.realm_id = realm_id
-            qbo_credentials.save()            
+            qbo_credentials.save()     
             
             # Update the workspace onboarding state and realm_id
             workspace.qbo_realm_id = realm_id
