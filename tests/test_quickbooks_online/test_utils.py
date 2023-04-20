@@ -86,11 +86,31 @@ def test_sync_departments(mocker, db):
     assert new_department_count == 1
 
 
-def test_construct_bill(create_bill, db):
+def test_construct_bill(create_bill, mocker, db):
+    mocker.patch(
+        'qbosdk.apis.ExchangeRates.get_by_source',
+        return_value={
+            'Rate': 1.2309,
+        }
+    )
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
 
     bill, bill_lineitems = create_bill
+    bill_object = qbo_connection._QBOConnector__construct_bill(bill=bill,bill_lineitems=bill_lineitems)
+    data['bill_payload']['TxnDate'] = bill_object['TxnDate']
+
+    assert dict_compare_keys(bill_object, data['bill_payload']) == [], 'construct bill_payload entry api return diffs in keys'
+
+    workspace_general_settings = qbo_credentials.workspace.workspace_general_settings
+    workspace_general_settings.is_multi_currency_allowed = True
+    workspace_general_settings.save()
+
+    qbo_credentials.currency = 'CAD'
+    qbo_credentials.save()
+
+    data['bill_payload']['ExchangeRate'] = 1.2309
+
     bill_object = qbo_connection._QBOConnector__construct_bill(bill=bill,bill_lineitems=bill_lineitems)
     data['bill_payload']['TxnDate'] = bill_object['TxnDate']
 
