@@ -655,8 +655,7 @@ class SetupE2ETestView(viewsets.ViewSet):
                             )
 
                             # Sync dimension for QBO and Fyle
-                            workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace.id)
-                            qbo_connector.sync_dimensions(workspace_general_settings=workspace_general_settings)
+                            qbo_connector.sync_dimensions()
 
                             fyle_credentials = FyleCredential.objects.get(workspace_id=workspace.id)
                             platform = PlatformConnector(fyle_credentials)

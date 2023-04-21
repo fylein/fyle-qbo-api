@@ -515,7 +515,7 @@ class QBOConnector:
                 customer_attributes, 'CUSTOMER', self.workspace_id, True)
         return []
 
-    def sync_dimensions(self,workspace_general_settings: WorkspaceGeneralSettings):
+    def sync_dimensions(self):
 
         try:
             self.sync_accounts()
@@ -553,8 +553,7 @@ class QBOConnector:
             logger.info(exception)
 
         try:
-            if workspace_general_settings.import_items:
-                self.sync_items()
+            self.sync_items()
         except Exception as exception:
             logger.info(exception)
 

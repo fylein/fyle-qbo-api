@@ -365,8 +365,7 @@ def test_sync_dimensions(mocker, db):
 
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
-    workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
-    qbo_connection.sync_dimensions(workspace_general_settings=workspace_general_settings)
+    qbo_connection.sync_dimensions()
 
     employee_count = DestinationAttribute.objects.filter(attribute_type='EMPLOYEE', workspace_id=1).count()
     accounts_count = DestinationAttribute.objects.filter(attribute_type='ACCOUNT', workspace_id=1).count()
@@ -600,34 +599,31 @@ def test_sync_dimensions_exception(db):
 
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
-    workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
-    workspace_general_settings.import_items = True
-    workspace_general_settings.save()
 
     with mock.patch('apps.quickbooks_online.utils.QBOConnector.sync_accounts') as mock_call:
         mock_call.side_effect = Exception()
-        qbo_connection.sync_dimensions(workspace_general_settings=workspace_general_settings)
+        qbo_connection.sync_dimensions()
 
     with mock.patch('apps.quickbooks_online.utils.QBOConnector.sync_employees') as mock_call:
         mock_call.side_effect = Exception()
-        qbo_connection.sync_dimensions(workspace_general_settings=workspace_general_settings)
+        qbo_connection.sync_dimensions()
 
     with mock.patch('apps.quickbooks_online.utils.QBOConnector.sync_vendors') as mock_call:
         mock_call.side_effect = Exception()
-        qbo_connection.sync_dimensions(workspace_general_settings=workspace_general_settings)
+        qbo_connection.sync_dimensions()
 
     with mock.patch('apps.quickbooks_online.utils.QBOConnector.sync_customers') as mock_call:
         mock_call.side_effect = Exception()
-        qbo_connection.sync_dimensions(workspace_general_settings=workspace_general_settings)
+        qbo_connection.sync_dimensions()
 
     with mock.patch('apps.quickbooks_online.utils.QBOConnector.sync_classes') as mock_call:
         mock_call.side_effect = Exception()
-        qbo_connection.sync_dimensions(workspace_general_settings=workspace_general_settings)
+        qbo_connection.sync_dimensions()
 
     with mock.patch('apps.quickbooks_online.utils.QBOConnector.sync_departments') as mock_call:
         mock_call.side_effect = Exception()
-        qbo_connection.sync_dimensions(workspace_general_settings=workspace_general_settings)
+        qbo_connection.sync_dimensions()
 
     with mock.patch('apps.quickbooks_online.utils.QBOConnector.sync_tax_codes') as mock_call:
         mock_call.side_effect = Exception()
-        qbo_connection.sync_dimensions(workspace_general_settings=workspace_general_settings)
+        qbo_connection.sync_dimensions()
