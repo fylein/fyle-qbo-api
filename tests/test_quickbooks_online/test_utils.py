@@ -145,6 +145,42 @@ def test_construct_bill(create_bill, mocker, db):
 
     assert dict_compare_keys(bill_object, data['bill_payload']) == [], 'construct bill_payload entry api return diffs in keys'
 
+def test_construct_bill_item_based(create_bill_item_based, mocker, db):
+    mocker.patch(
+        'qbosdk.apis.ExchangeRates.get_by_source',
+        return_value={
+            'Rate': 1.2309,
+        }
+    )
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+
+    #for item-based line-items 
+    bill, bill_lineitems = create_bill_item_based
+    bill_object = qbo_connection._QBOConnector__construct_bill(bill=bill,bill_lineitems=bill_lineitems)
+    bill_object['Line'][0]['DetailType'] == 'ItemBasedExpenseLineDetail'
+
+    assert dict_compare_keys(bill_object, data['bill_payload_item_based_payload']) == [], 'construct bill_payload entry api return diffs in keys'
+
+
+def test_construct_bill_item_and_account_based(create_bill_item_and_account_based, mocker, db):
+    mocker.patch(
+        'qbosdk.apis.ExchangeRates.get_by_source',
+        return_value={
+            'Rate': 1.2309,
+        }
+    )
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+
+    #for item-based and account-based line-items 
+    bill, bill_lineitems = create_bill_item_and_account_based
+    bill_object = qbo_connection._QBOConnector__construct_bill(bill=bill,bill_lineitems=bill_lineitems)
+    bill_object['Line'][0]['DetailType'] == 'ItemBasedExpenseLineDetail'
+    bill_object['Line'][1]['DetailType'] == 'AccountBasedExpenseLineDetail'
+
+    assert dict_compare_keys(bill_object, data['bill_payload_item_and_account_based_payload']) == [], 'construct bill_payload entry api return diffs in keys'
+
 
 def test_construct_credit_card_purchase(create_credit_card_purchase, db):
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
