@@ -530,6 +530,7 @@ data = {
             "domain": "QBO",
             "GivenName": "Bessie",
             "DisplayName": "Books by Bessie",
+            'CurrencyRef': {'value': 'USD', 'name': 'United States Dollar'},
             "BillAddr": {
                 "City": "Palo Alto",
                 "Line1": "15 Main St.",

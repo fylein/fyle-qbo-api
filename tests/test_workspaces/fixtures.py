@@ -89,6 +89,7 @@ data = {
         'created_at':'2022-05-23T11:34:12.831875Z',
         'updated_at':'2022-05-23T12:58:43.146006Z',
         'is_simplify_report_closure_enabled': True,
+        'is_multi_currency_allowed': True,
         'workspace':4
     },
     'expenses':[
