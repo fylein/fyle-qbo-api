@@ -224,6 +224,7 @@ def get_category_mapping(workspace_general_settings: WorkspaceGeneralSettings, c
             source_type='CATEGORY',
             destination_type='ACCOUNT',
             source__value=category,
+            destination__display_name='Account',
             workspace_id=workspace_id
         ).first()
         detail_type = 'AccountBasedExpenseLineDetail'
