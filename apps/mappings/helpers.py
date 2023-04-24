@@ -28,6 +28,7 @@ def schedule_or_delete_fyle_import_tasks(configuration: WorkspaceGeneralSettings
             func='apps.mappings.tasks.auto_import_and_map_fyle_fields',
             args='{}'.format(configuration.workspace_id)
         ).delete()
+
    
 def delete_items_mappings(configuration: WorkspaceGeneralSettings):
     """
@@ -42,5 +43,5 @@ def delete_items_mappings(configuration: WorkspaceGeneralSettings):
             source_type='CATEGORY',
             destination_type='ACCOUNT',
             destination__display_name='Item').delete()
-        
+
     return []

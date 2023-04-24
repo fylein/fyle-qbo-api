@@ -357,11 +357,16 @@ def upload_categories_to_fyle(platform: PlatformConnector, workspace_id):
     accounts: List[DestinationAttribute] = DestinationAttribute.objects.filter(
         workspace_id=workspace_id, attribute_type='ACCOUNT', detail__account_type__in=general_settings.charts_of_accounts).all()
     qbo_attributes = accounts
+
     if general_settings.import_items:
         qbo_connection.sync_items()
-        items: List[DestinationAttribute] = DestinationAttribute.objects.filter(workspace_id=workspace_id, display_name='Item', attribute_type='ACCOUNT')
-        if items:
-            qbo_attributes = qbo_attributes | items
+        qbo_items: List[DestinationAttribute] = DestinationAttribute.objects.filter(
+            workspace_id=workspace_id,
+            display_name='Item',
+            attribute_type='ACCOUNT'
+        )
+        if qbo_items:
+            qbo_attributes = qbo_attributes | qbo_items
 
     qbo_attributes = remove_duplicates(qbo_attributes)
     fyle_payload: List[Dict] = create_fyle_categories_payload(qbo_attributes, workspace_id)
