@@ -121,6 +121,7 @@ class QBOConnector:
         """
         items = self.connection.items.get()
         item_attributes = []
+        general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
 
         # getting all the items stored in the DB
         destination_attributes = DestinationAttribute.objects.filter(workspace_id=self.workspace_id, attribute_type= 'ACCOUNT', display_name='Item').values('destination_id', 'value')
@@ -140,7 +141,7 @@ class QBOConnector:
                     'display_name': 'Item',
                     'value': item['FullyQualifiedName'],
                     'destination_id': item['Id'],
-                    'active': True
+                    'active': True if general_settings.import_items else False
                 })
                 # If item is active and present in the map, remove it from the map
                 if item['Id'] in disabled_fields_map:

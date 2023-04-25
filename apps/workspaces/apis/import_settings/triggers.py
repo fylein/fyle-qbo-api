@@ -6,7 +6,7 @@ from django_q.models import Schedule
 from fyle_accounting_mappings.models import MappingSetting
 
 from apps.fyle.models import ExpenseGroupSettings
-from apps.mappings.helpers import schedule_or_delete_fyle_import_tasks, delete_items_mappings
+from apps.mappings.helpers import schedule_or_delete_fyle_import_tasks
 from apps.workspaces.models import WorkspaceGeneralSettings
 
 from apps.mappings.tasks import schedule_cost_centers_creation, schedule_fyle_attributes_creation, schedule_tax_groups_creation
@@ -86,8 +86,6 @@ class ImportSettingsTrigger:
         )
 
         schedule_or_delete_fyle_import_tasks(workspace_general_settings_instance)
-
-        delete_items_mappings(workspace_general_settings_instance)
 
 
     def __remove_old_department_source_field(

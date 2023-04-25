@@ -1,9 +1,11 @@
 from datetime import datetime
+from fyle_integrations_platform_connector import PlatformConnector
 
 from django_q.models import Schedule
 
-from fyle_accounting_mappings.models import MappingSetting, Mapping
-from apps.workspaces.models import WorkspaceGeneralSettings
+from fyle_accounting_mappings.models import MappingSetting, Mapping, ExpenseAttribute
+from apps.workspaces.models import WorkspaceGeneralSettings, FyleCredential
+from apps.mappings.tasks import create_fyle_categories_payload
 
 
 def schedule_or_delete_fyle_import_tasks(configuration: WorkspaceGeneralSettings):
@@ -28,19 +30,3 @@ def schedule_or_delete_fyle_import_tasks(configuration: WorkspaceGeneralSettings
             func='apps.mappings.tasks.auto_import_and_map_fyle_fields',
             args='{}'.format(configuration.workspace_id)
         ).delete()
-
-   
-def delete_items_mappings(configuration: WorkspaceGeneralSettings):
-    """
-    Delete all the mappings when import_items is set to false
-    :param configuration: WorkspaceGeneralSettings Instance
-    :return: None
-    """
-
-    if not configuration.import_items:
-        mappings = Mapping.objects.filter(
-            workspace_id=configuration.workspace_id,
-            source_type='CATEGORY',
-            destination_type='ACCOUNT',
-            destination__display_name='Item').all()
-        mappings.delete()

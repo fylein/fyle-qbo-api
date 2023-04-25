@@ -88,9 +88,7 @@ def test_sync_departments(mocker, db):
 def test_sync_items(mocker, db):
     
     with mock.patch('qbosdk.apis.Items.get') as mock_call:
-        mock_call.return_value = data['items_response']
-
-        item_count_to_be_created = len(data['items_response'])
+        mock_call.return_value = data['items_response']       
 
         qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
         qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
@@ -100,8 +98,13 @@ def test_sync_items(mocker, db):
 
         qbo_connection.sync_items()
 
-        new_item_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='ACCOUNT', display_name='Item').count()
-        assert new_item_count == item_count+item_count_to_be_created
+        new_item_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='ACCOUNT', display_name='Item', active=True).count()
+        assert new_item_count == 0
+
+        WorkspaceGeneralSettings.objects.filter(workspace_id=3).update(import_items=True)
+        qbo_connection.sync_items()
+        new_item_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='ACCOUNT', display_name='Item', active=True).count()
+        assert new_item_count == 4
 
         mock_call.return_value = data['items_response_with_inactive_values']
 
