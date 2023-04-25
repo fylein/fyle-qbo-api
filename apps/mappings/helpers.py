@@ -38,10 +38,9 @@ def delete_items_mappings(configuration: WorkspaceGeneralSettings):
     """
 
     if not configuration.import_items:
-        Mapping.objects.filter(
+        mappings = Mapping.objects.filter(
             workspace_id=configuration.workspace_id,
             source_type='CATEGORY',
             destination_type='ACCOUNT',
-            destination__display_name='Item').delete()
-
-    return []
+            destination__display_name='Item').all()
+        mappings.delete()

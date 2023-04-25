@@ -120,35 +120,34 @@ class QBOConnector:
         Get items
         """
         items = self.connection.items.get()
-        category_sync_version = 'v2'
-        general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
-        if general_settings:
-            category_sync_version = general_settings.category_sync_version
         item_attributes = []
+
+        # getting all the items stored in the DB
         destination_attributes = DestinationAttribute.objects.filter(workspace_id=self.workspace_id, attribute_type= 'ACCOUNT', display_name='Item').values('destination_id', 'value')
         disabled_fields_map = {}
 
+        # Assigning them to a map in destination_id as key and value as value
         for destination_attribute in destination_attributes:
             disabled_fields_map[destination_attribute['destination_id']] = {
                 'value': destination_attribute['value']
             }
 
+        # For getting all the items, any inactive item will not be returned
         for item in items:
-            value = format_special_characters(
-                item['Name'] if category_sync_version == 'v1' else item['FullyQualifiedName']
-            )
-            if  item['Active'] and value:
+            if  item['Active']:
                 item_attributes.append({
                     'attribute_type': 'ACCOUNT',
                     'display_name': 'Item',
-                    'value': value,
+                    'value': item['FullyQualifiedName'],
                     'destination_id': item['Id'],
                     'active': True
                 })
+                # If item is active and present in the map, remove it from the map
                 if item['Id'] in disabled_fields_map:
                     disabled_fields_map.pop(item['Id'])
         
-        #For setting active to False
+        # Since the item was present in the map, it means it is not active anymore
+        # So we need to set active to false and add it to the list
         for destination_id in disabled_fields_map:
             item_attributes.append({
                 'attribute_type': 'ACCOUNT',
@@ -606,52 +605,40 @@ class QBOConnector:
         lines = []
 
         for line in bill_lineitems:
-            if line.detail_type == 'ItemBasedExpenseLineDetail':
-                lineitem = {
-                    'Description': line.description,
-                    'DetailType': line.detail_type,
-                    'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None ) else \
+            lineitem = {
+                'Description': line.description,
+                'DetailType': line.detail_type,
+                'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None ) else \
                             self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
-                    'ItemBasedExpenseLineDetail': {
-                        'ItemRef': {
-                            'value': line.item_id
-                        },
-                        'Qty': 1,
-                        'CustomerRef': {
-                            'value': line.customer_id
-                        },
-                        'ClassRef': {
-                            'value': line.class_id
-                        },
-                        'TaxCodeRef': {
-                            'value': line.tax_code if (line.tax_code and line.tax_amount is not None) else general_mappings.default_tax_code_id
-                        },
-                        'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
-                    }
+                line.detail_type: {
+                    'CustomerRef': {
+                        'value': line.customer_id
+                    },
+                    'ClassRef': {
+                        'value': line.class_id
+                    },
+                    'TaxCodeRef': {
+                        'value': line.tax_code if (line.tax_code and line.tax_amount is not None) else general_mappings.default_tax_code_id
+                    },
+                    'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
                 }
+            }
+
+            if line.detail_type == 'ItemBasedExpenseLineDetail':
+                lineitem['ItemBasedExpenseLineDetail'].update({
+                    'ItemRef': {
+                        'value': line.item_id
+                    },
+                    'Qty': 1
+                })
             else:
-                lineitem = {
-                    'Description': line.description,
-                    'DetailType': line.detail_type,
-                    'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None) else \
-                            self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
-                    'AccountBasedExpenseLineDetail': {
-                        'AccountRef': {
+                lineitem['AccountBasedExpenseLineDetail'].update({
+                    'AccountRef': {
                             'value': line.account_id
                         },
-                        'CustomerRef': {
-                            'value': line.customer_id
-                        },
-                        'ClassRef': {
-                            'value': line.class_id
-                        },
-                        'TaxCodeRef': {
-                            'value': line.tax_code if (line.tax_code and line.tax_amount is not None) else general_mappings.default_tax_code_id
-                        },
-                        'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2),
-                        'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable',
-                    }
-                }
+                    'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else \
+                        round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)
+                })
 
             lines.append(lineitem)
 
@@ -748,52 +735,40 @@ class QBOConnector:
         lines = []
 
         for line in qbo_expense_lineitems:
-            if line.detail_type == 'ItemBasedExpenseLineDetail':
-                lineitem = {
-                    'Description': line.description,
-                    'DetailType': line.detail_type,
-                    'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None ) else \
+            lineitem = {
+                'Description': line.description,
+                'DetailType': line.detail_type,
+                'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None ) else \
                             self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
-                    'ItemBasedExpenseLineDetail': {
-                        'ItemRef': {
-                            'value': line.item_id
-                        },
-                        'Qty': 1,
-                        'CustomerRef': {
-                            'value': line.customer_id
-                        },
-                        'ClassRef': {
-                            'value': line.class_id
-                        },
-                        'TaxCodeRef': {
-                            'value': line.tax_code if (line.tax_code and line.tax_amount is not None) else general_mappings.default_tax_code_id
-                        },
-                        'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
-                    }
+                line.detail_type: {
+                    'CustomerRef': {
+                        'value': line.customer_id
+                    },
+                    'ClassRef': {
+                        'value': line.class_id
+                    },
+                    'TaxCodeRef': {
+                        'value': line.tax_code if (line.tax_code and line.tax_amount is not None) else general_mappings.default_tax_code_id
+                    },
+                    'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
                 }
+            }
+
+            if line.detail_type == 'ItemBasedExpenseLineDetail':
+                lineitem['ItemBasedExpenseLineDetail'].update({
+                    'ItemRef': {
+                        'value': line.item_id
+                    },
+                    'Qty': 1
+                })
             else:
-                lineitem = {
-                    'Description': line.description,
-                    'DetailType': line.detail_type,
-                    'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None ) else \
-                            self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
-                    'AccountBasedExpenseLineDetail': {
-                        'AccountRef': {
+                lineitem['AccountBasedExpenseLineDetail'].update({
+                    'AccountRef': {
                             'value': line.account_id
                         },
-                        'CustomerRef': {
-                            'value': line.customer_id
-                        },
-                        'ClassRef': {
-                            'value': line.class_id
-                        },
-                        'TaxCodeRef': {
-                            'value': line.tax_code if (line.tax_code and line.tax_amount is not None) else general_mappings.default_tax_code_id
-                        },
-                        'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2),
-                        'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
-                    }
-                }
+                    'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else \
+                        round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)
+                })
 
             lines.append(lineitem)
 
@@ -848,52 +823,40 @@ class QBOConnector:
         """
         lines = []
         for line in cheque_lineitems:
-            if line.detail_type == 'ItemBasedExpenseLineDetail':
-                lineitem = {
-                    'Description': line.description,
-                    'DetailType': line.detail_type,
-                    'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None ) else \
+            lineitem = {
+                'Description': line.description,
+                'DetailType': line.detail_type,
+                'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None ) else \
                             self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
-                    'ItemBasedExpenseLineDetail': {
-                        'ItemRef': {
-                            'value': line.item_id
-                        },
-                        'Qty': 1,
-                        'CustomerRef': {
-                            'value': line.customer_id
-                        },
-                        'ClassRef': {
-                            'value': line.class_id
-                        },
-                        'TaxCodeRef': {
-                            'value': line.tax_code if (line.tax_code and line.tax_amount is not None) else general_mappings.default_tax_code_id
-                        },
-                        'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
-                    }
+                line.detail_type: {
+                    'CustomerRef': {
+                        'value': line.customer_id
+                    },
+                    'ClassRef': {
+                        'value': line.class_id
+                    },
+                    'TaxCodeRef': {
+                        'value': line.tax_code if (line.tax_code and line.tax_amount is not None) else general_mappings.default_tax_code_id
+                    },
+                    'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
                 }
+            }
+
+            if line.detail_type == 'ItemBasedExpenseLineDetail':
+                lineitem['ItemBasedExpenseLineDetail'].update({
+                    'ItemRef': {
+                        'value': line.item_id
+                    },
+                    'Qty': 1
+                })
             else:
-                lineitem = {
-                    'Description': line.description,
-                    'DetailType': line.detail_type,
-                    'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None) else \
-                            self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
-                    'AccountBasedExpenseLineDetail': {
-                        'AccountRef': {
+                lineitem['AccountBasedExpenseLineDetail'].update({
+                    'AccountRef': {
                             'value': line.account_id
                         },
-                        'ClassRef': {
-                            'value': line.class_id
-                        },
-                        'CustomerRef': {
-                            'value': line.customer_id
-                        },
-                        'TaxCodeRef': {
-                            'value': line.tax_code if (line.tax_code and line.tax_amount is not None) else general_mappings.default_tax_code_id
-                        },
-                        'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
-                        'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
-                    }
-                }
+                    'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else \
+                        round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)
+                })
 
             lines.append(lineitem)
 
@@ -951,52 +914,40 @@ class QBOConnector:
         lines = []
 
         for line in credit_card_purchase_lineitems:
-            if line.detail_type == 'ItemBasedExpenseLineDetail':
-                lineitem = {
-                    'Description': line.description,
-                    'DetailType': line.detail_type,
-                    'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None ) else \
+            lineitem = {
+                'Description': line.description,
+                'DetailType': line.detail_type,
+                'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None ) else \
                             self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
-                    'ItemBasedExpenseLineDetail': {
-                        'ItemRef': {
-                            'value': line.item_id
-                        },
-                        'Qty': 1,
-                        'CustomerRef': {
-                            'value': line.customer_id
-                        },
-                        'ClassRef': {
-                            'value': line.class_id
-                        },
-                        'TaxCodeRef': {
-                            'value': line.tax_code if (line.tax_code and line.tax_amount is not None) else general_mappings.default_tax_code_id
-                        },
-                        'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
-                    }
+                line.detail_type: {
+                    'CustomerRef': {
+                        'value': line.customer_id
+                    },
+                    'ClassRef': {
+                        'value': line.class_id
+                    },
+                    'TaxCodeRef': {
+                        'value': line.tax_code if (line.tax_code and line.tax_amount is not None) else general_mappings.default_tax_code_id
+                    },
+                    'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
                 }
+            }
+
+            if line.detail_type == 'ItemBasedExpenseLineDetail':
+                lineitem['ItemBasedExpenseLineDetail'].update({
+                    'ItemRef': {
+                        'value': line.item_id
+                    },
+                    'Qty': 1
+                })
             else:
-                lineitem = {
-                    'Description': line.description,
-                    'DetailType': line.detail_type,
-                    'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None) else \
-                            self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
-                    'AccountBasedExpenseLineDetail': {
-                        'AccountRef': {
+                lineitem['AccountBasedExpenseLineDetail'].update({
+                    'AccountRef': {
                             'value': line.account_id
                         },
-                        'CustomerRef': {
-                            'value': line.customer_id
-                        },
-                        'ClassRef': {
-                            'value': line.class_id
-                        },
-                        'TaxCodeRef': {
-                            'value': line.tax_code if (line.tax_code and line.tax_amount is not None) else general_mappings.default_tax_code_id
-                        },
-                        'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2),
-                        'BillableStatus': 'Billable' if line.billable and line.customer_id else 'NotBillable'
-                    },
-                }
+                    'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else \
+                        round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)
+                })
 
             lines.append(lineitem)
 

@@ -216,7 +216,7 @@ def get_category_mapping_and_detail_type(workspace_general_settings: WorkspaceGe
             return qbo_item, 'ItemBasedExpenseLineDetail'
 
     # else get the account-mapping and return the detail_type as AccountBasedExpenseLineDetail
-    account: Mapping =Mapping.objects.filter(
+    qbo_account: Mapping = Mapping.objects.filter(
         source_type='CATEGORY',
         destination_type='ACCOUNT',
         source__value=category,
@@ -224,7 +224,7 @@ def get_category_mapping_and_detail_type(workspace_general_settings: WorkspaceGe
         workspace_id=workspace_id
     ).first()
 
-    return account, 'AccountBasedExpenseLineDetail'
+    return qbo_account, 'AccountBasedExpenseLineDetail'
 
 
 class Bill(models.Model):

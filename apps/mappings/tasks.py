@@ -304,7 +304,7 @@ def schedule_tax_groups_creation(import_tax_codes, workspace_id):
             schedule.delete()
 
 
-def create_fyle_categories_payload(categories: List[DestinationAttribute], workspace_id: int,\
+def create_fyle_categories_payload(categories: List[DestinationAttribute], workspace_id: int,
         updated_categories: List[ExpenseAttribute] = None):
     """
     Create Fyle Categories Payload from QBO Customer / Categories
@@ -354,9 +354,12 @@ def upload_categories_to_fyle(platform: PlatformConnector, workspace_id):
     platform.categories.sync()
     qbo_connection.sync_accounts()
 
-    accounts: List[DestinationAttribute] = DestinationAttribute.objects.filter(
-        workspace_id=workspace_id, attribute_type='ACCOUNT', detail__account_type__in=general_settings.charts_of_accounts).all()
-    qbo_attributes = accounts
+    qbo_accounts: List[DestinationAttribute] = DestinationAttribute.objects.filter(
+        workspace_id=workspace_id,
+        attribute_type='ACCOUNT',
+        detail__account_type__in=general_settings.charts_of_accounts,
+        display_name='Account').all()
+    qbo_attributes = qbo_accounts
 
     if general_settings.import_items:
         qbo_connection.sync_items()
@@ -366,7 +369,7 @@ def upload_categories_to_fyle(platform: PlatformConnector, workspace_id):
             attribute_type='ACCOUNT'
         )
         if qbo_items:
-            qbo_attributes = qbo_attributes | qbo_items
+            qbo_attributes = qbo_accounts.union(qbo_items)
 
     qbo_attributes = remove_duplicates(qbo_attributes)
     fyle_payload: List[Dict] = create_fyle_categories_payload(qbo_attributes, workspace_id)
@@ -389,12 +392,12 @@ def auto_create_category_mappings(workspace_id):
         fyle_categories = upload_categories_to_fyle(platform, workspace_id=workspace_id)
         category_mappings = Mapping.bulk_create_mappings(fyle_categories, 'CATEGORY', 'ACCOUNT', workspace_id)
 
-        #disabling fields
+        # disabling fields
         category_ids_to_be_changed = disable_or_enable_expense_attributes('CATEGORY', 'ACCOUNT', workspace_id)
         if category_ids_to_be_changed:
             expense_attributes = ExpenseAttribute.objects.filter(id__in=category_ids_to_be_changed)
-            fyle_payload: List[Dict] = create_fyle_categories_payload(categories=[],\
-                workspace_id=workspace_id,updated_categories=expense_attributes)
+            fyle_payload: List[Dict] = create_fyle_categories_payload(categories=[],
+                workspace_id=workspace_id, updated_categories=expense_attributes)
             platform.categories.post_bulk(fyle_payload)
             platform.categories.sync()
         
