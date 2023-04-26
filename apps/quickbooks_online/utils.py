@@ -1,5 +1,3 @@
-import base64
-from multiprocessing import connection
 from typing import List, Dict
 from datetime import datetime, timedelta
 import logging
@@ -141,7 +139,7 @@ class QBOConnector:
                     'display_name': 'Item',
                     'value': item['FullyQualifiedName'],
                     'destination_id': item['Id'],
-                    'active': True if general_settings.import_items else False
+                    'active': general_settings.import_items if general_settings else False
                 })
                 # If item is active and present in the map, remove it from the map
                 if item['Id'] in disabled_fields_map:

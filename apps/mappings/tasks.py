@@ -84,16 +84,82 @@ def remove_duplicates(qbo_attributes: List[DestinationAttribute]):
 
     return unique_attributes
 
-def disable_or_enable_expense_attributes(source_field: str, destination_field: str, workspace_id: int):
+def disable_category_for_items_mapping(configuration: WorkspaceGeneralSettings):
+    """
+    Disable Category for Items Mapping
+    :param configuration: Workspace General Settings
+    :return: None
+    """
+    if not configuration.import_items:
+        try:
+            workspace_id = configuration.workspace_id
+
+            fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
+            platform = PlatformConnector(fyle_credentials)
+            platform.categories.sync()
+
+            qbo_credentials: QBOCredential = QBOCredential.get_active_qbo_credentials(workspace_id)
+            qbo_connection = QBOConnector(
+                credentials_object=qbo_credentials,
+                workspace_id=workspace_id
+            )
+            qbo_connection.sync_items()
+
+            category_ids_to_be_changed = disable_or_enable_expense_attributes('CATEGORY', 'ACCOUNT', workspace_id, display_name='Item')
+            if category_ids_to_be_changed:
+                expense_attributes = ExpenseAttribute.objects.filter(id__in=category_ids_to_be_changed)
+                fyle_payload: List[Dict] = create_fyle_categories_payload(categories=[],
+                    workspace_id=workspace_id, updated_categories=expense_attributes)
+
+                platform.categories.post_bulk(fyle_payload)
+                platform.categories.sync()
+
+        except QBOCredential.DoesNotExist:
+            logger.info('QBO credentials not found workspace_id - %s', workspace_id)
+        
+        except FyleInvalidTokenError:
+            logger.info('Invalid Token for fyle')
+
+        except WrongParamsError as exception:
+            logger.error( 'Error while creating categories workspace_id - %s in Fyle %s %s', workspace_id, exception.message, {'error': exception.response} )
+
+        except (QBOWrongParamsError, InvalidTokenError):
+            logger.info('QBO token expired workspace_id - %s', workspace_id)
+
+        except Exception:
+            error = traceback.format_exc()
+            error = {
+                'error': error
+            }
+            logger.exception(
+                'Error while creating categories workspace_id - %s error: %s',
+                workspace_id, error
+            )
+
+def disable_or_enable_expense_attributes(source_field: str, destination_field: str, workspace_id: int, display_name:str=None):
+    """
+    Disable or Enable Expense Attributes
+    :param source_field: Source Field
+    :param destination_field: Destination Field
+    :param workspace_id: Workspace Id
+    :param display_name: Display Name(optional)
+    :return: None
+    """
+    # construct filters for the default cases
+    filters={
+        'attribute_type': destination_field,
+		'mapping__isnull': False,
+		'mapping__destination_type':destination_field,
+		'active':False,
+		'workspace_id':workspace_id
+    }
+    
+    # if display_name is present, add it to the filters
+    if display_name:
+        filters['display_name'] = display_name
 
     # Get All the inactive destination attribute ids
-    destination_attribute_ids = DestinationAttribute.objects.filter(
-		attribute_type=destination_field, 
-		mapping__isnull=False,
-		mapping__destination_type=destination_field,
-		active=False,
-		workspace_id=workspace_id
-	).values_list('id', flat=True)
+    destination_attribute_ids = DestinationAttribute.objects.filter(**filters).values_list('id', flat=True)
 
     # Get all the expense attributes that are mapped to these destination_attribute_ids
     expense_attributes_to_disable = ExpenseAttribute.objects.filter(
@@ -350,16 +416,18 @@ def upload_categories_to_fyle(platform: PlatformConnector, workspace_id):
         workspace_id=workspace_id
     )
     general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
+    qbo_attributes = []
 
     platform.categories.sync()
-    qbo_connection.sync_accounts()
 
-    qbo_accounts: List[DestinationAttribute] = DestinationAttribute.objects.filter(
-        workspace_id=workspace_id,
-        attribute_type='ACCOUNT',
-        detail__account_type__in=general_settings.charts_of_accounts,
-        display_name='Account').all()
-    qbo_attributes = qbo_accounts
+    if general_settings.import_categories:
+        qbo_connection.sync_accounts()
+        qbo_accounts: List[DestinationAttribute] = DestinationAttribute.objects.filter(
+            workspace_id=workspace_id,
+            attribute_type='ACCOUNT',
+            detail__account_type__in=general_settings.charts_of_accounts,
+            display_name='Account').all()
+        qbo_attributes = qbo_accounts
 
     if general_settings.import_items:
         qbo_connection.sync_items()
@@ -367,9 +435,10 @@ def upload_categories_to_fyle(platform: PlatformConnector, workspace_id):
             workspace_id=workspace_id,
             display_name='Item',
             attribute_type='ACCOUNT'
-        )
+        ).all()
+
         if qbo_items:
-            qbo_attributes = qbo_accounts.union(qbo_items)
+            qbo_attributes = qbo_attributes.union(qbo_items) if qbo_attributes else qbo_items
 
     qbo_attributes = remove_duplicates(qbo_attributes)
     fyle_payload: List[Dict] = create_fyle_categories_payload(qbo_attributes, workspace_id)
@@ -1188,7 +1257,7 @@ def auto_import_and_map_fyle_fields(workspace_id):
     if workspace_general_settings.import_vendors_as_merchants:
         chain.append('apps.mappings.tasks.auto_create_vendors_as_merchants', workspace_id)
 
-    if workspace_general_settings.import_categories:
+    if workspace_general_settings.import_categories or workspace_general_settings.import_items:
         chain.append('apps.mappings.tasks.auto_create_category_mappings', workspace_id)
 
     if project_mapping and project_mapping.import_to_fyle:
