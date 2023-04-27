@@ -940,11 +940,17 @@ class SearchedDestinationAttributesView(generics.ListAPIView):
         attribute_type = self.request.query_params.get('attribute_type').split(',')
         active = self.request.query_params.get('active')
         search_term = self.request.query_params.get('search_term')
+        display_name = self.request.query_params.get('display_name')
+
         filters = {
             'attribute_type__in' : attribute_type,
             'workspace_id': self.kwargs['workspace_id'],
             'active': True
         }
+
+        if display_name:
+            filters['display_name'] = display_name
+
         if search_term:
             filters['value__icontains'] = search_term
 
