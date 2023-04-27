@@ -1130,6 +1130,8 @@ def auto_create_expense_fields_mappings(
             'Error while creating %s workspace_id - %s in Fyle %s %s',
             fyle_attribute_type, workspace_id, exception.message, {'error': exception.response}
         )
+    except FyleInvalidTokenError:
+        logger.info('Invalid Token for fyle')
     except Exception:
         error = traceback.format_exc()
         error = {
