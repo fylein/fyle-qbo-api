@@ -76,7 +76,6 @@ class QBOConnector:
         :param create: False to just Get and True to Get or Create if not exists
         :return: Vendor
         """
-        vendor_name = vendor_name.replace('"', '')    #Replacing " with '
         vendor_name = vendor_name.replace("'", "\\'")  # Replacing ' with \\'
         vendor_name = vendor_name.replace('#', '%23')  # Replace '#' with %23
         vendor_name = vendor_name.replace('&', '%26')  # Replace '&' with %26
@@ -358,6 +357,10 @@ class QBOConnector:
         :return: Vendor Desination Atribute
         """
         currency = Workspace.objects.get(id=self.workspace_id).fyle_currency
+
+        vendor_name = vendor_name.replace("'", "\\'")  # Replacing ' with \\'
+        vendor_name = vendor_name.replace('#', '%23')  # Replace '#' with %23
+        vendor_name = vendor_name.replace('&', '%26')  # Replace '&' with %26
 
         vendor = {
             'GivenName': vendor_name.split(' ')[0] if email else None,
