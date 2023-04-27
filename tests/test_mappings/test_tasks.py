@@ -71,8 +71,7 @@ def test_disable_category_for_items_mapping(db, mocker):
     mocker.patch(
         'qbosdk.apis.Items.get',
         return_value=[]
-    )
-    # data['items_response']       
+    )      
 
     destination_attribute = DestinationAttribute.objects.create(
         attribute_type='ACCOUNT',
