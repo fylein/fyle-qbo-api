@@ -88,7 +88,8 @@ class ImportSettingsTrigger:
 
         schedule_or_delete_fyle_import_tasks(workspace_general_settings_instance)
 
-        async_task('apps.mappings.tasks.disable_category_for_items_mapping', workspace_general_settings_instance)
+        if not workspace_general_settings_instance.import_items:
+            async_task('apps.mappings.tasks.disable_category_for_items_mapping', workspace_general_settings_instance)
 
 
     def __remove_old_department_source_field(
