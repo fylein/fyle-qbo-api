@@ -111,6 +111,9 @@ def test_disable_category_for_items_mapping(db ,mocker):
         mock_call.side_effect = WrongParamsError(msg='invalid params', response='invalid params')
         disable_category_for_items_mapping(workspace_general_setting)
 
+        mock_call.side_effect = QBOWrongParamsError(msg='invalid params', response='invalid params')
+        disable_category_for_items_mapping(workspace_general_setting)
+
         mock_call.side_effect = FyleInvalidTokenError(msg='Invalid Token for fyle', response='Invalid Token for fyle')
         disable_category_for_items_mapping(workspace_general_setting)
 
