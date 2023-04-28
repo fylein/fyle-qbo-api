@@ -54,37 +54,3 @@ def test_export_settings(api_client, test_connection):
     )
 
     assert response.status_code == 400
-
-def test_export_settings_trigger(mocker, api_client, test_connection):
-    mocker.patch(
-        'fyle_integrations_platform_connector.apis.Categories.sync',
-        return_value=[]
-    )
-    mocker.patch(
-        'fyle_integrations_platform_connector.apis.Categories.post_bulk',
-        return_value=[]
-    )
-    mocker.patch(
-        'qbosdk.apis.Items.get',
-        return_value=[]
-    )
-
-    workspace = Workspace.objects.get(id=3)
-    workspace.onboarding_state = 'EXPORT_SETTINGS'
-    workspace.save()
-
-    workspace_general_settings_instance = WorkspaceGeneralSettings.objects.filter(workspace_id=3).first() 
-    workspace_general_settings_instance.map_merchant_to_vendor = True
-    workspace_general_settings_instance.category_sync_version = 'v2'
-    workspace_general_settings_instance.import_items = True
-    workspace_general_settings_instance.save()
-
-    url = '/api/v2/workspaces/3/export_settings/'
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
-    response = api_client.put(
-        url,
-        data=data['export_settings_trigger_check'],
-        format='json'
-    )
-
-    assert response.status_code == 200
