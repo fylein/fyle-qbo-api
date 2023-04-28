@@ -76,7 +76,7 @@ class QBOConnector:
         :param create: False to just Get and True to Get or Create if not exists
         :return: Vendor
         """
-        original_vendor = vendor_name
+        original_vendor_name = vendor_name
         vendor_name = vendor_name.replace("'", "\\'")  # Replacing ' with \\'
         vendor_name = vendor_name.replace('#', '%23')  # Replace '#' with %23
         vendor_name = vendor_name.replace('&', '%26')  # Replace '&' with %26
@@ -88,7 +88,7 @@ class QBOConnector:
                 #safe check to avoid duplicate vendor name exist error
                 if DestinationAttribute.objects.filter(attribute_type__in=['CUSTOMER', 'EMPLOYEE'], value=vendor_name, workspace_id=self.workspace_id).exists():
                     return
-                created_vendor = self.post_vendor(original_vendor, email)
+                created_vendor = self.post_vendor(original_vendor_name, email)
                 return self.create_vendor_destionation_attribute(created_vendor)
             else:
                 return
