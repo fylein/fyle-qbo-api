@@ -827,7 +827,6 @@ class SyncQuickbooksDimensionView(generics.ListCreateAPIView):
             if workspace.destination_synced_at is None or time_interval.days > 0:
                 quickbooks_credentials = QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
                 quickbooks_connector = QBOConnector(quickbooks_credentials, workspace_id=kwargs['workspace_id'])
-
                 quickbooks_connector.sync_dimensions()
 
                 workspace.destination_synced_at = datetime.now()
@@ -876,7 +875,6 @@ class RefreshQuickbooksDimensionView(generics.ListCreateAPIView):
         try:
             quickbooks_credentials = QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
             quickbooks_connector = QBOConnector(quickbooks_credentials, workspace_id=kwargs['workspace_id'])
-
             quickbooks_connector.sync_dimensions()
 
             workspace = Workspace.objects.get(id=kwargs['workspace_id'])
@@ -923,11 +921,17 @@ class DestinationAttributesView(generics.ListAPIView):
 
     def get_queryset(self):
         attribute_types = self.request.query_params.get('attribute_types').split(',')
+        display_name = self.request.query_params.get('display_name')
+
         filters = {
             'attribute_type__in' : attribute_types,
             'workspace_id': self.kwargs['workspace_id'],
             'active': True
         }
+
+        if display_name:
+            display_name = display_name.split(',')
+            filters['display_name__in'] = display_name
 
         return DestinationAttribute.objects.filter(**filters).order_by('value')
 
@@ -942,11 +946,18 @@ class SearchedDestinationAttributesView(generics.ListAPIView):
         attribute_type = self.request.query_params.get('attribute_type').split(',')
         active = self.request.query_params.get('active')
         search_term = self.request.query_params.get('search_term')
+        display_name = self.request.query_params.get('display_name')
+
         filters = {
             'attribute_type__in' : attribute_type,
             'workspace_id': self.kwargs['workspace_id'],
             'active': True
         }
+
+        if display_name:
+            display_name = display_name.split(',')
+            filters['display_name__in'] = display_name
+
         if search_term:
             filters['value__icontains'] = search_term
 

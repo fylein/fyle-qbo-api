@@ -5,6 +5,7 @@ from fyle_accounting_mappings.models import MappingSetting
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from apps.fyle.models import ExpenseGroupSettings
 from apps.mappings.models import GeneralMapping
+from .triggers import ExportSettingsTrigger
 
 
 class ReadWriteSerializerMethodField(serializers.SerializerMethodField):
@@ -163,6 +164,10 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
                 'map_fyle_cards_qbo_account': enable_cards_mapping
             }
         )
+
+        export_trigger = ExportSettingsTrigger(workspace_general_settings, instance.id)
+
+        export_trigger.post_save_workspace_general_settings(workspace_general_settings_instance)
 
         if enable_cards_mapping:
             MappingSetting.objects.update_or_create(
