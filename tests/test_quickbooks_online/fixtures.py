@@ -22,6 +22,93 @@ data = {
             }
         ],
     },
+    "bill_payload_item_based_payload": {
+        "VendorRef": {"value": "43"},
+        "APAccountRef": {"value": "33"},
+        "DepartmentRef": {"value": "None"},
+        "TxnDate": "2022-01-21",
+        "CurrencyRef": {"value": "USD"},
+        "PrivateNote": "Reimbursable expense by ashwin.t@fyle.in on 2022-01-21 ",
+        "Line": [
+            {
+                "Description":"ashwin.t@fyle.in - Travel - 2022-01-21 - C/2022/01/R/8 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txlPjmNxssq1?org_id=orGcBCVPijjO",
+                "DetailType":"ItemBasedExpenseLineDetail",
+                "Amount":60.0,
+                "ItemBasedExpenseLineDetail":{
+                   "ItemRef":{
+                        "value":"125"
+                    },
+                    "Qty":1,
+                    "CustomerRef": {"value": "None"},
+                    "ClassRef": {"value": "None"},
+                    "TaxCodeRef":{
+                        "value":"None"
+                    },
+                    "BillableStatus":"NotBillable"
+                }
+            }
+        ],
+    },
+    "bill_payload_item_and_account_based_payload": {
+        "VendorRef":{
+            "value":"84"
+        },
+        "APAccountRef":{
+            "value":"33"
+        },
+        "DepartmentRef":{
+            "value":"None"
+        },
+        "TxnDate":"2023-04-19",
+        "CurrencyRef":{
+            "value":"USD"
+        },
+        "PrivateNote":"Credit card expense by sravan.kumar@fyle.in",
+        "Line":[
+            {
+                "Description":"sravan.kumar@fyle.in - Concrete - 2023-04-19 - C/2023/04/R/2 -  - None/app/main/#/enterprise/view_expense/txybL0Dw709h?org_id=orPJvXuoLqvJ",
+                "DetailType":"ItemBasedExpenseLineDetail",
+                "Amount":1.0,
+                "ItemBasedExpenseLineDetail":{
+                    "ItemRef":{
+                    "value":"3"
+                    },
+                    "Qty":1,
+                    "CustomerRef":{
+                    "value":"None"
+                    },
+                    "ClassRef":{
+                    "value":"5000000000000142238"
+                    },
+                    "TaxCodeRef":{
+                    "value":"None"
+                    },
+                    "BillableStatus":"NotBillable"
+                }
+            },
+            {
+                "Description":"sravan.kumar@fyle.in - WIP - 2023-04-19 - C/2023/04/R/2 -  - None/app/main/#/enterprise/view_expense/txoF0nqv6cG3?org_id=orPJvXuoLqvJ",
+                "DetailType":"AccountBasedExpenseLineDetail",
+                "Amount":10.0,
+                "AccountBasedExpenseLineDetail":{
+                    "AccountRef":{
+                    "value":"69"
+                    },
+                    "CustomerRef":{
+                    "value":"None"
+                    },
+                    "ClassRef":{
+                    "value":"5000000000000142238"
+                    },
+                    "TaxCodeRef":{
+                    "value":"None"
+                    },
+                    "TaxAmount":0.0,
+                    "BillableStatus":"NotBillable"
+                }
+            }
+        ]
+    },
     "credit_card_purchase_payload": {
         "DocNumber": "E/2022/01/T/9",
         "PaymentType": "CreditCard",
@@ -47,6 +134,113 @@ data = {
                 },
             }
         ],
+    },
+    "credit_card_purchase_item_based_payload": {
+        "DocNumber":"E/2023/04/T/4",
+        "PaymentType":"CreditCard",
+        "AccountRef":{
+            "value":"41"
+        },
+        "EntityRef":{
+            "value":"58"
+        },
+        "DepartmentRef":{
+            "value":"None"
+        },
+        "TxnDate":"2023-04-19",
+        "CurrencyRef":{
+            "value":"USD"
+        },
+        "PrivateNote":"Credit card expense by sravan.kumar@fyle.in on 2023-04-19 ",
+        "Credit":False,
+        "Line":[
+            {
+                "Description":"sravan.kumar@fyle.in - Concrete - 2023-04-19 - C/2023/04/R/3 -  - None/app/main/#/enterprise/view_expense/txT4kpMbHdLm?org_id=or79Cob97KSh",
+                "DetailType":"ItemBasedExpenseLineDetail",
+                "Amount":1.0,
+                "ItemBasedExpenseLineDetail":{
+                    "ItemRef":{
+                    "value":"3"
+                    },
+                    "Qty":1,
+                    "CustomerRef":{
+                    "value":"None"
+                    },
+                    "ClassRef":{
+                    "value":"None"
+                    },
+                    "TaxCodeRef":{
+                    "value":"None"
+                    },
+                    "BillableStatus":"NotBillable"
+                }
+            }
+        ]
+    },
+    "credit_card_purchase_item_and_account_based_payload": {'DocNumber': 'E/2023/04/T/6', 'PaymentType': 'CreditCard', 'AccountRef': {'value': '41'}, 'EntityRef': {'value': '58'}, 'DepartmentRef': {'value': None}, 'TxnDate': '2023-04-19', 'CurrencyRef': {'value': 'USD'}, 'PrivateNote': 'Credit card expense by sravan.kumar@fyle.in', 'Credit': False, 'Line': [{'Description': 'sravan.kumar@fyle.in - Concrete - 2023-04-19 - C/2023/04/R/3 -  - None/app/main/#/enterprise/view_expense/txT4kpMbHdLg8?org_id=or79Cob97KSh', 'DetailType': 'ItemBasedExpenseLineDetail', 'Amount': 1.0, 'ItemBasedExpenseLineDetail': {'ItemRef': {'value': '3'}, 'Qty': 1, 'CustomerRef': {'value': None}, 'ClassRef': {'value': None}, 'TaxCodeRef': {'value': None}, 'BillableStatus': 'NotBillable'}}, {'Description': 'sravan.kumar@fyle.in - Food - 2023-04-19 - C/2023/04/R/2 -  - None/app/main/#/enterprise/view_expense/txoF0nqv6cG89?org_id=or79Cob97KSh', 'DetailType': 'AccountBasedExpenseLineDetail', 'Amount': 10.0, 'AccountBasedExpenseLineDetail': {'AccountRef': {'value': '13'}, 'CustomerRef': {'value': None}, 'ClassRef': {'value': None}, 'TaxCodeRef': {'value': None}, 'TaxAmount': 0.0, 'BillableStatus': 'NotBillable'}}]},
+    "qbo_expense_item_based_payload": {'DocNumber': None, 'PaymentType': 'Cash', 'AccountRef': {'value': '94'}, 'EntityRef': {'value': '60'}, 'DepartmentRef': {'value': None}, 'TxnDate': '2023-04-19', 'CurrencyRef': {'value': 'USD'}, 'PrivateNote': 'Credit card expense by sravan.kumar@fyle.in on 2023-04-19 ', 'Credit': None, 'Line': [{'Description': 'sravan.kumar@fyle.in - Concrete - 2023-04-19 - C/2023/04/R/6 -  - None/app/main/#/enterprise/view_expense/txT4kpMbHdIp?org_id=or79Cob97KSh', 'DetailType': 'ItemBasedExpenseLineDetail', 'Amount': 1.0, 'ItemBasedExpenseLineDetail': {'ItemRef': {'value': '3'}, 'Qty': 1, 'CustomerRef': {'value': None}, 'ClassRef': {'value': None}, 'TaxCodeRef': {'value': None}, 'BillableStatus': 'NotBillable'}}]},
+    "qbo_expense_item_and_account_based_payload": {
+        "DocNumber":"None",
+        "PaymentType":"Cash",
+        "AccountRef":{
+            "value":"94"
+        },
+        "EntityRef":{
+            "value":"60"
+        },
+        "DepartmentRef":{
+            "value":"None"
+        },
+        "TxnDate":"2023-04-19",
+        "CurrencyRef":{
+            "value":"USD"
+        },
+        "PrivateNote":"Credit card expense by sravan.kumar@fyle.in",
+        "Credit":"None",
+        "Line":[
+            {
+                "Description":"sravan.kumar@fyle.in - Concrete - 2023-04-19 - C/2023/04/R/6 -  - None/app/main/#/enterprise/view_expense/txT4kpMbHdLg87L?org_id=or79Cob97KSh",
+                "DetailType":"ItemBasedExpenseLineDetail",
+                "Amount":1.0,
+                "ItemBasedExpenseLineDetail":{
+                    "ItemRef":{
+                    "value":"3"
+                    },
+                    "Qty":1,
+                    "CustomerRef":{
+                    "value":"None"
+                    },
+                    "ClassRef":{
+                    "value":"None"
+                    },
+                    "TaxCodeRef":{
+                    "value":"None"
+                    },
+                    "BillableStatus":"NotBillable"
+                }
+            },
+            {
+                "Description":"sravan.kumar@fyle.in - Food - 2023-04-19 - C/2023/04/R/6 -  - None/app/main/#/enterprise/view_expense/txoF0nqv6cG78?org_id=or79Cob97KSh",
+                "DetailType":"AccountBasedExpenseLineDetail",
+                "Amount":10.0,
+                "AccountBasedExpenseLineDetail":{
+                    "AccountRef":{
+                    "value":"13"
+                    },
+                    "CustomerRef":{
+                    "value":"None"
+                    },
+                    "ClassRef":{
+                    "value":"None"
+                    },
+                    "TaxCodeRef":{
+                    "value":"None"
+                    },
+                    "TaxAmount":0.0,
+                    "BillableStatus":"NotBillable"
+                }
+            }
+        ]
     },
     "qbo_expense_payload": {
         "DocNumber": "None",
@@ -152,6 +346,111 @@ data = {
                 },
             }
         ],
+    },
+    "cheque_item_based_payload":{
+        "DocNumber":"None",
+        "PaymentType":"Check",
+        "AccountRef":{
+            "value":"95"
+        },
+        "EntityRef":{
+            "value":"55"
+        },
+        "DepartmentRef":{
+            "value":"None"
+        },
+        "TxnDate":"2023-04-19",
+        "CurrencyRef":{
+            "value":"USD"
+        },
+        "PrivateNote":"Reimbursable expense by user9@fyleforgotham.in on 2023-04-19 ",
+        "Credit":"None",
+        "Line":[
+            {
+                "Description":"user9@fyleforgotham.in - Concrete - 2023-04-19 - C/2023/04/R/13 -  - None/app/main/#/enterprise/view_expense/txT4kpMbiPlHdLm?org_id=or79Cob97KSh",
+                "DetailType":"ItemBasedExpenseLineDetail",
+                "Amount":1.0,
+                "ItemBasedExpenseLineDetail":{
+                    "ItemRef":{
+                    "value":"3"
+                    },
+                    "Qty":1,
+                    "CustomerRef":{
+                    "value":"None"
+                    },
+                    "ClassRef":{
+                    "value":"None"
+                    },
+                    "TaxCodeRef":{
+                    "value":"None"
+                    },
+                    "BillableStatus":"NotBillable"
+                }
+            }
+        ]
+    },
+    "cheque_item_and_account_based_payload":{
+        "DocNumber":"None",
+        "PaymentType":"Check",
+        "AccountRef":{
+            "value":"95"
+        },
+        "EntityRef":{
+            "value":"55"
+        },
+        "DepartmentRef":{
+            "value":"None"
+        },
+        "TxnDate":"2023-04-19",
+        "CurrencyRef":{
+            "value":"USD"
+        },
+        "PrivateNote":"Reimbursable expense by user9@fyleforgotham.in",
+        "Credit":"None",
+        "Line":[
+            {
+                "Description":"user9@fyleforgotham.in - Concrete - 2023-04-19 - C/2023/04/R/13 -  - None/app/main/#/enterprise/view_expense/txT4kpKidaAdLm?org_id=or79Cob97KSh",
+                "DetailType":"ItemBasedExpenseLineDetail",
+                "Amount":1.0,
+                "ItemBasedExpenseLineDetail":{
+                    "ItemRef":{
+                    "value":"3"
+                    },
+                    "Qty":1,
+                    "CustomerRef":{
+                    "value":"None"
+                    },
+                    "ClassRef":{
+                    "value":"None"
+                    },
+                    "TaxCodeRef":{
+                    "value":"None"
+                    },
+                    "BillableStatus":"NotBillable"
+                }
+            },
+            {
+                "Description":"user9@fyleforgotham.in - Food - 2023-04-19 - C/2023/04/R/13 -  - None/app/main/#/enterprise/view_expense/txT4kpMbiadw?org_id=or79Cob97KSh",
+                "DetailType":"AccountBasedExpenseLineDetail",
+                "Amount":1.0,
+                "AccountBasedExpenseLineDetail":{
+                    "AccountRef":{
+                    "value":"13"
+                    },
+                    "ClassRef":{
+                    "value":"None"
+                    },
+                    "CustomerRef":{
+                    "value":"None"
+                    },
+                    "TaxCodeRef":{
+                    "value":"None"
+                    },
+                    "TaxAmount":0.0,
+                    "BillableStatus":"NotBillable"
+                }
+            }
+        ]
     },
     "bill_response": {
         "SyncToken": "2",
@@ -554,7 +853,7 @@ data = {
         "LegalName": "Larry's Bakery",
         "CompanyStartDate": "2015-06-05",
         "Email": {"Address": "donotreply@intuit.com"},
-        "NameValue": [{"Name": "NeoEnabled", "Value": "true"}],
+        "NameValue": [{"Name": "NeoEnabled", "Value": "True"}],
         "MetaData": {
             "CreateTime": "2015-06-05T13:55:54-07:00",
             "LastUpdatedTime": "2015-07-06T08:51:50-07:00",
@@ -596,5 +895,147 @@ data = {
         'default_tax_code_name': '',
         'default_ccc_account_id': '',
         'default_ccc_account_name': '',
-    }
+    },
+    'items_response_with_inactive_values': [
+        {
+            "Name":"Concrete",
+            "Description":"Concrete for fountain installation",
+            "Active":True,
+            "FullyQualifiedName":"Concrete",
+            "Taxable":True,
+            "UnitPrice":0,
+            "Type":"Service",
+            "IncomeAccountRef":{
+                "value":"48",
+                "name":"Fountains and Garden Lighting"
+            },
+            "PurchaseCost":0,
+            "TrackQtyOnHand":False,
+            "domain":"QBO",
+            "sparse":False,
+            "Id":"3",
+            "SyncToken":"1",
+            "MetaData":{
+                "CreateTime":"2019-12-16T10:36:03-08:00",
+                "LastUpdatedTime":"2019-12-19T12:47:47-08:00"
+            }
+        },
+        {
+            "Name":"Maintenance & Repair",
+            "Description":"Maintenance & Repair",
+            "Active":True,
+            "FullyQualifiedName":"Maintenance & Repair",
+            "Taxable":False,
+            "UnitPrice":0,
+            "Type":"Service",
+            "IncomeAccountRef":{
+                "value":"53",
+                "name":"Maintenance and Repair"
+            },
+            "PurchaseCost":0,
+            "TrackQtyOnHand":False,
+            "domain":"QBO",
+            "sparse":False,
+            "Id":"9",
+            "SyncToken":"0",
+            "MetaData":{
+                "CreateTime":"2019-12-16T10:45:18-08:00",
+                "LastUpdatedTime":"2019-12-16T10:45:18-08:00"
+            }
+        }
+    ],
+    'items_response': [
+        {
+            "Name":"Concrete",
+            "Description":"Concrete for fountain installation",
+            "Active":True,
+            "FullyQualifiedName":"Concrete",
+            "Taxable":True,
+            "UnitPrice":0,
+            "Type":"Service",
+            "IncomeAccountRef":{
+                "value":"48",
+                "name":"Fountains and Garden Lighting"
+            },
+            "PurchaseCost":0,
+            "TrackQtyOnHand":False,
+            "domain":"QBO",
+            "sparse":False,
+            "Id":"3",
+            "SyncToken":"1",
+            "MetaData":{
+                "CreateTime":"2019-12-16T10:36:03-08:00",
+                "LastUpdatedTime":"2019-12-19T12:47:47-08:00"
+            }
+        },
+        {
+            "Name":"Lighting",
+            "Description":"Garden Lighting",
+            "Active":True,
+            "FullyQualifiedName":"Lighting",
+            "Taxable":True,
+            "UnitPrice":0,
+            "Type":"Service",
+            "IncomeAccountRef":{
+                "value":"48",
+                "name":"Fountains and Garden Lighting"
+            },
+            "PurchaseCost":0,
+            "TrackQtyOnHand":False,
+            "domain":"QBO",
+            "sparse":False,
+            "Id":"8",
+            "SyncToken":"1",
+            "MetaData":{
+                "CreateTime":"2019-12-16T10:44:40-08:00",
+                "LastUpdatedTime":"2019-12-19T12:47:38-08:00"
+            }
+        },
+        {
+            "Name":"Maintenance & Repair",
+            "Description":"Maintenance & Repair",
+            "Active":True,
+            "FullyQualifiedName":"Maintenance & Repair",
+            "Taxable":False,
+            "UnitPrice":0,
+            "Type":"Service",
+            "IncomeAccountRef":{
+                "value":"53",
+                "name":"Maintenance and Repair"
+            },
+            "PurchaseCost":0,
+            "TrackQtyOnHand":False,
+            "domain":"QBO",
+            "sparse":False,
+            "Id":"9",
+            "SyncToken":"0",
+            "MetaData":{
+                "CreateTime":"2019-12-16T10:45:18-08:00",
+                "LastUpdatedTime":"2019-12-16T10:45:18-08:00"
+            }
+        },
+        {
+            "Name":"Pest Control",
+            "Description":"Pest Control Services",
+            "Active":True,
+            "FullyQualifiedName":"Pest Control",
+            "Taxable":False,
+            "UnitPrice":35,
+            "Type":"Service",
+            "IncomeAccountRef":{
+                "value":"54",
+                "name":"Pest Control Services"
+            },
+            "PurchaseCost":0,
+            "TrackQtyOnHand":False,
+            "domain":"QBO",
+            "sparse":False,
+            "Id":"10",
+            "SyncToken":"0",
+            "MetaData":{
+                "CreateTime":"2019-12-16T10:45:49-08:00",
+                "LastUpdatedTime":"2019-12-16T10:45:49-08:00"
+            }
+        }
+    ]
 }

@@ -3,6 +3,7 @@ from datetime import timedelta
 
 from django.db.models import Q
 from django_q.models import Schedule
+from django_q.tasks import async_task
 from fyle_accounting_mappings.models import MappingSetting
 
 from apps.fyle.models import ExpenseGroupSettings
@@ -86,6 +87,9 @@ class ImportSettingsTrigger:
         )
 
         schedule_or_delete_fyle_import_tasks(workspace_general_settings_instance)
+
+        if not workspace_general_settings_instance.import_items:
+            async_task('apps.mappings.tasks.disable_category_for_items_mapping', workspace_general_settings_instance)
 
 
     def __remove_old_department_source_field(
