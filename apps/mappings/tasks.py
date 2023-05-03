@@ -1096,13 +1096,15 @@ def upload_attributes_to_fyle(
 
     qbo_attributes = remove_duplicates(qbo_attributes)
 
-    fyle_custom_field_payload = create_fyle_expense_custom_field_payload(
-        qbo_attributes=qbo_attributes,
-        workspace_id=workspace_id,
-        fyle_attribute=fyle_attribute_type,
-        platform=platform,
-        source_placeholder=source_placeholder
-    )
+
+    if qbo_attributes.count():
+        fyle_custom_field_payload = create_fyle_expense_custom_field_payload(
+            qbo_attributes=qbo_attributes,
+            workspace_id=workspace_id,
+            fyle_attribute=fyle_attribute_type,
+            platform=platform,
+            source_placeholder=source_placeholder
+        )
 
     if fyle_custom_field_payload:
         platform.expense_custom_fields.post(fyle_custom_field_payload)
