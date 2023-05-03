@@ -921,11 +921,17 @@ class DestinationAttributesView(generics.ListAPIView):
 
     def get_queryset(self):
         attribute_types = self.request.query_params.get('attribute_types').split(',')
+        display_name = self.request.query_params.get('display_name')
+
         filters = {
             'attribute_type__in' : attribute_types,
             'workspace_id': self.kwargs['workspace_id'],
             'active': True
         }
+
+        if display_name:
+            display_name = display_name.split(',')
+            filters['display_name__in'] = display_name
 
         return DestinationAttribute.objects.filter(**filters).order_by('value')
 
@@ -949,7 +955,8 @@ class SearchedDestinationAttributesView(generics.ListAPIView):
         }
 
         if display_name:
-            filters['display_name'] = display_name
+            display_name = display_name.split(',')
+            filters['display_name__in'] = display_name
 
         if search_term:
             filters['value__icontains'] = search_term
