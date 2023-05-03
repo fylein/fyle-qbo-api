@@ -7,6 +7,7 @@ data = {
         'map_merchant_to_vendor':True,
         'import_categories':True,
         'import_projects':False,
+        'import_items':False,
         'import_tax_codes':False,
         'change_accounting_period':False,
         'charts_of_accounts':[
@@ -61,6 +62,7 @@ data = {
         'map_merchant_to_vendor':True,
         'import_categories':True,
         'import_projects':False,
+        'import_items': False,
         'import_tax_codes':False,
         'change_accounting_period':False,
         'charts_of_accounts':[

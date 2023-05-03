@@ -102,6 +102,7 @@ class WorkspaceGeneralSettings(models.Model):
     employee_field_mapping = models.CharField(max_length=50, help_text='Mapping Settings ( VENDOR / EMPLOYEE )')
     map_merchant_to_vendor = models.BooleanField(help_text='Map Merchant to Vendor for CCC Expenses', default=False)
     import_categories = models.BooleanField(default=False, help_text='Auto import Categories to Fyle')
+    import_items = models.BooleanField(default=False, help_text='Auto import Items to Fyle')
     import_projects = models.BooleanField(default=False, help_text='Auto import projects to Fyle')
     import_tax_codes = models.BooleanField(default=False, help_text='Auto import tax codes to Fyle', null=True)
     change_accounting_period = models.BooleanField(default=False, help_text='Export Expense when accounting period is closed')

@@ -39,6 +39,46 @@ data = {
             }
         }
     },
+    'export_settings_trigger_check': {
+        'expense_group_settings': {
+            'expense_state': 'PAYMENT_PROCESSING',
+            'ccc_expense_state': 'PAID',
+            'reimbursable_expense_group_fields': [],
+            'reimbursable_export_date_type': '',
+            'corporate_credit_card_expense_group_fields': [],
+            'ccc_export_date_type': ''
+        },
+        'workspace_general_settings': {
+            'reimbursable_expenses_object': 'JOURNAL ENTRY',
+            'corporate_credit_card_expenses_object': 'BILL'
+        },
+        'general_mappings': {
+            'bank_account': {
+                'id': '',
+                'name': ''
+            },
+            'default_ccc_account': {
+                'id': '',
+                'name': ''
+            },
+            'accounts_payable': {
+                'name': 'Accumulated Depreciation',
+                'id': '3'
+            },
+            'default_ccc_vendor': {
+                'name': 'Arun',
+                'id': '87'
+            },
+            'qbo_expense_account': {
+                'name': 'Auto',
+                'id': '95'
+            },
+            'default_debit_card_account': {
+                'id': '',
+                'name': ''
+            }
+        }
+    },
     'response': {
         'workspace_general_settings': {
             'reimbursable_expenses_object':'EXPENSE',
