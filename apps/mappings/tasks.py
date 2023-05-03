@@ -1105,9 +1105,9 @@ def upload_attributes_to_fyle(
             source_placeholder=source_placeholder
         )
 
-    if fyle_custom_field_payload:
-        platform.expense_custom_fields.post(fyle_custom_field_payload)
-        platform.expense_custom_fields.sync()
+        if fyle_custom_field_payload:
+            platform.expense_custom_fields.post(fyle_custom_field_payload)
+            platform.expense_custom_fields.sync()
 
     return qbo_attributes
 
