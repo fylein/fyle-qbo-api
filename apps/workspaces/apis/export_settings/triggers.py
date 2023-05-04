@@ -13,8 +13,8 @@ class ExportSettingsTrigger:
         Post save action for workspace general settings
         """
 
-        if (workspace_general_settings_instance.reimbursable_expenses_object == 'JOURNAL ENTRY' or \
-            workspace_general_settings_instance.corporate_credit_card_expenses_object == 'JOURNAL ENTRY') and\
+        if (self.workspace_general_settings['reimbursable_expenses_object'] == 'JOURNAL ENTRY' or \
+            self.workspace_general_settings['corporate_credit_card_expenses_object'] == 'JOURNAL ENTRY') and\
             workspace_general_settings_instance.import_items:
 
             # Disable category for items mapping and set import-items to flase
