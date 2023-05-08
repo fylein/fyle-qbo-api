@@ -167,7 +167,7 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
 
         export_trigger = ExportSettingsTrigger(workspace_general_settings, instance.id)
 
-        export_trigger.post_save_workspace_general_settings(workspace_general_settings_instance)
+        export_trigger.post_save_workspace_general_settings()
 
         if enable_cards_mapping:
             MappingSetting.objects.update_or_create(
