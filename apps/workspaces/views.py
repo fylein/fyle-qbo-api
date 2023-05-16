@@ -26,7 +26,7 @@ from fyle_qbo_api.utils import assert_valid
 
 from apps.quickbooks_online.utils import QBOConnector
 from apps.fyle.helpers import get_cluster_domain
-from fyle_accounting_mappings.models import ExpenseAttribute
+from fyle_accounting_mappings.models import ExpenseAttribute, DestinationAttribute
 
 from .models import Workspace, FyleCredential, QBOCredential, WorkspaceGeneralSettings, WorkspaceSchedule, \
     LastExportDetail
@@ -641,6 +641,17 @@ class SetupE2ETestView(viewsets.ViewSet):
                             workspace.qbo_realm_id = healthy_token.realm_id
                             workspace.last_synced_at = None
                             workspace.save()
+
+                            #insert a destination attribute
+                            destination_attribute = DestinationAttribute.create_or_update_destination_attribute({
+                                'attribute_type': 'ACCOUNT',
+                                'display_name': 'Account',
+                                'value': 'Activity',
+                                'destination_id': 900,
+                                'active': 't',
+                                'detail': {"account_type": "Expense", "fully_qualified_name": "Activity"}
+                            }, workspace.id)
+                            destination_attribute.save()
 
                             return Response(status=status.HTTP_200_OK)
 
