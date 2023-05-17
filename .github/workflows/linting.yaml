@@ -3,7 +3,7 @@ name: Dlint
 on:
   pull_request:
     types: [assigned, opened, synchronize, reopened]
-    
+
 jobs:
     dlint:
         runs-on: ubuntu-latest
