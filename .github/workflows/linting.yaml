@@ -1,0 +1,11 @@
+name: Dlint
+on:
+  pull_request:
+    types: [assigned, opened, synchronize, reopened]
+jobs:
+  dlint:
+    runs-on: ubuntu-latest
+    name: Dlint
+    steps:
+    - uses: actions/checkout@master
+    - uses: dlint-py/dlint-action@masterhow 

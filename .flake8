@@ -1,0 +1,14 @@
+[flake8]
+ignore = 
+    # E501 line too long
+    E501,
+    W503, # Conflicting with W504 - https://www.flake8rules.com/rules/W503.html
+    # W605 invalid escape sequence
+    W605,
+exclude = 
+    .git,
+    __pycache__
+per-file-ignores = 
+    __init__.py:F401
+    enforce_kwargs_only.py:EKO002
+    */tests/*:EKO002,EKO001
