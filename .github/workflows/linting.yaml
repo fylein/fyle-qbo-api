@@ -23,4 +23,24 @@ jobs:
           pip install flake8
 
       - name: Run Flake8
-        run: flake8 --statistics --count
+        id: flake8
+        run: |
+          flake8 --format='%(path)s:%(row)d:%(col)d: %(code)s %(code)s: %(text)s' --statistics > flake8_report.txt || echo "No issues found"
+
+      - name: Create PR comment
+        if: ${{ always() }}
+        uses: actions/github-script@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          script: |
+            const fs = require('fs');
+
+            const commentBody = fs.readFileSync('flake8_report.txt', 'utf8');
+
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: commentBody
+            });
