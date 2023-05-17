@@ -133,6 +133,7 @@ class Expense(models.Model):
     is_skipped = models.BooleanField(null=True, default=False, help_text='Expense is skipped or not')
 
     class Meta:
+        ordering = ['-updated_at']
         db_table = 'expenses'
 
     @staticmethod
