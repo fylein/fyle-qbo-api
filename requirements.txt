@@ -49,3 +49,4 @@ pytest-django==4.4.0
 pytest-mock==3.6.1
 wrapt==1.12.1
 gevent==22.10.2
+flake8==5.0.4
