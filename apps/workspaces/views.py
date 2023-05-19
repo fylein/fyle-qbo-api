@@ -643,15 +643,14 @@ class SetupE2ETestView(viewsets.ViewSet):
                             workspace.save()
 
                             #insert a destination attribute
-                            destination_attribute = DestinationAttribute.create_or_update_destination_attribute({
+                            DestinationAttribute.create_or_update_destination_attribute({
                                 'attribute_type': 'ACCOUNT',
                                 'display_name': 'Account',
                                 'value': 'Activity',
-                                'destination_id': 900,
-                                'active': 't',
+                                'destination_id': '900',
+                                'active': True,
                                 'detail': {"account_type": "Expense", "fully_qualified_name": "Activity"}
                             }, workspace.id)
-                            destination_attribute.save()
 
                             return Response(status=status.HTTP_200_OK)
 
