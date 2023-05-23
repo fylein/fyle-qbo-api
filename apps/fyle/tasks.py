@@ -7,6 +7,7 @@ from django.db import transaction
 from django_q.tasks import async_task
 
 from fyle_integrations_platform_connector import PlatformConnector
+from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
 
 from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
 from apps.tasks.models import TaskLog
@@ -197,5 +198,8 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
 
 
 def sync_dimensions(fyle_credentials):
-    platform = PlatformConnector(fyle_credentials)
-    platform.import_fyle_dimensions(import_taxes=True)
+    try:
+        platform = PlatformConnector(fyle_credentials)
+        platform.import_fyle_dimensions(import_taxes=True)
+    except FyleInvalidTokenError:
+        logger.info('Invalid Token for fyle')

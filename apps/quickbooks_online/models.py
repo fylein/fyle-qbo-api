@@ -201,6 +201,32 @@ def get_department_id_or_none(expense_group: ExpenseGroup, lineitem: Expense = N
     return department_id
 
 
+def get_category_mapping_and_detail_type(workspace_general_settings: WorkspaceGeneralSettings, category: str, workspace_id: int):
+    # get the item-mapping if import_items is true
+    if workspace_general_settings.import_items:
+        qbo_item: Mapping = Mapping.objects.filter(
+            source_type='CATEGORY',
+            destination_type='ACCOUNT',
+            destination__display_name='Item',
+            source__value=category,
+            workspace_id=workspace_id
+        ).first()
+        # if qbo_item is found, return item and ItemBasedExpenseLineDetail as detail_type
+        if qbo_item:
+            return qbo_item, 'ItemBasedExpenseLineDetail'
+
+    # else get the account-mapping and return the detail_type as AccountBasedExpenseLineDetail
+    qbo_account: Mapping = Mapping.objects.filter(
+        source_type='CATEGORY',
+        destination_type='ACCOUNT',
+        source__value=category,
+        destination__display_name='Account',
+        workspace_id=workspace_id
+    ).first()
+
+    return qbo_account, 'AccountBasedExpenseLineDetail'
+
+
 class Bill(models.Model):
     """
     QBO Bill
@@ -215,6 +241,7 @@ class Bill(models.Model):
     private_note = models.TextField(help_text='Bill Description')
     payment_synced = models.BooleanField(help_text='Payment synced status', default=False)
     paid_on_qbo = models.BooleanField(help_text='Payment status in QBO', default=False)
+    exchange_rate = models.FloatField(help_text='Exchange rate', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
@@ -270,7 +297,7 @@ class BillLineitem(models.Model):
     id = models.AutoField(primary_key=True)
     bill = models.ForeignKey(Bill, on_delete=models.PROTECT, help_text='Reference to bill')
     expense = models.OneToOneField(Expense, on_delete=models.PROTECT, help_text='Reference to Expense')
-    account_id = models.CharField(max_length=255, help_text='QBO account id')
+    account_id = models.CharField(max_length=255, help_text='QBO account id', null=True)
     class_id = models.CharField(max_length=255, help_text='QBO class id', null=True)
     customer_id = models.CharField(max_length=255, help_text='QBO customer id', null=True)
     amount = models.FloatField(help_text='Bill amount')
@@ -278,6 +305,8 @@ class BillLineitem(models.Model):
     tax_code = models.CharField(max_length=255, help_text='Tax Group ID', null=True)
     billable = models.BooleanField(null=True, help_text='Expense Billable or not')
     description = models.TextField(help_text='QBO bill lineitem description', null=True)
+    detail_type = models.CharField(max_length=255, help_text='Detail type for the lineitem', default='AccountBasedExpenseLineDetail')
+    item_id = models.CharField(max_length=255, help_text='QBO item id', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
@@ -301,12 +330,7 @@ class BillLineitem(models.Model):
             category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category == None) else '{0} / {1}'.format(
                 lineitem.category, lineitem.sub_category)
 
-            account: Mapping = Mapping.objects.filter(
-                source_type='CATEGORY',
-                destination_type='ACCOUNT',
-                source__value=category,
-                workspace_id=expense_group.workspace_id
-            ).first()
+            account, detail_type = get_category_mapping_and_detail_type(workspace_general_settings, category, expense_group.workspace_id)
 
             class_id = get_class_id_or_none(expense_group, lineitem)
 
@@ -316,13 +340,15 @@ class BillLineitem(models.Model):
                 bill=bill,
                 expense_id=lineitem.id,
                 defaults={
-                    'account_id': account.destination.destination_id if account else None,
+                    'account_id': account.destination.destination_id if detail_type == 'AccountBasedExpenseLineDetail' else None,
                     'class_id': class_id,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
                     'tax_code': get_tax_code_id_or_none(expense_group, lineitem),
                     'tax_amount': lineitem.tax_amount,
                     'billable': lineitem.billable,
+                    'detail_type': detail_type,
+                    'item_id': account.destination.destination_id if detail_type == 'ItemBasedExpenseLineDetail' else None,
                     'description': get_expense_purpose(
                         expense_group.workspace_id, lineitem, category, workspace_general_settings
                     )
@@ -393,7 +419,7 @@ class ChequeLineitem(models.Model):
     id = models.AutoField(primary_key=True)
     cheque = models.ForeignKey(Cheque, on_delete=models.PROTECT, help_text='Reference to cheque')
     expense = models.OneToOneField(Expense, on_delete=models.PROTECT, help_text='Reference to Expense')
-    account_id = models.CharField(max_length=255, help_text='QBO account id')
+    account_id = models.CharField(max_length=255, help_text='QBO account id', null=True)
     class_id = models.CharField(max_length=255, help_text='QBO class id', null=True)
     customer_id = models.CharField(max_length=255, help_text='QBO customer id', null=True)
     amount = models.FloatField(help_text='Cheque amount')
@@ -401,6 +427,8 @@ class ChequeLineitem(models.Model):
     tax_code = models.CharField(max_length=255, help_text='Tax Group ID', null=True)
     billable = models.BooleanField(null=True, help_text='Expense Billable or not')
     description = models.TextField(help_text='QBO cheque lineitem description', null=True)
+    detail_type = models.CharField(max_length=255, help_text='Detail type for the lineitem', default='AccountBasedExpenseLineDetail')
+    item_id = models.CharField(max_length=255, help_text='QBO item id', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
@@ -424,12 +452,7 @@ class ChequeLineitem(models.Model):
             category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category == None) else '{0} / {1}'.format(
                 lineitem.category, lineitem.sub_category)
 
-            account: Mapping = Mapping.objects.filter(
-                source_type='CATEGORY',
-                destination_type='ACCOUNT',
-                source__value=category,
-                workspace_id=expense_group.workspace_id
-            ).first()
+            account, detail_type = get_category_mapping_and_detail_type(workspace_general_settings, category, expense_group.workspace_id)
 
             class_id = get_class_id_or_none(expense_group, lineitem)
 
@@ -439,13 +462,15 @@ class ChequeLineitem(models.Model):
                 cheque=cheque,
                 expense_id=lineitem.id,
                 defaults={
-                    'account_id': account.destination.destination_id if account else None,
+                    'account_id': account.destination.destination_id if detail_type == 'AccountBasedExpenseLineDetail' else None,
                     'class_id': class_id,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
                     'tax_amount': lineitem.tax_amount,
                     'tax_code': get_tax_code_id_or_none(expense_group, lineitem),
                     'billable': lineitem.billable,
+                    'detail_type': detail_type,
+                    'item_id': account.destination.destination_id if detail_type == 'ItemBasedExpenseLineDetail' else None,
                     'description': get_expense_purpose(
                         expense_group.workspace_id, lineitem, category, workspace_general_settings
                     )
@@ -541,7 +566,7 @@ class QBOExpenseLineitem(models.Model):
     id = models.AutoField(primary_key=True)
     qbo_expense = models.ForeignKey(QBOExpense, on_delete=models.PROTECT, help_text='Reference to QBO Expense')
     expense = models.OneToOneField(Expense, on_delete=models.PROTECT, help_text='Reference to Fyle Expense')
-    account_id = models.CharField(max_length=255, help_text='QBO account id')
+    account_id = models.CharField(max_length=255, help_text='QBO account id', null=True)
     class_id = models.CharField(max_length=255, help_text='QBO class id', null=True)
     customer_id = models.CharField(max_length=255, help_text='QBO customer id', null=True)
     amount = models.FloatField(help_text='Expense amount')
@@ -549,6 +574,8 @@ class QBOExpenseLineitem(models.Model):
     tax_code = models.CharField(max_length=255, help_text='Tax Group ID', null=True)
     billable = models.BooleanField(null=True, help_text='Expense Billable or not')
     description = models.TextField(help_text='QBO expense lineitem description', null=True)
+    detail_type = models.CharField(max_length=255, help_text='Detail type for the lineitem', default='AccountBasedExpenseLineDetail')
+    item_id = models.CharField(max_length=255, help_text='QBO item id', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
@@ -572,12 +599,7 @@ class QBOExpenseLineitem(models.Model):
             category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category == None) else '{0} / {1}'.format(
                 lineitem.category, lineitem.sub_category)
 
-            account: Mapping = Mapping.objects.filter(
-                source_type='CATEGORY',
-                destination_type='ACCOUNT',
-                source__value=category,
-                workspace_id=expense_group.workspace_id
-            ).first()
+            account, detail_type = get_category_mapping_and_detail_type(workspace_general_settings, category, expense_group.workspace_id)
 
             class_id = get_class_id_or_none(expense_group, lineitem)
 
@@ -587,13 +609,15 @@ class QBOExpenseLineitem(models.Model):
                 qbo_expense=qbo_expense,
                 expense_id=lineitem.id,
                 defaults={
-                    'account_id': account.destination.destination_id if account else None,
+                    'account_id': account.destination.destination_id if detail_type == 'AccountBasedExpenseLineDetail' else None,
                     'class_id': class_id,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
                     'tax_amount': lineitem.tax_amount,
                     'tax_code': get_tax_code_id_or_none(expense_group, lineitem),
                     'billable': lineitem.billable,
+                    'detail_type': detail_type,
+                    'item_id': account.destination.destination_id if detail_type == 'ItemBasedExpenseLineDetail' else None,
                     'description': get_expense_purpose(
                         expense_group.workspace_id, lineitem, category, workspace_general_settings
                     )
@@ -692,7 +716,7 @@ class CreditCardPurchaseLineitem(models.Model):
     credit_card_purchase = models.ForeignKey(CreditCardPurchase, on_delete=models.PROTECT,
                                              help_text='Reference to credit card purchase')
     expense = models.OneToOneField(Expense, on_delete=models.PROTECT, help_text='Reference to Expense')
-    account_id = models.CharField(max_length=255, help_text='QBO account id')
+    account_id = models.CharField(max_length=255, help_text='QBO account id', null=True)
     class_id = models.CharField(max_length=255, help_text='QBO class id', null=True)
     customer_id = models.CharField(max_length=255, help_text='QBO customer id', null=True)
     amount = models.FloatField(help_text='credit card purchase amount')
@@ -700,6 +724,8 @@ class CreditCardPurchaseLineitem(models.Model):
     tax_code = models.CharField(max_length=255, help_text='Tax Group ID', null=True)
     billable = models.BooleanField(null=True, help_text='Expense Billable or not')
     description = models.TextField(help_text='QBO credit card purchase lineitem description', null=True)
+    detail_type = models.CharField(max_length=255, help_text='Detail type for the lineitem', default='AccountBasedExpenseLineDetail')
+    item_id = models.CharField(max_length=255, help_text='QBO item id', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
@@ -726,12 +752,7 @@ class CreditCardPurchaseLineitem(models.Model):
             category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category == None) else '{0} / {1}'.format(
                 lineitem.category, lineitem.sub_category)
 
-            account: Mapping = Mapping.objects.filter(
-                source_type='CATEGORY',
-                destination_type='ACCOUNT',
-                source__value=category,
-                workspace_id=expense_group.workspace_id
-            ).first()
+            account, detail_type = get_category_mapping_and_detail_type(workspace_general_settings, category, expense_group.workspace_id)
 
             class_id = get_class_id_or_none(expense_group, lineitem)
 
@@ -741,12 +762,14 @@ class CreditCardPurchaseLineitem(models.Model):
                 credit_card_purchase=credit_card_purchase,
                 expense_id=lineitem.id,
                 defaults={
-                    'account_id': account.destination.destination_id if account else None,
+                    'account_id': account.destination.destination_id if detail_type == 'AccountBasedExpenseLineDetail' else None,
                     'class_id': class_id,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
                     'tax_amount': lineitem.tax_amount,
                     'tax_code': get_tax_code_id_or_none(expense_group, lineitem),
+                    'detail_type': detail_type,
+                    'item_id': account.destination.destination_id if detail_type == 'ItemBasedExpenseLineDetail' else None,
                     'billable': lineitem.billable,
                     'description': get_expense_purpose(
                         expense_group.workspace_id, lineitem, category, workspace_general_settings

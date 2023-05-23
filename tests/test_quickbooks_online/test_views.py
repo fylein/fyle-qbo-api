@@ -40,12 +40,13 @@ def test_destination_attributes_view(api_client, test_connection):
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
     response = api_client.get(url,{
-        'attribute_types':'CUSTOMER'
+        'attribute_types':'ACCOUNT',
+        'display_name':'Account'
     })
     assert response.status_code == 200
     response = json.loads(response.content)
 
-    assert len(response) == 29
+    assert len(response) == 63
 
 def test_searched_destination_attributes_view(api_client, test_connection):
 
@@ -59,11 +60,12 @@ def test_searched_destination_attributes_view(api_client, test_connection):
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
     response = api_client.get(url,{
-        'attribute_type':'CUSTOMER'
+        'attribute_type':'ACCOUNT',
+        'display_name':'Account'
     })
     assert response.status_code == 200
     response = json.loads(response.content)
-    assert len(response) == 29
+    assert len(response) == 30
 
 
 def test_qbo_attributes_view(api_client, test_connection):

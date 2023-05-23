@@ -56,7 +56,7 @@ class MappingSettingSerializer(serializers.ModelSerializer):
 class WorkspaceGeneralSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkspaceGeneralSettings
-        fields = ['import_categories', 'charts_of_accounts', 'import_tax_codes', 'import_vendors_as_merchants']
+        fields = ['import_categories', 'import_items', 'charts_of_accounts', 'import_tax_codes', 'import_vendors_as_merchants']
 
 
 class GeneralMappingsSerializer(serializers.ModelSerializer):
@@ -106,6 +106,7 @@ class ImportSettingsSerializer(serializers.ModelSerializer):
             workspace=instance,
             defaults={
                 'import_categories': workspace_general_settings.get('import_categories'),
+                'import_items': workspace_general_settings.get('import_items'),
                 'charts_of_accounts': workspace_general_settings.get('charts_of_accounts'),
                 'import_tax_codes': workspace_general_settings.get('import_tax_codes'),
                 'import_vendors_as_merchants': workspace_general_settings.get('import_vendors_as_merchants')

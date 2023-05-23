@@ -26,7 +26,7 @@ from fyle_qbo_api.utils import assert_valid
 
 from apps.quickbooks_online.utils import QBOConnector
 from apps.fyle.helpers import get_cluster_domain
-from fyle_accounting_mappings.models import ExpenseAttribute
+from fyle_accounting_mappings.models import ExpenseAttribute, DestinationAttribute
 
 from .models import Workspace, FyleCredential, QBOCredential, WorkspaceGeneralSettings, WorkspaceSchedule, \
     LastExportDetail
@@ -276,98 +276,71 @@ class ConnectQBOView(viewsets.ViewSet):
     """
 
     def post(self, request, **kwargs):
-        """
-        Post of QBO Credentials
-        """
+        # Extract data from the request
+        authorization_code = request.data.get('code')
+        realm_id = request.data.get('realm_id')
+        redirect_uri = request.data.get('redirect_uri')
+
         try:
-            authorization_code = request.data.get('code')
-            realm_id = request.data.get('realm_id')
-            redirect_uri = request.data.get('redirect_uri')
+            # Generate a refresh token from the authorization code
             refresh_token = generate_qbo_refresh_token(authorization_code, redirect_uri)
 
+            # Get the workspace associated with the request
             workspace = Workspace.objects.get(pk=kwargs['workspace_id'])
 
+            # Get the QBO credentials associated with the workspace, or create new credentials if none exist
             qbo_credentials = QBOCredential.objects.filter(workspace=workspace).first()
-            if qbo_credentials:
-                qbo_credentials.is_expired = False
             if not qbo_credentials:
-                if workspace.qbo_realm_id:
-                    assert_valid(realm_id == workspace.qbo_realm_id,
-                                 'Please choose the correct QuickBooks Online account')
-
                 qbo_credentials = QBOCredential.objects.create(
                     refresh_token=refresh_token,
                     realm_id=realm_id,
                     workspace=workspace
-                )
+                ) 
 
-                try:
-                    qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
+            # Check if the realm_id matches the one associated with the workspace
+            if workspace.qbo_realm_id:
+                assert_valid(realm_id == workspace.qbo_realm_id, 'Please choose the correct QuickBooks Online account')
 
-                    company_info = qbo_connector.get_company_info()
-                    qbo_credentials.country = company_info['Country']
-                    qbo_credentials.company_name = company_info['CompanyName']
-                    qbo_credentials.save()
+            # Update the workspace with the realm_id and refresh_token
+            qbo_credentials.is_expired = False
+            qbo_credentials.refresh_token = refresh_token
+            qbo_credentials.realm_id = realm_id
+            qbo_credentials.save()
 
-                except qbo_exc.WrongParamsError as exception:
-                    logger.info(exception.response)
+            # Use the QBO credentials to get the company info and preferences
+            qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
+            company_info = qbo_connector.get_company_info()
+            preferences = qbo_connector.get_company_preference()
 
-                workspace.qbo_realm_id = realm_id
-                workspace.save()
-            else:
-                if workspace.onboarding_state in ('CONNECTION', 'MAP_EMPLOYEES', 'EXPORT_SETTINGS'):
-                    workspace.qbo_realm_id = realm_id
-                    workspace.save()
-                qbo_credentials.refresh_token = refresh_token
-                qbo_credentials.realm_id = realm_id
-                qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
-                company_info = qbo_connector.get_company_info()
-                qbo_credentials.company_name = company_info['CompanyName']
-                qbo_credentials.country = company_info['Country']
-                if realm_id == workspace.qbo_realm_id:
-                    qbo_credentials.save()
-                else:
-                    qbo_credentials.realm_id = None
-                    qbo_credentials.refresh_token = None
-                    qbo_credentials.save()
-                    assert_valid(realm_id == workspace.qbo_realm_id,
-                                 'Please choose the correct QuickBooks Online account')
+            # Update the QBO credentials with the retrieved company info and preferences
+            qbo_credentials.country = company_info['Country']
+            qbo_credentials.company_name = company_info['CompanyName']
+            qbo_credentials.currency = preferences['CurrencyPrefs']['HomeCurrency']['value']
+
+            qbo_credentials.save()     
+            
+            # Update the workspace onboarding state and realm_id
+            workspace.qbo_realm_id = realm_id
 
             if workspace.onboarding_state == 'CONNECTION':
                 workspace.onboarding_state = 'MAP_EMPLOYEES'
-                workspace.qbo_realm_id = realm_id
-                workspace.save()
+            workspace.save()
 
-            return Response(
-                data=QBOCredentialSerializer(qbo_credentials).data,
-                status=status.HTTP_200_OK
-            )
+            # Return the QBO credentials as serialized data
+            return Response(data=QBOCredentialSerializer(qbo_credentials).data, status=status.HTTP_200_OK)
+
         except qbo_exc.UnauthorizedClientError:
-            return Response(
-                {
-                    'message': 'Invalid Authorization Code'
-                },
-                status=status.HTTP_401_UNAUTHORIZED
-            )
+            return Response({'message': 'Invalid Authorization Code'}, status=status.HTTP_401_UNAUTHORIZED)
+
         except qbo_exc.NotFoundClientError:
-            return Response(
-                {
-                    'message': 'QBO Application not found'
-                },
-                status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({'message': 'QBO Application not found'}, status=status.HTTP_404_NOT_FOUND)
+
         except qbo_exc.WrongParamsError as e:
-            return Response(
-                json.loads(e.response),
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response(json.loads(e.response), status=status.HTTP_400_BAD_REQUEST)
+
         except qbo_exc.InternalServerError:
-            return Response(
-                {
-                    'message': 'Wrong/Expired Authorization code'
-                },
-                status=status.HTTP_401_UNAUTHORIZED
-            )
+            return Response({'message': 'Wrong/Expired Authorization code'}, status=status.HTTP_401_UNAUTHORIZED)
+
 
     def patch(self, request, **kwargs):
         """Delete QBO refresh_token"""
@@ -668,6 +641,16 @@ class SetupE2ETestView(viewsets.ViewSet):
                             workspace.qbo_realm_id = healthy_token.realm_id
                             workspace.last_synced_at = None
                             workspace.save()
+
+                            #insert a destination attribute
+                            DestinationAttribute.create_or_update_destination_attribute({
+                                'attribute_type': 'ACCOUNT',
+                                'display_name': 'Account',
+                                'value': 'Activity',
+                                'destination_id': '900',
+                                'active': True,
+                                'detail': {"account_type": "Expense", "fully_qualified_name": "Activity"}
+                            }, workspace.id)
 
                             return Response(status=status.HTTP_200_OK)
 

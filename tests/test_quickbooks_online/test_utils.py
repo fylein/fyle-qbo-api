@@ -85,16 +85,104 @@ def test_sync_departments(mocker, db):
     new_department_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='DEPARTMENT').count()
     assert new_department_count == 1
 
+def test_sync_items(mocker, db):
+    
+    with mock.patch('qbosdk.apis.Items.get') as mock_call:
+        mock_call.return_value = data['items_response']       
 
-def test_construct_bill(create_bill, db):
+        qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
+        qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+
+        item_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='ACCOUNT', display_name='Item').count()
+        assert item_count == 0
+
+        qbo_connection.sync_items()
+
+        new_item_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='ACCOUNT', display_name='Item', active=True).count()
+        assert new_item_count == 0
+
+        WorkspaceGeneralSettings.objects.filter(workspace_id=3).update(import_items=True)
+        qbo_connection.sync_items()
+        new_item_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='ACCOUNT', display_name='Item', active=True).count()
+        assert new_item_count == 4
+
+        mock_call.return_value = data['items_response_with_inactive_values']
+
+        qbo_connection.sync_items()
+
+        active_item_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='ACCOUNT', display_name='Item', active=True).count()
+        assert active_item_count == 2
+        inactive_item_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='ACCOUNT', display_name='Item', active=False).count()
+        assert inactive_item_count == 2
+
+
+
+def test_construct_bill(create_bill, mocker, db):
+    mocker.patch(
+        'qbosdk.apis.ExchangeRates.get_by_source',
+        return_value={
+            'Rate': 1.2309,
+        }
+    )
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
 
+    #for account-based line-items 
     bill, bill_lineitems = create_bill
     bill_object = qbo_connection._QBOConnector__construct_bill(bill=bill,bill_lineitems=bill_lineitems)
     data['bill_payload']['TxnDate'] = bill_object['TxnDate']
 
     assert dict_compare_keys(bill_object, data['bill_payload']) == [], 'construct bill_payload entry api return diffs in keys'
+
+    workspace_general_settings = qbo_credentials.workspace.workspace_general_settings
+    workspace_general_settings.is_multi_currency_allowed = True
+    workspace_general_settings.save()
+
+    qbo_credentials.currency = 'CAD'
+    qbo_credentials.save()
+
+    data['bill_payload']['ExchangeRate'] = 1.2309
+
+    bill_object = qbo_connection._QBOConnector__construct_bill(bill=bill,bill_lineitems=bill_lineitems)
+    data['bill_payload']['TxnDate'] = bill_object['TxnDate']
+
+    assert dict_compare_keys(bill_object, data['bill_payload']) == [], 'construct bill_payload entry api return diffs in keys'
+
+def test_construct_bill_item_based(create_bill_item_based, mocker, db):
+    mocker.patch(
+        'qbosdk.apis.ExchangeRates.get_by_source',
+        return_value={
+            'Rate': 1.2309,
+        }
+    )
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+
+    #for item-based line-items 
+    bill, bill_lineitems = create_bill_item_based
+    bill_object = qbo_connection._QBOConnector__construct_bill(bill=bill,bill_lineitems=bill_lineitems)
+    bill_object['Line'][0]['DetailType'] == 'ItemBasedExpenseLineDetail'
+
+    assert dict_compare_keys(bill_object, data['bill_payload_item_based_payload']) == [], 'construct bill_payload entry api return diffs in keys'
+
+
+def test_construct_bill_item_and_account_based(create_bill_item_and_account_based, mocker, db):
+    mocker.patch(
+        'qbosdk.apis.ExchangeRates.get_by_source',
+        return_value={
+            'Rate': 1.2309,
+        }
+    )
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+
+    #for item-based and account-based line-items 
+    bill, bill_lineitems = create_bill_item_and_account_based
+    bill_object = qbo_connection._QBOConnector__construct_bill(bill=bill,bill_lineitems=bill_lineitems)
+    bill_object['Line'][0]['DetailType'] == 'ItemBasedExpenseLineDetail'
+    bill_object['Line'][1]['DetailType'] == 'AccountBasedExpenseLineDetail'
+
+    assert dict_compare_keys(bill_object, data['bill_payload_item_and_account_based_payload']) == [], 'construct bill_payload entry api return diffs in keys'
 
 
 def test_construct_credit_card_purchase(create_credit_card_purchase, db):
@@ -108,6 +196,28 @@ def test_construct_credit_card_purchase(create_credit_card_purchase, db):
 
     assert dict_compare_keys(credit_crad_purchase_object, data['credit_card_purchase_payload']) == [], 'construct credit_card_purchase_payload entry api return diffs in keys'
 
+def test_construct_credit_card_purchase_item_based(create_credit_card_purchase_item_based, db):
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+
+    credit_card_purchase,credit_card_purchase_lineitems = create_credit_card_purchase_item_based
+    credit_crad_purchase_object = qbo_connection._QBOConnector__construct_credit_card_purchase(credit_card_purchase=credit_card_purchase, credit_card_purchase_lineitems=credit_card_purchase_lineitems)
+
+    credit_crad_purchase_object['Line'][0]['DetailType'] == 'ItemBasedExpenseLineDetail'
+
+    assert dict_compare_keys(credit_crad_purchase_object, data['credit_card_purchase_item_based_payload']) == [], 'construct credit_card_purchase_payload entry api return diffs in keys'
+
+def test_construct_credit_card_purchase_item_and_account_based(create_credit_card_purchase_item_and_account_based, db):
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+
+    credit_card_purchase,credit_card_purchase_lineitems = create_credit_card_purchase_item_and_account_based
+    credit_crad_purchase_object = qbo_connection._QBOConnector__construct_credit_card_purchase(credit_card_purchase=credit_card_purchase, credit_card_purchase_lineitems=credit_card_purchase_lineitems)
+
+    credit_crad_purchase_object['Line'][0]['DetailType'] == 'ItemBasedExpenseLineDetail'
+    credit_crad_purchase_object['Line'][1]['DetailType'] == 'AccountBasedExpenseLineDetail'
+
+    assert dict_compare_keys(credit_crad_purchase_object, data['credit_card_purchase_item_and_account_based_payload']) == [], 'construct credit_card_purchase_payload entry api return diffs in keys'
 
 def test_construct_journal_entry(create_journal_entry, db):
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
@@ -139,6 +249,30 @@ def test_construct_qbo_expense(create_qbo_expense, db):
     assert dict_compare_keys(qbo_expense_object, data['qbo_expense_payload']) == [], 'construct expense api return diffs in keys'
 
 
+def test_construct_qbo_expense_item_based(create_qbo_expense_item_based, db):
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+
+    qbo_expense,qbo_expense_lineitems = create_qbo_expense_item_based
+    qbo_expense_object = qbo_connection._QBOConnector__construct_qbo_expense(qbo_expense=qbo_expense,qbo_expense_lineitems=qbo_expense_lineitems)
+
+    qbo_expense_object['Line'][0]['DetailType'] == 'ItemBasedExpenseLineDetail'
+
+    assert dict_compare_keys(qbo_expense_object, data['qbo_expense_item_based_payload']) == [], 'construct expense api return diffs in keys'
+
+def test_construct_qbo_expense_item_and_account_based(create_qbo_expense_item_and_account_based, db):
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+
+    qbo_expense,qbo_expense_lineitems = create_qbo_expense_item_and_account_based
+    qbo_expense_object = qbo_connection._QBOConnector__construct_qbo_expense(qbo_expense=qbo_expense,qbo_expense_lineitems=qbo_expense_lineitems)
+
+    qbo_expense_object['Line'][0]['DetailType'] == 'ItemBasedExpenseLineDetail'
+    qbo_expense_object['Line'][1]['DetailType'] == 'AccountBasedExpenseLineDetail'
+
+    assert dict_compare_keys(qbo_expense_object, data['qbo_expense_item_and_account_based_payload']) == [], 'construct expense api return diffs in keys'
+
+
 def test_construct_cheque(create_cheque, db):
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
@@ -149,6 +283,31 @@ def test_construct_cheque(create_cheque, db):
     data['cheque_payload']['TxnDate'] = cheque_object['TxnDate']
 
     assert dict_compare_keys(cheque_object, data['cheque_payload']) == [], 'construct cheque api return diffs in keys'
+
+def test_construct_cheque_item_based(create_cheque_item_based, db):
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+
+    cheque,cheque_lineitems = create_cheque_item_based
+    cheque_object = qbo_connection._QBOConnector__construct_cheque(cheque=cheque,cheque_lineitems=cheque_lineitems)
+
+    cheque_object['Line'][0]['DetailType'] == 'ItemBasedExpenseLineDetail'
+
+    assert dict_compare_keys(cheque_object, data['cheque_item_based_payload']) == [], 'construct cheque api return diffs in keys'
+
+
+def test_construct_cheque_item_and_account_based(create_cheque_item_and_account_based, db):
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+
+    cheque,cheque_lineitems = create_cheque_item_and_account_based
+    cheque_object = qbo_connection._QBOConnector__construct_cheque(cheque=cheque,cheque_lineitems=cheque_lineitems)
+
+    cheque_object['Line'][0]['DetailType'] == 'ItemBasedExpenseLineDetail'
+    cheque_object['Line'][1]['DetailType'] == 'AccountBasedExpenseLineDetail'
+
+    assert dict_compare_keys(cheque_object, data['cheque_item_and_account_based_payload']) == [], 'construct cheque api return diffs in keys'
+
 
 
 def test_get_bill(mocker, db):

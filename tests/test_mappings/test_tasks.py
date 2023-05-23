@@ -57,6 +57,129 @@ def test_auto_create_tax_codes_mappings(db, mocker):
 
     response = auto_create_tax_codes_mappings(workspace_id)
     assert response == None
+
+def test_disable_category_for_items_mapping(db ,mocker):
+    workspace_id = 5
+    workspace_general_setting = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
+    workspace_general_setting.import_items = False
+    workspace_general_setting.save()
+
+    # mocking all the sdk calls
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.Categories.sync',
+        return_value=[]
+    )
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.Categories.post_bulk',
+        return_value=[]
+    )
+    mocker.patch(
+        'qbosdk.apis.Items.get',
+        return_value=[]
+    )
+
+    # adding test data to the database
+    destination_attribute = DestinationAttribute.objects.create(
+        attribute_type='ACCOUNT',
+        display_name='Item',
+        value='Concrete',
+        destination_id=3,
+        workspace_id=workspace_id,
+        active=False
+    )
+    expense_attribute = ExpenseAttribute.objects.create(
+        attribute_type='CATEGORY',
+        display_name='Category',
+        value='Concrete',
+        source_id='253737253737',
+        workspace_id=workspace_id,
+        active=True
+    )
+    Mapping.objects.create(
+        source_type='CATEGORY',
+        destination_type='ACCOUNT',
+        destination_id=destination_attribute.id,
+        source_id=expense_attribute.id,
+        workspace_id=workspace_id
+    )
+
+    disable_category_for_items_mapping(workspace_general_setting)
+
+    assert expense_attribute.active == False
+
+    with mock.patch('fyle_integrations_platform_connector.apis.Categories.sync') as mock_call:
+        mock_call.side_effect = WrongParamsError(msg='invalid params', response='invalid params')
+        disable_category_for_items_mapping(workspace_general_setting)
+
+        mock_call.side_effect = QBOWrongParamsError(msg='invalid params', response='invalid params')
+        disable_category_for_items_mapping(workspace_general_setting)
+
+        mock_call.side_effect = FyleInvalidTokenError(msg='Invalid Token for fyle', response='Invalid Token for fyle')
+        disable_category_for_items_mapping(workspace_general_setting)
+
+        mock_call.side_effect = Exception
+        disable_category_for_items_mapping(workspace_general_setting)
+
+    with mock.patch('qbosdk.apis.Items.get') as mock_call:
+        mock_call.side_effect = QBOCredential.DoesNotExist
+        disable_category_for_items_mapping(workspace_general_setting)
+
+
+def test_disable_category_for_items_mapping(db, mocker):
+    workspace_id = 3
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.Categories.sync',
+        return_value=[]
+    )
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.Categories.post_bulk',
+        return_value=[]
+    )
+    mocker.patch(
+        'qbosdk.apis.Items.get',
+        return_value=[]
+    )      
+
+    destination_attribute = DestinationAttribute.objects.create(
+        attribute_type='ACCOUNT',
+        display_name='Item',
+        value='Concrete',
+        destination_id=3,
+        workspace_id=workspace_id,
+        active=True
+    )
+    expense_attribute = ExpenseAttribute.objects.create(
+        attribute_type='CATEGORY',
+        display_name='Category',
+        value='Concrete',
+        source_id='253737253737',
+        workspace_id=workspace_id,
+        active=True
+    )
+    Mapping.objects.create(
+        source_type='CATEGORY',
+        destination_type='ACCOUNT',
+        destination_id=destination_attribute.id,
+        source_id=expense_attribute.id,
+        workspace_id=workspace_id
+    )
+    configurations = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
+
+    disable_category_for_items_mapping(configurations)
+
+    with mock.patch('fyle_integrations_platform_connector.apis.Categories.sync') as mock_call:
+        mock_call.side_effect = WrongParamsError(msg='invalid params', response='invalid params')
+        disable_category_for_items_mapping(configurations)
+
+        mock_call.side_effect = FyleInvalidTokenError(msg='Invalid Token for fyle', response='Invalid Token for fyle')
+        disable_category_for_items_mapping(configurations)
+
+        mock_call.side_effect = Exception
+        disable_category_for_items_mapping(configurations)
+
+    with mock.patch('qbosdk.apis.Items.get') as mock_call:
+        mock_call.side_effect = QBOCredential.DoesNotExist
+        disable_category_for_items_mapping(configurations)
     
 
 def test_schedule_tax_groups_creation(db):
@@ -166,6 +289,35 @@ def test_create_fyle_category_payload(db):
     fyle_category_payload = create_fyle_categories_payload(qbo_attributes, 2)
     assert dict_compare_keys(fyle_category_payload[0], data['fyle_category_payload'][0]) == [], 'category upload api return diffs in keys'
 
+def test_auto_create_category_mappings_with_items(db, mocker):
+    workspace_id=4
+    WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(import_items=True)
+    mappings = Mapping.objects.filter(destination_type='ACCOUNT', source_type='CATEGORY', workspace_id=workspace_id).count()
+    assert mappings == 46
+
+    mocker.patch(
+        'qbosdk.apis.Accounts.get',
+        return_value=[]
+    )
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.Categories.sync',
+        return_value=[]
+    )
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.Categories.post_bulk',
+        return_value=[]
+    )
+    mocker.patch(
+        'qbosdk.apis.Items.get',
+        return_value=[]
+    )
+
+    response = auto_create_category_mappings(workspace_id=workspace_id)
+    assert response == []
+
+    item_count = Mapping.objects.filter(destination_type='ACCOUNT', source_type='CATEGORY', destination__display_name='Item', workspace_id=workspace_id).count()
+    assert item_count == 0
+    
 
 def test_auto_create_category_mappings(db, mocker):
     workspace_id = 3

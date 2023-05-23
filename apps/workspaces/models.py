@@ -102,6 +102,7 @@ class WorkspaceGeneralSettings(models.Model):
     employee_field_mapping = models.CharField(max_length=50, help_text='Mapping Settings ( VENDOR / EMPLOYEE )')
     map_merchant_to_vendor = models.BooleanField(help_text='Map Merchant to Vendor for CCC Expenses', default=False)
     import_categories = models.BooleanField(default=False, help_text='Auto import Categories to Fyle')
+    import_items = models.BooleanField(default=False, help_text='Auto import Items to Fyle')
     import_projects = models.BooleanField(default=False, help_text='Auto import projects to Fyle')
     import_tax_codes = models.BooleanField(default=False, help_text='Auto import tax codes to Fyle', null=True)
     change_accounting_period = models.BooleanField(default=False, help_text='Export Expense when accounting period is closed')
@@ -126,6 +127,7 @@ class WorkspaceGeneralSettings(models.Model):
     map_fyle_cards_qbo_account = models.BooleanField(default=True, help_text='Map Fyle Cards to QBO Accounts')
     skip_cards_mapping = models.BooleanField(default=False, help_text='Skip cards mapping')
     import_vendors_as_merchants = models.BooleanField(default=False, help_text='Auto import vendors from qbo as merchants to Fyle')
+    is_multi_currency_allowed = models.BooleanField(default=False, help_text='Multi Currency Allowed')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
@@ -143,6 +145,7 @@ class QBOCredential(models.Model):
     is_expired = models.BooleanField(default=False, help_text='QBO token expiry flag')
     company_name = models.CharField(max_length=255, help_text='QBO Company Name', null=True)
     country = models.CharField(max_length=255, help_text='QBO Country Name', null=True)
+    currency = models.CharField(max_length=255, help_text='QBO Currency', null=True)
     workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')
