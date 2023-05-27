@@ -1,5 +1,4 @@
 import logging
-
 from django.db.models import Q
 from datetime import datetime, timezone
 from rest_framework.response import Response
@@ -883,18 +882,15 @@ class RefreshQuickbooksDimensionView(generics.ListCreateAPIView):
 
             for mapping_setting in mapping_settings:
                 if mapping_setting.source_field == 'PROJECT':
-                    # run auto_import_and_map_fyle_fields
                     chain.append('apps.mappings.tasks.auto_import_and_map_fyle_fields', int(kwargs['workspace_id']))
                 elif mapping_setting.source_field == 'COST_CENTER':
-                    # run auto_create_cost_center_mappings
                     chain.append('apps.mappings.tasks.auto_create_cost_center_mappings', int(kwargs['workspace_id']))
                 elif mapping_setting.is_custom:
-                    # run async_auto_create_custom_field_mappings
-                    chain.append('apps.mappings.tasks.async_auto_create_custom_field_mappings', int(kwargs['workspace_id']))
-            
+                    chain.append('apps.mappings.tasks.async_auto_create_custom_field_mappings',
+                                int(kwargs['workspace_id']))
+
             if chain.length() > 0:
                 chain.run()
-
 
             quickbooks_connector.sync_dimensions()
 
