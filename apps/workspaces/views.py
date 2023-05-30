@@ -621,11 +621,11 @@ class SetupE2ETestView(viewsets.ViewSet):
                             QBOCredential.objects.update_or_create(
                                 workspace=workspace,
                                 defaults = {
-                                    'refresh_token' = qbo_connector.connection.refresh_token,
-                                    'realm_id' = healthy_token.realm_id,
-                                    'is_expired' = False,
-                                    'company_name' = healthy_token.company_name,
-                                    'country' = healthy_token.country
+                                    'refresh_token' : qbo_connector.connection.refresh_token,
+                                    'realm_id' : healthy_token.realm_id,
+                                    'is_expired' : False,
+                                    'company_name' : healthy_token.company_name,
+                                    'country' : healthy_token.country
                                 }
                             )
 
