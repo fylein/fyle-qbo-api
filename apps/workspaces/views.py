@@ -618,13 +618,15 @@ class SetupE2ETestView(viewsets.ViewSet):
                                 cursor.execute('select reset_workspace(%s)', [workspace.id])
 
                             # Store the latest healthy refresh token for the workspace
-                            QBOCredential.objects.create(
+                            QBOCredential.objects.update_or_create(
                                 workspace=workspace,
-                                refresh_token=qbo_connector.connection.refresh_token,
-                                realm_id=healthy_token.realm_id,
-                                is_expired=False,
-                                company_name=healthy_token.company_name,
-                                country=healthy_token.country
+                                defaults = {
+                                    'refresh_token' = qbo_connector.connection.refresh_token,
+                                    'realm_id' = healthy_token.realm_id,
+                                    'is_expired' = False,
+                                    'company_name' = healthy_token.company_name,
+                                    'country' = healthy_token.country
+                                }
                             )
 
                             # Sync dimension for QBO and Fyle
@@ -643,14 +645,14 @@ class SetupE2ETestView(viewsets.ViewSet):
                             workspace.save()
 
                             #insert a destination attribute
-                            # DestinationAttribute.create_or_update_destination_attribute({
-                            #     'attribute_type': 'ACCOUNT',
-                            #     'display_name': 'Account',
-                            #     'value': 'Activity',
-                            #     'destination_id': '900',
-                            #     'active': True,
-                            #     'detail': {"account_type": "Expense", "fully_qualified_name": "Activity"}
-                            # }, workspace.id)
+                            DestinationAttribute.create_or_update_destination_attribute({
+                                'attribute_type': 'ACCOUNT',
+                                'display_name': 'Account',
+                                'value': 'Activity',
+                                'destination_id': '900',
+                                'active': True,
+                                'detail': {"account_type": "Expense", "fully_qualified_name": "Activity"}
+                            }, workspace.id)
 
                             return Response(status=status.HTTP_200_OK)
 
