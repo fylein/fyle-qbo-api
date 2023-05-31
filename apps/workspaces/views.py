@@ -12,7 +12,6 @@ from rest_framework.views import status
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 
-from fyle.platform import exceptions as fyle_exc
 from qbosdk import exceptions as qbo_exc
 from qbosdk import revoke_refresh_token
 
@@ -28,12 +27,11 @@ from apps.quickbooks_online.utils import QBOConnector
 from apps.fyle.helpers import get_cluster_domain
 from fyle_accounting_mappings.models import ExpenseAttribute, DestinationAttribute
 
-from .models import Workspace, FyleCredential, QBOCredential, WorkspaceGeneralSettings, WorkspaceSchedule, \
-    LastExportDetail
+from .models import Workspace, FyleCredential, QBOCredential, WorkspaceGeneralSettings, LastExportDetail
 from .utils import generate_qbo_refresh_token, create_or_update_general_settings
-from .tasks import schedule_sync, run_sync_schedule, export_to_qbo
-from .serializers import WorkspaceSerializer, FyleCredentialSerializer, QBOCredentialSerializer, \
-    WorkSpaceGeneralSettingsSerializer, WorkspaceScheduleSerializer, LastExportDetailSerializer
+from .tasks import export_to_qbo
+from .serializers import WorkspaceSerializer, QBOCredentialSerializer, \
+    WorkSpaceGeneralSettingsSerializer, LastExportDetailSerializer
 from .signals import post_delete_qbo_connection
 from .permissions import IsAuthenticatedForTest
 
