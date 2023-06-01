@@ -1,5 +1,4 @@
 import logging
-
 from django.db.models import Q
 from datetime import datetime, timezone
 from rest_framework.response import Response
@@ -7,6 +6,8 @@ from rest_framework.views import status
 from rest_framework import generics
 
 from qbosdk.exceptions import WrongParamsError, InvalidTokenError
+
+from django_q.tasks import Chain
 
 from fyle_accounting_mappings.models import DestinationAttribute, MappingSetting
 from fyle_accounting_mappings.serializers import DestinationAttributeSerializer
@@ -875,6 +876,22 @@ class RefreshQuickbooksDimensionView(generics.ListCreateAPIView):
         try:
             quickbooks_credentials = QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
             quickbooks_connector = QBOConnector(quickbooks_credentials, workspace_id=kwargs['workspace_id'])
+
+            mapping_settings = MappingSetting.objects.filter(workspace_id=kwargs['workspace_id'], import_to_fyle=True)
+            chain = Chain()
+
+            for mapping_setting in mapping_settings:
+                if mapping_setting.source_field == 'PROJECT':
+                    chain.append('apps.mappings.tasks.auto_import_and_map_fyle_fields', int(kwargs['workspace_id']))
+                elif mapping_setting.source_field == 'COST_CENTER':
+                    chain.append('apps.mappings.tasks.auto_create_cost_center_mappings', int(kwargs['workspace_id']))
+                elif mapping_setting.is_custom:
+                    chain.append('apps.mappings.tasks.async_auto_create_custom_field_mappings',
+                                int(kwargs['workspace_id']))
+
+            if chain.length() > 0:
+                chain.run()
+
             quickbooks_connector.sync_dimensions()
 
             workspace = Workspace.objects.get(id=kwargs['workspace_id'])

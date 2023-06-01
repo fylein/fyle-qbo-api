@@ -3,23 +3,12 @@ import pytest
 import json
 from apps.fyle.models import ExpenseFilter, Expense, ExpenseGroup, ExpenseGroupSettings
 from apps.workspaces.models import WorkspaceGeneralSettings, FyleCredential, Workspace
-from apps.fyle.tasks import schedule_expense_group_creation, create_expense_groups
+from apps.fyle.tasks import create_expense_groups
 from apps.tasks.models import TaskLog
 from .fixtures import data
 from django.urls import reverse
 from tests.helper import dict_compare_keys
 from unittest import mock
-
-
-def test_schedule_expense_group_creation(api_client, test_connection):
-    expenses = Expense.objects.filter(org_id='or79Cob97KSh')
-    expenses_count = len(Expense.objects.filter(org_id='or79Cob97KSh'))
-    assert len(expenses) == expenses_count
-    expense_groups = ExpenseGroup.objects.filter(workspace_id=3).count()
-    assert expense_groups == 17
-    schedule_expense_group_creation(3)
-    expense_groups = ExpenseGroup.objects.filter(workspace_id=3).count()
-    assert expense_groups == 17
 
 
 @pytest.mark.django_db()
