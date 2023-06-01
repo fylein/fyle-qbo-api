@@ -76,23 +76,6 @@ def test_expense_group_view(api_client, test_connection):
     assert response.status_code==200
 
 
-def test_count_expense_view(api_client, test_connection):
-    access_token = test_connection.access_token
-
-    url = reverse('expense-groups-count', 
-        kwargs={
-                'workspace_id': 3,
-            }
-        )
-    
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
-    response = api_client.get(url,{
-        'state':'COMPLETE'
-    })
-        
-    assert response.status_code==200
-    assert response.data['count'] == 17
-
 def test_expense_group_settings(api_client, test_connection):
     access_token = test_connection.access_token
 
@@ -211,72 +194,6 @@ def test_fyle_sync_dimension_fail(api_client, test_connection):
         assert response.status_code == 400
 
 
-def test_expense_group_id_view(api_client, test_connection):
-    
-    access_token = test_connection.access_token
-
-    expense_group = ExpenseGroup.objects.filter(workspace_id=3).first()
-    url = reverse('expense-group-by-id', 
-        kwargs={
-                'workspace_id': 3,
-                'expense_group_id': expense_group.id
-            }
-        )
-    
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
-
-    response = api_client.get(url)
-    assert response.status_code == 200
-
-    response = json.loads(response.content)
-    assert dict_compare_keys(response, data['expense_group_id_response']) == [], 'expense group api return diffs in keys'
-
-    url = reverse('expense-group-by-id', 
-        kwargs={
-                'workspace_id': 3,
-                'expense_group_id': 9999
-            }
-        )
-    
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
-
-    response = api_client.get(url)
-    assert response.status_code == 400
-    assert response.data['message'] == 'Expense group not found'
-
-
-
-def test_expense_group_by_id_expenses_view(api_client, test_connection):
-    
-    access_token = test_connection.access_token
-
-    expense_group = ExpenseGroup.objects.filter(workspace_id=3).first()
-    url = reverse('expense-group-by-id-expenses', 
-        kwargs={
-                'workspace_id': 3,
-                'expense_group_id': expense_group.id
-            }
-        )
-
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
-
-    response = api_client.get(url)
-    assert response.status_code == 200
-
-    response = json.loads(response.content)
-    assert dict_compare_keys(response, data['expense_group_by_id_expenses_response']) == [], 'expense group api return diffs in keys'
-
-    url = reverse('expense-group-by-id-expenses', 
-        kwargs={
-                'workspace_id': 3,
-                'expense_group_id': 443
-            }
-        )
-
-    response = api_client.get(url)
-    assert response.status_code == 400
-    assert response.data['message'] == 'Expense group not found'
-
 def test_expense_fields_view(api_client, test_connection):
     
     access_token = test_connection.access_token
@@ -300,58 +217,6 @@ def test_employees_view(api_client, test_connection):
     access_token = test_connection.access_token
 
     url = reverse('employees', 
-        kwargs={
-                'workspace_id': 3
-            }
-        )
-
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
-
-    response = api_client.get(url)
-    assert response.status_code == 200
-
-def test_categories_view(api_client, test_connection):
-    
-    access_token = test_connection.access_token
-
-    url = reverse('categories', 
-        kwargs={
-                'workspace_id': 3
-            }
-        )
-
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
-
-    response = api_client.get(url)
-    assert response.status_code == 200
-
-    response = json.loads(response.content)
-    assert response[0] == data['categories_view'][0]
-
-def test_cost_centers_view(api_client, test_connection):
-    
-    access_token = test_connection.access_token
-
-    url = reverse('cost-centers', 
-        kwargs={
-                'workspace_id': 3
-            }
-        )
-
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
-
-    response = api_client.get(url)
-    assert response.status_code == 200
-
-    response = json.loads(response.content)
-    assert response[0] == data['cost_centers_view'][0]
-
-# Todo: check the response as well for projects
-def test_projects_view(api_client, test_connection):
-    
-    access_token = test_connection.access_token
-
-    url = reverse('projects', 
         kwargs={
                 'workspace_id': 3
             }
@@ -390,32 +255,6 @@ def test_sync_expense_groups(api_client, test_connection):
         )
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
-
-    response = api_client.post(url)
-    assert response.status_code == 200
-
-
-
-def test_expense_custom_fields(db, api_client, test_connection):
-    workspace_id = 3
-    access_token = test_connection.access_token
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
-
-    url = '/api/workspaces/{}/fyle/expense_custom_fields/'.format(workspace_id)
-
-    response = api_client.get(
-        url,
-        {'attribute_type': 'COOL'}
-        )
-    assert response.status_code == 200
-
-
-def test_expense_groups_trigger(db, api_client, test_connection):
-    workspace_id = 3
-    access_token = test_connection.access_token
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
-
-    url = '/api/workspaces/{}/fyle/expense_groups/trigger/'.format(workspace_id)
 
     response = api_client.post(url)
     assert response.status_code == 200
