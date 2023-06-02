@@ -25,7 +25,7 @@ def handle_exceptions(task_name):
                 return func(workspace_id, *args)
             except InvalidTokenError:
                 error['message'] = 'Invalid Fyle refresh token'
-            
+
             except QBOCredential.DoesNotExist:
                 error['message'] = 'QBO credentials not found'
 
@@ -41,7 +41,7 @@ def handle_exceptions(task_name):
             except requests.exceptions.HTTPError as exception:
                 error['message'] = 'Gateway Time-out for netsuite (HTTPError - %s)'.format(exception.code)
                 error['response'] = exception.__dict__
-						
+
             except QBOWrongParamsError as exception:
                 error['message'] = 'QBO token expired'
                 error['response'] = exception.__dict__

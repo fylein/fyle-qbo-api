@@ -16,12 +16,12 @@ from fyle_integrations_platform_connector import PlatformConnector
 from fyle_accounting_mappings.models import MappingSetting, Mapping, DestinationAttribute, ExpenseAttribute,\
     EmployeeMapping
 
-from .exceptions import handle_exceptions
 from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.utils import QBOConnector
 from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGeneralSettings
 from apps.tasks.models import Error
 
+from .exceptions import handle_exceptions
 from .constants import FYLE_EXPENSE_SYSTEM_FIELDS
 
 logger = logging.getLogger(__name__)
@@ -85,57 +85,32 @@ def remove_duplicates(qbo_attributes: List[DestinationAttribute]):
 
     return unique_attributes
 
-def disable_category_for_items_mapping(configuration: WorkspaceGeneralSettings):
+@handle_exceptions(task_name='Disable Category for Items Mapping')
+def disable_category_for_items_mapping(workspace_id: int):
     """
     Disable Category for Items Mapping
-    :param configuration: Workspace General Settings
+    :param workspacr_id: Workspace Id
     :return: None
     """
+    fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
+    platform = PlatformConnector(fyle_credentials)
+    platform.categories.sync()
 
-    try:
-        workspace_id = configuration.workspace_id
+    qbo_credentials: QBOCredential = QBOCredential.get_active_qbo_credentials(workspace_id)
+    qbo_connection = QBOConnector(
+        credentials_object=qbo_credentials,
+        workspace_id=workspace_id
+    )
+    qbo_connection.sync_items()
 
-        fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
-        platform = PlatformConnector(fyle_credentials)
+    category_ids_to_be_disabled = disable_or_enable_expense_attributes('CATEGORY', 'ACCOUNT', workspace_id, display_name='Item')
+    if category_ids_to_be_disabled:
+        expense_attributes = ExpenseAttribute.objects.filter(id__in=category_ids_to_be_disabled)
+        fyle_payload: List[Dict] = create_fyle_categories_payload(categories=[],
+            workspace_id=workspace_id, updated_categories=expense_attributes)
+
+        platform.categories.post_bulk(fyle_payload)
         platform.categories.sync()
-
-        qbo_credentials: QBOCredential = QBOCredential.get_active_qbo_credentials(workspace_id)
-        qbo_connection = QBOConnector(
-            credentials_object=qbo_credentials,
-            workspace_id=workspace_id
-        )
-        qbo_connection.sync_items()
-
-        category_ids_to_be_disabled = disable_or_enable_expense_attributes('CATEGORY', 'ACCOUNT', workspace_id, display_name='Item')
-        if category_ids_to_be_disabled:
-            expense_attributes = ExpenseAttribute.objects.filter(id__in=category_ids_to_be_disabled)
-            fyle_payload: List[Dict] = create_fyle_categories_payload(categories=[],
-                workspace_id=workspace_id, updated_categories=expense_attributes)
-
-            platform.categories.post_bulk(fyle_payload)
-            platform.categories.sync()
-
-    except QBOCredential.DoesNotExist:
-        logger.info('QBO credentials not found workspace_id - %s', workspace_id)
-    
-    except FyleInvalidTokenError:
-        logger.info('Invalid Token for fyle')
-
-    except WrongParamsError as exception:
-        logger.error( 'Error while disabling categories workspace_id - %s in Fyle %s %s', workspace_id, exception.message, {'error': exception.response} )
-
-    except (QBOWrongParamsError, InvalidTokenError):
-        logger.info('QBO token expired workspace_id - %s', workspace_id)
-
-    except Exception:
-        error = traceback.format_exc()
-        error = {
-            'error': error
-        }
-        logger.exception(
-            'Error while disabling categories workspace_id - %s error: %s',
-            workspace_id, error
-        )
 
 def disable_or_enable_expense_attributes(source_field: str, destination_field: str, workspace_id: int, display_name:str=None):
     """

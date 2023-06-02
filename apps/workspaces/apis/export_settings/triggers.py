@@ -22,4 +22,4 @@ class ExportSettingsTrigger:
             # Disable category for items mapping and set import-items to flase
             workspace_general_settings.import_items = False
             workspace_general_settings.save()
-            async_task('apps.mappings.tasks.disable_category_for_items_mapping', workspace_general_settings)
+            async_task('apps.mappings.tasks.disable_category_for_items_mapping', self.__workspace_id)
