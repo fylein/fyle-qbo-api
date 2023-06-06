@@ -34,6 +34,7 @@ from .serializers import WorkspaceSerializer, QBOCredentialSerializer, \
     WorkSpaceGeneralSettingsSerializer, LastExportDetailSerializer
 from .signals import post_delete_qbo_connection
 from .permissions import IsAuthenticatedForTest
+from apps.view_exceptions import handle_view_exceptions
 
 from apps.fyle.models import ExpenseGroupSettings
 
@@ -106,25 +107,18 @@ class WorkspaceView(viewsets.ViewSet):
             status=status.HTTP_200_OK
         )
 
+    @handle_view_exceptions(task_name="Get Workspace By Id")
     def get_by_id(self, request, **kwargs):
         """
         Get Workspace by id
         """
-        try:
-            user = User.objects.get(user_id=request.user)
-            workspace = Workspace.objects.get(pk=kwargs['workspace_id'], user=user)
+        user = User.objects.get(user_id=request.user)
+        workspace = Workspace.objects.get(pk=kwargs['workspace_id'], user=user)
 
-            return Response(
-                data=WorkspaceSerializer(workspace).data if workspace else {},
-                status=status.HTTP_200_OK
-            )
-        except Workspace.DoesNotExist:
-            return Response(
-                data={
-                    'message': 'Workspace with this id does not exist'
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        return Response(
+            data=WorkspaceSerializer(workspace).data if workspace else {},
+            status=status.HTTP_200_OK
+        )
 
     def patch(self, request, **kwargs):
         """
@@ -258,24 +252,17 @@ class ConnectQBOView(viewsets.ViewSet):
             'message': 'QBO Refresh Token deleted'
         })
 
+    @handle_view_exceptions(task_name="Get QBO credentials in Workspace")
     def get(self, request, **kwargs):
         """
         Get QBO Credentials in Workspace
         """
-        try:
-            qbo_credentials = QBOCredential.objects.get(workspace=kwargs['workspace_id'], is_expired=False)
+        qbo_credentials = QBOCredential.objects.get(workspace=kwargs['workspace_id'], is_expired=False)
 
-            return Response(
-                data=QBOCredentialSerializer(qbo_credentials).data,
-                status=status.HTTP_200_OK if qbo_credentials.refresh_token else status.HTTP_400_BAD_REQUEST
-            )
-        except QBOCredential.DoesNotExist:
-            return Response(
-                data={
-                    'message': 'QBO Credentials not found in this workspace'
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        return Response(
+            data=QBOCredentialSerializer(qbo_credentials).data,
+            status=status.HTTP_200_OK if qbo_credentials.refresh_token else status.HTTP_400_BAD_REQUEST
+        )
 
 
 class GeneralSettingsView(viewsets.ViewSet):
@@ -301,23 +288,16 @@ class GeneralSettingsView(viewsets.ViewSet):
             status=status.HTTP_200_OK
         )
 
+    @handle_view_exceptions(task_name="Get workspace general settings")
     def get(self, request, *args, **kwargs):
         """
         Get workspace general settings
         """
-        try:
-            general_settings = self.queryset.get(workspace_id=kwargs['workspace_id'])
-            return Response(
-                data=self.serializer_class(general_settings).data,
-                status=status.HTTP_200_OK
-            )
-        except WorkspaceGeneralSettings.DoesNotExist:
-            return Response(
-                {
-                    'message': 'General Settings does not exist in workspace'
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        general_settings = self.queryset.get(workspace_id=kwargs['workspace_id'])
+        return Response(
+            data=self.serializer_class(general_settings).data,
+            status=status.HTTP_200_OK
+        )
 
     def patch(self, request, **kwargs):
         """

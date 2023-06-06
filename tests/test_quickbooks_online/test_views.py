@@ -260,5 +260,5 @@ def test_post_refresh_dimensions(api_client, test_connection):
     assert response.status_code == 400
     response = json.loads(response.content)
 
-    assert response['message'] == 'Quickbooks Credentials not found / expired in workspace'
+    assert response['message'] == 'QBO credentials not found in workspace'
     

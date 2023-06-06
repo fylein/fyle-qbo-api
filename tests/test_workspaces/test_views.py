@@ -193,7 +193,7 @@ def test_get_qbo_credentials_view(api_client, test_connection):
     response = api_client.get(url)
     response = json.loads(response.content)
 
-    assert response['message'] == 'QBO Credentials not found in this workspace'
+    assert response['message'] == 'QBO credentials not found in workspace'
 
 
 def test_post_connect_qbo_view(mocker, api_client, test_connection):
