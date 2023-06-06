@@ -10,7 +10,6 @@ from django_q.tasks import Chain
 from django_q.models import Schedule
 
 from qbosdk.exceptions import WrongParamsError, InvalidTokenError
-from .exceptions import handle_export_exceptions, handle_quickbooks_error
 
 from fyle_accounting_mappings.models import Mapping, ExpenseAttribute, DestinationAttribute, EmployeeMapping
 from fyle_integrations_platform_connector import PlatformConnector
@@ -25,6 +24,7 @@ from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGener
 from .models import Bill, BillLineitem, Cheque, ChequeLineitem, CreditCardPurchase, CreditCardPurchaseLineitem, \
     JournalEntry, JournalEntryLineitem, BillPayment, BillPaymentLineitem, QBOExpense, QBOExpenseLineitem
 from .utils import QBOConnector
+from .exceptions import handle_export_exceptions, handle_quickbooks_error
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -616,7 +616,7 @@ def create_cheque(expense_group, task_log_id, last_export: bool):
         return
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
-    
+
     qbo_credentials = QBOCredential.get_active_qbo_credentials(expense_group.workspace_id)
 
     qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
@@ -703,11 +703,11 @@ def create_qbo_expense(expense_group, task_log_id, last_export: bool):
         return
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
-    
+
     qbo_credentials = QBOCredential.get_active_qbo_credentials(expense_group.workspace_id)
 
     qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
-    
+
     if expense_group.fund_source == 'PERSONAL':
         if general_settings.auto_map_employees and general_settings.auto_create_destination_entity:
             create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
@@ -742,7 +742,6 @@ def create_qbo_expense(expense_group, task_log_id, last_export: bool):
 
     load_attachments(qbo_connection, created_qbo_expense['Purchase']['Id'], 'Purchase', expense_group)
 
-    
     if last_export:
         update_last_export_details(expense_group.workspace_id)
 
@@ -800,7 +799,6 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id, last_e
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
-    
     qbo_credentials = QBOCredential.get_active_qbo_credentials(expense_group.workspace_id)
 
     qbo_connection = QBOConnector(qbo_credentials, int(expense_group.workspace_id))
@@ -898,7 +896,6 @@ def create_journal_entry(expense_group, task_log_id, last_export: bool):
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
-    
     qbo_credentials = QBOCredential.get_active_qbo_credentials(expense_group.workspace_id)
 
     qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
@@ -934,7 +931,6 @@ def create_journal_entry(expense_group, task_log_id, last_export: bool):
 
     load_attachments(qbo_connection, created_journal_entry['JournalEntry']['Id'], 'JournalEntry', expense_group)
 
-    
     if last_export:
         update_last_export_details(expense_group.workspace_id)
 

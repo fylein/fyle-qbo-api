@@ -4,7 +4,7 @@ import json
 
 from apps.workspaces.models import QBOCredential, FyleCredential
 from fyle_qbo_api.exceptions import BulkError
-import requests
+
 from apps.tasks.models import TaskLog, Error
 from apps.fyle.models import ExpenseGroup
 from qbosdk.exceptions import WrongParamsError, InvalidTokenError
@@ -79,7 +79,7 @@ def handle_export_exceptions(task_name):
                 }
                 task_log.status = 'FAILED'
                 task_log.save()
-						
+		
             except QBOCredential.DoesNotExist:
                 logger.info(
                     'QBO Account not connected / token expired for workspace_id %s / expense group %s',
@@ -94,13 +94,13 @@ def handle_export_exceptions(task_name):
                 task_log.detail = detail
 
                 task_log.save()
-            
+
             except InvalidTokenError:
                 error['message'] = 'Invalid Fyle refresh token'
 
             except WrongParamsError as exception:
                 handle_quickbooks_error(exception, expense_group, task_log, 'Bill')
-				
+
             except BulkError as exception:
                 logger.info(exception.response)
                 detail = exception.response
@@ -115,7 +115,8 @@ def handle_export_exceptions(task_name):
                 }
                 task_log.status = 'FATAL'
                 task_log.save()
-                logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
+                logger.error('Something unexpected happened workspace_id: %s %s', 
+                             task_log.workspace_id, task_log.detail)
 
 
         return new_fn
