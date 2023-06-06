@@ -12,7 +12,6 @@ from rest_framework.views import status
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 
-from fyle.platform import exceptions as fyle_exc
 from qbosdk import exceptions as qbo_exc
 from qbosdk import revoke_refresh_token
 
@@ -28,12 +27,11 @@ from apps.quickbooks_online.utils import QBOConnector
 from apps.fyle.helpers import get_cluster_domain
 from fyle_accounting_mappings.models import ExpenseAttribute, DestinationAttribute
 
-from .models import Workspace, FyleCredential, QBOCredential, WorkspaceGeneralSettings, WorkspaceSchedule, \
-    LastExportDetail
+from .models import Workspace, FyleCredential, QBOCredential, WorkspaceGeneralSettings, LastExportDetail
 from .utils import generate_qbo_refresh_token, create_or_update_general_settings
-from .tasks import schedule_sync, run_sync_schedule, export_to_qbo
-from .serializers import WorkspaceSerializer, FyleCredentialSerializer, QBOCredentialSerializer, \
-    WorkSpaceGeneralSettingsSerializer, WorkspaceScheduleSerializer, LastExportDetailSerializer
+from .tasks import export_to_qbo
+from .serializers import WorkspaceSerializer, QBOCredentialSerializer, \
+    WorkSpaceGeneralSettingsSerializer, LastExportDetailSerializer
 from .signals import post_delete_qbo_connection
 from .permissions import IsAuthenticatedForTest
 
@@ -165,111 +163,6 @@ class ReadyView(viewsets.ViewSet):
         )
 
 
-class ConnectFyleView(viewsets.ViewSet):
-    """
-    Fyle Connect Oauth View
-    """
-
-    def post(self, request, **kwargs):
-        """
-        Post of QBO Credentials
-        """
-        try:
-            authorization_code = request.data.get('code')
-
-            workspace = Workspace.objects.get(id=kwargs['workspace_id'])
-
-            tokens = auth_utils.generate_fyle_refresh_token(authorization_code)
-            refresh_token = tokens['refresh_token']
-
-            fyle_user = get_fyle_admin(tokens['access_token'], None)
-            org_name = fyle_user['data']['org']['name']
-            org_id = fyle_user['data']['org']['id']
-            org_currency = fyle_user['data']['org']['currency']
-
-            assert_valid(workspace.fyle_org_id and workspace.fyle_org_id == org_id,
-                         'Please select the correct Fyle account - {0}'.format(workspace.name))
-
-            workspace.name = org_name
-            workspace.fyle_org_id = org_id
-            workspace.fyle_currency = org_currency
-            workspace.save()
-
-            cluster_domain = get_cluster_domain(refresh_token)
-
-            fyle_credentials, _ = FyleCredential.objects.update_or_create(
-                workspace_id=kwargs['workspace_id'],
-                defaults={
-                    'refresh_token': refresh_token,
-                    'cluster_domain': cluster_domain
-                }
-            )
-
-            return Response(
-                data=FyleCredentialSerializer(fyle_credentials).data,
-                status=status.HTTP_200_OK
-            )
-        except fyle_exc.UnauthorizedClientError:
-            return Response(
-                {
-                    'message': 'Invalid Authorization Code'
-                },
-                status=status.HTTP_403_FORBIDDEN
-            )
-        except fyle_exc.NotFoundClientError:
-            return Response(
-                {
-                    'message': 'Fyle Application not found'
-                },
-                status=status.HTTP_404_NOT_FOUND
-            )
-        except fyle_exc.WrongParamsError:
-            return Response(
-                {
-                    'message': 'Some of the parameters are wrong'
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        except fyle_exc.InternalServerError:
-            return Response(
-                {
-                    'message': 'Wrong/Expired Authorization code'
-                },
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-
-    def delete(self, request, **kwargs):
-        """Delete credentials"""
-        workspace_id = kwargs['workspace_id']
-        FyleCredential.objects.filter(workspace_id=workspace_id).delete()
-
-        return Response(data={
-            'workspace_id': workspace_id,
-            'message': 'Fyle credentials deleted'
-        })
-
-    def get(self, request, **kwargs):
-        """
-        Get Fyle Credentials in Workspace
-        """
-        try:
-            workspace = Workspace.objects.get(pk=kwargs['workspace_id'])
-            fyle_credentials = FyleCredential.objects.get(workspace=workspace)
-
-            if fyle_credentials:
-                return Response(
-                    data=FyleCredentialSerializer(fyle_credentials).data,
-                    status=status.HTTP_200_OK
-                )
-        except FyleCredential.DoesNotExist:
-            return Response(
-                data={
-                    'message': 'Fyle Credentials not found in this workspace'
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-
 class ConnectQBOView(viewsets.ViewSet):
     """
     QBO Connect Oauth View
@@ -380,69 +273,6 @@ class ConnectQBOView(viewsets.ViewSet):
             return Response(
                 data={
                     'message': 'QBO Credentials not found in this workspace'
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-
-class ScheduledSyncView(viewsets.ViewSet):
-    """
-    Scheduled Sync
-    """
-
-    def post(self, request, **kwargs):
-        """
-        Scheduled sync
-        """
-        run_sync_schedule(kwargs['workspace_id'])
-        return Response(
-            status=status.HTTP_200_OK
-        )
-
-
-class ScheduleView(viewsets.ViewSet):
-    """
-    Settings View
-    """
-
-    def post(self, request, **kwargs):
-        """
-        Post Settings
-        """
-        schedule_enabled = request.data.get('schedule_enabled')
-        assert_valid(schedule_enabled is not None, 'Schedule enabled cannot be null')
-
-        hours = request.data.get('hours')
-        assert_valid(hours is not None, 'Hours cannot be left empty')
-
-        email_added = request.data.get('email_added')
-        emails_selected = request.data.get('emails_selected')
-
-        workspace_schedule_settings = schedule_sync(
-            workspace_id=kwargs['workspace_id'],
-            schedule_enabled=schedule_enabled,
-            hours=hours,
-            email_added=email_added,
-            emails_selected=emails_selected
-        )
-
-        return Response(
-            data=WorkspaceScheduleSerializer(workspace_schedule_settings).data,
-            status=status.HTTP_200_OK
-        )
-
-    def get(self, *args, **kwargs):
-        try:
-            workspace_schedule = WorkspaceSchedule.objects.get(workspace_id=kwargs['workspace_id'])
-
-            return Response(
-                data=WorkspaceScheduleSerializer(workspace_schedule).data,
-                status=status.HTTP_200_OK
-            )
-        except WorkspaceSchedule.DoesNotExist:
-            return Response(
-                data={
-                    'message': 'Workspace schedule does not exist in workspace'
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
