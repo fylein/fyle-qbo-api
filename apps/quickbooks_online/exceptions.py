@@ -72,7 +72,7 @@ def handle_export_exceptions(task_name):
             task_log = TaskLog.objects.get(id=task_log_id)
             try:
                 return func(expense_group, task_log_id, *args)
-            except FyleCredential.DoesNotExist:
+            except (FyleCredential.DoesNotExist, InvalidTokenError):
                 logger.info('Fyle credentials not found %s', expense_group.workspace_id)
                 task_log.detail = {
                     'message': 'Fyle credentials do not exist in workspace'
@@ -94,9 +94,6 @@ def handle_export_exceptions(task_name):
                 task_log.detail = detail
 
                 task_log.save()
-
-            except InvalidTokenError:
-                error['message'] = 'Invalid Fyle refresh token'
 
             except WrongParamsError as exception:
                 handle_quickbooks_error(exception, expense_group, task_log, 'Bill')
