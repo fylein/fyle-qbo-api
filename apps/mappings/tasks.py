@@ -21,7 +21,7 @@ from apps.quickbooks_online.utils import QBOConnector
 from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGeneralSettings
 from apps.tasks.models import Error
 
-from .exceptions import handle_exceptions
+from .exceptions import handle_import_exceptions
 from .constants import FYLE_EXPENSE_SYSTEM_FIELDS
 
 logger = logging.getLogger(__name__)
@@ -85,11 +85,11 @@ def remove_duplicates(qbo_attributes: List[DestinationAttribute]):
 
     return unique_attributes
 
-@handle_exceptions(task_name='Disable Category for Items Mapping')
+@handle_import_exceptions(task_name='Disable Category for Items Mapping')
 def disable_category_for_items_mapping(workspace_id: int):
     """
     Disable Category for Items Mapping
-    :param workspacr_id: Workspace Id
+    :param workspace_id: Workspace Id
     :return: None
     """
     fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
@@ -234,7 +234,7 @@ def post_projects_in_batches(platform: PlatformConnector, workspace_id: int, des
             platform.projects.post_bulk(fyle_payload)
             platform.projects.sync()
 
-@handle_exceptions(task_name='Auto Create Tax Code Mappings')
+@handle_import_exceptions(task_name='Auto Create Tax Code Mappings')
 def auto_create_tax_codes_mappings(workspace_id: int):
     """
     Create Tax Codes Mappings
@@ -255,7 +255,7 @@ def auto_create_tax_codes_mappings(workspace_id: int):
     upload_tax_groups_to_fyle(platform, workspace_id)
 
 
-@handle_exceptions(task_name='Auto Create Project Mappings')
+@handle_import_exceptions(task_name='Auto Create Project Mappings')
 def auto_create_project_mappings(workspace_id: int):
     """
     Create Project Mappings
@@ -376,7 +376,7 @@ def upload_categories_to_fyle(platform: PlatformConnector, workspace_id):
     return qbo_attributes
 
 
-@handle_exceptions(task_name='Auto Create Category Mappings')
+@handle_import_exceptions(task_name='Auto Create Category Mappings')
 def auto_create_category_mappings(workspace_id):
     """
     Create Category Mappings
@@ -595,7 +595,7 @@ def auto_map_employees(destination_type: str, employee_mapping_preference: str, 
     create_mappings_and_update_flag(mapping_creation_batch, mapping_updation_batch, update_key)
 
 
-@handle_exceptions(task_name='Async Auto Map Employees')
+@handle_import_exceptions(task_name='Async Auto Map Employees')
 def async_auto_map_employees(workspace_id: int):
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
     employee_mapping_preference = general_settings.auto_map_employees
@@ -839,7 +839,7 @@ def post_cost_centers_in_batches(platform: PlatformConnector, workspace_id: int,
         Mapping.bulk_create_mappings(paginated_qbo_attributes, 'COST_CENTER', qbo_attribute_type, workspace_id)
 
 
-@handle_exceptions(task_name='Auto Create Cost Center Mappings')
+@handle_import_exceptions(task_name='Auto Create Cost Center Mappings')
 def auto_create_cost_center_mappings(workspace_id):
     """
     Create Cost Center Mappings
@@ -980,7 +980,7 @@ def upload_attributes_to_fyle(
     return qbo_attributes
 
 
-@handle_exceptions(task_name='Auto Create Expense Fields Mappings')
+@handle_import_exceptions(task_name='Auto Create Expense Fields Mappings')
 def auto_create_expense_fields_mappings(
     workspace_id: int, qbo_attribute_type: str, fyle_attribute_type: str, source_placeholder: str = None
 ):
@@ -995,7 +995,7 @@ def auto_create_expense_fields_mappings(
         Mapping.bulk_create_mappings(fyle_attributes, fyle_attribute_type, qbo_attribute_type, workspace_id)
 
 
-@handle_exceptions(task_name='Async Auto Create Custom Fields Mappings')
+@handle_import_exceptions(task_name='Async Auto Create Custom Fields Mappings')
 def async_auto_create_custom_field_mappings(workspace_id):
     mapping_settings = MappingSetting.objects.filter(
         is_custom=True,
@@ -1061,7 +1061,7 @@ def post_merchants(platform_connection: PlatformConnector, workspace_id: int):
         platform_connection.merchants.post(fyle_payload)
         platform_connection.merchants.sync(workspace_id)
 
-@handle_exceptions(task_name='Auto Create Vendors as Merchants')
+@handle_import_exceptions(task_name='Auto Create Vendors as Merchants')
 def auto_create_vendors_as_merchants(workspace_id):
     fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
 

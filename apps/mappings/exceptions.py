@@ -1,17 +1,17 @@
 import logging
 import traceback
+import requests
 
 from qbosdk.exceptions import WrongParamsError as QBOWrongParamsError, InvalidTokenError as QBOInvalidTokenError
 from fyle.platform.exceptions import WrongParamsError, InvalidTokenError, InternalServerError
 from apps.workspaces.models import QBOCredential
-import requests
 
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
 
 
-def handle_exceptions(task_name):
+def handle_import_exceptions(task_name):
     def decorator(func):
         def new_fn(workspace_id: int, *args):
             error = {
@@ -38,15 +38,7 @@ def handle_exceptions(task_name):
                 error['message'] = 'Internal server error while importing to Fyle'
                 error['response'] = exception.__dict__
 
-            except requests.exceptions.HTTPError as exception:
-                error['message'] = 'Gateway Time-out for netsuite (HTTPError - %s)'.format(exception.code)
-                error['response'] = exception.__dict__
-
-            except QBOWrongParamsError as exception:
-                error['message'] = 'QBO token expired'
-                error['response'] = exception.__dict__
-
-            except QBOInvalidTokenError as exception:
+            except (QBOWrongParamsError, QBOInvalidTokenError) as exception:
                 error['message'] = 'QBO token expired'
                 error['response'] = exception.__dict__
 
