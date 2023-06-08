@@ -17,7 +17,7 @@ from apps.workspaces.serializers import QBOCredentialSerializer
 
 from .utils import QBOConnector
 from .tasks import create_bill_payment
-from apps.view_exceptions import handle_view_exceptions
+from apps.exceptions import handle_view_exceptions
 
 
 logger = logging.getLogger(__name__)
@@ -38,22 +38,6 @@ class VendorView(generics.ListCreateAPIView):
         return DestinationAttribute.objects.filter(
             attribute_type='VENDOR', active=True, workspace_id=self.kwargs['workspace_id']).order_by('value')[:10]
 
-    @handle_view_exceptions(task_name="Post Get Vendors from QBO")
-    def post(self, request, *args, **kwargs):
-        """
-        Get vendors from QBO
-        """
-        qbo_credentials = QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
-
-        qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
-
-        vendors = qbo_connector.sync_vendors()
-
-        return Response(
-            data=self.serializer_class(vendors, many=True).data,
-            status=status.HTTP_200_OK
-        )
-
 
 class EmployeeView(generics.ListCreateAPIView):
     """
@@ -70,7 +54,7 @@ class EmployeeView(generics.ListCreateAPIView):
         return DestinationAttribute.objects.filter(
             attribute_type='EMPLOYEE', active=True, workspace_id=self.kwargs['workspace_id']).order_by('value')[:10]
 
-    @handle_view_exceptions(task_name="Post Get Employees from QBO")
+    @handle_view_exceptions()
     def post(self, request, *args, **kwargs):
         """
         Get employees from QBO
@@ -91,21 +75,6 @@ class PreferencesView(generics.RetrieveAPIView):
     """
     Preferences View
     """
-    @handle_view_exceptions(task_name="Post Preferences View")
-    def post(self, request, **kwargs):
-        qbo_credentials = QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
-        qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
-
-        company_info = qbo_connector.get_company_info()
-        qbo_credentials.country = company_info['Country']
-        qbo_credentials.company_name = company_info['CompanyName']
-        qbo_credentials.is_expired = False
-        qbo_credentials.save()
-
-        return Response(
-            data=QBOCredentialSerializer(qbo_credentials).data,
-            status=status.HTTP_200_OK
-        )
 
     def get(self, request, *args, **kwargs):
         try:
@@ -171,7 +140,7 @@ class SyncQuickbooksDimensionView(generics.ListCreateAPIView):
     Sync Quickbooks Dimension View
     """
 
-    @handle_view_exceptions(task_name="Post Sync Quickbooks Dimension View")
+    @handle_view_exceptions()
     def post(self, request, *args, **kwargs):
         workspace = Workspace.objects.get(id=kwargs['workspace_id'])
         if workspace.destination_synced_at:
@@ -195,7 +164,7 @@ class RefreshQuickbooksDimensionView(generics.ListCreateAPIView):
     Refresh Quickbooks Dimensions view
     """
 
-    @handle_view_exceptions(task_name="Post Sync Data from QBO")
+    @handle_view_exceptions()
     def post(self, request, *args, **kwargs):
         """
         Sync data from quickbooks

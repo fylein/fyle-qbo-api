@@ -20,7 +20,7 @@ from .tasks import create_expense_groups, get_task_log_and_fund_source, \
 from .models import Expense, ExpenseGroup, ExpenseGroupSettings, ExpenseFilter
 from .serializers import ExpenseGroupSerializer, ExpenseSerializer, ExpenseFieldSerializer, \
     ExpenseGroupSettingsSerializer, ExpenseFilterSerializer, ExpenseGroupExpenseSerializer
-from apps.view_exceptions import handle_view_exceptions
+from apps.exceptions import handle_view_exceptions
 
 from .constants import DEFAULT_FYLE_CONDITIONS
 
@@ -216,7 +216,7 @@ class SyncFyleDimensionView(generics.ListCreateAPIView):
     Sync Fyle Dimensions View
     """
 
-    @handle_view_exceptions(task_name="Post Sync Data From Fyle")
+    @handle_view_exceptions()
     def post(self, request, *args, **kwargs):
         """
         Sync Data From Fyle
@@ -244,7 +244,7 @@ class RefreshFyleDimensionView(generics.ListCreateAPIView):
     Refresh Fyle Dimensions view
     """
 
-    @handle_view_exceptions(task_name="Post Sync Data From Fyle")
+    @handle_view_exceptions()
     def post(self, request, *args, **kwargs):
         """
         Sync data from Fyle

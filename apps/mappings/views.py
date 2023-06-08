@@ -9,7 +9,7 @@ from .serializers import GeneralMappingSerializer
 from .models import GeneralMapping
 from .utils import MappingUtils
 from ..workspaces.models import WorkspaceGeneralSettings
-from apps.view_exceptions import handle_view_exceptions
+from apps.exceptions import handle_view_exceptions
 
 
 
@@ -18,23 +18,15 @@ class AutoMapEmployeeView(generics.CreateAPIView):
     Auto Map Employees view
     """
 
-    @handle_view_exceptions(task_name="Post Trigger Auto Map employees")
+    @handle_view_exceptions()
     def post(self, request, *args, **kwargs):
         """
         Trigger Auto Map employees
         """
         workspace_id = kwargs['workspace_id']
-        general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+        general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id, auto_map_employees__isnull=False)
 
         chain = Chain()
-
-        if not general_settings.auto_map_employees:
-            return Response(
-                data={
-                    'message': 'Employee mapping preference not found for this workspace'
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
 
         chain.append(
             'apps.mappings.tasks.async_auto_map_employees', workspace_id)

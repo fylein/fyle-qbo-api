@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 logger.level = logging.INFO
 
 
-def handle_view_exceptions(task_name):
+def handle_view_exceptions():
     def decorator(func):
         def new_fn(*args, **kwargs):
             try:
@@ -90,6 +90,7 @@ def handle_view_exceptions(task_name):
 
 
             except QBOCredential.DoesNotExist:
+                logger.info('QBO credentials not found in workspace')
                 return Response(
                     data={
                         'message': 'QBO credentials not found in workspace'
@@ -101,7 +102,7 @@ def handle_view_exceptions(task_name):
                 logger.exception(exception)
                 return Response(
                     data={
-                        'message': 'Error in syncing/refreshing Dimensions'
+                        'message': 'An unhandled error has occurred, please re-try later'
                     },
                     status=status.HTTP_400_BAD_REQUEST
                 )

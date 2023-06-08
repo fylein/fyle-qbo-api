@@ -34,7 +34,7 @@ from .serializers import WorkspaceSerializer, QBOCredentialSerializer, \
     WorkSpaceGeneralSettingsSerializer, LastExportDetailSerializer
 from .signals import post_delete_qbo_connection
 from .permissions import IsAuthenticatedForTest
-from apps.view_exceptions import handle_view_exceptions
+from apps.exceptions import handle_view_exceptions
 
 from apps.fyle.models import ExpenseGroupSettings
 
@@ -107,7 +107,7 @@ class WorkspaceView(viewsets.ViewSet):
             status=status.HTTP_200_OK
         )
 
-    @handle_view_exceptions(task_name="Get Workspace By Id")
+    @handle_view_exceptions()
     def get_by_id(self, request, **kwargs):
         """
         Get Workspace by id
@@ -252,7 +252,7 @@ class ConnectQBOView(viewsets.ViewSet):
             'message': 'QBO Refresh Token deleted'
         })
 
-    @handle_view_exceptions(task_name="Get QBO credentials in Workspace")
+    @handle_view_exceptions()
     def get(self, request, **kwargs):
         """
         Get QBO Credentials in Workspace
@@ -288,7 +288,7 @@ class GeneralSettingsView(viewsets.ViewSet):
             status=status.HTTP_200_OK
         )
 
-    @handle_view_exceptions(task_name="Get workspace general settings")
+    @handle_view_exceptions()
     def get(self, request, *args, **kwargs):
         """
         Get workspace general settings
