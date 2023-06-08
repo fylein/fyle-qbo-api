@@ -59,16 +59,9 @@ def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: Ta
     task_log.quickbooks_errors = errors
     task_log.save()
 
-def handle_export_exceptions(task_name):
+def handle_export_exceptions():
     def decorator(func):
         def new_fn(expense_group: ExpenseGroup, task_log_id: int, *args):
-            error = {
-                'task': task_name,
-                'workspace_id': expense_group.workspace_id,
-                'alert': False,
-                'message': None,
-                'response': None
-            }
             task_log = TaskLog.objects.get(id=task_log_id)
             try:
                 return func(expense_group, task_log_id, *args)
@@ -105,7 +98,7 @@ def handle_export_exceptions(task_name):
                 task_log.detail = detail
                 task_log.save()
 
-            except Exception:
+            except Exception as error:
                 error = traceback.format_exc()
                 task_log.detail = {
                     'error': error

@@ -272,7 +272,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
             chain.run()
 
 
-@handle_export_exceptions(task_name='Create Bill')
+@handle_export_exceptions()
 def create_bill(expense_group, task_log_id, last_export: bool):
     task_log = TaskLog.objects.get(id=task_log_id)
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
@@ -606,7 +606,7 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
         if chain.length() > 1:
             chain.run()
 
-@handle_export_exceptions(task_name="Create Cheque")
+@handle_export_exceptions()
 def create_cheque(expense_group, task_log_id, last_export: bool):
     task_log = TaskLog.objects.get(id=task_log_id)
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
@@ -693,7 +693,7 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
             chain.run()
 
 
-@handle_export_exceptions(task_name="Create QBO Expense")
+@handle_export_exceptions()
 def create_qbo_expense(expense_group, task_log_id, last_export: bool):
     task_log = TaskLog.objects.get(id=task_log_id)
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
@@ -788,7 +788,7 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
             chain.run()
 
 
-@handle_export_exceptions("Create Credit Card Purchase")
+@handle_export_exceptions()
 def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id, last_export: bool):
     task_log = TaskLog.objects.get(id=task_log_id)
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
@@ -885,7 +885,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
             chain.run()
 
 
-@handle_export_exceptions("Create Journal Entry")
+@handle_export_exceptions()
 def create_journal_entry(expense_group, task_log_id, last_export: bool):
     task_log = TaskLog.objects.get(id=task_log_id)
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
