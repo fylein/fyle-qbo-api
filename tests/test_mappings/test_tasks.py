@@ -103,26 +103,26 @@ def test_disable_category_for_items_mapping(db ,mocker):
         workspace_id=workspace_id
     )
 
-    disable_category_for_items_mapping(workspace_general_setting)
+    disable_category_for_items_mapping(workspace_id)
 
     assert expense_attribute.active == False
 
     with mock.patch('fyle_integrations_platform_connector.apis.Categories.sync') as mock_call:
         mock_call.side_effect = WrongParamsError(msg='invalid params', response='invalid params')
-        disable_category_for_items_mapping(workspace_general_setting)
+        disable_category_for_items_mapping(workspace_id)
 
         mock_call.side_effect = QBOWrongParamsError(msg='invalid params', response='invalid params')
-        disable_category_for_items_mapping(workspace_general_setting)
+        disable_category_for_items_mapping(workspace_id)
 
         mock_call.side_effect = FyleInvalidTokenError(msg='Invalid Token for fyle', response='Invalid Token for fyle')
-        disable_category_for_items_mapping(workspace_general_setting)
+        disable_category_for_items_mapping(workspace_id)
 
         mock_call.side_effect = Exception
-        disable_category_for_items_mapping(workspace_general_setting)
+        disable_category_for_items_mapping(workspace_id)
 
     with mock.patch('qbosdk.apis.Items.get') as mock_call:
         mock_call.side_effect = QBOCredential.DoesNotExist
-        disable_category_for_items_mapping(workspace_general_setting)
+        disable_category_for_items_mapping(workspace_id)
 
 
 def test_disable_category_for_items_mapping(db, mocker):
@@ -163,23 +163,22 @@ def test_disable_category_for_items_mapping(db, mocker):
         source_id=expense_attribute.id,
         workspace_id=workspace_id
     )
-    configurations = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
 
-    disable_category_for_items_mapping(configurations)
+    disable_category_for_items_mapping(workspace_id)
 
     with mock.patch('fyle_integrations_platform_connector.apis.Categories.sync') as mock_call:
         mock_call.side_effect = WrongParamsError(msg='invalid params', response='invalid params')
-        disable_category_for_items_mapping(configurations)
+        disable_category_for_items_mapping(workspace_id)
 
         mock_call.side_effect = FyleInvalidTokenError(msg='Invalid Token for fyle', response='Invalid Token for fyle')
-        disable_category_for_items_mapping(configurations)
+        disable_category_for_items_mapping(workspace_id)
 
         mock_call.side_effect = Exception
-        disable_category_for_items_mapping(configurations)
+        disable_category_for_items_mapping(workspace_id)
 
     with mock.patch('qbosdk.apis.Items.get') as mock_call:
         mock_call.side_effect = QBOCredential.DoesNotExist
-        disable_category_for_items_mapping(configurations)
+        disable_category_for_items_mapping(workspace_id)
     
 
 def test_schedule_tax_groups_creation(db):
