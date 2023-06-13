@@ -320,7 +320,7 @@ def test_expenses(mocker, api_client, test_connection):
 
    url = reverse('expenses', 
       kwargs={
-         'workspace_id': 1,
+        'workspace_id': 1,
       }
    )
 

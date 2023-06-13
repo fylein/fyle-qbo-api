@@ -15,8 +15,9 @@ def test_default_fields():
 def test_create_expense_objects(db):
     payload = data['expenses']
     Expense.create_expense_objects(payload, 3)
-
-    expense = Expense.objects.last()
+    
+    expense = Expense.objects.all().order_by('id').last()
+    print(expense)
     assert expense.expense_id == 'txLAP0oIB5Yb'
 
 

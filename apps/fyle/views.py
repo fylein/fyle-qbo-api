@@ -246,20 +246,8 @@ class ExpenseView(generics.ListAPIView):
     """
 
     serializer_class = ExpenseSerializer
-
-    def get_queryset(self):
-        start_date = self.request.query_params.get('start_date')
-        end_date = self.request.query_params.get('end_date')
-        filters = {
-            'org_id': Workspace.objects.get(id=self.kwargs['workspace_id']).fyle_org_id
-        }
-        is_skipped = self.request.query_params.get('is_skipped')
-        if is_skipped == 'true':
-            filters['is_skipped'] = True
-        if start_date and end_date:
-            filters['updated_at__range'] = [start_date, end_date]
-        queryset = Expense.objects.filter(**filters).order_by('-updated_at')
-        return queryset
+    filterset_fields = {'org_id': ['exact'], 'is_skipped': ['exact'], 'updated_at': {'gte', 'lte'}}
+    queryset = Expense.objects.all()
 
 
 class CustomFieldView(generics.RetrieveAPIView):

@@ -134,6 +134,7 @@ class Expense(models.Model):
 
     class Meta:
         db_table = 'expenses'
+        ordering = ['-updated_at']
 
     @staticmethod
     def create_expense_objects(expenses: List[Dict], workspace_id: int):
