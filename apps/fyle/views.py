@@ -24,6 +24,8 @@ from .actions import get_expense_group_ids, get_expense_fields, sync_fyle_diment
 
 from .constants import DEFAULT_FYLE_CONDITIONS
 
+from django_filters.rest_framework import DjangoFilterBackend
+
 from fyle.platform import Platform
 from fyle_qbo_api import settings
 
@@ -244,10 +246,10 @@ class ExpenseView(generics.ListAPIView):
     """
     Expense view
     """
-
-    serializer_class = ExpenseSerializer
-    filterset_fields = {'org_id': ['exact'], 'is_skipped': ['exact'], 'updated_at': {'gte', 'lte'}}
     queryset = Expense.objects.all()
+    serializer_class = ExpenseSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ('org_id', 'is_skipped', 'updated_at')
 
 
 class CustomFieldView(generics.RetrieveAPIView):

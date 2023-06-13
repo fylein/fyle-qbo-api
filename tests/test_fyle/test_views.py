@@ -1,5 +1,4 @@
 import pytest
-from apps.fyle.models import ExpenseGroup
 from apps.workspaces.models import FyleCredential, Workspace
 from unittest import mock
 import json
@@ -323,6 +322,7 @@ def test_expenses(mocker, api_client, test_connection):
         'workspace_id': 1,
       }
    )
+   url = url + "?org_id=orHVw3ikkCxJ"
 
    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
