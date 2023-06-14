@@ -158,21 +158,6 @@ def test_employee_view(mocker, api_client, test_connection):
     response = json.loads(response.content)
     assert len(response) == 2
 
-    response = api_client.post(url)
-    assert response.status_code == 200
-    response = json.loads(response.content)
-
-    assert len(response) == 0
-     
-    qbo_credential = QBOCredential.get_active_qbo_credentials(3)
-    qbo_credential.delete()
-
-    response = api_client.post(url)
-    assert response.status_code == 400
-    response = json.loads(response.content)
-
-    assert response['message'] == 'QBO credentials not found in workspace'
-
 
 def test_post_sync_dimensions(api_client, test_connection):
     access_token = test_connection.access_token

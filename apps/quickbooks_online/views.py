@@ -54,22 +54,6 @@ class EmployeeView(generics.ListCreateAPIView):
         return DestinationAttribute.objects.filter(
             attribute_type='EMPLOYEE', active=True, workspace_id=self.kwargs['workspace_id']).order_by('value')[:10]
 
-    @handle_view_exceptions()
-    def post(self, request, *args, **kwargs):
-        """
-        Get employees from QBO
-        """
-        qbo_credentials = QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
-
-        qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
-
-        employees = qbo_connector.sync_employees()
-
-        return Response(
-            data=self.serializer_class(employees, many=True).data,
-            status=status.HTTP_200_OK
-        )
-
 
 class PreferencesView(generics.RetrieveAPIView):
     """
