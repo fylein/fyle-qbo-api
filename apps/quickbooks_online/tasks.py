@@ -175,27 +175,29 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
                     create=True
                 )
 
-            existing_employee_mapping = EmployeeMapping.objects.filter(
-                source_employee=source_employee
-            ).first()
+            if entity:
+                existing_employee_mapping = EmployeeMapping.objects.filter(
+                    source_employee=source_employee
+                ).first()
 
-            destination = {}
-            if existing_employee_mapping:
-                destination['destination_employee_id'] = existing_employee_mapping.destination_employee_id
-                destination['destination_card_account_id'] = existing_employee_mapping.destination_card_account_id
+                destination = {}
+                if existing_employee_mapping:
+                    destination['destination_employee_id'] = existing_employee_mapping.destination_employee_id
+                    destination['destination_card_account_id'] = existing_employee_mapping.destination_card_account_id
 
-            mapping = EmployeeMapping.create_or_update_employee_mapping(
-                source_employee_id=source_employee.id,
-                destination_vendor_id=entity.id,
-                workspace=expense_group.workspace,
-                **destination
-            )
+                mapping = EmployeeMapping.create_or_update_employee_mapping(
+                    source_employee_id=source_employee.id,
+                    destination_vendor_id=entity.id,
+                    workspace=expense_group.workspace,
+                    **destination
+                )
 
-            mapping.source_employee.auto_mapped = True
-            mapping.source_employee.save()
+                mapping.source_employee.auto_mapped = True
+                mapping.source_employee.save()
 
-            mapping.destination_vendor.auto_created = True
-            mapping.destination_vendor.save()
+                mapping.destination_vendor.auto_created = True
+                mapping.destination_vendor.save()
+                return
         except WrongParamsError as bad_request:
             logger.error(bad_request.response)
 
@@ -220,13 +222,13 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
                         }
                     )
 
-                raise BulkError('Mappings are missing', [{
-                    'row': None,
-                    'expense_group_id': expense_group.id,
-                    'value': expense_group.description.get('employee_email'),
-                    'type': 'Employee Mapping',
-                    'message': 'Employee mapping not found'
-                }])
+            raise BulkError('Mappings are missing', [{
+                'row': None,
+                'expense_group_id': expense_group.id,
+                'value': expense_group.description.get('employee_email'),
+                'type': 'Employee Mapping',
+                'message': 'Employee mapping not found'
+            }])
 
 
 def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: TaskLog, export_type: str):
