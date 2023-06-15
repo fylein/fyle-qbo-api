@@ -24,7 +24,7 @@ from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGener
 from .models import Bill, BillLineitem, Cheque, ChequeLineitem, CreditCardPurchase, CreditCardPurchaseLineitem, \
     JournalEntry, JournalEntryLineitem, BillPayment, BillPaymentLineitem, QBOExpense, QBOExpenseLineitem
 from .utils import QBOConnector
-from .exceptions import handle_export_exceptions
+from .exceptions import handle_qbo_exceptions
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -272,7 +272,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
             chain.run()
 
 
-@handle_export_exceptions()
+@handle_qbo_exceptions()
 def create_bill(expense_group, task_log_id, last_export: bool):
     task_log = TaskLog.objects.get(id=task_log_id)
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
@@ -606,7 +606,7 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
         if chain.length() > 1:
             chain.run()
 
-@handle_export_exceptions()
+@handle_qbo_exceptions()
 def create_cheque(expense_group, task_log_id, last_export: bool):
     task_log = TaskLog.objects.get(id=task_log_id)
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
@@ -693,7 +693,7 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
             chain.run()
 
 
-@handle_export_exceptions()
+@handle_qbo_exceptions()
 def create_qbo_expense(expense_group, task_log_id, last_export: bool):
     task_log = TaskLog.objects.get(id=task_log_id)
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
@@ -788,7 +788,7 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
             chain.run()
 
 
-@handle_export_exceptions()
+@handle_qbo_exceptions()
 def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id, last_export: bool):
     task_log = TaskLog.objects.get(id=task_log_id)
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
@@ -885,7 +885,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
             chain.run()
 
 
-@handle_export_exceptions()
+@handle_qbo_exceptions()
 def create_journal_entry(expense_group, task_log_id, last_export: bool):
     task_log = TaskLog.objects.get(id=task_log_id)
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
@@ -945,7 +945,7 @@ def check_expenses_reimbursement_status(expenses):
 
     return all_expenses_paid
 
-@handle_export_exceptions(bill_payment=True)
+@handle_qbo_exceptions(bill_payment=True)
 def process_bill_payments(bill: Bill, workspace_id: int, task_log: TaskLog):    
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(qbo_credentials, workspace_id)

@@ -59,16 +59,18 @@ def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: Ta
     task_log.quickbooks_errors = errors
     task_log.save()
 
-def handle_export_exceptions(bill_payment=False):
+def handle_qbo_exceptions(bill_payment=False):
     def decorator(func):
         def new_fn(*args):
             if not bill_payment:
-                task_log_id = args[1]
-                task_log = TaskLog.objects.get(id=task_log_id)
                 expense_group = args[0]
+                task_log_id = args[1]
+                last_export = args[2]
+                task_log = TaskLog.objects.get(id=task_log_id)
             else:
                 expense_group = args[0].expense_group
-                task_log=args[2]
+                workspace_id = args[1]
+                task_log = args[2]
             try:
                 return func(*args)
             except (FyleCredential.DoesNotExist, InvalidTokenError):
