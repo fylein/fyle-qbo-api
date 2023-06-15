@@ -24,7 +24,7 @@ from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGener
 from .models import Bill, BillLineitem, Cheque, ChequeLineitem, CreditCardPurchase, CreditCardPurchaseLineitem, \
     JournalEntry, JournalEntryLineitem, BillPayment, BillPaymentLineitem, QBOExpense, QBOExpenseLineitem
 from .utils import QBOConnector
-from .exceptions import handle_export_exceptions, handle_quickbooks_error
+from .exceptions import handle_export_exceptions
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -945,6 +945,40 @@ def check_expenses_reimbursement_status(expenses):
 
     return all_expenses_paid
 
+@handle_export_exceptions(bill_payment=True)
+def process_bill_payments(bill: Bill, workspace_id: int, task_log: TaskLog):    
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
+    qbo_connection = QBOConnector(qbo_credentials, workspace_id)
+
+    with transaction.atomic():
+
+        bill_payment_object = BillPayment.create_bill_payment(bill.expense_group)
+
+        qbo_object_task_log = TaskLog.objects.get(expense_group=bill.expense_group)
+
+        linked_transaction_id = qbo_object_task_log.detail['Bill']['Id']
+
+        bill_payment_lineitems_objects = BillPaymentLineitem.create_bill_payment_lineitems(
+            bill_payment_object.expense_group, linked_transaction_id
+        )
+
+        created_bill_payment = qbo_connection.post_bill_payment(
+            bill_payment_object, bill_payment_lineitems_objects
+        )
+
+        bill.payment_synced = True
+        bill.paid_on_qbo = True
+        bill.save()
+
+        task_log.detail = created_bill_payment
+        task_log.bill_payment = bill_payment_object
+        task_log.quickbooks_errors = None
+        task_log.status = 'COMPLETE'
+
+        task_log.save()
+
+                
+
 
 def create_bill_payment(workspace_id):
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
@@ -960,7 +994,7 @@ def create_bill_payment(workspace_id):
     if bills:
         for bill in bills:
             expense_group_reimbursement_status = check_expenses_reimbursement_status(
-                bill.expense_group.expenses.all())
+            bill.expense_group.expenses.all())
             if expense_group_reimbursement_status:
                 task_log, _ = TaskLog.objects.update_or_create(
                     workspace_id=workspace_id,
@@ -970,73 +1004,7 @@ def create_bill_payment(workspace_id):
                         'type': 'CREATING_BILL_PAYMENT'
                     }
                 )
-                try:
-                    qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
-                    qbo_connection = QBOConnector(qbo_credentials, workspace_id)
-
-                    with transaction.atomic():
-
-                        bill_payment_object = BillPayment.create_bill_payment(bill.expense_group)
-
-                        qbo_object_task_log = TaskLog.objects.get(expense_group=bill.expense_group)
-
-                        linked_transaction_id = qbo_object_task_log.detail['Bill']['Id']
-
-                        bill_payment_lineitems_objects = BillPaymentLineitem.create_bill_payment_lineitems(
-                            bill_payment_object.expense_group, linked_transaction_id
-                        )
-
-                        created_bill_payment = qbo_connection.post_bill_payment(
-                            bill_payment_object, bill_payment_lineitems_objects
-                        )
-
-                        bill.payment_synced = True
-                        bill.paid_on_qbo = True
-                        bill.save()
-
-                        task_log.detail = created_bill_payment
-                        task_log.bill_payment = bill_payment_object
-                        task_log.quickbooks_errors = None
-                        task_log.status = 'COMPLETE'
-
-                        task_log.save()
-
-                except (QBOCredential.DoesNotExist, InvalidTokenError):
-                    logger.info(
-                        'QBO Account not connected / token expired for workspace_id %s / expense group %s',
-                        workspace_id,
-                        bill.expense_group
-                    )
-                    detail = {
-                        'message': 'QBO Account not connected / token expired'
-                    }
-
-                    task_log.status = 'FAILED'
-                    task_log.detail = detail
-
-                    task_log.save()
-
-                except BulkError as exception:
-                    logger.info(exception.response)
-                    detail = exception.response
-                    task_log.status = 'FAILED'
-                    task_log.detail = detail
-
-                    task_log.save()
-
-                except WrongParamsError as exception:
-                    handle_quickbooks_error(exception, bill.expense_group, task_log, 'Bill Payment')
-
-                except Exception:
-                    error = traceback.format_exc()
-                    task_log.detail = {
-                        'error': error
-                    }
-                    task_log.status = 'FATAL'
-                    task_log.save()
-                    logger.error(
-                        'Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
-
+                process_bill_payments(bill, workspace_id, task_log)
 
 def schedule_bill_payment_creation(sync_fyle_to_qbo_payments, workspace_id):
     general_mappings: GeneralMapping = GeneralMapping.objects.filter(workspace_id=workspace_id).first()
