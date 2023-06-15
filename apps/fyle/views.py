@@ -18,6 +18,9 @@ from .serializers import (ExpenseGroupSerializer, ExpenseSerializer, ExpenseFiel
 from .actions import (get_expense_group_ids, get_expense_fields, sync_fyle_dimentions, refresh_fyle_dimension, 
                       get_custom_fields)
 
+from apps.exceptions import handle_view_exceptions
+
+
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
 
@@ -182,6 +185,7 @@ class SyncFyleDimensionView(generics.ListCreateAPIView):
     Sync Fyle Dimensions View
     """
 
+    @handle_view_exceptions()
     def post(self, request, *args, **kwargs):
         """
         Sync Data From Fyle
@@ -198,6 +202,7 @@ class RefreshFyleDimensionView(generics.ListCreateAPIView):
     Refresh Fyle Dimensions view
     """
 
+    @handle_view_exceptions()
     def post(self, request, *args, **kwargs):
         """
         Sync data from Fyle

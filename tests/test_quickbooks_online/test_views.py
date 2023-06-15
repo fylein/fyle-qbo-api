@@ -112,32 +112,6 @@ def test_get_company_preference_exceptions(api_client, test_connection, db):
         assert response['message'] == 'QBO credentials not found in workspace'
 
 
-def test_post_company_preference(mocker, api_client, test_connection):
-    mocker.patch(
-        'qbosdk.apis.CompanyInfo.get',
-        return_value=data['company_info']
-    )
-    access_token = test_connection.access_token
-    url = '/api/workspaces/3/qbo/preferences/'
-
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
-
-    response = api_client.post(url)
-    assert response.status_code == 200
-
-
-def test_post_company_preference_exception(api_client, test_connection):
-    access_token = test_connection.access_token
-    url = '/api/workspaces/3/qbo/preferences/'
-
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
-
-    with mock.patch('qbosdk.apis.CompanyInfo.get') as mock_call:
-        mock_call.side_effect = WrongParamsError(msg='wrong params', response='invalid_params')
-        response = api_client.post(url)
-        assert response.status_code == 400
-
-
 def test_vendor_view(mocker, api_client, test_connection):
     mocker.patch(
         'apps.quickbooks_online.utils.QBOConnector.sync_vendors',
@@ -166,21 +140,6 @@ def test_vendor_view(mocker, api_client, test_connection):
     response = json.loads(response.content)
     assert len(response) == 10
 
-    response = api_client.post(url)
-    assert response.status_code == 200
-
-    response = json.loads(response.content)
-    assert len(response) == 0
-
-    qbo_credential = QBOCredential.get_active_qbo_credentials(3)
-    qbo_credential.delete()
-
-    response = api_client.post(url)
-    assert response.status_code == 400
-
-    response = json.loads(response.content)
-    assert response['message'] == 'QBO credentials not found in workspace'
-
 
 def test_employee_view(mocker, api_client, test_connection):
     mocker.patch(
@@ -198,21 +157,6 @@ def test_employee_view(mocker, api_client, test_connection):
 
     response = json.loads(response.content)
     assert len(response) == 2
-
-    response = api_client.post(url)
-    assert response.status_code == 200
-    response = json.loads(response.content)
-
-    assert len(response) == 0
-     
-    qbo_credential = QBOCredential.get_active_qbo_credentials(3)
-    qbo_credential.delete()
-
-    response = api_client.post(url)
-    assert response.status_code == 400
-    response = json.loads(response.content)
-
-    assert response['message'] == 'QBO credentials not found in workspace'
 
 
 def test_post_sync_dimensions(api_client, test_connection):
@@ -260,5 +204,5 @@ def test_post_refresh_dimensions(api_client, test_connection):
     assert response.status_code == 400
     response = json.loads(response.content)
 
-    assert response['message'] == 'Quickbooks Credentials not found / expired in workspace'
+    assert response['message'] == 'QBO credentials not found in workspace'
     

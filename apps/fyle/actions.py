@@ -58,7 +58,7 @@ def sync_fyle_dimentions(workspace_id: int):
         workspace.save(update_fields=['source_synced_at'])
 
 def refresh_fyle_dimension(workspace_id: int):
-    fyle_credentials = FyleCredential.objects.get(workspace_id=kwargs['workspace_id'])
+    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
     platform = PlatformConnector(fyle_credentials)
 
     platform.import_fyle_dimensions(import_taxes=True)
