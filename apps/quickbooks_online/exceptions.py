@@ -65,11 +65,9 @@ def handle_qbo_exceptions(bill_payment=False):
             if not bill_payment:
                 expense_group = args[0]
                 task_log_id = args[1]
-                last_export = args[2]
                 task_log = TaskLog.objects.get(id=task_log_id)
             else:
                 expense_group = args[0].expense_group
-                workspace_id = args[1]
                 task_log = args[2]
             try:
                 return func(*args)
@@ -80,7 +78,7 @@ def handle_qbo_exceptions(bill_payment=False):
                 }
                 task_log.status = 'FAILED'
                 task_log.save()
-		
+
             except QBOCredential.DoesNotExist:
                 logger.info(
                     'QBO Account not connected / token expired for workspace_id %s / expense group %s',

@@ -979,8 +979,6 @@ def process_bill_payments(bill: Bill, workspace_id: int, task_log: TaskLog):
 
         task_log.save()
 
-                
-
 
 def create_bill_payment(workspace_id):
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
