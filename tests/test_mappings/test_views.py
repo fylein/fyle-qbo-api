@@ -20,7 +20,7 @@ def test_auto_map_employee(api_client, test_connection):
     assert response.status_code == 200
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
-    general_settings.auto_map_employees = ''
+    general_settings.auto_map_employees = None
     general_settings.save()
 
     response = api_client.post(url)
