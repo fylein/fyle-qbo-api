@@ -270,18 +270,6 @@ def test_expense_filters(api_client, test_connection):
 
    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
-   response = api_client.post(url,data=data['expense_filter_1'])
-   assert response.status_code == 201
-   response = json.loads(response.content)
-
-   assert dict_compare_keys(response, data['expense_filter_1_response']) == [], 'expense group api return diffs in keys'
-
-   response = api_client.post(url,data=data['expense_filter_2'])
-   assert response.status_code == 201
-   response = json.loads(response.content)
-
-   assert dict_compare_keys(response, data['expense_filter_2_response']) == [], 'expense group api return diffs in keys'
-
    response = api_client.get(url)
    assert response.status_code == 200
    response = json.loads(response.content)

@@ -17,7 +17,6 @@ def test_create_expense_objects(db):
     Expense.create_expense_objects(payload, 3)
     
     expense = Expense.objects.all().order_by('id').last()
-    print(expense)
     assert expense.expense_id == 'txLAP0oIB5Yb'
 
 

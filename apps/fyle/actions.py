@@ -5,6 +5,8 @@ from apps.workspaces.models import FyleCredential, Workspace
 from fyle_integrations_platform_connector import PlatformConnector
 from datetime import datetime, timezone
 
+from .constants import DEFAULT_FYLE_CONDITIONS
+
 
 def get_expense_group_ids(workspace_id: int):
     configuration = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
@@ -64,3 +66,21 @@ def refresh_fyle_dimension(workspace_id: int):
     workspace = Workspace.objects.get(id=workspace_id)
     workspace.source_synced_at = datetime.now()
     workspace.save(update_fields=['source_synced_at'])
+
+def get_custom_fields(workspace_id: int):
+    fyle_credentails = FyleCredential.objects.get(workspace_id=workspace_id)
+
+    platform = PlatformConnector(fyle_credentails)
+
+    custom_fields = platform.expense_custom_fields.list_all()
+
+    response = []
+    response.extend(DEFAULT_FYLE_CONDITIONS)
+    for custom_field in custom_fields:
+        if custom_field['type'] in ('SELECT', 'NUMBER', 'TEXT'):
+            response.append({
+                'field_name': custom_field['field_name'],
+                'type': custom_field['type'],
+                'is_custom': custom_field['is_custom']
+            })
+    return response

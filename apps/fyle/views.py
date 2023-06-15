@@ -1,33 +1,22 @@
 import logging
 
-from django.db.models import Q
-from datetime import datetime, timezone
-
 from rest_framework.views import status
 from rest_framework import generics
 from rest_framework.response import Response
+from django_filters.rest_framework import DjangoFilterBackend
 
 from fyle_accounting_mappings.models import ExpenseAttribute
 from fyle_accounting_mappings.serializers import ExpenseAttributeSerializer
 
-from fyle_integrations_platform_connector import PlatformConnector
-
-from apps.workspaces.models import FyleCredential, WorkspaceGeneralSettings, Workspace
+from apps.workspaces.models import WorkspaceGeneralSettings
 from apps.tasks.models import TaskLog
 
-from .tasks import create_expense_groups, get_task_log_and_fund_source, \
-    async_create_expense_groups
+from .tasks import create_expense_groups, get_task_log_and_fund_source, async_create_expense_groups
 from .models import Expense, ExpenseGroup, ExpenseGroupSettings, ExpenseFilter
-from .serializers import ExpenseGroupSerializer, ExpenseSerializer, ExpenseFieldSerializer, \
-    ExpenseGroupSettingsSerializer, ExpenseFilterSerializer, ExpenseGroupExpenseSerializer
-from .actions import get_expense_group_ids, get_expense_fields, sync_fyle_dimentions, refresh_fyle_dimension
-
-from .constants import DEFAULT_FYLE_CONDITIONS
-
-from django_filters.rest_framework import DjangoFilterBackend
-
-from fyle.platform import Platform
-from fyle_qbo_api import settings
+from .serializers import (ExpenseGroupSerializer, ExpenseSerializer, ExpenseFieldSerializer, 
+    ExpenseGroupSettingsSerializer, ExpenseFilterSerializer)
+from .actions import (get_expense_group_ids, get_expense_fields, sync_fyle_dimentions, refresh_fyle_dimension, 
+                      get_custom_fields)
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -220,26 +209,22 @@ class RefreshFyleDimensionView(generics.ListCreateAPIView):
             status=status.HTTP_200_OK
         )
 
-class ExpenseFilterView(generics.ListCreateAPIView, generics.DestroyAPIView):
+class ExpenseGetFilterView(generics.ListCreateAPIView):
     """
     Expense Filter view
     """
+    queryset = ExpenseFilter.objects.all()
     serializer_class = ExpenseFilterSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ('workspace_id',)
 
-    def get_queryset(self):
-        queryset = ExpenseFilter.objects.filter(workspace_id=self.kwargs['workspace_id']).order_by('rank')
-        return queryset
 
-    def delete(self, request, *args, **kwargs):
-        workspace_id = self.kwargs['workspace_id']
-        rank = self.request.query_params.getlist('rank')
-        ExpenseFilter.objects.filter(workspace_id=workspace_id, rank__in=rank).delete()
-
-        return Response(data={
-            'workspace_id': workspace_id,
-            'rank' : rank,
-            'message': 'Expense filter deleted'
-        })
+class ExpenseDeleteFilterView(generics.DestroyAPIView):
+    """
+    Expense Filter view
+    """
+    queryset = ExpenseFilter.objects.all()
+    serializer_class = ExpenseFilterSerializer
 
 
 class ExpenseView(generics.ListAPIView):
@@ -260,23 +245,7 @@ class CustomFieldView(generics.RetrieveAPIView):
         """
         Get Custom Fields
         """
-        workspace_id = self.kwargs['workspace_id']
-
-        fyle_credentails = FyleCredential.objects.get(workspace_id=workspace_id)
-
-        platform = PlatformConnector(fyle_credentails)
-
-        custom_fields = platform.expense_custom_fields.list_all()
-
-        response = []
-        response.extend(DEFAULT_FYLE_CONDITIONS)
-        for custom_field in custom_fields:
-            if custom_field['type'] in ('SELECT', 'NUMBER', 'TEXT'):
-                response.append({
-                    'field_name': custom_field['field_name'],
-                    'type': custom_field['type'],
-                    'is_custom': custom_field['is_custom']
-                })
+        response=get_custom_fields(workspace_id=self.kwargs['workspace_id'])
             
         return Response(
             data=response,
