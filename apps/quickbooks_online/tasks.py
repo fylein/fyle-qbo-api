@@ -24,6 +24,7 @@ from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGener
 from .models import Bill, BillLineitem, Cheque, ChequeLineitem, CreditCardPurchase, CreditCardPurchaseLineitem, \
     JournalEntry, JournalEntryLineitem, BillPayment, BillPaymentLineitem, QBOExpense, QBOExpenseLineitem
 from .utils import QBOConnector
+from .exceptions import handle_qbo_exceptions
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -231,52 +232,6 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
             }])
 
 
-def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: TaskLog, export_type: str):
-    logger.info(exception.response)
-    response = json.loads(exception.response)
-    if 'Fault' not in response:
-        logger.info(response)
-        if 'error' in response and response['error'] == 'invalid_grant':
-            qbo_credentials: QBOCredential = QBOCredential.objects.filter(
-                workspace_id=expense_group.workspace_id).first()
-            if qbo_credentials:
-                qbo_credentials.is_expired = True
-                qbo_credentials.refresh_token = None
-                qbo_credentials.save()
-        errors = response
-    else:
-        quickbooks_errors = response['Fault']['Error']
-
-        error_msg = 'Failed to create {0}'.format(export_type)
-        errors = []
-
-        for error in quickbooks_errors:
-            error = {
-                'expense_group_id': expense_group.id,
-                'type': '{0} / {1}'.format(response['Fault']['type'], error['code']),
-                'short_description': error['Message'] if error['Message'] else '{0} error'.format(export_type),
-                'long_description': error['Detail'] if error['Detail'] else error_msg
-            }
-            errors.append(error)
-
-            if export_type != 'Bill Payment':
-                Error.objects.update_or_create(
-                    workspace_id=expense_group.workspace_id,
-                    expense_group=expense_group,
-                    defaults={
-                        'error_title': error['type'],
-                        'type': 'QBO_ERROR',
-                        'error_detail': error['long_description'],
-                        'is_resolved': False
-                    }
-                )
-
-    task_log.status = 'FAILED'
-    task_log.detail = None
-    task_log.quickbooks_errors = errors
-    task_log.save()
-
-
 def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
     """
     Schedule bills creation
@@ -319,6 +274,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
             chain.run()
 
 
+@handle_qbo_exceptions()
 def create_bill(expense_group, task_log_id, last_export: bool):
     task_log = TaskLog.objects.get(id=task_log_id)
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
@@ -329,74 +285,38 @@ def create_bill(expense_group, task_log_id, last_export: bool):
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
-    try:
-        qbo_credentials = QBOCredential.get_active_qbo_credentials(expense_group.workspace_id)
+    
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(expense_group.workspace_id)
 
-        qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
+    qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
-        if expense_group.fund_source == 'PERSONAL' and general_settings.auto_map_employees \
-                and general_settings.auto_create_destination_entity \
-                and general_settings.auto_map_employees != 'EMPLOYEE_CODE':
-            create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
+    if expense_group.fund_source == 'PERSONAL' and general_settings.auto_map_employees \
+            and general_settings.auto_create_destination_entity \
+            and general_settings.auto_map_employees != 'EMPLOYEE_CODE':
+        create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
 
-        __validate_expense_group(expense_group, general_settings)
+    __validate_expense_group(expense_group, general_settings)
 
-        with transaction.atomic():
-            bill_object = Bill.create_bill(expense_group)
+    with transaction.atomic():
+        bill_object = Bill.create_bill(expense_group)
 
-            bill_lineitems_objects = BillLineitem.create_bill_lineitems(expense_group, general_settings)
+        bill_lineitems_objects = BillLineitem.create_bill_lineitems(expense_group, general_settings)
 
-            created_bill = qbo_connection.post_bill(bill_object, bill_lineitems_objects)
+        created_bill = qbo_connection.post_bill(bill_object, bill_lineitems_objects)
 
-            task_log.detail = created_bill
-            task_log.bill = bill_object
-            task_log.quickbooks_errors = None
-            task_log.status = 'COMPLETE'
-            task_log.save()
-
-            expense_group.exported_at = datetime.now()
-            expense_group.response_logs = created_bill
-            expense_group.save()
-
-            resolve_errors_for_exported_expense_group(expense_group)
-
-        load_attachments(qbo_connection, created_bill['Bill']['Id'], 'Bill', expense_group)
-
-    except (QBOCredential.DoesNotExist, InvalidTokenError):
-        logger.info(
-            'QBO Account not connected / token expired for workspace_id %s / expense group %s',
-            expense_group.workspace_id,
-            expense_group.id
-        )
-        detail = {
-            'expense_group_id': expense_group.id,
-            'message': 'QBO Account not connected / token expired'
-        }
-        task_log.status = 'FAILED'
-        task_log.detail = detail
-
+        task_log.detail = created_bill
+        task_log.bill = bill_object
+        task_log.quickbooks_errors = None
+        task_log.status = 'COMPLETE'
         task_log.save()
 
-    except BulkError as exception:
-        logger.info(exception.response)
-        detail = exception.response
-        task_log.status = 'FAILED'
-        task_log.detail = detail
+        expense_group.exported_at = datetime.now()
+        expense_group.response_logs = created_bill
+        expense_group.save()
 
-        task_log.save()
+        resolve_errors_for_exported_expense_group(expense_group)
 
-    except WrongParamsError as exception:
-        handle_quickbooks_error(exception, expense_group, task_log, 'Bill')
-
-
-    except Exception:
-        error = traceback.format_exc()
-        task_log.detail = {
-            'error': error
-        }
-        task_log.status = 'FATAL'
-        task_log.save()
-        logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
+    load_attachments(qbo_connection, created_bill['Bill']['Id'], 'Bill', expense_group)
 
     if last_export:
         update_last_export_details(expense_group.workspace_id)
@@ -688,7 +608,7 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
         if chain.length() > 1:
             chain.run()
 
-
+@handle_qbo_exceptions()
 def create_cheque(expense_group, task_log_id, last_export: bool):
     task_log = TaskLog.objects.get(id=task_log_id)
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
@@ -698,72 +618,37 @@ def create_cheque(expense_group, task_log_id, last_export: bool):
         return
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
-    try:
-        qbo_credentials = QBOCredential.get_active_qbo_credentials(expense_group.workspace_id)
 
-        qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(expense_group.workspace_id)
 
-        if general_settings.auto_map_employees and general_settings.auto_create_destination_entity:
-            create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
+    qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
-        __validate_expense_group(expense_group, general_settings)
+    if general_settings.auto_map_employees and general_settings.auto_create_destination_entity:
+        create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
 
-        with transaction.atomic():
-            cheque_object = Cheque.create_cheque(expense_group)
+    __validate_expense_group(expense_group, general_settings)
 
-            cheque_line_item_objects = ChequeLineitem.create_cheque_lineitems(expense_group, general_settings)
+    with transaction.atomic():
+        cheque_object = Cheque.create_cheque(expense_group)
 
-            created_cheque = qbo_connection.post_cheque(cheque_object, cheque_line_item_objects)
+        cheque_line_item_objects = ChequeLineitem.create_cheque_lineitems(expense_group, general_settings)
 
-            task_log.detail = created_cheque
-            task_log.cheque = cheque_object
-            task_log.quickbooks_errors = None
-            task_log.status = 'COMPLETE'
+        created_cheque = qbo_connection.post_cheque(cheque_object, cheque_line_item_objects)
 
-            task_log.save()
+        task_log.detail = created_cheque
+        task_log.cheque = cheque_object
+        task_log.quickbooks_errors = None
+        task_log.status = 'COMPLETE'
 
-            expense_group.exported_at = datetime.now()
-            expense_group.response_logs = created_cheque
-            expense_group.save()
+        task_log.save()
 
-            resolve_errors_for_exported_expense_group(expense_group)
+        expense_group.exported_at = datetime.now()
+        expense_group.response_logs = created_cheque
+        expense_group.save()
+
+        resolve_errors_for_exported_expense_group(expense_group)
 
         load_attachments(qbo_connection, created_cheque['Purchase']['Id'], 'Purchase', expense_group)
-
-    except (QBOCredential.DoesNotExist, InvalidTokenError):
-        logger.info(
-            'QBO Account not connected / token expired for workspace_id %s / expense group %s',
-            expense_group.workspace_id,
-            expense_group.id
-        )
-        detail = {
-            'expense_group_id': expense_group.id,
-            'message': 'QBO Account not connected / token expired'
-        }
-        task_log.status = 'FAILED'
-        task_log.detail = detail
-
-        task_log.save()
-
-    except BulkError as exception:
-        logger.info(exception.response)
-        detail = exception.response
-        task_log.status = 'FAILED'
-        task_log.detail = detail
-
-        task_log.save()
-
-    except WrongParamsError as exception:
-        handle_quickbooks_error(exception, expense_group, task_log, 'Check')
-
-    except Exception:
-        error = traceback.format_exc()
-        task_log.detail = {
-            'error': error
-        }
-        task_log.status = 'FATAL'
-        task_log.save()
-        logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
 
     if last_export:
         update_last_export_details(expense_group.workspace_id)
@@ -810,6 +695,7 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
             chain.run()
 
 
+@handle_qbo_exceptions()
 def create_qbo_expense(expense_group, task_log_id, last_export: bool):
     task_log = TaskLog.objects.get(id=task_log_id)
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
@@ -819,79 +705,44 @@ def create_qbo_expense(expense_group, task_log_id, last_export: bool):
         return
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
-    try:
-        qbo_credentials = QBOCredential.get_active_qbo_credentials(expense_group.workspace_id)
 
-        qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
-        
-        if expense_group.fund_source == 'PERSONAL':
-            if general_settings.auto_map_employees and general_settings.auto_create_destination_entity:
-                create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(expense_group.workspace_id)
 
-        else:
-            merchant = expense_group.expenses.first().vendor
-            get_or_create_credit_card_or_debit_card_vendor(expense_group.workspace_id, merchant, True, general_settings)
+    qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
-        __validate_expense_group(expense_group, general_settings)
+    if expense_group.fund_source == 'PERSONAL':
+        if general_settings.auto_map_employees and general_settings.auto_create_destination_entity:
+            create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
 
-        with transaction.atomic():
-            qbo_expense_object = QBOExpense.create_qbo_expense(expense_group)
+    else:
+        merchant = expense_group.expenses.first().vendor
+        get_or_create_credit_card_or_debit_card_vendor(expense_group.workspace_id, merchant, True, general_settings)
 
-            qbo_expense_line_item_objects = QBOExpenseLineitem.create_qbo_expense_lineitems(
-                expense_group, general_settings
-            )
+    __validate_expense_group(expense_group, general_settings)
 
-            created_qbo_expense = qbo_connection.post_qbo_expense(qbo_expense_object, qbo_expense_line_item_objects)
+    with transaction.atomic():
+        qbo_expense_object = QBOExpense.create_qbo_expense(expense_group)
 
-            task_log.detail = created_qbo_expense
-            task_log.qbo_expense = qbo_expense_object
-            task_log.quickbooks_errors = None
-            task_log.status = 'COMPLETE'
-
-            task_log.save()
-
-            expense_group.exported_at = datetime.now()
-            expense_group.response_logs = created_qbo_expense
-            expense_group.save()
-
-            resolve_errors_for_exported_expense_group(expense_group)
-
-        load_attachments(qbo_connection, created_qbo_expense['Purchase']['Id'], 'Purchase', expense_group)
-
-    except (QBOCredential.DoesNotExist, InvalidTokenError):
-        logger.info(
-            'QBO Account not connected / token expired for workspace_id %s / expense group %s',
-            expense_group.workspace_id,
-            expense_group.id
+        qbo_expense_line_item_objects = QBOExpenseLineitem.create_qbo_expense_lineitems(
+            expense_group, general_settings
         )
-        detail = {
-            'expense_group_id': expense_group.id,
-            'message': 'QBO Account not connected / token expired'
-        }
-        task_log.status = 'FAILED'
-        task_log.detail = detail
+
+        created_qbo_expense = qbo_connection.post_qbo_expense(qbo_expense_object, qbo_expense_line_item_objects)
+
+        task_log.detail = created_qbo_expense
+        task_log.qbo_expense = qbo_expense_object
+        task_log.quickbooks_errors = None
+        task_log.status = 'COMPLETE'
 
         task_log.save()
 
-    except BulkError as exception:
-        logger.info(exception.response)
-        detail = exception.response
-        task_log.status = 'FAILED'
-        task_log.detail = detail
+        expense_group.exported_at = datetime.now()
+        expense_group.response_logs = created_qbo_expense
+        expense_group.save()
 
-        task_log.save()
+        resolve_errors_for_exported_expense_group(expense_group)
 
-    except WrongParamsError as exception:
-        handle_quickbooks_error(exception, expense_group, task_log, 'Expense')
-
-    except Exception:
-        error = traceback.format_exc()
-        task_log.detail = {
-            'error': error
-        }
-        task_log.status = 'FATAL'
-        task_log.save()
-        logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
+    load_attachments(qbo_connection, created_qbo_expense['Purchase']['Id'], 'Purchase', expense_group)
 
     if last_export:
         update_last_export_details(expense_group.workspace_id)
@@ -939,6 +790,7 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
             chain.run()
 
 
+@handle_qbo_exceptions()
 def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id, last_export: bool):
     task_log = TaskLog.objects.get(id=task_log_id)
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
@@ -949,82 +801,46 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id, last_e
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
-    try:
-        qbo_credentials = QBOCredential.get_active_qbo_credentials(expense_group.workspace_id)
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(expense_group.workspace_id)
 
-        qbo_connection = QBOConnector(qbo_credentials, int(expense_group.workspace_id))
+    qbo_connection = QBOConnector(qbo_credentials, int(expense_group.workspace_id))
 
-        if not general_settings.map_merchant_to_vendor:
-            if general_settings.auto_map_employees and general_settings.auto_create_destination_entity \
-                    and general_settings.auto_map_employees != 'EMPLOYEE_CODE':
-                create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
-        else:
-            merchant = expense_group.expenses.first().vendor
-            get_or_create_credit_card_or_debit_card_vendor(expense_group.workspace_id, merchant, False, general_settings)
+    if not general_settings.map_merchant_to_vendor:
+        if general_settings.auto_map_employees and general_settings.auto_create_destination_entity \
+                and general_settings.auto_map_employees != 'EMPLOYEE_CODE':
+            create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
+    else:
+        merchant = expense_group.expenses.first().vendor
+        get_or_create_credit_card_or_debit_card_vendor(expense_group.workspace_id, merchant, False, general_settings)
 
-        __validate_expense_group(expense_group, general_settings)
+    __validate_expense_group(expense_group, general_settings)
 
-        with transaction.atomic():
-            credit_card_purchase_object = CreditCardPurchase.create_credit_card_purchase(
-                expense_group, general_settings.map_merchant_to_vendor)
+    with transaction.atomic():
+        credit_card_purchase_object = CreditCardPurchase.create_credit_card_purchase(
+            expense_group, general_settings.map_merchant_to_vendor)
 
-            credit_card_purchase_lineitems_objects = CreditCardPurchaseLineitem.create_credit_card_purchase_lineitems(
-                expense_group, general_settings
-            )
+        credit_card_purchase_lineitems_objects = CreditCardPurchaseLineitem.create_credit_card_purchase_lineitems(
+            expense_group, general_settings
+        )
 
-            created_credit_card_purchase = qbo_connection.post_credit_card_purchase(
-                credit_card_purchase_object, credit_card_purchase_lineitems_objects
-            )
+        created_credit_card_purchase = qbo_connection.post_credit_card_purchase(
+            credit_card_purchase_object, credit_card_purchase_lineitems_objects
+        )
 
-            task_log.detail = created_credit_card_purchase
-            task_log.credit_card_purchase = credit_card_purchase_object
-            task_log.quickbooks_errors = None
-            task_log.status = 'COMPLETE'
+        task_log.detail = created_credit_card_purchase
+        task_log.credit_card_purchase = credit_card_purchase_object
+        task_log.quickbooks_errors = None
+        task_log.status = 'COMPLETE'
 
-            task_log.save()
+        task_log.save()
 
-            expense_group.exported_at = datetime.now()
-            expense_group.response_logs = created_credit_card_purchase
-            expense_group.save()
+        expense_group.exported_at = datetime.now()
+        expense_group.response_logs = created_credit_card_purchase
+        expense_group.save()
 
-            resolve_errors_for_exported_expense_group(expense_group)
+        resolve_errors_for_exported_expense_group(expense_group)
 
         load_attachments(qbo_connection, created_credit_card_purchase['Purchase']['Id'], 'Purchase', expense_group)
-
-    except (QBOCredential.DoesNotExist, InvalidTokenError):
-        logger.info(
-            'QBO Account not connected / token expired for workspace_id %s / expense group %s',
-            expense_group.workspace_id,
-            expense_group.id
-        )
-        detail = {
-            'expense_group_id': expense_group.id,
-            'message': 'QBO Account not connected / token expired'
-        }
-        task_log.status = 'FAILED'
-        task_log.detail = detail
-
-        task_log.save()
-
-    except BulkError as exception:
-        logger.info(exception.response)
-        detail = exception.response
-        task_log.status = 'FAILED'
-        task_log.detail = detail
-
-        task_log.save()
-
-    except WrongParamsError as exception:
-        handle_quickbooks_error(exception, expense_group, task_log, 'Credit Card Purchase')
-
-    except Exception:
-        error = traceback.format_exc()
-        task_log.detail = {
-            'error': error
-        }
-        task_log.status = 'FATAL'
-        task_log.save()
-        logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
 
     if last_export:
         update_last_export_details(expense_group.workspace_id)
@@ -1071,6 +887,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
             chain.run()
 
 
+@handle_qbo_exceptions()
 def create_journal_entry(expense_group, task_log_id, last_export: bool):
     task_log = TaskLog.objects.get(id=task_log_id)
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
@@ -1081,76 +898,40 @@ def create_journal_entry(expense_group, task_log_id, last_export: bool):
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
-    try:
-        qbo_credentials = QBOCredential.get_active_qbo_credentials(expense_group.workspace_id)
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(expense_group.workspace_id)
 
-        qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
+    qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
 
-        if general_settings.auto_map_employees and general_settings.auto_create_destination_entity \
-                and general_settings.auto_map_employees != 'EMPLOYEE_CODE':
-            create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
+    if general_settings.auto_map_employees and general_settings.auto_create_destination_entity \
+            and general_settings.auto_map_employees != 'EMPLOYEE_CODE':
+        create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
 
-        __validate_expense_group(expense_group, general_settings)
+    __validate_expense_group(expense_group, general_settings)
 
-        with transaction.atomic():
-            journal_entry_object = JournalEntry.create_journal_entry(expense_group)
+    with transaction.atomic():
+        journal_entry_object = JournalEntry.create_journal_entry(expense_group)
 
-            journal_entry_lineitems_objects = JournalEntryLineitem.create_journal_entry_lineitems(
-                expense_group, general_settings
-            )
-
-            created_journal_entry = qbo_connection.post_journal_entry(
-                journal_entry_object, journal_entry_lineitems_objects, general_settings.je_single_credit_line)
-
-            task_log.detail = created_journal_entry
-            task_log.journal_entry = journal_entry_object
-            task_log.quickbooks_errors = None
-            task_log.status = 'COMPLETE'
-
-            task_log.save()
-
-            expense_group.exported_at = datetime.now()
-            expense_group.response_logs = created_journal_entry
-            expense_group.save()
-
-            resolve_errors_for_exported_expense_group(expense_group)
-
-        load_attachments(qbo_connection, created_journal_entry['JournalEntry']['Id'], 'JournalEntry', expense_group)
-
-    except (QBOCredential.DoesNotExist, InvalidTokenError):
-        logger.info(
-            'QBO Account not connected / token expired for workspace_id %s / expense group %s',
-            expense_group.workspace_id,
-            expense_group.id
+        journal_entry_lineitems_objects = JournalEntryLineitem.create_journal_entry_lineitems(
+            expense_group, general_settings
         )
-        detail = {
-            'expense_group_id': expense_group.id,
-            'message': 'QBO Account not connected / token expired'
-        }
-        task_log.status = 'FAILED'
-        task_log.detail = detail
+
+        created_journal_entry = qbo_connection.post_journal_entry(
+            journal_entry_object, journal_entry_lineitems_objects, general_settings.je_single_credit_line)
+
+        task_log.detail = created_journal_entry
+        task_log.journal_entry = journal_entry_object
+        task_log.quickbooks_errors = None
+        task_log.status = 'COMPLETE'
 
         task_log.save()
 
-    except BulkError as exception:
-        logger.info(exception.response)
-        detail = exception.response
-        task_log.status = 'FAILED'
-        task_log.detail = detail
+        expense_group.exported_at = datetime.now()
+        expense_group.response_logs = created_journal_entry
+        expense_group.save()
 
-        task_log.save()
+        resolve_errors_for_exported_expense_group(expense_group)
 
-    except WrongParamsError as exception:
-        handle_quickbooks_error(exception, expense_group, task_log, 'Journal Entries')
-
-    except Exception:
-        error = traceback.format_exc()
-        task_log.detail = {
-            'error': error
-        }
-        task_log.status = 'FATAL'
-        task_log.save()
-        logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
+    load_attachments(qbo_connection, created_journal_entry['JournalEntry']['Id'], 'JournalEntry', expense_group)
 
     if last_export:
         update_last_export_details(expense_group.workspace_id)
@@ -1165,6 +946,38 @@ def check_expenses_reimbursement_status(expenses):
             all_expenses_paid = False
 
     return all_expenses_paid
+
+@handle_qbo_exceptions(bill_payment=True)
+def process_bill_payments(bill: Bill, workspace_id: int, task_log: TaskLog):    
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
+    qbo_connection = QBOConnector(qbo_credentials, workspace_id)
+
+    with transaction.atomic():
+
+        bill_payment_object = BillPayment.create_bill_payment(bill.expense_group)
+
+        qbo_object_task_log = TaskLog.objects.get(expense_group=bill.expense_group)
+
+        linked_transaction_id = qbo_object_task_log.detail['Bill']['Id']
+
+        bill_payment_lineitems_objects = BillPaymentLineitem.create_bill_payment_lineitems(
+            bill_payment_object.expense_group, linked_transaction_id
+        )
+
+        created_bill_payment = qbo_connection.post_bill_payment(
+            bill_payment_object, bill_payment_lineitems_objects
+        )
+
+        bill.payment_synced = True
+        bill.paid_on_qbo = True
+        bill.save()
+
+        task_log.detail = created_bill_payment
+        task_log.bill_payment = bill_payment_object
+        task_log.quickbooks_errors = None
+        task_log.status = 'COMPLETE'
+
+        task_log.save()
 
 
 def create_bill_payment(workspace_id):
@@ -1181,7 +994,7 @@ def create_bill_payment(workspace_id):
     if bills:
         for bill in bills:
             expense_group_reimbursement_status = check_expenses_reimbursement_status(
-                bill.expense_group.expenses.all())
+            bill.expense_group.expenses.all())
             if expense_group_reimbursement_status:
                 task_log, _ = TaskLog.objects.update_or_create(
                     workspace_id=workspace_id,
@@ -1191,73 +1004,7 @@ def create_bill_payment(workspace_id):
                         'type': 'CREATING_BILL_PAYMENT'
                     }
                 )
-                try:
-                    qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
-                    qbo_connection = QBOConnector(qbo_credentials, workspace_id)
-
-                    with transaction.atomic():
-
-                        bill_payment_object = BillPayment.create_bill_payment(bill.expense_group)
-
-                        qbo_object_task_log = TaskLog.objects.get(expense_group=bill.expense_group)
-
-                        linked_transaction_id = qbo_object_task_log.detail['Bill']['Id']
-
-                        bill_payment_lineitems_objects = BillPaymentLineitem.create_bill_payment_lineitems(
-                            bill_payment_object.expense_group, linked_transaction_id
-                        )
-
-                        created_bill_payment = qbo_connection.post_bill_payment(
-                            bill_payment_object, bill_payment_lineitems_objects
-                        )
-
-                        bill.payment_synced = True
-                        bill.paid_on_qbo = True
-                        bill.save()
-
-                        task_log.detail = created_bill_payment
-                        task_log.bill_payment = bill_payment_object
-                        task_log.quickbooks_errors = None
-                        task_log.status = 'COMPLETE'
-
-                        task_log.save()
-
-                except (QBOCredential.DoesNotExist, InvalidTokenError):
-                    logger.info(
-                        'QBO Account not connected / token expired for workspace_id %s / expense group %s',
-                        workspace_id,
-                        bill.expense_group
-                    )
-                    detail = {
-                        'message': 'QBO Account not connected / token expired'
-                    }
-
-                    task_log.status = 'FAILED'
-                    task_log.detail = detail
-
-                    task_log.save()
-
-                except BulkError as exception:
-                    logger.info(exception.response)
-                    detail = exception.response
-                    task_log.status = 'FAILED'
-                    task_log.detail = detail
-
-                    task_log.save()
-
-                except WrongParamsError as exception:
-                    handle_quickbooks_error(exception, bill.expense_group, task_log, 'Bill Payment')
-
-                except Exception:
-                    error = traceback.format_exc()
-                    task_log.detail = {
-                        'error': error
-                    }
-                    task_log.status = 'FATAL'
-                    task_log.save()
-                    logger.error(
-                        'Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
-
+                process_bill_payments(bill, workspace_id, task_log)
 
 def schedule_bill_payment_creation(sync_fyle_to_qbo_payments, workspace_id):
     general_mappings: GeneralMapping = GeneralMapping.objects.filter(workspace_id=workspace_id).first()

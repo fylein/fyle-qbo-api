@@ -17,6 +17,7 @@ from apps.workspaces.models import WorkspaceGeneralSettings, QBOCredential
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute
 from apps.fyle.models import ExpenseGroup, Reimbursement, Expense
 from apps.quickbooks_online.utils import QBOConnector
+from apps.quickbooks_online.exceptions import handle_quickbooks_error
 from .fixtures import data
 
 logger = logging.getLogger(__name__)
