@@ -1,12 +1,12 @@
-from apps.workspaces.models import WorkspaceGeneralSettings
-from apps.fyle.models import ExpenseGroup, ExpenseAttribute
-from django.db.models import Q
-from apps.workspaces.models import FyleCredential, Workspace
-from fyle_integrations_platform_connector import PlatformConnector
 from datetime import datetime, timezone
+from django.db.models import Q
+
+from fyle_integrations_platform_connector import PlatformConnector
 
 from .constants import DEFAULT_FYLE_CONDITIONS
-
+from apps.workspaces.models import FyleCredential, Workspace
+from apps.workspaces.models import WorkspaceGeneralSettings
+from apps.fyle.models import ExpenseGroup, ExpenseAttribute
 
 def get_expense_group_ids(workspace_id: int):
     configuration = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
@@ -24,6 +24,7 @@ def get_expense_group_ids(workspace_id: int):
     ).values_list('id', flat=True)
 
     return expense_group_ids
+
 
 def get_expense_fields(workspace_id: int):
     default_attributes = ['EMPLOYEE', 'CATEGORY', 'PROJECT', 'COST_CENTER', 'TAX_GROUP', 'CORPORATE_CARD', 'MERCHANT']
@@ -43,7 +44,8 @@ def get_expense_fields(workspace_id: int):
     
     return expense_fields
 
-def sync_fyle_dimentions(workspace_id: int):
+
+def sync_fyle_dimensions(workspace_id: int):
     workspace = Workspace.objects.get(id=workspace_id)
     if workspace.source_synced_at:
         time_interval = datetime.now(timezone.utc) - workspace.source_synced_at
@@ -57,6 +59,7 @@ def sync_fyle_dimentions(workspace_id: int):
         workspace.source_synced_at = datetime.now()
         workspace.save(update_fields=['source_synced_at'])
 
+
 def refresh_fyle_dimension(workspace_id: int):
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
     platform = PlatformConnector(fyle_credentials)
@@ -66,6 +69,7 @@ def refresh_fyle_dimension(workspace_id: int):
     workspace = Workspace.objects.get(id=workspace_id)
     workspace.source_synced_at = datetime.now()
     workspace.save(update_fields=['source_synced_at'])
+
 
 def get_custom_fields(workspace_id: int):
     fyle_credentails = FyleCredential.objects.get(workspace_id=workspace_id)

@@ -13,10 +13,14 @@ from apps.tasks.models import TaskLog
 
 from .tasks import create_expense_groups, get_task_log_and_fund_source, async_create_expense_groups
 from .models import Expense, ExpenseGroup, ExpenseGroupSettings, ExpenseFilter
-from .serializers import (ExpenseGroupSerializer, ExpenseSerializer, ExpenseFieldSerializer, 
-    ExpenseGroupSettingsSerializer, ExpenseFilterSerializer)
-from .actions import (get_expense_group_ids, get_expense_fields, sync_fyle_dimentions, refresh_fyle_dimension, 
-                      get_custom_fields)
+from .serializers import (
+                ExpenseGroupSerializer, ExpenseSerializer, ExpenseFieldSerializer, 
+                ExpenseGroupSettingsSerializer, ExpenseFilterSerializer
+                )
+from .actions import (
+                get_expense_group_ids, get_expense_fields, sync_fyle_dimensions, 
+                refresh_fyle_dimension, get_custom_fields
+                )
 
 from apps.exceptions import handle_view_exceptions
 
@@ -105,7 +109,7 @@ class ExportableExpenseGroupsView(generics.RetrieveAPIView):
     List Exportable Expense Groups
     """
     def get(self, request, *args, **kwargs):
-        expense_group_ids=get_expense_group_ids(workspace_id=self.kwargs['workspace_id'])
+        expense_group_ids = get_expense_group_ids(workspace_id=self.kwargs['workspace_id'])
 
         return Response(
             data={'exportable_expense_group_ids': expense_group_ids},
@@ -190,7 +194,7 @@ class SyncFyleDimensionView(generics.ListCreateAPIView):
         """
         Sync Data From Fyle
         """
-        sync_fyle_dimentions(workspace_id=kwargs['workspace_id'])
+        sync_fyle_dimensions(workspace_id=kwargs['workspace_id'])
 
         return Response(
             status=status.HTTP_200_OK
@@ -218,10 +222,10 @@ class ExpenseGetFilterView(generics.ListCreateAPIView):
     """
     Expense Filter view
     """
+    lookup_field = 'workspace_id'
     queryset = ExpenseFilter.objects.all()
     serializer_class = ExpenseFilterSerializer
-    filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('workspace_id',)
+   
 
 
 class ExpenseDeleteFilterView(generics.DestroyAPIView):
