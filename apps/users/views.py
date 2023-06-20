@@ -2,9 +2,7 @@ from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from apps.fyle.helpers import get_fyle_orgs
-from apps.users.helpers import get_cluster_domain_and_refresh_token
-
+from .actions import get_fyle_orgs
 
 class FyleOrgsView(generics.ListCreateAPIView):
     """
@@ -17,9 +15,7 @@ class FyleOrgsView(generics.ListCreateAPIView):
         """
         Get cluster domain from Fyle
         """
-        cluster_domain, refresh_token = get_cluster_domain_and_refresh_token(request.user)
-
-        fyle_orgs = get_fyle_orgs(refresh_token, cluster_domain)
+        fyle_orgs = get_fyle_orgs(request.user)
 
         return Response(
             data=len(fyle_orgs),
