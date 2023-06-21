@@ -1,6 +1,10 @@
 from apps.fyle.models import _format_date, _group_expenses, get_default_ccc_expense_state
 from apps.fyle.models import *
 from .fixtures import data
+from apps.tasks.models import TaskLog
+from apps.fyle.tasks import create_expense_groups
+from apps.quickbooks_online.models import get_transaction_date
+from datetime import datetime
 
 def test_default_fields():
     expense_group_field = get_default_expense_group_fields()
@@ -99,3 +103,44 @@ def test_format_date():
     date_string = _format_date('2022-05-13T09:32:06.643941Z')
 
     assert date_string == parser.parse('2022-05-13T09:32:06.643941Z')
+
+def test_support_post_date_integrations(mocker, db, api_client, test_connection):
+    workspace_id = 1
+
+    #Import assert
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.Expenses.get',
+        return_value=data['expenses']
+    )
+
+    task_log, _ = TaskLog.objects.update_or_create(
+        workspace_id=workspace_id,
+        type='FETCHING_EXPENSES',
+        defaults={
+            'status': 'IN_PROGRESS'
+        }
+    )
+
+    expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
+    expense_group_settings.reimbursable_export_date_type = 'last_spent_at'
+    expense_group_settings.ccc_export_date_type = 'posted_at'
+    expense_group_settings.save()
+
+    create_expense_groups(workspace_id, ['PERSONAL', 'CCC'], task_log)
+
+    task_log = TaskLog.objects.get(id=task_log.id)
+
+    assert task_log.status == 'COMPLETE'
+
+	#Export assert
+    mocker.patch(
+        'apps.workspaces.views.export_to_qbo',
+        return_value=None
+    )
+
+    workspace_id = 3
+    url = '/api/workspaces/{}/exports/trigger/'.format(workspace_id)
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
+
+    response = api_client.post(url)
+    assert response.status_code == 200
