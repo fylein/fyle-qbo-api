@@ -1,9 +1,8 @@
-from datetime import datetime
+
 from apps.fyle.models import _format_date, _group_expenses, get_default_ccc_expense_state
 from apps.fyle.models import *
 from apps.tasks.models import TaskLog
 from apps.fyle.tasks import create_expense_groups
-from apps.quickbooks_online.models import get_transaction_date
 from .fixtures import data
 
 def test_default_fields():
