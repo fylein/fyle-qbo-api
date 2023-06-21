@@ -409,27 +409,6 @@ data = {
         "Credit":"None",
         "Line":[
             {
-                "Description":"user9@fyleforgotham.in - Concrete - 2023-04-19 - C/2023/04/R/13 -  - None/app/main/#/enterprise/view_expense/txT4kpKidaAdLm?org_id=or79Cob97KSh",
-                "DetailType":"ItemBasedExpenseLineDetail",
-                "Amount":1.0,
-                "ItemBasedExpenseLineDetail":{
-                    "ItemRef":{
-                    "value":"3"
-                    },
-                    "Qty":1,
-                    "CustomerRef":{
-                    "value":"None"
-                    },
-                    "ClassRef":{
-                    "value":"None"
-                    },
-                    "TaxCodeRef":{
-                    "value":"None"
-                    },
-                    "BillableStatus":"NotBillable"
-                }
-            },
-            {
                 "Description":"user9@fyleforgotham.in - Food - 2023-04-19 - C/2023/04/R/13 -  - None/app/main/#/enterprise/view_expense/txT4kpMbiadw?org_id=or79Cob97KSh",
                 "DetailType":"AccountBasedExpenseLineDetail",
                 "Amount":1.0,
@@ -447,6 +426,27 @@ data = {
                     "value":"None"
                     },
                     "TaxAmount":0.0,
+                    "BillableStatus":"NotBillable"
+                }
+            },
+            {
+                "Description":"user9@fyleforgotham.in - Concrete - 2023-04-19 - C/2023/04/R/13 -  - None/app/main/#/enterprise/view_expense/txT4kpKidaAdLm?org_id=or79Cob97KSh",
+                "DetailType":"ItemBasedExpenseLineDetail",
+                "Amount":1.0,
+                "ItemBasedExpenseLineDetail":{
+                    "ItemRef":{
+                    "value":"3"
+                    },
+                    "Qty":1,
+                    "CustomerRef":{
+                    "value":"None"
+                    },
+                    "ClassRef":{
+                    "value":"None"
+                    },
+                    "TaxCodeRef":{
+                    "value":"None"
+                    },
                     "BillableStatus":"NotBillable"
                 }
             }
