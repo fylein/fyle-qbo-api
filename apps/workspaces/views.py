@@ -1,6 +1,9 @@
 import json
 import logging
 from datetime import datetime
+from rest_framework import generics
+
+from django_filters.rest_framework import DjangoFilterBackend
 
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
@@ -37,6 +40,7 @@ from .permissions import IsAuthenticatedForTest
 from apps.exceptions import handle_view_exceptions
 
 from apps.fyle.models import ExpenseGroupSettings
+from .actions import qbo_workspace, connect_qbo_oauth, get_workspace_admin
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -45,7 +49,7 @@ User = get_user_model()
 auth_utils = AuthUtils()
 
 
-class WorkspaceView(viewsets.ViewSet):
+class WorkspaceView(generics.CreateAPIView, generics.RetrieveAPIView, generics.ListAPIView, generics.UpdateAPIView):
     """
     QBO Workspace
     """
@@ -56,39 +60,14 @@ class WorkspaceView(viewsets.ViewSet):
         """
         Create a Workspace
         """
-
         access_token = request.META.get('HTTP_AUTHORIZATION')
+        user = request.user
         fyle_user = get_fyle_admin(access_token.split(' ')[1], None)
-        org_name = fyle_user['data']['org']['name']
-        org_id = fyle_user['data']['org']['id']
-        org_currency = fyle_user['data']['org']['currency']
-
-        workspace = Workspace.objects.filter(fyle_org_id=org_id).first()
-
-        if workspace:
-            workspace.user.add(User.objects.get(user_id=request.user))
-            cache.delete(str(workspace.id))
-        else:
-            workspace = Workspace.objects.create(
-                name=org_name, fyle_org_id=org_id, fyle_currency=org_currency, app_version='v2'
-            )
-
-            ExpenseGroupSettings.objects.create(workspace_id=workspace.id)
-
-            LastExportDetail.objects.create(workspace_id=workspace.id)
-
-            workspace.user.add(User.objects.get(user_id=request.user))
-
-            auth_tokens = AuthToken.objects.get(user__user_id=request.user)
-
-            cluster_domain = get_cluster_domain(auth_tokens.refresh_token)
-
-            FyleCredential.objects.update_or_create(
-                refresh_token=auth_tokens.refresh_token,
-                workspace_id=workspace.id,
-                cluster_domain=cluster_domain
-            )
-
+        workspace = qbo_workspace(user, 
+                                  org_id=fyle_user['data']['org']['id'], 
+                                  org_name=fyle_user['data']['org']['name'], 
+                                  org_currency=fyle_user['data']['org']['currency'])
+       
         return Response(
             data=WorkspaceSerializer(workspace).data,
             status=status.HTTP_200_OK
@@ -136,7 +115,7 @@ class WorkspaceView(viewsets.ViewSet):
             )
 
 
-class ReadyView(viewsets.ViewSet):
+class ReadyView(generics.ListAPIView):
     """
     Ready call
     """
@@ -157,65 +136,19 @@ class ReadyView(viewsets.ViewSet):
         )
 
 
-class ConnectQBOView(viewsets.ViewSet):
+class ConnectQBOView(generics.CreateAPIView, generics.ListAPIView, generics.UpdateAPIView):
     """
     QBO Connect Oauth View
     """
 
     def post(self, request, **kwargs):
-        # Extract data from the request
         authorization_code = request.data.get('code')
         realm_id = request.data.get('realm_id')
         redirect_uri = request.data.get('redirect_uri')
-
         try:
             # Generate a refresh token from the authorization code
             refresh_token = generate_qbo_refresh_token(authorization_code, redirect_uri)
-
-            # Get the workspace associated with the request
-            workspace = Workspace.objects.get(pk=kwargs['workspace_id'])
-
-            # Get the QBO credentials associated with the workspace, or create new credentials if none exist
-            qbo_credentials = QBOCredential.objects.filter(workspace=workspace).first()
-            if not qbo_credentials:
-                qbo_credentials = QBOCredential.objects.create(
-                    refresh_token=refresh_token,
-                    realm_id=realm_id,
-                    workspace=workspace
-                ) 
-
-            # Check if the realm_id matches the one associated with the workspace
-            if workspace.qbo_realm_id:
-                assert_valid(realm_id == workspace.qbo_realm_id, 'Please choose the correct QuickBooks Online account')
-
-            # Update the workspace with the realm_id and refresh_token
-            qbo_credentials.is_expired = False
-            qbo_credentials.refresh_token = refresh_token
-            qbo_credentials.realm_id = realm_id
-            qbo_credentials.save()
-
-            # Use the QBO credentials to get the company info and preferences
-            qbo_connector = QBOConnector(qbo_credentials, workspace_id=kwargs['workspace_id'])
-            company_info = qbo_connector.get_company_info()
-            preferences = qbo_connector.get_company_preference()
-
-            # Update the QBO credentials with the retrieved company info and preferences
-            qbo_credentials.country = company_info['Country']
-            qbo_credentials.company_name = company_info['CompanyName']
-            qbo_credentials.currency = preferences['CurrencyPrefs']['HomeCurrency']['value']
-
-            qbo_credentials.save()     
-            
-            # Update the workspace onboarding state and realm_id
-            workspace.qbo_realm_id = realm_id
-
-            if workspace.onboarding_state == 'CONNECTION':
-                workspace.onboarding_state = 'MAP_EMPLOYEES'
-            workspace.save()
-
-            # Return the QBO credentials as serialized data
-            return Response(data=QBOCredentialSerializer(qbo_credentials).data, status=status.HTTP_200_OK)
-
+            return connect_qbo_oauth(refresh_token, realm_id, redirect_uri)
         except qbo_exc.UnauthorizedClientError:
             return Response({'message': 'Invalid Authorization Code'}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -227,7 +160,6 @@ class ConnectQBOView(viewsets.ViewSet):
 
         except qbo_exc.InternalServerError:
             return Response({'message': 'Wrong/Expired Authorization code'}, status=status.HTTP_401_UNAUTHORIZED)
-
 
     def patch(self, request, **kwargs):
         """Delete QBO refresh_token"""
@@ -265,57 +197,19 @@ class ConnectQBOView(viewsets.ViewSet):
         )
 
 
-class GeneralSettingsView(viewsets.ViewSet):
+class GeneralSettingsView(generics.ListAPIView):
     """
     General Settings
     """
-    serializer_class = WorkSpaceGeneralSettingsSerializer
     queryset = WorkspaceGeneralSettings.objects.all()
+    serializer_class = WorkSpaceGeneralSettingsSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filter_fields = {'workspace_id':{'exact'},}
 
-    def post(self, request, *args, **kwargs):
-        """
-        Post workspace general settings
-        """
-        general_settings_payload = request.data
-        assert_valid(general_settings_payload is not None, 'Request body is empty')
-
-        workspace_id = kwargs['workspace_id']
-
-        general_settings = create_or_update_general_settings(general_settings_payload, workspace_id)
-
-        return Response(
-            data=self.serializer_class(general_settings).data,
-            status=status.HTTP_200_OK
-        )
-
-    @handle_view_exceptions()
-    def get(self, request, *args, **kwargs):
-        """
-        Get workspace general settings
-        """
-        general_settings = self.queryset.get(workspace_id=kwargs['workspace_id'])
-        return Response(
-            data=self.serializer_class(general_settings).data,
-            status=status.HTTP_200_OK
-        )
-
-    def patch(self, request, **kwargs):
-        """
-        PATCH workspace general settings
-        """
-        workspace_general_settings_object = WorkspaceGeneralSettings.objects.get(workspace_id=kwargs['workspace_id'])
-        serializer = WorkSpaceGeneralSettingsSerializer(
-            workspace_general_settings_object, data=request.data, partial=True
-        )
-        if serializer.is_valid():
-            serializer.save()
-            return Response(
-                data=serializer.data,
-                status=status.HTTP_200_OK
-            )
+    
 
 
-class ExportToQBOView(viewsets.ViewSet):
+class ExportToQBOView(generics.CreateAPIView):
     """
     Export Expenses to QBO
     """
@@ -328,59 +222,30 @@ class ExportToQBOView(viewsets.ViewSet):
         )
 
 
-class LastExportDetailView(viewsets.ViewSet):
+class LastExportDetailView(generics.RetrieveAPIView):
     """
     Last Export Details
     """
+    lookup_field = 'workspace_id'
+    lookup_field_kwarg = 'workspace_id'
+
+    quryset = LastExportDetail.objects.first()
     serializer_class = LastExportDetailSerializer
 
-    def get(self, request, *args, **kwargs):
-        """
-        last export detail
-        """
-        last_export_detail = LastExportDetail.objects.filter(workspace_id=kwargs['workspace_id']).first()
-        if last_export_detail.last_exported_at and last_export_detail.total_expense_groups_count:
-            return Response(
-                data=self.serializer_class(last_export_detail).data,
-                status=status.HTTP_200_OK
-            )
-        else:
-            return Response(
-                data={
-                    'message': 'latest exported details does not exist in workspace'
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-class WorkspaceAdminsView(viewsets.ViewSet):
+class WorkspaceAdminsView(generics.ListAPIView):
 
     def get(self, request, *args, **kwargs):
         """
         Get Admins for the workspaces
         """
-
-        workspace = Workspace.objects.get(pk=kwargs['workspace_id'])
+        admin_email = get_workspace_admin(kwargs['workspace_id'])
         
-        admin_email = []
-        users = workspace.user.all()
-        for user in users:
-            admin = User.objects.get(user_id=user)
-            name = ExpenseAttribute.objects.get(
-                value=admin.email, 
-                workspace_id=kwargs['workspace_id'],
-                attribute_type='EMPLOYEE'
-            ).detail['full_name']
-
-            admin_email.append({
-                'name': name,
-                'email': admin.email
-            })
-
         return Response(
                 data=admin_email,
                 status=status.HTTP_200_OK
             )
 
-class SetupE2ETestView(viewsets.ViewSet):
+class SetupE2ETestView(generics.CreateAPIView):
     """
     QBO Workspace
     """

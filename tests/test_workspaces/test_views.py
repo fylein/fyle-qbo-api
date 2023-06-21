@@ -111,7 +111,9 @@ def test_get_configuration_detail(api_client, test_connection):
     )
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
-    response = api_client.get(url)
+    response = api_client.get(url, {
+        'workspace_id':workspace_id,
+    })
     assert response.status_code == 200
 
     response = json.loads(response.content)
@@ -122,45 +124,6 @@ def test_get_configuration_detail(api_client, test_connection):
 
     response = api_client.get(url)
     assert response.status_code == 400
-
-
-def test_post_workspace_configurations(api_client, test_connection):
-    workspace_id = 4
-    workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first() 
-    workspace_general_settings.map_merchant_to_vendor = True
-    workspace_general_settings.save()
-
-    url = reverse(
-        'workspace-general-settings', kwargs={
-            'workspace_id': workspace_id
-        }
-    )
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
-
-    response = api_client.post(
-        url,
-        data=data['workspace_general_settings_payload'],
-        format='json'
-    )
-    assert response.status_code==200
-
-    response = api_client.patch(
-        url,
-        data=data['workspace_general_settings_payload'],
-        format='json'
-    )
-    assert response.status_code==200
-
-    updated_data = data['workspace_general_settings_payload']
-    updated_data['je_single_credit_line'] = True
-    updated_data['corporate_credit_card_expenses_object'] = 'JOURNAL ENTRY'
-
-    response = api_client.post(
-        url,
-        data=updated_data,
-        format='json'
-    )
-    assert response.status_code==200
 
 
 def test_ready_view(api_client, test_connection):
