@@ -15,9 +15,9 @@ Including another URLconf
 """
 from django.urls import path
 
-from .views import (ExpenseGroupView, ExpenseView, EmployeeView, 
-    ExpenseFieldsView, ExportableExpenseGroupsView, 
-    ExpenseGroupSettingsView, RefreshFyleDimensionView, SyncFyleDimensionView, 
+from .views import (ExpenseGroupView, ExpenseView, EmployeeView,
+    ExpenseFieldsView, ExportableExpenseGroupsView,
+    ExpenseGroupSettingsView, RefreshFyleDimensionView, SyncFyleDimensionView,
     ExpenseGroupSyncView, ExpenseFilterView, CustomFieldView)
 
 urlpatterns = [

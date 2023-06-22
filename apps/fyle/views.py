@@ -8,22 +8,19 @@ from django_filters.rest_framework import DjangoFilterBackend
 from fyle_accounting_mappings.models import ExpenseAttribute
 from fyle_accounting_mappings.serializers import ExpenseAttributeSerializer
 
-from apps.workspaces.models import WorkspaceGeneralSettings
-from apps.tasks.models import TaskLog
+from apps.exceptions import handle_view_exceptions
 
-from .tasks import create_expense_groups, get_task_log_and_fund_source, async_create_expense_groups
-from .models import Expense, ExpenseGroup, ExpenseGroupSettings, ExpenseFilter
+from .tasks import get_task_log_and_fund_source, async_create_expense_groups
+from .models import Expense, ExpenseGroupSettings, ExpenseFilter
 from .serializers import (
-                ExpenseGroupSerializer, ExpenseSerializer, ExpenseFieldSerializer, 
+                ExpenseGroupSerializer, ExpenseSerializer, ExpenseFieldSerializer,
                 ExpenseGroupSettingsSerializer, ExpenseFilterSerializer
                 )
 from .actions import (
-                get_expense_group_ids, get_expense_fields, sync_fyle_dimensions, 
+                get_expense_group_ids, get_expense_fields, sync_fyle_dimensions,
                 refresh_fyle_dimension, get_custom_fields, get_fyle_expenses_list,
                 create_expense_groups_view
                 )
-
-from apps.exceptions import handle_view_exceptions
 
 
 logger = logging.getLogger(__name__)
@@ -205,4 +202,3 @@ class CustomFieldView(generics.RetrieveAPIView):
             data=response,
             status=status.HTTP_200_OK
         )
-

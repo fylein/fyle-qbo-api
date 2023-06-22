@@ -3,11 +3,13 @@ from django.db.models import Q
 
 from fyle_integrations_platform_connector import PlatformConnector
 
-from .constants import DEFAULT_FYLE_CONDITIONS
 from apps.workspaces.models import FyleCredential, Workspace
 from apps.workspaces.models import WorkspaceGeneralSettings
 from apps.fyle.models import ExpenseGroup, ExpenseAttribute
 from apps.tasks.models import TaskLog
+
+from .constants import DEFAULT_FYLE_CONDITIONS
+
 
 from .tasks import create_expense_groups
 
