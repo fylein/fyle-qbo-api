@@ -19,7 +19,6 @@ from .serializers import (
 from .actions import (
                 get_expense_group_ids, get_expense_fields, sync_fyle_dimensions,
                 refresh_fyle_dimension, get_custom_fields, get_fyle_expenses_list,
-                create_expense_groups_view
                 )
 
 
@@ -40,19 +39,6 @@ class ExpenseGroupView(generics.ListCreateAPIView):
                                       expense_group_ids = self.request.query_params.get('expense_group_ids', None),
                                       exported_at = self.request.query_params.get('exported_at', None),
                                       workspace_id = self.kwargs['workspace_id'])
-        
-
-    def post(self, request, *args, **kwargs):
-        """
-        Create expense groups
-        """
-        create_expense_groups_view(
-            task_log_id = request.data.get('task_log_id'),
-            workspace_id = kwargs['workspace_id']
-        )
-        return Response(
-            status=status.HTTP_200_OK
-        )
 
 
 class ExportableExpenseGroupsView(generics.RetrieveAPIView):

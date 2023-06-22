@@ -11,8 +11,6 @@ from apps.tasks.models import TaskLog
 from .constants import DEFAULT_FYLE_CONDITIONS
 
 
-from .tasks import create_expense_groups
-
 def get_fyle_expenses_list(state, start_date, end_date, expense_group_ids, exported_at, workspace_id):
 
     if expense_group_ids:
@@ -51,25 +49,6 @@ def get_fyle_expenses_list(state, start_date, end_date, expense_group_ids, expor
             journalentry__id__isnull=True,
             qboexpense__id__isnull=True
         ).order_by('-updated_at')
-
-
-def create_expense_groups_view(task_log_id: int, workspace_id: int):
-    task_log = TaskLog.objects.get(pk=task_log_id)
-
-    queryset = WorkspaceGeneralSettings.objects.all()
-    general_settings = queryset.get(workspace_id=workspace_id)
-
-    fund_source = []
-    if general_settings.reimbursable_expenses_object:
-        fund_source.append('PERSONAL')
-    if general_settings.corporate_credit_card_expenses_object:
-        fund_source.append('CCC')
-
-    create_expense_groups(
-        workspace_id,
-        fund_source=fund_source,
-        task_log=task_log,
-    )
 
 def get_expense_group_ids(workspace_id: int):
     configuration = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
