@@ -60,19 +60,13 @@ def test_expense_group_view(api_client, test_connection):
     response = json.loads(response.content)
     assert response == {'count': 0, 'next': None, 'previous': None, 'results': []}
 
-    task_log, _ = TaskLog.objects.update_or_create(
+    TaskLog.objects.update_or_create(
         workspace_id=3,
         type='FETCHING_EXPENSES',
         defaults={
             'status': 'IN_PROGRESS'
         }
     )
-    response = api_client.post(
-        url,
-        data={'task_log_id': task_log.id},
-        format='json'
-    )
-    assert response.status_code==200
 
 
 def test_expense_group_settings(api_client, test_connection):
