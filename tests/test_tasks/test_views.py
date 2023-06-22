@@ -14,14 +14,3 @@ def test_get_queryset(api_client, test_connection):
         'status__in': 'COMPLETE'
     })
     assert response.status_code==200
-
-
-def test_get_task_by_id(api_client, test_connection):
-    access_token = test_connection.access_token
-    url = '/api/workspaces/3/tasks/8/'
-
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
-
-    response = api_client.get(url)
-    assert response.status_code==200
-    

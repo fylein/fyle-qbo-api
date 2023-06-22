@@ -128,7 +128,11 @@ def test_vendor_view(mocker, api_client, test_connection):
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
-    response = api_client.get(url)
+    response = api_client.get(url, {
+        'workspace_id':3,
+        'attribute_type__in': 'VENDOR',
+        'active': True
+    })
     assert response.status_code == 200
 
     response = json.loads(response.content)

@@ -23,18 +23,18 @@ class VendorView(generics.ListCreateAPIView):
     serializer_class = DestinationAttributeSerializer
     pagination_class = None
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = {'value': {'icontains'}, 'attribute_type': {'exact', 'in'}, 'active':{'exact'}, 'workspace_id': {'exact'}}
+    filterset_fields = {'value': {'icontains'}, 'attribute_type': {'exact', 'in'}, 'active': {'exact'}, 'workspace_id': {'exact'}}
     ordering_fields = ['value']
 
 class EmployeeView(generics.ListCreateAPIView):
     """
     Employee view
     """
-    queryset = DestinationAttribute.objects.all()
+    queryset = DestinationAttribute.objects.all()[:10]
     serializer_class = DestinationAttributeSerializer
     pagination_class = None
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = {'value': {'icontains'}, 'attribute_type': {'exact', 'in'}, 'active':{'exact'}, 'workspace_id': {'exact'}}
+    filterset_fields = {'value': {'icontains'}, 'attribute_type': {'exact', 'in'}, 'active': {'exact'}, 'workspace_id': {'exact'}}
     ordering_fields = ['value']
 
 
@@ -45,22 +45,6 @@ class PreferencesView(generics.RetrieveAPIView):
 
     def get(self, request, *args, **kwargs):
         return get_preferences(kwargs['workspace_id'])
-       
-
-class BillPaymentView(generics.CreateAPIView):
-    """
-    Create Bill Payment View
-    """
-    def post(self, request, *args, **kwargs):
-        """
-        Create bill payment
-        """
-        create_bill_payment(workspace_id=self.kwargs['workspace_id'])
-
-        return Response(
-            data={},
-            status=status.HTTP_200_OK
-        )
 
 
 class SyncQuickbooksDimensionView(generics.ListCreateAPIView):
@@ -110,11 +94,11 @@ class SearchedDestinationAttributesView(generics.ListAPIView):
     """
     Destination Attributes view
     """
-    queryset = DestinationAttribute.objects.all()[:30]
+    queryset = DestinationAttribute.objects.all()
     serializer_class = DestinationAttributeSerializer
     pagination_class = None
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = {'workspace_id': {'exact'}, 'attribute_type': {'exact', 'in'}, 'display_name': {'exact', 'in'}, 'active': {'exact'}}
+    filterset_fields = {'workspace_id': {'exact'}, 'value': {'icontains'}, 'attribute_type': {'exact', 'in'}, 'display_name': {'exact', 'in'}, 'active': {'exact'}}
     ordering_fields = ['value']
 
 

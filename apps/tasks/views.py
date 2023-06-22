@@ -17,13 +17,3 @@ class TasksView(generics.ListAPIView):
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = {'type':{'exact', 'in'}, 'expense_group_id':{'exact', 'in'}, 'status':{'exact', 'in'}, 'workspace_id':{'exact'}}
     ordering_fields = ('updated_at',)
-
-
-class TasksByIdView(generics.RetrieveAPIView):
-    """
-    Get Task by Ids
-    """
-    queryset = TaskLog.objects.all()
-    serializer_class = TaskLogSerializer
-    lookup_field = 'id'
-    

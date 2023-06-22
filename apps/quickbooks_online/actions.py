@@ -29,25 +29,14 @@ def get_preferences(workspace_id: int):
             },
             status=status.HTTP_400_BAD_REQUEST
         )
-    except WrongParamsError:
+    except (WrongParamsError, InvalidTokenError):
         if qbo_credentials:
             qbo_credentials.refresh_token = None
             qbo_credentials.is_expired = True
             qbo_credentials.save()
         return Response(
             data={
-                'message': 'Quickbooks Online connection expired'
-            },
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    except InvalidTokenError:
-        if qbo_credentials:
-            qbo_credentials.refresh_token = None
-            qbo_credentials.is_expired = True
-            qbo_credentials.save()
-        return Response(
-            data={
-                'message': 'Invalid token, try to refresh it'
+                'message': 'Invalid token or Quickbooks Online connection expired'
             },
             status=status.HTTP_400_BAD_REQUEST
         )
