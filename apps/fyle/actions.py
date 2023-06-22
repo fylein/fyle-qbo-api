@@ -7,6 +7,67 @@ from .constants import DEFAULT_FYLE_CONDITIONS
 from apps.workspaces.models import FyleCredential, Workspace
 from apps.workspaces.models import WorkspaceGeneralSettings
 from apps.fyle.models import ExpenseGroup, ExpenseAttribute
+from apps.tasks.models import TaskLog
+
+from .tasks import create_expense_groups
+
+def get_fyle_expenses_list(state, start_date, end_date, expense_group_ids, exported_at, workspace_id):
+
+    if expense_group_ids:
+        return ExpenseGroup.objects.filter(
+            workspace_id=workspace_id,
+            id__in=expense_group_ids.split(',')
+        )
+
+    if state == 'ALL':
+        return ExpenseGroup.objects.filter(workspace_id=workspace_id).order_by('-updated_at')
+
+    if state == 'FAILED':
+        return ExpenseGroup.objects.filter(tasklog__status='FAILED',
+                                            workspace_id=workspace_id).order_by('-updated_at')
+
+    elif state == 'COMPLETE':
+        filters = {
+            'workspace_id': workspace_id,
+            'tasklog__status': 'COMPLETE'
+        }
+
+        if start_date and end_date:
+            filters['exported_at__range'] = [start_date, end_date]
+
+        if exported_at:
+            filters['exported_at__gte'] = exported_at
+
+        return ExpenseGroup.objects.filter(**filters).order_by('-exported_at')
+
+    elif state == 'READY':
+        return ExpenseGroup.objects.filter(
+            workspace_id=workspace_id,
+            bill__id__isnull=True,
+            cheque__id__isnull=True,
+            creditcardpurchase__id__isnull=True,
+            journalentry__id__isnull=True,
+            qboexpense__id__isnull=True
+        ).order_by('-updated_at')
+
+
+def create_expense_groups_view(task_log_id: int, workspace_id: int):
+    task_log = TaskLog.objects.get(pk=task_log_id)
+
+    queryset = WorkspaceGeneralSettings.objects.all()
+    general_settings = queryset.get(workspace_id=workspace_id)
+
+    fund_source = []
+    if general_settings.reimbursable_expenses_object:
+        fund_source.append('PERSONAL')
+    if general_settings.corporate_credit_card_expenses_object:
+        fund_source.append('CCC')
+
+    create_expense_groups(
+        workspace_id,
+        fund_source=fund_source,
+        task_log=task_log,
+    )
 
 def get_expense_group_ids(workspace_id: int):
     configuration = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)

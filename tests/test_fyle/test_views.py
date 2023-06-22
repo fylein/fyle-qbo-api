@@ -223,8 +223,16 @@ def test_employees_view(api_client, test_connection):
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
-    response = api_client.get(url)
+    response = api_client.get(url,
+                              {
+                                  'attribute_type': 'EMPLOYEE',
+                                  'workspace_id': 3,
+                                  'active': True
+                              })
     assert response.status_code == 200
+    response = json.loads(response.content)
+    assert len(response) == 0
+    
 
 
 def test_exportable_expense_groups(api_client, test_connection):
@@ -310,7 +318,7 @@ def test_expenses(mocker, api_client, test_connection):
         'workspace_id': 1,
       }
    )
-   url = url + "?org_id=orHVw3ikkCxJ"
+   url = url + "?org_id=orHVw3ikkCxJ" + "/?updated_at__gte=2021-01-01T00:00:00Z" + "&updated_at__lte=2021-01-01T00:00:00Z"
 
    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 

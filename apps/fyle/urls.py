@@ -18,7 +18,7 @@ from django.urls import path
 from .views import (ExpenseGroupView, ExpenseView, EmployeeView, 
     ExpenseFieldsView, ExportableExpenseGroupsView, 
     ExpenseGroupSettingsView, RefreshFyleDimensionView, SyncFyleDimensionView, 
-    ExpenseGroupSyncView, ExpenseGetFilterView, ExpenseDeleteFilterView, CustomFieldView)
+    ExpenseGroupSyncView, ExpenseFilterView, CustomFieldView)
 
 urlpatterns = [
     path('expense_groups/', ExpenseGroupView.as_view(), name='expense-groups'),
@@ -29,8 +29,8 @@ urlpatterns = [
     path('expense_fields/', ExpenseFieldsView.as_view(), name='expense-fields'),
     path('sync_dimensions/', SyncFyleDimensionView.as_view(), name='sync-fyle-dimensions'),
     path('refresh_dimensions/', RefreshFyleDimensionView.as_view(), name='refresh-fyle-dimensions'),
-    path('expense_filters/<int:pk>/', ExpenseDeleteFilterView.as_view(), name='expense-filters'),
-    path('expense_filters/', ExpenseGetFilterView.as_view(), name='expense-filters'),
+    path('expense_filters/<int:pk>/', ExpenseFilterView.as_view(), name='expense-filters'),
+    path('expense_filters/', ExpenseFilterView.as_view(), name='expense-filters'),
     path('expenses/', ExpenseView.as_view(), name='expenses'),
     path('custom_fields/', CustomFieldView.as_view(), name='custom-field')
 ]
