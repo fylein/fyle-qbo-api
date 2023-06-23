@@ -537,4 +537,4 @@ class ExpenseFilter(models.Model):
 
     class Meta:
         db_table = 'expense_filters'
-        ordering = ['-rank']
+        ordering = ['rank']

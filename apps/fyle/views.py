@@ -154,11 +154,19 @@ class RefreshFyleDimensionView(generics.ListCreateAPIView):
             status=status.HTTP_200_OK
         )
 
-class ExpenseFilterView(generics.ListCreateAPIView, generics.DestroyAPIView):
+class ExpenseFilterView(generics.ListCreateAPIView):
     """
     Expense Filter view
     """
     lookup_field = 'workspace_id'
+    queryset = ExpenseFilter.objects.all()
+    serializer_class = ExpenseFilterSerializer
+
+
+class ExpenseFilterDeleteView(generics.DestroyAPIView):
+    """
+    Expense Filter view
+    """
     queryset = ExpenseFilter.objects.all()
     serializer_class = ExpenseFilterSerializer
 
@@ -171,7 +179,7 @@ class ExpenseView(generics.ListAPIView):
     queryset = Expense.objects.all()
     serializer_class = ExpenseSerializer
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = {'org_id':{'exact'}, 'is_skipped':{'exact'}, 'updated_at':{'gte', 'lte'}}
+    filterset_fields = {'org_id': {'exact'}, 'is_skipped': {'exact'}, 'updated_at': {'gte', 'lte'}}
 
 
 class CustomFieldView(generics.RetrieveAPIView):
