@@ -143,7 +143,11 @@ def test_vendor_view(mocker, api_client, test_connection):
     vendor.active = False
     vendor.save()
 
-    response = api_client.get(url)
+    response = api_client.get(url,  {
+        'workspace_id':3,
+        'attribute_type__in': 'VENDOR',
+        'limit': 10,
+    })
     assert response.status_code == 200
 
     response = json.loads(response.content)
