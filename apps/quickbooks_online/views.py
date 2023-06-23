@@ -19,9 +19,8 @@ class VendorView(generics.ListCreateAPIView):
     """
     Vendor view
     """
-    queryset = DestinationAttribute.objects.all()[:10]
+    queryset = DestinationAttribute.objects.all()
     serializer_class = DestinationAttributeSerializer
-    pagination_class = None
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = {'value': {'icontains'}, 'attribute_type': {'exact', 'in'}, 'active': {'exact'}, 'workspace_id': {'exact'}}
     ordering_fields = ['value']
@@ -30,9 +29,8 @@ class EmployeeView(generics.ListCreateAPIView):
     """
     Employee view
     """
-    queryset = DestinationAttribute.objects.all()[:10]
+    queryset = DestinationAttribute.objects.all()
     serializer_class = DestinationAttributeSerializer
-    pagination_class = None
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = {'value': {'icontains'}, 'attribute_type': {'exact', 'in'}, 'active': {'exact'}, 'workspace_id': {'exact'}}
     ordering_fields = ['value']
@@ -96,7 +94,6 @@ class SearchedDestinationAttributesView(generics.ListAPIView):
     """
     queryset = DestinationAttribute.objects.all()
     serializer_class = DestinationAttributeSerializer
-    pagination_class = None
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = {'workspace_id': {'exact'}, 'value': {'icontains'}, 'attribute_type': {'exact', 'in'}, 'display_name': {'exact', 'in'}, 'active': {'exact'}}
     ordering_fields = ['value']
