@@ -218,11 +218,10 @@ def test_employees_view(api_client, test_connection):
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
     response = api_client.get(url,
-                              {
-                                  'attribute_type': 'EMPLOYEE',
-                                  'workspace_id': 3,
-                                  'active': True
-                              })
+                            {
+                            'attribute_type': 'EMPLOYEE',
+                            'active': True
+                            })
     assert response.status_code == 200
     response = json.loads(response.content)
     assert len(response) == 0

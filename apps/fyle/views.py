@@ -9,7 +9,7 @@ from fyle_accounting_mappings.models import ExpenseAttribute
 from fyle_accounting_mappings.serializers import ExpenseAttributeSerializer
 
 from apps.exceptions import handle_view_exceptions
-
+from fyle_qbo_api.utils import LookupFieldMixin
 from .tasks import get_task_log_and_fund_source, async_create_expense_groups
 from .models import Expense, ExpenseGroupSettings, ExpenseFilter
 from .serializers import (
@@ -95,7 +95,7 @@ class ExpenseGroupSettingsView(generics.ListCreateAPIView):
         )
 
 
-class EmployeeView(generics.ListCreateAPIView):
+class EmployeeView(LookupFieldMixin ,generics.ListAPIView):
     """
     Employee view
     """
@@ -103,7 +103,7 @@ class EmployeeView(generics.ListCreateAPIView):
     serializer_class = ExpenseAttributeSerializer
     pagination_class = None
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = {'attribute_type': {'exact', 'in'}, 'workspace_id': {'exact'}, 'active': {'exact'}}
+    filterset_fields = {'attribute_type': {'exact', 'in'}, 'active': {'exact'}}
     ordering_fields = ('value',)
 
 
