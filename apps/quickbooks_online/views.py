@@ -7,6 +7,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from fyle_accounting_mappings.models import DestinationAttribute
 from fyle_accounting_mappings.serializers import DestinationAttributeSerializer
 
+from fyle_qbo_api.utils import LookupFieldMixin
 from .tasks import create_bill_payment
 from apps.exceptions import handle_view_exceptions
 from .actions import get_preferences, sync_quickbooks_dimensions, refresh_quickbooks_dimensions
@@ -15,25 +16,25 @@ from .actions import get_preferences, sync_quickbooks_dimensions, refresh_quickb
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
 
-class VendorView(generics.ListCreateAPIView):
+class VendorView(LookupFieldMixin, generics.ListAPIView):
     """
     Vendor view
     """
     queryset = DestinationAttribute.objects.all()
     serializer_class = DestinationAttributeSerializer
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = {'value': {'icontains'}, 'attribute_type': {'exact', 'in'}, 'active': {'exact'}, 'workspace_id': {'exact'}}
-    ordering_fields = ['value']
+    filterset_fields = {'value': {'icontains'}, 'attribute_type': {'exact', 'in'}, 'active': {'exact'}}
+    ordering_fields = ('value',)
 
-class EmployeeView(generics.ListCreateAPIView):
+class EmployeeView(LookupFieldMixin, generics.ListAPIView):
     """
     Employee view
     """
     queryset = DestinationAttribute.objects.all()
     serializer_class = DestinationAttributeSerializer
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = {'value': {'icontains'}, 'attribute_type': {'exact', 'in'}, 'active': {'exact'}, 'workspace_id': {'exact'}}
-    ordering_fields = ['value']
+    filterset_fields = {'value': {'icontains'}, 'attribute_type': {'exact', 'in'}, 'active': {'exact'}}
+    ordering_fields = ('value',)
 
 
 class PreferencesView(generics.RetrieveAPIView):
@@ -76,7 +77,7 @@ class RefreshQuickbooksDimensionView(generics.ListCreateAPIView):
         )
 
 
-class DestinationAttributesView(generics.ListAPIView):
+class DestinationAttributesView(LookupFieldMixin, generics.ListAPIView):
     """
     Destination Attributes view
     """
@@ -84,22 +85,22 @@ class DestinationAttributesView(generics.ListAPIView):
     serializer_class = DestinationAttributeSerializer
     pagination_class = None
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = {'workspace_id': {'exact'}, 'attribute_type': {'exact', 'in'}, 'display_name': {'exact', 'in'}, 'active': {'exact'}}
-    ordering_fields = ['value']
+    filterset_fields = {'attribute_type': {'exact', 'in'}, 'display_name': {'exact', 'in'}, 'active': {'exact'}}
+    ordering_fields = ('value',)
 
-#slice problem
-class SearchedDestinationAttributesView(generics.ListAPIView):
+
+class SearchedDestinationAttributesView(LookupFieldMixin, generics.ListAPIView):
     """
     Destination Attributes view
     """
     queryset = DestinationAttribute.objects.all()
     serializer_class = DestinationAttributeSerializer
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = {'workspace_id': {'exact'}, 'value': {'icontains'}, 'attribute_type': {'exact', 'in'}, 'display_name': {'exact', 'in'}, 'active': {'exact'}}
-    ordering_fields = ['value']
+    filterset_fields = {'value': {'icontains'}, 'attribute_type': {'exact', 'in'}, 'display_name': {'exact', 'in'}, 'active': {'exact'}}
+    ordering_fields = ('value',)
 
 
-class QBOAttributesView(generics.ListCreateAPIView):
+class QBOAttributesView(LookupFieldMixin, generics.ListAPIView):
     """
     GET Paginated QBO Attributes view
     """
@@ -107,4 +108,4 @@ class QBOAttributesView(generics.ListCreateAPIView):
     serializer_class = DestinationAttributeSerializer
     pagination_class = None
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = {'workspace_id': {'exact'}, 'attribute_type': {'exact', 'in'}}
+    filterset_fields = {'attribute_type': {'exact', 'in'}}

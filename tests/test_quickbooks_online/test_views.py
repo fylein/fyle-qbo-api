@@ -26,8 +26,7 @@ def test_destination_attributes_view(api_client, test_connection):
     response = api_client.get(url,{
         'attribute_type__in':'ACCOUNT',
         'display_name__in':'Account',
-        'active':True,
-        'workspace_id':3
+        'active':True
     })
     assert response.status_code == 200
     response = json.loads(response.content)
@@ -46,7 +45,6 @@ def test_searched_destination_attributes_view(api_client, test_connection):
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
     response = api_client.get(url,{
-        'workspace_id':3,
         'attribute_type':'ACCOUNT',
         'display_name':'Account',
         'limit':30
@@ -68,7 +66,6 @@ def test_qbo_attributes_view(api_client, test_connection):
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
     response = api_client.get(url,{
-        'workspace_id':3,
         'attribute_type__in':'CUSTOMER'
     })
     assert response.status_code == 200
@@ -129,7 +126,6 @@ def test_vendor_view(mocker, api_client, test_connection):
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
     response = api_client.get(url, {
-        'workspace_id':3,
         'attribute_type__in': 'VENDOR',
         'limit': 10,
     })
@@ -144,7 +140,6 @@ def test_vendor_view(mocker, api_client, test_connection):
     vendor.save()
 
     response = api_client.get(url,  {
-        'workspace_id':3,
         'attribute_type__in': 'VENDOR',
         'limit': 10,
     })
@@ -166,7 +161,6 @@ def test_employee_view(mocker, api_client, test_connection):
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
     response = response = api_client.get(url,{
-        'workspace_id':3,
         'attribute_type__in': 'EMPLOYEE',
         'limit': 10
     })
