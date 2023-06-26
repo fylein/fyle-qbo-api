@@ -5,6 +5,8 @@ from dateutil import parser
 from typing import List, Dict
 
 from django_q.tasks import Chain
+from qbosdk.exceptions import WrongParamsError as QBOWrongParamsError, InvalidTokenError
+from fyle.platform.exceptions import WrongParamsError, InvalidTokenError as FyleInvalidTokenError
 from fyle_integrations_platform_connector import PlatformConnector
 from fyle_accounting_mappings.models import MappingSetting, Mapping, DestinationAttribute, ExpenseAttribute,\
     EmployeeMapping
