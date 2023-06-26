@@ -1,25 +1,29 @@
+import logging
+from datetime import datetime
 from rest_framework.response import Response
 from rest_framework.views import status
 from qbosdk import exceptions as qbo_exc
+from django.db import transaction, connection
+from django.conf import settings
 
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 
-from fyle_rest_auth.helpers import get_fyle_admin
 from apps.fyle.helpers import get_cluster_domain
 from fyle_rest_auth.models import AuthToken
+from fyle_integrations_platform_connector import PlatformConnector
 
 from apps.quickbooks_online.utils import QBOConnector
 from .models import Workspace, LastExportDetail, FyleCredential, QBOCredential
-from fyle_accounting_mappings.models import ExpenseAttribute
+from fyle_accounting_mappings.models import ExpenseAttribute, DestinationAttribute
 from apps.fyle.models import ExpenseGroupSettings
-from .utils import generate_qbo_refresh_token, assert_valid
-from .serializers import WorkspaceSerializer, QBOCredentialSerializer, \
-    WorkSpaceGeneralSettingsSerializer, LastExportDetailSerializer
-from .signals import post_delete_qbo_connection
+from .utils import assert_valid
+from .serializers import QBOCredentialSerializer
 
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
+logger.level = logging.INFO
 
 def update_or_create_workspace(user, org_id, org_name, org_currency):
     workspace = Workspace.objects.filter(fyle_org_id=org_id).first()
@@ -113,5 +117,83 @@ def get_workspace_admin(workspace_id: int):
             'email': admin.email
         })
     return admin_email
+
+def setup_e2e_tests(workspace_id: int):
+    workspace = Workspace.objects.get(pk=kwargs['workspace_id'])
+    error_message = 'Something unexpected has happened. Please try again later.'
+
+    # Filter out prod orgs
+    if 'fyle for' in workspace.name.lower():
+        # Grab the latest healthy refresh token, from a demo org with the specified realm id
+        healthy_tokens = QBOCredential.objects.filter(
+            workspace__name__icontains='fyle for',
+            is_expired=False,
+            realm_id=settings.E2E_TESTS_REALM_ID,
+            refresh_token__isnull=False
+        ).order_by('-updated_at')
+        logger.info('Found {} healthy tokens'.format(healthy_tokens.count()))
+
+        for healthy_token in healthy_tokens:
+            logger.info('Checking token health for workspace: {}'.format(healthy_token.workspace_id))
+            # Token Health check
+            try:
+                qbo_connector = QBOConnector(healthy_token, workspace_id=workspace.id)
+                qbo_connector.get_company_preference()
+                logger.info('Yaay, token is healthly for workspace: {}'.format(healthy_token.workspace_id))
+            except Exception:
+                # If the token is expired, setting is_expired = True so that they are not used for future runs
+                logger.info('Oops, token is dead for workspace: {}'.format(healthy_token.workspace_id))
+                healthy_token.is_expired = True
+                healthy_token.save()
+                # Stop the execution here for the token since it's expired
+                continue
+
+            with transaction.atomic():
+                if healthy_token:
+                    # Reset the workspace completely
+                    with connection.cursor() as cursor:
+                        cursor.execute('select reset_workspace(%s)', [workspace.id])
+
+                    # Store the latest healthy refresh token for the workspace
+                    QBOCredential.objects.update_or_create(
+                        workspace=workspace,
+                        defaults = {
+                            'refresh_token' : qbo_connector.connection.refresh_token,
+                            'realm_id' : healthy_token.realm_id,
+                            'is_expired' : False,
+                            'company_name' : healthy_token.company_name,
+                            'country' : healthy_token.country
+                        }
+                    )
+
+                    # Sync dimension for QBO and Fyle
+                    qbo_connector.sync_dimensions()
+
+                    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace.id)
+                    platform = PlatformConnector(fyle_credentials)
+                    platform.import_fyle_dimensions(import_taxes=True)
+
+                    # Reset workspace details
+                    workspace.onboarding_state = 'MAP_EMPLOYEES'
+                    workspace.source_synced_at = datetime.now()
+                    workspace.destination_synced_at = datetime.now()
+                    workspace.qbo_realm_id = healthy_token.realm_id
+                    workspace.last_synced_at = None
+                    workspace.save()
+
+                    #insert a destination attribute
+                    DestinationAttribute.create_or_update_destination_attribute({
+                        'attribute_type': 'ACCOUNT',
+                        'display_name': 'Account',
+                        'value': 'Activity',
+                        'destination_id': '900',
+                        'active': True,
+                        'detail': {"account_type": "Expense", "fully_qualified_name": "Activity"}
+                    }, workspace.id)
+
+                    return Response(status=status.HTTP_200_OK)
+
+        error_message = 'No healthy tokens found, please try again later.'
+    return Response(status=status.HTTP_400_BAD_REQUEST, data={'message': error_message})
 
     
