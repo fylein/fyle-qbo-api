@@ -154,11 +154,10 @@ class RefreshFyleDimensionView(generics.ListCreateAPIView):
             status=status.HTTP_200_OK
         )
 
-class ExpenseFilterView(generics.ListCreateAPIView):
+class ExpenseFilterView(LookupFieldMixin, generics.ListCreateAPIView):
     """
     Expense Filter view
     """
-    lookup_field = 'workspace_id'
     queryset = ExpenseFilter.objects.all()
     serializer_class = ExpenseFilterSerializer
 
