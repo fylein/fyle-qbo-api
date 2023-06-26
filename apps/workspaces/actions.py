@@ -1,22 +1,22 @@
 import logging
 from datetime import datetime
-from rest_framework.response import Response
-from rest_framework.views import status
-from qbosdk import exceptions as qbo_exc
+
 from django.db import transaction, connection
 from django.conf import settings
-
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 
-from apps.fyle.helpers import get_cluster_domain
+from rest_framework.response import Response
+from rest_framework.views import status
+from fyle_accounting_mappings.models import ExpenseAttribute, DestinationAttribute
 from fyle_rest_auth.models import AuthToken
 from fyle_integrations_platform_connector import PlatformConnector
 
 from apps.quickbooks_online.utils import QBOConnector
-from .models import Workspace, LastExportDetail, FyleCredential, QBOCredential
-from fyle_accounting_mappings.models import ExpenseAttribute, DestinationAttribute
 from apps.fyle.models import ExpenseGroupSettings
+from apps.fyle.helpers import get_cluster_domain
+
+from .models import Workspace, LastExportDetail, FyleCredential, QBOCredential
 from .utils import assert_valid
 from .serializers import QBOCredentialSerializer
 
@@ -64,7 +64,7 @@ def connect_qbo_oauth(refresh_token, realm_id, workspace_id):
             refresh_token=refresh_token,
             realm_id=realm_id,
             workspace=workspace
-        ) 
+        )
 
     # Check if the realm_id matches the one associated with the workspace
     if workspace.qbo_realm_id:
@@ -86,8 +86,8 @@ def connect_qbo_oauth(refresh_token, realm_id, workspace_id):
     qbo_credentials.company_name = company_info['CompanyName']
     qbo_credentials.currency = preferences['CurrencyPrefs']['HomeCurrency']['value']
 
-    qbo_credentials.save()     
-    
+    qbo_credentials.save()
+
     # Update the workspace onboarding state and realm_id
     workspace.qbo_realm_id = realm_id
 
@@ -101,13 +101,13 @@ def connect_qbo_oauth(refresh_token, realm_id, workspace_id):
 
 def get_workspace_admin(workspace_id: int):
     workspace = Workspace.objects.get(pk=workspace_id)
-        
+
     admin_email = []
     users = workspace.user.all()
     for user in users:
         admin = User.objects.get(user_id=user)
         name = ExpenseAttribute.objects.get(
-            value=admin.email, 
+            value=admin.email,
             workspace_id=workspace_id,
             attribute_type='EMPLOYEE'
         ).detail['full_name']
@@ -119,7 +119,7 @@ def get_workspace_admin(workspace_id: int):
     return admin_email
 
 def setup_e2e_tests(workspace_id: int):
-    workspace = Workspace.objects.get(pk=kwargs['workspace_id'])
+    workspace = Workspace.objects.get(pk=workspace_id)
     error_message = 'Something unexpected has happened. Please try again later.'
 
     # Filter out prod orgs

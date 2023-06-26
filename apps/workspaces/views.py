@@ -1,9 +1,8 @@
 import logging
-from rest_framework import generics
-
-from django.contrib.auth import get_user_model
 from django.conf import settings
+from django.contrib.auth import get_user_model
 
+from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import status
 from rest_framework.permissions import IsAuthenticated
@@ -120,10 +119,10 @@ class ConnectQBOView(generics.CreateAPIView, generics.ListAPIView, generics.Upda
             # Generate a refresh token from the authorization code
             refresh_token = generate_qbo_refresh_token(authorization_code, redirect_uri)
             return connect_qbo_oauth(refresh_token, realm_id, kwargs['workspace_id'])
-        except (qbo_exc.UnauthorizedClientError, qbo_exc.NotFoundClientError, qbo_exc.WrongParamsError, 
+        except (qbo_exc.UnauthorizedClientError, qbo_exc.NotFoundClientError, qbo_exc.WrongParamsError,
                 qbo_exc.InternalServerError) as e:
             logger.info('Invalid/Expired Authorization Code or QBO application not found - %s',{'error': e.response})
-            return Response({'message': 'Invalid/Expired Authorization Code or QBO application not found'}, 
+            return Response({'message': 'Invalid/Expired Authorization Code or QBO application not found'},
                             status=status.HTTP_401_UNAUTHORIZED)
 
 
