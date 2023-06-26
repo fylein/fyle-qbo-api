@@ -1,13 +1,10 @@
 import logging
 import json
 import traceback
-from typing import List
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from django.db import transaction
 from django.db.models import Q
-from django_q.tasks import Chain
-from django_q.models import Schedule
 
 from qbosdk.exceptions import WrongParamsError, InvalidTokenError
 

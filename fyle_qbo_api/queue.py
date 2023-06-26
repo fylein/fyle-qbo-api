@@ -1,14 +1,17 @@
 from datetime import datetime, timedelta
+from typing import List
+
+
 from django_q.models import Schedule
 from django_q.tasks import Chain
-from typing import List
 from django.db.models import Q
-from apps.tasks.models import Error, TaskLog
-from apps.mappings.models import GeneralMapping
-from apps.workspaces.models import WorkspaceGeneralSettings, FyleCredential
+
 from fyle_accounting_mappings.models import MappingSetting
 
-from apps.fyle.models import Expense, ExpenseGroup
+from apps.tasks.models import TaskLog
+from apps.mappings.models import GeneralMapping
+from apps.workspaces.models import WorkspaceGeneralSettings, FyleCredential
+from apps.fyle.models import ExpenseGroup
 
 
 def schedule_cost_centers_creation(import_to_fyle, workspace_id):
@@ -318,11 +321,13 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
                 expense_group=expense_group,
                 defaults={
                     'status': 'ENQUEUED',
-                    'type': 'CREATING_EXPENSE' if expense_group.fund_source == 'PERSONAL' else 'CREATING_DEBIT_CARD_EXPENSE'
+                    'type': 'CREATING_EXPENSE' if expense_group.fund_source == 'PERSONAL' else 
+                    'CREATING_DEBIT_CARD_EXPENSE'
                 }
             )
             if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
-                task_log.type = 'CREATING_EXPENSE' if expense_group.fund_source == 'PERSONAL' else 'CREATING_DEBIT_CARD_EXPENSE'
+                task_log.type = 'CREATING_EXPENSE' if expense_group.fund_source == 'PERSONAL' else \
+                'CREATING_DEBIT_CARD_EXPENSE'
                 task_log.status = 'ENQUEUED'
                 task_log.save()
 
@@ -372,7 +377,8 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
             if expense_groups.count() == index + 1:
                 last_export = True
 
-            chain.append('apps.quickbooks_online.tasks.create_credit_card_purchase', expense_group, task_log.id, last_export)
+            chain.append('apps.quickbooks_online.tasks.create_credit_card_purchase', expense_group, task_log.id, 
+                         last_export)
 
         if chain.length() > 1:
             chain.run()
@@ -387,7 +393,8 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
     if expense_group_ids:
         expense_groups = ExpenseGroup.objects.filter(
             Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']),
-            workspace_id=workspace_id, id__in=expense_group_ids, journalentry__id__isnull=True, exported_at__isnull=True
+            workspace_id=workspace_id, id__in=expense_group_ids, journalentry__id__isnull=True, 
+            exported_at__isnull=True
         ).all()
 
         chain = Chain()
