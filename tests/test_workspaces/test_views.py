@@ -9,28 +9,6 @@ from qbosdk import exceptions as qbo_exc
 from apps.workspaces.models import *
 from .fixtures import data
 
-def test_get_workspace_by_id(api_client, test_connection):
-
-    url = reverse(
-        'workspace-by-id', kwargs={
-            'workspace_id': 3
-        }
-    )
-
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
-    response = api_client.get(url)
-    assert response.status_code == 200
-
-    response = json.loads(response.content)
-
-    assert dict_compare_keys(response, data['workspace']) == [], 'workspaces api returns a diff in the keys'
-
-    with mock.patch('apps.workspaces.models.Workspace.objects.get') as mock_call:
-        mock_call.side_effect = Workspace.DoesNotExist()
-
-        response = api_client.get(url)
-        assert response.status_code == 400
-
 
 def test_get_workspace(api_client, test_connection):
 
@@ -104,16 +82,10 @@ def test_post_of_new_workspace(mocker, api_client, test_connection):
 def test_get_configuration_detail(api_client, test_connection):
     workspace_id = 4
 
-    url = reverse(
-        'workspace-general-settings', kwargs={
-            'workspace_id': workspace_id
-        }
-    )
+    url = '/api/workspaces/4/settings/general/'
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
-    response = api_client.get(url, {
-        'workspace_id':workspace_id,
-    })
+    response = api_client.get(url, {'workspace_id': workspace_id})
     assert response.status_code == 200
 
     response = json.loads(response.content)
@@ -122,7 +94,7 @@ def test_get_configuration_detail(api_client, test_connection):
     workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first() 
     workspace_general_settings.delete()
 
-    response = api_client.get(url)
+    response = api_client.get(url, {'workspace_id': workspace_id})
     assert response.status_code == 400
 
 
@@ -245,7 +217,7 @@ def test_connect_qbo_view_exceptions(api_client, test_connection):
             url,
             data={'code': code}    
         )
-        assert response.status_code == 404
+        assert response.status_code == 401
 
         mock_call.side_effect = qbo_exc.WrongParamsError(msg='Some of the parameters are wrong', response='Some of the parameters are wrong')
         
@@ -253,7 +225,7 @@ def test_connect_qbo_view_exceptions(api_client, test_connection):
             url,
             data={'code': code}    
         )
-        assert response.status_code == 500
+        assert response.status_code == 401
 
         mock_call.side_effect = qbo_exc.InternalServerError(msg='Wrong/Expired Authorization code', response='Wrong/Expired Authorization code')
         
@@ -335,12 +307,11 @@ def test_export_to_qbo(mocker, api_client, test_connection):
 
 
 def test_last_export_detail_view(mocker, db, api_client, test_connection):
-
     workspace_id = 3
     url = '/api/workspaces/{}/export_detail/'.format(workspace_id)
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
 
-    response = api_client.get(url)
+    response = api_client.get(url, {'workspace_id': workspace_id})
     assert response.status_code == 200
 
     last_export_detail = LastExportDetail.objects.filter(workspace_id=workspace_id).first()

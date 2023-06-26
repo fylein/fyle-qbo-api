@@ -21,7 +21,7 @@ from .signals import post_delete_qbo_connection
 
 User = get_user_model()
 
-def qbo_workspace(user, org_id, org_name, org_currency):
+def update_or_create_workspace(user, org_id, org_name, org_currency):
     workspace = Workspace.objects.filter(fyle_org_id=org_id).first()
 
     if workspace:
@@ -104,7 +104,7 @@ def get_workspace_admin(workspace_id: int):
         admin = User.objects.get(user_id=user)
         name = ExpenseAttribute.objects.get(
             value=admin.email, 
-            workspace_id=kwargs['workspace_id'],
+            workspace_id=workspace_id,
             attribute_type='EMPLOYEE'
         ).detail['full_name']
 

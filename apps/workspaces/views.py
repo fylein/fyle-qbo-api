@@ -28,6 +28,7 @@ from fyle_qbo_api.utils import assert_valid
 
 from apps.quickbooks_online.utils import QBOConnector
 from apps.fyle.helpers import get_cluster_domain
+from fyle_qbo_api.utils import LookupFieldMixin
 from fyle_accounting_mappings.models import ExpenseAttribute, DestinationAttribute
 
 from .models import Workspace, FyleCredential, QBOCredential, WorkspaceGeneralSettings, LastExportDetail
@@ -40,7 +41,7 @@ from .permissions import IsAuthenticatedForTest
 from apps.exceptions import handle_view_exceptions
 
 from apps.fyle.models import ExpenseGroupSettings
-from .actions import qbo_workspace, connect_qbo_oauth, get_workspace_admin
+from .actions import update_or_create_workspace, connect_qbo_oauth, get_workspace_admin
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -63,7 +64,7 @@ class WorkspaceView(generics.CreateAPIView, generics.RetrieveAPIView, generics.L
         access_token = request.META.get('HTTP_AUTHORIZATION')
         user = request.user
         fyle_user = get_fyle_admin(access_token.split(' ')[1], None)
-        workspace = qbo_workspace(user, 
+        workspace = update_or_create_workspace(user, 
                                   org_id=fyle_user['data']['org']['id'], 
                                   org_name=fyle_user['data']['org']['name'], 
                                   org_currency=fyle_user['data']['org']['currency'])
@@ -86,18 +87,6 @@ class WorkspaceView(generics.CreateAPIView, generics.RetrieveAPIView, generics.L
             status=status.HTTP_200_OK
         )
 
-    @handle_view_exceptions()
-    def get_by_id(self, request, **kwargs):
-        """
-        Get Workspace by id
-        """
-        user = User.objects.get(user_id=request.user)
-        workspace = Workspace.objects.get(pk=kwargs['workspace_id'], user=user)
-
-        return Response(
-            data=WorkspaceSerializer(workspace).data if workspace else {},
-            status=status.HTTP_200_OK
-        )
 
     def patch(self, request, **kwargs):
         """
@@ -148,18 +137,11 @@ class ConnectQBOView(generics.CreateAPIView, generics.ListAPIView, generics.Upda
         try:
             # Generate a refresh token from the authorization code
             refresh_token = generate_qbo_refresh_token(authorization_code, redirect_uri)
-            return connect_qbo_oauth(refresh_token, realm_id, redirect_uri)
-        except qbo_exc.UnauthorizedClientError:
-            return Response({'message': 'Invalid Authorization Code'}, status=status.HTTP_401_UNAUTHORIZED)
+            return connect_qbo_oauth(refresh_token, realm_id, kwargs['workspace_id'])
+        except (qbo_exc.UnauthorizedClientError, qbo_exc.NotFoundClientError, qbo_exc.WrongParamsError, qbo_exc.InternalServerError) as e:
+            logger.info('Invalid/Expired Authorization Code or QBO application not found - %s',{'error': e.response})
+            return Response({'message': 'Invalid/Expired Authorization Code or QBO application not found'}, status=status.HTTP_401_UNAUTHORIZED)
 
-        except qbo_exc.NotFoundClientError:
-            return Response({'message': 'QBO Application not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        except qbo_exc.WrongParamsError as e:
-            return Response(json.loads(e.response), status=status.HTTP_400_BAD_REQUEST)
-
-        except qbo_exc.InternalServerError:
-            return Response({'message': 'Wrong/Expired Authorization code'}, status=status.HTTP_401_UNAUTHORIZED)
 
     def patch(self, request, **kwargs):
         """Delete QBO refresh_token"""
@@ -197,17 +179,14 @@ class ConnectQBOView(generics.CreateAPIView, generics.ListAPIView, generics.Upda
         )
 
 
-class GeneralSettingsView(generics.ListAPIView):
+class GeneralSettingsView(LookupFieldMixin, generics.ListAPIView):
     """
     General Settings
     """
     queryset = WorkspaceGeneralSettings.objects.all()
     serializer_class = WorkSpaceGeneralSettingsSerializer
     filter_backends = (DjangoFilterBackend,)
-    filter_fields = {'workspace_id':{'exact'},}
-
-    
-
+    filter_fields = { 'workspace_id': {'exact'} }
 
 class ExportToQBOView(generics.CreateAPIView):
     """
@@ -226,13 +205,13 @@ class LastExportDetailView(generics.RetrieveAPIView):
     """
     Last Export Details
     """
-    lookup_field = 'workspace_id'
-    lookup_field_kwarg = 'workspace_id'
-
-    quryset = LastExportDetail.objects.first()
+    queryset = LastExportDetail.objects.first()
     serializer_class = LastExportDetailSerializer
+    lookup_field = 'workspace_id'
+    lookup_url_kwarg = 'workspace_id'
 
-class WorkspaceAdminsView(generics.ListAPIView):
+
+class WorkspaceAdminsView(generics.RetrieveAPIView):
 
     def get(self, request, *args, **kwargs):
         """
