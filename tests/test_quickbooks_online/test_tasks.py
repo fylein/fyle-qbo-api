@@ -19,6 +19,7 @@ from apps.fyle.models import ExpenseGroup, Reimbursement, Expense
 from apps.quickbooks_online.utils import QBOConnector
 from apps.quickbooks_online.exceptions import handle_quickbooks_error
 from .fixtures import data
+from fyle_qbo_api.queue import *
 
 logger = logging.getLogger(__name__)
 

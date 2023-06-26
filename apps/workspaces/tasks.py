@@ -10,38 +10,18 @@ from django.template.loader import render_to_string
 from django_q.models import Schedule
 from django.utils.safestring import mark_safe
 
+from fyle_qbo_api.queue import (schedule_email_notification, schedule_bills_creation, schedule_cheques_creation, 
+    schedule_journal_entry_creation, schedule_credit_card_purchase_creation, schedule_qbo_expense_creation)
 from apps.workspaces.models import User, Workspace, WorkspaceSchedule, WorkspaceGeneralSettings, LastExportDetail, QBOCredential, FyleCredential
 from apps.fyle.tasks import async_create_expense_groups
 from apps.fyle.models import Expense, ExpenseGroup
-from apps.fyle.serializers import ExpenseSerializer, ExpenseGroupSerializer
-from apps.quickbooks_online.tasks import schedule_bills_creation, schedule_cheques_creation, \
-    schedule_journal_entry_creation, schedule_credit_card_purchase_creation, schedule_qbo_expense_creation
+
 from apps.tasks.models import TaskLog
 from fyle_accounting_mappings.models import ExpenseAttribute
 from apps.tasks.models import Error
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
-
-def schedule_email_notification(workspace_id: int, schedule_enabled: bool, hours: int):
-    if schedule_enabled:
-        schedule, _ = Schedule.objects.update_or_create(
-            func='apps.workspaces.tasks.run_email_notification',
-            args='{}'.format(workspace_id),
-            defaults={
-                'schedule_type': Schedule.MINUTES,
-                'minutes': hours * 60,
-                'next_run': datetime.now() + timedelta(minutes=10)
-            }
-        )
-    else:
-        schedule: Schedule = Schedule.objects.filter(
-            func='apps.workspaces.tasks.run_email_notification',
-            args='{}'.format(workspace_id)
-        ).first()
-
-        if schedule:
-            schedule.delete()
 
 
 def schedule_sync(workspace_id: int, schedule_enabled: bool, hours: int, email_added: List, emails_selected: List):

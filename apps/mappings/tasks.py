@@ -275,27 +275,6 @@ def auto_create_project_mappings(workspace_id: int):
     post_projects_in_batches(platform, workspace_id, mapping_setting.destination_field)
 
 
-def schedule_tax_groups_creation(import_tax_codes, workspace_id):
-    if import_tax_codes:
-        schedule, _ = Schedule.objects.update_or_create(
-            func='apps.mappings.tasks.auto_create_tax_codes_mappings',
-            args='{}'.format(workspace_id),
-            defaults={
-                'schedule_type': Schedule.MINUTES,
-                'minutes': 24 * 60,
-                'next_run': datetime.now()
-            }
-        )
-    else:
-        schedule: Schedule = Schedule.objects.filter(
-            func='apps.mappings.tasks.auto_create_tax_codes_mappings',
-            args='{}'.format(workspace_id),
-        ).first()
-
-        if schedule:
-            schedule.delete()
-
-
 def create_fyle_categories_payload(categories: List[DestinationAttribute], workspace_id: int,
         updated_categories: List[ExpenseAttribute] = None):
     """
@@ -620,28 +599,6 @@ def async_auto_map_employees(workspace_id: int):
         destination_attribute_type=destination_type
     )
 
-def schedule_auto_map_employees(employee_mapping_preference: str, workspace_id: int):
-    if employee_mapping_preference:
-        start_datetime = datetime.now()
-
-        schedule, _ = Schedule.objects.update_or_create(
-            func='apps.mappings.tasks.async_auto_map_employees',
-            args='{0}'.format(workspace_id),
-            defaults={
-                'schedule_type': Schedule.MINUTES,
-                'minutes': 24 * 60,
-                'next_run': start_datetime
-            }
-        )
-    else:
-        schedule: Schedule = Schedule.objects.filter(
-            func='apps.mappings.tasks.async_auto_map_employees',
-            args='{}'.format(workspace_id)
-        ).first()
-
-        if schedule:
-            schedule.delete()
-
 
 def auto_map_ccc_employees(default_ccc_account_id: str, workspace_id: int):
     """
@@ -704,31 +661,6 @@ def async_auto_map_ccc_account(workspace_id: int):
             platform.employees.sync()
 
             auto_map_ccc_employees(default_ccc_account_id, workspace_id)
-
-
-def schedule_auto_map_ccc_employees(workspace_id: int):
-    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
-
-    if general_settings.auto_map_employees and general_settings.corporate_credit_card_expenses_object != 'BILL':
-        start_datetime = datetime.now()
-
-        schedule, _ = Schedule.objects.update_or_create(
-            func='apps.mappings.tasks.async_auto_map_ccc_account',
-            args='{0}'.format(workspace_id),
-            defaults={
-                'schedule_type': Schedule.MINUTES,
-                'minutes': 24 * 60,
-                'next_run': start_datetime
-            }
-        )
-    else:
-        schedule: Schedule = Schedule.objects.filter(
-            func='apps.mappings.tasks.async_auto_map_ccc_account',
-            args='{}'.format(workspace_id)
-        ).first()
-
-        if schedule:
-            schedule.delete()
 
 
 def upload_tax_groups_to_fyle(platform_connection: PlatformConnector, workspace_id: int):
@@ -857,27 +789,6 @@ def auto_create_cost_center_mappings(workspace_id):
     sync_qbo_attribute(mapping_setting.destination_field, workspace_id)
 
     post_cost_centers_in_batches(platform, workspace_id, mapping_setting.destination_field)
-
-
-def schedule_cost_centers_creation(import_to_fyle, workspace_id):
-    if import_to_fyle:
-        schedule, _ = Schedule.objects.update_or_create(
-            func='apps.mappings.tasks.auto_create_cost_center_mappings',
-            args='{}'.format(workspace_id),
-            defaults={
-                'schedule_type': Schedule.MINUTES,
-                'minutes': 24 * 60,
-                'next_run': datetime.now()
-            }
-        )
-    else:
-        schedule: Schedule = Schedule.objects.filter(
-            func='apps.mappings.tasks.auto_create_cost_center_mappings',
-            args='{}'.format(workspace_id)
-        ).first()
-
-        if schedule:
-            schedule.delete()
 
 
 def create_fyle_expense_custom_field_payload(
@@ -1011,30 +922,6 @@ def async_auto_create_custom_field_mappings(workspace_id):
                     workspace_id, mapping_setting.destination_field, mapping_setting.source_field,
                     mapping_setting.source_placeholder
                 )
-
-
-def schedule_fyle_attributes_creation(workspace_id: int):
-    mapping_settings = MappingSetting.objects.filter(
-        is_custom=True, import_to_fyle=True, workspace_id=workspace_id
-    ).all()
-    if mapping_settings:
-        schedule, _ = Schedule.objects.get_or_create(
-            func='apps.mappings.tasks.async_auto_create_custom_field_mappings',
-            args='{0}'.format(workspace_id),
-            defaults={
-                'schedule_type': Schedule.MINUTES,
-                'minutes': 24 * 60,
-                'next_run': datetime.now() + timedelta(hours=24)
-            }
-        )
-    else:
-        schedule: Schedule = Schedule.objects.filter(
-            func='apps.mappings.tasks.async_auto_create_custom_field_mappings',
-            args='{0}'.format(workspace_id)
-        ).first()
-
-        if schedule:
-            schedule.delete()
 
 
 def create_fyle_merchants_payload(vendors, existing_merchants_name):

@@ -1,4 +1,4 @@
-from apps.mappings.tasks import schedule_auto_map_employees
+from fyle_qbo_api.queue import schedule_auto_map_employees
 from apps.workspaces.models import WorkspaceGeneralSettings
 
 

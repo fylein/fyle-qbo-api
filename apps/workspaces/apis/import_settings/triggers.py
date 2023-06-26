@@ -9,8 +9,7 @@ from fyle_accounting_mappings.models import MappingSetting
 from apps.fyle.models import ExpenseGroupSettings
 from apps.mappings.helpers import schedule_or_delete_fyle_import_tasks
 from apps.workspaces.models import WorkspaceGeneralSettings
-
-from apps.mappings.tasks import schedule_cost_centers_creation, schedule_fyle_attributes_creation, schedule_tax_groups_creation
+from fyle_qbo_api.queue import schedule_cost_centers_creation, schedule_fyle_attributes_creation, schedule_tax_groups_creation
 
 
 class ImportSettingsTrigger:

@@ -8,8 +8,8 @@ from django_q.tasks import async_task
 from fyle_accounting_mappings.models import MappingSetting, Mapping, EmployeeMapping
 
 from apps.tasks.models import Error
-from apps.mappings.tasks import upload_attributes_to_fyle, schedule_cost_centers_creation,\
-    schedule_fyle_attributes_creation
+from fyle_qbo_api.queue import schedule_cost_centers_creation, schedule_fyle_attributes_creation
+from apps.mappings.tasks import upload_attributes_to_fyle
 from apps.workspaces.utils import delete_cards_mapping_settings
 from apps.workspaces.models import WorkspaceGeneralSettings
 

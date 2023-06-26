@@ -8,6 +8,7 @@ from fyle.platform.exceptions import InvalidTokenError as FylePlatformError
 from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute, CategoryMapping, \
     Mapping, MappingSetting, EmployeeMapping
 from apps.mappings.tasks import *
+from fyle_qbo_api.queue import *
 from fyle_integrations_platform_connector import PlatformConnector
 from apps.mappings.models import GeneralMapping
 from .fixtures import data
