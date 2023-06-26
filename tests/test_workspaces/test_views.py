@@ -79,13 +79,13 @@ def test_post_of_new_workspace(mocker, api_client, test_connection):
     assert response.status_code == 200
 
 
-def test_get_configuration_detail(api_client, test_connection):
+def test_get_configuration_detail(db, api_client, test_connection):
     workspace_id = 4
 
     url = '/api/workspaces/4/settings/general/'
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
-    response = api_client.get(url, {'workspace_id': workspace_id})
+    response = api_client.get(url)
     assert response.status_code == 200
 
     response = json.loads(response.content)
@@ -94,8 +94,8 @@ def test_get_configuration_detail(api_client, test_connection):
     workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first() 
     workspace_general_settings.delete()
 
-    response = api_client.get(url, {'workspace_id': workspace_id})
-    assert response.status_code == 400
+    response = api_client.get(url)
+    assert response.status_code == 404
 
 
 def test_ready_view(api_client, test_connection):
@@ -306,20 +306,13 @@ def test_export_to_qbo(mocker, api_client, test_connection):
     assert response.status_code == 200
 
 
-def test_last_export_detail_view(mocker, db, api_client, test_connection):
+def test_last_export_detail_view(db, api_client, test_connection):
     workspace_id = 3
     url = '/api/workspaces/{}/export_detail/'.format(workspace_id)
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
 
-    response = api_client.get(url, {'workspace_id': workspace_id})
-    assert response.status_code == 200
-
-    last_export_detail = LastExportDetail.objects.filter(workspace_id=workspace_id).first()
-    last_export_detail.total_expense_groups_count = 0
-    last_export_detail.save()
-
     response = api_client.get(url)
-    assert response.status_code == 400
+    assert response.status_code == 200
 
 
 def test_workspace_admin_view(mocker, db, api_client, test_connection):

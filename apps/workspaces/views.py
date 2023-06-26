@@ -179,14 +179,14 @@ class ConnectQBOView(generics.CreateAPIView, generics.ListAPIView, generics.Upda
         )
 
 
-class GeneralSettingsView(LookupFieldMixin, generics.ListAPIView):
+class GeneralSettingsView(generics.RetrieveAPIView):
     """
     General Settings
     """
+    lookup_field = 'workspace_id'
+    lookup_url_kwarg = 'workspace_id'
     queryset = WorkspaceGeneralSettings.objects.all()
     serializer_class = WorkSpaceGeneralSettingsSerializer
-    filter_backends = (DjangoFilterBackend,)
-    filter_fields = { 'workspace_id': {'exact'} }
 
 class ExportToQBOView(generics.CreateAPIView):
     """
@@ -205,10 +205,12 @@ class LastExportDetailView(generics.RetrieveAPIView):
     """
     Last Export Details
     """
-    queryset = LastExportDetail.objects.first()
-    serializer_class = LastExportDetailSerializer
     lookup_field = 'workspace_id'
     lookup_url_kwarg = 'workspace_id'
+
+    queryset = LastExportDetail.objects.all()
+    serializer_class = LastExportDetailSerializer
+    
 
 
 class WorkspaceAdminsView(generics.RetrieveAPIView):
