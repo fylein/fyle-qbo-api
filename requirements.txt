@@ -50,3 +50,4 @@ pytest-django==4.4.0
 pytest-mock==3.6.1
 wrapt==1.12.1
 gevent==22.10.2
+django-filter==21.1
