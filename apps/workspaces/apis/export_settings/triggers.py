@@ -1,7 +1,7 @@
 from typing import Dict
-from django_q.tasks import async_task
 
 from apps.workspaces.models import WorkspaceGeneralSettings
+from apps.workspaces.queue import async_disable_category_for_items_mapping
 
 class ExportSettingsTrigger:
     def __init__(self, workspace_general_settings: Dict, workspace_id: int):
@@ -22,4 +22,4 @@ class ExportSettingsTrigger:
             # Disable category for items mapping and set import-items to flase
             workspace_general_settings.import_items = False
             workspace_general_settings.save()
-            async_task('apps.mappings.tasks.disable_category_for_items_mapping', self.__workspace_id)
+            async_disable_category_for_items_mapping(self.__workspace_id)

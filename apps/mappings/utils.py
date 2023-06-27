@@ -2,11 +2,11 @@ from typing import Dict
 
 from django.db.models import Q
 
-from fyle_qbo_api.queue import schedule_bill_payment_creation, schedule_auto_map_ccc_employees
 from apps.workspaces.models import WorkspaceGeneralSettings
 from fyle_qbo_api.utils import assert_valid
 
 from .models import GeneralMapping
+from .queue import schedule_bill_payment_creation, schedule_auto_map_ccc_employees
 
 
 class MappingUtils:

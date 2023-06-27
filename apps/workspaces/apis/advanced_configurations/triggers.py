@@ -1,7 +1,6 @@
 from apps.workspaces.models import WorkspaceGeneralSettings
-from fyle_qbo_api.queue import (schedule_bill_payment_creation, schedule_qbo_objects_status_sync, 
-                                schedule_reimbursements_sync)
-
+from apps.workspaces.queue import schedule_qbo_objects_status_sync, schedule_reimbursements_sync
+from apps.mappings.queue import schedule_bill_payment_creation
 
 
 class AdvancedConfigurationsTriggers:

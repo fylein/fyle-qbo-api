@@ -10,8 +10,6 @@ from django.template.loader import render_to_string
 from django_q.models import Schedule
 from django.utils.safestring import mark_safe
 
-from fyle_qbo_api.queue import (schedule_email_notification, schedule_bills_creation, schedule_cheques_creation, 
-    schedule_journal_entry_creation, schedule_credit_card_purchase_creation, schedule_qbo_expense_creation)
 from apps.workspaces.models import Workspace, WorkspaceSchedule, WorkspaceGeneralSettings, LastExportDetail, QBOCredential, FyleCredential
 from apps.fyle.tasks import async_create_expense_groups
 from apps.fyle.models import ExpenseGroup
@@ -19,6 +17,9 @@ from apps.fyle.models import ExpenseGroup
 from apps.tasks.models import TaskLog
 from fyle_accounting_mappings.models import ExpenseAttribute
 from apps.tasks.models import Error
+
+from .queue import (schedule_email_notification, schedule_bills_creation, schedule_cheques_creation, 
+    schedule_journal_entry_creation, schedule_credit_card_purchase_creation, schedule_qbo_expense_creation)
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO

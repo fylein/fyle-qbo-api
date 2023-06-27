@@ -3,12 +3,10 @@ Mapping Signals
 """
 from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
-from django_q.tasks import async_task
 
 from fyle_accounting_mappings.models import MappingSetting, Mapping, EmployeeMapping
 
 from apps.tasks.models import Error
-from fyle_qbo_api.queue import schedule_cost_centers_creation, schedule_fyle_attributes_creation
 from apps.mappings.tasks import upload_attributes_to_fyle
 from apps.workspaces.utils import delete_cards_mapping_settings
 from apps.workspaces.models import WorkspaceGeneralSettings
@@ -16,6 +14,7 @@ from apps.workspaces.models import WorkspaceGeneralSettings
 from apps.workspaces.apis.import_settings.triggers import ImportSettingsTrigger
 
 from .helpers import schedule_or_delete_fyle_import_tasks
+from .queue import async_auto_create_expense_field_mapping, schedule_cost_centers_creation, schedule_fyle_attributes_creation
 
 
 @receiver(post_save, sender=Mapping)
@@ -90,12 +89,7 @@ def run_pre_mapping_settings_triggers(sender, instance: MappingSetting, **kwargs
             source_placeholder=instance.source_placeholder,
         )
 
-        async_task(
-            'apps.mappings.tasks.auto_create_expense_fields_mappings',
-            int(instance.workspace_id),
-            instance.destination_field,
-            instance.source_field
-        )
+        async_auto_create_expense_field_mapping(instance)
 
 @receiver(post_delete, sender=MappingSetting)
 def run_post_delete_mapping_settings_triggers(sender, instance: MappingSetting, **kwargs):
