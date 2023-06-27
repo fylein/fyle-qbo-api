@@ -12,7 +12,6 @@ from ..workspaces.models import WorkspaceGeneralSettings
 from apps.exceptions import handle_view_exceptions
 
 
-
 class AutoMapEmployeeView(generics.CreateAPIView):
     """
     Auto Map Employees view

@@ -327,7 +327,7 @@ class BillLineitem(models.Model):
         bill_lineitem_objects = []
 
         for lineitem in expenses:
-            category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category == None) else '{0} / {1}'.format(
+            category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category is None) else '{0} / {1}'.format(
                 lineitem.category, lineitem.sub_category)
 
             account, detail_type = get_category_mapping_and_detail_type(workspace_general_settings, category, expense_group.workspace_id)
@@ -449,7 +449,7 @@ class ChequeLineitem(models.Model):
         cheque_lineitem_objects = []
 
         for lineitem in expenses:
-            category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category == None) else '{0} / {1}'.format(
+            category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category is None) else '{0} / {1}'.format(
                 lineitem.category, lineitem.sub_category)
 
             account, detail_type = get_category_mapping_and_detail_type(workspace_general_settings, category, expense_group.workspace_id)
@@ -547,8 +547,8 @@ class QBOExpense(models.Model):
         qbo_expense_object, _ = QBOExpense.objects.update_or_create(
             expense_group=expense_group,
             defaults={
-                'expense_account_id': general_mappings.qbo_expense_account_id if expense_group.fund_source == 'PERSONAL'\
-                    else general_mappings.default_debit_card_account_id,
+                'expense_account_id': general_mappings.qbo_expense_account_id if expense_group.fund_source == 'PERSONAL'
+                else general_mappings.default_debit_card_account_id,
                 'entity_id': entity_id,
                 'department_id': department_id,
                 'transaction_date': get_transaction_date(expense_group),
@@ -596,7 +596,7 @@ class QBOExpenseLineitem(models.Model):
         qbo_expense_lineitem_objects = []
 
         for lineitem in expenses:
-            category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category == None) else '{0} / {1}'.format(
+            category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category is None) else '{0} / {1}'.format(
                 lineitem.category, lineitem.sub_category)
 
             account, detail_type = get_category_mapping_and_detail_type(workspace_general_settings, category, expense_group.workspace_id)
@@ -749,7 +749,7 @@ class CreditCardPurchaseLineitem(models.Model):
         credit_card_purchase_lineitem_objects = []
 
         for lineitem in expenses:
-            category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category == None) else '{0} / {1}'.format(
+            category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category is None) else '{0} / {1}'.format(
                 lineitem.category, lineitem.sub_category)
 
             account, detail_type = get_category_mapping_and_detail_type(workspace_general_settings, category, expense_group.workspace_id)
@@ -882,7 +882,7 @@ class JournalEntryLineitem(models.Model):
         journal_entry_lineitem_objects = []
 
         for lineitem in expenses:
-            category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category == None) else '{0} / {1}'.format(
+            category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category is None) else '{0} / {1}'.format(
                 lineitem.category, lineitem.sub_category)
 
             if expense_group.fund_source == 'PERSONAL':
@@ -915,8 +915,8 @@ class JournalEntryLineitem(models.Model):
                     'debit_account_id': debit_account_id,
                     'account_id': account.destination.destination_id if account else None,
                     'class_id': class_id,
-                    'entity_id': entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' \
-                        else entity.destination_vendor.destination_id,
+                    'entity_id': entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE'
+                    else entity.destination_vendor.destination_id,
                     'entity_type': entity_type,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,

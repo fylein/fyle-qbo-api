@@ -12,7 +12,7 @@ from fyle_integrations_platform_connector import PlatformConnector
 from apps.mappings.models import GeneralMapping
 from .fixtures import data
 from tests.helper import dict_compare_keys
-from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGeneralSettings 
+from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGeneralSettings
 from apps.tasks.models import Error
 from django.test import TestCase
 from django.utils import timezone
@@ -35,7 +35,7 @@ def test_auto_create_tax_codes_mappings(db, mocker):
 
     tax_groups = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='TAX_CODE').count()
     mappings = Mapping.objects.filter(workspace_id=workspace_id, destination_type='TAX_CODE').count()
-    
+
     assert tax_groups == 24
     assert mappings == 23
     auto_create_tax_codes_mappings(workspace_id=workspace_id)
@@ -56,9 +56,10 @@ def test_auto_create_tax_codes_mappings(db, mocker):
     fyle_credentials.delete()
 
     response = auto_create_tax_codes_mappings(workspace_id)
-    assert response == None
+    assert response is None
 
-def test_disable_category_for_items_mapping(db ,mocker):
+
+def test_disable_category_for_items_mapping(db, mocker):
     workspace_id = 5
     workspace_general_setting = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
     workspace_general_setting.import_items = False
@@ -138,7 +139,7 @@ def test_disable_category_for_items_mapping(db, mocker):
     mocker.patch(
         'qbosdk.apis.Items.get',
         return_value=[]
-    )      
+    )
 
     destination_attribute = DestinationAttribute.objects.create(
         attribute_type='ACCOUNT',
@@ -179,7 +180,7 @@ def test_disable_category_for_items_mapping(db, mocker):
     with mock.patch('qbosdk.apis.Items.get') as mock_call:
         mock_call.side_effect = QBOCredential.DoesNotExist
         disable_category_for_items_mapping(workspace_id)
-    
+
 
 def test_schedule_tax_groups_creation(db):
     workspace_id = 5
@@ -189,7 +190,7 @@ def test_schedule_tax_groups_creation(db):
         func='apps.mappings.tasks.auto_create_tax_codes_mappings',
         args='{}'.format(workspace_id),
     ).first()
-    
+
     assert schedule.func == 'apps.mappings.tasks.auto_create_tax_codes_mappings'
 
     schedule_tax_groups_creation(import_tax_codes=False, workspace_id=workspace_id)
@@ -199,7 +200,7 @@ def test_schedule_tax_groups_creation(db):
         args='{}'.format(workspace_id),
     ).first()
 
-    assert schedule == None
+    assert schedule is None
 
 
 def test_auto_create_project_mappings(db, mocker):
@@ -226,7 +227,7 @@ def test_auto_create_project_mappings(db, mocker):
     )
 
     response = auto_create_project_mappings(workspace_id=workspace_id)
-    assert response == None
+    assert response is None
 
     mapping_setting = MappingSetting.objects.get(source_field='PROJECT', workspace_id=workspace_id)
     mapping_setting.destination_field = 'CUSTOMER'
@@ -237,13 +238,13 @@ def test_auto_create_project_mappings(db, mocker):
         mapping__source_type='PROJECT',
         attribute_type='PROJECT',
         workspace_id=workspace_id
-	).first()
+    ).first()
 
     expense_attributes_to_enable.active = False
     expense_attributes_to_enable.save()
 
     response = auto_create_project_mappings(workspace_id=workspace_id)
-    assert response == None
+    assert response is None
 
     projects = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='PROJECT').count()
     mappings = Mapping.objects.filter(workspace_id=workspace_id, destination_type='PROJECT').count()
@@ -265,7 +266,7 @@ def test_auto_create_project_mappings(db, mocker):
 
     response = auto_create_project_mappings(workspace_id=workspace_id)
 
-    assert response == None
+    assert response is None
 
 
 def test_remove_duplicates(db):
@@ -288,8 +289,9 @@ def test_create_fyle_category_payload(db):
     fyle_category_payload = create_fyle_categories_payload(qbo_attributes, 2)
     assert dict_compare_keys(fyle_category_payload[0], data['fyle_category_payload'][0]) == [], 'category upload api return diffs in keys'
 
+
 def test_auto_create_category_mappings_with_items(db, mocker):
-    workspace_id=4
+    workspace_id = 4
     WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(import_items=True)
     mappings = Mapping.objects.filter(destination_type='ACCOUNT', source_type='CATEGORY', workspace_id=workspace_id).count()
     assert mappings == 46
@@ -316,7 +318,7 @@ def test_auto_create_category_mappings_with_items(db, mocker):
 
     item_count = Mapping.objects.filter(destination_type='ACCOUNT', source_type='CATEGORY', destination__display_name='Item', workspace_id=workspace_id).count()
     assert item_count == 0
-    
+
 
 def test_auto_create_category_mappings(db, mocker):
     workspace_id = 3
@@ -334,9 +336,9 @@ def test_auto_create_category_mappings(db, mocker):
     )
 
     expense_attributes_to_disable = ExpenseAttribute.objects.filter(
-		attribute_type='CATEGORY', 
-		mapping__destination_id__in=[585],
-	).first()
+        attribute_type='CATEGORY',
+        mapping__destination_id__in=[585],
+    ).first()
 
     expense_attributes_to_disable.active = True
     expense_attributes_to_disable.save()
@@ -360,24 +362,24 @@ def test_auto_create_category_mappings(db, mocker):
 
     response = auto_create_category_mappings(workspace_id=workspace_id)
 
-    assert response == None
+    assert response is None
 
 
 def test_auto_map_employees(db):
     mappings = auto_map_employees('EMPLOYEE', 'EMAIL', 4)
-    assert mappings == None
+    assert mappings is None
 
     mappings = auto_map_employees('EMPLOYEE', 'NAME', 2)
-    assert mappings == None
+    assert mappings is None
 
     mappings = auto_map_employees('EMPLOYEE', 'EMPLOYEE_CODE', 2)
-    assert mappings == None
+    assert mappings is None
 
     mappings = auto_map_employees('VENDOR', 'EMAIL', 2)
-    assert mappings == None
+    assert mappings is None
 
     mappings = auto_map_employees('CREDIT_CARD_ACCOUNT', 'NAME', 3)
-    assert mappings == None
+    assert mappings is None
 
 
 def test_async_auto_map_employees(mocker, db):
@@ -419,7 +421,7 @@ def test_schedule_auto_map_employees(db):
         func='apps.mappings.tasks.async_auto_map_employees',
         args='{}'.format(workspace_id),
     ).first()
-    
+
     assert schedule.func == 'apps.mappings.tasks.async_auto_map_employees'
 
     schedule_auto_map_employees(employee_mapping_preference=False, workspace_id=workspace_id)
@@ -429,7 +431,7 @@ def test_schedule_auto_map_employees(db):
         args='{}'.format(workspace_id),
     ).first()
 
-    assert schedule == None
+    assert schedule is None
 
 
 def test_auto_map_ccc_employees(db):
@@ -460,7 +462,7 @@ def test_schedule_auto_map_ccc_employees(db):
         func='apps.mappings.tasks.async_auto_map_ccc_account',
         args='{}'.format(workspace_id),
     ).first()
-    
+
     assert schedule.func == 'apps.mappings.tasks.async_auto_map_ccc_account'
 
     workspace_id = 1
@@ -471,13 +473,13 @@ def test_schedule_auto_map_ccc_employees(db):
         args='{}'.format(workspace_id),
     ).first()
 
-    assert schedule == None
+    assert schedule is None
 
 
 def test_create_cost_center_payload(db):
     existing_cost_center_names = ExpenseAttribute.objects.filter(
         attribute_type='COST_CENTER', workspace_id=4).values_list('value', flat=True)
-    
+
     qbo_attributes = DestinationAttribute.objects.filter(
         attribute_type='CLASS', workspace_id=4).first()
     qbo_attributes.value = 'sample333'
@@ -503,10 +505,10 @@ def test_auto_create_cost_center_mappings(db, mocker):
         return_value=[]
     )
     mocker.patch(
-            'fyle_integrations_platform_connector.apis.CostCenters.post_bulk',
-            return_value=[]
-        )
-    
+        'fyle_integrations_platform_connector.apis.CostCenters.post_bulk',
+        return_value=[]
+    )
+
     qbo_attributes = DestinationAttribute.objects.filter(
         attribute_type='CLASS', workspace_id=4).first()
     qbo_attributes.value = 'sample333'
@@ -530,7 +532,7 @@ def test_auto_create_cost_center_mappings(db, mocker):
     fyle_credentials.delete()
 
     response = auto_create_cost_center_mappings(workspace_id=workspace_id)
-    assert response == None
+    assert response is None
 
 
 def test_schedule_cost_centers_creation(db):
@@ -541,7 +543,7 @@ def test_schedule_cost_centers_creation(db):
         func='apps.mappings.tasks.auto_create_cost_center_mappings',
         args='{}'.format(workspace_id),
     ).first()
-    
+
     assert schedule.func == 'apps.mappings.tasks.auto_create_cost_center_mappings'
 
     schedule_cost_centers_creation(import_to_fyle=False, workspace_id=workspace_id)
@@ -551,7 +553,7 @@ def test_schedule_cost_centers_creation(db):
         args='{}'.format(workspace_id),
     ).first()
 
-    assert schedule == None
+    assert schedule is None
 
 
 def test_schedule_fyle_attributes_creation(db, mocker):
@@ -591,7 +593,7 @@ def test_schedule_fyle_attributes_creation(db, mocker):
         args='{}'.format(workspace_id),
     ).first()
 
-    assert schedule == None
+    assert schedule is None
 
     mocker.patch(
         'apps.mappings.tasks.upload_attributes_to_fyle',
@@ -600,7 +602,7 @@ def test_schedule_fyle_attributes_creation(db, mocker):
 
     with mock.patch('fyle_accounting_mappings.models.Mapping.bulk_create_mappings') as mock_call:
         mock_call.side_effect = WrongParamsError(msg='invalid params', response='invalid params')
-        auto_create_expense_fields_mappings(workspace_id, 'CUSTOMER', 'CUSTOMER', 'Select CUSTOMER' )
+        auto_create_expense_fields_mappings(workspace_id, 'CUSTOMER', 'CUSTOMER', 'Select CUSTOMER')
 
 
 def test_post_merchants(db, mocker):
@@ -618,7 +620,7 @@ def test_post_merchants(db, mocker):
     )
     workspace_id = 5
     fyle_credentials = FyleCredential.objects.all()
-    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id) 
+    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
     fyle_connection = PlatformConnector(fyle_credentials)
 
     post_merchants(fyle_connection, workspace_id)
@@ -648,7 +650,7 @@ def test_auto_create_vendors_as_merchants(db, mocker):
     assert expense_attribute == 0
 
     auto_create_vendors_as_merchants(workspace_id=workspace_id)
-    
+
     vendors = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='VENDOR').count()
     expense_attribute = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type='MERCHANT').count()
     assert vendors == 29
@@ -666,7 +668,7 @@ def test_auto_create_vendors_as_merchants(db, mocker):
 
     response = auto_create_vendors_as_merchants(workspace_id=1)
 
-    assert response == None
+    assert response is None
 
 
 def test_resolve_expense_attribute_errors(db):

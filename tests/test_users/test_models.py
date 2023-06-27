@@ -2,6 +2,7 @@ import pytest
 from datetime import datetime, timezone
 from fyle_rest_auth.models import User
 
+
 @pytest.mark.django_db
 def test_user_creation():
     '''
@@ -12,7 +13,8 @@ def test_user_creation():
 
     user.save()
 
-    assert user.email=='labhvam.s@fyle.in'
+    assert user.email == 'labhvam.s@fyle.in'
+
 
 @pytest.mark.django_db
 def test_get_of_user(add_users_to_database):

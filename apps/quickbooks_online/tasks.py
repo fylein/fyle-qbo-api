@@ -29,6 +29,7 @@ from .exceptions import handle_qbo_exceptions
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
 
+
 def update_last_export_details(workspace_id):
     last_export_detail = LastExportDetail.objects.get(workspace_id=workspace_id)
 
@@ -50,6 +51,7 @@ def update_last_export_details(workspace_id):
 
     return last_export_detail
 
+
 def resolve_errors_for_exported_expense_group(expense_group: ExpenseGroup):
     """
     Resolve errors for exported expense group
@@ -61,6 +63,7 @@ def resolve_errors_for_exported_expense_group(expense_group: ExpenseGroup):
         is_resolved=False
     ).update(is_resolved=True)
 
+
 def get_or_create_misc_vendor(debit_card_expense: bool, qbo_connection: QBOConnector):
     if debit_card_expense:
         vendor = qbo_connection.get_or_create_vendor('Debit Card Misc', create=True)
@@ -68,6 +71,7 @@ def get_or_create_misc_vendor(debit_card_expense: bool, qbo_connection: QBOConne
         vendor = qbo_connection.get_or_create_vendor('Credit Card Misc', create=True)
 
     return vendor
+
 
 def get_or_create_credit_card_or_debit_card_vendor(workspace_id: int, merchant: str, debit_card_expense: bool, general_settings: WorkspaceGeneralSettings):
     """
@@ -99,6 +103,7 @@ def get_or_create_credit_card_or_debit_card_vendor(workspace_id: int, merchant: 
         vendor = get_or_create_misc_vendor(debit_card_expense, qbo_connection)
 
     return vendor
+
 
 def load_attachments(qbo_connection: QBOConnector, ref_id: str, ref_type: str, expense_group: ExpenseGroup):
     """
@@ -285,7 +290,6 @@ def create_bill(expense_group, task_log_id, last_export: bool):
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
-    
     qbo_credentials = QBOCredential.get_active_qbo_credentials(expense_group.workspace_id)
 
     qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
@@ -321,6 +325,7 @@ def create_bill(expense_group, task_log_id, last_export: bool):
     if last_export:
         update_last_export_details(expense_group.workspace_id)
 
+
 def __validate_expense_group(expense_group: ExpenseGroup, general_settings: WorkspaceGeneralSettings):
     bulk_errors = []
     row = 0
@@ -352,10 +357,10 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                 })
 
     if general_mapping and not (general_mapping.accounts_payable_id or general_mapping.accounts_payable_name):
-        if (general_settings.reimbursable_expenses_object == 'BILL' or \
-            general_settings.corporate_credit_card_expenses_object == 'BILL') or (
-            general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY' and
-            general_settings.employee_field_mapping == 'VENDOR' and expense_group.fund_source == 'PERSONAL'):
+        if (general_settings.reimbursable_expenses_object == 'BILL'
+                or general_settings.corporate_credit_card_expenses_object == 'BILL') or (
+                general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY'
+                and general_settings.employee_field_mapping == 'VENDOR' and expense_group.fund_source == 'PERSONAL'):
             bulk_errors.append({
                 'row': None,
                 'expense_group_id': expense_group.id,
@@ -369,11 +374,11 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
             (
                 general_settings.reimbursable_expenses_object == 'CHECK'
                 or (
-                    general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY' and
-                    general_settings.employee_field_mapping == 'EMPLOYEE' and expense_group.fund_source == 'PERSONAL'
+                    general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY'
+                    and general_settings.employee_field_mapping == 'EMPLOYEE' and expense_group.fund_source == 'PERSONAL'
                 )
             )
-        ):
+    ):
         bulk_errors.append({
             'row': None,
             'expense_group_id': expense_group.id,
@@ -383,7 +388,7 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
         })
 
     if general_mapping and not (general_mapping.qbo_expense_account_id or general_mapping.qbo_expense_account_name)\
-        and general_settings.reimbursable_expenses_object == 'EXPENSE':
+            and general_settings.reimbursable_expenses_object == 'EXPENSE':
         bulk_errors.append({
             'row': None,
             'expense_group_id': expense_group.id,
@@ -393,7 +398,7 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
         })
 
     if general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE' or \
-        general_settings.corporate_credit_card_expenses_object == 'JOURNAL ENTRY':
+            general_settings.corporate_credit_card_expenses_object == 'JOURNAL ENTRY':
         ccc_account_mapping: EmployeeMapping = EmployeeMapping.objects.filter(
             source_employee__value=expense_group.description.get('employee_email'),
             workspace_id=expense_group.workspace_id
@@ -423,7 +428,7 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                 'type': 'General Mapping',
                 'message': 'Default Credit Card Account not found'
             })
-    
+
     if general_settings.corporate_credit_card_expenses_object == 'DEBIT CARD EXPENSE' and expense_group.fund_source == 'CCC':
         if not (general_mapping.default_debit_card_account_id or general_mapping.default_debit_card_account_name):
             bulk_errors.append({
@@ -443,17 +448,17 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
             'message': 'Default Tax Code not found'
         })
 
-    if not (expense_group.fund_source == 'CCC' and
-        ((general_settings.corporate_credit_card_expenses_object in ('CREDIT CARD PURCHASE', 'DEBIT CARD EXPENSE') and
-          general_settings.map_merchant_to_vendor) or
-         general_settings.corporate_credit_card_expenses_object == 'BILL')):
-        
+    if not (expense_group.fund_source == 'CCC'
+            and ((general_settings.corporate_credit_card_expenses_object in ('CREDIT CARD PURCHASE', 'DEBIT CARD EXPENSE')
+                  and general_settings.map_merchant_to_vendor) or
+                 general_settings.corporate_credit_card_expenses_object == 'BILL')):
+
         employee_attribute = ExpenseAttribute.objects.filter(
             value=expense_group.description.get('employee_email'),
             workspace_id=expense_group.workspace_id,
             attribute_type='EMPLOYEE'
         ).first()
-        
+
         try:
             entity = EmployeeMapping.objects.get(
                 source_employee=employee_attribute,
@@ -490,7 +495,7 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
     expenses = expense_group.expenses.all()
 
     for lineitem in expenses:
-        category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category == None) else '{0} / {1}'.format(
+        category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category is None) else '{0} / {1}'.format(
             lineitem.category, lineitem.sub_category)
 
         category_attribute = ExpenseAttribute.objects.filter(
@@ -528,7 +533,7 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                 )
 
         if general_settings.import_tax_codes and lineitem.tax_group_id:
-            tax_group  = ExpenseAttribute.objects.get(
+            tax_group = ExpenseAttribute.objects.get(
                 workspace_id=expense_group.workspace_id,
                 attribute_type='TAX_GROUP',
                 source_id=lineitem.tax_group_id
@@ -552,15 +557,15 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
 
                 if tax_group:
                     Error.objects.update_or_create(
-                    workspace_id=expense_group.workspace_id,
-                    expense_attribute=tax_group,
-                    defaults={
-                        'type': 'TAX_MAPPING',
-                        'error_title': tax_group.value,
-                        'error_detail': 'Tax mapping is missing',
-                        'is_resolved': False
-                    }
-                )
+                        workspace_id=expense_group.workspace_id,
+                        expense_attribute=tax_group,
+                        defaults={
+                            'type': 'TAX_MAPPING',
+                            'error_title': tax_group.value,
+                            'error_detail': 'Tax mapping is missing',
+                            'is_resolved': False
+                        }
+                    )
         row = row + 1
 
     if bulk_errors:
@@ -608,6 +613,7 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
         if chain.length() > 1:
             chain.run()
 
+
 @handle_qbo_exceptions()
 def create_cheque(expense_group, task_log_id, last_export: bool):
     task_log = TaskLog.objects.get(id=task_log_id)
@@ -652,6 +658,7 @@ def create_cheque(expense_group, task_log_id, last_export: bool):
 
     if last_export:
         update_last_export_details(expense_group.workspace_id)
+
 
 def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str]):
     """
@@ -746,6 +753,7 @@ def create_qbo_expense(expense_group, task_log_id, last_export: bool):
 
     if last_export:
         update_last_export_details(expense_group.workspace_id)
+
 
 def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids: List[str]):
     """
@@ -845,6 +853,7 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id, last_e
     if last_export:
         update_last_export_details(expense_group.workspace_id)
 
+
 def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[str]):
     """
     Schedule journal_entry creation
@@ -936,6 +945,7 @@ def create_journal_entry(expense_group, task_log_id, last_export: bool):
     if last_export:
         update_last_export_details(expense_group.workspace_id)
 
+
 def check_expenses_reimbursement_status(expenses):
     all_expenses_paid = True
 
@@ -947,8 +957,9 @@ def check_expenses_reimbursement_status(expenses):
 
     return all_expenses_paid
 
+
 @handle_qbo_exceptions(bill_payment=True)
-def process_bill_payments(bill: Bill, workspace_id: int, task_log: TaskLog):    
+def process_bill_payments(bill: Bill, workspace_id: int, task_log: TaskLog):
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(qbo_credentials, workspace_id)
 
@@ -994,7 +1005,7 @@ def create_bill_payment(workspace_id):
     if bills:
         for bill in bills:
             expense_group_reimbursement_status = check_expenses_reimbursement_status(
-            bill.expense_group.expenses.all())
+                bill.expense_group.expenses.all())
             if expense_group_reimbursement_status:
                 task_log, _ = TaskLog.objects.update_or_create(
                     workspace_id=workspace_id,
@@ -1005,6 +1016,7 @@ def create_bill_payment(workspace_id):
                     }
                 )
                 process_bill_payments(bill, workspace_id, task_log)
+
 
 def schedule_bill_payment_creation(sync_fyle_to_qbo_payments, workspace_id):
     general_mappings: GeneralMapping = GeneralMapping.objects.filter(workspace_id=workspace_id).first()

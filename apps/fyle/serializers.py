@@ -12,6 +12,7 @@ class ExpenseGroupSettingsSerializer(serializers.ModelSerializer):
         model = ExpenseGroupSettings
         fields = '__all__'
 
+
 class ExpenseSerializer(serializers.ModelSerializer):
     """
     Expense serializer
@@ -19,6 +20,7 @@ class ExpenseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Expense
         fields = ['updated_at', 'claim_number', 'employee_email', 'employee_name', 'fund_source', 'expense_number', 'payment_number', 'vendor', 'category', 'amount']
+
 
 class ExpenseGroupSerializer(serializers.ModelSerializer):
     """
@@ -30,6 +32,7 @@ class ExpenseGroupSerializer(serializers.ModelSerializer):
         model = ExpenseGroup
         fields = '__all__'
         extra_fields = ['expenses']
+
 
 class ExpenseGroupExpenseSerializer(serializers.ModelSerializer):
     """
@@ -57,6 +60,7 @@ class ReimbursementSerializer(serializers.ModelSerializer):
         model = Reimbursement
         fields = '__all__'
 
+
 class ExpenseFilterSerializer(serializers.ModelSerializer):
     """
     Expense Filter Serializer
@@ -64,7 +68,7 @@ class ExpenseFilterSerializer(serializers.ModelSerializer):
     class Meta:
         model = ExpenseFilter
         fields = '__all__'
-        read_only_fields = ('id', 'workspace', 'created_at', 'updated_at') 
+        read_only_fields = ('id', 'workspace', 'created_at', 'updated_at')
 
     def create(self, validated_data):
         workspace_id = self.context['request'].parser_context.get('kwargs').get('workspace_id')

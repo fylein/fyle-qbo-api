@@ -71,6 +71,7 @@ def run_post_mapping_settings_triggers(sender, instance: MappingSetting, **kwarg
         )
         trigger.add_department_grouping(instance.source_field)
 
+
 @receiver(pre_save, sender=MappingSetting)
 def run_pre_mapping_settings_triggers(sender, instance: MappingSetting, **kwargs):
     """
@@ -96,6 +97,7 @@ def run_pre_mapping_settings_triggers(sender, instance: MappingSetting, **kwargs
             instance.destination_field,
             instance.source_field
         )
+
 
 @receiver(post_delete, sender=MappingSetting)
 def run_post_delete_mapping_settings_triggers(sender, instance: MappingSetting, **kwargs):

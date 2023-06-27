@@ -2,6 +2,7 @@ from apps.fyle.models import _format_date, _group_expenses, get_default_ccc_expe
 from apps.fyle.models import *
 from .fixtures import data
 
+
 def test_default_fields():
     expense_group_field = get_default_expense_group_fields()
     expense_state = get_default_expense_state()
@@ -32,7 +33,7 @@ def test_expense_group_settings(create_temp_workspace, db):
     assert settings.expense_state == 'PAID'
     assert settings.ccc_export_date_type == 'spent_at'
     assert settings.ccc_expense_state == 'PAID'
- 
+
 
 def test_create_reimbursement(db):
 
@@ -43,7 +44,7 @@ def test_create_reimbursement(db):
     pending_reimbursement = Reimbursement.objects.get(reimbursement_id='reimgCW1Og0BcM')
 
     pending_reimbursement.state = 'PENDING'
-    pending_reimbursement.settlement_id= 'setgCxsr2vTmZ'
+    pending_reimbursement.settlement_id = 'setgCxsr2vTmZ'
 
     reimbursements[0]['is_paid'] = True
 
@@ -58,12 +59,12 @@ def test_create_expense_groups_by_report_id_fund_source(db):
     payload = data['expenses']
     Expense.create_expense_objects(payload, workspace_id)
     expense_objects = Expense.objects.last()
-    
+
     expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
     expense_group_settings.reimbursable_export_date_type = 'last_spent_at'
     expense_group_settings.ccc_export_date_type = 'last_spent_at'
     expense_group_settings.save()
-    
+
     field = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type='PROJECT').last()
     field.attribute_type = 'KILLUA'
     field.save()
@@ -77,7 +78,7 @@ def test_create_expense_groups_by_report_id_fund_source(db):
     assert len(expense_groups) == 1
 
     expense_groups = ExpenseGroup.objects.last()
-    assert expense_groups.exported_at == None
+    assert expense_groups.exported_at is None
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
     general_settings.reimbursable_expenses_object = 'BILL'
@@ -92,7 +93,7 @@ def test_create_expense_groups_by_report_id_fund_source(db):
     ExpenseGroup.create_expense_groups_by_report_id_fund_source([expense_objects], workspace_id)
 
     expense_groups = ExpenseGroup.objects.last()
-    assert expense_groups.exported_at == None
+    assert expense_groups.exported_at is None
 
 
 def test_format_date():

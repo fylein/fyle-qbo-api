@@ -17,6 +17,7 @@ class ImportSettingsTrigger:
     """
     All the post save actions of Import Settings API
     """
+
     def __init__(self, workspace_general_settings: Dict, mapping_settings: List[Dict], workspace_id):
         self.__workspace_general_settings = workspace_general_settings
         self.__mapping_settings = mapping_settings
@@ -91,12 +92,11 @@ class ImportSettingsTrigger:
         if not workspace_general_settings_instance.import_items:
             async_task('apps.mappings.tasks.disable_category_for_items_mapping', self.__workspace_id)
 
-
     def __remove_old_department_source_field(
-            self,
-            current_mappings_settings: List[MappingSetting],
-            new_mappings_settings: List[Dict]
-        ):
+        self,
+        current_mappings_settings: List[MappingSetting],
+        new_mappings_settings: List[Dict]
+    ):
         """
         Should remove Department Source field from Reimbursable settings in case of deletion and updation
         """
@@ -112,7 +112,6 @@ class ImportSettingsTrigger:
         if (old_department_setting and new_department_setting and old_department_setting.source_field != new_department_setting[0]['source_field']):
             self.remove_department_grouping(old_department_setting.source_field.lower())
 
-
     def pre_save_mapping_settings(self):
         """
         Post save action for mapping settings
@@ -124,10 +123,10 @@ class ImportSettingsTrigger:
         for setting in mapping_settings:
             if setting['source_field'] == 'COST_CENTER':
                 cost_center_mapping_available = True
-        
+
         if not cost_center_mapping_available:
             schedule_cost_centers_creation(False, self.__workspace_id)
-        
+
         schedule_fyle_attributes_creation(self.__workspace_id)
 
         # Removal of department grouping will be taken care from post_delete() signal

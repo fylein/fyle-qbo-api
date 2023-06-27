@@ -1,6 +1,6 @@
 arrow==0.15.4
 asgiref==3.4.1
-astroid==2.6.6
+astroid==2.15.5
 blessed==1.16.1
 Babel==2.9.1
 certifi==2019.11.28
@@ -28,9 +28,9 @@ gunicorn==20.1.0
 idna==2.8
 isort==5.10.1
 lazy-object-proxy==1.6.0
-mccabe==0.6.1
+mccabe==0.7.0
 psycopg2-binary==2.8.4
-pylint==2.7.4
+pylint==2.17.4
 python-dateutil==2.8.1
 pytz==2019.3
 qbosdk==0.16.1
@@ -50,3 +50,4 @@ pytest-mock==3.6.1
 wrapt==1.12.1
 gevent==22.10.2
 flake8==5.0.4
+autopep8==2.0.0

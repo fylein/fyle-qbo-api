@@ -23,6 +23,7 @@ from apps.tasks.models import Error
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
 
+
 def schedule_email_notification(workspace_id: int, schedule_enabled: bool, hours: int):
     if schedule_enabled:
         schedule, _ = Schedule.objects.update_or_create(
@@ -56,10 +57,9 @@ def schedule_sync(workspace_id: int, schedule_enabled: bool, hours: int, email_a
         ws_schedule.start_datetime = datetime.now()
         ws_schedule.interval_hours = hours
         ws_schedule.emails_selected = emails_selected
-        
+
         if email_added:
             ws_schedule.additional_email_options.append(email_added)
-
 
         schedule, _ = Schedule.objects.update_or_create(
             func='apps.workspaces.tasks.run_sync_schedule',
@@ -182,6 +182,7 @@ def export_to_qbo(workspace_id, export_mode=None):
         last_export_detail.export_mode = export_mode or 'MANUAL'
         last_export_detail.save()
 
+
 def run_email_notification(workspace_id):
     expense_data = []
     expense_html = ''
@@ -197,7 +198,7 @@ def run_email_notification(workspace_id):
     workspace = Workspace.objects.get(id=workspace_id)
     try:
         qbo = QBOCredential.get_active_qbo_credentials(workspace_id)
-        errors = Error.objects.filter(workspace_id=workspace_id,is_resolved=False).order_by('id')[:10]
+        errors = Error.objects.filter(workspace_id=workspace_id, is_resolved=False).order_by('id')[:10]
         for error in errors:
             if error.type == 'EMPLOYEE_MAPPING' or error.type == 'CATEGORY_MAPPING':
                 html = '''<tr>
@@ -219,7 +220,7 @@ def run_email_notification(workspace_id):
                 html_data = '''<td>''' + error_type + '''</td>
                                 <td style="padding-right: 8px">''' + error.error_title + '''</td>
                             </tr>'''
-            html = '{0} {1}'.format(html,html_data)
+            html = '{0} {1}'.format(html, html_data)
             expense_html = '{0} {1}'.format(expense_html, html)
         expense_data = set(expense_data)
         expense_data = ', '.join([str(data) for data in expense_data])
@@ -233,11 +234,11 @@ def run_email_notification(workspace_id):
                 for data in ws_schedule.additional_email_options:
                     if data['email'] == admin_email:
                         admin_name = data['name']
-            
+
             if workspace.last_synced_at and workspace.ccc_last_synced_at:
                 export_time = max(workspace.last_synced_at, workspace.ccc_last_synced_at)
             else:
-                export_time =  workspace.last_synced_at or workspace.ccc_last_synced_at
+                export_time = workspace.last_synced_at or workspace.ccc_last_synced_at
 
             if task_logs and (ws_schedule.error_count is None or len(task_logs) > ws_schedule.error_count):
                 context = {
@@ -271,6 +272,7 @@ def run_email_notification(workspace_id):
             'QBO Credentials not found for workspace_id %s',
             workspace_id
         )
+
 
 def async_update_fyle_credentials(fyle_org_id: str, refresh_token: str):
     fyle_credentials = FyleCredential.objects.filter(workspace__fyle_org_id=fyle_org_id).first()

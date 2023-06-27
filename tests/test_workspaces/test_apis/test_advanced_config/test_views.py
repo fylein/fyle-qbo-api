@@ -7,6 +7,7 @@ from apps.workspaces.models import FyleCredential, WorkspaceSchedule
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from .fixtures import data
 
+
 def test_advanced_config(api_client, test_connection):
 
     workspace = Workspace.objects.get(id=3)
@@ -26,11 +27,11 @@ def test_advanced_config(api_client, test_connection):
 
     response = json.loads(response.content)
     assert dict_compare_keys(response, data['response']) == [], 'workspaces api returns a diff in the keys'
-    
+
     response = api_client.put(
         url,
         data={
-        'general_mappings':{}},
+            'general_mappings': {}},
         format='json'
     )
 
@@ -39,7 +40,7 @@ def test_advanced_config(api_client, test_connection):
     response = api_client.put(
         url,
         data={
-        'workspace_general_settings':{}},
+            'workspace_general_settings': {}},
         format='json'
     )
 
@@ -48,9 +49,8 @@ def test_advanced_config(api_client, test_connection):
     response = api_client.put(
         url,
         data={
-        'workspace_schedules':{}},
+            'workspace_schedules': {}},
         format='json'
     )
 
     assert response.status_code == 400
-    

@@ -2,6 +2,7 @@ import pytest
 from apps.workspaces.apis.export_settings.triggers import ExportSettingsTrigger
 from apps.workspaces.models import WorkspaceGeneralSettings
 
+
 def test_post_save_workspace_general_settings_export_trigger(mocker, db):
     # setting the import_items to True
     workspace_general_setting = WorkspaceGeneralSettings.objects.filter(workspace_id=5).first()

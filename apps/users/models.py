@@ -4,6 +4,7 @@ from django.contrib.auth.models import (
     BaseUserManager, AbstractBaseUser
 )
 
+
 class User(AbstractBaseUser):
     id = models.AutoField(primary_key=True)
     email = models.EmailField(

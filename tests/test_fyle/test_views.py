@@ -13,18 +13,18 @@ from apps.tasks.models import TaskLog
 def test_expense_group_view(api_client, test_connection):
     access_token = test_connection.access_token
 
-    url = reverse('expense-groups', 
-            kwargs={
-                'workspace_id': 3,
-                }
-            )
-    
+    url = reverse('expense-groups',
+                  kwargs={
+                      'workspace_id': 3,
+                  }
+                  )
+
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
     response = api_client.get(url, {
         'expense_group_ids': '1,2'
     })
-    assert response.status_code==200
+    assert response.status_code == 200
 
     response = json.loads(response.content)
     assert response == {'count': 0, 'next': None, 'previous': None, 'results': []}
@@ -32,7 +32,7 @@ def test_expense_group_view(api_client, test_connection):
     response = api_client.get(url, {
         'state': 'ALL'
     })
-    assert response.status_code==200
+    assert response.status_code == 200
 
     response = json.loads(response.content)
     assert response['count'] == 17
@@ -43,11 +43,11 @@ def test_expense_group_view(api_client, test_connection):
         'end_date': '2022-05-23 13:03:48',
         'exported_at': '2022-05-23 13:03:06'
     })
-    assert response.status_code==200
+    assert response.status_code == 200
 
     response = json.loads(response.content)
     assert response['count'] == 4
-    
+
     response = api_client.get(url, {
         'state': 'READY'
     })
@@ -56,7 +56,7 @@ def test_expense_group_view(api_client, test_connection):
     assert response == data['expense_groups_ready_response']
 
     response = api_client.get(url, {
-      'state': 'FAILED'
+        'state': 'FAILED'
     })
     response = json.loads(response.content)
     assert response == {'count': 0, 'next': None, 'previous': None, 'results': []}
@@ -73,18 +73,18 @@ def test_expense_group_view(api_client, test_connection):
         data={'task_log_id': task_log.id},
         format='json'
     )
-    assert response.status_code==200
+    assert response.status_code == 200
 
 
 def test_expense_group_settings(api_client, test_connection):
     access_token = test_connection.access_token
 
-    url = reverse('expense-group-settings', 
-        kwargs={
-                'workspace_id': 3,
-            }
-        )
-    
+    url = reverse('expense-group-settings',
+                  kwargs={
+                      'workspace_id': 3,
+                  }
+                  )
+
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
     response = api_client.get(url)
     response = json.loads(response.content)
@@ -100,13 +100,13 @@ def test_expense_group_settings(api_client, test_connection):
         data=data['expense_group_settings_payload'],
         format='json'
     )
-    assert response.status_code==200
+    assert response.status_code == 200
     response = json.loads(response.content)
 
     assert dict_compare_keys(response, data['expense_groups_settings_response']) == [], 'expense group api return diffs in keys'
     assert response['expense_state'] == 'PAID'
     assert response['reimbursable_export_date_type'] == 'spent_at'
-    
+
 
 def test_fyle_refresh_dimension(mocker, api_client, test_connection):
     mocker.patch(
@@ -116,14 +116,14 @@ def test_fyle_refresh_dimension(mocker, api_client, test_connection):
 
     access_token = test_connection.access_token
 
-    url = reverse('refresh-fyle-dimensions', 
-        kwargs={
-                'workspace_id': 1,
-            }
-        )
-    
+    url = reverse('refresh-fyle-dimensions',
+                  kwargs={
+                      'workspace_id': 1,
+                  }
+                  )
+
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
-    
+
     response = api_client.post(url)
     assert response.status_code == 200
 
@@ -148,14 +148,14 @@ def test_fyle_sync_dimension(mocker, api_client, test_connection, db):
 
     access_token = test_connection.access_token
 
-    url = reverse('sync-fyle-dimensions', 
-        kwargs={
-                'workspace_id': 1,
-            }
-        )
-    
+    url = reverse('sync-fyle-dimensions',
+                  kwargs={
+                      'workspace_id': 1,
+                  }
+                  )
+
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
-    
+
     response = api_client.post(url)
     assert response.status_code == 200
 
@@ -168,14 +168,14 @@ def test_fyle_sync_dimension(mocker, api_client, test_connection, db):
 
 
 def test_fyle_sync_dimension_fail(api_client, test_connection):
-    
+
     access_token = test_connection.access_token
 
-    url = reverse('sync-fyle-dimensions', 
-        kwargs={
-                'workspace_id': 1,
-            }
-        )
+    url = reverse('sync-fyle-dimensions',
+                  kwargs={
+                      'workspace_id': 1,
+                  }
+                  )
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
     workspace = Workspace.objects.get(id=1)
@@ -195,14 +195,14 @@ def test_fyle_sync_dimension_fail(api_client, test_connection):
 
 
 def test_expense_fields_view(api_client, test_connection):
-    
+
     access_token = test_connection.access_token
 
-    url = reverse('expense-fields', 
-        kwargs={
-                'workspace_id': 3
-            }
-        )
+    url = reverse('expense-fields',
+                  kwargs={
+                      'workspace_id': 3
+                  }
+                  )
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
@@ -212,15 +212,16 @@ def test_expense_fields_view(api_client, test_connection):
     response = json.loads(response.content)
     assert response[0] == data['expense_fields_response'][0]
 
+
 def test_employees_view(api_client, test_connection):
-    
+
     access_token = test_connection.access_token
 
-    url = reverse('employees', 
-        kwargs={
-                'workspace_id': 3
-            }
-        )
+    url = reverse('employees',
+                  kwargs={
+                      'workspace_id': 3
+                  }
+                  )
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
@@ -231,11 +232,11 @@ def test_employees_view(api_client, test_connection):
 def test_exportable_expense_groups(api_client, test_connection):
     access_token = test_connection.access_token
 
-    url = reverse('exportable-expense-groups', 
-        kwargs={
-                'workspace_id': 3
-            }
-        )
+    url = reverse('exportable-expense-groups',
+                  kwargs={
+                      'workspace_id': 3
+                  }
+                  )
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
@@ -248,11 +249,11 @@ def test_exportable_expense_groups(api_client, test_connection):
 def test_sync_expense_groups(api_client, test_connection):
     access_token = test_connection.access_token
 
-    url = reverse('sync-expense-groups', 
-        kwargs={
-                'workspace_id': 3
-            }
-        )
+    url = reverse('sync-expense-groups',
+                  kwargs={
+                      'workspace_id': 3
+                  }
+                  )
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
@@ -261,73 +262,73 @@ def test_sync_expense_groups(api_client, test_connection):
 
 
 def test_expense_filters(api_client, test_connection):
-   access_token=test_connection.access_token
+    access_token = test_connection.access_token
 
-   url = reverse('expense-filters', 
-      kwargs={
-         'workspace_id': 1,
-      }
-   )
+    url = reverse('expense-filters',
+                  kwargs={
+                      'workspace_id': 1,
+                  }
+                  )
 
-   api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
-   response = api_client.post(url,data=data['expense_filter_1'])
-   assert response.status_code == 201
-   response = json.loads(response.content)
+    response = api_client.post(url, data=data['expense_filter_1'])
+    assert response.status_code == 201
+    response = json.loads(response.content)
 
-   assert dict_compare_keys(response, data['expense_filter_1_response']) == [], 'expense group api return diffs in keys'
+    assert dict_compare_keys(response, data['expense_filter_1_response']) == [], 'expense group api return diffs in keys'
 
-   response = api_client.post(url,data=data['expense_filter_2'])
-   assert response.status_code == 201
-   response = json.loads(response.content)
+    response = api_client.post(url, data=data['expense_filter_2'])
+    assert response.status_code == 201
+    response = json.loads(response.content)
 
-   assert dict_compare_keys(response, data['expense_filter_2_response']) == [], 'expense group api return diffs in keys'
+    assert dict_compare_keys(response, data['expense_filter_2_response']) == [], 'expense group api return diffs in keys'
 
-   response = api_client.get(url)
-   assert response.status_code == 200
-   response = json.loads(response.content)
+    response = api_client.get(url)
+    assert response.status_code == 200
+    response = json.loads(response.content)
 
-   assert dict_compare_keys(response, data['expense_filters_response']) == [], 'expense group api return diffs in keys'
+    assert dict_compare_keys(response, data['expense_filters_response']) == [], 'expense group api return diffs in keys'
 
 
 @pytest.mark.django_db(databases=['default'])
 def test_custom_fields(mocker, api_client, test_connection):
-   access_token=test_connection.access_token
+    access_token = test_connection.access_token
 
-   url = reverse('custom-field', 
-      kwargs={
-         'workspace_id': 1,
-      }
-   )
+    url = reverse('custom-field',
+                  kwargs={
+                      'workspace_id': 1,
+                  }
+                  )
 
-   mocker.patch(
-      'fyle.platform.apis.v1beta.admin.expense_fields.list_all',
-      return_value=data['get_all_custom_fields']
-   )
+    mocker.patch(
+        'fyle.platform.apis.v1beta.admin.expense_fields.list_all',
+        return_value=data['get_all_custom_fields']
+    )
 
-   api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
-   response = api_client.get(url)
-   assert response.status_code == 200
-   response = json.loads(response.content)
+    response = api_client.get(url)
+    assert response.status_code == 200
+    response = json.loads(response.content)
 
-   assert dict_compare_keys(response, data['custom_fields_response']) == [], 'expense group api return diffs in keys'
+    assert dict_compare_keys(response, data['custom_fields_response']) == [], 'expense group api return diffs in keys'
 
 
 @pytest.mark.django_db(databases=['default'])
 def test_expenses(mocker, api_client, test_connection):
-   access_token=test_connection.access_token
+    access_token = test_connection.access_token
 
-   url = reverse('expenses', 
-      kwargs={
-         'workspace_id': 1,
-      }
-   )
+    url = reverse('expenses',
+                  kwargs={
+                      'workspace_id': 1,
+                  }
+                  )
 
-   api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
-   response = api_client.get(url)
-   assert response.status_code == 200
-   response = json.loads(response.content)
+    response = api_client.get(url)
+    assert response.status_code == 200
+    response = json.loads(response.content)
 
-   assert dict_compare_keys(response, data['skipped_expenses']) == [], 'expense group api return diffs in keys'
+    assert dict_compare_keys(response, data['skipped_expenses']) == [], 'expense group api return diffs in keys'

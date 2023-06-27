@@ -7,13 +7,14 @@ from apps.workspaces.models import FyleCredential, WorkspaceSchedule
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from .fixtures import data
 
+
 def test_export_settings(api_client, test_connection):
 
     workspace = Workspace.objects.get(id=3)
     workspace.onboarding_state = 'EXPORT_SETTINGS'
     workspace.save()
 
-    workspace_general_settings_instance = WorkspaceGeneralSettings.objects.filter(workspace_id=3).first() 
+    workspace_general_settings_instance = WorkspaceGeneralSettings.objects.filter(workspace_id=3).first()
     workspace_general_settings_instance.map_merchant_to_vendor = True
     workspace_general_settings_instance.category_sync_version = 'v2'
     workspace_general_settings_instance.save()
@@ -44,8 +45,8 @@ def test_export_settings(api_client, test_connection):
     invalid_expense_group_settings = data['export_settings']
     invalid_expense_group_settings['expense_group_settings'] = {}
     invalid_expense_group_settings['workspace_general_settings'] = {'reimbursable_expenses_object': 'EXPENSE',
-        'corporate_credit_card_expenses_object': 'BILL'
-    }
+                                                                    'corporate_credit_card_expenses_object': 'BILL'
+                                                                    }
 
     response = api_client.put(
         url,

@@ -1,6 +1,7 @@
 from apps.mappings.models import GeneralMapping
 from apps.workspaces.models import WorkspaceGeneralSettings
 
+
 def test_get_queryset(api_client, test_connection):
     access_token = test_connection.access_token
     url = '/api/workspaces/3/tasks/all/'
@@ -12,7 +13,7 @@ def test_get_queryset(api_client, test_connection):
         'task_type': 'CREATING_EXPENSE',
         'status': 'COMPLETE'
     })
-    assert response.status_code==200
+    assert response.status_code == 200
 
 
 def test_get_task_by_id(api_client, test_connection):
@@ -24,5 +25,4 @@ def test_get_task_by_id(api_client, test_connection):
     response = api_client.get(url, {
         'id': '8'
     })
-    assert response.status_code==200
-    
+    assert response.status_code == 200

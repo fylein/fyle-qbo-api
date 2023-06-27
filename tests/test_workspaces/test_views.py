@@ -9,6 +9,7 @@ from qbosdk import exceptions as qbo_exc
 from apps.workspaces.models import *
 from .fixtures import data
 
+
 def test_get_workspace_by_id(api_client, test_connection):
 
     url = reverse(
@@ -78,7 +79,7 @@ def test_post_of_workspace(mocker, api_client, test_connection):
 
     response = json.loads(response.content)
     assert dict_compare_keys(response, data['workspace']) == [], 'workspaces api returns a diff in the keys'
-    
+
     workspace = Workspace.objects.filter(fyle_org_id='or79Cob97KSh').first()
     workspace.fyle_org_id = 'asdfghj'
     workspace.save()
@@ -117,7 +118,7 @@ def test_get_configuration_detail(api_client, test_connection):
     response = json.loads(response.content)
     assert dict_compare_keys(response, data['general_settings']) == [], 'configuration api returns a diff in keys'
 
-    workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first() 
+    workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
     workspace_general_settings.delete()
 
     response = api_client.get(url)
@@ -126,7 +127,7 @@ def test_get_configuration_detail(api_client, test_connection):
 
 def test_post_workspace_configurations(api_client, test_connection):
     workspace_id = 4
-    workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first() 
+    workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
     workspace_general_settings.map_merchant_to_vendor = True
     workspace_general_settings.save()
 
@@ -142,14 +143,14 @@ def test_post_workspace_configurations(api_client, test_connection):
         data=data['workspace_general_settings_payload'],
         format='json'
     )
-    assert response.status_code==200
+    assert response.status_code == 200
 
     response = api_client.patch(
         url,
         data=data['workspace_general_settings_payload'],
         format='json'
     )
-    assert response.status_code==200
+    assert response.status_code == 200
 
     updated_data = data['workspace_general_settings_payload']
     updated_data['je_single_credit_line'] = True
@@ -160,7 +161,7 @@ def test_post_workspace_configurations(api_client, test_connection):
         data=updated_data,
         format='json'
     )
-    assert response.status_code==200
+    assert response.status_code == 200
 
 
 def test_ready_view(api_client, test_connection):
@@ -232,7 +233,7 @@ def test_post_connect_qbo_view(mocker, api_client, test_connection):
         data={
             'code': code,
             'realm_id': '123146326950399',
-        }    
+        }
     )
 
     assert response.status_code == 200
@@ -261,42 +262,42 @@ def test_patch_connect_qbo_view(mocker, api_client, test_connection):
 
 def test_connect_qbo_view_exceptions(api_client, test_connection):
     workspace_id = 1
-    
+
     code = 'qwertyu'
     url = '/api/workspaces/{}/connect_qbo/authorization_code/'.format(workspace_id)
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
-    
+
     with mock.patch('apps.workspaces.views.generate_qbo_refresh_token') as mock_call:
         mock_call.side_effect = qbo_exc.UnauthorizedClientError(msg='Invalid Authorization Code', response='Invalid Authorization Code')
-        
+
         response = api_client.post(
             url,
-            data={'code': code}    
+            data={'code': code}
         )
         assert response.status_code == 401
 
         mock_call.side_effect = qbo_exc.NotFoundClientError(msg='Fyle Application not found', response='Fyle Application not found')
-        
+
         response = api_client.post(
             url,
-            data={'code': code}    
+            data={'code': code}
         )
         assert response.status_code == 404
 
         mock_call.side_effect = qbo_exc.WrongParamsError(msg='Some of the parameters are wrong', response='Some of the parameters are wrong')
-        
+
         response = api_client.post(
             url,
-            data={'code': code}    
+            data={'code': code}
         )
         assert response.status_code == 500
 
         mock_call.side_effect = qbo_exc.InternalServerError(msg='Wrong/Expired Authorization code', response='Wrong/Expired Authorization code')
-        
+
         response = api_client.post(
             url,
-            data={'code': code}    
+            data={'code': code}
         )
         assert response.status_code == 401
 
@@ -317,7 +318,7 @@ def test_prepare_e2e_test_view(mock_db, mocker, api_client, test_connection):
         'cryptography.fernet.Fernet.decrypt',
         return_value=settings.E2E_TESTS_CLIENT_SECRET.encode('utf-8')
     )
-   
+
     mocker.patch(
         'apps.quickbooks_online.utils.QBOConnector.sync_dimensions',
         return_value=None

@@ -182,7 +182,7 @@ class ConnectQBOView(viewsets.ViewSet):
                     refresh_token=refresh_token,
                     realm_id=realm_id,
                     workspace=workspace
-                ) 
+                )
 
             # Check if the realm_id matches the one associated with the workspace
             if workspace.qbo_realm_id:
@@ -204,8 +204,8 @@ class ConnectQBOView(viewsets.ViewSet):
             qbo_credentials.company_name = company_info['CompanyName']
             qbo_credentials.currency = preferences['CurrencyPrefs']['HomeCurrency']['value']
 
-            qbo_credentials.save()     
-            
+            qbo_credentials.save()
+
             # Update the workspace onboarding state and realm_id
             workspace.qbo_realm_id = realm_id
 
@@ -227,7 +227,6 @@ class ConnectQBOView(viewsets.ViewSet):
 
         except qbo_exc.InternalServerError:
             return Response({'message': 'Wrong/Expired Authorization code'}, status=status.HTTP_401_UNAUTHORIZED)
-
 
     def patch(self, request, **kwargs):
         """Delete QBO refresh_token"""
@@ -351,6 +350,8 @@ class LastExportDetailView(viewsets.ViewSet):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+
 class WorkspaceAdminsView(viewsets.ViewSet):
 
     def get(self, request, *args, **kwargs):
@@ -359,13 +360,13 @@ class WorkspaceAdminsView(viewsets.ViewSet):
         """
 
         workspace = Workspace.objects.get(pk=kwargs['workspace_id'])
-        
+
         admin_email = []
         users = workspace.user.all()
         for user in users:
             admin = User.objects.get(user_id=user)
             name = ExpenseAttribute.objects.get(
-                value=admin.email, 
+                value=admin.email,
                 workspace_id=kwargs['workspace_id'],
                 attribute_type='EMPLOYEE'
             ).detail['full_name']
@@ -376,9 +377,10 @@ class WorkspaceAdminsView(viewsets.ViewSet):
             })
 
         return Response(
-                data=admin_email,
-                status=status.HTTP_200_OK
-            )
+            data=admin_email,
+            status=status.HTTP_200_OK
+        )
+
 
 class SetupE2ETestView(viewsets.ViewSet):
     """
@@ -430,12 +432,12 @@ class SetupE2ETestView(viewsets.ViewSet):
                             # Store the latest healthy refresh token for the workspace
                             QBOCredential.objects.update_or_create(
                                 workspace=workspace,
-                                defaults = {
-                                    'refresh_token' : qbo_connector.connection.refresh_token,
-                                    'realm_id' : healthy_token.realm_id,
-                                    'is_expired' : False,
-                                    'company_name' : healthy_token.company_name,
-                                    'country' : healthy_token.country
+                                defaults={
+                                    'refresh_token': qbo_connector.connection.refresh_token,
+                                    'realm_id': healthy_token.realm_id,
+                                    'is_expired': False,
+                                    'company_name': healthy_token.company_name,
+                                    'country': healthy_token.country
                                 }
                             )
 
@@ -454,7 +456,7 @@ class SetupE2ETestView(viewsets.ViewSet):
                             workspace.last_synced_at = None
                             workspace.save()
 
-                            #insert a destination attribute
+                            # insert a destination attribute
                             DestinationAttribute.create_or_update_destination_attribute({
                                 'attribute_type': 'ACCOUNT',
                                 'display_name': 'Account',

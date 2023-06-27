@@ -62,16 +62,16 @@ def test_create_expense_groups(mocker, db):
 @pytest.mark.django_db()
 def test_create_expense_group_skipped_flow(mocker, api_client, test_connection):
     access_token = test_connection.access_token
-    #adding the expense-filter
-    url = reverse('expense-filters', 
-        kwargs={
-            'workspace_id': 1,
-        }
-    )
+    # adding the expense-filter
+    url = reverse('expense-filters',
+                  kwargs={
+                      'workspace_id': 1,
+                  }
+                  )
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
-    response = api_client.post(url,data=data['expense_filter_0'])
+    response = api_client.post(url, data=data['expense_filter_0'])
     assert response.status_code == 201
     response = json.loads(response.content)
 
@@ -84,11 +84,10 @@ def test_create_expense_group_skipped_flow(mocker, api_client, test_connection):
             'status': 'IN_PROGRESS'
         }
     )
-    
+
     expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=1)
     expense_group_settings.import_card_credits = True
     expense_group_settings.save()
-
 
     with mock.patch('fyle_integrations_platform_connector.apis.Expenses.get') as mock_call:
         mock_call.side_effect = [
@@ -104,8 +103,8 @@ def test_create_expense_group_skipped_flow(mocker, api_client, test_connection):
         expenses = Expense.objects.filter(org_id='or79Cob97KSh')
 
         assert len(expense_group) == expense_group_count
-        assert len(expenses) == expenses_count+2
+        assert len(expenses) == expenses_count + 2
 
         for expense in expenses:
-            if expense.employee_email == 'jhonsnow@fyle.in': 
+            if expense.employee_email == 'jhonsnow@fyle.in':
                 assert expense.is_skipped == True

@@ -1,19 +1,19 @@
 data = {
-    'workspace_general_settings_payload':{
-        'id':4,
-        'reimbursable_expenses_object':'BILL',
-        'corporate_credit_card_expenses_object':'CREDIT CARD PURCHASE',
-        'employee_field_mapping':'VENDOR',
-        'map_merchant_to_vendor':True,
-        'import_categories':True,
-        'import_projects':False,
-        'import_items':False,
-        'import_tax_codes':False,
-        'change_accounting_period':False,
-        'charts_of_accounts':[
+    'workspace_general_settings_payload': {
+        'id': 4,
+        'reimbursable_expenses_object': 'BILL',
+        'corporate_credit_card_expenses_object': 'CREDIT CARD PURCHASE',
+        'employee_field_mapping': 'VENDOR',
+        'map_merchant_to_vendor': True,
+        'import_categories': True,
+        'import_projects': False,
+        'import_items': False,
+        'import_tax_codes': False,
+        'change_accounting_period': False,
+        'charts_of_accounts': [
             'Expense'
         ],
-        'memo_structure':[
+        'memo_structure': [
             'employee_email',
             'category',
             'spent_on',
@@ -21,54 +21,54 @@ data = {
             'purpose',
             'expense_link'
         ],
-        'auto_map_employees':'EMAIL',
-        'auto_create_destination_entity':True,
-        'auto_create_merchants_as_vendors':False,
-        'sync_fyle_to_qbo_payments':True,
-        'sync_qbo_to_fyle_payments':False,
-        'category_sync_version':'v1',
-        'je_single_credit_line':False,
-        'map_fyle_cards_qbo_account':False,
-        'skip_cards_mapping':False,
-        'import_vendors_as_merchants':True,
-        'created_at':'2022-05-23T11:34:12.831875Z',
-        'updated_at':'2022-05-23T12:58:43.146006Z',
-        'workspace':4
+        'auto_map_employees': 'EMAIL',
+        'auto_create_destination_entity': True,
+        'auto_create_merchants_as_vendors': False,
+        'sync_fyle_to_qbo_payments': True,
+        'sync_qbo_to_fyle_payments': False,
+        'category_sync_version': 'v1',
+        'je_single_credit_line': False,
+        'map_fyle_cards_qbo_account': False,
+        'skip_cards_mapping': False,
+        'import_vendors_as_merchants': True,
+        'created_at': '2022-05-23T11:34:12.831875Z',
+        'updated_at': '2022-05-23T12:58:43.146006Z',
+        'workspace': 4
     },
-    'workspace':{
-        'id':3,
-        'name':'Fyle For Arkham Asylum',
-        'fyle_org_id':'or79Cob97KSh',
-        'fyle_currency':'USD',
-        'qbo_realm_id':'4620816365071123640',
-        'cluster_domain':None,
-        'app_version':'v1',
-        'last_synced_at':'2022-05-23T17:35:13.674387Z',
-        'ccc_last_synced_at':'2022-05-23T17:35:13.674387Z',
-        'source_synced_at':'2022-05-25T14:35:34.196373Z',
-        'destination_synced_at':'2022-05-25T14:35:50.437019Z',
-        'onboarding_state':'COMPLETE',
-        'created_at':'2022-05-23T11:09:25.690652Z',
-        'updated_at':'2022-05-23T17:35:13.675764Z',
-        'user':[
+    'workspace': {
+        'id': 3,
+        'name': 'Fyle For Arkham Asylum',
+        'fyle_org_id': 'or79Cob97KSh',
+        'fyle_currency': 'USD',
+        'qbo_realm_id': '4620816365071123640',
+        'cluster_domain': None,
+        'app_version': 'v1',
+        'last_synced_at': '2022-05-23T17:35:13.674387Z',
+        'ccc_last_synced_at': '2022-05-23T17:35:13.674387Z',
+        'source_synced_at': '2022-05-25T14:35:34.196373Z',
+        'destination_synced_at': '2022-05-25T14:35:50.437019Z',
+        'onboarding_state': 'COMPLETE',
+        'created_at': '2022-05-23T11:09:25.690652Z',
+        'updated_at': '2022-05-23T17:35:13.675764Z',
+        'user': [
             1
         ]
     },
-    'general_settings':{
-        'id':4,
-        'reimbursable_expenses_object':'EXPENSE',
-        'corporate_credit_card_expenses_object':'BILL',
-        'employee_field_mapping':'EMPLOYEE',
-        'map_merchant_to_vendor':True,
-        'import_categories':True,
-        'import_projects':False,
+    'general_settings': {
+        'id': 4,
+        'reimbursable_expenses_object': 'EXPENSE',
+        'corporate_credit_card_expenses_object': 'BILL',
+        'employee_field_mapping': 'EMPLOYEE',
+        'map_merchant_to_vendor': True,
+        'import_categories': True,
+        'import_projects': False,
         'import_items': False,
-        'import_tax_codes':False,
-        'change_accounting_period':False,
-        'charts_of_accounts':[
+        'import_tax_codes': False,
+        'change_accounting_period': False,
+        'charts_of_accounts': [
             'Expense'
         ],
-        'memo_structure':[
+        'memo_structure': [
             'employee_email',
             'category',
             'spent_on',
@@ -76,53 +76,53 @@ data = {
             'purpose',
             'expense_link'
         ],
-        'auto_map_employees':'EMAIL',
-        'auto_create_destination_entity':False,
-        'auto_create_merchants_as_vendors':False,
-        'sync_fyle_to_qbo_payments':False,
-        'sync_qbo_to_fyle_payments':False,
-        'category_sync_version':'v1',
-        'je_single_credit_line':False,
-        'map_fyle_cards_qbo_account':False,
-        'skip_cards_mapping':False,
-        'import_vendors_as_merchants':True,
-        'created_at':'2022-05-23T11:34:12.831875Z',
-        'updated_at':'2022-05-23T12:58:43.146006Z',
+        'auto_map_employees': 'EMAIL',
+        'auto_create_destination_entity': False,
+        'auto_create_merchants_as_vendors': False,
+        'sync_fyle_to_qbo_payments': False,
+        'sync_qbo_to_fyle_payments': False,
+        'category_sync_version': 'v1',
+        'je_single_credit_line': False,
+        'map_fyle_cards_qbo_account': False,
+        'skip_cards_mapping': False,
+        'import_vendors_as_merchants': True,
+        'created_at': '2022-05-23T11:34:12.831875Z',
+        'updated_at': '2022-05-23T12:58:43.146006Z',
         'is_simplify_report_closure_enabled': True,
         'is_multi_currency_allowed': True,
-        'workspace':4
+        'workspace': 4
     },
-    'expenses':[
+    'expenses': [
         {
-            'id':'txBfCOgcuYE4',
+            'id': 'txBfCOgcuYE4',
             'report_title': 'title1',
-            'employee_email':'ashwin.t@fyle.in',
-            'employee_name':'Joanna',
-            'category':'Flight',
-            'sub_category':None,
-            'project':None,
-            'project_id':None,
-            'expense_number':'E/2022/05/T/46',
-            'org_id':'or79Cob97KSh',
-            'claim_number':'C/2022/05/R/11',
-            'amount':50,
-            'tax_amount':None,
-            'tax_group_id':None,
-            'settled_at':'2022-05-26T14:39:31.164945+00:00',
-            'currency':'USD',
-            'foreign_amount':None,
-            'foreign_currency':None,
-            'settlement_id':'set2sqoTh6wb0',
-            'reimbursable':True,
-            'billable':False,
-            'state':'PAYMENT_PROCESSING',
-            'vendor':'Ashwin',
-            'cost_center':'Marketing',
-            'corporate_card_id':None,
-            'purpose':None,
-            'report_id':'rp2qRWE0XgGI',
-            'file_ids':[
-                
+            'employee_email': 'ashwin.t@fyle.in',
+            'employee_name': 'Joanna',
+            'category': 'Flight',
+            'sub_category': None,
+            'project': None,
+            'project_id': None,
+            'expense_number': 'E/2022/05/T/46',
+            'org_id': 'or79Cob97KSh',
+            'claim_number': 'C/2022/05/R/11',
+            'amount': 50,
+            'tax_amount': None,
+            'tax_group_id': None,
+            'settled_at': '2022-05-26T14:39:31.164945+00:00',
+            'currency': 'USD',
+            'foreign_amount': None,
+            'foreign_currency': None,
+            'settlement_id': 'set2sqoTh6wb0',
+            'reimbursable': True,
+            'billable': False,
+            'state': 'PAYMENT_PROCESSING',
+            'vendor': 'Ashwin',
+            'cost_center': 'Marketing',
+            'corporate_card_id': None,
+            'purpose': None,
+            'report_id': 'rp2qRWE0XgGI',
+            'file_ids': [
+
             ],
             'spent_at':'2021-12-22T07:30:26.289842+00:00',
             'approved_at':'2021-12-22T07:30:26.289842+00:00',
@@ -131,89 +131,89 @@ data = {
             'source_account_type':'PERSONAL_CASH_ACCOUNT',
             'verified_at':None,
             'custom_properties':{
-                'Custom Expense Field':None,
-                'Location':'',
-                'Operating System':'',
-                'Team':'',
-                'User Dimension':'',
-                'User Dimension Copy':'',
-                'Team Copy':'',
-                'Team 2 Postman':'',
-                'System Operating':'',
-                'Departments':'',
-                'Location Entity':'',
-                'Class':'',
-                'Tax Groups':'',
-                'Klass':''
+                'Custom Expense Field': None,
+                'Location': '',
+                'Operating System': '',
+                'Team': '',
+                'User Dimension': '',
+                'User Dimension Copy': '',
+                'Team Copy': '',
+                'Team 2 Postman': '',
+                'System Operating': '',
+                'Departments': '',
+                'Location Entity': '',
+                'Class': '',
+                'Tax Groups': '',
+                'Klass': ''
             },
-            'payment_number':'P/2022/05/R/14'
+            'payment_number': 'P/2022/05/R/14'
         }
     ],
-    'company_info':{
-        'SyncToken':'4',
-        'domain':'QBO',
-        'LegalAddr':{
-            'City':'Mountain View',
-            'Country':'US',
-            'Line1':'2500 Garcia Ave',
-            'PostalCode':'94043',
-            'CountrySubDivisionCode':'CA',
-            'Id':'1'
+    'company_info': {
+        'SyncToken': '4',
+        'domain': 'QBO',
+        'LegalAddr': {
+            'City': 'Mountain View',
+            'Country': 'US',
+            'Line1': '2500 Garcia Ave',
+            'PostalCode': '94043',
+            'CountrySubDivisionCode': 'CA',
+            'Id': '1'
         },
-        'SupportedLanguages':'en',
-        'CompanyName':'Sandbox Company_US_4',
-        'Country':'US',
-        'CompanyAddr':{
-            'City':'Mountain View',
-            'Country':'US',
-            'Line1':'2500 Garcia Ave',
-            'PostalCode':'94043',
-            'CountrySubDivisionCode':'CA',
-            'Id':'1'
+        'SupportedLanguages': 'en',
+        'CompanyName': 'Sandbox Company_US_4',
+        'Country': 'US',
+        'CompanyAddr': {
+            'City': 'Mountain View',
+            'Country': 'US',
+            'Line1': '2500 Garcia Ave',
+            'PostalCode': '94043',
+            'CountrySubDivisionCode': 'CA',
+            'Id': '1'
         },
-        'sparse':False,
-        'Id':'1',
-        'WebAddr':{
-            
+        'sparse': False,
+        'Id': '1',
+        'WebAddr': {
+
         },
-        'FiscalYearStartMonth':'January',
-        'CustomerCommunicationAddr':{
-            'City':'Mountain View',
-            'Country':'US',
-            'Line1':'2500 Garcia Ave',
-            'PostalCode':'94043',
-            'CountrySubDivisionCode':'CA',
-            'Id':'1'
+        'FiscalYearStartMonth': 'January',
+        'CustomerCommunicationAddr': {
+            'City': 'Mountain View',
+            'Country': 'US',
+            'Line1': '2500 Garcia Ave',
+            'PostalCode': '94043',
+            'CountrySubDivisionCode': 'CA',
+            'Id': '1'
         },
-        'PrimaryPhone':{
-            'FreeFormNumber':'(650)944-4444'
+        'PrimaryPhone': {
+            'FreeFormNumber': '(650)944-4444'
         },
-        'LegalName':'Larry"s Bakery',
-        'CompanyStartDate':'2015-06-05',
-        'Email':{
-            'Address':'donotreply@intuit.com'
+        'LegalName': 'Larry"s Bakery',
+        'CompanyStartDate': '2015-06-05',
+        'Email': {
+            'Address': 'donotreply@intuit.com'
         },
-        'NameValue':[
+        'NameValue': [
             {
-                'Name':'NeoEnabled',
-                'Value':'True'
+                'Name': 'NeoEnabled',
+                'Value': 'True'
             }
         ],
-        'MetaData':{
-            'CreateTime':'2015-06-05T13:55:54-07:00',
-            'LastUpdatedTime':'2015-07-06T08:51:50-07:00'
+        'MetaData': {
+            'CreateTime': '2015-06-05T13:55:54-07:00',
+            'LastUpdatedTime': '2015-07-06T08:51:50-07:00'
         }
     },
-    'admin_user':{
-        'data':{
-            'org':{
-                'currency':'USD',
-                'domain':'fyleforgotham.in',
-                'id':'or79Cob97KSh',
-                'name':'Fyle For Arkham Asylum'
+    'admin_user': {
+        'data': {
+            'org': {
+                'currency': 'USD',
+                'domain': 'fyleforgotham.in',
+                'id': 'or79Cob97KSh',
+                'name': 'Fyle For Arkham Asylum'
             },
-            'org_id':'or79Cob97KSh',
-            'roles':[
+            'org_id': 'or79Cob97KSh',
+            'roles': [
                 'VERIFIER',
                 'FYLER',
                 'FINANCE',
@@ -222,12 +222,12 @@ data = {
                 'APPROVER',
                 'AUDITOR'
             ],
-            'user':{
-                'email':'ashwin.t@fyle.in',
-                'full_name':'Joanna',
-                'id':'usqywo0f3nBY'
+            'user': {
+                'email': 'ashwin.t@fyle.in',
+                'full_name': 'Joanna',
+                'id': 'usqywo0f3nBY'
             },
-            'user_id':'usqywo0f3nBY'
+            'user_id': 'usqywo0f3nBY'
         }
     }
 }

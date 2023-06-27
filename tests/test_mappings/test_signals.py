@@ -57,7 +57,7 @@ def test_resolve_post_employees_mapping_errors(test_connection):
         }
     )
     employee_mapping = EmployeeMapping.objects.get(
-       source_employee_id=2082,
+        source_employee_id=2082,
         workspace_id=2
     )
     employee_mapping.destination_employee_id = 748
@@ -66,7 +66,6 @@ def test_resolve_post_employees_mapping_errors(test_connection):
     error = Error.objects.filter(expense_attribute_id=employee_mapping.source_employee_id).first()
 
     assert error.is_resolved == True
-
 
 
 @pytest.mark.django_db()
@@ -148,6 +147,7 @@ def test_run_post_mapping_settings_triggers(test_connection, mocker):
     assert schedule.func == 'apps.mappings.tasks.async_auto_create_custom_field_mappings'
     assert schedule.args == '1'
 
+
 @pytest.mark.django_db()
 def test_run_post_delete_mapping_settings_triggers(test_connection):
     mapping_setting = MappingSetting(
@@ -193,6 +193,6 @@ def test_run_pre_mapping_settings_triggers(db, mocker, test_connection):
     mapping_setting.save()
 
     custom_mappings = Mapping.objects.last()
-    
+
     custom_mappings = Mapping.objects.filter(workspace_id=workspace_id, source_type='CUSTOM_INTENTs').count()
     assert custom_mappings == 0

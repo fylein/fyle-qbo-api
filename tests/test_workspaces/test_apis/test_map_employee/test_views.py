@@ -7,13 +7,14 @@ from apps.workspaces.models import FyleCredential, WorkspaceSchedule
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from .fixtures import data
 
+
 def test_map_employees(api_client, test_connection):
 
     workspace = Workspace.objects.get(id=3)
     workspace.onboarding_state = 'MAP_EMPLOYEES'
     workspace.save()
 
-    workspace_general_settings_instance = WorkspaceGeneralSettings.objects.filter(workspace_id=3).first() 
+    workspace_general_settings_instance = WorkspaceGeneralSettings.objects.filter(workspace_id=3).first()
     workspace_general_settings_instance.employee_field_mapping = 'VENDOR'
     workspace_general_settings_instance.save()
 
@@ -28,9 +29,8 @@ def test_map_employees(api_client, test_connection):
     assert response.status_code == 200
 
     response = json.loads(response.content)
-    
-    assert dict_compare_keys(response, data['response']) == [], 'workspaces api returns a diff in the keys'
 
+    assert dict_compare_keys(response, data['response']) == [], 'workspaces api returns a diff in the keys'
 
     response = api_client.put(
         url,
@@ -40,15 +40,14 @@ def test_map_employees(api_client, test_connection):
 
     assert response.status_code == 400
     response = json.loads(response.content)
-    
 
     response = api_client.put(
         url,
         data=data['invalid_auto_map_employees'],
         format='json'
     )
-    
+
     assert response.status_code == 400
     response = json.loads(response.content)
-    
+
     assert response['non_field_errors'][0] == 'auto_map_employees can have only EMAIL / NAME / EMPLOYEE_CODE'

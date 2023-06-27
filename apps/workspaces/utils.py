@@ -73,22 +73,22 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
         'reimbursable_expenses_object' in general_settings_payload and general_settings_payload[
             'reimbursable_expenses_object'], 'reimbursable_expenses_object field is blank')
 
-    assert_valid('employee_field_mapping' in general_settings_payload and
-        general_settings_payload['employee_field_mapping'], 'employee_field_mapping field is blank')
+    assert_valid('employee_field_mapping' in general_settings_payload
+                 and general_settings_payload['employee_field_mapping'], 'employee_field_mapping field is blank')
 
     if 'auto_map_employees' in general_settings_payload and general_settings_payload['auto_map_employees']:
         assert_valid(general_settings_payload['auto_map_employees'] in ['EMAIL', 'NAME', 'EMPLOYEE_CODE'],
                      'auto_map_employees can have only EMAIL / NAME / EMPLOYEE_CODE')
 
     if general_settings_payload['auto_create_destination_entity']:
-        assert_valid(general_settings_payload['auto_map_employees'] and \
-            general_settings_payload['employee_field_mapping'] == 'VENDOR',
-            'auto_create_destination_entity can be set only if auto map is enabled and employee mapped to vendor')
+        assert_valid(general_settings_payload['auto_map_employees']
+                     and general_settings_payload['employee_field_mapping'] == 'VENDOR',
+                     'auto_create_destination_entity can be set only if auto map is enabled and employee mapped to vendor')
 
     if general_settings_payload['je_single_credit_line']:
         assert_valid(
-            general_settings_payload['reimbursable_expenses_object'] == 'JOURNAL ENTRY' or
-            general_settings_payload['corporate_credit_card_expenses_object'] == 'JOURNAL ENTRY',
+            general_settings_payload['reimbursable_expenses_object'] == 'JOURNAL ENTRY'
+            or general_settings_payload['corporate_credit_card_expenses_object'] == 'JOURNAL ENTRY',
             'je_single_credit_line can be set only if reimbursable_expenses_object or \
                 corporate_credit_card_expenses_object is JOURNAL ENTRY')
 
@@ -153,9 +153,9 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
         expense_group_settings.ccc_export_date_type = 'spent_at'
 
         expense_group_settings.save()
-    
+
     if general_settings.corporate_credit_card_expenses_object == 'JOURNAL ENTRY' or \
-        general_settings.reimbursable_expenses_object in ('JOURNAL ENTRY', 'EXPENSE'):
+            general_settings.reimbursable_expenses_object in ('JOURNAL ENTRY', 'EXPENSE'):
         expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
         expense_group_settings.import_card_credits = True
         expense_group_settings.save()

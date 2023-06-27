@@ -30,7 +30,7 @@ def get_task_log_and_fund_source(workspace_id: int):
         workspace_id=workspace_id,
         type='FETCHING_EXPENSES',
         defaults={
-           'status': 'IN_PROGRESS'
+            'status': 'IN_PROGRESS'
         }
     )
 
@@ -153,13 +153,13 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
                     expensegroup__isnull=True,
                     org_id=workspace.fyle_org_id
                 ).update(is_skipped=True)
-                
+
                 filtered_expenses = Expense.objects.filter(
                     is_skipped=False,
                     id__in=expenses_object_ids,
                     expensegroup__isnull=True,
-                    org_id=workspace.fyle_org_id)     
-                
+                    org_id=workspace.fyle_org_id)
+
             ExpenseGroup.create_expense_groups_by_report_id_fund_source(
                 filtered_expenses, workspace_id
             )

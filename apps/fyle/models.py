@@ -51,21 +51,23 @@ EXPENSE_FILTER_JOIN_BY = (
 EXPENSE_FILTER_CUSTOM_FIELD_TYPE = (
     ('SELECT', 'SELECT'),
     ('NUMBER', 'NUMBER'),
-    ('TEXT','TEXT')
+    ('TEXT', 'TEXT')
 )
 
 EXPENSE_FILTER_OPERATOR = (
-	('isnull', 'isnull'),
-	('in', 'in'),
-	('iexact' , 'iexact'),
-	('icontains', 'icontains'),
-	('lt', 'lt'),
-	('lte', 'lte'),
-	('not_in', 'not_in')
+    ('isnull', 'isnull'),
+    ('in', 'in'),
+    ('iexact', 'iexact'),
+    ('icontains', 'icontains'),
+    ('lt', 'lt'),
+    ('lte', 'lte'),
+    ('not_in', 'not_in')
 )
+
 
 def get_default_ccc_expense_state():
     return 'PAID'
+
 
 def _format_date(date_string) -> datetime:
     """
@@ -214,11 +216,11 @@ class ExpenseGroupSettings(models.Model):
         help_text='list of fields ccc expenses grouped by'
     )
 
-    expense_state = models.CharField(max_length=100, default=get_default_expense_state, null = True,
+    expense_state = models.CharField(max_length=100, default=get_default_expense_state, null=True,
                                      help_text='state at which the expenses are fetched ( PAYMENT_PENDING / '
                                                'PAYMENT_PROCESSING, PAID)')
     ccc_expense_state = models.CharField(max_length=100, default=get_default_ccc_expense_state,
-        choices=CCC_EXPENSE_STATE, help_text='state at which the ccc expenses are fetched (APPROVED/PAID)', null=True)
+                                         choices=CCC_EXPENSE_STATE, help_text='state at which the ccc expenses are fetched (APPROVED/PAID)', null=True)
     reimbursable_export_date_type = models.CharField(max_length=100, default='current_date', help_text='Export Date')
     ccc_export_date_type = models.CharField(max_length=100, default='current_date', help_text='CCC Export Date')
     import_card_credits = models.BooleanField(help_text='Import Card Credits', default=False)
@@ -298,7 +300,7 @@ class ExpenseGroupSettings(models.Model):
         import_card_credits = settings.import_card_credits
         if 'import_card_credits' in expense_group_settings.keys():
             import_card_credits = expense_group_settings['import_card_credits']
-            
+
         return ExpenseGroupSettings.objects.update_or_create(
             workspace_id=workspace_id,
             defaults={
@@ -371,8 +373,8 @@ class ExpenseGroup(models.Model):
 
             if total_amount < 0:
                 reimbursable_expenses = list(filter(lambda expense: expense.amount > 0, reimbursable_expenses))
-                
-        elif  general_settings.reimbursable_expenses_object  != 'JOURNAL ENTRY':
+
+        elif general_settings.reimbursable_expenses_object != 'JOURNAL ENTRY':
             reimbursable_expenses = list(filter(lambda expense: expense.amount > 0, reimbursable_expenses))
 
         expense_groups = _group_expenses(reimbursable_expenses, reimbursable_expense_group_fields, workspace_id)
@@ -527,7 +529,7 @@ class ExpenseFilter(models.Model):
         choices=EXPENSE_FILTER_CUSTOM_FIELD_TYPE
     )
     workspace = models.ForeignKey(
-        Workspace, 
+        Workspace,
         on_delete=models.PROTECT,
         help_text='To which workspace these filters belongs to'
     )

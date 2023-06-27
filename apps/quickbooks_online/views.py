@@ -23,6 +23,7 @@ from apps.exceptions import handle_view_exceptions
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
 
+
 class VendorView(generics.ListCreateAPIView):
     """
     Vendor view
@@ -34,7 +35,7 @@ class VendorView(generics.ListCreateAPIView):
         search_term = self.request.query_params.get('search_term')
         if search_term:
             return DestinationAttribute.objects.filter(
-                attribute_type='VENDOR', active=True, workspace_id=self.kwargs['workspace_id'],value__icontains=search_term).order_by('value')[:10]
+                attribute_type='VENDOR', active=True, workspace_id=self.kwargs['workspace_id'], value__icontains=search_term).order_by('value')[:10]
         return DestinationAttribute.objects.filter(
             attribute_type='VENDOR', active=True, workspace_id=self.kwargs['workspace_id']).order_by('value')[:10]
 
@@ -50,7 +51,7 @@ class EmployeeView(generics.ListCreateAPIView):
         search_term = self.request.query_params.get('search_term')
         if search_term:
             return DestinationAttribute.objects.filter(
-                attribute_type='EMPLOYEE', active=True, workspace_id=self.kwargs['workspace_id'],value__icontains=search_term).order_by('value')[:10]
+                attribute_type='EMPLOYEE', active=True, workspace_id=self.kwargs['workspace_id'], value__icontains=search_term).order_by('value')[:10]
         return DestinationAttribute.objects.filter(
             attribute_type='EMPLOYEE', active=True, workspace_id=self.kwargs['workspace_id']).order_by('value')[:10]
 
@@ -107,6 +108,7 @@ class BillPaymentView(generics.CreateAPIView):
     """
     Create Bill Payment View
     """
+
     def post(self, request, *args, **kwargs):
         """
         Create bill payment
@@ -166,7 +168,7 @@ class RefreshQuickbooksDimensionView(generics.ListCreateAPIView):
                 chain.append('apps.mappings.tasks.auto_create_cost_center_mappings', int(kwargs['workspace_id']))
             elif mapping_setting.is_custom:
                 chain.append('apps.mappings.tasks.async_auto_create_custom_field_mappings',
-                            int(kwargs['workspace_id']))
+                             int(kwargs['workspace_id']))
 
         if chain.length() > 0:
             chain.run()
@@ -194,7 +196,7 @@ class DestinationAttributesView(generics.ListAPIView):
         display_name = self.request.query_params.get('display_name')
 
         filters = {
-            'attribute_type__in' : attribute_types,
+            'attribute_type__in': attribute_types,
             'workspace_id': self.kwargs['workspace_id'],
             'active': True
         }
@@ -204,6 +206,7 @@ class DestinationAttributesView(generics.ListAPIView):
             filters['display_name__in'] = display_name
 
         return DestinationAttribute.objects.filter(**filters).order_by('value')
+
 
 class SearchedDestinationAttributesView(generics.ListAPIView):
     """
@@ -219,7 +222,7 @@ class SearchedDestinationAttributesView(generics.ListAPIView):
         display_name = self.request.query_params.get('display_name')
 
         filters = {
-            'attribute_type__in' : attribute_type,
+            'attribute_type__in': attribute_type,
             'workspace_id': self.kwargs['workspace_id'],
             'active': True
         }
@@ -235,7 +238,6 @@ class SearchedDestinationAttributesView(generics.ListAPIView):
             filters['active'] = True
 
         return DestinationAttribute.objects.filter(**filters).order_by('value')[:30]
-
 
 
 class QBOAttributesView(generics.ListCreateAPIView):

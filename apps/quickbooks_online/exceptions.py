@@ -59,6 +59,7 @@ def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: Ta
     task_log.quickbooks_errors = errors
     task_log.save()
 
+
 def handle_qbo_exceptions(bill_payment=False):
     def decorator(func):
         def new_fn(*args):
@@ -111,9 +112,8 @@ def handle_qbo_exceptions(bill_payment=False):
                 }
                 task_log.status = 'FATAL'
                 task_log.save()
-                logger.error('Something unexpected happened workspace_id: %s %s', 
+                logger.error('Something unexpected happened workspace_id: %s %s',
                              task_log.workspace_id, task_log.detail)
-
 
         return new_fn
 

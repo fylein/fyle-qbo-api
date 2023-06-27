@@ -110,6 +110,7 @@ class ExportableExpenseGroupsView(generics.RetrieveAPIView):
     """
     List Exportable Expense Groups
     """
+
     def get(self, request, *args, **kwargs):
         configuration = WorkspaceGeneralSettings.objects.get(workspace_id=kwargs['workspace_id'])
         fund_source = []
@@ -262,6 +263,7 @@ class RefreshFyleDimensionView(generics.ListCreateAPIView):
             status=status.HTTP_200_OK
         )
 
+
 class ExpenseFilterView(generics.ListCreateAPIView, generics.DestroyAPIView):
     """
     Expense Filter view
@@ -279,7 +281,7 @@ class ExpenseFilterView(generics.ListCreateAPIView, generics.DestroyAPIView):
 
         return Response(data={
             'workspace_id': workspace_id,
-            'rank' : rank,
+            'rank': rank,
             'message': 'Expense filter deleted'
         })
 
@@ -310,6 +312,7 @@ class CustomFieldView(generics.RetrieveAPIView):
     """
     Custom Field view
     """
+
     def get(self, request, *args, **kwargs):
         """
         Get Custom Fields
@@ -331,9 +334,8 @@ class CustomFieldView(generics.RetrieveAPIView):
                     'type': custom_field['type'],
                     'is_custom': custom_field['is_custom']
                 })
-            
+
         return Response(
             data=response,
             status=status.HTTP_200_OK
         )
-

@@ -59,7 +59,7 @@ class Error(models.Model):
     workspace = models.ForeignKey(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
     type = models.CharField(max_length=50, choices=ERROR_TYPE_CHOICES, help_text='Error type')
     expense_group = models.ForeignKey(
-        ExpenseGroup, on_delete=models.PROTECT, 
+        ExpenseGroup, on_delete=models.PROTECT,
         null=True, help_text='Reference to Expense group'
     )
     expense_attribute = models.OneToOneField(

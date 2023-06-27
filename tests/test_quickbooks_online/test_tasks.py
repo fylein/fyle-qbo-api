@@ -43,7 +43,7 @@ def test_get_or_create_credit_card_or_debit_card_vendor(mocker, db):
         with mock.patch('apps.quickbooks_online.utils.QBOConnector.get_or_create_vendor') as mock_call:
             mock_call.side_effect = [None, WrongParamsError(msg='wrong parameters', response='wrong parameters')]
             contact = get_or_create_credit_card_or_debit_card_vendor(workspace_id, 'samp_merchant', False, general_settings)
-    except:
+    except BaseException:
         logger.info('wrong parameters')
 
     general_settings.auto_create_merchants_as_vendors = False
@@ -64,7 +64,7 @@ def test_get_or_create_credit_card_or_debit_card_vendor(mocker, db):
         with mock.patch('apps.quickbooks_online.utils.QBOConnector.get_or_create_vendor') as mock_call:
             mock_call.side_effect = WrongParamsError(msg='wrong parameters', response='wrong parameters')
             contact = get_or_create_credit_card_or_debit_card_vendor(workspace_id, 'samp_merchant', False, general_settings)
-    except:
+    except BaseException:
         logger.info('wrong parameters')
 
 
@@ -83,12 +83,12 @@ def test_create_or_update_employee_mapping(mocker, db):
     expense_group.save()
 
     source = ExpenseAttribute.objects.filter(
-            attribute_type='EMPLOYEE', value__iexact='user4@fyleforgotham.in', workspace_id=workspace_id
-        ).first()
+        attribute_type='EMPLOYEE', value__iexact='user4@fyleforgotham.in', workspace_id=workspace_id
+    ).first()
     if source:
         employee_mapping = EmployeeMapping.objects.get(source_employee__value='user4@fyleforgotham.in')
         employee_mapping.delete()
-    
+
     create_or_update_employee_mapping(expense_group=expense_group, qbo_connection=qbo_connection, auto_map_employees_preference='EMAIL')
 
     with mock.patch('apps.quickbooks_online.utils.QBOConnector.get_or_create_vendor') as mock_call:
@@ -106,7 +106,7 @@ def test_create_or_update_employee_mapping(mocker, db):
             }))
         try:
             create_or_update_employee_mapping(expense_group=expense_group, qbo_connection=qbo_connection, auto_map_employees_preference='NAME')
-        except:
+        except BaseException:
             logger.info('Employee mapping not found')
 
 
@@ -129,7 +129,7 @@ def test_post_bill_success(mocker, create_task_logs, db):
     for expense in expenses:
         expense.expense_group_id = expense_group.id
         expense.save()
-    
+
     expense_group.expenses.set(expenses)
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
@@ -137,12 +137,12 @@ def test_post_bill_success(mocker, create_task_logs, db):
     general_settings.auto_map_employees = 'NAME'
     general_settings.auto_create_destination_entity = True
     general_settings.save()
-    
+
     create_bill(expense_group, task_log.id, False)
-    
+
     task_log = TaskLog.objects.get(pk=task_log.id)
     bill = Bill.objects.get(expense_group_id=expense_group.id)
-    assert task_log.status=='COMPLETE'
+    assert task_log.status == 'COMPLETE'
     assert bill.currency == 'USD'
     assert bill.accounts_payable_id == '33'
     assert bill.vendor_id == '31'
@@ -167,7 +167,7 @@ def test_create_bill_exceptions(db, create_task_logs):
         expense.save()
 
     expense_group.expenses.set(expenses)
-    
+
     with mock.patch('apps.quickbooks_online.models.Bill.create_bill') as mock_call:
         mock_call.side_effect = QBOCredential.DoesNotExist()
         create_bill(expense_group, task_log.id, False)
@@ -340,12 +340,12 @@ def test_post_qbo_expenses_success(mocker, create_task_logs, db):
     for expense in expenses:
         expense.expense_group_id = expense_group.id
         expense.save()
-    
+
     expense_group.expenses.set(expenses)
     expense_group.save()
 
     qbo_expense_lineitem = QBOExpenseLineitem.objects.get(expense_id=7)
-    qbo_expense_lineitem.expense_id=24
+    qbo_expense_lineitem.expense_id = 24
     qbo_expense_lineitem.save()
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
@@ -365,7 +365,7 @@ def test_post_qbo_expenses_success(mocker, create_task_logs, db):
 
     task_log = TaskLog.objects.get(pk=task_log.id)
     qbo_expense = QBOExpense.objects.get(expense_group_id=expense_group.id)
-    assert task_log.status=='COMPLETE'
+    assert task_log.status == 'COMPLETE'
     assert qbo_expense.currency == 'USD'
     assert qbo_expense.expense_account_id == '35'
     assert qbo_expense.entity_id == '55'
@@ -381,7 +381,7 @@ def test_post_qbo_expenses_success(mocker, create_task_logs, db):
     task_log = TaskLog.objects.get(pk=task_log.id)
     qbo_expense = QBOExpense.objects.get(expense_group_id=expense_group.id)
 
-    assert task_log.status=='COMPLETE'
+    assert task_log.status == 'COMPLETE'
     assert qbo_expense.currency == 'USD'
 
 
@@ -400,12 +400,12 @@ def test_post_qbo_expenses_exceptions(create_task_logs, db):
     for expense in expenses:
         expense.expense_group_id = expense_group.id
         expense.save()
-    
+
     expense_group.expenses.set(expenses)
     expense_group.save()
 
     qbo_expense_lineitem = QBOExpenseLineitem.objects.get(expense_id=7)
-    qbo_expense_lineitem.expense_id=24
+    qbo_expense_lineitem.expense_id = 24
     qbo_expense_lineitem.save()
 
     with mock.patch('apps.quickbooks_online.models.QBOExpense.create_qbo_expense') as mock_call:
@@ -435,7 +435,7 @@ def test_post_qbo_expenses_exceptions(create_task_logs, db):
                     'Error': [{'code': 400, 'Message': 'Invalid parametrs', 'Detail': 'Invalid parametrs'}],
                     'type': 'Invalid_params'
                 }
-        }))
+            }))
         create_qbo_expense(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
@@ -464,7 +464,7 @@ def test_post_credit_card_purchase_success(mocker, create_task_logs, db):
     for expense in expenses:
         expense.expense_group_id = expense_group.id
         expense.save()
-    
+
     expense_group.expenses.set(expenses)
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
@@ -473,13 +473,13 @@ def test_post_credit_card_purchase_success(mocker, create_task_logs, db):
     general_settings.auto_map_employees = 'NAME'
     general_settings.auto_create_destination_entity = True
     general_settings.save()
-    
+
     create_credit_card_purchase(expense_group, task_log.id, True)
-    
+
     task_log = TaskLog.objects.get(pk=task_log.id)
     credit_card_purchase = CreditCardPurchase.objects.get(expense_group_id=expense_group.id)
 
-    assert task_log.status=='COMPLETE'
+    assert task_log.status == 'COMPLETE'
     assert credit_card_purchase.currency == 'USD'
     assert credit_card_purchase.ccc_account_id == '41'
     assert credit_card_purchase.entity_id == '55'
@@ -503,7 +503,7 @@ def test_post_credit_card_exceptions(mocker, create_task_logs, db):
     for expense in expenses:
         expense.expense_group_id = expense_group.id
         expense.save()
-    
+
     expense_group.expenses.set(expenses)
 
     with mock.patch('apps.quickbooks_online.models.CreditCardPurchase.create_credit_card_purchase') as mock_call:
@@ -533,7 +533,7 @@ def test_post_credit_card_exceptions(mocker, create_task_logs, db):
                     'Error': [{'code': 400, 'Message': 'Invalid parametrs', 'Detail': 'Invalid parametrs'}],
                     'type': 'Invalid_params'
                 }
-        }))
+            }))
         create_credit_card_purchase(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
@@ -558,7 +558,7 @@ def test_post_journal_entry_success(mocker, create_task_logs, db):
     for expense in expenses:
         expense.expense_group_id = expense_group.id
         expense.save()
-    
+
     expense_group.expenses.set(expenses)
     expense_group.save()
 
@@ -566,10 +566,10 @@ def test_post_journal_entry_success(mocker, create_task_logs, db):
         expense.expense_group_id = expense_group.id
         expense.currency = 'GBP'
         expense.save()
-    
+
     expense_group.expenses.set(expenses)
     expense_group.save()
-    
+
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
 
     general_settings.auto_map_employees = 'NAME'
@@ -577,13 +577,13 @@ def test_post_journal_entry_success(mocker, create_task_logs, db):
     general_settings.save()
 
     create_journal_entry(expense_group, task_log.id, True)
-    
+
     task_log = TaskLog.objects.get(id=task_log.id)
     journal_entry = JournalEntry.objects.get(expense_group_id=expense_group.id)
 
-    assert task_log.status=='COMPLETE'
+    assert task_log.status == 'COMPLETE'
     assert journal_entry.currency == 'GBP'
-    assert journal_entry.private_note =='Reimbursable expense by ashwin.t@fyle.in on 2022-04-06 '
+    assert journal_entry.private_note == 'Reimbursable expense by ashwin.t@fyle.in on 2022-04-06 '
 
     expense_group = ExpenseGroup.objects.get(id=51)
 
@@ -592,13 +592,13 @@ def test_post_journal_entry_success(mocker, create_task_logs, db):
     task_log.save()
 
     create_journal_entry(expense_group, task_log.id, True)
-    
+
     task_log = TaskLog.objects.get(id=task_log.id)
     journal_entry = JournalEntry.objects.get(expense_group_id=expense_group.id)
 
-    assert task_log.status=='COMPLETE'
+    assert task_log.status == 'COMPLETE'
     assert journal_entry.currency == 'INR'
-    assert journal_entry.private_note =='Reimbursable expense by ashwin.t@fyle.in on 2022-04-06 '
+    assert journal_entry.private_note == 'Reimbursable expense by ashwin.t@fyle.in on 2022-04-06 '
 
 
 def test_post_create_journal_entry_exceptions(create_task_logs, db):
@@ -615,7 +615,7 @@ def test_post_create_journal_entry_exceptions(create_task_logs, db):
     for expense in expenses:
         expense.expense_group_id = expense_group.id
         expense.save()
-    
+
     expense_group.expenses.set(expenses)
     expense_group.save()
 
@@ -646,7 +646,7 @@ def test_post_create_journal_entry_exceptions(create_task_logs, db):
                     'Error': [{'code': 400, 'Message': 'Invalid parametrs', 'Detail': 'Invalid parametrs'}],
                     'type': 'Invalid_params'
                 }
-        }))
+            }))
         create_journal_entry(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
@@ -674,14 +674,14 @@ def test_post_cheque_success(mocker, create_task_logs, db):
     general_settings.save()
 
     create_cheque(expense_group, task_log.id, True)
-    
+
     task_log = TaskLog.objects.get(id=task_log.id)
     cheque = Cheque.objects.get(expense_group_id=expense_group.id)
 
-    assert task_log.status=='COMPLETE'
+    assert task_log.status == 'COMPLETE'
     assert cheque.currency == 'USD'
     assert cheque.entity_id == '55'
-    assert cheque.private_note =='Reimbursable expense by user9@fyleforgotham.in on 2020-05-13 '
+    assert cheque.private_note == 'Reimbursable expense by user9@fyleforgotham.in on 2020-05-13 '
 
 
 def test_post_create_cheque_exceptions(create_task_logs, db):
@@ -698,7 +698,7 @@ def test_post_create_cheque_exceptions(create_task_logs, db):
     for expense in expenses:
         expense.expense_group_id = expense_group.id
         expense.save()
-    
+
     expense_group.expenses.set(expenses)
     expense_group.save()
 
@@ -729,7 +729,7 @@ def test_post_create_cheque_exceptions(create_task_logs, db):
                     'Error': [{'code': 400, 'Message': 'Invalid parametrs', 'Detail': 'Invalid parametrs'}],
                     'type': 'Invalid_params'
                 }
-        }))
+            }))
         create_cheque(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
@@ -761,7 +761,7 @@ def test_create_bill_payment(mocker, db):
     task_log = TaskLog.objects.filter(workspace_id=workspace_id).first()
     task_log.status = 'READY'
     task_log.save()
-    
+
     expense_group = ExpenseGroup.objects.get(id=14)
     expenses = expense_group.expenses.all()
 
@@ -771,15 +771,15 @@ def test_create_bill_payment(mocker, db):
     for expense in expenses:
         expense.expense_group_id = expense_group.id
         expense.save()
-    
+
     expense_group.expenses.set(expenses)
     expense_group.save()
-    
+
     create_bill(expense_group, task_log.id, False)
 
     bill = Bill.objects.last()
     task_log = TaskLog.objects.get(id=task_log.id)
-    task_log.expense_group=bill.expense_group
+    task_log.expense_group = bill.expense_group
     task_log.save()
 
     reimbursements = data['reimbursements']
@@ -825,20 +825,20 @@ def test_post_bill_payment_exceptions(mocker, db):
     for expense in expenses:
         expense.expense_group_id = expense_group.id
         expense.save()
-    
+
     expense_group.expenses.set(expenses)
     expense_group.save()
-    
+
     create_bill(expense_group, task_log.id, False)
 
     bill = Bill.objects.last()
     task_log = TaskLog.objects.get(id=task_log.id)
-    task_log.expense_group=bill.expense_group
+    task_log.expense_group = bill.expense_group
     task_log.save()
 
     reimbursements = data['reimbursements']
     Reimbursement.create_or_update_reimbursement_objects(reimbursements=reimbursements, workspace_id=workspace_id)
-    
+
     with mock.patch('apps.quickbooks_online.models.BillPayment.create_bill_payment') as mock_call:
         mock_call.side_effect = BulkError(msg='employess not found', response='mapping error')
         create_bill_payment(workspace_id)
@@ -854,13 +854,13 @@ def test_post_bill_payment_exceptions(mocker, db):
                     'Error': [{'code': 400, 'Message': 'Invalid parametrs', 'Detail': 'Invalid parametrs'}],
                     'type': 'Invalid_params'
                 }
-        }))
+            }))
         create_bill_payment(workspace_id)
 
         try:
             mock_call.side_effect = QBOCredential.DoesNotExist()
             create_bill_payment(workspace_id)
-        except:
+        except BaseException:
             logger.info('QBO credentials not found')
 
 
@@ -875,6 +875,7 @@ def test_schedule_bill_payment_creation(db):
     schedule = Schedule.objects.filter(func='apps.quickbooks_online.tasks.create_bill_payment').count()
 
     assert schedule == 0
+
 
 def test_handle_quickbooks_errors(db):
     expense_group = ExpenseGroup.objects.get(id=8)
@@ -896,7 +897,7 @@ def test_handle_quickbooks_errors(db):
 
     qbo_credentials = QBOCredential.objects.get(workspace_id=expense_group.workspace_id)
 
-    assert qbo_credentials.refresh_token == None
+    assert qbo_credentials.refresh_token is None
     assert qbo_credentials.is_expired == True
     assert task_log.quickbooks_errors['error'] == 'invalid_grant'
 
@@ -940,7 +941,7 @@ def test_handle_quickbooks_errors(db):
         task_log=task_log,
         export_type='Bill Payment'
     )
-    
+
     errors = Error.objects.filter(
         workspace_id=task_log.workspace_id, is_resolved=False, error_title='ValidationFault / 6210'
     ).all()
@@ -953,7 +954,7 @@ def test_check_qbo_object_status(mocker, db):
         'qbosdk.apis.Bills.get_by_id',
         return_value=data['bill_response']
     )
-    
+
     expense_group = ExpenseGroup.objects.get(id=8)
     workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
     bill = Bill.create_bill(expense_group)
@@ -970,7 +971,7 @@ def test_check_qbo_object_status(mocker, db):
     check_qbo_object_status(3)
     bills = Bill.objects.filter(expense_group__workspace_id=3)
 
-    for bill in bills: 
+    for bill in bills:
         assert bill.paid_on_qbo == True
         assert bill.payment_synced == True
 
@@ -1007,7 +1008,7 @@ def test_process_reimbursements(db, mocker):
 
     expenses = Expense.objects.filter(fund_source='PERSONAL')
     for expense in expenses:
-        expense.paid_on_qbo=True
+        expense.paid_on_qbo = True
         expense.save()
 
     Reimbursement.create_or_update_reimbursement_objects(reimbursements=reimbursements, workspace_id=workspace_id)
@@ -1031,7 +1032,7 @@ def test_async_sync_accounts(mocker, db):
     old_accounts = DestinationAttribute.objects.filter(
         attribute_type='ACCOUNT', workspace_id=3).count()
     assert old_accounts == 63
-    
+
     async_sync_accounts(3)
     new_accounts = DestinationAttribute.objects.filter(
         attribute_type='ACCOUNT', workspace_id=3).count()
@@ -1080,7 +1081,7 @@ def test__validate_expense_group(mocker, db):
 
     try:
         __validate_expense_group(expense_group, general_settings)
-    except:
+    except BaseException:
         logger.info('Mappings are missing')
 
     expense_group.description.update({'employee_email': 'ashwin.t@fyle.in'})
@@ -1091,7 +1092,7 @@ def test__validate_expense_group(mocker, db):
 
     try:
         __validate_expense_group(expense_group, general_settings)
-    except:
+    except BaseException:
         logger.info('Mappings are missing')
 
     general_settings.corporate_credit_card_expenses_object = 'DEBIT CARD EXPENSE'
@@ -1108,9 +1109,9 @@ def test__validate_expense_group(mocker, db):
 
     try:
         __validate_expense_group(expense_group, general_settings)
-    except:
+    except BaseException:
         logger.info('Mappings are missing')
-    
+
     account = Mapping.objects.filter(
         source_type='CATEGORY',
         destination_type='ACCOUNT',
@@ -1120,14 +1121,14 @@ def test__validate_expense_group(mocker, db):
 
     try:
         __validate_expense_group(expense_group, general_settings)
-    except:
+    except BaseException:
         logger.info('Mappings are missing')
 
     general_mapping = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
     general_mapping.delete()
     try:
         __validate_expense_group(expense_group, general_settings)
-    except:
+    except BaseException:
         logger.info('Mappings are missing')
 
 

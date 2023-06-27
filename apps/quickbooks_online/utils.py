@@ -23,6 +23,7 @@ SYNC_UPPER_LIMIT = {
     'customers': 17000
 }
 
+
 def format_special_characters(value: str) -> str:
     """
     Formats special characters in the string.
@@ -35,11 +36,13 @@ def format_special_characters(value: str) -> str:
 
     return formatted_string
 
+
 CHARTS_OF_ACCOUNTS = [
     'Expense', 'Other Expense', 'Fixed Asset', 'Cost of Goods Sold',
     'Current Liability', 'Equity', 'Other Current Asset', 'Other Current Liability',
     'Long Term Liability', 'Current Asset', 'Income', 'Other Income'
 ]
+
 
 class QBOConnector:
     """
@@ -65,7 +68,6 @@ class QBOConnector:
         credentials_object.refresh_token = self.connection.refresh_token
         credentials_object.save()
 
-
     def get_or_create_vendor(self, vendor_name: str, email: str = None, create: bool = False):
         """
         Call qbo api to get or create vendor
@@ -83,7 +85,7 @@ class QBOConnector:
 
         if not vendor:
             if create:
-                #safe check to avoid duplicate vendor name exist error
+                # safe check to avoid duplicate vendor name exist error
                 if DestinationAttribute.objects.filter(attribute_type__in=['CUSTOMER', 'EMPLOYEE'], value=vendor_name, workspace_id=self.workspace_id).exists():
                     return
                 created_vendor = self.post_vendor(original_vendor_name, email)
@@ -105,11 +107,11 @@ class QBOConnector:
 
     def get_tax_inclusive_amount(self, amount, default_tax_code_id):
 
-        tax_attribute = DestinationAttribute.objects.filter(destination_id=default_tax_code_id, attribute_type='TAX_CODE',workspace_id=self.workspace_id).first()
+        tax_attribute = DestinationAttribute.objects.filter(destination_id=default_tax_code_id, attribute_type='TAX_CODE', workspace_id=self.workspace_id).first()
         tax_inclusive_amount = amount
         if tax_attribute:
             tax_rate = float((tax_attribute.detail['tax_rate']) / 100)
-            tax_amount = round((amount - (amount / ( tax_rate + 1))), 2)
+            tax_amount = round((amount - (amount / (tax_rate + 1))), 2)
             tax_inclusive_amount = round((amount - tax_amount), 2)
 
         return tax_inclusive_amount
@@ -123,7 +125,7 @@ class QBOConnector:
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
 
         # getting all the items stored in the DB
-        destination_attributes = DestinationAttribute.objects.filter(workspace_id=self.workspace_id, attribute_type= 'ACCOUNT', display_name='Item').values('destination_id', 'value')
+        destination_attributes = DestinationAttribute.objects.filter(workspace_id=self.workspace_id, attribute_type='ACCOUNT', display_name='Item').values('destination_id', 'value')
         disabled_fields_map = {}
 
         # Assigning them to a map in destination_id as key and value as value
@@ -134,7 +136,7 @@ class QBOConnector:
 
         # For getting all the items, any inactive item will not be returned
         for item in items:
-            if  item['Active']:
+            if item['Active']:
                 item_attributes.append({
                     'attribute_type': 'ACCOUNT',
                     'display_name': 'Item',
@@ -145,7 +147,7 @@ class QBOConnector:
                 # If item is active and present in the map, remove it from the map
                 if item['Id'] in disabled_fields_map:
                     disabled_fields_map.pop(item['Id'])
-        
+
         # Since the item was present in the map, it means it is not active anymore
         # So we need to set active to false and add it to the list
         for destination_id in disabled_fields_map:
@@ -160,7 +162,6 @@ class QBOConnector:
         DestinationAttribute.bulk_create_or_update_destination_attributes(
             item_attributes, 'ACCOUNT', self.workspace_id, True, 'Item')
         return []
-
 
     def sync_accounts(self):
         """
@@ -200,7 +201,7 @@ class QBOConnector:
             value = format_special_characters(
                 account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName']
             )
-            
+
             if general_settings and account['AccountType'] in CHARTS_OF_ACCOUNTS and value:
                 account_attributes['account'].append({
                     'attribute_type': 'ACCOUNT',
@@ -214,7 +215,7 @@ class QBOConnector:
                     }
                 })
                 if account['Id'] in disabled_fields_map:
-                        disabled_fields_map.pop(account['Id'])
+                    disabled_fields_map.pop(account['Id'])
 
             elif account['AccountType'] == 'Credit Card' and value:
                 account_attributes['credit_card_account'].append({
@@ -271,7 +272,7 @@ class QBOConnector:
         for attribute_type, attribute in account_attributes.items():
             if attribute:
                 DestinationAttribute.bulk_create_or_update_destination_attributes(
-                    attribute, attribute_type.upper(), self.workspace_id, True, attribute_type.title().replace('_',' '))
+                    attribute, attribute_type.upper(), self.workspace_id, True, attribute_type.title().replace('_', ' '))
         return []
 
     def sync_departments(self):
@@ -288,7 +289,7 @@ class QBOConnector:
                 'display_name': 'Department',
                 'value': department['FullyQualifiedName'],
                 'destination_id': department['Id'],
-                'active' : department['Active']
+                'active': department['Active']
             })
 
         DestinationAttribute.bulk_create_or_update_destination_attributes(
@@ -300,7 +301,7 @@ class QBOConnector:
         Get Tax Codes
         """
         tax_codes = self.connection.tax_codes.get()
-        
+
         tax_attributes = []
         for tax_code in tax_codes:
             if 'PurchaseTaxRateList' in tax_code.keys():
@@ -331,10 +332,9 @@ class QBOConnector:
         vendors = self.connection.vendors.get()
 
         vendor_attributes = []
-        destination_attributes = DestinationAttribute.objects.filter(workspace_id=self.workspace_id,\
-            attribute_type='VENDOR').values('destination_id', 'value')
+        destination_attributes = DestinationAttribute.objects.filter(workspace_id=self.workspace_id,
+                                                                     attribute_type='VENDOR').values('destination_id', 'value')
         disabled_fields_map = {}
-
 
         for destination_attribute in destination_attributes:
             disabled_fields_map[destination_attribute['destination_id']] = {
@@ -346,10 +346,10 @@ class QBOConnector:
                 detail = {
                     'email': vendor['PrimaryEmailAddr']['Address']
                     if (
-                        'PrimaryEmailAddr' in vendor and
-                        vendor['PrimaryEmailAddr'] and
-                        'Address' in vendor['PrimaryEmailAddr'] and
-                        vendor['PrimaryEmailAddr']['Address']
+                        'PrimaryEmailAddr' in vendor
+                        and vendor['PrimaryEmailAddr']
+                        and 'Address' in vendor['PrimaryEmailAddr']
+                        and vendor['PrimaryEmailAddr']['Address']
                     ) else None,
                     'currency': vendor['CurrencyRef']['value'] if 'CurrencyRef' in vendor else None,
                 }
@@ -366,7 +366,7 @@ class QBOConnector:
                 if vendor['Id'] in disabled_fields_map:
                     disabled_fields_map.pop(vendor['Id'])
 
-        #For setting active to False
+        # For setting active to False
         for destination_id in disabled_fields_map:
             vendor_attributes.append({
                 'attribute_type': 'VENDOR',
@@ -433,10 +433,10 @@ class QBOConnector:
             detail = {
                 'email': employee['PrimaryEmailAddr']['Address']
                 if (
-                        'PrimaryEmailAddr' in employee and
-                        employee['PrimaryEmailAddr'] and
-                        'Address' in employee['PrimaryEmailAddr'] and
-                        employee['PrimaryEmailAddr']['Address']
+                    'PrimaryEmailAddr' in employee
+                    and employee['PrimaryEmailAddr']
+                    and 'Address' in employee['PrimaryEmailAddr']
+                    and employee['PrimaryEmailAddr']['Address']
                 ) else None
             }
 
@@ -467,7 +467,7 @@ class QBOConnector:
                 'display_name': 'class',
                 'value': qbo_class['FullyQualifiedName'],
                 'destination_id': qbo_class['Id'],
-                'active' : qbo_class['Active']
+                'active': qbo_class['Active']
             })
 
         DestinationAttribute.bulk_create_or_update_destination_attributes(
@@ -483,8 +483,8 @@ class QBOConnector:
             customers = self.connection.customers.get()
 
             customer_attributes = []
-            destination_attributes = DestinationAttribute.objects.filter(workspace_id=self.workspace_id,\
-                attribute_type= 'CUSTOMER', display_name='customer').values('destination_id', 'value')
+            destination_attributes = DestinationAttribute.objects.filter(workspace_id=self.workspace_id,
+                                                                         attribute_type='CUSTOMER', display_name='customer').values('destination_id', 'value')
             disabled_fields_map = {}
 
             for destination_attribute in destination_attributes:
@@ -494,7 +494,7 @@ class QBOConnector:
 
             for customer in customers:
                 value = format_special_characters(customer['FullyQualifiedName'])
-                if  customer['Active'] and value:
+                if customer['Active'] and value:
                     customer_attributes.append({
                         'attribute_type': 'CUSTOMER',
                         'display_name': 'customer',
@@ -504,8 +504,8 @@ class QBOConnector:
                     })
                     if customer['Id'] in disabled_fields_map:
                         disabled_fields_map.pop(customer['Id'])
-            
-            #For setting active to False
+
+            # For setting active to False
             for destination_id in disabled_fields_map:
                 customer_attributes.append({
                     'attribute_type': 'CUSTOMER',
@@ -545,7 +545,7 @@ class QBOConnector:
             self.sync_classes()
         except Exception as exception:
             logger.info(exception)
-        
+
         try:
             self.sync_tax_codes()
         except Exception as exception:
@@ -582,7 +582,7 @@ class QBOConnector:
             },
             'TxnDate': purchase_object.transaction_date,
             'CurrencyRef': {
-               'value': purchase_object.currency
+                'value': purchase_object.currency
             },
             'PrivateNote': purchase_object.private_note,
             'Credit': credit,
@@ -608,8 +608,8 @@ class QBOConnector:
             lineitem = {
                 'Description': line.description,
                 'DetailType': line.detail_type,
-                'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None ) else \
-                            self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
+                'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None) else
+                self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
                 line.detail_type: {
                     'CustomerRef': {
                         'value': line.customer_id
@@ -634,10 +634,10 @@ class QBOConnector:
             else:
                 lineitem['AccountBasedExpenseLineDetail'].update({
                     'AccountRef': {
-                            'value': line.account_id
-                        },
-                    'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else \
-                        round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)
+                        'value': line.account_id
+                    },
+                    'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else
+                    round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)
                 })
 
             lines.append(lineitem)
@@ -738,8 +738,8 @@ class QBOConnector:
             lineitem = {
                 'Description': line.description,
                 'DetailType': line.detail_type,
-                'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None ) else \
-                            self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
+                'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None) else
+                self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
                 line.detail_type: {
                     'CustomerRef': {
                         'value': line.customer_id
@@ -764,10 +764,10 @@ class QBOConnector:
             else:
                 lineitem['AccountBasedExpenseLineDetail'].update({
                     'AccountRef': {
-                            'value': line.account_id
-                        },
-                    'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else \
-                        round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)
+                        'value': line.account_id
+                    },
+                    'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else
+                    round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)
                 })
 
             lines.append(lineitem)
@@ -826,8 +826,8 @@ class QBOConnector:
             lineitem = {
                 'Description': line.description,
                 'DetailType': line.detail_type,
-                'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None ) else \
-                            self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
+                'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None) else
+                self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
                 line.detail_type: {
                     'CustomerRef': {
                         'value': line.customer_id
@@ -852,10 +852,10 @@ class QBOConnector:
             else:
                 lineitem['AccountBasedExpenseLineDetail'].update({
                     'AccountRef': {
-                            'value': line.account_id
-                        },
-                    'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else \
-                        round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)
+                        'value': line.account_id
+                    },
+                    'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else
+                    round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)
                 })
 
             lines.append(lineitem)
@@ -903,9 +903,8 @@ class QBOConnector:
 
             raise
 
-
     def __construct_credit_card_purchase_lineitems(self,
-            credit_card_purchase_lineitems: List[CreditCardPurchaseLineitem], general_mappings: GeneralMapping) -> List[Dict]:
+                                                   credit_card_purchase_lineitems: List[CreditCardPurchaseLineitem], general_mappings: GeneralMapping) -> List[Dict]:
         """
         Create credit_card_purchase line items
         :param credit_card_purchase_lineitems: list of credit_card_purchase line items extracted from database
@@ -917,8 +916,8 @@ class QBOConnector:
             lineitem = {
                 'Description': line.description,
                 'DetailType': line.detail_type,
-                'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None ) else \
-                            self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
+                'Amount': line.amount - line.tax_amount if (line.tax_code and line.tax_amount is not None) else
+                self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id),
                 line.detail_type: {
                     'CustomerRef': {
                         'value': line.customer_id
@@ -943,10 +942,10 @@ class QBOConnector:
             else:
                 lineitem['AccountBasedExpenseLineDetail'].update({
                     'AccountRef': {
-                            'value': line.account_id
-                        },
-                    'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else \
-                        round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)
+                        'value': line.account_id
+                    },
+                    'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else
+                    round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)
                 })
 
             lines.append(lineitem)
@@ -978,13 +977,12 @@ class QBOConnector:
 
     def post_credit_card_purchase(self, credit_card_purchase: CreditCardPurchase,
                                   credit_card_purchase_lineitems: List[CreditCardPurchaseLineitem]):
-
         """
         Post Credit Card Purchase  to QBO
         """
         try:
             credit_card_purchase_payload = self.__construct_credit_card_purchase(credit_card_purchase,
-                                                                                credit_card_purchase_lineitems)
+                                                                                 credit_card_purchase_lineitems)
             created_credit_card_purchase = self.connection.purchases.post(credit_card_purchase_payload)
             return created_credit_card_purchase
 
@@ -1075,7 +1073,7 @@ class QBOConnector:
         return line_items
 
     def __construct_journal_entry_lineitems(self, journal_entry_lineitems: List[JournalEntryLineitem],
-                                            posting_type,  general_mappings: GeneralMapping, single_credit_line: bool = False) -> List[Dict]:
+                                            posting_type, general_mappings: GeneralMapping, single_credit_line: bool = False) -> List[Dict]:
         """
         Create journal_entry line items
         :param journal_entry_lineitems: list of journal entry line items extracted from database
@@ -1093,7 +1091,7 @@ class QBOConnector:
                     refund_journal_entry_lineitems.append(line)
 
             if non_refund_journal_entry_lineitems:
-                single_credit_lines =  self.__group_journal_entry_credits(non_refund_journal_entry_lineitems, general_mappings)
+                single_credit_lines = self.__group_journal_entry_credits(non_refund_journal_entry_lineitems, general_mappings)
                 for line in single_credit_lines:
                     lines.append(line)
 
@@ -1101,7 +1099,7 @@ class QBOConnector:
                 lineitems = refund_journal_entry_lineitems
             else:
                 return lines
-        
+
         refund = False
         for line in lineitems:
             account_ref = None
@@ -1148,11 +1146,11 @@ class QBOConnector:
                     'TaxCodeRef': {
                         'value': line.tax_code if (line.tax_code and line.tax_amount is not None) else general_mappings.default_tax_code_id
                     },
-                    'TaxAmount': abs(line.tax_amount if (line.tax_code and line.tax_amount is not None) else 
-                        round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)),
-                    "TaxApplicableOn":"Purchase",
-                    }
+                    'TaxAmount': abs(line.tax_amount if (line.tax_code and line.tax_amount is not None) else
+                                     round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)),
+                    "TaxApplicableOn": "Purchase",
                 }
+            }
             lines.append(lineitem)
             refund = False
 
@@ -1182,7 +1180,7 @@ class QBOConnector:
             'PrivateNote': journal_entry.private_note,
             'Line': lines,
             'CurrencyRef': {
-               "value": journal_entry.currency
+                "value": journal_entry.currency
             },
             'TxnTaxDetail': {
                 'TaxLine': []
@@ -1197,19 +1195,19 @@ class QBOConnector:
             for line_item in journal_entry_lineitems:
                 tax_code_id = line_item.tax_code if (line_item.tax_code and line_item.tax_amount is not None) else general_mappings.default_tax_code_id
 
-                destination_attribute = DestinationAttribute.objects.filter(destination_id=tax_code_id, attribute_type='TAX_CODE',workspace_id=self.workspace_id).first()
+                destination_attribute = DestinationAttribute.objects.filter(destination_id=tax_code_id, attribute_type='TAX_CODE', workspace_id=self.workspace_id).first()
                 for tax_rate_ref in destination_attribute.detail['tax_refs']:
                     tax_rate_refs.append(tax_rate_ref)
 
             for tax_rate in tax_rate_refs:
                 journal_entry_payload['TxnTaxDetail']['TaxLine'].append(
                     {
-                        "Amount":0,
-                        "DetailType":"TaxLineDetail",
+                        "Amount": 0,
+                        "DetailType": "TaxLineDetail",
                         'TaxLineDetail': {
                             'TaxRateRef': tax_rate,
-                            "PercentBased":True,
-                            "NetAmountTaxable":0
+                            "PercentBased": True,
+                            "NetAmountTaxable": 0
                         },
                     }
                 )

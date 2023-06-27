@@ -6,6 +6,7 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
+
 def test_generate_qbo_refresh_token(db, mocker):
     mocker.patch(
         'apps.workspaces.utils.requests.post',
@@ -19,7 +20,7 @@ def test_generate_qbo_refresh_token(db, mocker):
     )
     try:
         generate_qbo_refresh_token('asdfghjkl', settings.QBO_REDIRECT_URI)
-    except:
+    except BaseException:
         logger.info('Wrong client secret or/and refresh token')
 
     mocker.patch(
@@ -28,7 +29,7 @@ def test_generate_qbo_refresh_token(db, mocker):
     )
     try:
         generate_qbo_refresh_token('asdfghjkl', settings.QBO_REDIRECT_URI)
-    except:
+    except BaseException:
         logger.info('Client ID doesn\'t exist')
 
     mocker.patch(
@@ -37,7 +38,7 @@ def test_generate_qbo_refresh_token(db, mocker):
     )
     try:
         generate_qbo_refresh_token('asdfghjkl', settings.QBO_REDIRECT_URI)
-    except:
+    except BaseException:
         logger.info('Some of the parameters were wrong')
 
     mocker.patch(
@@ -46,5 +47,5 @@ def test_generate_qbo_refresh_token(db, mocker):
     )
     try:
         generate_qbo_refresh_token('asdfghjkl', settings.QBO_REDIRECT_URI)
-    except:
+    except BaseException:
         logger.info('Internal server error')

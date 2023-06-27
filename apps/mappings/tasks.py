@@ -35,7 +35,7 @@ DEFAULT_FYLE_CATEGORIES = [
 
 
 def resolve_expense_attribute_errors(
-    source_attribute_type: str, workspace_id: int, destination_attribute_type: str = None):
+        source_attribute_type: str, workspace_id: int, destination_attribute_type: str = None):
     """
     Resolve Expense Attribute Errors
     :return: None
@@ -85,6 +85,7 @@ def remove_duplicates(qbo_attributes: List[DestinationAttribute]):
 
     return unique_attributes
 
+
 @handle_import_exceptions(task_name='Disable Category for Items Mapping')
 def disable_category_for_items_mapping(workspace_id: int):
     """
@@ -107,12 +108,13 @@ def disable_category_for_items_mapping(workspace_id: int):
     if category_ids_to_be_disabled:
         expense_attributes = ExpenseAttribute.objects.filter(id__in=category_ids_to_be_disabled)
         fyle_payload: List[Dict] = create_fyle_categories_payload(categories=[],
-            workspace_id=workspace_id, updated_categories=expense_attributes)
+                                                                  workspace_id=workspace_id, updated_categories=expense_attributes)
 
         platform.categories.post_bulk(fyle_payload)
         platform.categories.sync()
 
-def disable_or_enable_expense_attributes(source_field: str, destination_field: str, workspace_id: int, display_name:str=None):
+
+def disable_or_enable_expense_attributes(source_field: str, destination_field: str, workspace_id: int, display_name: str = None):
     """
     Disable or Enable Expense Attributes
     :param source_field: Source Field
@@ -122,14 +124,14 @@ def disable_or_enable_expense_attributes(source_field: str, destination_field: s
     :return: None
     """
     # construct filters for the default cases
-    filters={
+    filters = {
         'attribute_type': destination_field,
         'mapping__isnull': False,
-        'mapping__destination_type':destination_field,
-        'active':False,
-        'workspace_id':workspace_id
+        'mapping__destination_type': destination_field,
+        'active': False,
+        'workspace_id': workspace_id
     }
-    
+
     # if display_name is present, add it to the filters
     if display_name:
         filters['display_name'] = display_name
@@ -139,10 +141,10 @@ def disable_or_enable_expense_attributes(source_field: str, destination_field: s
 
     # Get all the expense attributes that are mapped to these destination_attribute_ids
     expense_attributes_to_disable = ExpenseAttribute.objects.filter(
-		attribute_type=source_field, 
-		mapping__destination_id__in=destination_attribute_ids,
-		active=True
-	)
+        attribute_type=source_field,
+        mapping__destination_id__in=destination_attribute_ids,
+        active=True
+    )
 
     expense_attributes_to_enable = []
 
@@ -166,8 +168,9 @@ def disable_or_enable_expense_attributes(source_field: str, destination_field: s
 
         return expense_attributes_ids
 
-def create_fyle_projects_payload(projects: List[DestinationAttribute], existing_project_names: list, 
-                                    updated_projects: List[ExpenseAttribute] = None):
+
+def create_fyle_projects_payload(projects: List[DestinationAttribute], existing_project_names: list,
+                                 updated_projects: List[ExpenseAttribute] = None):
     """
     Create Fyle Projects Payload from QBO Customer / Projects
     :param projects: QBO Projects
@@ -234,6 +237,7 @@ def post_projects_in_batches(platform: PlatformConnector, workspace_id: int, des
             platform.projects.post_bulk(fyle_payload)
             platform.projects.sync()
 
+
 @handle_import_exceptions(task_name='Auto Create Tax Code Mappings')
 def auto_create_tax_codes_mappings(workspace_id: int):
     """
@@ -297,7 +301,7 @@ def schedule_tax_groups_creation(import_tax_codes, workspace_id):
 
 
 def create_fyle_categories_payload(categories: List[DestinationAttribute], workspace_id: int,
-        updated_categories: List[ExpenseAttribute] = None):
+                                   updated_categories: List[ExpenseAttribute] = None):
     """
     Create Fyle Categories Payload from QBO Customer / Categories
     :param workspace_id: Workspace integer id
@@ -318,7 +322,7 @@ def create_fyle_categories_payload(categories: List[DestinationAttribute], works
     else:
         existing_category_names = ExpenseAttribute.objects.filter(
             attribute_type='CATEGORY', workspace_id=workspace_id).values_list('value', flat=True)
-        
+
         existing_category_names_lower_case = [existing_category_name.lower() for existing_category_name in existing_category_names]
 
         for category in categories:
@@ -392,10 +396,10 @@ def auto_create_category_mappings(workspace_id):
     if category_ids_to_be_changed:
         expense_attributes = ExpenseAttribute.objects.filter(id__in=category_ids_to_be_changed)
         fyle_payload: List[Dict] = create_fyle_categories_payload(categories=[],
-            workspace_id=workspace_id, updated_categories=expense_attributes)
+                                                                  workspace_id=workspace_id, updated_categories=expense_attributes)
         platform.categories.post_bulk(fyle_payload)
         platform.categories.sync()
-    
+
     resolve_expense_attribute_errors(
         source_attribute_type='CATEGORY',
         workspace_id=workspace_id
@@ -425,7 +429,7 @@ def get_existing_source_and_mappings(destination_type: str, workspace_id: int):
 
 
 def check_exact_matches(employee_mapping_preference: str, source_attribute: ExpenseAttribute,
-    destination_id_value_map: dict, destination_type: str):
+                        destination_id_value_map: dict, destination_type: str):
     """
     Check if the source attribute matches with the destination attribute
     :param employee_mapping_preference: Employee Mapping Preference
@@ -481,7 +485,7 @@ def construct_mapping_payload(employee_source_attributes: List[ExpenseAttribute]
         # Ignoring already present mappings
         if source_attribute.id not in existing_source_ids:
             destination = check_exact_matches(employee_mapping_preference, source_attribute,
-                destination_id_value_map, destination_type)
+                                              destination_id_value_map, destination_type)
             if destination:
                 update_key = list(destination.keys())[0]
                 if source_attribute.id in existing_mappings_map:
@@ -507,7 +511,7 @@ def construct_mapping_payload(employee_source_attributes: List[ExpenseAttribute]
 
 
 def create_mappings_and_update_flag(mapping_creation_batch: List[EmployeeMapping],
-    mapping_updation_batch: List[EmployeeMapping], update_key: str):
+                                    mapping_updation_batch: List[EmployeeMapping], update_key: str):
     """
     Create Mappings and Update Flag
     :param mapping_creation_batch: Mapping Creation Batch
@@ -616,9 +620,10 @@ def async_auto_map_employees(workspace_id: int):
 
     resolve_expense_attribute_errors(
         source_attribute_type='EMPLOYEE',
-        workspace_id=workspace_id ,
+        workspace_id=workspace_id,
         destination_attribute_type=destination_type
     )
+
 
 def schedule_auto_map_employees(employee_mapping_preference: str, workspace_id: int):
     if employee_mapping_preference:
@@ -762,7 +767,7 @@ def sync_qbo_attribute(qbo_attribute_type: str, workspace_id: int):
 
     elif qbo_attribute_type == 'CLASS':
         qbo_connection.sync_classes()
-    
+
     elif qbo_attribute_type == 'TAX_CODE':
         qbo_connection.sync_tax_codes()
 
@@ -805,10 +810,10 @@ def create_fyle_tax_group_payload(qbo_attributes: List[DestinationAttribute], ex
     for qbo_attribute in qbo_attributes:
         if qbo_attribute.value not in existing_fyle_tax_groups:
             fyle_tax_group_payload.append({
-                    'name': qbo_attribute.value,
-                    'is_enabled': True,
-                    'percentage': round((qbo_attribute.detail['tax_rate']/100), 2)
-                })
+                'name': qbo_attribute.value,
+                'is_enabled': True,
+                'percentage': round((qbo_attribute.detail['tax_rate'] / 100), 2)
+            })
 
     return fyle_tax_group_payload
 
@@ -915,7 +920,7 @@ def create_fyle_expense_custom_field_payload(
 
         new_placeholder = None
 
-        # Here is the explanation of what's happening in the if-else ladder below   
+        # Here is the explanation of what's happening in the if-else ladder below
         # source_field is the field that's save in mapping settings, this field user may or may not fill in the custom field form
         # placeholder is the field that's saved in the detail column of destination attributes
         # fyle_attribute is what we're constructing when both of these fields would not be available
@@ -937,7 +942,7 @@ def create_fyle_expense_custom_field_payload(
             'field_name': fyle_attribute,
             'type': 'SELECT',
             'is_enabled': True,
-            'is_mandatory': is_mandatory ,
+            'is_mandatory': is_mandatory,
             'placeholder': new_placeholder,
             'options': fyle_expense_custom_field_options,
             'code': None
@@ -950,7 +955,7 @@ def create_fyle_expense_custom_field_payload(
 
 
 def upload_attributes_to_fyle(
-    workspace_id: int, qbo_attribute_type: str, fyle_attribute_type: str, source_placeholder: str = None):
+        workspace_id: int, qbo_attribute_type: str, fyle_attribute_type: str, source_placeholder: str = None):
     """
     Upload attributes to Fyle
     """
@@ -1045,6 +1050,7 @@ def create_fyle_merchants_payload(vendors, existing_merchants_name):
 
     return payload
 
+
 def post_merchants(platform_connection: PlatformConnector, workspace_id: int):
     existing_merchants_name = ExpenseAttribute.objects.filter(
         attribute_type='MERCHANT', workspace_id=workspace_id).values_list('value', flat=True)
@@ -1061,6 +1067,7 @@ def post_merchants(platform_connection: PlatformConnector, workspace_id: int):
         platform_connection.merchants.post(fyle_payload)
         platform_connection.merchants.sync(workspace_id)
 
+
 @handle_import_exceptions(task_name='Auto Create Vendors as Merchants')
 def auto_create_vendors_as_merchants(workspace_id):
     fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
@@ -1071,6 +1078,7 @@ def auto_create_vendors_as_merchants(workspace_id):
 
     sync_qbo_attribute('VENDOR', workspace_id)
     post_merchants(fyle_connection, workspace_id)
+
 
 def auto_import_and_map_fyle_fields(workspace_id):
     """

@@ -6,6 +6,7 @@ from django.db.models import Q
 from apps.fyle.models import ExpenseFilter
 from typing import List
 
+
 def post_request(url, body, refresh_token=None):
     """
     Create a HTTP post request.
@@ -101,11 +102,11 @@ def construct_expense_filter_query(expense_filters: List[ExpenseFilter]):
     final_filter = None
     for expense_filter in expense_filters:
         constructed_expense_filter = construct_expense_filter(expense_filter)
-        
+
         # If this is the first filter, set it as the final filter
         if expense_filter.rank == 1:
             final_filter = (constructed_expense_filter)
-        
+
         # If join by is AND, OR
         elif expense_filter.rank != 1:
             if join_by == 'AND':

@@ -8,10 +8,10 @@ from .serializers import ErrorSerializer
 class ErrorsView(generics.ListAPIView):
     serializer_class = ErrorSerializer
     pagination_class = None
-    
+
     def get_queryset(self):
         type = self.request.query_params.get('type')
-        
+
         is_resolved = self.request.query_params.get('is_resolved', None)
 
         params = {

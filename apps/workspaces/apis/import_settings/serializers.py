@@ -137,7 +137,7 @@ class ImportSettingsSerializer(serializers.ModelSerializer):
                 'import_to_fyle': True,
                 'is_custom': False
             })
-        
+
         mapping_settings.append({
             'source_field': 'CATEGORY',
             'destination_field': 'ACCOUNT',

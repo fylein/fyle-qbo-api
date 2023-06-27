@@ -1,8 +1,8 @@
 import os
 from unittest import mock
-from datetime import datetime,timezone
+from datetime import datetime, timezone
 import pytest
-from fyle_rest_auth.models import User,AuthToken
+from fyle_rest_auth.models import User, AuthToken
 from rest_framework.test import APIClient
 from fyle.platform import Platform
 from apps.fyle.helpers import get_access_token
@@ -13,9 +13,11 @@ from tests.test_workspaces.fixtures import data as fyle_data
 def pytest_configure():
     os.system('sh ./tests/sql_fixtures/reset_db_fixtures/reset_db.sh')
 
+
 @pytest.fixture
 def api_client():
     return APIClient()
+
 
 @pytest.fixture()
 def test_connection(db):

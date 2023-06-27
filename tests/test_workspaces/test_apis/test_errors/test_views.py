@@ -7,6 +7,7 @@ from apps.workspaces.models import FyleCredential, WorkspaceSchedule
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from .fixtures import data
 
+
 def test_errors(api_client, test_connection):
 
     url = '/api/v2/workspaces/3/errors/'

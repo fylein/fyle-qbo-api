@@ -71,7 +71,6 @@ def handle_view_exceptions():
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-
             except WorkspaceSchedule.DoesNotExist:
                 return Response(
                     data={
@@ -87,7 +86,6 @@ def handle_view_exceptions():
                     },
                     status=status.HTTP_400_BAD_REQUEST
                 )
-
 
             except QBOCredential.DoesNotExist:
                 logger.info('QBO credentials not found in workspace')

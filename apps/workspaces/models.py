@@ -67,8 +67,8 @@ class WorkspaceSchedule(models.Model):
     Workspace Schedule
     """
     id = models.AutoField(primary_key=True, help_text='Unique Id to identify a schedule')
-    workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model', 
-                                        related_name='workspace_schedules')
+    workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model',
+                                     related_name='workspace_schedules')
     enabled = models.BooleanField(default=False)
     start_datetime = models.DateTimeField(help_text='Datetime for start of schedule', null=True)
     interval_hours = models.IntegerField(null=True)
@@ -95,7 +95,7 @@ class WorkspaceGeneralSettings(models.Model):
     """
     id = models.AutoField(primary_key=True, help_text='Unique Id to identify a workspace')
     workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model',
-                                        related_name='workspace_general_settings')
+                                     related_name='workspace_general_settings')
     reimbursable_expenses_object = models.CharField(max_length=50, help_text='Reimbursable Expenses type', null=True)
     corporate_credit_card_expenses_object = models.CharField(max_length=50,
                                                              help_text='Non Reimbursable Expenses type', null=True)
@@ -121,7 +121,7 @@ class WorkspaceGeneralSettings(models.Model):
     sync_fyle_to_qbo_payments = models.BooleanField(default=False, help_text='Auto Sync Payments from Fyle to QBO')
     sync_qbo_to_fyle_payments = models.BooleanField(default=False, help_text='Auto Sync Payments from QBO to Fyle')
     is_simplify_report_closure_enabled = models.BooleanField(default=True,
-        help_text='Simplify report closure is enabled')
+                                                             help_text='Simplify report closure is enabled')
     category_sync_version = models.CharField(default='v2', max_length=50, help_text='Category sync version')
     je_single_credit_line = models.BooleanField(default=False, help_text='Single Credit Line for Journal Entries')
     map_fyle_cards_qbo_account = models.BooleanField(default=True, help_text='Map Fyle Cards to QBO Accounts')
@@ -156,6 +156,7 @@ class QBOCredential(models.Model):
     @staticmethod
     def get_active_qbo_credentials(workspace_id):
         return QBOCredential.objects.get(workspace_id=workspace_id, is_expired=False, refresh_token__isnull=False)
+
 
 class FyleCredential(models.Model):
     """
