@@ -19,7 +19,7 @@ from fyle_accounting_mappings.models import ExpenseAttribute
 ALLOWED_FIELDS = [
     'employee_email', 'report_id', 'claim_number', 'settlement_id',
     'fund_source', 'vendor', 'category', 'project', 'cost_center',
-    'verified_at', 'approved_at', 'spent_at', 'expense_id'
+    'verified_at', 'approved_at', 'spent_at', 'expense_id', 'posted_at'
 ]
 
 ALLOWED_FORM_INPUT = {
