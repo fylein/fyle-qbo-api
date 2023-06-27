@@ -5,20 +5,23 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('tasks', '0006_tasklog_quickbooks_errors'),
+        ("tasks", "0006_tasklog_quickbooks_errors"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='tasklog',
-            name='detail',
-            field=models.JSONField(default=apps.tasks.models.get_default, help_text='Task response', null=True),
+            model_name="tasklog",
+            name="detail",
+            field=models.JSONField(
+                default=apps.tasks.models.get_default,
+                help_text="Task response",
+                null=True,
+            ),
         ),
         migrations.AlterField(
-            model_name='tasklog',
-            name='quickbooks_errors',
-            field=models.JSONField(help_text='Quickbooks Errors', null=True),
+            model_name="tasklog",
+            name="quickbooks_errors",
+            field=models.JSONField(help_text="Quickbooks Errors", null=True),
         ),
     ]

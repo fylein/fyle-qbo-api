@@ -22,9 +22,12 @@ from .advanced_configurations.views import AdvancedConfigurationsView
 from .errors.views import ErrorsView
 
 urlpatterns = [
-    path('<int:workspace_id>/export_settings/', ExportSettingsView.as_view()),
-    path('<int:workspace_id>/map_employees/', MapEmployeesView.as_view()),
-    path('<int:workspace_id>/import_settings/', ImportSettingsView.as_view()),
-    path('<int:workspace_id>/advanced_configurations/', AdvancedConfigurationsView.as_view()),
-    path('<int:workspace_id>/errors/', ErrorsView.as_view())
+    path("<int:workspace_id>/export_settings/", ExportSettingsView.as_view()),
+    path("<int:workspace_id>/map_employees/", MapEmployeesView.as_view()),
+    path("<int:workspace_id>/import_settings/", ImportSettingsView.as_view()),
+    path(
+        "<int:workspace_id>/advanced_configurations/",
+        AdvancedConfigurationsView.as_view(),
+    ),
+    path("<int:workspace_id>/errors/", ErrorsView.as_view()),
 ]

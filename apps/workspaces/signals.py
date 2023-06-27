@@ -12,15 +12,16 @@ from apps.workspaces.utils import delete_cards_mapping_settings
 
 
 @receiver(post_save, sender=WorkspaceGeneralSettings)
-def run_post_configration_triggers(sender, instance: WorkspaceGeneralSettings, **kwargs):
+def run_post_configration_triggers(
+    sender, instance: WorkspaceGeneralSettings, **kwargs
+):
     """
     :param sender: Sender Class
     :param instance: Row Instance of Sender Class
     :return: None
     """
     async_task(
-        'apps.quickbooks_online.tasks.async_sync_accounts',
-        int(instance.workspace_id)
+        "apps.quickbooks_online.tasks.async_sync_accounts", int(instance.workspace_id)
     )
 
     delete_cards_mapping_settings(instance)
@@ -33,9 +34,9 @@ def post_delete_qbo_connection(workspace_id):
     :return: None
     """
     workspace = Workspace.objects.get(id=workspace_id)
-    if workspace.onboarding_state in ('CONNECTION', 'MAP_EMPLOYEES', 'EXPORT_SETTINGS'):
+    if workspace.onboarding_state in ("CONNECTION", "MAP_EMPLOYEES", "EXPORT_SETTINGS"):
         EmployeeMapping.objects.filter(workspace_id=workspace_id).delete()
         DestinationAttribute.objects.filter(workspace_id=workspace_id).delete()
-        workspace.onboarding_state = 'CONNECTION'
+        workspace.onboarding_state = "CONNECTION"
         workspace.qbo_realm_id = None
         workspace.save()

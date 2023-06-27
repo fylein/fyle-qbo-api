@@ -5,63 +5,119 @@ import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('fyle', '0014_auto_20210120_1831'),
-        ('quickbooks_online', '0007_auto_20201221_0748'),
+        ("fyle", "0014_auto_20210120_1831"),
+        ("quickbooks_online", "0007_auto_20201221_0748"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='BillPayment',
+            name="BillPayment",
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False)),
-                ('private_note', models.TextField(help_text='Bill Description')),
-                ('vendor_id', models.CharField(help_text='QBO vendor id', max_length=255)),
-                ('amount', models.FloatField(help_text='Bill amount')),
-                ('currency', models.CharField(help_text='Bill Currency', max_length=255)),
-                ('payment_account', models.CharField(help_text='Payment Account', max_length=255)),
-                ('accounts_payable_id', models.CharField(help_text='QBO Accounts Payable account id', max_length=255)),
-                ('department_id', models.CharField(help_text='QBO department id', max_length=255, null=True)),
-                ('transaction_date', models.DateField(help_text='Bill transaction date')),
-                ('bill_payment_number', models.CharField(max_length=255)),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='Created at')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='Updated at')),
+                ("id", models.AutoField(primary_key=True, serialize=False)),
+                ("private_note", models.TextField(help_text="Bill Description")),
+                (
+                    "vendor_id",
+                    models.CharField(help_text="QBO vendor id", max_length=255),
+                ),
+                ("amount", models.FloatField(help_text="Bill amount")),
+                (
+                    "currency",
+                    models.CharField(help_text="Bill Currency", max_length=255),
+                ),
+                (
+                    "payment_account",
+                    models.CharField(help_text="Payment Account", max_length=255),
+                ),
+                (
+                    "accounts_payable_id",
+                    models.CharField(
+                        help_text="QBO Accounts Payable account id", max_length=255
+                    ),
+                ),
+                (
+                    "department_id",
+                    models.CharField(
+                        help_text="QBO department id", max_length=255, null=True
+                    ),
+                ),
+                (
+                    "transaction_date",
+                    models.DateField(help_text="Bill transaction date"),
+                ),
+                ("bill_payment_number", models.CharField(max_length=255)),
+                (
+                    "created_at",
+                    models.DateTimeField(auto_now_add=True, help_text="Created at"),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(auto_now=True, help_text="Updated at"),
+                ),
             ],
             options={
-                'db_table': 'bill_payments',
+                "db_table": "bill_payments",
             },
         ),
         migrations.AddField(
-            model_name='bill',
-            name='paid_on_qbo',
-            field=models.BooleanField(default=False, help_text='Payment status in QBO'),
+            model_name="bill",
+            name="paid_on_qbo",
+            field=models.BooleanField(default=False, help_text="Payment status in QBO"),
         ),
         migrations.AddField(
-            model_name='bill',
-            name='payment_synced',
-            field=models.BooleanField(default=False, help_text='Payment synced status'),
+            model_name="bill",
+            name="payment_synced",
+            field=models.BooleanField(default=False, help_text="Payment synced status"),
         ),
         migrations.AddField(
-            model_name='billpayment',
-            name='expense_group',
-            field=models.OneToOneField(default=1, help_text='Expense group reference',
-                                       on_delete=django.db.models.deletion.PROTECT, to='fyle.ExpenseGroup'),
+            model_name="billpayment",
+            name="expense_group",
+            field=models.OneToOneField(
+                default=1,
+                help_text="Expense group reference",
+                on_delete=django.db.models.deletion.PROTECT,
+                to="fyle.ExpenseGroup",
+            ),
             preserve_default=False,
         ),
         migrations.CreateModel(
-            name='BillPaymentLineitem',
+            name="BillPaymentLineitem",
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False)),
-                ('amount', models.FloatField(help_text='Bill amount')),
-                ('linked_transaction_id', models.CharField(help_text='Linked Transaction ID ( Bill ID )', max_length=255)),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='Created at')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='Updated at')),
-                ('bill_payment', models.ForeignKey(help_text='Reference to bill payment', on_delete=django.db.models.deletion.PROTECT, to='quickbooks_online.BillPayment')),
-                ('expense', models.OneToOneField(help_text='Reference to Expense', on_delete=django.db.models.deletion.PROTECT, to='fyle.Expense')),
+                ("id", models.AutoField(primary_key=True, serialize=False)),
+                ("amount", models.FloatField(help_text="Bill amount")),
+                (
+                    "linked_transaction_id",
+                    models.CharField(
+                        help_text="Linked Transaction ID ( Bill ID )", max_length=255
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(auto_now_add=True, help_text="Created at"),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(auto_now=True, help_text="Updated at"),
+                ),
+                (
+                    "bill_payment",
+                    models.ForeignKey(
+                        help_text="Reference to bill payment",
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to="quickbooks_online.BillPayment",
+                    ),
+                ),
+                (
+                    "expense",
+                    models.OneToOneField(
+                        help_text="Reference to Expense",
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to="fyle.Expense",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'bill_payment_lineitems',
+                "db_table": "bill_payment_lineitems",
             },
         ),
     ]

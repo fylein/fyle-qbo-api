@@ -5,19 +5,22 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('fyle', '0008_auto_20200901_1038'),
+        ("fyle", "0008_auto_20200901_1038"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='expensegroupsettings',
-            name='expense_states',
+            model_name="expensegroupsettings",
+            name="expense_states",
         ),
         migrations.AddField(
-            model_name='expensegroupsettings',
-            name='expense_state',
-            field=models.CharField(default=apps.fyle.models.get_default_expense_state, help_text='state at which the expenses are fetched ( PAYMENT_PENDING / PAYMENT_PROCESSING, PAID)', max_length=100),
+            model_name="expensegroupsettings",
+            name="expense_state",
+            field=models.CharField(
+                default=apps.fyle.models.get_default_expense_state,
+                help_text="state at which the expenses are fetched ( PAYMENT_PENDING / PAYMENT_PROCESSING, PAID)",
+                max_length=100,
+            ),
         ),
     ]

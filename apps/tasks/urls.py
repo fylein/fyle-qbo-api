@@ -17,7 +17,4 @@ from django.urls import path
 
 from .views import TasksView, TasksByIdView
 
-urlpatterns = [
-    path('', TasksByIdView.as_view()),
-    path('all/', TasksView.as_view())
-]
+urlpatterns = [path("", TasksByIdView.as_view()), path("all/", TasksView.as_view())]

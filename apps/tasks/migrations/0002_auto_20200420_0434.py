@@ -5,31 +5,51 @@ import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('quickbooks_online', '0002_cheque_chequelineitem_creditcardpurchase_creditcardpurchaselineitem_journalentry_journalentrylineite'),
-        ('tasks', '0001_initial'),
+        (
+            "quickbooks_online",
+            "0002_cheque_chequelineitem_creditcardpurchase_creditcardpurchaselineitem_journalentry_journalentrylineite",
+        ),
+        ("tasks", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='tasklog',
-            name='cheque',
-            field=models.ForeignKey(help_text='Reference to Cheque', null=True, on_delete=django.db.models.deletion.PROTECT, to='quickbooks_online.Cheque'),
+            model_name="tasklog",
+            name="cheque",
+            field=models.ForeignKey(
+                help_text="Reference to Cheque",
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                to="quickbooks_online.Cheque",
+            ),
         ),
         migrations.AddField(
-            model_name='tasklog',
-            name='credit_card_purchase',
-            field=models.ForeignKey(help_text='Reference to CreditCardPurchase', null=True, on_delete=django.db.models.deletion.PROTECT, to='quickbooks_online.CreditCardPurchase'),
+            model_name="tasklog",
+            name="credit_card_purchase",
+            field=models.ForeignKey(
+                help_text="Reference to CreditCardPurchase",
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                to="quickbooks_online.CreditCardPurchase",
+            ),
         ),
         migrations.AddField(
-            model_name='tasklog',
-            name='journal_entry',
-            field=models.ForeignKey(help_text='Reference to journal_entry', null=True, on_delete=django.db.models.deletion.PROTECT, to='quickbooks_online.JournalEntry'),
+            model_name="tasklog",
+            name="journal_entry",
+            field=models.ForeignKey(
+                help_text="Reference to journal_entry",
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                to="quickbooks_online.JournalEntry",
+            ),
         ),
         migrations.AlterField(
-            model_name='tasklog',
-            name='type',
-            field=models.CharField(help_text='Task type (FETCH_EXPENSES / CREATE_BILL / CREATE_CHECK)', max_length=50),
+            model_name="tasklog",
+            name="type",
+            field=models.CharField(
+                help_text="Task type (FETCH_EXPENSES / CREATE_BILL / CREATE_CHECK)",
+                max_length=50,
+            ),
         ),
     ]

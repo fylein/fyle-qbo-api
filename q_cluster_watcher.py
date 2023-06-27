@@ -19,20 +19,21 @@ class LoggingEventHandler(FileSystemEventHandler):
     def on_modified(self, event):
         super().on_modified(event)
 
-        if 'tasks.py' in event.src_path:
+        if "tasks.py" in event.src_path:
             if self.counter != 0 and self.counter % 2 == 1:
-                print('Restarting . . .')
-                os.system('docker-compose restart qcluster')
-                print('Modified {}'.format(event.src_path))
+                print("Restarting . . .")
+                os.system("docker-compose restart qcluster")
+                print("Modified {}".format(event.src_path))
             self.counter = self.counter + 1
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        format="%(asctime)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
-    path = sys.argv[1] if len(sys.argv) > 1 else '.'
+    path = sys.argv[1] if len(sys.argv) > 1 else "."
     event_handler = LoggingEventHandler()
     observer = Observer()
     observer.schedule(event_handler, path, recursive=True)

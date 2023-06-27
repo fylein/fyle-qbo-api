@@ -24,231 +24,213 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY')
+SECRET_KEY = os.environ.get("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True if os.environ.get('DEBUG') == 'True' else False
+DEBUG = True if os.environ.get("DEBUG") == "True" else False
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(',')
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS").split(",")
 
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
     # Installed Apps
-    'rest_framework',
-    'corsheaders',
-    'fyle_rest_auth',
-    'fyle_accounting_mappings',
-    'django_q',
-
+    "rest_framework",
+    "corsheaders",
+    "fyle_rest_auth",
+    "fyle_accounting_mappings",
+    "django_q",
     # User Created Apps
-    'apps.users',
-    'apps.workspaces',
-    'apps.mappings',
-    'apps.fyle',
-    'apps.quickbooks_online',
-    'apps.tasks'
+    "apps.users",
+    "apps.workspaces",
+    "apps.mappings",
+    "apps.fyle",
+    "apps.quickbooks_online",
+    "apps.tasks",
 ]
 
 MIDDLEWARE = [
-    'request_logging.middleware.LoggingMiddleware',
-    'fyle_qbo_api.logging_middleware.ErrorHandlerMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'corsheaders.middleware.CorsPostCsrfMiddleware',
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "request_logging.middleware.LoggingMiddleware",
+    "fyle_qbo_api.logging_middleware.ErrorHandlerMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "corsheaders.middleware.CorsPostCsrfMiddleware",
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'fyle_qbo_api.urls'
+ROOT_URLCONF = "fyle_qbo_api.urls"
 APPEND_SLASH = False
 
-AUTH_USER_MODEL = 'users.User'
+AUTH_USER_MODEL = "users.User"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
 FYLE_REST_AUTH_SERIALIZERS = {
-    'USER_DETAILS_SERIALIZER': 'apps.users.serializers.UserSerializer'
+    "USER_DETAILS_SERIALIZER": "apps.users.serializers.UserSerializer"
 }
 
 REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
-        'apps.workspaces.permissions.WorkspacePermissions'
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+        "apps.workspaces.permissions.WorkspacePermissions",
     ),
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'fyle_rest_auth.authentication.FyleJWTAuthentication',
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "fyle_rest_auth.authentication.FyleJWTAuthentication",
     ),
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'PAGE_SIZE': 100
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
+    "PAGE_SIZE": 100,
 }
 
-WSGI_APPLICATION = 'fyle_qbo_api.wsgi.application'
+WSGI_APPLICATION = "fyle_qbo_api.wsgi.application"
 
-FYLE_REST_AUTH_SETTINGS = {
-    'async_update_user': True
-}
+FYLE_REST_AUTH_SETTINGS = {"async_update_user": True}
 
 Q_CLUSTER = {
-    'name': 'fyle_quickbooks_api',
-    'save_limit': 0,
-    'workers': 4,
+    "name": "fyle_quickbooks_api",
+    "save_limit": 0,
+    "workers": 4,
     # How many tasks are kept in memory by a single cluster.
     # Helps balance the workload and the memory overhead of each individual cluster
-    'queue_limit': 10,
-    'cached': False,
-    'orm': 'default',
-    'ack_failures': True,
-    'poll': 1,
-    'retry': 14400,
-    'timeout': 3600,
-    'catch_up': False,
+    "queue_limit": 10,
+    "cached": False,
+    "orm": "default",
+    "ack_failures": True,
+    "poll": 1,
+    "retry": 14400,
+    "timeout": 3600,
+    "catch_up": False,
     # The number of tasks a worker will process before recycling.
     # Useful to release memory resources on a regular basis.
-    'recycle': 50,
+    "recycle": 50,
     # The maximum resident set size in kilobytes before a worker will recycle and release resources.
     # Useful for limiting memory usage.
-    'max_rss': 100000 # 100mb
+    "max_rss": 100000,  # 100mb
 }
 
-SERVICE_NAME = os.environ.get('SERVICE_NAME')
+SERVICE_NAME = os.environ.get("SERVICE_NAME")
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': True,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} %s {asctime} {module} {message} ' % SERVICE_NAME,
-            'style': '{',
+    "version": 1,
+    "disable_existing_loggers": True,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} %s {asctime} {module} {message} " % SERVICE_NAME,
+            "style": "{",
         },
-        'requests': {
-            'format': 'request {levelname} %s {asctime} {message}' % SERVICE_NAME,
-            'style': '{'
-        }
-    },
-    'handlers': {
-        'debug_logs': {
-            'class': 'logging.StreamHandler',
-            'stream': sys.stdout,
-            'formatter': 'verbose'
-        },
-        'request_logs': {
-            'class': 'logging.StreamHandler',
-            'stream': sys.stdout,
-            'formatter': 'requests'
+        "requests": {
+            "format": "request {levelname} %s {asctime} {message}" % SERVICE_NAME,
+            "style": "{",
         },
     },
-    'loggers': {
-        'django': {
-            'handlers': ['request_logs'],
-            'propagate': True,
+    "handlers": {
+        "debug_logs": {
+            "class": "logging.StreamHandler",
+            "stream": sys.stdout,
+            "formatter": "verbose",
         },
-        'django.request': {
-            'handlers': ['request_logs'],
-            'propagate': False
+        "request_logs": {
+            "class": "logging.StreamHandler",
+            "stream": sys.stdout,
+            "formatter": "requests",
         },
-        'fyle_qbo_api': {
-            'handlers': ['debug_logs'],
-            'level': 'ERROR',
-            'propagate': False
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["request_logs"],
+            "propagate": True,
         },
-        'apps': {
-            'handlers': ['debug_logs'],
-            'level': 'ERROR',
-            'propagate': False
+        "django.request": {"handlers": ["request_logs"], "propagate": False},
+        "fyle_qbo_api": {
+            "handlers": ["debug_logs"],
+            "level": "ERROR",
+            "propagate": False,
         },
-        'django_q': {
-            'handlers': ['debug_logs'],
-            'propagate': True,
+        "apps": {"handlers": ["debug_logs"], "level": "ERROR", "propagate": False},
+        "django_q": {
+            "handlers": ["debug_logs"],
+            "propagate": True,
         },
-        'gunicorn': {
-            'handlers': ['request_logs'],
-            'level': 'INFO',
-            'propagate': False
+        "gunicorn": {"handlers": ["request_logs"], "level": "INFO", "propagate": False},
+        "fyle_rest_auth": {
+            "handlers": ["debug_logs"],
+            "propagate": True,
         },
-        'fyle_rest_auth': {
-            'handlers': ['debug_logs'],
-            'propagate': True,
-        }
-    }
+    },
 }
 
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 # Defaulting django engine for qcluster
-if len(sys.argv) > 0 and sys.argv[1] == 'qcluster':
-    DATABASES = {
-        'default': dj_database_url.config()
-    }
+if len(sys.argv) > 0 and sys.argv[1] == "qcluster":
+    DATABASES = {"default": dj_database_url.config()}
 else:
     DATABASES = {
-        'default': dj_database_url.config(engine='django_db_geventpool.backends.postgresql_psycopg2')
+        "default": dj_database_url.config(
+            engine="django_db_geventpool.backends.postgresql_psycopg2"
+        )
     }
 
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-        'LOCATION': 'auth_cache',
+    "default": {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "auth_cache",
     }
 }
 
-DATABASES['cache_db'] = {
-    'ENGINE': 'django.db.backends.sqlite3',
-    'NAME': 'cache.db'
-}
+DATABASES["cache_db"] = {"ENGINE": "django.db.backends.sqlite3", "NAME": "cache.db"}
 
-DATABASE_ROUTERS = ['fyle_qbo_api.cache_router.CacheRouter']
+DATABASE_ROUTERS = ["fyle_qbo_api.cache_router.CacheRouter"]
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -259,34 +241,34 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = "/static/"
 
 # Fyle Settings
-API_URL = os.environ.get('API_URL')
-FYLE_TOKEN_URI = os.environ.get('FYLE_TOKEN_URI')
-FYLE_CLIENT_ID = os.environ.get('FYLE_CLIENT_ID')
-FYLE_CLIENT_SECRET = os.environ.get('FYLE_CLIENT_SECRET')
-FYLE_BASE_URL = os.environ.get('FYLE_BASE_URL')
-FYLE_APP_URL = os.environ.get('APP_URL')
-FYLE_EXPENSE_URL = os.environ.get('FYLE_APP_URL')
+API_URL = os.environ.get("API_URL")
+FYLE_TOKEN_URI = os.environ.get("FYLE_TOKEN_URI")
+FYLE_CLIENT_ID = os.environ.get("FYLE_CLIENT_ID")
+FYLE_CLIENT_SECRET = os.environ.get("FYLE_CLIENT_SECRET")
+FYLE_BASE_URL = os.environ.get("FYLE_BASE_URL")
+FYLE_APP_URL = os.environ.get("APP_URL")
+FYLE_EXPENSE_URL = os.environ.get("FYLE_APP_URL")
 
 
 # QBO Settings
-QBO_CLIENT_ID = os.environ.get('QBO_CLIENT_ID')
-QBO_CLIENT_SECRET = os.environ.get('QBO_CLIENT_SECRET')
-QBO_REDIRECT_URI = os.environ.get('QBO_REDIRECT_URI')
-QBO_TOKEN_URI = os.environ.get('QBO_TOKEN_URI')
-QBO_ENVIRONMENT = os.environ.get('QBO_ENVIRONMENT')
-ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY')
-E2E_TESTS_CLIENT_SECRET = os.environ.get('E2E_TESTS_CLIENT_SECRET')
-E2E_TESTS_REALM_ID = os.environ.get('E2E_TESTS_REALM_ID')
+QBO_CLIENT_ID = os.environ.get("QBO_CLIENT_ID")
+QBO_CLIENT_SECRET = os.environ.get("QBO_CLIENT_SECRET")
+QBO_REDIRECT_URI = os.environ.get("QBO_REDIRECT_URI")
+QBO_TOKEN_URI = os.environ.get("QBO_TOKEN_URI")
+QBO_ENVIRONMENT = os.environ.get("QBO_ENVIRONMENT")
+ENCRYPTION_KEY = os.environ.get("ENCRYPTION_KEY")
+E2E_TESTS_CLIENT_SECRET = os.environ.get("E2E_TESTS_CLIENT_SECRET")
+E2E_TESTS_REALM_ID = os.environ.get("E2E_TESTS_REALM_ID")
 
 # Cache Settings
-SENDGRID_SANDBOX_MODE_IN_DEBUG=False
+SENDGRID_SANDBOX_MODE_IN_DEBUG = False
 
-SENDGRID_API_KEY = os.environ.get('SENDGRID_KEY')
-EMAIL = os.environ.get('SENDGRID_EMAIL')
-EMAIL_BACKEND = 'sendgrid_backend.SendgridBackend'
+SENDGRID_API_KEY = os.environ.get("SENDGRID_KEY")
+EMAIL = os.environ.get("SENDGRID_EMAIL")
+EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
 
 CACHE_EXPIRY = 3600
 
@@ -295,8 +277,4 @@ CORS_ORIGIN_ALLOW_ALL = True
 # Sentry
 Sentry.init()
 
-CORS_ALLOW_HEADERS = [
-    'sentry-trace',
-    'authorization',
-    'content-type'
-]
+CORS_ALLOW_HEADERS = ["sentry-trace", "authorization", "content-type"]

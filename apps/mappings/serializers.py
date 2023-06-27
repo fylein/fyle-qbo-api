@@ -7,6 +7,7 @@ class GeneralMappingSerializer(serializers.ModelSerializer):
     """
     General mappings group serializer
     """
+
     class Meta:
         model = GeneralMapping
-        fields = '__all__'
+        fields = "__all__"

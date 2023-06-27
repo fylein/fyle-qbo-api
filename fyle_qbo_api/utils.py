@@ -10,6 +10,4 @@ def assert_valid(condition: bool, message: str) -> Response or None:
     :return: Response or None
     """
     if not condition:
-        raise ValidationError(detail={
-            'message': message
-        })
+        raise ValidationError(detail={"message": message})
