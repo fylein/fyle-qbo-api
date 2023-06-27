@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'fyle_rest_auth',
     'fyle_accounting_mappings',
     'django_q',
+    'django_filters',
 
     # User Created Apps
     'apps.users',
@@ -101,6 +102,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
         'apps.workspaces.permissions.WorkspacePermissions'
     ),
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'fyle_rest_auth.authentication.FyleJWTAuthentication',
     ),
