@@ -163,29 +163,6 @@ def test_post_workspace_configurations(api_client, test_connection):
     assert response.status_code==200
 
 
-def test_get_workspace_schedule(api_client, test_connection):
-    url = reverse(
-        'workspace-schedule', kwargs={
-            'workspace_id': 4
-        }
-    )
-
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
-
-    response = api_client.get(url)
-    response = json.loads(response.content)
-
-    assert response['schedule'] == None
-
-    WorkspaceSchedule.objects.get_or_create(
-        workspace_id=5
-    )
-
-    response = api_client.get(url)
-    response = json.loads(response.content)
-
-    assert response == {'id': 3, 'enabled': False, 'start_datetime': None, 'interval_hours': None, 'workspace': 4, 'schedule': None, 'additional_email_options': [], 'emails_selected': None, 'error_count': None}
-
 def test_ready_view(api_client, test_connection):
     url = reverse('ready')
 
@@ -195,45 +172,6 @@ def test_ready_view(api_client, test_connection):
     response = json.loads(response.content)
 
     assert response['message'] == 'Ready'
-
-
-def test_delete_fyle_credentials_view(api_client, test_connection):
-    url = reverse(
-        'delete-fyle-credentials', kwargs={
-            'workspace_id': 4
-        }
-    )
-
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
-
-    response = api_client.delete(url)
-    response = json.loads(response.content)
-
-    assert response['message'] == 'Fyle credentials deleted'
-
-
-def test_get_fyle_credentials_view(api_client, test_connection):
-    url = reverse(
-        'get-fyle-credentials', kwargs={
-            'workspace_id': 4
-        }
-    )
-
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
-
-    response = api_client.get(url)
-    response = json.loads(response.content)
-    fyle_credentials = FyleCredential.objects.get(workspace_id=4)
-
-    assert response['refresh_token'] == fyle_credentials.refresh_token
-
-    fyle_credentials = FyleCredential.objects.get(workspace_id=4)
-    fyle_credentials.delete()
-
-    response = api_client.get(url)
-
-    response = json.loads(response.content)
-    assert response['message'] == 'Fyle Credentials not found in this workspace'
 
 
 def test_get_qbo_credentials_view(api_client, test_connection):
@@ -255,73 +193,7 @@ def test_get_qbo_credentials_view(api_client, test_connection):
     response = api_client.get(url)
     response = json.loads(response.content)
 
-    assert response['message'] == 'QBO Credentials not found in this workspace'
-    
-
-def test_post_connect_fyle_view(mocker, api_client, test_connection):
-    mocker.patch(
-        'fyle_rest_auth.utils.AuthUtils.generate_fyle_refresh_token',
-        return_value={'refresh_token': 'asdfghjk', 'access_token': 'qwertyuio'}
-    )
-    mocker.patch(
-        'apps.workspaces.views.get_fyle_admin',
-        return_value={'data': {'org': {'name': 'Test Trip', 'id': 'orZu2yrz7zdy', 'currency': 'USD'}}}
-    )
-    mocker.patch(
-        'apps.workspaces.views.get_cluster_domain',
-        return_value='https://staging.fyle.tech'
-    )
-    code = 'asd'
-    url = '/api/workspaces/5/connect_fyle/authorization_code/'
-
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
-    response = api_client.post(
-        url,
-        data={'code': code}    
-    )
-    response = api_client.post(url)
-    assert response.status_code == 200
-
-
-def test_connect_fyle_view_exceptions(api_client, test_connection):
-    workspace_id = 5
-    
-    code = 'qwertyu'
-    url = '/api/workspaces/{}/connect_fyle/authorization_code/'.format(workspace_id)
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
-    
-    with mock.patch('fyle_rest_auth.utils.AuthUtils.generate_fyle_refresh_token') as mock_call:
-        mock_call.side_effect = fyle_exc.UnauthorizedClientError(msg='Invalid Authorization Code', response='Invalid Authorization Code')
-        
-        response = api_client.post(
-            url,
-            data={'code': code}    
-        )
-        assert response.status_code == 403
-
-        mock_call.side_effect = fyle_exc.NotFoundClientError(msg='Fyle Application not found', response='Fyle Application not found')
-        
-        response = api_client.post(
-            url,
-            data={'code': code}    
-        )
-        assert response.status_code == 404
-
-        mock_call.side_effect = fyle_exc.WrongParamsError(msg='Some of the parameters are wrong', response='Some of the parameters are wrong')
-        
-        response = api_client.post(
-            url,
-            data={'code': code}    
-        )
-        assert response.status_code == 400
-
-        mock_call.side_effect = fyle_exc.InternalServerError(msg='Wrong/Expired Authorization code', response='Wrong/Expired Authorization code')
-        
-        response = api_client.post(
-            url,
-            data={'code': code}    
-        )
-        assert response.status_code == 401
+    assert response['message'] == 'QBO credentials not found in workspace'
 
 
 def test_post_connect_qbo_view(mocker, api_client, test_connection):
@@ -483,50 +355,6 @@ def test_prepare_e2e_test_view(mock_db, mocker, api_client, test_connection):
     api_client.credentials(HTTP_X_E2E_Tests_Client_ID='gAAAAABi8oWVoonxF0K_g2TQnFdlpOJvGsBYa9rPtwfgM-puStki_qYbi0PdipWHqIBIMip94MDoaTP4MXOfERDeEGrbARCxPw==')
     response = api_client.post(url)
     assert response.status_code == 500
-
-
-def test_schedule_sync_view(mocker, api_client, test_connection):
-    mocker.patch(
-        'apps.workspaces.views.run_sync_schedule',
-        return_value=None
-    )
-
-    workspace_id = 3
-    url = '/api/workspaces/{}/schedule/trigger/'.format(workspace_id)
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
-
-    response = api_client.post(url)
-    assert response.status_code == 200
-
-
-def test_schedule_view(mocker, db, api_client, test_connection):
-    mocker.patch(
-        'apps.workspaces.views.run_sync_schedule',
-        return_value=None
-    )
-
-    workspace_id = 3
-    url = '/api/workspaces/{}/schedule/'.format(workspace_id)
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
-
-    response = api_client.get(url)
-    assert response.status_code == 200
-
-    response = api_client.post(
-        url,
-        data={
-            'schedule_enabled': True,
-            'hours': 1
-        },
-        format='json'
-    )
-    assert response.status_code == 200
-
-    workspace_schedule = WorkspaceSchedule.objects.filter(workspace_id=workspace_id).first() 
-    workspace_schedule.delete()
-
-    response = api_client.get(url)
-    assert response.status_code == 400
 
 
 def test_export_to_qbo(mocker, api_client, test_connection):

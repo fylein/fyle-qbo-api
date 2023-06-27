@@ -21,6 +21,7 @@ from apps.quickbooks_online.utils import QBOConnector
 from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGeneralSettings
 from apps.tasks.models import Error
 
+from .exceptions import handle_import_exceptions
 from .constants import FYLE_EXPENSE_SYSTEM_FIELDS
 
 logger = logging.getLogger(__name__)
@@ -84,57 +85,32 @@ def remove_duplicates(qbo_attributes: List[DestinationAttribute]):
 
     return unique_attributes
 
-def disable_category_for_items_mapping(configuration: WorkspaceGeneralSettings):
+@handle_import_exceptions(task_name='Disable Category for Items Mapping')
+def disable_category_for_items_mapping(workspace_id: int):
     """
     Disable Category for Items Mapping
-    :param configuration: Workspace General Settings
+    :param workspace_id: Workspace Id
     :return: None
     """
+    fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
+    platform = PlatformConnector(fyle_credentials)
+    platform.categories.sync()
 
-    try:
-        workspace_id = configuration.workspace_id
+    qbo_credentials: QBOCredential = QBOCredential.get_active_qbo_credentials(workspace_id)
+    qbo_connection = QBOConnector(
+        credentials_object=qbo_credentials,
+        workspace_id=workspace_id
+    )
+    qbo_connection.sync_items()
 
-        fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
-        platform = PlatformConnector(fyle_credentials)
+    category_ids_to_be_disabled = disable_or_enable_expense_attributes('CATEGORY', 'ACCOUNT', workspace_id, display_name='Item')
+    if category_ids_to_be_disabled:
+        expense_attributes = ExpenseAttribute.objects.filter(id__in=category_ids_to_be_disabled)
+        fyle_payload: List[Dict] = create_fyle_categories_payload(categories=[],
+            workspace_id=workspace_id, updated_categories=expense_attributes)
+
+        platform.categories.post_bulk(fyle_payload)
         platform.categories.sync()
-
-        qbo_credentials: QBOCredential = QBOCredential.get_active_qbo_credentials(workspace_id)
-        qbo_connection = QBOConnector(
-            credentials_object=qbo_credentials,
-            workspace_id=workspace_id
-        )
-        qbo_connection.sync_items()
-
-        category_ids_to_be_disabled = disable_or_enable_expense_attributes('CATEGORY', 'ACCOUNT', workspace_id, display_name='Item')
-        if category_ids_to_be_disabled:
-            expense_attributes = ExpenseAttribute.objects.filter(id__in=category_ids_to_be_disabled)
-            fyle_payload: List[Dict] = create_fyle_categories_payload(categories=[],
-                workspace_id=workspace_id, updated_categories=expense_attributes)
-
-            platform.categories.post_bulk(fyle_payload)
-            platform.categories.sync()
-
-    except QBOCredential.DoesNotExist:
-        logger.info('QBO credentials not found workspace_id - %s', workspace_id)
-    
-    except FyleInvalidTokenError:
-        logger.info('Invalid Token for fyle')
-
-    except WrongParamsError as exception:
-        logger.error( 'Error while disabling categories workspace_id - %s in Fyle %s %s', workspace_id, exception.message, {'error': exception.response} )
-
-    except (QBOWrongParamsError, InvalidTokenError):
-        logger.info('QBO token expired workspace_id - %s', workspace_id)
-
-    except Exception:
-        error = traceback.format_exc()
-        error = {
-            'error': error
-        }
-        logger.exception(
-            'Error while disabling categories workspace_id - %s error: %s',
-            workspace_id, error
-        )
 
 def disable_or_enable_expense_attributes(source_field: str, destination_field: str, workspace_id: int, display_name:str=None):
     """
@@ -258,95 +234,45 @@ def post_projects_in_batches(platform: PlatformConnector, workspace_id: int, des
             platform.projects.post_bulk(fyle_payload)
             platform.projects.sync()
 
-
+@handle_import_exceptions(task_name='Auto Create Tax Code Mappings')
 def auto_create_tax_codes_mappings(workspace_id: int):
     """
     Create Tax Codes Mappings
     :return: None
     """
-    try:
-        fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
 
-        platform = PlatformConnector(fyle_credentials)
+    fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
 
-        platform.tax_groups.sync()
+    platform = PlatformConnector(fyle_credentials)
 
-        mapping_setting = MappingSetting.objects.get(
-            source_field='TAX_GROUP', workspace_id=workspace_id
-        )
+    platform.tax_groups.sync()
 
-        sync_qbo_attribute(mapping_setting.destination_field, workspace_id)
-        upload_tax_groups_to_fyle(platform, workspace_id)
+    mapping_setting = MappingSetting.objects.get(
+        source_field='TAX_GROUP', workspace_id=workspace_id
+    )
 
-    except QBOCredential.DoesNotExist:
-        logger.info('QBO credentials not found workspace_id - %s', workspace_id)
-    
-    except FyleInvalidTokenError:
-        logger.info('Invalid Token for fyle')
-
-    except WrongParamsError as exception:
-        logger.error(
-            'Error while creating tax groups workspace_id - %s in Fyle %s %s',
-            workspace_id, exception.message, {'error': exception.response}
-        )
-
-    except (QBOWrongParamsError, InvalidTokenError):
-        logger.info('QBO token expired workspace_id - %s', workspace_id)
-
-    except Exception:
-        error = traceback.format_exc()
-        error = {
-            'error': error
-        }
-        logger.error(
-            'Error while creating tax groups workspace_id - %s error: %s',
-            workspace_id, error
-        )
+    sync_qbo_attribute(mapping_setting.destination_field, workspace_id)
+    upload_tax_groups_to_fyle(platform, workspace_id)
 
 
+@handle_import_exceptions(task_name='Auto Create Project Mappings')
 def auto_create_project_mappings(workspace_id: int):
     """
     Create Project Mappings
     :return: mappings
     """
-    try:
-        fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
-        platform = PlatformConnector(fyle_credentials)
+    fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
+    platform = PlatformConnector(fyle_credentials)
 
-        platform.projects.sync()
+    platform.projects.sync()
 
-        mapping_setting = MappingSetting.objects.get(
-            source_field='PROJECT', workspace_id=workspace_id
-        )
+    mapping_setting = MappingSetting.objects.get(
+        source_field='PROJECT', workspace_id=workspace_id
+    )
 
-        sync_qbo_attribute(mapping_setting.destination_field, workspace_id)
+    sync_qbo_attribute(mapping_setting.destination_field, workspace_id)
 
-        post_projects_in_batches(platform, workspace_id, mapping_setting.destination_field)
-
-    except QBOCredential.DoesNotExist:
-        logger.info('QBO credentials not found workspace_id - %s', workspace_id)
-
-    except FyleInvalidTokenError:
-        logger.info('Invalid Token for fyle')
-
-    except WrongParamsError as exception:
-        logger.error(
-            'Error while creating projects workspace_id - %s in Fyle %s %s',
-            workspace_id, exception.message, {'error': exception.response}
-        )
-
-    except (QBOWrongParamsError, InvalidTokenError):
-        logger.info('QBO token expired workspace_id - %s', workspace_id)
-
-    except Exception:
-        error = traceback.format_exc()
-        error = {
-            'error': error
-        }
-        logger.exception(
-            'Error while creating projects workspace_id - %s error: %s',
-            workspace_id, error
-        )
+    post_projects_in_batches(platform, workspace_id, mapping_setting.destination_field)
 
 
 def schedule_tax_groups_creation(import_tax_codes, workspace_id):
@@ -450,53 +376,31 @@ def upload_categories_to_fyle(platform: PlatformConnector, workspace_id):
     return qbo_attributes
 
 
+@handle_import_exceptions(task_name='Auto Create Category Mappings')
 def auto_create_category_mappings(workspace_id):
     """
     Create Category Mappings
     :return: mappings
     """
-    try:
-        fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
-        platform = PlatformConnector(fyle_credentials)
-        fyle_categories = upload_categories_to_fyle(platform, workspace_id=workspace_id)
-        category_mappings = Mapping.bulk_create_mappings(fyle_categories, 'CATEGORY', 'ACCOUNT', workspace_id)
+    fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
+    platform = PlatformConnector(fyle_credentials)
+    fyle_categories = upload_categories_to_fyle(platform, workspace_id=workspace_id)
+    category_mappings = Mapping.bulk_create_mappings(fyle_categories, 'CATEGORY', 'ACCOUNT', workspace_id)
 
-        # disabling fields
-        category_ids_to_be_changed = disable_or_enable_expense_attributes('CATEGORY', 'ACCOUNT', workspace_id)
-        if category_ids_to_be_changed:
-            expense_attributes = ExpenseAttribute.objects.filter(id__in=category_ids_to_be_changed)
-            fyle_payload: List[Dict] = create_fyle_categories_payload(categories=[],
-                workspace_id=workspace_id, updated_categories=expense_attributes)
-            platform.categories.post_bulk(fyle_payload)
-            platform.categories.sync()
-        
-        resolve_expense_attribute_errors(
-            source_attribute_type='CATEGORY',
-            workspace_id=workspace_id
-        )
-        return category_mappings
-
-    except QBOCredential.DoesNotExist:
-        logger.info('QBO credentials not found workspace_id - %s', workspace_id)
+    # disabling fields
+    category_ids_to_be_changed = disable_or_enable_expense_attributes('CATEGORY', 'ACCOUNT', workspace_id)
+    if category_ids_to_be_changed:
+        expense_attributes = ExpenseAttribute.objects.filter(id__in=category_ids_to_be_changed)
+        fyle_payload: List[Dict] = create_fyle_categories_payload(categories=[],
+            workspace_id=workspace_id, updated_categories=expense_attributes)
+        platform.categories.post_bulk(fyle_payload)
+        platform.categories.sync()
     
-    except FyleInvalidTokenError:
-        logger.info('Invalid Token for fyle')
-
-    except WrongParamsError as exception:
-        logger.error( 'Error while creating categories workspace_id - %s in Fyle %s %s', workspace_id, exception.message, {'error': exception.response} )
-
-    except (QBOWrongParamsError, InvalidTokenError):
-        logger.info('QBO token expired workspace_id - %s', workspace_id)
-
-    except Exception:
-        error = traceback.format_exc()
-        error = {
-            'error': error
-        }
-        logger.exception(
-            'Error while creating categories workspace_id - %s error: %s',
-            workspace_id, error
-        )
+    resolve_expense_attribute_errors(
+        source_attribute_type='CATEGORY',
+        workspace_id=workspace_id
+    )
+    return category_mappings
 
 
 def get_existing_source_and_mappings(destination_type: str, workspace_id: int):
@@ -691,41 +595,30 @@ def auto_map_employees(destination_type: str, employee_mapping_preference: str, 
     create_mappings_and_update_flag(mapping_creation_batch, mapping_updation_batch, update_key)
 
 
+@handle_import_exceptions(task_name='Async Auto Map Employees')
 def async_auto_map_employees(workspace_id: int):
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
     employee_mapping_preference = general_settings.auto_map_employees
     destination_type = general_settings.employee_field_mapping
 
+    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+    platform = PlatformConnector(fyle_credentials)
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
-    try:
-        fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-        platform = PlatformConnector(fyle_credentials)
-        qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
-        qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
+    platform.employees.sync()
+    if destination_type == 'EMPLOYEE':
+        qbo_connection.sync_employees()
+    else:
+        qbo_connection.sync_vendors()
 
-        platform.employees.sync()
-        if destination_type == 'EMPLOYEE':
-            qbo_connection.sync_employees()
-        else:
-            qbo_connection.sync_vendors()
+    auto_map_employees(destination_type, employee_mapping_preference, workspace_id)
 
-        auto_map_employees(destination_type, employee_mapping_preference, workspace_id)
-
-        resolve_expense_attribute_errors(
-            source_attribute_type='EMPLOYEE',
-            workspace_id=workspace_id ,
-            destination_attribute_type=destination_type
-        )
-    except QBOCredential.DoesNotExist:
-        logger.info(
-            'QBO Credentials not found for workspace_id %s', workspace_id
-        )
-    
-    except FyleInvalidTokenError:
-        logger.info('Invalid Token for fyle')
-
-    except (QBOWrongParamsError, InvalidTokenError):
-        logger.info('QBO token expired workspace_id - %s', workspace_id)
+    resolve_expense_attribute_errors(
+        source_attribute_type='EMPLOYEE',
+        workspace_id=workspace_id ,
+        destination_attribute_type=destination_type
+    )
 
 def schedule_auto_map_employees(employee_mapping_preference: str, workspace_id: int):
     if employee_mapping_preference:
@@ -946,49 +839,24 @@ def post_cost_centers_in_batches(platform: PlatformConnector, workspace_id: int,
         Mapping.bulk_create_mappings(paginated_qbo_attributes, 'COST_CENTER', qbo_attribute_type, workspace_id)
 
 
+@handle_import_exceptions(task_name='Auto Create Cost Center Mappings')
 def auto_create_cost_center_mappings(workspace_id):
     """
     Create Cost Center Mappings
     """
-    try:
-        fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
+    fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
 
-        platform = PlatformConnector(fyle_credentials)
+    platform = PlatformConnector(fyle_credentials)
 
-        mapping_setting = MappingSetting.objects.get(
-            source_field='COST_CENTER', import_to_fyle=True, workspace_id=workspace_id
-        )
+    mapping_setting = MappingSetting.objects.get(
+        source_field='COST_CENTER', import_to_fyle=True, workspace_id=workspace_id
+    )
 
-        platform.cost_centers.sync()
+    platform.cost_centers.sync()
 
-        sync_qbo_attribute(mapping_setting.destination_field, workspace_id)
+    sync_qbo_attribute(mapping_setting.destination_field, workspace_id)
 
-        post_cost_centers_in_batches(platform, workspace_id, mapping_setting.destination_field)
-
-    except QBOCredential.DoesNotExist:
-        logger.info('QBO credentials not found workspace_id - %s', workspace_id)
-
-    except FyleInvalidTokenError:
-        logger.info('Invalid Token for fyle')
-
-    except WrongParamsError as exception:
-        logger.error(
-            'Error while creating cost centers workspace_id - %s in Fyle %s %s',
-            workspace_id, exception.message, {'error': exception.response}
-        )
-
-    except (QBOWrongParamsError, InvalidTokenError):
-        logger.info('QBO token expired workspace_id - %s', workspace_id)
-
-    except Exception:
-        error = traceback.format_exc()
-        error = {
-            'error': error
-        }
-        logger.exception(
-            'Error while creating cost centers workspace_id - %s error: %s',
-            workspace_id, error
-        )
+    post_cost_centers_in_batches(platform, workspace_id, mapping_setting.destination_field)
 
 
 def schedule_cost_centers_creation(import_to_fyle, workspace_id):
@@ -1112,6 +980,7 @@ def upload_attributes_to_fyle(
     return qbo_attributes
 
 
+@handle_import_exceptions(task_name='Auto Create Expense Fields Mappings')
 def auto_create_expense_fields_mappings(
     workspace_id: int, qbo_attribute_type: str, fyle_attribute_type: str, source_placeholder: str = None
 ):
@@ -1119,30 +988,14 @@ def auto_create_expense_fields_mappings(
     Create Fyle Attributes Mappings
     :return: mappings
     """
-    try:
-        fyle_attributes = upload_attributes_to_fyle(
-            workspace_id, qbo_attribute_type, fyle_attribute_type, source_placeholder
-        )
-        if fyle_attributes:
-            Mapping.bulk_create_mappings(fyle_attributes, fyle_attribute_type, qbo_attribute_type, workspace_id)
-
-    except WrongParamsError as exception:
-        logger.error(
-            'Error while creating %s workspace_id - %s in Fyle %s %s',
-            fyle_attribute_type, workspace_id, exception.message, {'error': exception.response}
-        )
-    except FyleInvalidTokenError:
-        logger.info('Invalid Token for fyle')
-    except Exception:
-        error = traceback.format_exc()
-        error = {
-            'error': error
-        }
-        logger.exception(
-            'Error while creating %s workspace_id - %s error: %s', fyle_attribute_type, workspace_id, error
-        )
+    fyle_attributes = upload_attributes_to_fyle(
+        workspace_id, qbo_attribute_type, fyle_attribute_type, source_placeholder
+    )
+    if fyle_attributes:
+        Mapping.bulk_create_mappings(fyle_attributes, fyle_attribute_type, qbo_attribute_type, workspace_id)
 
 
+@handle_import_exceptions(task_name='Async Auto Create Custom Fields Mappings')
 def async_auto_create_custom_field_mappings(workspace_id):
     mapping_settings = MappingSetting.objects.filter(
         is_custom=True,
@@ -1153,16 +1006,11 @@ def async_auto_create_custom_field_mappings(workspace_id):
     if mapping_settings:
         for mapping_setting in mapping_settings:
             if mapping_setting.import_to_fyle:
-                try:
-                    sync_qbo_attribute(mapping_setting.destination_field, workspace_id)
-                    auto_create_expense_fields_mappings(
-                        workspace_id, mapping_setting.destination_field, mapping_setting.source_field,
-                        mapping_setting.source_placeholder
-                    )
-                except QBOCredential.DoesNotExist:
-                    logger.info('QBO credentials not found workspace_id - %s', workspace_id)
-                except (QBOWrongParamsError, InvalidTokenError):
-                    logger.info('QBO token expired workspace_id - %s', workspace_id)
+                sync_qbo_attribute(mapping_setting.destination_field, workspace_id)
+                auto_create_expense_fields_mappings(
+                    workspace_id, mapping_setting.destination_field, mapping_setting.source_field,
+                    mapping_setting.source_placeholder
+                )
 
 
 def schedule_fyle_attributes_creation(workspace_id: int):
@@ -1213,40 +1061,16 @@ def post_merchants(platform_connection: PlatformConnector, workspace_id: int):
         platform_connection.merchants.post(fyle_payload)
         platform_connection.merchants.sync(workspace_id)
 
+@handle_import_exceptions(task_name='Auto Create Vendors as Merchants')
 def auto_create_vendors_as_merchants(workspace_id):
-    try:
-        fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
+    fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
 
-        fyle_connection = PlatformConnector(fyle_credentials)
+    fyle_connection = PlatformConnector(fyle_credentials)
 
-        fyle_connection.merchants.sync(workspace_id)
+    fyle_connection.merchants.sync(workspace_id)
 
-        sync_qbo_attribute('VENDOR', workspace_id)
-        post_merchants(fyle_connection, workspace_id)
-
-    except QBOCredential.DoesNotExist:
-        logger.info('QBO credentials not found workspace_id - %s', workspace_id)
-    
-    except FyleInvalidTokenError:
-        logger.info('Invalid Token for fyle')
-
-    except WrongParamsError as exception:
-        logger.error(
-            'Error while posting vendors as merchants to fyle for workspace_id - %s in Fyle %s %s',
-            workspace_id, exception.message, {'error': exception.response}
-        )
-
-    except (QBOWrongParamsError, InvalidTokenError):
-        logger.info('QBO token expired workspace_id - %s', workspace_id)
-
-    except Exception:
-        error = traceback.format_exc()
-        error = {
-            'error': error
-        }
-        logger.exception(
-            'Error while posting vendors as merchants to fyle for workspace_id - %s error: %s',
-            workspace_id, error)
+    sync_qbo_attribute('VENDOR', workspace_id)
+    post_merchants(fyle_connection, workspace_id)
 
 def auto_import_and_map_fyle_fields(workspace_id):
     """
