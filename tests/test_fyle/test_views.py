@@ -21,21 +21,6 @@ def test_expense_group_view(api_client, test_connection):
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
     response = api_client.get(url, {
-        'id__in': '1,2'
-    })
-    assert response.status_code==200
-
-    response = json.loads(response.content)
-    assert response == {'count': 0, 'next': None, 'previous': None, 'results': []}
-
-    response = api_client.get(url)
-    assert response.status_code==200
-
-    response = json.loads(response.content)
-    assert response['count'] == 17
-
-    response = api_client.get(url, {
-        'tasklog__status': 'COMPLETE',
         'exported_at__gte': '2022-05-23 13:03:06',
         'exported_at__lte': '2022-05-23 13:03:48',
     })
@@ -43,19 +28,7 @@ def test_expense_group_view(api_client, test_connection):
 
     response = json.loads(response.content)
     assert response['count'] == 4
-    
-    response = api_client.get(url, {
-        'tasklog__status': 'READY'
-    })
 
-    response = json.loads(response.content)
-    assert response == data['expense_groups_ready_response']
-
-    response = api_client.get(url, {
-      'tasklog__status': 'FAILED'
-    })
-    response = json.loads(response.content)
-    assert response == {'count': 0, 'next': None, 'previous': None, 'results': []}
 
     TaskLog.objects.update_or_create(
         workspace_id=3,

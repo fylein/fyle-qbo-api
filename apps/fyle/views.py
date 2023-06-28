@@ -29,10 +29,10 @@ class ExpenseGroupView(LookupFieldMixin, generics.ListCreateAPIView):
     """
     List Fyle Expenses
     """
-    queryset = ExpenseGroup.objects.all()
+    queryset = ExpenseGroup.objects.filter(tasklog__status='COMPLETE')
     serializer_class = ExpenseGroupSerializer
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = {'tasklog__status': {'exact'}, 'exported_at': {'exact'}, 'exported_at': {'gte', 'lte'}, 'id': {'in'}}
+    filterset_fields = {'exported_at': {'gte', 'lte'}}
 
 
 class ExportableExpenseGroupsView(generics.RetrieveAPIView):
