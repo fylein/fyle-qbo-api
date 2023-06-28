@@ -2,6 +2,7 @@ import logging
 from django.conf import settings
 from django.contrib.auth import get_user_model
 
+from django.db import connection
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import status
@@ -31,7 +32,7 @@ User = get_user_model()
 auth_utils = AuthUtils()
 
 
-class WorkspaceView(generics.CreateAPIView, generics.RetrieveAPIView, generics.ListAPIView, generics.UpdateAPIView):
+class WorkspaceView(generics.CreateAPIView, generics.RetrieveUpdateAPIView):
     """
     QBO Workspace
     """
@@ -106,7 +107,7 @@ class ReadyView(generics.ListAPIView):
         )
 
 
-class ConnectQBOView(generics.CreateAPIView, generics.ListAPIView, generics.UpdateAPIView):
+class ConnectQBOView(generics.CreateAPIView, generics.RetrieveUpdateAPIView):
     """
     QBO Connect Oauth View
     """
@@ -124,42 +125,6 @@ class ConnectQBOView(generics.CreateAPIView, generics.ListAPIView, generics.Upda
             logger.info('Invalid/Expired Authorization Code or QBO application not found - %s',{'error': e.response})
             return Response({'message': 'Invalid/Expired Authorization Code or QBO application not found'},
                             status=status.HTTP_401_UNAUTHORIZED)
-
-
-    def patch(self, request, **kwargs):
-        """Delete QBO refresh_token"""
-        workspace_id = kwargs['workspace_id']
-        qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
-        refresh_token = qbo_credentials.refresh_token
-        qbo_credentials.refresh_token = None
-        qbo_credentials.is_expired = False
-        qbo_credentials.realm_id = None
-        qbo_credentials.save()
-
-        post_delete_qbo_connection(workspace_id)
-
-        try:
-            revoke_refresh_token(refresh_token, settings.QBO_CLIENT_ID, settings.QBO_CLIENT_SECRET)
-        except Exception as exception:
-            logger.error(exception)
-            pass
-
-        return Response(data={
-            'workspace_id': workspace_id,
-            'message': 'QBO Refresh Token deleted'
-        })
-
-    @handle_view_exceptions()
-    def get(self, request, **kwargs):
-        """
-        Get QBO Credentials in Workspace
-        """
-        qbo_credentials = QBOCredential.objects.get(workspace=kwargs['workspace_id'], is_expired=False)
-
-        return Response(
-            data=QBOCredentialSerializer(qbo_credentials).data,
-            status=status.HTTP_200_OK if qbo_credentials.refresh_token else status.HTTP_400_BAD_REQUEST
-        )
 
 
 class GeneralSettingsView(generics.RetrieveAPIView):
@@ -191,7 +156,7 @@ class LastExportDetailView(generics.RetrieveAPIView):
     lookup_field = 'workspace_id'
     lookup_url_kwarg = 'workspace_id'
 
-    queryset = LastExportDetail.objects.all()
+    queryset = LastExportDetail.objects.filter(last_exported_at__isnull=False, total_expense_groups_count__gt=0)
     serializer_class = LastExportDetailSerializer
     
 
@@ -220,10 +185,5 @@ class SetupE2ETestView(generics.CreateAPIView):
         """
         Setup end to end test for a given workspace
         """
-        try:
-            return setup_e2e_tests(kwargs['workspace_id'])
-
-        except Exception as error:
-            error_message = 'No healthy tokens found, please try again later.'
-            logger.error(error)
-            return Response(status=status.HTTP_400_BAD_REQUEST, data={'message': error_message})
+        return setup_e2e_tests(kwargs['workspace_id'], connection)
+        

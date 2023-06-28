@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 
-from django.db import transaction, connection
+from django.db import transaction
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
@@ -118,82 +118,89 @@ def get_workspace_admin(workspace_id: int):
         })
     return admin_email
 
-def setup_e2e_tests(workspace_id: int):
-    workspace = Workspace.objects.get(pk=workspace_id)
-    error_message = 'Something unexpected has happened. Please try again later.'
+def setup_e2e_tests(workspace_id: int, connection):
+    try:
+        workspace = Workspace.objects.get(pk=workspace_id)
+        error_message = 'Something unexpected has happened. Please try again later.'
 
-    # Filter out prod orgs
-    if 'fyle for' in workspace.name.lower():
-        # Grab the latest healthy refresh token, from a demo org with the specified realm id
-        healthy_tokens = QBOCredential.objects.filter(
-            workspace__name__icontains='fyle for',
-            is_expired=False,
-            realm_id=settings.E2E_TESTS_REALM_ID,
-            refresh_token__isnull=False
-        ).order_by('-updated_at')
-        logger.info('Found {} healthy tokens'.format(healthy_tokens.count()))
+        # Filter out prod orgs
+        if 'fyle for' in workspace.name.lower():
+            # Grab the latest healthy refresh token, from a demo org with the specified realm id
+            healthy_tokens = QBOCredential.objects.filter(
+                workspace__name__icontains='fyle for',
+                is_expired=False,
+                realm_id=settings.E2E_TESTS_REALM_ID,
+                refresh_token__isnull=False
+            ).order_by('-updated_at')
+            logger.info('Found {} healthy tokens'.format(healthy_tokens.count()))
 
-        for healthy_token in healthy_tokens:
-            logger.info('Checking token health for workspace: {}'.format(healthy_token.workspace_id))
-            # Token Health check
-            try:
-                qbo_connector = QBOConnector(healthy_token, workspace_id=workspace.id)
-                qbo_connector.get_company_preference()
-                logger.info('Yaay, token is healthly for workspace: {}'.format(healthy_token.workspace_id))
-            except Exception:
-                # If the token is expired, setting is_expired = True so that they are not used for future runs
-                logger.info('Oops, token is dead for workspace: {}'.format(healthy_token.workspace_id))
-                healthy_token.is_expired = True
-                healthy_token.save()
-                # Stop the execution here for the token since it's expired
-                continue
+            for healthy_token in healthy_tokens:
+                logger.info('Checking token health for workspace: {}'.format(healthy_token.workspace_id))
+                # Token Health check
+                try:
+                    qbo_connector = QBOConnector(healthy_token, workspace_id=workspace.id)
+                    qbo_connector.get_company_preference()
+                    logger.info('Yaay, token is healthly for workspace: {}'.format(healthy_token.workspace_id))
+                except Exception:
+                    # If the token is expired, setting is_expired = True so that they are not used for future runs
+                    logger.info('Oops, token is dead for workspace: {}'.format(healthy_token.workspace_id))
+                    healthy_token.is_expired = True
+                    healthy_token.save()
+                    # Stop the execution here for the token since it's expired
+                    continue
 
-            with transaction.atomic():
-                if healthy_token:
-                    # Reset the workspace completely
-                    with connection.cursor() as cursor:
-                        cursor.execute('select reset_workspace(%s)', [workspace.id])
+                with transaction.atomic():
+                    if healthy_token:
+                        # Reset the workspace completely
+                        with connection.cursor() as cursor:
+                            cursor.execute('select reset_workspace(%s)', [workspace.id])
 
-                    # Store the latest healthy refresh token for the workspace
-                    QBOCredential.objects.update_or_create(
-                        workspace=workspace,
-                        defaults = {
-                            'refresh_token' : qbo_connector.connection.refresh_token,
-                            'realm_id' : healthy_token.realm_id,
-                            'is_expired' : False,
-                            'company_name' : healthy_token.company_name,
-                            'country' : healthy_token.country
-                        }
-                    )
+                        # Store the latest healthy refresh token for the workspace
+                        QBOCredential.objects.update_or_create(
+                            workspace=workspace,
+                            defaults = {
+                                'refresh_token' : qbo_connector.connection.refresh_token,
+                                'realm_id' : healthy_token.realm_id,
+                                'is_expired' : False,
+                                'company_name' : healthy_token.company_name,
+                                'country' : healthy_token.country
+                            }
+                        )
 
-                    # Sync dimension for QBO and Fyle
-                    qbo_connector.sync_dimensions()
+                        # Sync dimension for QBO and Fyle
+                        qbo_connector.sync_dimensions()
 
-                    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace.id)
-                    platform = PlatformConnector(fyle_credentials)
-                    platform.import_fyle_dimensions(import_taxes=True)
+                        fyle_credentials = FyleCredential.objects.get(workspace_id=workspace.id)
+                        platform = PlatformConnector(fyle_credentials)
+                        platform.import_fyle_dimensions(import_taxes=True)
 
-                    # Reset workspace details
-                    workspace.onboarding_state = 'MAP_EMPLOYEES'
-                    workspace.source_synced_at = datetime.now()
-                    workspace.destination_synced_at = datetime.now()
-                    workspace.qbo_realm_id = healthy_token.realm_id
-                    workspace.last_synced_at = None
-                    workspace.save()
+                        # Reset workspace details
+                        workspace.onboarding_state = 'MAP_EMPLOYEES'
+                        workspace.source_synced_at = datetime.now()
+                        workspace.destination_synced_at = datetime.now()
+                        workspace.qbo_realm_id = healthy_token.realm_id
+                        workspace.last_synced_at = None
+                        workspace.save()
 
-                    #insert a destination attribute
-                    DestinationAttribute.create_or_update_destination_attribute({
-                        'attribute_type': 'ACCOUNT',
-                        'display_name': 'Account',
-                        'value': 'Activity',
-                        'destination_id': '900',
-                        'active': True,
-                        'detail': {"account_type": "Expense", "fully_qualified_name": "Activity"}
-                    }, workspace.id)
+                        #insert a destination attribute
+                        DestinationAttribute.create_or_update_destination_attribute({
+                            'attribute_type': 'ACCOUNT',
+                            'display_name': 'Account',
+                            'value': 'Activity',
+                            'destination_id': '900',
+                            'active': True,
+                            'detail': {"account_type": "Expense", "fully_qualified_name": "Activity"}
+                        }, workspace.id)
 
-                    return Response(status=status.HTTP_200_OK)
+                        return Response(status=status.HTTP_200_OK)
 
+            error_message = 'No healthy tokens found, please try again later.'
+        return Response(status=status.HTTP_400_BAD_REQUEST, data={'message': error_message})
+
+    except Exception as error:
         error_message = 'No healthy tokens found, please try again later.'
-    return Response(status=status.HTTP_400_BAD_REQUEST, data={'message': error_message})
+        logger.error(error)
+        return Response(status=status.HTTP_400_BAD_REQUEST, data={'message': error_message})
+    
 
     

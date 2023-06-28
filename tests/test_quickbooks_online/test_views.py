@@ -24,8 +24,9 @@ def test_destination_attributes_view(api_client, test_connection):
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
     response = api_client.get(url,{
-        'attribute_types':'ACCOUNT',
-        'display_name':'Account'
+        'attribute_type__in':'ACCOUNT',
+        'display_name__in':'Account',
+        'active':True
     })
     assert response.status_code == 200
     response = json.loads(response.content)
@@ -45,11 +46,12 @@ def test_searched_destination_attributes_view(api_client, test_connection):
 
     response = api_client.get(url,{
         'attribute_type':'ACCOUNT',
-        'display_name':'Account'
+        'display_name':'Account',
+        'limit':30
     })
     assert response.status_code == 200
     response = json.loads(response.content)
-    assert len(response) == 30
+    assert len(response['results']) == 30
 
 
 def test_qbo_attributes_view(api_client, test_connection):
@@ -64,7 +66,7 @@ def test_qbo_attributes_view(api_client, test_connection):
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
     response = api_client.get(url,{
-        'attribute_types':'CUSTOMER'
+        'attribute_type__in':'CUSTOMER'
     })
     assert response.status_code == 200
     response = json.loads(response.content)
@@ -123,22 +125,28 @@ def test_vendor_view(mocker, api_client, test_connection):
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
-    response = api_client.get(url)
+    response = api_client.get(url, {
+        'attribute_type__in': 'VENDOR',
+        'limit': 10,
+    })
     assert response.status_code == 200
 
     response = json.loads(response.content)
-    assert len(response) == 10
+    assert len(response['results']) == 10
 
     vendor = DestinationAttribute.objects.filter(
             attribute_type='VENDOR', active=True, workspace_id=3).first()
     vendor.active = False
     vendor.save()
 
-    response = api_client.get(url)
+    response = api_client.get(url,  {
+        'attribute_type__in': 'VENDOR',
+        'limit': 10,
+    })
     assert response.status_code == 200
 
     response = json.loads(response.content)
-    assert len(response) == 10
+    assert len(response['results']) == 10
 
 
 def test_employee_view(mocker, api_client, test_connection):
@@ -152,11 +160,14 @@ def test_employee_view(mocker, api_client, test_connection):
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
-    response = api_client.get(url)
+    response = response = api_client.get(url,{
+        'attribute_type__in': 'EMPLOYEE',
+        'limit': 10
+    })
     assert response.status_code == 200
 
     response = json.loads(response.content)
-    assert len(response) == 2
+    assert len(response['results']) == 2
 
 
 def test_post_sync_dimensions(api_client, test_connection):

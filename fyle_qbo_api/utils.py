@@ -14,6 +14,7 @@ def assert_valid(condition: bool, message: str) -> Response or None:
             'message': message
         })
     
+
 class LookupFieldMixin:
     lookup_field = 'workspace_id'
 

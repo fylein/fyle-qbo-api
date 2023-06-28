@@ -109,28 +109,6 @@ def test_ready_view(api_client, test_connection):
     assert response['message'] == 'Ready'
 
 
-def test_get_qbo_credentials_view(api_client, test_connection):
-    url = reverse(
-        'get-qbo-credentials', kwargs={
-            'workspace_id': 4
-        }
-    )
-
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
-
-    response = api_client.get(url)
-    response = json.loads(response.content)
-
-    assert response['realm_id'] == '4620816365009870170'
-
-    qbo_credentials = QBOCredential.get_active_qbo_credentials(4)
-    qbo_credentials.delete()
-    response = api_client.get(url)
-    response = json.loads(response.content)
-
-    assert response['message'] == 'QBO credentials not found in workspace'
-
-
 def test_post_connect_qbo_view(mocker, api_client, test_connection):
     mocker.patch(
         'apps.workspaces.views.generate_qbo_refresh_token',
@@ -180,18 +158,6 @@ def test_post_connect_qbo_view(mocker, api_client, test_connection):
         }
     )
     assert response.status_code == 400
-
-
-def test_patch_connect_qbo_view(mocker, api_client, test_connection):
-
-    url = '/api/workspaces/5/connect_qbo/authorization_code/'
-
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
-
-    response = api_client.patch(url)
-    response = json.loads(response.content)
-
-    assert response['message'] == 'QBO Refresh Token deleted'
 
 
 def test_connect_qbo_view_exceptions(api_client, test_connection):
@@ -289,7 +255,7 @@ def test_prepare_e2e_test_view(mock_db, mocker, api_client, test_connection):
     )
     api_client.credentials(HTTP_X_E2E_Tests_Client_ID='gAAAAABi8oWVoonxF0K_g2TQnFdlpOJvGsBYa9rPtwfgM-puStki_qYbi0PdipWHqIBIMip94MDoaTP4MXOfERDeEGrbARCxPw==')
     response = api_client.post(url)
-    assert response.status_code == 500
+    assert response.status_code == 400
 
 
 def test_export_to_qbo(mocker, api_client, test_connection):
