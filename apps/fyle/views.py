@@ -33,7 +33,7 @@ class ExpenseGroupView(LookupFieldMixin, generics.ListCreateAPIView):
     queryset = ExpenseGroup.objects.all()
     serializer_class = ExpenseGroupSerializer
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = {'tasklog__status': {'exact'}, 'exported_at': {'gte', 'lte', 'exact'}, 'id': {'in'}}
+    filterset_fields = {'tasklog__status': {'exact'}, 'exported_at': {'exact'}, 'exported_at': {'gte', 'lte'}, 'id': {'in'}}
 
 
 class ExportableExpenseGroupsView(generics.RetrieveAPIView):
