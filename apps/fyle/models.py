@@ -134,6 +134,7 @@ class Expense(models.Model):
 
     class Meta:
         db_table = 'expenses'
+        ordering = ['-updated_at']
 
     @staticmethod
     def create_expense_objects(expenses: List[Dict], workspace_id: int):
@@ -352,6 +353,7 @@ class ExpenseGroup(models.Model):
 
     class Meta:
         db_table = 'expense_groups'
+        ordering = ['-updated_at']
 
     @staticmethod
     def create_expense_groups_by_report_id_fund_source(expense_objects: List[Expense], workspace_id):
@@ -536,3 +538,4 @@ class ExpenseFilter(models.Model):
 
     class Meta:
         db_table = 'expense_filters'
+        ordering = ['rank']
