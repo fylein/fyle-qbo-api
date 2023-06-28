@@ -15,7 +15,7 @@ Including another URLconf
 """
 from django.urls import path
 
-from .views import (ExpenseGroupView, ExpenseView, EmployeeView,
+from .views import (ExpenseGroupView, ExpenseView,
     ExpenseFieldsView, ExportableExpenseGroupsView,
     ExpenseGroupSettingsView, RefreshFyleDimensionView, SyncFyleDimensionView,
     ExpenseGroupSyncView, ExpenseFilterView, ExpenseFilterDeleteView, CustomFieldView)
@@ -25,7 +25,6 @@ urlpatterns = [
     path('exportable_expense_groups/', ExportableExpenseGroupsView.as_view(), name='exportable-expense-groups'),
     path('expense_group_settings/', ExpenseGroupSettingsView.as_view(), name='expense-group-settings'),
     path('expense_groups/sync/', ExpenseGroupSyncView.as_view(), name='sync-expense-groups'),
-    path('employees/', EmployeeView.as_view(), name='employees'),
     path('expense_fields/', ExpenseFieldsView.as_view(), name='expense-fields'),
     path('sync_dimensions/', SyncFyleDimensionView.as_view(), name='sync-fyle-dimensions'),
     path('refresh_dimensions/', RefreshFyleDimensionView.as_view(), name='refresh-fyle-dimensions'),

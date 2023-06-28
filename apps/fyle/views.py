@@ -11,7 +11,7 @@ from fyle_accounting_mappings.serializers import ExpenseAttributeSerializer
 from apps.exceptions import handle_view_exceptions
 from fyle_qbo_api.utils import LookupFieldMixin
 from .tasks import get_task_log_and_fund_source, async_create_expense_groups
-from .models import Expense, ExpenseGroupSettings, ExpenseFilter
+from .models import Expense, ExpenseGroupSettings, ExpenseFilter, ExpenseGroup
 from .serializers import (
                 ExpenseGroupSerializer, ExpenseSerializer, ExpenseFieldSerializer,
                 ExpenseGroupSettingsSerializer, ExpenseFilterSerializer
@@ -26,19 +26,14 @@ logger = logging.getLogger(__name__)
 logger.level = logging.INFO
 
 
-class ExpenseGroupView(generics.ListCreateAPIView):
+class ExpenseGroupView(LookupFieldMixin, generics.ListCreateAPIView):
     """
     List Fyle Expenses
     """
+    queryset = ExpenseGroup.objects.all()
     serializer_class = ExpenseGroupSerializer
-
-    def get_queryset(self):
-        return get_fyle_expenses_list(state = self.request.query_params.get('state', 'ALL'),
-                                      start_date = self.request.query_params.get('start_date', None),
-                                      end_date = self.request.query_params.get('end_date', None),
-                                      expense_group_ids = self.request.query_params.get('expense_group_ids', None),
-                                      exported_at = self.request.query_params.get('exported_at', None),
-                                      workspace_id = self.kwargs['workspace_id'])
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = {'tasklog__status': {'exact'}, 'exported_at': {'gte', 'lte', 'exact'}, 'id': {'in'}}
 
 
 class ExportableExpenseGroupsView(generics.RetrieveAPIView):
@@ -93,18 +88,6 @@ class ExpenseGroupSettingsView(generics.ListCreateAPIView):
             data=self.serializer_class(expense_group_settings).data,
             status=status.HTTP_200_OK
         )
-
-
-class EmployeeView(LookupFieldMixin ,generics.ListAPIView):
-    """
-    Employee view
-    """
-    queryset = ExpenseAttribute.objects.all()
-    serializer_class = ExpenseAttributeSerializer
-    pagination_class = None
-    filter_backends = (DjangoFilterBackend,)
-    filterset_fields = {'attribute_type': {'exact', 'in'}, 'active': {'exact'}}
-    ordering_fields = ('value',)
 
 
 class ExpenseFieldsView(generics.ListAPIView):

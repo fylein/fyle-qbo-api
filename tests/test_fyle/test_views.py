@@ -21,26 +21,23 @@ def test_expense_group_view(api_client, test_connection):
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
     response = api_client.get(url, {
-        'expense_group_ids': '1,2'
+        'id__in': '1,2'
     })
     assert response.status_code==200
 
     response = json.loads(response.content)
     assert response == {'count': 0, 'next': None, 'previous': None, 'results': []}
 
-    response = api_client.get(url, {
-        'state': 'ALL'
-    })
+    response = api_client.get(url)
     assert response.status_code==200
 
     response = json.loads(response.content)
     assert response['count'] == 17
 
     response = api_client.get(url, {
-        'state': 'COMPLETE',
-        'start_date': '2022-05-23 13:03:06',
-        'end_date': '2022-05-23 13:03:48',
-        'exported_at': '2022-05-23 13:03:06'
+        'tasklog__status': 'COMPLETE',
+        'exported_at__gte': '2022-05-23 13:03:06',
+        'exported_at__lte': '2022-05-23 13:03:48',
     })
     assert response.status_code==200
 
@@ -48,14 +45,14 @@ def test_expense_group_view(api_client, test_connection):
     assert response['count'] == 4
     
     response = api_client.get(url, {
-        'state': 'READY'
+        'tasklog__status': 'READY'
     })
 
     response = json.loads(response.content)
     assert response == data['expense_groups_ready_response']
 
     response = api_client.get(url, {
-      'state': 'FAILED'
+      'tasklog__status': 'FAILED'
     })
     response = json.loads(response.content)
     assert response == {'count': 0, 'next': None, 'previous': None, 'results': []}
@@ -204,27 +201,6 @@ def test_expense_fields_view(api_client, test_connection):
 
     response = json.loads(response.content)
     assert response[0] == data['expense_fields_response'][0]
-
-def test_employees_view(api_client, test_connection):
-    
-    access_token = test_connection.access_token
-
-    url = reverse('employees', 
-        kwargs={
-                'workspace_id': 3
-            }
-        )
-
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
-
-    response = api_client.get(url,
-                            {
-                            'attribute_type': 'EMPLOYEE',
-                            'active': True
-                            })
-    assert response.status_code == 200
-    response = json.loads(response.content)
-    assert len(response) == 0
 
 
 def test_exportable_expense_groups(api_client, test_connection):
