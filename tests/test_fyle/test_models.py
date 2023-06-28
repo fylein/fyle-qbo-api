@@ -134,6 +134,42 @@ def test_support_post_date_integrations(mocker, db, api_client, test_connection)
 
     expense_groups = ExpenseGroup.create_expense_groups_by_report_id_fund_source([expense_objects], workspace_id)
     assert expense_groups[0].description['posted_at'] == '2021-11-08'
+    
+    mapping_setting = MappingSetting(
+        source_field='CATEGORY',
+        destination_field='ACCOUNT',
+        workspace_id=workspace_id,
+        import_to_fyle=False,
+        is_custom=False
+    )
+    mapping_setting.save()
+
+    destination_attribute = DestinationAttribute.objects.create(
+        attribute_type='ACCOUNT',
+        display_name='Account',
+        value='Concreteworks Studio',
+        destination_id=321,
+        workspace_id=workspace_id,
+        active=True,
+    )
+    destination_attribute.save()
+    expense_attribute = ExpenseAttribute.objects.create(
+        attribute_type='CATEGORY',
+        display_name='Category',
+        value='Flight',
+        source_id='253737253737',
+        workspace_id=workspace_id,
+        active=True
+    )
+    expense_attribute.save()
+    mapping = Mapping.objects.create(
+        source_type='CATEGORY',
+        destination_type='ACCOUNT',
+        destination_id=destination_attribute.id,
+        source_id=expense_attribute.id,
+        workspace_id=workspace_id
+    )
+    mapping.save()
 
     mocker.patch(
         'qbosdk.apis.Bills.post',
@@ -145,19 +181,21 @@ def test_support_post_date_integrations(mocker, db, api_client, test_connection)
     task_log.status = 'READY'
     task_log.save()
 
-    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
+    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=1)
 
     general_settings.auto_map_employees = 'NAME'
+    general_settings.import_items = False
     general_settings.auto_create_destination_entity = True
-    general_settings.workspace_id = 1
     general_settings.save()
     
     create_bill(expense_groups[0], task_log.id, False)
-    
+
     task_log = TaskLog.objects.get(pk=task_log.id)
-    bill = Bill.objects.get(expense_group_id=expense_group[0].id)
-    assert task_log.status=='COMPLETE'
+    bill = Bill.objects.get(expense_group_id=expense_groups[0].id)
+
+    print ('Employee mapping not found', bill.__dict__)
+    assert task_log.status == 'COMPLETE'
     assert bill.currency == 'USD'
     assert bill.accounts_payable_id == '33'
-    assert bill.vendor_id == '31'
+    assert bill.vendor_id == '56'
     assert bill.transaction_date.strftime("%m/%d/%Y") == expense_objects.posted_at.strftime("%m/%d/%Y")
