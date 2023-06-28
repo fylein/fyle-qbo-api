@@ -8,12 +8,12 @@ from apps.mappings.models import GeneralMapping
 from apps.workspaces.models import WorkspaceGeneralSettings
 
 
-def async_auto_create_expense_field_mapping(instance: MappingSetting):
+def async_auto_create_expense_field_mapping(mapping_setting: MappingSetting):
     async_task(
         'apps.mappings.tasks.auto_create_expense_fields_mappings',
-        int(instance.workspace_id),
-        instance.destination_field,
-        instance.source_field
+        int(mapping_setting.workspace_id),
+        mapping_setting.destination_field,
+        mapping_setting.source_field
     )
 
 
@@ -109,3 +109,50 @@ def schedule_auto_map_ccc_employees(workspace_id: int):
 
         if schedule:
             schedule.delete()
+
+def schedule_tax_groups_creation(import_tax_codes, workspace_id):
+    if import_tax_codes:
+        schedule, _ = Schedule.objects.update_or_create(
+            func='apps.mappings.tasks.auto_create_tax_codes_mappings',
+            args='{}'.format(workspace_id),
+            defaults={
+                'schedule_type': Schedule.MINUTES,
+                'minutes': 24 * 60,
+                'next_run': datetime.now()
+            }
+        )
+    else:
+        schedule: Schedule = Schedule.objects.filter(
+            func='apps.mappings.tasks.auto_create_tax_codes_mappings',
+            args='{}'.format(workspace_id),
+        ).first()
+
+        if schedule:
+            schedule.delete()
+
+
+def schedule_auto_map_employees(employee_mapping_preference: str, workspace_id: int):
+    if employee_mapping_preference:
+        start_datetime = datetime.now()
+
+        schedule, _ = Schedule.objects.update_or_create(
+            func='apps.mappings.tasks.async_auto_map_employees',
+            args='{0}'.format(workspace_id),
+            defaults={
+                'schedule_type': Schedule.MINUTES,
+                'minutes': 24 * 60,
+                'next_run': start_datetime
+            }
+        )
+    else:
+        schedule: Schedule = Schedule.objects.filter(
+            func='apps.mappings.tasks.async_auto_map_employees',
+            args='{}'.format(workspace_id)
+        ).first()
+
+        if schedule:
+            schedule.delete()
+
+
+def async_disable_category_for_items_mapping(workspace_id: int):
+    async_task('apps.mappings.tasks.disable_category_for_items_mapping', workspace_id)

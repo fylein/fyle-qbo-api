@@ -8,7 +8,7 @@ from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMappin
 
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from apps.workspaces.utils import delete_cards_mapping_settings
-from .queue import async_run_post_configration_triggers
+from apps.quickbooks_online.queue import async_run_post_configration_triggers
 
 @receiver(post_save, sender=WorkspaceGeneralSettings)
 def run_post_configration_triggers(sender, instance: WorkspaceGeneralSettings, **kwargs):

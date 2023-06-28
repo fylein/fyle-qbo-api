@@ -3,11 +3,7 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import status
 
-from fyle_qbo_api.utils import assert_valid
-
-from .serializers import GeneralMappingSerializer
 from .models import GeneralMapping
-from .utils import MappingUtils
 from ..workspaces.models import WorkspaceGeneralSettings
 from apps.exceptions import handle_view_exceptions
 

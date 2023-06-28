@@ -1,4 +1,4 @@
-from apps.workspaces.queue import schedule_auto_map_employees
+from apps.mappings.queue import schedule_auto_map_employees
 from apps.workspaces.models import WorkspaceGeneralSettings
 
 
