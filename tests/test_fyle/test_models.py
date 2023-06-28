@@ -1,8 +1,11 @@
-
+import random
 from apps.fyle.models import _format_date, _group_expenses, get_default_ccc_expense_state
 from apps.fyle.models import *
 from apps.tasks.models import TaskLog
 from apps.fyle.tasks import create_expense_groups
+from apps.quickbooks_online.tasks import create_bill
+from apps.quickbooks_online.models import Bill, get_transaction_date
+from fyle_accounting_mappings.models import MappingSetting, Mapping, DestinationAttribute, ExpenseAttribute
 from .fixtures import data
 
 def test_default_fields():
@@ -107,39 +110,54 @@ def test_support_post_date_integrations(mocker, db, api_client, test_connection)
     workspace_id = 1
 
     #Import assert
-    mocker.patch(
-        'fyle_integrations_platform_connector.apis.Expenses.get',
-        return_value=data['expenses']
-    )
 
-    task_log, _ = TaskLog.objects.update_or_create(
-        workspace_id=workspace_id,
-        type='FETCHING_EXPENSES',
-        defaults={
-            'status': 'IN_PROGRESS'
-        }
-    )
+    payload = data['expenses']
+    expense_id = data['expenses'][0]['id']
+    Expense.create_expense_objects(payload, workspace_id)
+    expense_objects = Expense.objects.get(expense_id=expense_id)
+    expense_objects.reimbursable = False
+    expense_objects.fund_source = 'CCC'
+    expense_objects.source_account_type = 'PERSONAL_CORPORATE_CREDIT_CARD_ACCOUNT'
+    expense_objects.save()
+    assert expense_objects.posted_at.strftime("%m/%d/%Y") == '11/08/2021'
 
     expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
-    expense_group_settings.reimbursable_export_date_type = 'last_spent_at'
+    expense_group_settings.corporate_credit_card_expense_group_fields = ['expense_id', 'employee_email', 'project', 'fund_source', 'posted_at']
     expense_group_settings.ccc_export_date_type = 'posted_at'
     expense_group_settings.save()
+    
+    field = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type='PROJECT').last()
+    field.attribute_type = 'KILLUA'
+    field.save()
 
-    create_expense_groups(workspace_id, ['PERSONAL', 'CCC'], task_log)
+    expenses = Expense.objects.filter(id=33).all()
 
-    task_log = TaskLog.objects.get(id=task_log.id)
+    expense_groups = ExpenseGroup.create_expense_groups_by_report_id_fund_source([expense_objects], workspace_id)
+    assert expense_groups[0].description['posted_at'] == '2021-11-08'
 
-    assert task_log.status == 'COMPLETE'
-
-	#Export assert
     mocker.patch(
-        'apps.workspaces.views.export_to_qbo',
-        return_value=None
+        'qbosdk.apis.Bills.post',
+        return_value={"Bill": {"Id": "sdfghjk"}}
     )
 
-    workspace_id = 3
-    url = '/api/workspaces/{}/exports/trigger/'.format(workspace_id)
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
+    task_log = TaskLog.objects.first()
+    task_log.workspace_id = 1
+    task_log.status = 'READY'
+    task_log.save()
 
-    response = api_client.post(url)
-    assert response.status_code == 200
+    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
+
+    general_settings.auto_map_employees = 'NAME'
+    general_settings.auto_create_destination_entity = True
+    general_settings.workspace_id = 1
+    general_settings.save()
+    
+    create_bill(expense_groups[0], task_log.id, False)
+    
+    task_log = TaskLog.objects.get(pk=task_log.id)
+    bill = Bill.objects.get(expense_group_id=expense_group[0].id)
+    assert task_log.status=='COMPLETE'
+    assert bill.currency == 'USD'
+    assert bill.accounts_payable_id == '33'
+    assert bill.vendor_id == '31'
+    assert bill.transaction_date.strftime("%m/%d/%Y") == expense_objects.posted_at.strftime("%m/%d/%Y")
