@@ -18,8 +18,7 @@ from .serializers import (
                 )
 from .actions import (
                 get_expense_group_ids, get_expense_fields, sync_fyle_dimensions,
-                refresh_fyle_dimension, get_custom_fields, get_fyle_expenses_list,
-                )
+                refresh_fyle_dimension, get_custom_fields)
 
 
 logger = logging.getLogger(__name__)
