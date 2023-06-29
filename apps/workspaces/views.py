@@ -12,7 +12,6 @@ from qbosdk import exceptions as qbo_exc
 from qbosdk import revoke_refresh_token
 
 from fyle_rest_auth.utils import AuthUtils
-from fyle_rest_auth.helpers import get_fyle_admin
 
 from .models import Workspace, QBOCredential, WorkspaceGeneralSettings, LastExportDetail
 from .utils import generate_qbo_refresh_token
@@ -45,11 +44,7 @@ class WorkspaceView(generics.CreateAPIView, generics.RetrieveUpdateAPIView):
         """
         access_token = request.META.get('HTTP_AUTHORIZATION')
         user = request.user
-        fyle_user = get_fyle_admin(access_token.split(' ')[1], None)
-        workspace = update_or_create_workspace(user,
-                                  org_id=fyle_user['data']['org']['id'],
-                                  org_name=fyle_user['data']['org']['name'],
-                                  org_currency=fyle_user['data']['org']['currency'])
+        workspace = update_or_create_workspace(user, access_token)
        
         return Response(
             data=WorkspaceSerializer(workspace).data,
@@ -126,6 +121,17 @@ class ConnectQBOView(generics.CreateAPIView, generics.RetrieveUpdateAPIView):
             return Response({'message': 'Invalid/Expired Authorization Code or QBO application not found'},
                             status=status.HTTP_401_UNAUTHORIZED)
 
+    @handle_view_exceptions()
+    def get(self, request, **kwargs):
+        """
+        Get QBO Credentials in Workspace
+        """
+        qbo_credentials = QBOCredential.objects.get(workspace=kwargs['workspace_id'], is_expired=False)
+
+        return Response(
+            data=QBOCredentialSerializer(qbo_credentials).data,
+            status=status.HTTP_200_OK if qbo_credentials.refresh_token else status.HTTP_400_BAD_REQUEST
+        )
 
 class GeneralSettingsView(generics.RetrieveAPIView):
     """

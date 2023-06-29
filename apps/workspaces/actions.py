@@ -12,6 +12,8 @@ from fyle_accounting_mappings.models import ExpenseAttribute, DestinationAttribu
 from fyle_rest_auth.models import AuthToken
 from fyle_integrations_platform_connector import PlatformConnector
 
+from fyle_rest_auth.helpers import get_fyle_admin
+
 from apps.quickbooks_online.utils import QBOConnector
 from apps.fyle.models import ExpenseGroupSettings
 from apps.fyle.helpers import get_cluster_domain
@@ -25,7 +27,11 @@ User = get_user_model()
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
 
-def update_or_create_workspace(user, org_id, org_name, org_currency):
+def update_or_create_workspace(user, access_token):
+    fyle_user = get_fyle_admin(access_token.split(' ')[1], None)
+    org_id=fyle_user['data']['org']['id'],
+    org_name=fyle_user['data']['org']['name'],
+    org_currency=fyle_user['data']['org']['currency']
     workspace = Workspace.objects.filter(fyle_org_id=org_id).first()
 
     if workspace:

@@ -43,7 +43,7 @@ def test_patch_of_workspace(api_client, test_connection):
 
 def test_post_of_workspace(mocker, api_client, test_connection):
     mocker.patch(
-        'apps.workspaces.views.get_fyle_admin',
+        'apps.workspaces.actions.get_fyle_admin',
         return_value={'data': {'org': {'name': 'Test Trip', 'id': 'orZu2yrz7zdy', 'currency': 'USD'}}}
     )
     url = reverse(
@@ -67,7 +67,7 @@ def test_post_of_workspace(mocker, api_client, test_connection):
 
 def test_post_of_new_workspace(mocker, api_client, test_connection):
     mocker.patch(
-        'apps.workspaces.views.get_fyle_admin',
+        'apps.workspaces.actions.get_fyle_admin',
         return_value={'data': {'org': {'name': 'Test Trip', 'id': 'orZu2y7zdy', 'currency': 'USD'}}}
     )
     url = reverse(
