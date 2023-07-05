@@ -305,7 +305,6 @@ def test_construct_cheque_item_and_account_based(create_cheque_item_and_account_
 
     assert cheque_object['Line'][1]['DetailType'] == 'ItemBasedExpenseLineDetail'
     assert cheque_object['Line'][0]['DetailType'] == 'AccountBasedExpenseLineDetail'
-    
     assert dict_compare_keys(cheque_object, data['cheque_item_and_account_based_payload']) == [], 'construct cheque api return diffs in keys'
 
 
