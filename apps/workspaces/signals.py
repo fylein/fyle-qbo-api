@@ -3,13 +3,12 @@ Workspace Signals
 """
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django_q.tasks import async_task
 
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping
 
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from apps.workspaces.utils import delete_cards_mapping_settings
-
+from apps.quickbooks_online.queue import async_run_post_configration_triggers
 
 @receiver(post_save, sender=WorkspaceGeneralSettings)
 def run_post_configration_triggers(sender, instance: WorkspaceGeneralSettings, **kwargs):
@@ -18,10 +17,7 @@ def run_post_configration_triggers(sender, instance: WorkspaceGeneralSettings, *
     :param instance: Row Instance of Sender Class
     :return: None
     """
-    async_task(
-        'apps.quickbooks_online.tasks.async_sync_accounts',
-        int(instance.workspace_id)
-    )
+    async_run_post_configration_triggers(instance)
 
     delete_cards_mapping_settings(instance)
 
