@@ -44,6 +44,9 @@ suggestion-mode=yes
 # active Python interpreter and may run arbitrary code.
 unsafe-load-any-extension=no
 
+# Disabling the consider-using-f-string on pylint
+disable=consider-using-f-string
+
 
 [MESSAGES CONTROL]
 
