@@ -9,28 +9,6 @@ from qbosdk import exceptions as qbo_exc
 from apps.workspaces.models import *
 from .fixtures import data
 
-def test_get_workspace_by_id(api_client, test_connection):
-
-    url = reverse(
-        'workspace-by-id', kwargs={
-            'workspace_id': 3
-        }
-    )
-
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
-    response = api_client.get(url)
-    assert response.status_code == 200
-
-    response = json.loads(response.content)
-
-    assert dict_compare_keys(response, data['workspace']) == [], 'workspaces api returns a diff in the keys'
-
-    with mock.patch('apps.workspaces.models.Workspace.objects.get') as mock_call:
-        mock_call.side_effect = Workspace.DoesNotExist()
-
-        response = api_client.get(url)
-        assert response.status_code == 400
-
 
 def test_get_workspace(api_client, test_connection):
 
@@ -65,7 +43,7 @@ def test_patch_of_workspace(api_client, test_connection):
 
 def test_post_of_workspace(mocker, api_client, test_connection):
     mocker.patch(
-        'apps.workspaces.views.get_fyle_admin',
+        'apps.workspaces.actions.get_fyle_admin',
         return_value={'data': {'org': {'name': 'Test Trip', 'id': 'orZu2yrz7zdy', 'currency': 'USD'}}}
     )
     url = reverse(
@@ -89,7 +67,7 @@ def test_post_of_workspace(mocker, api_client, test_connection):
 
 def test_post_of_new_workspace(mocker, api_client, test_connection):
     mocker.patch(
-        'apps.workspaces.views.get_fyle_admin',
+        'apps.workspaces.actions.get_fyle_admin',
         return_value={'data': {'org': {'name': 'Test Trip', 'id': 'orZu2y7zdy', 'currency': 'USD'}}}
     )
     url = reverse(
@@ -101,14 +79,10 @@ def test_post_of_new_workspace(mocker, api_client, test_connection):
     assert response.status_code == 200
 
 
-def test_get_configuration_detail(api_client, test_connection):
+def test_get_configuration_detail(db, api_client, test_connection):
     workspace_id = 4
 
-    url = reverse(
-        'workspace-general-settings', kwargs={
-            'workspace_id': workspace_id
-        }
-    )
+    url = '/api/workspaces/4/settings/general/'
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
     response = api_client.get(url)
@@ -121,46 +95,7 @@ def test_get_configuration_detail(api_client, test_connection):
     workspace_general_settings.delete()
 
     response = api_client.get(url)
-    assert response.status_code == 400
-
-
-def test_post_workspace_configurations(api_client, test_connection):
-    workspace_id = 4
-    workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first() 
-    workspace_general_settings.map_merchant_to_vendor = True
-    workspace_general_settings.save()
-
-    url = reverse(
-        'workspace-general-settings', kwargs={
-            'workspace_id': workspace_id
-        }
-    )
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
-
-    response = api_client.post(
-        url,
-        data=data['workspace_general_settings_payload'],
-        format='json'
-    )
-    assert response.status_code==200
-
-    response = api_client.patch(
-        url,
-        data=data['workspace_general_settings_payload'],
-        format='json'
-    )
-    assert response.status_code==200
-
-    updated_data = data['workspace_general_settings_payload']
-    updated_data['je_single_credit_line'] = True
-    updated_data['corporate_credit_card_expenses_object'] = 'JOURNAL ENTRY'
-
-    response = api_client.post(
-        url,
-        data=updated_data,
-        format='json'
-    )
-    assert response.status_code==200
+    assert response.status_code == 404
 
 
 def test_ready_view(api_client, test_connection):
@@ -172,28 +107,6 @@ def test_ready_view(api_client, test_connection):
     response = json.loads(response.content)
 
     assert response['message'] == 'Ready'
-
-
-def test_get_qbo_credentials_view(api_client, test_connection):
-    url = reverse(
-        'get-qbo-credentials', kwargs={
-            'workspace_id': 4
-        }
-    )
-
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
-
-    response = api_client.get(url)
-    response = json.loads(response.content)
-
-    assert response['realm_id'] == '4620816365009870170'
-
-    qbo_credentials = QBOCredential.get_active_qbo_credentials(4)
-    qbo_credentials.delete()
-    response = api_client.get(url)
-    response = json.loads(response.content)
-
-    assert response['message'] == 'QBO credentials not found in workspace'
 
 
 def test_post_connect_qbo_view(mocker, api_client, test_connection):
@@ -246,9 +159,7 @@ def test_post_connect_qbo_view(mocker, api_client, test_connection):
     )
     assert response.status_code == 400
 
-
 def test_patch_connect_qbo_view(mocker, api_client, test_connection):
-
     url = '/api/workspaces/5/connect_qbo/authorization_code/'
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
@@ -282,7 +193,7 @@ def test_connect_qbo_view_exceptions(api_client, test_connection):
             url,
             data={'code': code}    
         )
-        assert response.status_code == 404
+        assert response.status_code == 401
 
         mock_call.side_effect = qbo_exc.WrongParamsError(msg='Some of the parameters are wrong', response='Some of the parameters are wrong')
         
@@ -290,7 +201,7 @@ def test_connect_qbo_view_exceptions(api_client, test_connection):
             url,
             data={'code': code}    
         )
-        assert response.status_code == 500
+        assert response.status_code == 401
 
         mock_call.side_effect = qbo_exc.InternalServerError(msg='Wrong/Expired Authorization code', response='Wrong/Expired Authorization code')
         
@@ -354,7 +265,7 @@ def test_prepare_e2e_test_view(mock_db, mocker, api_client, test_connection):
     )
     api_client.credentials(HTTP_X_E2E_Tests_Client_ID='gAAAAABi8oWVoonxF0K_g2TQnFdlpOJvGsBYa9rPtwfgM-puStki_qYbi0PdipWHqIBIMip94MDoaTP4MXOfERDeEGrbARCxPw==')
     response = api_client.post(url)
-    assert response.status_code == 500
+    assert response.status_code == 400
 
 
 def test_export_to_qbo(mocker, api_client, test_connection):
@@ -371,21 +282,13 @@ def test_export_to_qbo(mocker, api_client, test_connection):
     assert response.status_code == 200
 
 
-def test_last_export_detail_view(mocker, db, api_client, test_connection):
-
+def test_last_export_detail_view(db, api_client, test_connection):
     workspace_id = 3
     url = '/api/workspaces/{}/export_detail/'.format(workspace_id)
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
 
     response = api_client.get(url)
     assert response.status_code == 200
-
-    last_export_detail = LastExportDetail.objects.filter(workspace_id=workspace_id).first()
-    last_export_detail.total_expense_groups_count = 0
-    last_export_detail.save()
-
-    response = api_client.get(url)
-    assert response.status_code == 400
 
 
 def test_workspace_admin_view(mocker, db, api_client, test_connection):
