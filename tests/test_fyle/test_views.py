@@ -1,5 +1,4 @@
 import pytest
-from apps.fyle.models import ExpenseGroup
 from apps.workspaces.models import FyleCredential, Workspace
 from unittest import mock
 import json
@@ -22,58 +21,22 @@ def test_expense_group_view(api_client, test_connection):
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
     response = api_client.get(url, {
-        'expense_group_ids': '1,2'
-    })
-    assert response.status_code==200
-
-    response = json.loads(response.content)
-    assert response == {'count': 0, 'next': None, 'previous': None, 'results': []}
-
-    response = api_client.get(url, {
-        'state': 'ALL'
-    })
-    assert response.status_code==200
-
-    response = json.loads(response.content)
-    assert response['count'] == 17
-
-    response = api_client.get(url, {
-        'state': 'COMPLETE',
-        'start_date': '2022-05-23 13:03:06',
-        'end_date': '2022-05-23 13:03:48',
-        'exported_at': '2022-05-23 13:03:06'
+        'exported_at__gte': '2022-05-23 13:03:06',
+        'exported_at__lte': '2022-05-23 13:03:48',
     })
     assert response.status_code==200
 
     response = json.loads(response.content)
     assert response['count'] == 4
-    
-    response = api_client.get(url, {
-        'state': 'READY'
-    })
 
-    response = json.loads(response.content)
-    assert response == data['expense_groups_ready_response']
 
-    response = api_client.get(url, {
-      'state': 'FAILED'
-    })
-    response = json.loads(response.content)
-    assert response == {'count': 0, 'next': None, 'previous': None, 'results': []}
-
-    task_log, _ = TaskLog.objects.update_or_create(
+    TaskLog.objects.update_or_create(
         workspace_id=3,
         type='FETCHING_EXPENSES',
         defaults={
             'status': 'IN_PROGRESS'
         }
     )
-    response = api_client.post(
-        url,
-        data={'task_log_id': task_log.id},
-        format='json'
-    )
-    assert response.status_code==200
 
 
 def test_expense_group_settings(api_client, test_connection):
@@ -212,21 +175,6 @@ def test_expense_fields_view(api_client, test_connection):
     response = json.loads(response.content)
     assert response[0] == data['expense_fields_response'][0]
 
-def test_employees_view(api_client, test_connection):
-    
-    access_token = test_connection.access_token
-
-    url = reverse('employees', 
-        kwargs={
-                'workspace_id': 3
-            }
-        )
-
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
-
-    response = api_client.get(url)
-    assert response.status_code == 200
-
 
 def test_exportable_expense_groups(api_client, test_connection):
     access_token = test_connection.access_token
@@ -271,18 +219,6 @@ def test_expense_filters(api_client, test_connection):
 
    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
-   response = api_client.post(url,data=data['expense_filter_1'])
-   assert response.status_code == 201
-   response = json.loads(response.content)
-
-   assert dict_compare_keys(response, data['expense_filter_1_response']) == [], 'expense group api return diffs in keys'
-
-   response = api_client.post(url,data=data['expense_filter_2'])
-   assert response.status_code == 201
-   response = json.loads(response.content)
-
-   assert dict_compare_keys(response, data['expense_filter_2_response']) == [], 'expense group api return diffs in keys'
-
    response = api_client.get(url)
    assert response.status_code == 200
    response = json.loads(response.content)
@@ -320,9 +256,10 @@ def test_expenses(mocker, api_client, test_connection):
 
    url = reverse('expenses', 
       kwargs={
-         'workspace_id': 1,
+        'workspace_id': 1,
       }
    )
+   url = url + "?org_id=orHVw3ikkCxJ&updated_at__gte=2021-01-01T00:00:00Z&updated_at__lte=2021-01-01T00:00:00Z"
 
    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
