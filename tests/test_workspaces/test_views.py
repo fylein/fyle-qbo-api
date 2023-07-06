@@ -159,6 +159,16 @@ def test_post_connect_qbo_view(mocker, api_client, test_connection):
     )
     assert response.status_code == 400
 
+def test_patch_connect_qbo_view(mocker, api_client, test_connection):
+    url = '/api/workspaces/5/connect_qbo/authorization_code/'
+
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
+
+    response = api_client.patch(url)
+    response = json.loads(response.content)
+
+    assert response['message'] == 'QBO Refresh Token deleted'
+
 
 def test_connect_qbo_view_exceptions(api_client, test_connection):
     workspace_id = 1

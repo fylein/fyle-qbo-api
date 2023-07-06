@@ -7,6 +7,7 @@ from django.contrib.auth import get_user_model
 from django.core.cache import cache
 
 from rest_framework.response import Response
+from qbosdk import revoke_refresh_token
 from rest_framework.views import status
 from fyle_accounting_mappings.models import ExpenseAttribute, DestinationAttribute
 from fyle_rest_auth.models import AuthToken
@@ -21,6 +22,7 @@ from apps.fyle.helpers import get_cluster_domain
 from .models import Workspace, LastExportDetail, FyleCredential, QBOCredential
 from .utils import assert_valid
 from .serializers import QBOCredentialSerializer
+from .signals import post_delete_qbo_connection
 
 
 User = get_user_model()
@@ -123,6 +125,28 @@ def get_workspace_admin(workspace_id: int):
             'email': admin.email
         })
     return admin_email
+
+def delete_qbo_refresh_token(workspace_id: int):
+    qbo_credentials = QBOCredential.objects.get(workspace_id=workspace_id)
+    refresh_token = qbo_credentials.refresh_token
+    qbo_credentials.refresh_token = None
+    qbo_credentials.is_expired = False
+    qbo_credentials.realm_id = None
+    qbo_credentials.save()
+    
+    post_delete_qbo_connection(workspace_id)
+
+    try:
+        revoke_refresh_token(refresh_token, settings.QBO_CLIENT_ID, settings.QBO_CLIENT_SECRET)
+    except Exception as exception:
+        logger.error(exception)
+        pass
+
+    return Response(data={
+        'workspace_id': workspace_id,
+        'message': 'QBO Refresh Token deleted'
+    })
+
 
 def setup_e2e_tests(workspace_id: int, connection):
     try:

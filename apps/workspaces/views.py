@@ -9,20 +9,19 @@ from rest_framework.views import status
 from rest_framework.permissions import IsAuthenticated
 
 from qbosdk import exceptions as qbo_exc
-from qbosdk import revoke_refresh_token
 
 from fyle_rest_auth.utils import AuthUtils
 
 from .models import Workspace, QBOCredential, WorkspaceGeneralSettings, LastExportDetail
 from .utils import generate_qbo_refresh_token
 from .tasks import export_to_qbo
-from .serializers import WorkspaceSerializer, QBOCredentialSerializer, \
-    WorkSpaceGeneralSettingsSerializer, LastExportDetailSerializer
-from .signals import post_delete_qbo_connection
+from .serializers import (WorkspaceSerializer, QBOCredentialSerializer, WorkSpaceGeneralSettingsSerializer, 
+                          LastExportDetailSerializer)
 from .permissions import IsAuthenticatedForTest
 from apps.exceptions import handle_view_exceptions
 
-from .actions import update_or_create_workspace, connect_qbo_oauth, get_workspace_admin, setup_e2e_tests
+from .actions import (update_or_create_workspace, connect_qbo_oauth, get_workspace_admin, setup_e2e_tests, 
+                      delete_qbo_refresh_token)
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -120,6 +119,13 @@ class ConnectQBOView(generics.CreateAPIView, generics.RetrieveUpdateAPIView):
             logger.info('Invalid/Expired Authorization Code or QBO application not found - %s',{'error': e.response})
             return Response({'message': 'Invalid/Expired Authorization Code or QBO application not found'},
                             status=status.HTTP_401_UNAUTHORIZED)
+
+
+    def patch(self, request, **kwargs):
+        """Delete QBO refresh_token"""
+        return delete_qbo_refresh_token(kwargs['workspace_id'])
+
+
 
     @handle_view_exceptions()
     def get(self, request, **kwargs):
