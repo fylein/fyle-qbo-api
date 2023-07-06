@@ -161,6 +161,7 @@ class ExpenseView(generics.ListAPIView):
     serializer_class = ExpenseSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = {'org_id': {'exact'}, 'is_skipped': {'exact'}, 'updated_at': {'gte', 'lte'}}
+    ordering_fields = ('-updated_at',)
 
 
 class CustomFieldView(generics.RetrieveAPIView):
