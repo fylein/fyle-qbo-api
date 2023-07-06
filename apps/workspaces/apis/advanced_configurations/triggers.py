@@ -1,6 +1,6 @@
 from apps.workspaces.models import WorkspaceGeneralSettings
-from apps.quickbooks_online.tasks import schedule_bill_payment_creation, schedule_qbo_objects_status_sync, \
-    schedule_reimbursements_sync
+from apps.quickbooks_online.queue import schedule_qbo_objects_status_sync, schedule_reimbursements_sync
+from apps.mappings.queue import schedule_bill_payment_creation
 
 
 class AdvancedConfigurationsTriggers:

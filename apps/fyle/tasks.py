@@ -4,7 +4,6 @@ import traceback
 from datetime import datetime
 
 from django.db import transaction
-from django_q.tasks import async_task
 
 from fyle_integrations_platform_connector import PlatformConnector
 from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError

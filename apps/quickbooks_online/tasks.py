@@ -1,13 +1,10 @@
 import logging
 import json
 import traceback
-from typing import List
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from django.db import transaction
 from django.db.models import Q
-from django_q.tasks import Chain
-from django_q.models import Schedule
 
 from qbosdk.exceptions import WrongParamsError, InvalidTokenError
 
@@ -212,48 +209,6 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
                 'type': 'Employee Mapping',
                 'message': 'Employee mapping not found'
             }])
-
-
-def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
-    """
-    Schedule bills creation
-    :param expense_group_ids: List of expense group ids
-    :param workspace_id: workspace id
-    :return: None
-    """
-    if expense_group_ids:
-        expense_groups = ExpenseGroup.objects.filter(
-            Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']),
-            workspace_id=workspace_id, id__in=expense_group_ids, bill__id__isnull=True, exported_at__isnull=True
-        ).all()
-
-        chain = Chain()
-
-        fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials)
-
-        for index, expense_group in enumerate(expense_groups):
-            task_log, _ = TaskLog.objects.get_or_create(
-                workspace_id=expense_group.workspace_id,
-                expense_group=expense_group,
-                defaults={
-                    'status': 'ENQUEUED',
-                    'type': 'CREATING_BILL'
-                }
-            )
-            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
-                task_log.type = 'CREATING_BILL'
-                task_log.status = 'ENQUEUED'
-                task_log.save()
-
-            last_export = False
-            if expense_groups.count() == index + 1:
-                last_export = True
-
-            chain.append('apps.quickbooks_online.tasks.create_bill', expense_group, task_log.id, last_export)
-
-        if chain.length() > 1:
-            chain.run()
 
 
 @handle_qbo_exceptions()
@@ -549,46 +504,7 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
         raise BulkError('Mappings are missing', bulk_errors)
 
 
-def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
-    """
-    Schedule cheque creation
-    :param expense_group_ids: List of expense group ids
-    :param workspace_id: workspace id
-    :return: None
-    """
-    if expense_group_ids:
-        expense_groups = ExpenseGroup.objects.filter(
-            Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']),
-            workspace_id=workspace_id, id__in=expense_group_ids, cheque__id__isnull=True, exported_at__isnull=True
-        ).all()
 
-        chain = Chain()
-
-        fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials)
-
-        for index, expense_group in enumerate(expense_groups):
-            task_log, _ = TaskLog.objects.get_or_create(
-                workspace_id=expense_group.workspace_id,
-                expense_group=expense_group,
-                defaults={
-                    'status': 'ENQUEUED',
-                    'type': 'CREATING_CHECK'
-                }
-            )
-            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
-                task_log.type = 'CREATING_CHECK'
-                task_log.status = 'ENQUEUED'
-                task_log.save()
-
-            last_export = False
-            if expense_groups.count() == index + 1:
-                last_export = True
-
-            chain.append('apps.quickbooks_online.tasks.create_cheque', expense_group, task_log.id, last_export)
-
-        if chain.length() > 1:
-            chain.run()
 
 @handle_qbo_exceptions()
 def create_cheque(expense_group, task_log_id, last_export: bool):
@@ -635,46 +551,7 @@ def create_cheque(expense_group, task_log_id, last_export: bool):
     if last_export:
         update_last_export_details(expense_group.workspace_id)
 
-def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str]):
-    """
-    Schedule QBO expense creation
-    :param expense_group_ids: List of expense group ids
-    :param workspace_id: workspace id
-    :return: None
-    """
-    if expense_group_ids:
-        expense_groups = ExpenseGroup.objects.filter(
-            Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']),
-            workspace_id=workspace_id, id__in=expense_group_ids, qboexpense__id__isnull=True, exported_at__isnull=True
-        ).all()
 
-        chain = Chain()
-
-        fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials)
-
-        for index, expense_group in enumerate(expense_groups):
-            task_log, _ = TaskLog.objects.get_or_create(
-                workspace_id=expense_group.workspace_id,
-                expense_group=expense_group,
-                defaults={
-                    'status': 'ENQUEUED',
-                    'type': 'CREATING_EXPENSE' if expense_group.fund_source == 'PERSONAL' else 'CREATING_DEBIT_CARD_EXPENSE'
-                }
-            )
-            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
-                task_log.type = 'CREATING_EXPENSE' if expense_group.fund_source == 'PERSONAL' else 'CREATING_DEBIT_CARD_EXPENSE'
-                task_log.status = 'ENQUEUED'
-                task_log.save()
-
-            last_export = False
-            if expense_groups.count() == index + 1:
-                last_export = True
-
-            chain.append('apps.quickbooks_online.tasks.create_qbo_expense', expense_group, task_log.id, last_export)
-
-        if chain.length() > 1:
-            chain.run()
 
 
 @handle_qbo_exceptions()
@@ -728,48 +605,6 @@ def create_qbo_expense(expense_group, task_log_id, last_export: bool):
 
     if last_export:
         update_last_export_details(expense_group.workspace_id)
-
-def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids: List[str]):
-    """
-    Schedule credit card purchase creation
-    :param expense_group_ids: List of expense group ids
-    :param workspace_id: workspace id
-    :return: None
-    """
-    if expense_group_ids:
-        expense_groups = ExpenseGroup.objects.filter(
-            Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']),
-            workspace_id=workspace_id, id__in=expense_group_ids, creditcardpurchase__id__isnull=True,
-            exported_at__isnull=True
-        ).all()
-
-        chain = Chain()
-
-        fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials)
-
-        for index, expense_group in enumerate(expense_groups):
-            task_log, _ = TaskLog.objects.get_or_create(
-                workspace_id=expense_group.workspace_id,
-                expense_group=expense_group,
-                defaults={
-                    'status': 'ENQUEUED',
-                    'type': 'CREATING_CREDIT_CARD_PURCHASE'
-                }
-            )
-            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
-                task_log.type = 'CREATING_CREDIT_CARD_PURCHASE'
-                task_log.status = 'ENQUEUED'
-                task_log.save()
-
-            last_export = False
-            if expense_groups.count() == index + 1:
-                last_export = True
-
-            chain.append('apps.quickbooks_online.tasks.create_credit_card_purchase', expense_group, task_log.id, last_export)
-
-        if chain.length() > 1:
-            chain.run()
 
 
 @handle_qbo_exceptions()
@@ -826,47 +661,6 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id, last_e
 
     if last_export:
         update_last_export_details(expense_group.workspace_id)
-
-def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[str]):
-    """
-    Schedule journal_entry creation
-    :param expense_group_ids: List of expense group ids
-    :param workspace_id: workspace id
-    :return: None
-    """
-    if expense_group_ids:
-        expense_groups = ExpenseGroup.objects.filter(
-            Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']),
-            workspace_id=workspace_id, id__in=expense_group_ids, journalentry__id__isnull=True, exported_at__isnull=True
-        ).all()
-
-        chain = Chain()
-
-        fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials)
-
-        for index, expense_group in enumerate(expense_groups):
-            task_log, _ = TaskLog.objects.get_or_create(
-                workspace_id=expense_group.workspace_id,
-                expense_group=expense_group,
-                defaults={
-                    'status': 'ENQUEUED',
-                    'type': 'CREATING_JOURNAL_ENTRY'
-                }
-            )
-            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
-                task_log.type = 'CREATING_JOURNAL_ENTRY'
-                task_log.status = 'ENQUEUED'
-                task_log.save()
-
-            last_export = False
-            if expense_groups.count() == index + 1:
-                last_export = True
-
-            chain.append('apps.quickbooks_online.tasks.create_journal_entry', expense_group, task_log.id, last_export)
-
-        if chain.length() > 1:
-            chain.run()
 
 
 @handle_qbo_exceptions()
@@ -988,29 +782,6 @@ def create_bill_payment(workspace_id):
                 )
                 process_bill_payments(bill, workspace_id, task_log)
 
-def schedule_bill_payment_creation(sync_fyle_to_qbo_payments, workspace_id):
-    general_mappings: GeneralMapping = GeneralMapping.objects.filter(workspace_id=workspace_id).first()
-    if general_mappings:
-        if sync_fyle_to_qbo_payments and general_mappings.bill_payment_account_id:
-            start_datetime = datetime.now()
-            schedule, _ = Schedule.objects.update_or_create(
-                func='apps.quickbooks_online.tasks.create_bill_payment',
-                args='{}'.format(workspace_id),
-                defaults={
-                    'schedule_type': Schedule.MINUTES,
-                    'minutes': 24 * 60,
-                    'next_run': start_datetime
-                }
-            )
-    if not sync_fyle_to_qbo_payments:
-        schedule: Schedule = Schedule.objects.filter(
-            func='apps.quickbooks_online.tasks.create_bill_payment',
-            args='{}'.format(workspace_id)
-        ).first()
-
-        if schedule:
-            schedule.delete()
-
 
 def get_all_qbo_object_ids(qbo_objects):
     qbo_objects_details = {}
@@ -1058,28 +829,6 @@ def check_qbo_object_status(workspace_id):
         logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
 
 
-def schedule_qbo_objects_status_sync(sync_qbo_to_fyle_payments, workspace_id):
-    if sync_qbo_to_fyle_payments:
-        start_datetime = datetime.now()
-        schedule, _ = Schedule.objects.update_or_create(
-            func='apps.quickbooks_online.tasks.check_qbo_object_status',
-            args='{}'.format(workspace_id),
-            defaults={
-                'schedule_type': Schedule.MINUTES,
-                'minutes': 24 * 60,
-                'next_run': start_datetime
-            }
-        )
-    else:
-        schedule: Schedule = Schedule.objects.filter(
-            func='apps.quickbooks_online.tasks.check_qbo_object_status',
-            args='{}'.format(workspace_id)
-        ).first()
-
-        if schedule:
-            schedule.delete()
-
-
 def process_reimbursements(workspace_id):
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
 
@@ -1109,28 +858,6 @@ def process_reimbursements(workspace_id):
 
         platform.reimbursements.bulk_post_reimbursements(reimbursements_list)
         platform.reimbursements.sync()
-
-
-def schedule_reimbursements_sync(sync_qbo_to_fyle_payments, workspace_id):
-    if sync_qbo_to_fyle_payments:
-        start_datetime = datetime.now() + timedelta(hours=12)
-        schedule, _ = Schedule.objects.update_or_create(
-            func='apps.quickbooks_online.tasks.process_reimbursements',
-            args='{}'.format(workspace_id),
-            defaults={
-                'schedule_type': Schedule.MINUTES,
-                'minutes': 24 * 60,
-                'next_run': start_datetime
-            }
-        )
-    else:
-        schedule: Schedule = Schedule.objects.filter(
-            func='apps.quickbooks_online.tasks.process_reimbursements',
-            args='{}'.format(workspace_id)
-        ).first()
-
-        if schedule:
-            schedule.delete()
 
 
 def async_sync_accounts(workspace_id):

@@ -50,62 +50,37 @@ data = {
         ],
     },
     "bill_payload_item_and_account_based_payload": {
-        "VendorRef":{
-            "value":"84"
-        },
-        "APAccountRef":{
-            "value":"33"
-        },
-        "DepartmentRef":{
-            "value":"None"
-        },
-        "TxnDate":"2023-04-19",
-        "CurrencyRef":{
-            "value":"USD"
-        },
-        "PrivateNote":"Credit card expense by sravan.kumar@fyle.in",
-        "Line":[
+        'VendorRef': {'value': '84'}, 
+        'APAccountRef': {'value': '33'}, 
+        'DepartmentRef': {'value': None}, 
+        'TxnDate': '2023-07-06', 
+        'CurrencyRef': {'value': 'USD'}, 
+        'PrivateNote': 'Credit card expense by sravan.kumar@fyle.in', 
+        'Line': [
             {
-                "Description":"sravan.kumar@fyle.in - Concrete - 2023-04-19 - C/2023/04/R/2 -  - None/app/main/#/enterprise/view_expense/txybL0Dw709h?org_id=orPJvXuoLqvJ",
-                "DetailType":"ItemBasedExpenseLineDetail",
-                "Amount":1.0,
-                "ItemBasedExpenseLineDetail":{
-                    "ItemRef":{
-                    "value":"3"
-                    },
-                    "Qty":1,
-                    "CustomerRef":{
-                    "value":"None"
-                    },
-                    "ClassRef":{
-                    "value":"5000000000000142238"
-                    },
-                    "TaxCodeRef":{
-                    "value":"None"
-                    },
-                    "BillableStatus":"NotBillable"
-                }
-            },
+                'Description': 'sravan.kumar@fyle.in - Concrete - 2023-07-06 - C/2023/04/R/2 -  - None/app/main/#/enterprise/view_expense/txybL0Dw709h?org_id=orPJvXuoLqvJ', 
+                'DetailType': 'ItemBasedExpenseLineDetail', 
+                'Amount': 1.0, 
+                'ItemBasedExpenseLineDetail': {
+                    'CustomerRef': {'value': None}, 
+                    'ClassRef': {'value': '5000000000000142238'}, 
+                    'TaxCodeRef': {'value': None}, 'BillableStatus': 
+                    'NotBillable', 
+                    'ItemRef': {'value': '3'}, 
+                    'Qty': 1
+                    }
+            }, 
             {
-                "Description":"sravan.kumar@fyle.in - WIP - 2023-04-19 - C/2023/04/R/2 -  - None/app/main/#/enterprise/view_expense/txoF0nqv6cG3?org_id=orPJvXuoLqvJ",
-                "DetailType":"AccountBasedExpenseLineDetail",
-                "Amount":10.0,
-                "AccountBasedExpenseLineDetail":{
-                    "AccountRef":{
-                    "value":"69"
-                    },
-                    "CustomerRef":{
-                    "value":"None"
-                    },
-                    "ClassRef":{
-                    "value":"5000000000000142238"
-                    },
-                    "TaxCodeRef":{
-                    "value":"None"
-                    },
-                    "TaxAmount":0.0,
-                    "BillableStatus":"NotBillable"
-                }
+                'Description': 'sravan.kumar@fyle.in - WIP - 2023-07-06 - C/2023/04/R/2 -  - None/app/main/#/enterprise/view_expense/txoF0nqv6cG3?org_id=orPJvXuoLqvJ', 'DetailType': 'AccountBasedExpenseLineDetail', 
+                'Amount': 10.0, 
+                'AccountBasedExpenseLineDetail': {
+                    'CustomerRef': {'value': None}, 
+                    'ClassRef': {'value': '5000000000000142238'}, 
+                    'TaxCodeRef': {'value': None}, 
+                    'BillableStatus': 'NotBillable', 
+                    'AccountRef': {'value': '69'}, 
+                    'TaxAmount': 0.0
+                    }
             }
         ]
     },
@@ -177,71 +152,9 @@ data = {
             }
         ]
     },
-    "credit_card_purchase_item_and_account_based_payload": {'DocNumber': 'E/2023/04/T/6', 'PaymentType': 'CreditCard', 'AccountRef': {'value': '41'}, 'EntityRef': {'value': '58'}, 'DepartmentRef': {'value': None}, 'TxnDate': '2023-04-19', 'CurrencyRef': {'value': 'USD'}, 'PrivateNote': 'Credit card expense by sravan.kumar@fyle.in', 'Credit': False, 'Line': [{'Description': 'sravan.kumar@fyle.in - Concrete - 2023-04-19 - C/2023/04/R/3 -  - None/app/main/#/enterprise/view_expense/txT4kpMbHdLg8?org_id=or79Cob97KSh', 'DetailType': 'ItemBasedExpenseLineDetail', 'Amount': 1.0, 'ItemBasedExpenseLineDetail': {'ItemRef': {'value': '3'}, 'Qty': 1, 'CustomerRef': {'value': None}, 'ClassRef': {'value': None}, 'TaxCodeRef': {'value': None}, 'BillableStatus': 'NotBillable'}}, {'Description': 'sravan.kumar@fyle.in - Food - 2023-04-19 - C/2023/04/R/2 -  - None/app/main/#/enterprise/view_expense/txoF0nqv6cG89?org_id=or79Cob97KSh', 'DetailType': 'AccountBasedExpenseLineDetail', 'Amount': 10.0, 'AccountBasedExpenseLineDetail': {'AccountRef': {'value': '13'}, 'CustomerRef': {'value': None}, 'ClassRef': {'value': None}, 'TaxCodeRef': {'value': None}, 'TaxAmount': 0.0, 'BillableStatus': 'NotBillable'}}]},
+    "credit_card_purchase_item_and_account_based_payload": {'DocNumber': 'E/2023/04/T/6', 'PaymentType': 'CreditCard', 'AccountRef': {'value': '41'}, 'EntityRef': {'value': '58'}, 'DepartmentRef': {'value': None}, 'TxnDate': '2023-07-06', 'CurrencyRef': {'value': 'USD'}, 'PrivateNote': 'Credit card expense by sravan.kumar@fyle.in', 'Credit': False, 'Line': [{'Description': 'sravan.kumar@fyle.in - Concrete - 2023-07-06 - C/2023/04/R/3 -  - None/app/main/#/enterprise/view_expense/txT4kpMbHdLg8?org_id=or79Cob97KSh', 'DetailType': 'ItemBasedExpenseLineDetail', 'Amount': 1.0, 'ItemBasedExpenseLineDetail': {'CustomerRef': {'value': None}, 'ClassRef': {'value': None}, 'TaxCodeRef': {'value': None}, 'BillableStatus': 'NotBillable', 'ItemRef': {'value': '3'}, 'Qty': 1}}, {'Description': 'sravan.kumar@fyle.in - Food - 2023-07-06 - C/2023/04/R/2 -  - None/app/main/#/enterprise/view_expense/txoF0nqv6cG89?org_id=or79Cob97KSh', 'DetailType': 'AccountBasedExpenseLineDetail', 'Amount': 10.0, 'AccountBasedExpenseLineDetail': {'CustomerRef': {'value': None}, 'ClassRef': {'value': None}, 'TaxCodeRef': {'value': None}, 'BillableStatus': 'NotBillable', 'AccountRef': {'value': '13'}, 'TaxAmount': 0.0}}]},
     "qbo_expense_item_based_payload": {'DocNumber': None, 'PaymentType': 'Cash', 'AccountRef': {'value': '94'}, 'EntityRef': {'value': '60'}, 'DepartmentRef': {'value': None}, 'TxnDate': '2023-04-19', 'CurrencyRef': {'value': 'USD'}, 'PrivateNote': 'Credit card expense by sravan.kumar@fyle.in on 2023-04-19 ', 'Credit': None, 'Line': [{'Description': 'sravan.kumar@fyle.in - Concrete - 2023-04-19 - C/2023/04/R/6 -  - None/app/main/#/enterprise/view_expense/txT4kpMbHdIp?org_id=or79Cob97KSh', 'DetailType': 'ItemBasedExpenseLineDetail', 'Amount': 1.0, 'ItemBasedExpenseLineDetail': {'ItemRef': {'value': '3'}, 'Qty': 1, 'CustomerRef': {'value': None}, 'ClassRef': {'value': None}, 'TaxCodeRef': {'value': None}, 'BillableStatus': 'NotBillable'}}]},
-    "qbo_expense_item_and_account_based_payload": {
-        "DocNumber":"None",
-        "PaymentType":"Cash",
-        "AccountRef":{
-            "value":"94"
-        },
-        "EntityRef":{
-            "value":"60"
-        },
-        "DepartmentRef":{
-            "value":"None"
-        },
-        "TxnDate":"2023-04-19",
-        "CurrencyRef":{
-            "value":"USD"
-        },
-        "PrivateNote":"Credit card expense by sravan.kumar@fyle.in",
-        "Credit":"None",
-        "Line":[
-            {
-                "Description":"sravan.kumar@fyle.in - Concrete - 2023-04-19 - C/2023/04/R/6 -  - None/app/main/#/enterprise/view_expense/txT4kpMbHdLg87L?org_id=or79Cob97KSh",
-                "DetailType":"ItemBasedExpenseLineDetail",
-                "Amount":1.0,
-                "ItemBasedExpenseLineDetail":{
-                    "ItemRef":{
-                    "value":"3"
-                    },
-                    "Qty":1,
-                    "CustomerRef":{
-                    "value":"None"
-                    },
-                    "ClassRef":{
-                    "value":"None"
-                    },
-                    "TaxCodeRef":{
-                    "value":"None"
-                    },
-                    "BillableStatus":"NotBillable"
-                }
-            },
-            {
-                "Description":"sravan.kumar@fyle.in - Food - 2023-04-19 - C/2023/04/R/6 -  - None/app/main/#/enterprise/view_expense/txoF0nqv6cG78?org_id=or79Cob97KSh",
-                "DetailType":"AccountBasedExpenseLineDetail",
-                "Amount":10.0,
-                "AccountBasedExpenseLineDetail":{
-                    "AccountRef":{
-                    "value":"13"
-                    },
-                    "CustomerRef":{
-                    "value":"None"
-                    },
-                    "ClassRef":{
-                    "value":"None"
-                    },
-                    "TaxCodeRef":{
-                    "value":"None"
-                    },
-                    "TaxAmount":0.0,
-                    "BillableStatus":"NotBillable"
-                }
-            }
-        ]
-    },
+    "qbo_expense_item_and_account_based_payload": {'DocNumber': None, 'PaymentType': 'Cash', 'AccountRef': {'value': '94'}, 'EntityRef': {'value': '60'}, 'DepartmentRef': {'value': None}, 'TxnDate': '2023-07-06', 'CurrencyRef': {'value': 'USD'}, 'PrivateNote': 'Credit card expense by sravan.kumar@fyle.in', 'Credit': None, 'Line': [{'Description': 'sravan.kumar@fyle.in - Concrete - 2023-07-06 - C/2023/04/R/6 -  - None/app/main/#/enterprise/view_expense/txT4kpMbHdLg87L?org_id=or79Cob97KSh', 'DetailType': 'ItemBasedExpenseLineDetail', 'Amount': 1.0, 'ItemBasedExpenseLineDetail': {'CustomerRef': {'value': None}, 'ClassRef': {'value': None}, 'TaxCodeRef': {'value': None}, 'BillableStatus': 'NotBillable', 'ItemRef': {'value': '3'}, 'Qty': 1}}, {'Description': 'sravan.kumar@fyle.in - Food - 2023-07-06 - C/2023/04/R/6 -  - None/app/main/#/enterprise/view_expense/txoF0nqv6cG78?org_id=or79Cob97KSh', 'DetailType': 'AccountBasedExpenseLineDetail', 'Amount': 10.0, 'AccountBasedExpenseLineDetail': {'CustomerRef': {'value': None}, 'ClassRef': {'value': None}, 'TaxCodeRef': {'value': None}, 'BillableStatus': 'NotBillable', 'AccountRef': {'value': '13'}, 'TaxAmount': 0.0}}]},
     "qbo_expense_payload": {
         "DocNumber": "None",
         "PaymentType": "Cash",
@@ -409,27 +322,6 @@ data = {
         "Credit":"None",
         "Line":[
             {
-                "Description":"user9@fyleforgotham.in - Concrete - 2023-04-19 - C/2023/04/R/13 -  - None/app/main/#/enterprise/view_expense/txT4kpKidaAdLm?org_id=or79Cob97KSh",
-                "DetailType":"ItemBasedExpenseLineDetail",
-                "Amount":1.0,
-                "ItemBasedExpenseLineDetail":{
-                    "ItemRef":{
-                    "value":"3"
-                    },
-                    "Qty":1,
-                    "CustomerRef":{
-                    "value":"None"
-                    },
-                    "ClassRef":{
-                    "value":"None"
-                    },
-                    "TaxCodeRef":{
-                    "value":"None"
-                    },
-                    "BillableStatus":"NotBillable"
-                }
-            },
-            {
                 "Description":"user9@fyleforgotham.in - Food - 2023-04-19 - C/2023/04/R/13 -  - None/app/main/#/enterprise/view_expense/txT4kpMbiadw?org_id=or79Cob97KSh",
                 "DetailType":"AccountBasedExpenseLineDetail",
                 "Amount":1.0,
@@ -447,6 +339,27 @@ data = {
                     "value":"None"
                     },
                     "TaxAmount":0.0,
+                    "BillableStatus":"NotBillable"
+                }
+            },
+            {
+                "Description":"user9@fyleforgotham.in - Concrete - 2023-04-19 - C/2023/04/R/13 -  - None/app/main/#/enterprise/view_expense/txT4kpKidaAdLm?org_id=or79Cob97KSh",
+                "DetailType":"ItemBasedExpenseLineDetail",
+                "Amount":1.0,
+                "ItemBasedExpenseLineDetail":{
+                    "ItemRef":{
+                    "value":"3"
+                    },
+                    "Qty":1,
+                    "CustomerRef":{
+                    "value":"None"
+                    },
+                    "ClassRef":{
+                    "value":"None"
+                    },
+                    "TaxCodeRef":{
+                    "value":"None"
+                    },
                     "BillableStatus":"NotBillable"
                 }
             }
