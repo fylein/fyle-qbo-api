@@ -304,7 +304,69 @@ data = {
             }
         ]
     },
-    "cheque_item_and_account_based_payload":{'DocNumber': None, 'PaymentType': 'Check', 'AccountRef': {'value': '95'}, 'EntityRef': {'value': '55'}, 'DepartmentRef': {'value': None}, 'TxnDate': '2023-06-14', 'CurrencyRef': {'value': 'USD'}, 'PrivateNote': 'Reimbursable expense by user9@fyleforgotham.in', 'Credit': None, 'Line': [{'Description': 'user9@fyleforgotham.in - Food - 2023-06-14 - C/2023/04/R/13 -  - None/app/main/#/enterprise/view_expense/txT4kpMbiadw?org_id=or79Cob97KSh', 'DetailType': 'AccountBasedExpenseLineDetail', 'Amount': 1.0, 'AccountBasedExpenseLineDetail': {'CustomerRef': {'value': None}, 'ClassRef': {'value': None}, 'TaxCodeRef': {'value': None}, 'BillableStatus': 'NotBillable', 'AccountRef': {'value': '13'}, 'TaxAmount': 0.0}}, {'Description': 'user9@fyleforgotham.in - Concrete - 2023-06-14 - C/2023/04/R/13 -  - None/app/main/#/enterprise/view_expense/txT4kpKidaAdLm?org_id=or79Cob97KSh', 'DetailType': 'ItemBasedExpenseLineDetail', 'Amount': 1.0, 'ItemBasedExpenseLineDetail': {'CustomerRef': {'value': None}, 'ClassRef': {'value': None}, 'TaxCodeRef': {'value': None}, 'BillableStatus': 'NotBillable', 'ItemRef': {'value': '3'}, 'Qty': 1}}]},
+    "cheque_item_and_account_based_payload":{
+        "DocNumber":"None",
+        "PaymentType":"Check",
+        "AccountRef":{
+            "value":"95"
+        },
+        "EntityRef":{
+            "value":"55"
+        },
+        "DepartmentRef":{
+            "value":"None"
+        },
+        "TxnDate":"2023-04-19",
+        "CurrencyRef":{
+            "value":"USD"
+        },
+        "PrivateNote":"Reimbursable expense by user9@fyleforgotham.in",
+        "Credit":"None",
+        "Line":[
+            {
+                "Description":"user9@fyleforgotham.in - Food - 2023-04-19 - C/2023/04/R/13 -  - None/app/main/#/enterprise/view_expense/txT4kpMbiadw?org_id=or79Cob97KSh",
+                "DetailType":"AccountBasedExpenseLineDetail",
+                "Amount":1.0,
+                "AccountBasedExpenseLineDetail":{
+                    "AccountRef":{
+                    "value":"13"
+                    },
+                    "ClassRef":{
+                    "value":"None"
+                    },
+                    "CustomerRef":{
+                    "value":"None"
+                    },
+                    "TaxCodeRef":{
+                    "value":"None"
+                    },
+                    "TaxAmount":0.0,
+                    "BillableStatus":"NotBillable"
+                }
+            },
+            {
+                "Description":"user9@fyleforgotham.in - Concrete - 2023-04-19 - C/2023/04/R/13 -  - None/app/main/#/enterprise/view_expense/txT4kpKidaAdLm?org_id=or79Cob97KSh",
+                "DetailType":"ItemBasedExpenseLineDetail",
+                "Amount":1.0,
+                "ItemBasedExpenseLineDetail":{
+                    "ItemRef":{
+                    "value":"3"
+                    },
+                    "Qty":1,
+                    "CustomerRef":{
+                    "value":"None"
+                    },
+                    "ClassRef":{
+                    "value":"None"
+                    },
+                    "TaxCodeRef":{
+                    "value":"None"
+                    },
+                    "BillableStatus":"NotBillable"
+                }
+            }
+        ]
+    },
     "bill_response": {
         "SyncToken": "2",
         "domain": "QBO",
