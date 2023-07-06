@@ -126,6 +126,7 @@ data = {
             ],
             'spent_at':'2021-12-22T07:30:26.289842+00:00',
             'approved_at':'2021-12-22T07:30:26.289842+00:00',
+            'posted_at': '2021-11-08T06:23:35.631000Z',
             'expense_created_at':'2022-05-26T14:38:01.568388+00:00',
             'expense_updated_at':'2022-05-26T14:39:31.164945+00:00',
             'source_account_type':'PERSONAL_CASH_ACCOUNT',

@@ -24,6 +24,8 @@ def get_transaction_date(expense_group: ExpenseGroup) -> str:
         return expense_group.description['verified_at']
     elif 'last_spent_at' in expense_group.description and expense_group.description['last_spent_at']:
         return expense_group.description['last_spent_at']
+    elif 'posted_at' in expense_group.description and expense_group.description['posted_at']:
+        return expense_group.description['posted_at']
 
     return datetime.now().strftime("%Y-%m-%d")
 
@@ -527,9 +529,6 @@ class QBOExpense(models.Model):
                 value__iexact=merchant, attribute_type='VENDOR', workspace_id=expense_group.workspace_id, active=True
             ).first()
 
-            expense_group.description['spent_at'] = expense.spent_at.strftime("%Y-%m-%d")
-            expense_group.save()
-
             if not entity:
                 entity_id = DestinationAttribute.objects.filter(
                     value='Debit Card Misc', workspace_id=expense_group.workspace_id).first().destination_id
@@ -673,9 +672,6 @@ class CreditCardPurchase(models.Model):
             entity = DestinationAttribute.objects.filter(
                 value__iexact=merchant, attribute_type='VENDOR', workspace_id=expense_group.workspace_id, active=True
             ).first()
-
-            expense_group.description['spent_at'] = expense.spent_at.strftime("%Y-%m-%d")
-            expense_group.save()
 
             if not entity:
                 entity_id = DestinationAttribute.objects.filter(
