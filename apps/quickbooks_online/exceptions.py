@@ -114,7 +114,7 @@ def handle_qbo_exceptions(bill_payment=False):
                 logger.error('Something unexpected happened workspace_id: %s %s', 
                              task_log.workspace_id, task_log.detail)
 
-            if args[2] == True and args[2] > 0 and not bill_payment:
+            if len(args) > 2 and args[2] == True and not bill_payment:
                 update_last_export_details(expense_group.workspace_id)
 
         return new_fn
