@@ -3,14 +3,15 @@ import pytest
 from datetime import datetime, timezone
 from fyle_rest_auth.models import User
 from apps.quickbooks_online.utils import Bill,BillLineitem,QBOExpense,QBOExpenseLineitem
-from apps.fyle.models import ExpenseGroup
+from apps.quickbooks_online.tasks import create_bill
+from apps.fyle.models import ExpenseGroup, Expense, ExpenseGroupSettings
 from apps.workspaces.models import WorkspaceGeneralSettings
-from fyle_accounting_mappings.models import Mapping, MappingSetting
+from fyle_accounting_mappings.models import Mapping, MappingSetting, DestinationAttribute, ExpenseAttribute
 from apps.quickbooks_online.models import get_department_id_or_none,get_tax_code_id_or_none, get_customer_id_or_none, get_class_id_or_none, get_expense_purpose, get_transaction_date, \
     BillPayment, BillPaymentLineitem, JournalEntry, JournalEntryLineitem, CreditCardPurchase, CreditCardPurchaseLineitem, \
         Cheque, ChequeLineitem, get_ccc_account_id
 from apps.tasks.models import TaskLog
-
+from tests.test_fyle.fixtures import data
 
 def test_create_bill(db):
 
@@ -303,3 +304,95 @@ def test_get_ccc_account_id():
     for lineitem in expenses:
         ccc_account_id = get_ccc_account_id(workspace_general_settings, general_mapping, lineitem, description)
         assert ccc_account_id == '41'
+
+def test_support_post_date_integrations(mocker, db):
+    workspace_id = 1
+
+    #Import assert
+
+    payload = data['expenses']
+    expense_id = data['expenses'][0]['id']
+    Expense.create_expense_objects(payload, workspace_id)
+    expense_objects = Expense.objects.get(expense_id=expense_id)
+    expense_objects.reimbursable = False
+    expense_objects.fund_source = 'CCC'
+    expense_objects.source_account_type = 'PERSONAL_CORPORATE_CREDIT_CARD_ACCOUNT'
+    expense_objects.save()
+    assert expense_objects.posted_at.strftime("%m/%d/%Y") == '11/08/2021'
+
+    expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
+    expense_group_settings.corporate_credit_card_expense_group_fields = ['expense_id', 'employee_email', 'project', 'fund_source', 'posted_at']
+    expense_group_settings.ccc_export_date_type = 'posted_at'
+    expense_group_settings.save()
+    
+    field = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type='PROJECT').last()
+    field.attribute_type = 'KILLUA'
+    field.save()
+
+    expense_groups = ExpenseGroup.create_expense_groups_by_report_id_fund_source([expense_objects], workspace_id)
+    assert expense_groups[0].description['posted_at'] == '2021-11-08'
+    
+    mapping_setting = MappingSetting(
+        source_field='CATEGORY',
+        destination_field='ACCOUNT',
+        workspace_id=workspace_id,
+        import_to_fyle=False,
+        is_custom=False
+    )
+    mapping_setting.save()
+
+    destination_attribute = DestinationAttribute.objects.create(
+        attribute_type='ACCOUNT',
+        display_name='Account',
+        value='Concreteworks Studio',
+        destination_id=321,
+        workspace_id=workspace_id,
+        active=True,
+    )
+    destination_attribute.save()
+    expense_attribute = ExpenseAttribute.objects.create(
+        attribute_type='CATEGORY',
+        display_name='Category',
+        value='Flight',
+        source_id='253737253737',
+        workspace_id=workspace_id,
+        active=True
+    )
+    expense_attribute.save()
+    mapping = Mapping.objects.create(
+        source_type='CATEGORY',
+        destination_type='ACCOUNT',
+        destination_id=destination_attribute.id,
+        source_id=expense_attribute.id,
+        workspace_id=workspace_id
+    )
+    mapping.save()
+
+    mocker.patch(
+        'qbosdk.apis.Bills.post',
+        return_value={"Bill": {"Id": "sdfghjk"}}
+    )
+
+    task_log = TaskLog.objects.first()
+    task_log.workspace_id = 1
+    task_log.status = 'READY'
+    task_log.save()
+
+    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=1)
+
+    general_settings.auto_map_employees = 'NAME'
+    general_settings.import_items = False
+    general_settings.auto_create_destination_entity = True
+    general_settings.save()
+    
+    create_bill(expense_groups[0], task_log.id, False)
+
+    task_log = TaskLog.objects.get(pk=task_log.id)
+    bill = Bill.objects.get(expense_group_id=expense_groups[0].id)
+
+    assert task_log.status == 'COMPLETE'
+    assert bill.currency == 'USD'
+    assert bill.accounts_payable_id == '33'
+    assert bill.vendor_id == '56'
+    assert bill.transaction_date.strftime("%m/%d/%Y") == expense_objects.posted_at.strftime("%m/%d/%Y")
+

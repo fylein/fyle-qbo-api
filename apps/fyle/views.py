@@ -33,6 +33,7 @@ class ExpenseGroupView(LookupFieldMixin, generics.ListCreateAPIView):
     serializer_class = ExpenseGroupSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = {'exported_at': {'gte', 'lte'}}
+    ordering_fields = ('-updated_at',)
 
 
 class ExportableExpenseGroupsView(generics.RetrieveAPIView):
@@ -161,6 +162,7 @@ class ExpenseView(generics.ListAPIView):
     serializer_class = ExpenseSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = {'org_id': {'exact'}, 'is_skipped': {'exact'}, 'updated_at': {'gte', 'lte'}}
+    ordering_fields = ('-updated_at',)
 
 
 class CustomFieldView(generics.RetrieveAPIView):
