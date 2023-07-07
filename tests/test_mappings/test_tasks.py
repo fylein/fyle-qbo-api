@@ -1,10 +1,8 @@
-from asyncio.log import logger
-import pytest
+
 from unittest import mock
 from unittest.mock import Mock
 from django_q.models import Schedule
 from qbosdk.exceptions import WrongParamsError
-from fyle.platform.exceptions import InvalidTokenError as FylePlatformError
 from fyle_accounting_mappings.models import (
     DestinationAttribute,
     ExpenseAttribute,
@@ -17,7 +15,7 @@ from apps.mappings.tasks import *
 from apps.mappings.queue import *
 from apps.workspaces.queue import *
 from fyle_integrations_platform_connector import PlatformConnector
-from apps.mappings.models import GeneralMapping
+from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
 from .fixtures import data
 from tests.helper import dict_compare_keys
 from apps.workspaces.models import (
@@ -26,8 +24,6 @@ from apps.workspaces.models import (
     WorkspaceGeneralSettings,
 )
 from apps.tasks.models import Error
-from django.test import TestCase
-from django.utils import timezone
 
 
 def test_auto_create_tax_codes_mappings(db, mocker):
