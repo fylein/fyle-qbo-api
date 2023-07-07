@@ -172,8 +172,7 @@ class CustomFieldView(generics.RetrieveAPIView):
         """
         Get Custom Fields
         """
-        response=get_custom_fields(workspace_id=self.kwargs['workspace_id'])
-            
+        response=get_custom_fields(workspace_id=self.kwargs['workspace_id'])            
         return Response(
             data=response,
             status=status.HTTP_200_OK
