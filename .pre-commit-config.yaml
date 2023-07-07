@@ -2,7 +2,7 @@ default_stages: [commit]
 fail_fast: true
 default_language_version:
   python: python3
-exclude: 'venv|.venv|.git|README.md|beneficial_owners_module|customers_module|dev|dwolla_service|funding_sources_module|libs|migrations|models|payouts_module|scripts|test_reports|tests|webhooks_module|gunicorn_config.py'
+exclude: 'venv|.venv|.git|README.md'
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
