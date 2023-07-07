@@ -5,27 +5,71 @@ import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('workspaces', '0028_workspacegeneralsettings_import_vendors_as_merchants'),
+        ("workspaces", "0028_workspacegeneralsettings_import_vendors_as_merchants"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='LastExportDetail',
+            name="LastExportDetail",
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False)),
-                ('last_exported_at', models.DateTimeField(help_text='Last exported at datetime', null=True)),
-                ('export_mode', models.CharField(choices=[('MANUAL', 'MANUAL'), ('AUTO', 'AUTO')], help_text='Mode of the export Auto / Manual', max_length=50, null=True)),
-                ('total_expense_groups_count', models.IntegerField(help_text='Total count of expense groups exported', null=True)),
-                ('successful_expense_groups_count', models.IntegerField(help_text='count of successful expense_groups ', null=True)),
-                ('failed_expense_groups_count', models.IntegerField(help_text='count of failed expense_groups ', null=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='Created at datetime')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='Updated at datetime')),
-                ('workspace', models.OneToOneField(help_text='Reference to Workspace model', on_delete=django.db.models.deletion.PROTECT, to='workspaces.workspace')),
+                ("id", models.AutoField(primary_key=True, serialize=False)),
+                (
+                    "last_exported_at",
+                    models.DateTimeField(
+                        help_text="Last exported at datetime", null=True
+                    ),
+                ),
+                (
+                    "export_mode",
+                    models.CharField(
+                        choices=[("MANUAL", "MANUAL"), ("AUTO", "AUTO")],
+                        help_text="Mode of the export Auto / Manual",
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "total_expense_groups_count",
+                    models.IntegerField(
+                        help_text="Total count of expense groups exported", null=True
+                    ),
+                ),
+                (
+                    "successful_expense_groups_count",
+                    models.IntegerField(
+                        help_text="count of successful expense_groups ", null=True
+                    ),
+                ),
+                (
+                    "failed_expense_groups_count",
+                    models.IntegerField(
+                        help_text="count of failed expense_groups ", null=True
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, help_text="Created at datetime"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, help_text="Updated at datetime"
+                    ),
+                ),
+                (
+                    "workspace",
+                    models.OneToOneField(
+                        help_text="Reference to Workspace model",
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to="workspaces.workspace",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'last_export_details',
+                "db_table": "last_export_details",
             },
         ),
     ]

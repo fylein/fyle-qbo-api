@@ -1,0 +1,40 @@
+default_stages: [commit]
+fail_fast: true
+default_language_version:
+  python: python3
+exclude: 'venv|.venv|.git|README.md|beneficial_owners_module|customers_module|dev|dwolla_service|funding_sources_module|libs|migrations|models|payouts_module|scripts|test_reports|tests|webhooks_module|gunicorn_config.py'
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.0.1
+    hooks:
+      - id: check-ast
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: https://github.com/psf/black
+    rev: 22.3.0
+    hooks:
+      - id: black
+
+  - repo: https://github.com/timothycrosley/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        args: ["--profile", "black"]
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 3.9.2
+    hooks:
+      - id: flake8
+        additional_dependencies: [flake8-isort, flake8-tidy-imports]
+
+  - repo: https://github.com/Lucas-C/pre-commit-hooks-bandit
+    rev: v1.0.5
+    hooks:
+      - id: python-bandit-vulnerability-check
+        args: [ -lll, --recursive, -c, bandit.yaml, .]
+        files: .py$

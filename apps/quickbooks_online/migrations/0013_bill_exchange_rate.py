@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('quickbooks_online', '0012_auto_20210830_1239'),
+        ("quickbooks_online", "0012_auto_20210830_1239"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='bill',
-            name='exchange_rate',
-            field=models.FloatField(help_text='Exchange rate', null=True),
+            model_name="bill",
+            name="exchange_rate",
+            field=models.FloatField(help_text="Exchange rate", null=True),
         ),
     ]

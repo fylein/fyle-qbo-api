@@ -1,0 +1,23 @@
+[flake8]
+extend-ignore = E712, E711
+max-line-length = 99
+max-complexity = 19
+ban-relative-imports = true
+select = B,C,E,F,N,W,I25
+exclude =
+    .git,
+    __pycache__.
+    beneficial_owners_module/*,
+    customers_module/*,
+    dev/*,
+    dwolla_service/*,
+    funding_sources_module/*,
+    libs/*,
+    migrations/*,
+    models/*,
+    payouts_module/*,
+    scripts/*,
+    test_reports/*,
+    tests/*,
+    webhooks_module/*,
+    gunicorn_config.py

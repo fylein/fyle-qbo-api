@@ -4,20 +4,23 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('mappings', '0004_auto_20201221_0748'),
+        ("mappings", "0004_auto_20201221_0748"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='generalmapping',
-            name='bill_payment_account_id',
-            field=models.CharField(help_text='BillPayment Account id', max_length=255, null=True),
+            model_name="generalmapping",
+            name="bill_payment_account_id",
+            field=models.CharField(
+                help_text="BillPayment Account id", max_length=255, null=True
+            ),
         ),
         migrations.AddField(
-            model_name='generalmapping',
-            name='bill_payment_account_name',
-            field=models.CharField(help_text='BillPayment Account name', max_length=255, null=True),
+            model_name="generalmapping",
+            name="bill_payment_account_name",
+            field=models.CharField(
+                help_text="BillPayment Account name", max_length=255, null=True
+            ),
         ),
     ]

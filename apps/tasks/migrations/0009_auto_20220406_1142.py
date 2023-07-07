@@ -5,16 +5,20 @@ import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('fyle_accounting_mappings', '0014_mappingsetting_source_placeholder'),
-        ('tasks', '0008_error'),
+        ("fyle_accounting_mappings", "0014_mappingsetting_source_placeholder"),
+        ("tasks", "0008_error"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='error',
-            name='expense_attribute',
-            field=models.OneToOneField(help_text='Reference to Expense Attribute', null=True, on_delete=django.db.models.deletion.PROTECT, to='fyle_accounting_mappings.expenseattribute'),
+            model_name="error",
+            name="expense_attribute",
+            field=models.OneToOneField(
+                help_text="Reference to Expense Attribute",
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                to="fyle_accounting_mappings.expenseattribute",
+            ),
         ),
     ]
