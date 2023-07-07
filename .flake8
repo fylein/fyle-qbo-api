@@ -1,5 +1,9 @@
 [flake8]
-extend-ignore = E712, E711
+extend-ignore =
+    # Comparison to true should be 'if cond is true:' or 'if cond:'
+    E712,
+    # Comparison to None should be 'cond is None:' (E711)
+    E711
 max-line-length = 99
 max-complexity = 19
 ban-relative-imports = true
