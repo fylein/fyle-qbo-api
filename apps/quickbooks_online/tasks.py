@@ -676,7 +676,6 @@ def __validate_expense_attributes(
 def __validate_expense_group(
     expense_group: ExpenseGroup, general_settings: WorkspaceGeneralSettings
 ):
-
     general_mapping_errors = __validate_general_mapping(expense_group, general_settings)
 
     general_settings_errors = __validate_general_settings(

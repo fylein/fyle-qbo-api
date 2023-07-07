@@ -1,29 +1,31 @@
-
 from unittest import mock
 from unittest.mock import Mock
+
 from django_q.models import Schedule
-from qbosdk.exceptions import WrongParamsError
+from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
 from fyle_accounting_mappings.models import (
-    DestinationAttribute,
-    ExpenseAttribute,
     CategoryMapping,
+    DestinationAttribute,
+    EmployeeMapping,
+    ExpenseAttribute,
     Mapping,
     MappingSetting,
-    EmployeeMapping,
 )
-from apps.mappings.tasks import *
-from apps.mappings.queue import *
-from apps.workspaces.queue import *
 from fyle_integrations_platform_connector import PlatformConnector
-from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
-from .fixtures import data
-from tests.helper import dict_compare_keys
+from qbosdk.exceptions import WrongParamsError
+
+from apps.mappings.queue import *
+from apps.mappings.tasks import *
+from apps.tasks.models import Error
 from apps.workspaces.models import (
-    QBOCredential,
     FyleCredential,
+    QBOCredential,
     WorkspaceGeneralSettings,
 )
-from apps.tasks.models import Error
+from apps.workspaces.queue import *
+from tests.helper import dict_compare_keys
+
+from .fixtures import data
 
 
 def test_auto_create_tax_codes_mappings(db, mocker):
