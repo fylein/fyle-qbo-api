@@ -1,4 +1,5 @@
 import os
+
 from psycogreen.gevent import patch_psycopg
 
 # https://docs.gunicorn.org/en/stable/settings.html
@@ -60,7 +61,7 @@ tmp_upload_dir = None
 
 errorlog = "-"
 accesslog = "-"
-access_log_format = '%({X-Real-IP}i)s - - - %(t)s "%(r)s" "%(f)s" "%(a)s" %({X-Request-Id}i)s %(L)s %(b)s %(s)s'
+access_log_format = '%({X-Real-IP}i)s - - - %(t)s "%(r)s" "%(f)s" "%(a)s" %({X-Request-Id}i)s %(L)s %(b)s %(s)s'  # noqa: E501
 
 
 def post_fork(server, worker):
@@ -84,8 +85,8 @@ def worker_int(worker):
     worker.log.info("worker received INT or QUIT signal")
 
     # get traceback info
-    import threading
     import sys
+    import threading
     import traceback
 
     id2name = dict([(th.ident, th.name) for th in threading.enumerate()])

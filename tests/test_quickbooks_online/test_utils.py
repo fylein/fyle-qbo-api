@@ -1,31 +1,19 @@
-import ast
 import json
-import pytest
 import logging
 from unittest import mock
-from qbosdk.exceptions import WrongParamsError
+
+import pytest
 from fyle_accounting_mappings.models import DestinationAttribute
+from qbosdk.exceptions import WrongParamsError
+
+from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.utils import (
     QBOConnector,
     QBOCredential,
     WorkspaceGeneralSettings,
 )
-from apps.quickbooks_online.models import (
-    Bill,
-    BillLineitem,
-    Cheque,
-    QBOExpense,
-    QBOExpenseLineitem,
-    CreditCardPurchase,
-    JournalEntry,
-    JournalEntryLineitem,
-    ChequeLineitem,
-)
-from apps.mappings.models import GeneralMapping
-from .fixtures import data
 from tests.helper import dict_compare_keys
-import random
-import string
+from tests.test_quickbooks_online.fixtures import data
 
 logger = logging.getLogger(__name__)
 
@@ -696,7 +684,7 @@ def test_post_qbo_expense_exception(mocker, db, create_qbo_expense):
                 None,
             ]
             qbo_connection.post_qbo_expense(qbo_expense, qbo_expense_lineitems)
-    except:
+    except Exception:
         logger.info("Account period error")
 
 
@@ -742,7 +730,7 @@ def test_post_cheque_exception(mocker, db, create_cheque):
                 None,
             ]
             qbo_connection.post_cheque(cheque, cheque_lineitems)
-    except:
+    except Exception:
         logger.info("Account period error")
 
 
@@ -790,7 +778,7 @@ def test_post_credit_card_purchase_exception(mocker, db, create_credit_card_purc
             qbo_connection.post_credit_card_purchase(
                 credit_card_purchase, credit_card_purchase_lineitems
             )
-    except:
+    except Exception:
         logger.info("Account period error")
 
 
@@ -838,7 +826,7 @@ def test_post_journal_entry_exception(mocker, db, create_journal_entry):
             qbo_connection.post_journal_entry(
                 journal_entry, journal_entry_lineitems, True
             )
-    except:
+    except Exception:
         logger.info("Account period error")
 
 

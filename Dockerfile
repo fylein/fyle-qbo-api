@@ -17,7 +17,7 @@ RUN if [ "$CI" = "ENABLED" ]; then \
         apt -y update; \
         apt-get install postgresql-15 -y --no-install-recommends; \
     fi
-    
+
 # Installing requirements
 COPY requirements.txt /tmp/requirements.txt
 RUN pip install --upgrade pip && pip install -r /tmp/requirements.txt && pip install pylint-django==2.3.0

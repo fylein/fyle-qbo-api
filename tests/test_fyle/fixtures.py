@@ -302,7 +302,9 @@ data = {
                                 "Id": "1",
                                 "Amount": 50.0,
                                 "DetailType": "AccountBasedExpenseLineDetail",
-                                "Description": "ashwin.t@fyle.in - Food - 2022-05-13 - C/2022/05/R/4 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txxTi9ZfdepC?org_id=or79Cob97KSh",
+                                "Description": "ashwin.t@fyle.in - Food - 2022-05-13 - \
+                                    C/2022/05/R/4 -  - https://staging.fyle.tech/app/main/#/ \
+                                    enterprise/view_expense/txxTi9ZfdepC?org_id=or79Cob97KSh",
                                 "AccountBasedExpenseLineDetail": {
                                     "AccountRef": {
                                         "name": "Meals and Entertainment",
@@ -344,7 +346,8 @@ data = {
                         "CurrencyRef": {"name": "United States Dollar", "value": "USD"},
                         "CustomField": [],
                         "PaymentType": "Cash",
-                        "PrivateNote": "Reimbursable expense by ashwin.t@fyle.in spent on merchant Ashwin on 2022-05-13",
+                        "PrivateNote": "Reimbursable expense by ashwin.t@fyle.in spent on \
+                            merchant Ashwin on 2022-05-13",
                     },
                 },
                 "employee_name": "Joanna",
@@ -415,7 +418,10 @@ data = {
                                 "Id": "1",
                                 "Amount": 608.0,
                                 "DetailType": "AccountBasedExpenseLineDetail",
-                                "Description": "user9@fyleforgotham.in - Office Supplies - 2020-05-03 - C/2021/04/R/42 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txJFfGeWSQdD?org_id=or79Cob97KSh",
+                                "Description": "user9@fyleforgotham.in - Office Supplies - \
+                                    2020-05-03 - C/2021/04/R/42 -  - https://staging.fyle.tech\
+                                    /app/main/#/enterprise/ view_expense/txJFfGeWSQdD?\
+                                    org_id=or79Cob97KSh",
                                 "AccountBasedExpenseLineDetail": {
                                     "AccountRef": {
                                         "name": "Job Expenses:Equipment Rental",
@@ -457,7 +463,8 @@ data = {
                         "CurrencyRef": {"name": "United States Dollar", "value": "USD"},
                         "CustomField": [],
                         "PaymentType": "Cash",
-                        "PrivateNote": "Reimbursable expense by user9@fyleforgotham.in on 2020-05-03",
+                        "PrivateNote": "Reimbursable expense by \
+                            user9@fyleforgotham.in on 2020-05-03",
                     },
                 },
                 "employee_name": "Justin Glass",
@@ -528,7 +535,9 @@ data = {
                                 "Id": "1",
                                 "Amount": 1188.0,
                                 "DetailType": "AccountBasedExpenseLineDetail",
-                                "Description": "user9@fyleforgotham.in - Office Party - 2020-05-13 - C/2021/04/R/42 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txU2qpKmrUR9?org_id=or79Cob97KSh",
+                                "Description": "user9@fyleforgotham.in - Office Party - 2020-05-13\
+                                     -C/2021/04/R/42 -  - https://staging.fyle.tech/app/main/#/\
+                                    enterprise/view_expense/txU2qpKmrUR9?org_id=or79Cob97KSh",
                                 "AccountBasedExpenseLineDetail": {
                                     "AccountRef": {
                                         "name": "Meals and Entertainment",
@@ -570,7 +579,8 @@ data = {
                         "CurrencyRef": {"name": "United States Dollar", "value": "USD"},
                         "CustomField": [],
                         "PaymentType": "Cash",
-                        "PrivateNote": "Reimbursable expense by user9@fyleforgotham.in on 2020-05-13",
+                        "PrivateNote": "Reimbursable expense by user9@fyleforgotham.in \
+                            on 2020-05-13",
                     },
                 },
                 "employee_name": "Justin Glass",
@@ -641,7 +651,10 @@ data = {
                                 "Id": "1",
                                 "Amount": 922.0,
                                 "DetailType": "AccountBasedExpenseLineDetail",
-                                "Description": "user4@fyleforgotham.in - Office Party - 2020-05-14 - C/2021/04/R/23 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txRrLLI8zD4k?org_id=or79Cob97KSh",
+                                "Description": "user4@fyleforgotham.in - Office Party - \
+                                    2020-05-14 - C/2021/04/R/23 -  - https://staging.fyle.tech/\
+                                    app/main/#/enterprise/view_expense/txRrLLI8zD4k?\
+                                    org_id=or79Cob97KSh",
                                 "AccountBasedExpenseLineDetail": {
                                     "AccountRef": {
                                         "name": "Meals and Entertainment",
@@ -683,7 +696,8 @@ data = {
                         "CurrencyRef": {"name": "United States Dollar", "value": "USD"},
                         "CustomField": [],
                         "PaymentType": "Cash",
-                        "PrivateNote": "Reimbursable expense by user4@fyleforgotham.in on 2020-05-14",
+                        "PrivateNote": "Reimbursable expense by user4@fyleforgotham.in \
+                            on 2020-05-14",
                     },
                 },
                 "employee_name": "Samantha Washington",
@@ -794,7 +808,10 @@ data = {
                                 "Id": "1",
                                 "Amount": 673.0,
                                 "DetailType": "AccountBasedExpenseLineDetail",
-                                "Description": "user4@fyleforgotham.in - Software - 2020-05-10 - C/2021/04/R/23 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txC5usIbRgRg?org_id=or79Cob97KSh",
+                                "Description": "user4@fyleforgotham.in - Software - \
+                                    2020-05-10 - C/2021/04/R/23 -  - https://staging.fyle.tech/\
+                                    app/main/#/enterprise/view_expense/txC5usIbRgRg?\
+                                    org_id=or79Cob97KSh",
                                 "AccountBasedExpenseLineDetail": {
                                     "AccountRef": {
                                         "name": "Legal & Professional Fees:Accounting",
@@ -808,7 +825,10 @@ data = {
                                 "Id": "2",
                                 "Amount": 900.0,
                                 "DetailType": "AccountBasedExpenseLineDetail",
-                                "Description": "user4@fyleforgotham.in - Software - 2020-05-04 - C/2021/04/R/23 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txk9w63xZYyA?org_id=or79Cob97KSh",
+                                "Description": "user4@fyleforgotham.in - Software - \
+                                    2020-05-04 - C/2021/04/R/23 -  - https://staging.fyle.tech/\
+                                    app/main/#/enterprise/view_expense/txk9w63xZYyA?\
+                                    org_id=or79Cob97KSh",
                                 "AccountBasedExpenseLineDetail": {
                                     "AccountRef": {
                                         "name": "Legal & Professional Fees:Accounting",
@@ -921,7 +941,10 @@ data = {
                                 "Id": "1",
                                 "Amount": 608.0,
                                 "DetailType": "AccountBasedExpenseLineDetail",
-                                "Description": "user4@fyleforgotham.in - Software - 2020-05-07 - C/2021/04/R/23 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txh7HByDjFXT?org_id=or79Cob97KSh",
+                                "Description": "user4@fyleforgotham.in - Software - \
+                                    2020-05-07 - C/2021/04/R/23 -  - https://staging.fyle.tech/\
+                                    app/main/#/enterprise/view_expense/txh7HByDjFXT?\
+                                    org_id=or79Cob97KSh",
                                 "AccountBasedExpenseLineDetail": {
                                     "AccountRef": {
                                         "name": "Legal & Professional Fees:Accounting",
@@ -963,7 +986,8 @@ data = {
                         "CurrencyRef": {"name": "United States Dollar", "value": "USD"},
                         "CustomField": [],
                         "PaymentType": "Cash",
-                        "PrivateNote": "Reimbursable expense by user4@fyleforgotham.in on 2020-05-07",
+                        "PrivateNote": "Reimbursable expense by user4@fyleforgotham.in \
+                            on 2020-05-07",
                     },
                 },
                 "employee_name": "Samantha Washington",
@@ -1074,7 +1098,10 @@ data = {
                                 "Id": "1",
                                 "Amount": 383.0,
                                 "DetailType": "AccountBasedExpenseLineDetail",
-                                "Description": "user8@fyleforgotham.in - Office Supplies - 2020-05-06 - C/2021/04/R/38 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txjFtOcEBO4C?org_id=or79Cob97KSh",
+                                "Description": "user8@fyleforgotham.in - Office Supplies - \
+                                    2020-05-06 - C/2021/04/R/38 -  - https://staging.fyle.tech/\
+                                    app/main/#/enterprise/view_expense/txjFtOcEBO4C?\
+                                    org_id=or79Cob97KSh",
                                 "AccountBasedExpenseLineDetail": {
                                     "AccountRef": {
                                         "name": "Job Expenses:Equipment Rental",
@@ -1088,7 +1115,10 @@ data = {
                                 "Id": "2",
                                 "Amount": 1007.0,
                                 "DetailType": "AccountBasedExpenseLineDetail",
-                                "Description": "user8@fyleforgotham.in - Software - 2020-05-12 - C/2021/04/R/38 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txYgJFgb8MET?org_id=or79Cob97KSh",
+                                "Description": "user8@fyleforgotham.in - Software - \
+                                    2020-05-12 - C/2021/04/R/38 -  - https://staging.fyle.tech/\
+                                    app/main/#/enterprise/view_expense/txYgJFgb8MET?\
+                                    org_id=or79Cob97KSh",
                                 "AccountBasedExpenseLineDetail": {
                                     "AccountRef": {
                                         "name": "Legal & Professional Fees:Accounting",
@@ -1201,7 +1231,10 @@ data = {
                                 "Id": "1",
                                 "Amount": 797.0,
                                 "DetailType": "AccountBasedExpenseLineDetail",
-                                "Description": "user8@fyleforgotham.in - Office Party - 2020-05-01 - C/2021/04/R/38 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/tx77CqtMUW2L?org_id=or79Cob97KSh",
+                                "Description": "user8@fyleforgotham.in - Office Party - \
+                                    2020-05-01 - C/2021/04/R/38 -  - https://staging.fyle.tech/\
+                                    app/main/#/enterprise/view_expense/tx77CqtMUW2L?\
+                                    org_id=or79Cob97KSh",
                                 "AccountBasedExpenseLineDetail": {
                                     "AccountRef": {
                                         "name": "Meals and Entertainment",
@@ -1243,7 +1276,8 @@ data = {
                         "CurrencyRef": {"name": "United States Dollar", "value": "USD"},
                         "CustomField": [],
                         "PaymentType": "Cash",
-                        "PrivateNote": "Reimbursable expense by user8@fyleforgotham.in on 2020-05-01",
+                        "PrivateNote": "Reimbursable expense by user8@fyleforgotham.in \
+                            on 2020-05-01",
                     },
                 },
                 "employee_name": "Jessica Lane",
@@ -1394,7 +1428,7 @@ data = {
                                 "Id": "1",
                                 "Amount": 701.0,
                                 "DetailType": "AccountBasedExpenseLineDetail",
-                                "Description": "user9@fyleforgotham.in - Office Party - 2020-05-05 - C/2021/04/R/42 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/tx3o8Yb29JVH?org_id=or79Cob97KSh",
+                                "Description": "user9@fyleforgotham.in - Office Party - 2020-05-05 - C/2021/04/R/42 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/tx3o8Yb29JVH?org_id=or79Cob97KSh",  # noqa: E501
                                 "AccountBasedExpenseLineDetail": {
                                     "AccountRef": {
                                         "name": "Meals and Entertainment",
@@ -1408,7 +1442,7 @@ data = {
                                 "Id": "2",
                                 "Amount": 1104.0,
                                 "DetailType": "AccountBasedExpenseLineDetail",
-                                "Description": "user9@fyleforgotham.in - Food - 2020-05-11 - C/2021/04/R/42 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txUve21xzdtr?org_id=or79Cob97KSh",
+                                "Description": "user9@fyleforgotham.in - Food - 2020-05-11 - C/2021/04/R/42 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txUve21xzdtr?org_id=or79Cob97KSh",  # noqa: E501
                                 "AccountBasedExpenseLineDetail": {
                                     "AccountRef": {
                                         "name": "Meals and Entertainment",
@@ -1422,7 +1456,7 @@ data = {
                                 "Id": "3",
                                 "Amount": 642.0,
                                 "DetailType": "AccountBasedExpenseLineDetail",
-                                "Description": "user9@fyleforgotham.in - Food - 2020-05-07 - C/2021/04/R/42 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/tx4q4RJTeYBw?org_id=or79Cob97KSh",
+                                "Description": "user9@fyleforgotham.in - Food - 2020-05-07 - C/2021/04/R/42 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/tx4q4RJTeYBw?org_id=or79Cob97KSh",  # noqa: E501
                                 "AccountBasedExpenseLineDetail": {
                                     "AccountRef": {
                                         "name": "Meals and Entertainment",
@@ -1535,7 +1569,7 @@ data = {
                                 "Id": "1",
                                 "Amount": 352.0,
                                 "DetailType": "AccountBasedExpenseLineDetail",
-                                "Description": "user8@fyleforgotham.in - Office Party - 2020-05-07 - C/2021/04/R/38 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txladt6mN4nj?org_id=or79Cob97KSh",
+                                "Description": "user8@fyleforgotham.in - Office Party - 2020-05-07 - C/2021/04/R/38 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txladt6mN4nj?org_id=or79Cob97KSh",  # noqa: E501
                                 "AccountBasedExpenseLineDetail": {
                                     "AccountRef": {
                                         "name": "Meals and Entertainment",
@@ -1577,7 +1611,7 @@ data = {
                         "CurrencyRef": {"name": "United States Dollar", "value": "USD"},
                         "CustomField": [],
                         "PaymentType": "Cash",
-                        "PrivateNote": "Reimbursable expense by user8@fyleforgotham.in on 2020-05-07",
+                        "PrivateNote": "Reimbursable expense by user8@fyleforgotham.in on 2020-05-07",  # noqa: E501
                     },
                 },
                 "employee_name": "Jessica Lane",
@@ -1663,7 +1697,7 @@ data = {
                                 "Id": "1",
                                 "Amount": 100.0,
                                 "DetailType": "AccountBasedExpenseLineDetail",
-                                "Description": "ashwin.t@fyle.in - Taxi - 2022-05-13 - C/2022/05/R/4 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txgUAIXUPQ8r?org_id=or79Cob97KSh",
+                                "Description": "ashwin.t@fyle.in - Taxi - 2022-05-13 - C/2022/05/R/4 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txgUAIXUPQ8r?org_id=or79Cob97KSh",  # noqa: E501
                                 "AccountBasedExpenseLineDetail": {
                                     "AccountRef": {"name": "Automobile", "value": "55"},
                                     "TaxCodeRef": {"value": "NON"},
@@ -1704,7 +1738,7 @@ data = {
                         "CurrencyRef": {"name": "United States Dollar", "value": "USD"},
                         "CustomField": [],
                         "PaymentType": "CreditCard",
-                        "PrivateNote": "Credit card expense by ashwin.t@fyle.in spent on merchant Allison Hill on 2022-05-13",
+                        "PrivateNote": "Credit card expense by ashwin.t@fyle.in spent on merchant Allison Hill on 2022-05-13",  # noqa: E501
                     },
                 },
                 "employee_name": "Joanna",
@@ -1855,7 +1889,7 @@ data = {
                                 "Id": "1",
                                 "Amount": 801.0,
                                 "DetailType": "AccountBasedExpenseLineDetail",
-                                "Description": "user9@fyleforgotham.in - Food - 2020-05-10 - C/2021/04/R/42 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txHmoggWDQZs?org_id=or79Cob97KSh",
+                                "Description": "user9@fyleforgotham.in - Food - 2020-05-10 - C/2021/04/R/42 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txHmoggWDQZs?org_id=or79Cob97KSh",  # noqa: E501
                                 "AccountBasedExpenseLineDetail": {
                                     "AccountRef": {
                                         "name": "Meals and Entertainment",
@@ -1869,7 +1903,7 @@ data = {
                                 "Id": "2",
                                 "Amount": 1803.0,
                                 "DetailType": "AccountBasedExpenseLineDetail",
-                                "Description": "user9@fyleforgotham.in - Office Party - 2020-05-01 - C/2021/04/R/42 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txqy5WraeWt6?org_id=or79Cob97KSh",
+                                "Description": "user9@fyleforgotham.in - Office Party - 2020-05-01 - C/2021/04/R/42 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txqy5WraeWt6?org_id=or79Cob97KSh",  # noqa: E501   # noqa: E501
                                 "AccountBasedExpenseLineDetail": {
                                     "AccountRef": {
                                         "name": "Meals and Entertainment",
@@ -1883,7 +1917,7 @@ data = {
                                 "Id": "3",
                                 "Amount": 592.0,
                                 "DetailType": "AccountBasedExpenseLineDetail",
-                                "Description": "user9@fyleforgotham.in - Others - 2020-05-01 - C/2021/04/R/42 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/tx5PXU8lacAv?org_id=or79Cob97KSh",
+                                "Description": "user9@fyleforgotham.in - Others - 2020-05-01 - C/2021/04/R/42 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/tx5PXU8lacAv?org_id=or79Cob97KSh",  # noqa: E501
                                 "AccountBasedExpenseLineDetail": {
                                     "AccountRef": {
                                         "name": "Commissions & fees",
@@ -2010,7 +2044,7 @@ data = {
                                 "Id": "1",
                                 "Amount": 18.46,
                                 "DetailType": "AccountBasedExpenseLineDetail",
-                                "Description": "ashwin.t@fyle.in - Food - 2021-09-30 - C/2021/12/R/36 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txNEnr2OEtkm?org_id=or79Cob97KSh",
+                                "Description": "ashwin.t@fyle.in - Food - 2021-09-30 - C/2021/12/R/36 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txNEnr2OEtkm?org_id=or79Cob97KSh",  # noqa: E501
                                 "AccountBasedExpenseLineDetail": {
                                     "AccountRef": {
                                         "name": "Meals and Entertainment",
@@ -2054,7 +2088,7 @@ data = {
                         "CurrencyRef": {"name": "United States Dollar", "value": "USD"},
                         "CustomField": [],
                         "PaymentType": "CreditCard",
-                        "PrivateNote": "Credit card expense by ashwin.t@fyle.in spent on merchant Shiv Sagar on 2021-09-30",
+                        "PrivateNote": "Credit card expense by ashwin.t@fyle.in spent on merchant Shiv Sagar on 2021-09-30",  # noqa: E501
                     },
                 },
                 "employee_name": "Ashwin",
@@ -2140,7 +2174,7 @@ data = {
                                 "Id": "1",
                                 "Amount": 1.0,
                                 "DetailType": "AccountBasedExpenseLineDetail",
-                                "Description": "ashwin.t@fyle.in - Food - 2022-05-17 - C/2022/05/R/5 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txj8kWkDTyog?org_id=or79Cob97KSh",
+                                "Description": "ashwin.t@fyle.in - Food - 2022-05-17 - C/2022/05/R/5 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txj8kWkDTyog?org_id=or79Cob97KSh",  # noqa: E501
                                 "AccountBasedExpenseLineDetail": {
                                     "AccountRef": {
                                         "name": "Meals and Entertainment",
@@ -2184,7 +2218,7 @@ data = {
                         "CurrencyRef": {"name": "United States Dollar", "value": "USD"},
                         "CustomField": [],
                         "PaymentType": "CreditCard",
-                        "PrivateNote": "Credit card expense by ashwin.t@fyle.in spent on merchant Ashwin on 2022-05-17",
+                        "PrivateNote": "Credit card expense by ashwin.t@fyle.in spent on merchant Ashwin on 2022-05-17",  # noqa: E501
                     },
                 },
                 "employee_name": "Joanna",
@@ -2295,7 +2329,7 @@ data = {
                                 "Id": "1",
                                 "Amount": 727.0,
                                 "DetailType": "AccountBasedExpenseLineDetail",
-                                "Description": "user8@fyleforgotham.in - Food - 2020-05-03 - C/2021/04/R/38 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txgryOAgCf9b?org_id=or79Cob97KSh",
+                                "Description": "user8@fyleforgotham.in - Food - 2020-05-03 - C/2021/04/R/38 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txgryOAgCf9b?org_id=or79Cob97KSh",  # noqa: E501
                                 "AccountBasedExpenseLineDetail": {
                                     "AccountRef": {
                                         "name": "Meals and Entertainment",
@@ -2309,7 +2343,7 @@ data = {
                                 "Id": "2",
                                 "Amount": 1390.0,
                                 "DetailType": "AccountBasedExpenseLineDetail",
-                                "Description": "user8@fyleforgotham.in - Food - 2020-05-10 - C/2021/04/R/38 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txgXWggJGBf0?org_id=or79Cob97KSh",
+                                "Description": "user8@fyleforgotham.in - Food - 2020-05-10 - C/2021/04/R/38 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txgXWggJGBf0?org_id=or79Cob97KSh",  # noqa: E501
                                 "AccountBasedExpenseLineDetail": {
                                     "AccountRef": {
                                         "name": "Meals and Entertainment",
@@ -2468,7 +2502,7 @@ data = {
                         "Id": "1",
                         "Amount": 50.0,
                         "DetailType": "AccountBasedExpenseLineDetail",
-                        "Description": "ashwin.t@fyle.in - Food - 2022-05-13 - C/2022/05/R/4 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txxTi9ZfdepC?org_id=or79Cob97KSh",
+                        "Description": "ashwin.t@fyle.in - Food - 2022-05-13 - C/2022/05/R/4 -  - https://staging.fyle.tech/app/main/#/enterprise/view_expense/txxTi9ZfdepC?org_id=or79Cob97KSh",  # noqa: E501
                         "AccountBasedExpenseLineDetail": {
                             "AccountRef": {
                                 "name": "Meals and Entertainment",
@@ -2510,7 +2544,7 @@ data = {
                 "CurrencyRef": {"name": "United States Dollar", "value": "USD"},
                 "CustomField": [],
                 "PaymentType": "Cash",
-                "PrivateNote": "Reimbursable expense by ashwin.t@fyle.in spent on merchant Ashwin on 2022-05-13",
+                "PrivateNote": "Reimbursable expense by ashwin.t@fyle.in spent on merchant Ashwin on 2022-05-13",  # noqa: E501
             },
         },
         "employee_name": "Joanna",
@@ -9424,13 +9458,12 @@ data = {
     ],
     "reimbursements": [
         {
-            "id": 2,
+            "id": "reimgCW1Og0BcM",
             "amount": 76,
             "code": None,
             "created_at": "2022-01-20T16:30:44.584100",
             "creator_user_id": "usqywo0f3nBY",
             "currency": "USD",
-            "id": "reimgCW1Og0BcM",
             "is_exported": False,
             "is_paid": False,
             "mode": "OFFLINE",
@@ -9632,7 +9665,7 @@ data = {
                     "approver_users": [],
                     "code": "Template-FF",
                     "created_at": "2022-08-10T16:50:50.914909+00:00",
-                    "description": "Sage Intacct Project - Fixed Fee Project with Five Tasks, Id - Template-FF",
+                    "description": "Sage Intacct Project - Fixed Fee Project with Five Tasks, Id - Template-FF",  # noqa: E501
                     "display_name": "Fixed Fee Project with Five Tasks",
                     "id": 300177,
                     "is_enabled": True,

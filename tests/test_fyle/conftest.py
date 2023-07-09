@@ -1,11 +1,9 @@
 from datetime import datetime, timezone
+
 import pytest
+
 from apps.fyle.models import ExpenseGroupSettings
-from apps.workspaces.models import Workspace, FyleCredential
-from fyle.platform import Platform
-from fyle_rest_auth.models import AuthToken, User
-from apps.fyle.helpers import get_access_token
-from fyle_qbo_api.tests import settings
+from apps.workspaces.models import Workspace
 
 
 @pytest.fixture
@@ -28,7 +26,8 @@ def create_temp_workspace(db):
 
     ExpenseGroupSettings.objects.create(
         reimbursable_expense_group_fields="{employee_email,report_id,claim_number,fund_source}",
-        corporate_credit_card_expense_group_fields="{fund_source,employee_email,claim_number,expense_id,report_id}",
+        corporate_credit_card_expense_group_fields="{fund_source,employee_email,\
+            claim_number,expense_id,report_id}",
         expense_state="PAYMENT PROCESSING",
         ccc_expense_state="PAID",
         workspace_id=98,

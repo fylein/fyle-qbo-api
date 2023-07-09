@@ -1,12 +1,8 @@
-from datetime import timedelta
 import json
 
-from django_q.models import Schedule
-
-from tests.helper import dict_compare_keys
-
 from apps.workspaces.models import Workspace
-from .fixtures import data
+from tests.helper import dict_compare_keys
+from tests.test_workspaces.test_apis.test_import_settings.fixtures import data
 
 
 def test_import_settings(mocker, api_client, test_connection):

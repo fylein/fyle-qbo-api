@@ -1,32 +1,58 @@
-import ast
 import json
-import os
 import logging
-import pytest
 import random
 from unittest import mock
+
 from django_q.models import Schedule
-from apps.tasks.models import TaskLog
-from apps.quickbooks_online.models import *
-from apps.quickbooks_online.tasks import __validate_expense_group
-from apps.quickbooks_online.tasks import *
-from apps.workspaces.queue import *
-from apps.mappings.queue import *
-from apps.quickbooks_online.queue import *
-from fyle_qbo_api.exceptions import BulkError
-from qbosdk.exceptions import WrongParamsError
-from fyle_accounting_mappings.models import EmployeeMapping
-from apps.workspaces.models import WorkspaceGeneralSettings, QBOCredential
 from fyle_accounting_mappings.models import (
     DestinationAttribute,
     EmployeeMapping,
     ExpenseAttribute,
 )
-from apps.fyle.models import ExpenseGroup, Reimbursement, Expense
-from apps.quickbooks_online.utils import QBOConnector
-from apps.quickbooks_online.exceptions import handle_quickbooks_error
-from .fixtures import data
+from qbosdk.exceptions import WrongParamsError
 
+from apps.fyle.models import Expense, ExpenseGroup, Reimbursement
+from apps.mappings.queue import schedule_bill_payment_creation
+from apps.quickbooks_online.exceptions import handle_quickbooks_error
+from apps.quickbooks_online.queue import (
+    schedule_bills_creation,
+    schedule_cheques_creation,
+    schedule_credit_card_purchase_creation,
+    schedule_journal_entry_creation,
+    schedule_qbo_expense_creation,
+    schedule_qbo_objects_status_sync,
+    schedule_reimbursements_sync,
+)
+from apps.quickbooks_online.tasks import (
+    Bill,
+    BillLineitem,
+    Cheque,
+    CreditCardPurchase,
+    Error,
+    GeneralMapping,
+    JournalEntry,
+    Mapping,
+    QBOExpense,
+    QBOExpenseLineitem,
+    __validate_expense_group,
+    async_sync_accounts,
+    check_qbo_object_status,
+    create_bill,
+    create_bill_payment,
+    create_cheque,
+    create_credit_card_purchase,
+    create_journal_entry,
+    create_or_update_employee_mapping,
+    create_qbo_expense,
+    get_or_create_credit_card_or_debit_card_vendor,
+    process_reimbursements,
+    update_last_export_details,
+)
+from apps.quickbooks_online.utils import QBOConnector
+from apps.tasks.models import TaskLog
+from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings
+from fyle_qbo_api.exceptions import BulkError
+from tests.test_quickbooks_online.fixtures import data
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +80,7 @@ def test_get_or_create_credit_card_or_debit_card_vendor(mocker, db):
             contact = get_or_create_credit_card_or_debit_card_vendor(
                 workspace_id, "samp_merchant", False, general_settings
             )
-    except:
+    except Exception:
         logger.info("wrong parameters")
 
     general_settings.auto_create_merchants_as_vendors = False
@@ -85,7 +111,7 @@ def test_get_or_create_credit_card_or_debit_card_vendor(mocker, db):
             contact = get_or_create_credit_card_or_debit_card_vendor(
                 workspace_id, "samp_merchant", False, general_settings
             )
-    except:
+    except Exception:
         logger.info("wrong parameters")
 
 
@@ -153,7 +179,7 @@ def test_create_or_update_employee_mapping(mocker, db):
                 qbo_connection=qbo_connection,
                 auto_map_employees_preference="NAME",
             )
-        except:
+        except Exception:
             logger.info("Employee mapping not found")
 
 
@@ -287,10 +313,8 @@ def test_changing_accounting_period(mocker, db, create_task_logs):
                             "Error": [
                                 {
                                     "code": 6210,
-                                    "Message": "Account Period Closed, Cannot Update Through Services API",
-                                    "Detail": "The account period has closed and the account books cannot be updated \
-                                        through through the QBO Services API. \
-                                            Please use the QBO website to make these changes.",
+                                    "Message": "Account Period Closed, Cannot Update Through Services API",  # noqa: E501
+                                    "Detail": "The account period has closed and the account books cannot be updated through through the QBO Services API. Please use the QBO website to make these changes.",  # noqa: E501
                                 }
                             ],
                         }
@@ -327,10 +351,8 @@ def test_changing_accounting_period(mocker, db, create_task_logs):
                             "Error": [
                                 {
                                     "code": 6210,
-                                    "Message": "Account Period Closed, Cannot Update Through Services API",
-                                    "Detail": "The account period has closed and the account books cannot be updated \
-                                        through through the QBO Services API. \
-                                            Please use the QBO website to make these changes.",
+                                    "Message": "Account Period Closed, Cannot Update Through Services API",  # noqa: E501
+                                    "Detail": "The account period has closed and the account books cannot be updated through through the QBO Services API. Please use the QBO website to make these changes.",  # noqa: E501
                                 }
                             ],
                         }
@@ -953,7 +975,7 @@ def test_post_bill_payment_exceptions(mocker, db):
         try:
             mock_call.side_effect = QBOCredential.DoesNotExist()
             create_bill_payment(workspace_id)
-        except:
+        except Exception:
             logger.info("QBO credentials not found")
 
 
@@ -1015,10 +1037,8 @@ def test_handle_quickbooks_errors(db):
                         "Error": [
                             {
                                 "code": 6210,
-                                "Message": "Account Period Closed, Cannot Update Through Services API",
-                                "Detail": "The account period has closed and the account books cannot be updated \
-                                    through through the QBO Services API. \
-                                        Please use the QBO website to make these changes.",
+                                "Message": "Account Period Closed, Cannot Update Through Services API",  # noqa: E501
+                                "Detail": "The account period has closed and the account books cannot be updated through through the QBO Services API. Please use the QBO website to make these changes.",  # noqa: E501
                             }
                         ],
                     }
@@ -1045,9 +1065,7 @@ def test_check_qbo_object_status(mocker, db):
     expense_group = ExpenseGroup.objects.get(id=8)
     workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
     bill = Bill.create_bill(expense_group)
-    bill_lineitems = BillLineitem.create_bill_lineitems(
-        expense_group, workspace_general_settings
-    )
+    BillLineitem.create_bill_lineitems(expense_group, workspace_general_settings)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     task_log.expense_group = bill.expense_group
@@ -1181,7 +1199,7 @@ def test__validate_expense_group(mocker, db):
 
     try:
         __validate_expense_group(expense_group, general_settings)
-    except:
+    except Exception:
         logger.info("Mappings are missing")
 
     expense_group.description.update({"employee_email": "ashwin.t@fyle.in"})
@@ -1192,7 +1210,7 @@ def test__validate_expense_group(mocker, db):
 
     try:
         __validate_expense_group(expense_group, general_settings)
-    except:
+    except Exception:
         logger.info("Mappings are missing")
 
     general_settings.corporate_credit_card_expenses_object = "DEBIT CARD EXPENSE"
@@ -1209,10 +1227,10 @@ def test__validate_expense_group(mocker, db):
 
     try:
         __validate_expense_group(expense_group, general_settings)
-    except:
+    except Exception:
         logger.info("Mappings are missing")
 
-    account = Mapping.objects.filter(
+    Mapping.objects.filter(
         source_type="CATEGORY",
         destination_type="ACCOUNT",
         source__value="Food",
@@ -1221,7 +1239,7 @@ def test__validate_expense_group(mocker, db):
 
     try:
         __validate_expense_group(expense_group, general_settings)
-    except:
+    except Exception:
         logger.info("Mappings are missing")
 
     general_mapping = GeneralMapping.objects.get(
@@ -1230,7 +1248,7 @@ def test__validate_expense_group(mocker, db):
     general_mapping.delete()
     try:
         __validate_expense_group(expense_group, general_settings)
-    except:
+    except Exception:
         logger.info("Mappings are missing")
 
 

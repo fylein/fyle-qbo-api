@@ -1,28 +1,30 @@
-import pytest
 import json
 from datetime import datetime
+
+import pytest
+from fyle_accounting_mappings.models import (
+    DestinationAttribute,
+    ExpenseAttribute,
+    Mapping,
+)
+
 from apps.fyle.models import Expense, ExpenseGroup
-from apps.workspaces.models import WorkspaceGeneralSettings
 from apps.quickbooks_online.models import (
     Bill,
     BillLineitem,
+    BillPayment,
+    BillPaymentLineitem,
+    Cheque,
+    ChequeLineitem,
     CreditCardPurchase,
     CreditCardPurchaseLineitem,
     JournalEntry,
     JournalEntryLineitem,
     QBOExpense,
     QBOExpenseLineitem,
-    Cheque,
-    ChequeLineitem,
-    BillPayment,
-    BillPaymentLineitem,
 )
 from apps.tasks.models import TaskLog
-from fyle_accounting_mappings.models import (
-    DestinationAttribute,
-    ExpenseAttribute,
-    Mapping,
-)
+from apps.workspaces.models import WorkspaceGeneralSettings
 
 
 def create_item_based_mapping(workspace_id):
@@ -88,7 +90,7 @@ def create_bill_item_and_account_based(db):
         expense_created_at=datetime.now(),
         expense_updated_at=datetime.now(),
         custom_properties=json.loads(
-            '{"Card": "", "Killua": "", "Classes": "", "avc_123": null, "New Field": "", "Multi field": "", "Testing This": "", "abc in [123]": null, "POSTMAN FIELD": "", "Netsuite Class": ""}'
+            '{"Card": "", "Killua": "", "Classes": "", "avc_123": null, "New Field": "", "Multi field": "", "Testing This": "", "abc in [123]": null, "POSTMAN FIELD": "", "Netsuite Class": ""}'  # noqa: E501
         ),
         fund_source="CCC",
         payment_number="P/2023/04/R/2",
@@ -117,7 +119,7 @@ def create_bill_item_and_account_based(db):
         expense_created_at=datetime.now(),
         expense_updated_at=datetime.now(),
         custom_properties=json.loads(
-            '{"Card": "", "Killua": "", "Classes": "", "avc_123": null, "New Field": "", "Multi field": "", "Testing This": "", "abc in [123]": null, "POSTMAN FIELD": "", "Netsuite Class": ""}'
+            '{"Card": "", "Killua": "", "Classes": "", "avc_123": null, "New Field": "", "Multi field": "", "Testing This": "", "abc in [123]": null, "POSTMAN FIELD": "", "Netsuite Class": ""}'  # noqa: E501
         ),
         fund_source="CCC",
         payment_number="P/2023/04/R/3",
@@ -127,7 +129,7 @@ def create_bill_item_and_account_based(db):
         workspace_id=4,
         fund_source="CCC",
         description=json.loads(
-            '{"report_id": "rpcegBZcwUkHI", "fund_source": "CCC", "claim_number": "C/2023/04/R/2", "employee_email": "sravan.kumar@fyle.in"}'
+            '{"report_id": "rpcegBZcwUkHI", "fund_source": "CCC", "claim_number": "C/2023/04/R/2", "employee_email": "sravan.kumar@fyle.in"}'  # noqa: E501
         ),
         employee_name="sravan k",
     )
@@ -172,7 +174,7 @@ def create_bill_item_based(db):
         expense_created_at=datetime.now(),
         expense_updated_at=datetime.now(),
         custom_properties=json.loads(
-            '{"Card": "", "Killua": "", "Classes": "", "avc_123": null, "New Field": "", "Multi field": "", "Testing This": "", "abc in [123]": null, "POSTMAN FIELD": "", "Netsuite Class": ""}'
+            '{"Card": "", "Killua": "", "Classes": "", "avc_123": null, "New Field": "", "Multi field": "", "Testing This": "", "abc in [123]": null, "POSTMAN FIELD": "", "Netsuite Class": ""}'  # noqa: E501
         ),
         fund_source="CCC",
         payment_number="P/2023/04/R/1",
@@ -182,7 +184,7 @@ def create_bill_item_based(db):
         workspace_id=4,
         fund_source="CCC",
         description=json.loads(
-            '{"report_id": "rpcegBZcwUkH", "fund_source": "CCC", "claim_number": "C/2023/04/R/1", "employee_email": "sravan.kumar@fyle.in"}'
+            '{"report_id": "rpcegBZcwUkH", "fund_source": "CCC", "claim_number": "C/2023/04/R/1", "employee_email": "sravan.kumar@fyle.in"}'  # noqa: E501
         ),
         employee_name="sravan k",
     )
@@ -227,7 +229,7 @@ def create_credit_card_purchase_item_based(db):
         expense_created_at=datetime.now(),
         expense_updated_at=datetime.now(),
         custom_properties=json.loads(
-            '{"Card": "", "Killua": "", "Classes": "", "avc_123": null, "New Field": "", "Multi field": "", "Testing This": "", "abc in [123]": null, "POSTMAN FIELD": "", "Netsuite Class": ""}'
+            '{"Card": "", "Killua": "", "Classes": "", "avc_123": null, "New Field": "", "Multi field": "", "Testing This": "", "abc in [123]": null, "POSTMAN FIELD": "", "Netsuite Class": ""}'  # noqa: E501
         ),
         fund_source="CCC",
         payment_number="P/2023/04/R/4",
@@ -237,7 +239,7 @@ def create_credit_card_purchase_item_based(db):
         workspace_id=3,
         fund_source="CCC",
         description=json.loads(
-            '{"report_id": "rpcegBZcwUkH", "fund_source": "CCC", "claim_number": "C/2023/04/R/3", "employee_email": "sravan.kumar@fyle.in"}'
+            '{"report_id": "rpcegBZcwUkH", "fund_source": "CCC", "claim_number": "C/2023/04/R/3", "employee_email": "sravan.kumar@fyle.in"}'  # noqa: E501
         ),
         employee_name="sravan k",
     )
@@ -286,7 +288,7 @@ def create_credit_card_purchase_item_and_account_based(db):
         expense_created_at=datetime.now(),
         expense_updated_at=datetime.now(),
         custom_properties=json.loads(
-            '{"Card": "", "Killua": "", "Classes": "", "avc_123": null, "New Field": "", "Multi field": "", "Testing This": "", "abc in [123]": null, "POSTMAN FIELD": "", "Netsuite Class": ""}'
+            '{"Card": "", "Killua": "", "Classes": "", "avc_123": null, "New Field": "", "Multi field": "", "Testing This": "", "abc in [123]": null, "POSTMAN FIELD": "", "Netsuite Class": ""}'  # noqa: E501
         ),
         fund_source="CCC",
         payment_number="P/2023/04/R/5",
@@ -315,7 +317,7 @@ def create_credit_card_purchase_item_and_account_based(db):
         expense_created_at=datetime.now(),
         expense_updated_at=datetime.now(),
         custom_properties=json.loads(
-            '{"Card": "", "Killua": "", "Classes": "", "avc_123": null, "New Field": "", "Multi field": "", "Testing This": "", "abc in [123]": null, "POSTMAN FIELD": "", "Netsuite Class": ""}'
+            '{"Card": "", "Killua": "", "Classes": "", "avc_123": null, "New Field": "", "Multi field": "", "Testing This": "", "abc in [123]": null, "POSTMAN FIELD": "", "Netsuite Class": ""}'  # noqa: E501
         ),
         fund_source="CCC",
         payment_number="P/2023/04/R/6",
@@ -325,7 +327,7 @@ def create_credit_card_purchase_item_and_account_based(db):
         workspace_id=3,
         fund_source="CCC",
         description=json.loads(
-            '{"report_id": "rpcegBZcwUkUi", "fund_source": "CCC", "claim_number": "C/2023/04/R/4", "employee_email": "sravan.kumar@fyle.in"}'
+            '{"report_id": "rpcegBZcwUkUi", "fund_source": "CCC", "claim_number": "C/2023/04/R/4", "employee_email": "sravan.kumar@fyle.in"}'  # noqa: E501
         ),
         employee_name="sravan k",
     )
@@ -414,7 +416,7 @@ def create_qbo_expense_item_based(db):
         expense_created_at=datetime.now(),
         expense_updated_at=datetime.now(),
         custom_properties=json.loads(
-            '{"Card": "", "Killua": "", "Classes": "", "avc_123": null, "New Field": "", "Multi field": "", "Testing This": "", "abc in [123]": null, "POSTMAN FIELD": "", "Netsuite Class": ""}'
+            '{"Card": "", "Killua": "", "Classes": "", "avc_123": null, "New Field": "", "Multi field": "", "Testing This": "", "abc in [123]": null, "POSTMAN FIELD": "", "Netsuite Class": ""}'  # noqa: E501
         ),
         fund_source="CCC",
         payment_number="P/2023/04/R/10",
@@ -424,7 +426,7 @@ def create_qbo_expense_item_based(db):
         workspace_id=3,
         fund_source="CCC",
         description=json.loads(
-            '{"report_id": "rpcegBZcwpoP", "fund_source": "CCC", "claim_number": "C/2023/04/R/6", "employee_email": "sravan.kumar@fyle.in"}'
+            '{"report_id": "rpcegBZcwpoP", "fund_source": "CCC", "claim_number": "C/2023/04/R/6", "employee_email": "sravan.kumar@fyle.in"}'  # noqa: E501
         ),
         employee_name="sravan k",
     )
@@ -469,7 +471,7 @@ def create_qbo_expense_item_and_account_based(db):
         expense_created_at=datetime.now(),
         expense_updated_at=datetime.now(),
         custom_properties=json.loads(
-            '{"Card": "", "Killua": "", "Classes": "", "avc_123": null, "New Field": "", "Multi field": "", "Testing This": "", "abc in [123]": null, "POSTMAN FIELD": "", "Netsuite Class": ""}'
+            '{"Card": "", "Killua": "", "Classes": "", "avc_123": null, "New Field": "", "Multi field": "", "Testing This": "", "abc in [123]": null, "POSTMAN FIELD": "", "Netsuite Class": ""}'  # noqa: E501
         ),
         fund_source="CCC",
         payment_number="P/2023/04/R/13",
@@ -498,7 +500,7 @@ def create_qbo_expense_item_and_account_based(db):
         expense_created_at=datetime.now(),
         expense_updated_at=datetime.now(),
         custom_properties=json.loads(
-            '{"Card": "", "Killua": "", "Classes": "", "avc_123": null, "New Field": "", "Multi field": "", "Testing This": "", "abc in [123]": null, "POSTMAN FIELD": "", "Netsuite Class": ""}'
+            '{"Card": "", "Killua": "", "Classes": "", "avc_123": null, "New Field": "", "Multi field": "", "Testing This": "", "abc in [123]": null, "POSTMAN FIELD": "", "Netsuite Class": ""}'  # noqa: E501
         ),
         fund_source="CCC",
         payment_number="P/2023/04/R/12",
@@ -508,7 +510,7 @@ def create_qbo_expense_item_and_account_based(db):
         workspace_id=3,
         fund_source="CCC",
         description=json.loads(
-            '{"report_id": "rpcegBZcwUkpiL", "fund_source": "CCC", "claim_number": "C/2023/04/R/6", "employee_email": "sravan.kumar@fyle.in"}'
+            '{"report_id": "rpcegBZcwUkpiL", "fund_source": "CCC", "claim_number": "C/2023/04/R/6", "employee_email": "sravan.kumar@fyle.in"}'  # noqa: E501
         ),
         employee_name="sravan k",
     )
@@ -565,7 +567,7 @@ def create_cheque_item_based(db):
         expense_created_at=datetime.now(),
         expense_updated_at=datetime.now(),
         custom_properties=json.loads(
-            '{"Card": "", "Killua": "", "Classes": "", "avc_123": null, "New Field": "", "Multi field": "", "Testing This": "", "abc in [123]": null, "POSTMAN FIELD": "", "Netsuite Class": ""}'
+            '{"Card": "", "Killua": "", "Classes": "", "avc_123": null, "New Field": "", "Multi field": "", "Testing This": "", "abc in [123]": null, "POSTMAN FIELD": "", "Netsuite Class": ""}'  # noqa: E501
         ),
         fund_source="PERSONAL",
         payment_number="P/2023/04/R/14",
@@ -575,7 +577,7 @@ def create_cheque_item_based(db):
         workspace_id=3,
         fund_source="PERSONAL",
         description=json.loads(
-            '{"report_id": "rpcegBZciploL", "fund_source": "PERSONAL", "claim_number": "C/2023/04/R/7", "employee_email": "user9@fyleforgotham.in"}'
+            '{"report_id": "rpcegBZciploL", "fund_source": "PERSONAL", "claim_number": "C/2023/04/R/7", "employee_email": "user9@fyleforgotham.in"}'  # noqa: E501
         ),
         employee_name="Justin Glass",
     )
@@ -620,7 +622,7 @@ def create_cheque_item_and_account_based(db):
         expense_created_at=datetime.now(),
         expense_updated_at=datetime.now(),
         custom_properties=json.loads(
-            '{"Card": "", "Killua": "", "Classes": "", "avc_123": null, "New Field": "", "Multi field": "", "Testing This": "", "abc in [123]": null, "POSTMAN FIELD": "", "Netsuite Class": ""}'
+            '{"Card": "", "Killua": "", "Classes": "", "avc_123": null, "New Field": "", "Multi field": "", "Testing This": "", "abc in [123]": null, "POSTMAN FIELD": "", "Netsuite Class": ""}'  # noqa: E501
         ),
         fund_source="PERSONAL",
         payment_number="P/2023/04/R/18",
@@ -649,7 +651,7 @@ def create_cheque_item_and_account_based(db):
         expense_created_at=datetime.now(),
         expense_updated_at=datetime.now(),
         custom_properties=json.loads(
-            '{"Card": "", "Killua": "", "Classes": "", "avc_123": null, "New Field": "", "Multi field": "", "Testing This": "", "abc in [123]": null, "POSTMAN FIELD": "", "Netsuite Class": ""}'
+            '{"Card": "", "Killua": "", "Classes": "", "avc_123": null, "New Field": "", "Multi field": "", "Testing This": "", "abc in [123]": null, "POSTMAN FIELD": "", "Netsuite Class": ""}'  # noqa: E501
         ),
         fund_source="PERSONAL",
         payment_number="P/2023/04/R/16",
@@ -659,7 +661,7 @@ def create_cheque_item_and_account_based(db):
         workspace_id=3,
         fund_source="PERSONAL",
         description=json.loads(
-            '{"report_id": "rpcegBZcipIpkiLL", "fund_source": "PERSONAL", "claim_number": "C/2023/04/R/13", "employee_email": "user9@fyleforgotham.in"}'
+            '{"report_id": "rpcegBZcipIpkiLL", "fund_source": "PERSONAL", "claim_number": "C/2023/04/R/13", "employee_email": "user9@fyleforgotham.in"}'  # noqa: E501
         ),
         employee_name="Justin Glass",
     )

@@ -1,7 +1,3 @@
-from apps.mappings.models import GeneralMapping
-from apps.workspaces.models import WorkspaceGeneralSettings
-
-
 def test_get_queryset(api_client, test_connection):
     access_token = test_connection.access_token
     url = "/api/workspaces/3/tasks/all/"

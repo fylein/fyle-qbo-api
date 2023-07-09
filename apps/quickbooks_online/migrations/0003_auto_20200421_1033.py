@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
     dependencies = [
         (
             "quickbooks_online",
-            "0002_cheque_chequelineitem_creditcardpurchase_creditcardpurchaselineitem_journalentry_journalentrylineite",
+            "0002_cheque_chequelineitem_creditcardpurchase_creditcardpurchaselineitem_journalentry_journalentrylineite",  # noqa: E501
         ),
     ]
 

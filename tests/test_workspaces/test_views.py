@@ -1,13 +1,13 @@
-from fyle_qbo_api.tests import settings
-import pytest
 import json
-from django.urls import reverse
 from unittest import mock
-from tests.helper import dict_compare_keys
-from fyle.platform import exceptions as fyle_exc
+
+from django.urls import reverse
 from qbosdk import exceptions as qbo_exc
-from apps.workspaces.models import *
-from .fixtures import data
+
+from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSettings
+from fyle_qbo_api.tests import settings
+from tests.helper import dict_compare_keys
+from tests.test_workspaces.fixtures import data
 
 
 def test_get_workspace(api_client, test_connection):
@@ -236,7 +236,7 @@ def test_prepare_e2e_test_view(mock_db, mocker, api_client, test_connection):
         "apps.quickbooks_online.utils.QBOConnector.sync_dimensions", return_value=None
     )
     mocker.patch(
-        "fyle_integrations_platform_connector.fyle_integrations_platform_connector.PlatformConnector.import_fyle_dimensions",
+        "fyle_integrations_platform_connector.fyle_integrations_platform_connector.PlatformConnector.import_fyle_dimensions",  # noqa: E501
         return_value=[],
     )
     mocker.patch(
@@ -256,14 +256,14 @@ def test_prepare_e2e_test_view(mock_db, mocker, api_client, test_connection):
     healthy_token.save()
 
     api_client.credentials(
-        HTTP_X_E2E_Tests_Client_ID="gAAAAABi8oXHBll3lEUPGpMDXnZDhVgSl_LMOkIF0ilfmSCL3wFxZnoTIbpdzwPoOFzS0vFO4qaX51JtAqCG2RBHZaf1e98hug=="
+        HTTP_X_E2E_Tests_Client_ID="gAAAAABi8oXHBll3lEUPGpMDXnZDhVgSl_LMOkIF0ilfmSCL3wFxZnoTIbpdzwPoOFzS0vFO4qaX51JtAqCG2RBHZaf1e98hug=="  # noqa: E501
     )
     response = api_client.post(url)
     assert response.status_code == 200
 
     url = reverse("setup-e2e-test", kwargs={"workspace_id": 6})
     api_client.credentials(
-        HTTP_X_E2E_Tests_Client_ID="gAAAAABi8oWVoonxF0K_g2TQnFdlpOJvGsBYa9rPtwfgM-puStki_qYbi0PdipWHqIBIMip94MDoaTP4MXOfERDeEGrbARCxPw=="
+        HTTP_X_E2E_Tests_Client_ID="gAAAAABi8oWVoonxF0K_g2TQnFdlpOJvGsBYa9rPtwfgM-puStki_qYbi0PdipWHqIBIMip94MDoaTP4MXOfERDeEGrbARCxPw=="  # noqa: E501
     )
     response = api_client.post(url)
     assert response.status_code == 400

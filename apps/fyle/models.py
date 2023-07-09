@@ -1,20 +1,19 @@
 """
 Fyle Models
 """
-from dateutil import parser
 from datetime import datetime
-from typing import List, Dict
-from babel.numbers import get_currency_precision
+from typing import Dict, List
 
+from babel.numbers import get_currency_precision
+from dateutil import parser
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.db import models
-from django.db.models import Count, Q, JSONField
+from django.db.models import Count, JSONField
+from fyle_accounting_mappings.models import ExpenseAttribute
 
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
-
-from fyle_accounting_mappings.models import ExpenseAttribute
 
 ALLOWED_FIELDS = [
     "employee_email",
@@ -387,7 +386,7 @@ class ExpenseGroupSettings(models.Model):
             workspace_id=workspace_id,
             defaults={
                 "reimbursable_expense_group_fields": reimbursable_grouped_by,
-                "corporate_credit_card_expense_group_fields": corporate_credit_card_expenses_grouped_by,
+                "corporate_credit_card_expense_group_fields": corporate_credit_card_expenses_grouped_by,  # noqa: E501
                 "expense_state": expense_group_settings["expense_state"],
                 "ccc_expense_state": expense_group_settings["ccc_expense_state"],
                 "reimbursable_export_date_type": expense_group_settings[

@@ -1,4 +1,4 @@
--- Usage: 
+-- Usage:
 -- select migrate_to_new_app(2);
 -- 2 is the workspace_id in this case
 

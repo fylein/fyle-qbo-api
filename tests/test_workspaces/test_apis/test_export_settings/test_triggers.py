@@ -1,4 +1,3 @@
-import pytest
 from apps.workspaces.apis.export_settings.triggers import ExportSettingsTrigger
 from apps.workspaces.models import WorkspaceGeneralSettings
 

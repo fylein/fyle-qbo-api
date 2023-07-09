@@ -1,5 +1,4 @@
 from unittest import mock
-from unittest.mock import Mock
 
 from django_q.models import Schedule
 from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
@@ -12,20 +11,44 @@ from fyle_accounting_mappings.models import (
     MappingSetting,
 )
 from fyle_integrations_platform_connector import PlatformConnector
-from qbosdk.exceptions import WrongParamsError
+from qbosdk.exceptions import WrongParamsError as QBOWrongParamsError
 
-from apps.mappings.queue import *
-from apps.mappings.tasks import *
+from apps.mappings.queue import (
+    schedule_auto_map_ccc_employees,
+    schedule_auto_map_employees,
+    schedule_cost_centers_creation,
+    schedule_fyle_attributes_creation,
+    schedule_tax_groups_creation,
+)
+from apps.mappings.tasks import (
+    Chain,
+    async_auto_create_custom_field_mappings,
+    async_auto_map_ccc_account,
+    async_auto_map_employees,
+    auto_create_category_mappings,
+    auto_create_cost_center_mappings,
+    auto_create_expense_fields_mappings,
+    auto_create_project_mappings,
+    auto_create_tax_codes_mappings,
+    auto_create_vendors_as_merchants,
+    auto_import_and_map_fyle_fields,
+    auto_map_ccc_employees,
+    auto_map_employees,
+    create_fyle_categories_payload,
+    create_fyle_cost_centers_payload,
+    disable_category_for_items_mapping,
+    post_merchants,
+    remove_duplicates,
+    resolve_expense_attribute_errors,
+)
 from apps.tasks.models import Error
 from apps.workspaces.models import (
     FyleCredential,
     QBOCredential,
     WorkspaceGeneralSettings,
 )
-from apps.workspaces.queue import *
 from tests.helper import dict_compare_keys
-
-from .fixtures import data
+from tests.test_mappings.fixtures import data
 
 
 def test_auto_create_tax_codes_mappings(db, mocker):
@@ -60,7 +83,7 @@ def test_auto_create_tax_codes_mappings(db, mocker):
     with mock.patch(
         "fyle_integrations_platform_connector.apis.TaxGroups.sync"
     ) as mock_call:
-        mock_call.side_effect = WrongParamsError(
+        mock_call.side_effect = QBOWrongParamsError(
             msg="invalid params", response="invalid params"
         )
         auto_create_tax_codes_mappings(workspace_id=workspace_id)
@@ -78,79 +101,6 @@ def test_auto_create_tax_codes_mappings(db, mocker):
 
     response = auto_create_tax_codes_mappings(workspace_id)
     assert response == None
-
-
-def test_disable_category_for_items_mapping(db, mocker):
-    workspace_id = 5
-    workspace_general_setting = WorkspaceGeneralSettings.objects.filter(
-        workspace_id=workspace_id
-    ).first()
-    workspace_general_setting.import_items = False
-    workspace_general_setting.save()
-
-    # mocking all the sdk calls
-    mocker.patch(
-        "fyle_integrations_platform_connector.apis.Categories.sync", return_value=[]
-    )
-    mocker.patch(
-        "fyle_integrations_platform_connector.apis.Categories.post_bulk",
-        return_value=[],
-    )
-    mocker.patch("qbosdk.apis.Items.get", return_value=[])
-
-    # adding test data to the database
-    destination_attribute = DestinationAttribute.objects.create(
-        attribute_type="ACCOUNT",
-        display_name="Item",
-        value="Concrete",
-        destination_id=3,
-        workspace_id=workspace_id,
-        active=False,
-    )
-    expense_attribute = ExpenseAttribute.objects.create(
-        attribute_type="CATEGORY",
-        display_name="Category",
-        value="Concrete",
-        source_id="253737253737",
-        workspace_id=workspace_id,
-        active=True,
-    )
-    Mapping.objects.create(
-        source_type="CATEGORY",
-        destination_type="ACCOUNT",
-        destination_id=destination_attribute.id,
-        source_id=expense_attribute.id,
-        workspace_id=workspace_id,
-    )
-
-    disable_category_for_items_mapping(workspace_id)
-
-    assert expense_attribute.active == False
-
-    with mock.patch(
-        "fyle_integrations_platform_connector.apis.Categories.sync"
-    ) as mock_call:
-        mock_call.side_effect = WrongParamsError(
-            msg="invalid params", response="invalid params"
-        )
-        disable_category_for_items_mapping(workspace_id)
-
-        mock_call.side_effect = QBOWrongParamsError(
-            msg="invalid params", response="invalid params"
-        )
-        disable_category_for_items_mapping(workspace_id)
-
-        mock_call.side_effect = FyleInvalidTokenError(
-            msg="Invalid Token for fyle", response="Invalid Token for fyle"
-        )
-        disable_category_for_items_mapping(workspace_id)
-
-        mock_call.side_effect = Exception
-        disable_category_for_items_mapping(workspace_id)
-
-    with mock.patch("qbosdk.apis.Items.get") as mock_call:
-        mock_call.side_effect = QBOCredential.DoesNotExist
-        disable_category_for_items_mapping(workspace_id)
 
 
 def test_disable_category_for_items_mapping(db, mocker):
@@ -193,7 +143,7 @@ def test_disable_category_for_items_mapping(db, mocker):
     with mock.patch(
         "fyle_integrations_platform_connector.apis.Categories.sync"
     ) as mock_call:
-        mock_call.side_effect = WrongParamsError(
+        mock_call.side_effect = QBOWrongParamsError(
             msg="invalid params", response="invalid params"
         )
         disable_category_for_items_mapping(workspace_id)
@@ -278,7 +228,7 @@ def test_auto_create_project_mappings(db, mocker):
     with mock.patch(
         "fyle_integrations_platform_connector.apis.Projects.sync"
     ) as mock_call:
-        mock_call.side_effect = WrongParamsError(
+        mock_call.side_effect = QBOWrongParamsError(
             msg="invalid params", response="invalid params"
         )
         auto_create_project_mappings(workspace_id=workspace_id)
@@ -382,7 +332,7 @@ def test_auto_create_category_mappings(db, mocker):
     with mock.patch(
         "fyle_integrations_platform_connector.apis.Projects.sync"
     ) as mock_call:
-        mock_call.side_effect = WrongParamsError(
+        mock_call.side_effect = QBOWrongParamsError(
             msg="invalid params", response="invalid params"
         )
         auto_create_project_mappings(workspace_id=workspace_id)
@@ -575,7 +525,7 @@ def test_auto_create_cost_center_mappings(db, mocker):
     with mock.patch(
         "fyle_integrations_platform_connector.apis.CostCenters.sync"
     ) as mock_call:
-        mock_call.side_effect = WrongParamsError(
+        mock_call.side_effect = QBOWrongParamsError(
             msg="invalid params", response="invalid params"
         )
         auto_create_cost_center_mappings(workspace_id)
@@ -663,7 +613,7 @@ def test_schedule_fyle_attributes_creation(db, mocker):
     with mock.patch(
         "fyle_accounting_mappings.models.Mapping.bulk_create_mappings"
     ) as mock_call:
-        mock_call.side_effect = WrongParamsError(
+        mock_call.side_effect = QBOWrongParamsError(
             msg="invalid params", response="invalid params"
         )
         auto_create_expense_fields_mappings(
@@ -728,7 +678,7 @@ def test_auto_create_vendors_as_merchants(db, mocker):
     with mock.patch(
         "fyle_integrations_platform_connector.apis.Merchants.sync"
     ) as mock_call:
-        mock_call.side_effect = WrongParamsError(
+        mock_call.side_effect = QBOWrongParamsError(
             msg="invalid params", response="invalid params"
         )
         auto_create_vendors_as_merchants(workspace_id=workspace_id)

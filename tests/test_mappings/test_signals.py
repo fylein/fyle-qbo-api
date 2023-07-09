@@ -1,12 +1,13 @@
-from apps.fyle.models import ExpenseGroupSettings
 import pytest
 from django_q.models import Schedule
 from fyle_accounting_mappings.models import (
-    MappingSetting,
-    Mapping,
-    ExpenseAttribute,
     EmployeeMapping,
+    ExpenseAttribute,
+    Mapping,
+    MappingSetting,
 )
+
+from apps.fyle.models import ExpenseGroupSettings
 from apps.tasks.models import Error
 from tests.test_fyle.fixtures import data as fyle_data
 

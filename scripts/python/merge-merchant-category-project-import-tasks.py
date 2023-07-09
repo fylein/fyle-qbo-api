@@ -1,5 +1,5 @@
-from django.db.models import Count
 from django.db import transaction
+from django.db.models import Count
 from django_q.models import Schedule
 
 # TODO: take a backup of the schedules table before running this script

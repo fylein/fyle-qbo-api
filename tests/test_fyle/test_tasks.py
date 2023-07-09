@@ -1,14 +1,15 @@
-import datetime
-import pytest
 import json
-from apps.fyle.models import ExpenseFilter, Expense, ExpenseGroup, ExpenseGroupSettings
-from apps.workspaces.models import WorkspaceGeneralSettings, FyleCredential, Workspace
+from unittest import mock
+
+import pytest
+from django.urls import reverse
+
+from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings
 from apps.fyle.tasks import create_expense_groups
 from apps.tasks.models import TaskLog
-from .fixtures import data
-from django.urls import reverse
+from apps.workspaces.models import FyleCredential
 from tests.helper import dict_compare_keys
-from unittest import mock
+from tests.test_fyle.fixtures import data
 
 
 @pytest.mark.django_db()

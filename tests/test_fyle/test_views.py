@@ -1,12 +1,13 @@
-import pytest
-from apps.workspaces.models import FyleCredential, Workspace
-from unittest import mock
 import json
-from fyle_accounting_mappings.models import DestinationAttribute
+from unittest import mock
+
+import pytest
 from django.urls import reverse
-from .fixtures import data
-from tests.helper import dict_compare_keys
+
 from apps.tasks.models import TaskLog
+from apps.workspaces.models import FyleCredential, Workspace
+from tests.helper import dict_compare_keys
+from tests.test_fyle.fixtures import data
 
 
 def test_expense_group_view(api_client, test_connection):
@@ -81,7 +82,7 @@ def test_expense_group_settings(api_client, test_connection):
 
 def test_fyle_refresh_dimension(mocker, api_client, test_connection):
     mocker.patch(
-        "fyle_integrations_platform_connector.fyle_integrations_platform_connector.PlatformConnector.import_fyle_dimensions",
+        "fyle_integrations_platform_connector.fyle_integrations_platform_connector.PlatformConnector.import_fyle_dimensions",  # noqa: E501
         return_value=[],
     )
 
@@ -114,7 +115,7 @@ def test_fyle_refresh_dimension(mocker, api_client, test_connection):
 
 def test_fyle_sync_dimension(mocker, api_client, test_connection, db):
     mocker.patch(
-        "fyle_integrations_platform_connector.fyle_integrations_platform_connector.PlatformConnector.import_fyle_dimensions",
+        "fyle_integrations_platform_connector.fyle_integrations_platform_connector.PlatformConnector.import_fyle_dimensions",  # noqa: E501
         return_value=[],
     )
 
@@ -265,7 +266,7 @@ def test_expenses(mocker, api_client, test_connection):
     )
     url = (
         url
-        + "?org_id=orHVw3ikkCxJ&updated_at__gte=2021-01-01T00:00:00Z&updated_at__lte=2021-01-01T00:00:00Z"
+        + "?org_id=orHVw3ikkCxJ&updated_at__gte=2021-01-01T00:00:00Z&updated_at__lte=2021-01-01T00:00:00Z"  # noqa: E501
     )
 
     api_client.credentials(HTTP_AUTHORIZATION="Bearer {}".format(access_token))
