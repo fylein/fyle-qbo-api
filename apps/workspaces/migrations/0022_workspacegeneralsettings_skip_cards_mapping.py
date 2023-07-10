@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('workspaces', '0021_workspacegeneralsettings_map_fyle_cards_qbo_account'),
+        ("workspaces", "0021_workspacegeneralsettings_map_fyle_cards_qbo_account"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='workspacegeneralsettings',
-            name='skip_cards_mapping',
-            field=models.BooleanField(default=False, help_text='Skip cards mapping'),
+            model_name="workspacegeneralsettings",
+            name="skip_cards_mapping",
+            field=models.BooleanField(default=False, help_text="Skip cards mapping"),
         ),
     ]

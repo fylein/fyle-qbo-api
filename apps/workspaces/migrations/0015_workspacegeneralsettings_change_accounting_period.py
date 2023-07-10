@@ -4,15 +4,17 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('workspaces', '0014_workspacegeneralsettings_je_single_credit_line'),
+        ("workspaces", "0014_workspacegeneralsettings_je_single_credit_line"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='workspacegeneralsettings',
-            name='change_accounting_period',
-            field=models.BooleanField(default=False, help_text='Export Expense when accounting period is closed'),
+            model_name="workspacegeneralsettings",
+            name="change_accounting_period",
+            field=models.BooleanField(
+                default=False,
+                help_text="Export Expense when accounting period is closed",
+            ),
         ),
     ]

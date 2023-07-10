@@ -4,20 +4,26 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('workspaces', '0035_workspacegeneralsettings_auto_create_merchants_as_vendors'),
+        (
+            "workspaces",
+            "0035_workspacegeneralsettings_auto_create_merchants_as_vendors",
+        ),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='workspace',
-            name='ccc_last_synced_at',
-            field=models.DateTimeField(help_text='Datetime when ccc expenses were pulled last', null=True),
+            model_name="workspace",
+            name="ccc_last_synced_at",
+            field=models.DateTimeField(
+                help_text="Datetime when ccc expenses were pulled last", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='workspacegeneralsettings',
-            name='is_simplify_report_closure_enabled',
-            field=models.BooleanField(default=False, help_text='Simplify report closure is enabled'),
+            model_name="workspacegeneralsettings",
+            name="is_simplify_report_closure_enabled",
+            field=models.BooleanField(
+                default=False, help_text="Simplify report closure is enabled"
+            ),
         ),
     ]

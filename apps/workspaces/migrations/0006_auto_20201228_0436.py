@@ -4,34 +4,33 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('workspaces', '0005_workspacegeneralsettings_import_categories'),
+        ("workspaces", "0005_workspacegeneralsettings_import_categories"),
     ]
 
     operations = [
         migrations.AlterModelTable(
-            name='fylecredential',
-            table='fyle_credentials',
+            name="fylecredential",
+            table="fyle_credentials",
         ),
         migrations.AlterModelTable(
-            name='qbocredential',
-            table='qbo_credentials',
+            name="qbocredential",
+            table="qbo_credentials",
         ),
         migrations.AlterModelTable(
-            name='workspace',
-            table='workspaces',
+            name="workspace",
+            table="workspaces",
         ),
         migrations.AlterModelTable(
-            name='workspacegeneralsettings',
-            table='workspace_general_settings',
+            name="workspacegeneralsettings",
+            table="workspace_general_settings",
         ),
         migrations.AlterModelTable(
-            name='workspaceschedule',
-            table='workspace_schedules',
+            name="workspaceschedule",
+            table="workspace_schedules",
         ),
         migrations.AlterModelTable(
-            name='workspacesettings',
-            table='workspace_settings',
+            name="workspacesettings",
+            table="workspace_settings",
         ),
     ]

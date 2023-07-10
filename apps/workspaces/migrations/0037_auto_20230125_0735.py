@@ -4,20 +4,26 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('workspaces', '0036_auto_20221223_1146'),
+        ("workspaces", "0036_auto_20221223_1146"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='workspace',
-            name='app_version',
-            field=models.CharField(choices=[('v1', 'v1'), ('v2', 'v2')], default='v2', help_text='App version', max_length=2),
+            model_name="workspace",
+            name="app_version",
+            field=models.CharField(
+                choices=[("v1", "v1"), ("v2", "v2")],
+                default="v2",
+                help_text="App version",
+                max_length=2,
+            ),
         ),
         migrations.AlterField(
-            model_name='workspacegeneralsettings',
-            name='category_sync_version',
-            field=models.CharField(default='v2', help_text='Category sync version', max_length=50),
+            model_name="workspacegeneralsettings",
+            name="category_sync_version",
+            field=models.CharField(
+                default="v2", help_text="Category sync version", max_length=50
+            ),
         ),
     ]

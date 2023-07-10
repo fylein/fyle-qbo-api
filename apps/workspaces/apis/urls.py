@@ -15,16 +15,21 @@ Including another URLconf
 """
 from django.urls import path
 
-from .export_settings.views import ExportSettingsView
-from .import_settings.views import ImportSettingsView
-from .map_employees.views import MapEmployeesView
-from .advanced_configurations.views import AdvancedConfigurationsView
-from .errors.views import ErrorsView
+from apps.workspaces.apis.advanced_configurations.views import (
+    AdvancedConfigurationsView,
+)
+from apps.workspaces.apis.errors.views import ErrorsView
+from apps.workspaces.apis.export_settings.views import ExportSettingsView
+from apps.workspaces.apis.import_settings.views import ImportSettingsView
+from apps.workspaces.apis.map_employees.views import MapEmployeesView
 
 urlpatterns = [
-    path('<int:workspace_id>/export_settings/', ExportSettingsView.as_view()),
-    path('<int:workspace_id>/map_employees/', MapEmployeesView.as_view()),
-    path('<int:workspace_id>/import_settings/', ImportSettingsView.as_view()),
-    path('<int:workspace_id>/advanced_configurations/', AdvancedConfigurationsView.as_view()),
-    path('<int:workspace_id>/errors/', ErrorsView.as_view())
+    path("<int:workspace_id>/export_settings/", ExportSettingsView.as_view()),
+    path("<int:workspace_id>/map_employees/", MapEmployeesView.as_view()),
+    path("<int:workspace_id>/import_settings/", ImportSettingsView.as_view()),
+    path(
+        "<int:workspace_id>/advanced_configurations/",
+        AdvancedConfigurationsView.as_view(),
+    ),
+    path("<int:workspace_id>/errors/", ErrorsView.as_view()),
 ]
