@@ -3,7 +3,6 @@ Registering models in Django Admin
 """
 from django.contrib import admin
 
-from .models import TaskLog
-
+from apps.tasks.models import TaskLog
 
 admin.site.register(TaskLog)

@@ -4,15 +4,16 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('workspaces', '0013_auto_20210428_0855'),
+        ("workspaces", "0013_auto_20210428_0855"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='workspacegeneralsettings',
-            name='je_single_credit_line',
-            field=models.BooleanField(default=False, help_text='Single Credit Line for Journal Entries'),
+            model_name="workspacegeneralsettings",
+            name="je_single_credit_line",
+            field=models.BooleanField(
+                default=False, help_text="Single Credit Line for Journal Entries"
+            ),
         ),
     ]

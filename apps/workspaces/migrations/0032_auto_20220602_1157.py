@@ -4,20 +4,21 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('workspaces', '0031_auto_20220517_0931'),
+        ("workspaces", "0031_auto_20220517_0931"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='qbocredential',
-            name='realm_id',
-            field=models.CharField(help_text='QBO realm / company Id', max_length=40, null=True),
+            model_name="qbocredential",
+            name="realm_id",
+            field=models.CharField(
+                help_text="QBO realm / company Id", max_length=40, null=True
+            ),
         ),
         migrations.AlterField(
-            model_name='workspace',
-            name='qbo_realm_id',
-            field=models.CharField(help_text='qbo realm id', max_length=255, null=True),
+            model_name="workspace",
+            name="qbo_realm_id",
+            field=models.CharField(help_text="qbo realm id", max_length=255, null=True),
         ),
     ]
