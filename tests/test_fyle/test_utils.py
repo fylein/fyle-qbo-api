@@ -8,8 +8,8 @@ from apps.workspaces.models import FyleCredential
 from tests.test_fyle.fixtures import data
 
 
-@pytest.mark.django_db()
-def test_get_fyle_orgs(mocker):
+@pytest.mark.django_db(databases=["default"])
+def test_get_fyle_orgs(mocker, create_temp_workspace, add_fyle_credentials):
     mocker.patch(
         "apps.fyle.helpers.requests.get",
         return_value=mock.MagicMock(

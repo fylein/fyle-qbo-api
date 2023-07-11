@@ -72,8 +72,8 @@ def test_get_cluster_domain(mocker):
         logger.info("Error in post request")
 
 
-@pytest.mark.django_db()
-def test_construct_expense_filter():
+@pytest.mark.django_db(databases=["default"])
+def test_construct_expense_filter(create_temp_workspace):
     # employee-email-is-equal
     expense_filter = ExpenseFilter(
         condition="employee_email",

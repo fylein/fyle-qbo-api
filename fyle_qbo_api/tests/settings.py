@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     # Installed Apps
     "rest_framework",
     "corsheaders",
+    "django_q",
     "fyle_rest_auth",
     "fyle_accounting_mappings",
     "django_filters",

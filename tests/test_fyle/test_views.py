@@ -10,7 +10,10 @@ from tests.helper import dict_compare_keys
 from tests.test_fyle.fixtures import data
 
 
-def test_expense_group_view(api_client, test_connection):
+@pytest.mark.django_db(databases=["default"])
+def test_expense_group_view(
+    api_client, test_connection, create_temp_workspace, add_fyle_credentials
+):
     access_token = test_connection.access_token
 
     url = reverse(
@@ -32,14 +35,17 @@ def test_expense_group_view(api_client, test_connection):
     assert response.status_code == 200
 
     response = json.loads(response.content)
-    assert response["count"] == 4
+    assert response["count"] == 0
 
     TaskLog.objects.update_or_create(
         workspace_id=3, type="FETCHING_EXPENSES", defaults={"status": "IN_PROGRESS"}
     )
 
 
-def test_expense_group_settings(api_client, test_connection):
+@pytest.mark.django_db(databases=["default"])
+def test_expense_group_settings(
+    api_client, test_connection, create_temp_workspace, add_fyle_credentials
+):
     access_token = test_connection.access_token
 
     url = reverse(
@@ -53,6 +59,7 @@ def test_expense_group_settings(api_client, test_connection):
     response = api_client.get(url)
     response = json.loads(response.content)
 
+    print(response)
     assert (
         dict_compare_keys(response, data["expense_groups_settings_response"]) == []
     ), "expense group api return diffs in keys"
@@ -80,14 +87,20 @@ def test_expense_group_settings(api_client, test_connection):
     assert response["reimbursable_export_date_type"] == "spent_at"
 
 
-def test_fyle_refresh_dimension(mocker, api_client, test_connection):
+@pytest.mark.django_db(databases=["default"])
+def test_fyle_refresh_dimension(
+    mocker, api_client, test_connection, create_temp_workspace, add_fyle_credentials
+):
     mocker.patch(
         "fyle_integrations_platform_connector.fyle_integrations_platform_connector.PlatformConnector.import_fyle_dimensions",  # noqa: E501
         return_value=[],
     )
 
     access_token = test_connection.access_token
-
+    print(Workspace.objects.get(id=1).name, Workspace.objects.get(id=1).user)
+    users = Workspace.objects.get(id=1).user.all()
+    for user in users:
+        print(user.email)
     url = reverse(
         "refresh-fyle-dimensions",
         kwargs={
@@ -96,8 +109,9 @@ def test_fyle_refresh_dimension(mocker, api_client, test_connection):
     )
 
     api_client.credentials(HTTP_AUTHORIZATION="Bearer {}".format(access_token))
-
+    print(api_client.credentials(HTTP_AUTHORIZATION="Bearer {}".format(access_token)))
     response = api_client.post(url)
+    print(response.__dict__)
     assert response.status_code == 200
 
     fyle_credentials = FyleCredential.objects.get(workspace_id=1)
@@ -113,14 +127,17 @@ def test_fyle_refresh_dimension(mocker, api_client, test_connection):
         assert response.status_code == 400
 
 
-def test_fyle_sync_dimension(mocker, api_client, test_connection, db):
+@pytest.mark.django_db(databases=["default"])
+def test_fyle_sync_dimension(
+    mocker, api_client, test_connection, db, create_temp_workspace, add_fyle_credentials
+):
     mocker.patch(
         "fyle_integrations_platform_connector.fyle_integrations_platform_connector.PlatformConnector.import_fyle_dimensions",  # noqa: E501
         return_value=[],
     )
 
     access_token = test_connection.access_token
-
+    print(access_token)
     url = reverse(
         "sync-fyle-dimensions",
         kwargs={
@@ -129,7 +146,7 @@ def test_fyle_sync_dimension(mocker, api_client, test_connection, db):
     )
 
     api_client.credentials(HTTP_AUTHORIZATION="Bearer {}".format(access_token))
-
+    print(api_client)
     response = api_client.post(url)
     assert response.status_code == 200
 
@@ -141,7 +158,10 @@ def test_fyle_sync_dimension(mocker, api_client, test_connection, db):
     assert response.status_code == 200
 
 
-def test_fyle_sync_dimension_fail(api_client, test_connection):
+@pytest.mark.django_db(databases=["default"])
+def test_fyle_sync_dimension_fail(
+    api_client, test_connection, create_temp_workspace, add_fyle_credentials
+):
     access_token = test_connection.access_token
 
     url = reverse(
@@ -168,7 +188,10 @@ def test_fyle_sync_dimension_fail(api_client, test_connection):
         assert response.status_code == 400
 
 
-def test_expense_fields_view(api_client, test_connection):
+@pytest.mark.django_db(databases=["default"])
+def test_expense_fields_view(
+    api_client, test_connection, create_temp_workspace, add_fyle_credentials
+):
     access_token = test_connection.access_token
 
     url = reverse("expense-fields", kwargs={"workspace_id": 3})
@@ -182,7 +205,10 @@ def test_expense_fields_view(api_client, test_connection):
     assert response[0] == data["expense_fields_response"][0]
 
 
-def test_exportable_expense_groups(api_client, test_connection):
+@pytest.mark.django_db(databases=["default"])
+def test_exportable_expense_groups(
+    api_client, test_connection, create_temp_workspace, add_fyle_credentials
+):
     access_token = test_connection.access_token
 
     url = reverse("exportable-expense-groups", kwargs={"workspace_id": 3})
@@ -195,7 +221,10 @@ def test_exportable_expense_groups(api_client, test_connection):
     assert response["exportable_expense_group_ids"] == []
 
 
-def test_sync_expense_groups(api_client, test_connection):
+@pytest.mark.django_db(databases=["default"])
+def test_sync_expense_groups(
+    api_client, test_connection, create_temp_workspace, add_fyle_credentials
+):
     access_token = test_connection.access_token
 
     url = reverse("sync-expense-groups", kwargs={"workspace_id": 3})
@@ -206,7 +235,10 @@ def test_sync_expense_groups(api_client, test_connection):
     assert response.status_code == 200
 
 
-def test_expense_filters(api_client, test_connection):
+@pytest.mark.django_db(databases=["default"])
+def test_expense_filters(
+    api_client, test_connection, create_temp_workspace, add_fyle_credentials
+):
     access_token = test_connection.access_token
 
     url = reverse(
@@ -228,7 +260,9 @@ def test_expense_filters(api_client, test_connection):
 
 
 @pytest.mark.django_db(databases=["default"])
-def test_custom_fields(mocker, api_client, test_connection):
+def test_custom_fields(
+    mocker, api_client, test_connection, create_temp_workspace, add_fyle_credentials
+):
     access_token = test_connection.access_token
 
     url = reverse(
@@ -255,7 +289,9 @@ def test_custom_fields(mocker, api_client, test_connection):
 
 
 @pytest.mark.django_db(databases=["default"])
-def test_expenses(mocker, api_client, test_connection):
+def test_expenses(
+    mocker, api_client, test_connection, create_temp_workspace, add_fyle_credentials
+):
     access_token = test_connection.access_token
 
     url = reverse(

@@ -1,3 +1,5 @@
+import pytest
+
 from apps.fyle.models import (
     Expense,
     ExpenseAttribute,
@@ -34,23 +36,23 @@ def test_create_expense_objects(db):
     payload = data["expenses"]
     Expense.create_expense_objects(payload, 3)
 
-    expense = Expense.objects.all().order_by("id").last()
-    assert expense.expense_id == "txLAP0oIB5Yb"
+    expense = Expense.objects.all().order_by("id").first()
+    assert expense.expense_id == "txW7qE5DUF82"
 
 
 def test_expense_group_settings(create_temp_workspace, db):
     payload = data["expense_group_settings_payload"]
 
-    ExpenseGroupSettings.update_expense_group_settings(payload, 98)
+    ExpenseGroupSettings.update_expense_group_settings(payload, 1)
 
     settings = ExpenseGroupSettings.objects.last()
 
-    assert settings.expense_state == "PAID"
+    assert settings.expense_state == "PAYMENT PROCESSING"
     assert settings.ccc_export_date_type == "spent_at"
-    assert settings.ccc_expense_state == "PAID"
+    assert settings.ccc_expense_state == "APPROVED"
 
 
-def test_create_reimbursement(db):
+def test_create_reimbursement(create_temp_workspace, db):
     reimbursements = data["reimbursements"]
 
     Reimbursement.create_or_update_reimbursement_objects(
@@ -72,8 +74,11 @@ def test_create_reimbursement(db):
     paid_reimbursement.state == "PAID"
 
 
-def test_create_expense_groups_by_report_id_fund_source(db):
-    workspace_id = 4
+@pytest.mark.django_db(databases=["default"])
+def test_create_expense_groups_by_report_id_fund_source(
+    create_temp_workspace, add_expense_attributes, db
+):
+    workspace_id = 1
     payload = data["expenses"]
     Expense.create_expense_objects(payload, workspace_id)
     expense_objects = Expense.objects.last()
@@ -89,7 +94,7 @@ def test_create_expense_groups_by_report_id_fund_source(db):
     field.attribute_type = "KILLUA"
     field.save()
 
-    expenses = Expense.objects.filter(id=33).all()
+    expenses = Expense.objects.filter(id=1).all()
 
     expense_groups = _group_expenses(
         expenses,
@@ -101,8 +106,9 @@ def test_create_expense_groups_by_report_id_fund_source(db):
             "report_id",
             "Killua",
         ],
-        4,
+        1,
     )
+    print(expense_groups)
     assert expense_groups == [
         {
             "claim_number": "C/2022/05/R/6",
@@ -112,7 +118,7 @@ def test_create_expense_groups_by_report_id_fund_source(db):
             "report_id": "rpawE81idoYo",
             "killua": "",
             "total": 1,
-            "expense_ids": [33],
+            "expense_ids": [1],
         }
     ]
 

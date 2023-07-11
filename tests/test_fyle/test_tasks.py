@@ -13,14 +13,14 @@ from tests.test_fyle.fixtures import data
 
 
 @pytest.mark.django_db()
-def test_create_expense_groups(mocker, db):
+def test_create_expense_groups(create_temp_workspace, add_fyle_credentials, mocker, db):
     mocker.patch(
         "fyle_integrations_platform_connector.apis.Expenses.get",
         return_value=data["expenses"],
     )
 
     task_log, _ = TaskLog.objects.update_or_create(
-        workspace_id=3, type="FETCHING_EXPENSES", defaults={"status": "IN_PROGRESS"}
+        workspace_id=1, type="FETCHING_EXPENSES", defaults={"status": "IN_PROGRESS"}
     )
 
     expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=3)
@@ -29,7 +29,7 @@ def test_create_expense_groups(mocker, db):
     expense_group_settings.import_card_credits = True
     expense_group_settings.save()
 
-    create_expense_groups(3, ["PERSONAL", "CCC"], task_log)
+    create_expense_groups(1, ["PERSONAL", "CCC"], task_log)
 
     assert task_log.status == "COMPLETE"
 
@@ -52,8 +52,10 @@ def test_create_expense_groups(mocker, db):
     assert task_log.status == "FATAL"
 
 
-@pytest.mark.django_db()
-def test_create_expense_group_skipped_flow(mocker, api_client, test_connection):
+@pytest.mark.django_db(databases=["default"])
+def test_create_expense_group_skipped_flow(
+    create_temp_workspace, add_fyle_credentials, mocker, api_client, test_connection
+):
     access_token = test_connection.access_token
     # adding the expense-filter
     url = reverse(
