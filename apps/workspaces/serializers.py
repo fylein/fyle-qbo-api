@@ -4,12 +4,12 @@ Workspace Serializers
 from rest_framework import serializers
 
 from .models import (
+    FyleCredential,
+    LastExportDetail,
+    QBOCredential,
     Workspace,
     WorkspaceGeneralSettings,
     WorkspaceSchedule,
-    FyleCredential,
-    QBOCredential,
-    LastExportDetail,
 )
 
 

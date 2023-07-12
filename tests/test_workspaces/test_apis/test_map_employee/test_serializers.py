@@ -2,6 +2,7 @@ import pytest
 from pytest import fail
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+
 from apps.workspaces.apis.map_employees.serializers import MapEmployeesSerializer
 
 

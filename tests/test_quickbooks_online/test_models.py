@@ -1,40 +1,42 @@
-from apps.mappings.models import GeneralMapping
-import pytest
 from datetime import datetime, timezone
+
+import pytest
 from fyle_rest_auth.models import User
+
+from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings
+from apps.mappings.models import GeneralMapping
+from apps.quickbooks_online.models import (
+    BillPayment,
+    BillPaymentLineitem,
+    Cheque,
+    ChequeLineitem,
+    CreditCardPurchase,
+    CreditCardPurchaseLineitem,
+    JournalEntry,
+    JournalEntryLineitem,
+    get_ccc_account_id,
+    get_class_id_or_none,
+    get_customer_id_or_none,
+    get_department_id_or_none,
+    get_expense_purpose,
+    get_tax_code_id_or_none,
+    get_transaction_date,
+)
+from apps.quickbooks_online.tasks import create_bill
 from apps.quickbooks_online.utils import (
     Bill,
     BillLineitem,
     QBOExpense,
     QBOExpenseLineitem,
 )
-from apps.quickbooks_online.tasks import create_bill
-from apps.fyle.models import ExpenseGroup, Expense, ExpenseGroupSettings
+from apps.tasks.models import TaskLog
 from apps.workspaces.models import WorkspaceGeneralSettings
 from fyle_accounting_mappings.models import (
-    Mapping,
-    MappingSetting,
     DestinationAttribute,
     ExpenseAttribute,
+    Mapping,
+    MappingSetting,
 )
-from apps.quickbooks_online.models import (
-    get_department_id_or_none,
-    get_tax_code_id_or_none,
-    get_customer_id_or_none,
-    get_class_id_or_none,
-    get_expense_purpose,
-    get_transaction_date,
-    BillPayment,
-    BillPaymentLineitem,
-    JournalEntry,
-    JournalEntryLineitem,
-    CreditCardPurchase,
-    CreditCardPurchaseLineitem,
-    Cheque,
-    ChequeLineitem,
-    get_ccc_account_id,
-)
-from apps.tasks.models import TaskLog
 from tests.test_fyle.fixtures import data
 
 

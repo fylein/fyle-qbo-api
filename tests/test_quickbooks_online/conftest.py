@@ -1,23 +1,25 @@
-import pytest
 import json
 from datetime import datetime
+
+import pytest
+
 from apps.fyle.models import Expense, ExpenseGroup
-from apps.workspaces.models import WorkspaceGeneralSettings
 from apps.quickbooks_online.models import (
     Bill,
     BillLineitem,
+    BillPayment,
+    BillPaymentLineitem,
+    Cheque,
+    ChequeLineitem,
     CreditCardPurchase,
     CreditCardPurchaseLineitem,
     JournalEntry,
     JournalEntryLineitem,
     QBOExpense,
     QBOExpenseLineitem,
-    Cheque,
-    ChequeLineitem,
-    BillPayment,
-    BillPaymentLineitem,
 )
 from apps.tasks.models import TaskLog
+from apps.workspaces.models import WorkspaceGeneralSettings
 from fyle_accounting_mappings.models import (
     DestinationAttribute,
     ExpenseAttribute,

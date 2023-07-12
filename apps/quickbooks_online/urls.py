@@ -13,17 +13,18 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from unicodedata import name
+
 from django.urls import path
 
 from .views import (
-    VendorView,
+    DestinationAttributesView,
     EmployeeView,
     PreferencesView,
-    SyncQuickbooksDimensionView,
-    RefreshQuickbooksDimensionView,
-    DestinationAttributesView,
     QBOAttributesView,
+    RefreshQuickbooksDimensionView,
     SearchedDestinationAttributesView,
+    SyncQuickbooksDimensionView,
+    VendorView,
 )
 
 urlpatterns = [

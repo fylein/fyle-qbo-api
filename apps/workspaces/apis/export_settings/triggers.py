@@ -1,7 +1,7 @@
 from typing import Dict
 
-from apps.workspaces.models import WorkspaceGeneralSettings
 from apps.mappings.queue import async_disable_category_for_items_mapping
+from apps.workspaces.models import WorkspaceGeneralSettings
 
 
 class ExportSettingsTrigger:

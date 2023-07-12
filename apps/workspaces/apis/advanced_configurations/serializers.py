@@ -1,11 +1,11 @@
 from rest_framework import serializers
 
+from apps.mappings.models import GeneralMapping
 from apps.workspaces.models import (
-    WorkspaceGeneralSettings,
     Workspace,
+    WorkspaceGeneralSettings,
     WorkspaceSchedule,
 )
-from apps.mappings.models import GeneralMapping
 from apps.workspaces.tasks import schedule_sync
 
 from .triggers import AdvancedConfigurationsTriggers

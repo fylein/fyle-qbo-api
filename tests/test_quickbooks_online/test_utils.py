@@ -1,31 +1,34 @@
 import ast
 import json
-import pytest
 import logging
+import random
+import string
 from unittest import mock
+
+import pytest
 from qbosdk.exceptions import WrongParamsError
-from fyle_accounting_mappings.models import DestinationAttribute
+
+from apps.mappings.models import GeneralMapping
+from apps.quickbooks_online.models import (
+    Bill,
+    BillLineitem,
+    Cheque,
+    ChequeLineitem,
+    CreditCardPurchase,
+    JournalEntry,
+    JournalEntryLineitem,
+    QBOExpense,
+    QBOExpenseLineitem,
+)
 from apps.quickbooks_online.utils import (
     QBOConnector,
     QBOCredential,
     WorkspaceGeneralSettings,
 )
-from apps.quickbooks_online.models import (
-    Bill,
-    BillLineitem,
-    Cheque,
-    QBOExpense,
-    QBOExpenseLineitem,
-    CreditCardPurchase,
-    JournalEntry,
-    JournalEntryLineitem,
-    ChequeLineitem,
-)
-from apps.mappings.models import GeneralMapping
-from .fixtures import data
+from fyle_accounting_mappings.models import DestinationAttribute
 from tests.helper import dict_compare_keys
-import random
-import string
+
+from .fixtures import data
 
 logger = logging.getLogger(__name__)
 

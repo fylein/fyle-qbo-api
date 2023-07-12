@@ -1,11 +1,11 @@
-from datetime import timedelta
 import json
+from datetime import timedelta
 
 from django_q.models import Schedule
 
+from apps.workspaces.models import Workspace
 from tests.helper import dict_compare_keys
 
-from apps.workspaces.models import Workspace
 from .fixtures import data
 
 

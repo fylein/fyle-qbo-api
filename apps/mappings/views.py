@@ -2,10 +2,11 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import status
 
-from .models import GeneralMapping
-from ..workspaces.models import WorkspaceGeneralSettings
 from apps.exceptions import handle_view_exceptions
+
+from ..workspaces.models import WorkspaceGeneralSettings
 from .actions import trigger_auto_map_employees
+from .models import GeneralMapping
 
 
 class AutoMapEmployeeView(generics.CreateAPIView):

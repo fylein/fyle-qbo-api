@@ -1,12 +1,15 @@
-import pytest
-from apps.workspaces.models import FyleCredential, Workspace
-from unittest import mock
 import json
-from fyle_accounting_mappings.models import DestinationAttribute
+from unittest import mock
+
+import pytest
 from django.urls import reverse
-from .fixtures import data
-from tests.helper import dict_compare_keys
+
 from apps.tasks.models import TaskLog
+from apps.workspaces.models import FyleCredential, Workspace
+from fyle_accounting_mappings.models import DestinationAttribute
+from tests.helper import dict_compare_keys
+
+from .fixtures import data
 
 
 def test_expense_group_view(api_client, test_connection):

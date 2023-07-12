@@ -1,11 +1,12 @@
-from pkg_resources import working_set
-import pytest
 import json
+
+import pytest
 from django.urls import reverse
+from pkg_resources import working_set
 
 from apps.mappings.models import GeneralMapping
-from apps.workspaces.models import WorkspaceGeneralSettings
-from apps.workspaces.models import Workspace
+from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
+
 from .fixtures import data
 
 

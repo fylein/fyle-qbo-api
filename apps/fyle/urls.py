@@ -16,17 +16,17 @@ Including another URLconf
 from django.urls import path
 
 from .views import (
+    CustomFieldView,
+    ExpenseFieldsView,
+    ExpenseFilterDeleteView,
+    ExpenseFilterView,
+    ExpenseGroupSettingsView,
+    ExpenseGroupSyncView,
     ExpenseGroupView,
     ExpenseView,
-    ExpenseFieldsView,
     ExportableExpenseGroupsView,
-    ExpenseGroupSettingsView,
     RefreshFyleDimensionView,
     SyncFyleDimensionView,
-    ExpenseGroupSyncView,
-    ExpenseFilterView,
-    ExpenseFilterDeleteView,
-    CustomFieldView,
 )
 
 urlpatterns = [

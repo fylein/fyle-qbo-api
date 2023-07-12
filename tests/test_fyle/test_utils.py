@@ -1,9 +1,12 @@
 import json
-import pytest
 from unittest import mock
+
+import pytest
+from fyle_integrations_platform_connector import PlatformConnector
+
 from apps.fyle.helpers import get_fyle_orgs
 from apps.workspaces.models import FyleCredential
-from fyle_integrations_platform_connector import PlatformConnector
+
 from .fixtures import data
 
 

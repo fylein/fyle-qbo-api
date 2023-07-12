@@ -13,17 +13,17 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.urls import path, include
+from django.urls import include, path
 
 from .views import (
-    WorkspaceView,
-    ReadyView,
     ConnectQBOView,
-    GeneralSettingsView,
     ExportToQBOView,
+    GeneralSettingsView,
     LastExportDetailView,
-    WorkspaceAdminsView,
+    ReadyView,
     SetupE2ETestView,
+    WorkspaceAdminsView,
+    WorkspaceView,
 )
 
 urlpatterns = [

@@ -1,11 +1,13 @@
+from datetime import datetime, timezone
+
 import pytest
+from fyle_rest_auth.models import User
+
 from apps.workspaces.models import (
     Workspace,
     get_default_chart_of_accounts,
     get_default_memo_fields,
 )
-from fyle_rest_auth.models import User
-from datetime import datetime, timezone
 
 
 @pytest.mark.django_db

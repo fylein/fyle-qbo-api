@@ -1,12 +1,11 @@
 from datetime import datetime, timezone
-from django.db.models import Q
 
+from django.db.models import Q
 from fyle_integrations_platform_connector import PlatformConnector
 
-from apps.workspaces.models import FyleCredential, Workspace
-from apps.workspaces.models import WorkspaceGeneralSettings
-from apps.fyle.models import ExpenseGroup, ExpenseAttribute
+from apps.fyle.models import ExpenseAttribute, ExpenseGroup
 from apps.tasks.models import TaskLog
+from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
 
 from .constants import DEFAULT_FYLE_CONDITIONS
 

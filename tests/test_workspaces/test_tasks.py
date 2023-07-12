@@ -1,12 +1,13 @@
+from apps.fyle.models import ExpenseGroupSettings
 from apps.tasks.models import TaskLog
+from apps.workspaces.models import WorkspaceGeneralSettings, WorkspaceSchedule
 from apps.workspaces.tasks import (
+    run_email_notification,
     run_sync_schedule,
     schedule_sync,
-    run_email_notification,
 )
-from apps.workspaces.models import WorkspaceSchedule, WorkspaceGeneralSettings
 from fyle_accounting_mappings.models import ExpenseAttribute
-from apps.fyle.models import ExpenseGroupSettings
+
 from .fixtures import data
 
 

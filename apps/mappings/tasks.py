@@ -1,35 +1,34 @@
 import logging
 import traceback
-from django.db.models import Q
-from dateutil import parser
-from typing import List, Dict
+from typing import Dict, List
 
+from dateutil import parser
+from django.db.models import Q
 from django_q.tasks import Chain
-from qbosdk.exceptions import WrongParamsError as QBOWrongParamsError, InvalidTokenError
-from fyle.platform.exceptions import (
-    WrongParamsError,
-    InvalidTokenError as FyleInvalidTokenError,
-)
+from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
+from fyle.platform.exceptions import WrongParamsError
 from fyle_integrations_platform_connector import PlatformConnector
-from fyle_accounting_mappings.models import (
-    MappingSetting,
-    Mapping,
-    DestinationAttribute,
-    ExpenseAttribute,
-    EmployeeMapping,
-)
+from qbosdk.exceptions import InvalidTokenError
+from qbosdk.exceptions import WrongParamsError as QBOWrongParamsError
 
 from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.utils import QBOConnector
+from apps.tasks.models import Error
 from apps.workspaces.models import (
-    QBOCredential,
     FyleCredential,
+    QBOCredential,
     WorkspaceGeneralSettings,
 )
-from apps.tasks.models import Error
+from fyle_accounting_mappings.models import (
+    DestinationAttribute,
+    EmployeeMapping,
+    ExpenseAttribute,
+    Mapping,
+    MappingSetting,
+)
 
-from .exceptions import handle_import_exceptions
 from .constants import FYLE_EXPENSE_SYSTEM_FIELDS
+from .exceptions import handle_import_exceptions
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO

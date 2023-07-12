@@ -1,17 +1,17 @@
 from django.db import models
 from django.db.models import JSONField
 
-from fyle_accounting_mappings.models import ExpenseAttribute
-from apps.workspaces.models import Workspace
 from apps.fyle.models import ExpenseGroup
 from apps.quickbooks_online.models import (
     Bill,
+    BillPayment,
     Cheque,
     CreditCardPurchase,
     JournalEntry,
-    BillPayment,
     QBOExpense,
 )
+from apps.workspaces.models import Workspace
+from fyle_accounting_mappings.models import ExpenseAttribute
 
 
 def get_default():

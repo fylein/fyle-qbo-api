@@ -1,9 +1,8 @@
 import os
 
-import sentry_sdk
-
-from sentry_sdk.integrations.django import DjangoIntegration
 import gevent
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
 
 
 class Sentry:

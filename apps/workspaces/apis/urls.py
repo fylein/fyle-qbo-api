@@ -15,11 +15,11 @@ Including another URLconf
 """
 from django.urls import path
 
+from .advanced_configurations.views import AdvancedConfigurationsView
+from .errors.views import ErrorsView
 from .export_settings.views import ExportSettingsView
 from .import_settings.views import ImportSettingsView
 from .map_employees.views import MapEmployeesView
-from .advanced_configurations.views import AdvancedConfigurationsView
-from .errors.views import ErrorsView
 
 urlpatterns = [
     path('<int:workspace_id>/export_settings/', ExportSettingsView.as_view()),

@@ -1,9 +1,10 @@
+from apps.fyle.models import *
 from apps.fyle.models import (
     _format_date,
     _group_expenses,
     get_default_ccc_expense_state,
 )
-from apps.fyle.models import *
+
 from .fixtures import data
 
 

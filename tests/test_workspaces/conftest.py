@@ -1,6 +1,8 @@
-import pytest
-from apps.workspaces.models import Workspace
 from datetime import datetime, timezone
+
+import pytest
+
+from apps.workspaces.models import Workspace
 
 
 @pytest.fixture

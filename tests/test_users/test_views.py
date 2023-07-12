@@ -1,5 +1,5 @@
-from django.urls import reverse
 import pytest
+from django.urls import reverse
 
 from tests.test_fyle.fixtures import data as fyle_data
 

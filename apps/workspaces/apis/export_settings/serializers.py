@@ -1,10 +1,10 @@
 from rest_framework import serializers
 
-from fyle_accounting_mappings.models import MappingSetting
-
-from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from apps.fyle.models import ExpenseGroupSettings
 from apps.mappings.models import GeneralMapping
+from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
+from fyle_accounting_mappings.models import MappingSetting
+
 from .triggers import ExportSettingsTrigger
 
 

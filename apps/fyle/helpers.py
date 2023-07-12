@@ -1,10 +1,11 @@
 import json
-import requests
+from typing import List
 
+import requests
 from django.conf import settings
 from django.db.models import Q
+
 from apps.fyle.models import ExpenseFilter
-from typing import List
 
 
 def post_request(url, body, refresh_token=None):

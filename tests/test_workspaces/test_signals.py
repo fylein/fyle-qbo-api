@@ -1,6 +1,7 @@
-from apps.workspaces.signals import post_delete_qbo_connection
-from apps.workspaces.models import Workspace
 import logging
+
+from apps.workspaces.models import Workspace
+from apps.workspaces.signals import post_delete_qbo_connection
 
 logger = logging.getLogger(__name__)
 

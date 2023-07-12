@@ -1,34 +1,32 @@
-import json
 import base64
+import json
 from typing import Dict
+
 import requests
-
 from django.conf import settings
-
 from future.moves.urllib.parse import urlencode
 from qbosdk import (
-    UnauthorizedClientError,
-    NotFoundClientError,
-    WrongParamsError,
     InternalServerError,
+    NotFoundClientError,
+    UnauthorizedClientError,
+    WrongParamsError,
 )
 
-from fyle_accounting_mappings.models import MappingSetting
-
-
-from fyle_qbo_api.utils import assert_valid
-from .models import WorkspaceGeneralSettings
-from ..fyle.models import ExpenseGroupSettings
+from apps.mappings.queue import (
+    schedule_auto_map_ccc_employees,
+    schedule_auto_map_employees,
+    schedule_bill_payment_creation,
+    schedule_tax_groups_creation,
+)
 from apps.quickbooks_online.queue import (
     schedule_qbo_objects_status_sync,
     schedule_reimbursements_sync,
 )
-from apps.mappings.queue import (
-    schedule_auto_map_ccc_employees,
-    schedule_bill_payment_creation,
-    schedule_tax_groups_creation,
-    schedule_auto_map_employees,
-)
+from fyle_accounting_mappings.models import MappingSetting
+from fyle_qbo_api.utils import assert_valid
+
+from ..fyle.models import ExpenseGroupSettings
+from .models import WorkspaceGeneralSettings
 
 
 def generate_qbo_refresh_token(authorization_code: str, redirect_uri: str) -> str:

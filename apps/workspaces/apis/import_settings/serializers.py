@@ -1,12 +1,9 @@
+from django.db import transaction
 from rest_framework import serializers
 
-from django.db import transaction
-
-from fyle_accounting_mappings.models import MappingSetting
-
 from apps.mappings.models import GeneralMapping
-
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
+from fyle_accounting_mappings.models import MappingSetting
 
 from .triggers import ImportSettingsTrigger
 
