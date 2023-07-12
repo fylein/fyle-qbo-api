@@ -4,17 +4,17 @@ rollback;
 begin;
 
 update workspace_general_settings
-set employee_field_mapping = 'EMPLOYEE'
+set employee_field_mapping = 'EMPLOYEE' 
 where workspace_id in (
-    select workspace_id from mapping_settings
-    where source_field = 'EMPLOYEE'
+    select workspace_id from mapping_settings 
+    where source_field = 'EMPLOYEE' 
     and destination_field = 'EMPLOYEE'
 );
 
 update workspace_general_settings
-set employee_field_mapping = 'VENDOR'
+set employee_field_mapping = 'VENDOR' 
 where workspace_id in (
-    select workspace_id from mapping_settings
-    where source_field = 'EMPLOYEE'
+    select workspace_id from mapping_settings 
+    where source_field = 'EMPLOYEE' 
     and destination_field = 'VENDOR'
 );

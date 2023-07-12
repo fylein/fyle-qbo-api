@@ -4,18 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
+
     dependencies = [
-        ("fyle", "0006_auto_20200825_0631"),
+        ('fyle', '0006_auto_20200825_0631'),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name="expense",
-            name="rp_created_at",
+            model_name='expense',
+            name='rp_created_at',
         ),
         migrations.AddField(
-            model_name="expense",
-            name="verified_at",
-            field=models.DateTimeField(help_text="Report verified at", null=True),
+            model_name='expense',
+            name='verified_at',
+            field=models.DateTimeField(help_text='Report verified at', null=True),
         ),
     ]

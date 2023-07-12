@@ -1,12 +1,10 @@
 import json
-from typing import List
-
 import requests
+
 from django.conf import settings
 from django.db.models import Q
-
 from apps.fyle.models import ExpenseFilter
-
+from typing import List
 
 def post_request(url, body, refresh_token=None):
     """
@@ -17,10 +15,14 @@ def post_request(url, body, refresh_token=None):
     if refresh_token:
         access_token = get_access_token(refresh_token)
 
-        api_headers["content-type"] = "application/json"
-        api_headers["Authorization"] = "Bearer {0}".format(access_token)
+        api_headers['content-type'] = 'application/json'
+        api_headers['Authorization'] = 'Bearer {0}'.format(access_token)
 
-    response = requests.post(url, headers=api_headers, data=body)
+    response = requests.post(
+        url,
+        headers=api_headers,
+        data=body
+    )
 
     if response.status_code == 200:
         return json.loads(response.text)
@@ -34,8 +36,8 @@ def get_request(url, params, refresh_token):
     """
     access_token = get_access_token(refresh_token)
     api_headers = {
-        "content-type": "application/json",
-        "Authorization": "Bearer {0}".format(access_token),
+        'content-type': 'application/json',
+        'Authorization': 'Bearer {0}'.format(access_token)
     }
     api_params = {}
 
@@ -50,7 +52,11 @@ def get_request(url, params, refresh_token):
 
             api_params[k] = p
 
-    response = requests.get(url, headers=api_headers, params=api_params)
+    response = requests.get(
+        url,
+        headers=api_headers,
+        params=api_params
+    )
 
     if response.status_code == 200:
         return json.loads(response.text)
@@ -63,19 +69,19 @@ def get_access_token(refresh_token: str) -> str:
     Get access token from fyle
     """
     api_data = {
-        "grant_type": "refresh_token",
-        "refresh_token": refresh_token,
-        "client_id": settings.FYLE_CLIENT_ID,
-        "client_secret": settings.FYLE_CLIENT_SECRET,
+        'grant_type': 'refresh_token',
+        'refresh_token': refresh_token,
+        'client_id': settings.FYLE_CLIENT_ID,
+        'client_secret': settings.FYLE_CLIENT_SECRET
     }
-    return post_request(settings.FYLE_TOKEN_URI, body=api_data)["access_token"]
+    return post_request(settings.FYLE_TOKEN_URI, body=api_data)['access_token']
 
 
 def get_fyle_orgs(refresh_token: str, cluster_domain: str):
     """
     Get fyle orgs of a user
     """
-    api_url = "{0}/api/orgs/".format(cluster_domain)
+    api_url = '{0}/api/orgs/'.format(cluster_domain)
 
     return get_request(api_url, {}, refresh_token)
 
@@ -86,24 +92,23 @@ def get_cluster_domain(refresh_token: str) -> str:
     :param refresh_token: (str)
     :return: cluster_domain (str)
     """
-    cluster_api_url = "{0}/oauth/cluster/".format(settings.FYLE_BASE_URL)
+    cluster_api_url = '{0}/oauth/cluster/'.format(settings.FYLE_BASE_URL)
 
-    return post_request(cluster_api_url, {}, refresh_token)["cluster_domain"]
+    return post_request(cluster_api_url, {}, refresh_token)['cluster_domain']
 
 
 def construct_expense_filter_query(expense_filters: List[ExpenseFilter]):
     final_filter = None
-    join_by = None
     for expense_filter in expense_filters:
         constructed_expense_filter = construct_expense_filter(expense_filter)
-
+        
         # If this is the first filter, set it as the final filter
         if expense_filter.rank == 1:
-            final_filter = constructed_expense_filter
-
+            final_filter = (constructed_expense_filter)
+        
         # If join by is AND, OR
         elif expense_filter.rank != 1:
-            if join_by == "AND":
+            if join_by == 'AND':
                 final_filter = final_filter & (constructed_expense_filter)
             else:
                 final_filter = final_filter | (constructed_expense_filter)
@@ -118,64 +123,54 @@ def construct_expense_filter(expense_filter):
     constructed_expense_filter = {}
 
     # If the expense filter is a custom field and the operator is not isnull
-    if expense_filter.is_custom and expense_filter.operator != "isnull":
+    if expense_filter.is_custom and expense_filter.operator != 'isnull':
         # If the custom field is of type SELECT and the operator is not_in
-        if (
-            expense_filter.custom_field_type == "SELECT"
-            and expense_filter.operator == "not_in"
-        ):
+        if expense_filter.custom_field_type == 'SELECT' and expense_filter.operator == 'not_in':
             # Construct the filter for the custom property
             filter1 = {
-                f"custom_properties__{expense_filter.condition}__in": expense_filter.values
+                f'custom_properties__{expense_filter.condition}__in': expense_filter.values
             }
-            # Invert the filter using the ~Q operator and assign it to the constructed
-            # expense filter
+            # Invert the filter using the ~Q operator and assign it to the constructed expense filter
             constructed_expense_filter = ~Q(**filter1)
         else:
             # If the custom field is of type NUMBER, convert the values to integers
-            if expense_filter.custom_field_type == "NUMBER":
+            if expense_filter.custom_field_type == 'NUMBER':
                 expense_filter.values = [int(value) for value in expense_filter.values]
             # Construct the filter for the custom property
             filter1 = {
-                f"custom_properties__{expense_filter.condition}__{expense_filter.operator}": expense_filter.values[  # noqa: E501
-                    0
-                ]
-                if len(expense_filter.values) == 1 and expense_filter.operator != "in"
-                else expense_filter.values
+                f'custom_properties__{expense_filter.condition}__{expense_filter.operator}':
+                    expense_filter.values[0] if len(expense_filter.values) == 1 and expense_filter.operator != 'in'
+                    else expense_filter.values
             }
             # Assign the constructed filter to the constructed expense filter
             constructed_expense_filter = Q(**filter1)
 
     # If the expense filter is a custom field and the operator is isnull
-    elif expense_filter.is_custom and expense_filter.operator == "isnull":
+    elif expense_filter.is_custom and expense_filter.operator == 'isnull':
         # Determine the value for the isnull filter based on the first value in the values list
-        expense_filter_value: bool = (
-            True if expense_filter.values[0].lower() == "true" else False
-        )
+        expense_filter_value: bool = True if expense_filter.values[0].lower() == 'true' else False
         # Construct the isnull filter for the custom property
         filter1 = {
-            f"custom_properties__{expense_filter.condition}__isnull": expense_filter_value
+            f'custom_properties__{expense_filter.condition}__isnull': expense_filter_value
         }
         # Construct the exact filter for the custom property
-        filter2 = {f"custom_properties__{expense_filter.condition}__exact": None}
+        filter2 = {
+            f'custom_properties__{expense_filter.condition}__exact': None
+        }
         if expense_filter_value:
-            # If the isnull filter value is True, combine the two filters using the |
-            # operator and assign it to the constructed expense filter
+            # If the isnull filter value is True, combine the two filters using the | operator and assign it to the constructed expense filter
             constructed_expense_filter = Q(**filter1) | Q(**filter2)
         else:
-            # If the isnull filter value is False, invert the exact filter using the ~Q operator
-            # and assign it to the constructed expense filter
+            # If the isnull filter value is False, invert the exact filter using the ~Q operator and assign it to the constructed expense filter
             constructed_expense_filter = ~Q(**filter2)
 
     # For all non-custom fields
     else:
         # Construct the filter for the non-custom field
         filter1 = {
-            f"{expense_filter.condition}__{expense_filter.operator}": expense_filter.values[
-                0
-            ]
-            if len(expense_filter.values) == 1 and expense_filter.operator != "in"
-            else expense_filter.values
+            f'{expense_filter.condition}__{expense_filter.operator}':
+                expense_filter.values[0] if len(expense_filter.values) == 1 and expense_filter.operator != 'in'
+                else expense_filter.values
         }
         # Assign the constructed filter to the constructed expense filter
         constructed_expense_filter = Q(**filter1)
