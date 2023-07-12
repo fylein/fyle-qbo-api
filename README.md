@@ -13,7 +13,7 @@ Django Rest Framework API for Fyle Quickbooks Online Integration
     ```
     $ cp docker-compose.yml.template docker-compose.yml
     ```
-  
+
 * Setup environment variables in docker_compose.yml
 
     ```yaml
@@ -33,7 +33,7 @@ Django Rest Framework API for Fyle Quickbooks Online Integration
       QBO_TOKEN_URI:
       QBO_ENVIRONMENT:
    ```
-  
+
 * Build docker images
 
     ```
@@ -53,7 +53,7 @@ Django Rest Framework API for Fyle Quickbooks Online Integration
     ```
 
 * To tail the logs of a service you can do
-    
+
     ```
     docker-compose logs -f <api / qcluster>
     ```
@@ -126,5 +126,21 @@ Django Rest Framework API for Fyle Quickbooks Online Integration
 
 * Run the following command to update tests SQL fixture (`tests/sql_fixtures/reset_db_fixtures/reset_db.sql`)
     ```
-    docker-compose -f docker-compose-pipeline.yml exec api /bin/bash tests/sql_fixtures/migration_fixtures/create_migration.sh 
+    docker-compose -f docker-compose-pipeline.yml exec api /bin/bash tests/sql_fixtures/migration_fixtures/create_migration.sh
     ```
+### Working with pre commit hooks ###
+* Run below command to install pre commit, if it is not already installed.
+pre commit version must be at least 3.3.1.
+```shell
+brew install pre-commit
+```
+* To set up pre commit hook in your local development environment run below command.
+This step may take a little longer to complete.
+Once done pre commit hooks will automatically run on changed files when you do `git commit`.
+```shell
+pre-commit install --install-hooks
+```
+* To run pre commit hooks on all files run below command
+```shell
+pre-commit run --all-files
+```
