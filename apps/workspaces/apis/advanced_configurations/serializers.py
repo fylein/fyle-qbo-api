@@ -1,6 +1,10 @@
 from rest_framework import serializers
 
-from apps.workspaces.models import WorkspaceGeneralSettings, Workspace, WorkspaceSchedule
+from apps.workspaces.models import (
+    WorkspaceGeneralSettings,
+    Workspace,
+    WorkspaceSchedule,
+)
 from apps.mappings.models import GeneralMapping
 from apps.workspaces.tasks import schedule_sync
 
@@ -32,7 +36,7 @@ class WorkspaceGeneralSettingsSerializer(serializers.ModelSerializer):
             'auto_create_merchants_as_vendors',
             'je_single_credit_line',
             'change_accounting_period',
-            'memo_structure'
+            'memo_structure',
         ]
 
 
@@ -41,14 +45,12 @@ class GeneralMappingsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = GeneralMapping
-        fields = [
-            'bill_payment_account'
-        ]
+        fields = ['bill_payment_account']
 
     def get_bill_payment_account(self, instance):
         return {
             'id': instance.bill_payment_account_id,
-            'name': instance.bill_payment_account_name
+            'name': instance.bill_payment_account_name,
         }
 
 
@@ -61,7 +63,7 @@ class WorkspaceScheduleSerializer(serializers.ModelSerializer):
             'enabled',
             'interval_hours',
             'additional_email_options',
-            'emails_selected'
+            'emails_selected',
         ]
 
 
@@ -69,6 +71,7 @@ class AdvancedConfigurationsSerializer(serializers.ModelSerializer):
     """
     Serializer for the Advanced Configurations Form/API
     """
+
     workspace_general_settings = WorkspaceGeneralSettingsSerializer()
     general_mappings = GeneralMappingsSerializer()
     workspace_schedules = WorkspaceScheduleSerializer()
@@ -80,7 +83,7 @@ class AdvancedConfigurationsSerializer(serializers.ModelSerializer):
             'workspace_general_settings',
             'general_mappings',
             'workspace_schedules',
-            'workspace_id'
+            'workspace_id',
         ]
         read_only_fields = ['workspace_id']
 
@@ -92,25 +95,44 @@ class AdvancedConfigurationsSerializer(serializers.ModelSerializer):
         general_mappings = validated.pop('general_mappings')
         workspace_schedules = validated.pop('workspace_schedules')
 
-        workspace_general_settings_instance, _ = WorkspaceGeneralSettings.objects.update_or_create(
+        (
+            workspace_general_settings_instance,
+            _,
+        ) = WorkspaceGeneralSettings.objects.update_or_create(
             workspace=instance,
             defaults={
-                'sync_fyle_to_qbo_payments': workspace_general_settings.get('sync_fyle_to_qbo_payments'),
-                'sync_qbo_to_fyle_payments': workspace_general_settings.get('sync_qbo_to_fyle_payments'),
-                'auto_create_destination_entity': workspace_general_settings.get('auto_create_destination_entity'),
-                'auto_create_merchants_as_vendors': workspace_general_settings.get('auto_create_merchants_as_vendors'),
-                'je_single_credit_line': workspace_general_settings.get('je_single_credit_line'),
-                'change_accounting_period': workspace_general_settings.get('change_accounting_period'),
-                'memo_structure': workspace_general_settings.get('memo_structure')
-            }
+                'sync_fyle_to_qbo_payments': workspace_general_settings.get(
+                    'sync_fyle_to_qbo_payments'
+                ),
+                'sync_qbo_to_fyle_payments': workspace_general_settings.get(
+                    'sync_qbo_to_fyle_payments'
+                ),
+                'auto_create_destination_entity': workspace_general_settings.get(
+                    'auto_create_destination_entity'
+                ),
+                'auto_create_merchants_as_vendors': workspace_general_settings.get(
+                    'auto_create_merchants_as_vendors'
+                ),
+                'je_single_credit_line': workspace_general_settings.get(
+                    'je_single_credit_line'
+                ),
+                'change_accounting_period': workspace_general_settings.get(
+                    'change_accounting_period'
+                ),
+                'memo_structure': workspace_general_settings.get('memo_structure'),
+            },
         )
 
         GeneralMapping.objects.update_or_create(
             workspace=instance,
             defaults={
-                'bill_payment_account_name': general_mappings.get('bill_payment_account').get('name'),
-                'bill_payment_account_id': general_mappings.get('bill_payment_account').get('id')
-            }
+                'bill_payment_account_name': general_mappings.get(
+                    'bill_payment_account'
+                ).get('name'),
+                'bill_payment_account_id': general_mappings.get(
+                    'bill_payment_account'
+                ).get('id'),
+            },
         )
 
         schedule_sync(
@@ -118,10 +140,12 @@ class AdvancedConfigurationsSerializer(serializers.ModelSerializer):
             schedule_enabled=workspace_schedules.get('enabled'),
             hours=workspace_schedules.get('interval_hours'),
             email_added=workspace_schedules.get('additional_email_options'),
-            emails_selected=workspace_schedules.get('emails_selected')
+            emails_selected=workspace_schedules.get('emails_selected'),
         )
 
-        AdvancedConfigurationsTriggers.run_workspace_general_settings_triggers(workspace_general_settings_instance)
+        AdvancedConfigurationsTriggers.run_workspace_general_settings_triggers(
+            workspace_general_settings_instance
+        )
 
         if instance.onboarding_state == 'ADVANCED_CONFIGURATION':
             instance.onboarding_state = 'COMPLETE'

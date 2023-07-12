@@ -15,9 +15,16 @@ Including another URLconf
 from unicodedata import name
 from django.urls import path
 
-from .views import VendorView, EmployeeView, \
-    PreferencesView, SyncQuickbooksDimensionView, RefreshQuickbooksDimensionView, \
-    DestinationAttributesView, QBOAttributesView, SearchedDestinationAttributesView
+from .views import (
+    VendorView,
+    EmployeeView,
+    PreferencesView,
+    SyncQuickbooksDimensionView,
+    RefreshQuickbooksDimensionView,
+    DestinationAttributesView,
+    QBOAttributesView,
+    SearchedDestinationAttributesView,
+)
 
 urlpatterns = [
     path('preferences/', PreferencesView.as_view()),
@@ -25,7 +32,15 @@ urlpatterns = [
     path('employees/', EmployeeView.as_view()),
     path('sync_dimensions/', SyncQuickbooksDimensionView.as_view()),
     path('refresh_dimensions/', RefreshQuickbooksDimensionView.as_view()),
-    path('destination_attributes/', DestinationAttributesView.as_view(), name='destination-attributes'),
-    path('mapping_options/', SearchedDestinationAttributesView.as_view(), name='searching-destination-attributes'),
-    path('qbo_attributes/', QBOAttributesView.as_view(), name='qbo-attributes')
+    path(
+        'destination_attributes/',
+        DestinationAttributesView.as_view(),
+        name='destination-attributes',
+    ),
+    path(
+        'mapping_options/',
+        SearchedDestinationAttributesView.as_view(),
+        name='searching-destination-attributes',
+    ),
+    path('qbo_attributes/', QBOAttributesView.as_view(), name='qbo-attributes'),
 ]

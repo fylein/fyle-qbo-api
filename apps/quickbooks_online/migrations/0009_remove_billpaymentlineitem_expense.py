@@ -5,13 +5,8 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('quickbooks_online', '0008_auto_20210120_1831'),
-    ]
+    dependencies = [('quickbooks_online', '0008_auto_20210120_1831')]
 
     operations = [
-        migrations.RemoveField(
-            model_name='billpaymentlineitem',
-            name='expense',
-        ),
+        migrations.RemoveField(model_name='billpaymentlineitem', name='expense')
     ]

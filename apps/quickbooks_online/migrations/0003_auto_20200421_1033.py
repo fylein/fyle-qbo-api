@@ -6,7 +6,10 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('quickbooks_online', '0002_cheque_chequelineitem_creditcardpurchase_creditcardpurchaselineitem_journalentry_journalentrylineite'),
+        (
+            'quickbooks_online',
+            '0002_cheque_chequelineitem_creditcardpurchase_creditcardpurchaselineitem_journalentry_journalentrylineite',
+        )
     ]
 
     operations = [
@@ -38,7 +41,9 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='creditcardpurchase',
             name='currency',
-            field=models.CharField(help_text='CreditCardPurchase Currency', max_length=255),
+            field=models.CharField(
+                help_text='CreditCardPurchase Currency', max_length=255
+            ),
         ),
         migrations.AlterField(
             model_name='journalentry',

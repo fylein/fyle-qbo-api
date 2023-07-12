@@ -5,8 +5,8 @@ import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 import gevent
 
-class Sentry:
 
+class Sentry:
     @staticmethod
     def init():
         sentry_sdk.init(
@@ -18,14 +18,16 @@ class Sentry:
             attach_stacktrace=True,
             before_send=Sentry.before_send,
             request_bodies='small',
-            in_app_include=['apps.users',
-            'apps.workspaces',
-            'apps.mappings',
-            'apps.fyle',
-            'apps.quickbooks_online',
-            'apps.tasks',
-            'fyle_rest_auth',
-            'fyle_accounting_mappings'],
+            in_app_include=[
+                'apps.users',
+                'apps.workspaces',
+                'apps.mappings',
+                'apps.fyle',
+                'apps.quickbooks_online',
+                'apps.tasks',
+                'fyle_rest_auth',
+                'fyle_accounting_mappings',
+            ],
         )
 
     @staticmethod
@@ -36,11 +38,11 @@ class Sentry:
                 return 0
 
         return 1
-    
+
     @staticmethod
     def before_send(event, hint):
         if 'exc_info' in hint:
-            exc_type, exc_value, tb = hint['exc_info'] 
+            exc_type, exc_value, tb = hint['exc_info']
             if isinstance(exc_value, (gevent.GreenletExit)):
                 return None
             elif exc_value.args[0] in ['Error: 502']:

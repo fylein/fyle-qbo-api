@@ -5,15 +5,10 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('fyle', '0006_auto_20200825_0631'),
-    ]
+    dependencies = [('fyle', '0006_auto_20200825_0631')]
 
     operations = [
-        migrations.RemoveField(
-            model_name='expense',
-            name='rp_created_at',
-        ),
+        migrations.RemoveField(model_name='expense', name='rp_created_at'),
         migrations.AddField(
             model_name='expense',
             name='verified_at',

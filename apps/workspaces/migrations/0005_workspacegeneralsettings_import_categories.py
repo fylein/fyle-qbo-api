@@ -5,14 +5,14 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('workspaces', '0004_workspacegeneralsettings_import_projects'),
-    ]
+    dependencies = [('workspaces', '0004_workspacegeneralsettings_import_projects')]
 
     operations = [
         migrations.AddField(
             model_name='workspacegeneralsettings',
             name='import_categories',
-            field=models.BooleanField(default=False, help_text='Auto import Categories to Fyle'),
-        ),
+            field=models.BooleanField(
+                default=False, help_text='Auto import Categories to Fyle'
+            ),
+        )
     ]

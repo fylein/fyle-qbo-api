@@ -15,21 +15,45 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='expense',
             name='paid_on_qbo',
-            field=models.BooleanField(default=False, help_text='Expense Payment status on QBO'),
+            field=models.BooleanField(
+                default=False, help_text='Expense Payment status on QBO'
+            ),
         ),
         migrations.CreateModel(
             name='Reimbursement',
             fields=[
                 ('id', models.AutoField(primary_key=True, serialize=False)),
-                ('settlement_id', models.CharField(help_text='Fyle Settlement ID', max_length=255)),
-                ('reimbursement_id', models.CharField(help_text='Fyle Reimbursement ID', max_length=255)),
-                ('state', models.CharField(help_text='Fyle Reimbursement State', max_length=255)),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='Created at')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='Updated at')),
-                ('workspace', models.ForeignKey(help_text='To which workspace this reimbursement belongs to', on_delete=django.db.models.deletion.PROTECT, to='workspaces.Workspace')),
+                (
+                    'settlement_id',
+                    models.CharField(help_text='Fyle Settlement ID', max_length=255),
+                ),
+                (
+                    'reimbursement_id',
+                    models.CharField(help_text='Fyle Reimbursement ID', max_length=255),
+                ),
+                (
+                    'state',
+                    models.CharField(
+                        help_text='Fyle Reimbursement State', max_length=255
+                    ),
+                ),
+                (
+                    'created_at',
+                    models.DateTimeField(auto_now_add=True, help_text='Created at'),
+                ),
+                (
+                    'updated_at',
+                    models.DateTimeField(auto_now=True, help_text='Updated at'),
+                ),
+                (
+                    'workspace',
+                    models.ForeignKey(
+                        help_text='To which workspace this reimbursement belongs to',
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to='workspaces.Workspace',
+                    ),
+                ),
             ],
-            options={
-                'db_table': 'reimbursements',
-            },
+            options={'db_table': 'reimbursements'},
         ),
     ]

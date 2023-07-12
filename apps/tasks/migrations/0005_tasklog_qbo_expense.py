@@ -15,6 +15,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='tasklog',
             name='qbo_expense',
-            field=models.ForeignKey(help_text='Reference to QBO Expense', null=True, on_delete=django.db.models.deletion.PROTECT, to='quickbooks_online.QBOExpense'),
-        ),
+            field=models.ForeignKey(
+                help_text='Reference to QBO Expense',
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                to='quickbooks_online.QBOExpense',
+            ),
+        )
     ]

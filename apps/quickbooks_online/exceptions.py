@@ -14,14 +14,17 @@ logger = logging.getLogger(__name__)
 logger.level = logging.INFO
 
 
-def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: TaskLog, export_type: str):
+def handle_quickbooks_error(
+    exception, expense_group: ExpenseGroup, task_log: TaskLog, export_type: str
+):
     logger.info(exception.response)
     response = json.loads(exception.response)
     if 'Fault' not in response:
         logger.info(response)
         if 'error' in response and response['error'] == 'invalid_grant':
             qbo_credentials: QBOCredential = QBOCredential.objects.filter(
-                workspace_id=expense_group.workspace_id).first()
+                workspace_id=expense_group.workspace_id
+            ).first()
             if qbo_credentials:
                 qbo_credentials.is_expired = True
                 qbo_credentials.refresh_token = None
@@ -37,8 +40,10 @@ def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: Ta
             error = {
                 'expense_group_id': expense_group.id,
                 'type': '{0} / {1}'.format(response['Fault']['type'], error['code']),
-                'short_description': error['Message'] if error['Message'] else '{0} error'.format(export_type),
-                'long_description': error['Detail'] if error['Detail'] else error_msg
+                'short_description': error['Message']
+                if error['Message']
+                else '{0} error'.format(export_type),
+                'long_description': error['Detail'] if error['Detail'] else error_msg,
             }
             errors.append(error)
 
@@ -50,14 +55,15 @@ def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: Ta
                         'error_title': error['type'],
                         'type': 'QBO_ERROR',
                         'error_detail': error['long_description'],
-                        'is_resolved': False
-                    }
+                        'is_resolved': False,
+                    },
                 )
 
     task_log.status = 'FAILED'
     task_log.detail = None
     task_log.quickbooks_errors = errors
     task_log.save()
+
 
 def handle_qbo_exceptions(bill_payment=False):
     def decorator(func):
@@ -83,11 +89,11 @@ def handle_qbo_exceptions(bill_payment=False):
                 logger.info(
                     'QBO Account not connected / token expired for workspace_id %s / expense group %s',
                     expense_group.workspace_id,
-                    expense_group.id
+                    expense_group.id,
                 )
                 detail = {
                     'expense_group_id': expense_group.id,
-                    'message': 'QBO Account not connected / token expired'
+                    'message': 'QBO Account not connected / token expired',
                 }
                 task_log.status = 'FAILED'
                 task_log.detail = detail
@@ -106,13 +112,14 @@ def handle_qbo_exceptions(bill_payment=False):
 
             except Exception as error:
                 error = traceback.format_exc()
-                task_log.detail = {
-                    'error': error
-                }
+                task_log.detail = {'error': error}
                 task_log.status = 'FATAL'
                 task_log.save()
-                logger.error('Something unexpected happened workspace_id: %s %s', 
-                             task_log.workspace_id, task_log.detail)
+                logger.error(
+                    'Something unexpected happened workspace_id: %s %s',
+                    task_log.workspace_id,
+                    task_log.detail,
+                )
 
             if len(args) > 2 and args[2] == True and not bill_payment:
                 update_last_export_details(expense_group.workspace_id)

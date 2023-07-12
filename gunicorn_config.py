@@ -87,14 +87,13 @@ def worker_int(worker):
     import threading
     import sys
     import traceback
+
     id2name = dict([(th.ident, th.name) for th in threading.enumerate()])
     code = []
     for thread_id, stack in sys._current_frames().items():
-        code.append("\n# Thread: %s(%d)" % (id2name.get(thread_id, ""),
-                                            thread_id))
+        code.append("\n# Thread: %s(%d)" % (id2name.get(thread_id, ""), thread_id))
         for filename, line_no, name, line in traceback.extract_stack(stack):
-            code.append('File: "%s", line %d, in %s' % (filename,
-                                                        line_no, name))
+            code.append('File: "%s", line %d, in %s' % (filename, line_no, name))
             if line:
                 code.append("  %s" % (line.strip()))
     worker.log.debug("\n".join(code))
@@ -115,7 +114,11 @@ def worker_exit(server, worker):
 
 
 def nworkers_changed(server, new_value, old_value):
-    server.log.info("server: nworkers_changed is called with new_value: %s old_value: %s", new_value, old_value)
+    server.log.info(
+        "server: nworkers_changed is called with new_value: %s old_value: %s",
+        new_value,
+        old_value,
+    )
 
 
 def on_exit(server):

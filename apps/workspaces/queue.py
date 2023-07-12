@@ -11,13 +11,13 @@ def schedule_email_notification(workspace_id: int, schedule_enabled: bool, hours
             defaults={
                 'schedule_type': Schedule.MINUTES,
                 'minutes': hours * 60,
-                'next_run': datetime.now() + timedelta(minutes=10)
-            }
+                'next_run': datetime.now() + timedelta(minutes=10),
+            },
         )
     else:
         schedule: Schedule = Schedule.objects.filter(
             func='apps.workspaces.tasks.run_email_notification',
-            args='{}'.format(workspace_id)
+            args='{}'.format(workspace_id),
         ).first()
 
         if schedule:

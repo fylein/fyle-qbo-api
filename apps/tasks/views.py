@@ -13,8 +13,13 @@ class TasksView(LookupFieldMixin, generics.ListAPIView):
     """
     Tasks view
     """
+
     queryset = TaskLog.objects.all()
     serializer_class = TaskLogSerializer
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = {'type':{'exact', 'in'}, 'expense_group_id':{'exact', 'in'}, 'status':{'exact', 'in'}}
+    filterset_fields = {
+        'type': {'exact', 'in'},
+        'expense_group_id': {'exact', 'in'},
+        'status': {'exact', 'in'},
+    }
     ordering_fields = ('updated_at',)

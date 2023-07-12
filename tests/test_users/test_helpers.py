@@ -21,13 +21,20 @@ def test_get_cluster_domain_and_refresh_token(db, add_users_to_database):
         client_id=client_id,
         client_secret=client_secret,
         refresh_token=refresh_token,
-        server_url=server_url
+        server_url=server_url,
     )
 
     user_profile = fyle_connection.v1beta.spender.my_profile.get()['data']
     user = User(
-        password='', last_login=datetime.now(tz=timezone.utc), id=1, email=user_profile['user']['email'],
-        user_id=user_profile['user_id'], full_name='', active='t', staff='f', admin='t'
+        password='',
+        last_login=datetime.now(tz=timezone.utc),
+        id=1,
+        email=user_profile['user']['email'],
+        user_id=user_profile['user_id'],
+        full_name='',
+        active='t',
+        staff='f',
+        admin='t',
     )
     cluster_domain, refresh_token = get_cluster_domain_and_refresh_token(user)
     fyle_credentials = FyleCredential.objects.filter(workspace__user=user).first()
@@ -39,4 +46,3 @@ def test_get_cluster_domain_and_refresh_token(db, add_users_to_database):
     cluster_domain, refresh_token = get_cluster_domain_and_refresh_token(user)
 
     assert cluster_domain == 'https://staging.fyle.tech'
-    

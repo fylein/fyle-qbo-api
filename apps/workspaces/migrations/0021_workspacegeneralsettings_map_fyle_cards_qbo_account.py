@@ -5,14 +5,14 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('workspaces', '0020_fylecredential_cluster_domain'),
-    ]
+    dependencies = [('workspaces', '0020_fylecredential_cluster_domain')]
 
     operations = [
         migrations.AddField(
             model_name='workspacegeneralsettings',
             name='map_fyle_cards_qbo_account',
-            field=models.BooleanField(default=True, help_text='Map Fyle Cards to QBO Accounts'),
-        ),
+            field=models.BooleanField(
+                default=True, help_text='Map Fyle Cards to QBO Accounts'
+            ),
+        )
     ]

@@ -7,7 +7,11 @@ from qbosdk.exceptions import WrongParamsError, InvalidTokenError
 from apps.workspaces.models import QBOCredential, FyleCredential
 from apps.fyle.models import ExpenseGroup
 from apps.mappings.models import GeneralMapping
-from apps.workspaces.models import Workspace, WorkspaceSchedule, WorkspaceGeneralSettings
+from apps.workspaces.models import (
+    Workspace,
+    WorkspaceSchedule,
+    WorkspaceGeneralSettings,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -21,81 +25,67 @@ def handle_view_exceptions():
                 return func(*args, **kwargs)
             except ExpenseGroup.DoesNotExist:
                 return Response(
-                    data={
-                        'message': 'Expense group not found'
-                    },
-                    status=status.HTTP_400_BAD_REQUEST
+                    data={'message': 'Expense group not found'},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
             except FyleCredential.DoesNotExist:
                 return Response(
-                    data={
-                        'message': 'Fyle credentials not found in workspace'
-                    },
-                    status=status.HTTP_400_BAD_REQUEST
+                    data={'message': 'Fyle credentials not found in workspace'},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
             except GeneralMapping.DoesNotExist:
                 return Response(
-                    {
-                        'message': 'General mappings do not exist for the workspace'
-                    },
-                    status=status.HTTP_400_BAD_REQUEST
+                    {'message': 'General mappings do not exist for the workspace'},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
             except WrongParamsError as exception:
-                logger.info('QBO token expired workspace_id - %s %s', kwargs['workspace_id'],
-                            {'error': exception.response})
+                logger.info(
+                    'QBO token expired workspace_id - %s %s',
+                    kwargs['workspace_id'],
+                    {'error': exception.response},
+                )
                 return Response(
-                    data={
-                        'message': 'QBO token expired workspace_id'
-                    },
-                    status=status.HTTP_400_BAD_REQUEST
+                    data={'message': 'QBO token expired workspace_id'},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
             except InvalidTokenError as exception:
-                logger.info('QBO token expired workspace_id - %s %s', kwargs['workspace_id'], {
-                            'error': exception.response})
+                logger.info(
+                    'QBO token expired workspace_id - %s %s',
+                    kwargs['workspace_id'],
+                    {'error': exception.response},
+                )
                 return Response(
-                    data={
-                        'message': 'QBO token expired workspace_id'
-                    },
-                    status=status.HTTP_400_BAD_REQUEST
+                    data={'message': 'QBO token expired workspace_id'},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
             except Workspace.DoesNotExist:
                 return Response(
-                    data={
-                        'message': 'Workspace with this id does not exist'
-                    },
-                    status=status.HTTP_400_BAD_REQUEST
+                    data={'message': 'Workspace with this id does not exist'},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
-
 
             except WorkspaceSchedule.DoesNotExist:
                 return Response(
-                    data={
-                        'message': 'Workspace schedule does not exist in workspace'
-                    },
-                    status=status.HTTP_400_BAD_REQUEST
+                    data={'message': 'Workspace schedule does not exist in workspace'},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
             except WorkspaceGeneralSettings.DoesNotExist:
                 return Response(
-                    {
-                        'message': 'General Settings does not exist in workspace'
-                    },
-                    status=status.HTTP_400_BAD_REQUEST
+                    {'message': 'General Settings does not exist in workspace'},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
-
 
             except QBOCredential.DoesNotExist:
                 logger.info('QBO credentials not found in workspace')
                 return Response(
-                    data={
-                        'message': 'QBO credentials not found in workspace'
-                    },
-                    status=status.HTTP_400_BAD_REQUEST
+                    data={'message': 'QBO credentials not found in workspace'},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
             except Exception as exception:
@@ -104,7 +94,7 @@ def handle_view_exceptions():
                     data={
                         'message': 'An unhandled error has occurred, please re-try later'
                     },
-                    status=status.HTTP_400_BAD_REQUEST
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
         return new_fn

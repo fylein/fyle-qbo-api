@@ -5,39 +5,53 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('mappings', '0001_initial'),
-    ]
+    dependencies = [('mappings', '0001_initial')]
 
     operations = [
         migrations.AddField(
             model_name='generalmapping',
             name='accounts_payable_id',
-            field=models.CharField(help_text='QBO accounts payable bank account id', max_length=40, null=True),
+            field=models.CharField(
+                help_text='QBO accounts payable bank account id',
+                max_length=40,
+                null=True,
+            ),
         ),
         migrations.AddField(
             model_name='generalmapping',
             name='accounts_payable_name',
-            field=models.CharField(help_text='Accounts payable bank account name', max_length=255, null=True),
+            field=models.CharField(
+                help_text='Accounts payable bank account name',
+                max_length=255,
+                null=True,
+            ),
         ),
         migrations.AlterField(
             model_name='generalmapping',
             name='bank_account_id',
-            field=models.CharField(help_text='QBO bank account id', max_length=40, null=True),
+            field=models.CharField(
+                help_text='QBO bank account id', max_length=40, null=True
+            ),
         ),
         migrations.AlterField(
             model_name='generalmapping',
             name='bank_account_name',
-            field=models.CharField(help_text='Name of the bank account', max_length=255, null=True),
+            field=models.CharField(
+                help_text='Name of the bank account', max_length=255, null=True
+            ),
         ),
         migrations.AlterField(
             model_name='generalmapping',
             name='default_ccc_account_id',
-            field=models.CharField(help_text='QBO default ccc account id', max_length=40, null=True),
+            field=models.CharField(
+                help_text='QBO default ccc account id', max_length=40, null=True
+            ),
         ),
         migrations.AlterField(
             model_name='generalmapping',
             name='default_ccc_account_name',
-            field=models.CharField(help_text='Name of the default ccc account', max_length=255, null=True),
+            field=models.CharField(
+                help_text='Name of the default ccc account', max_length=255, null=True
+            ),
         ),
     ]

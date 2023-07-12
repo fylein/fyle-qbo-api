@@ -18,18 +18,65 @@ class Migration(migrations.Migration):
             name='Error',
             fields=[
                 ('id', models.AutoField(primary_key=True, serialize=False)),
-                ('type', models.CharField(choices=[('EMPLOYEE_MAPPING', 'EMPLOYEE_MAPPING'), ('CATEGORY_MAPPING', 'CATEGORY_MAPPING'), ('QBO_ERROR', 'QBO_ERROR')], help_text='Error type', max_length=50)),
-                ('is_resolved', models.BooleanField(default=False, help_text='Is resolved')),
-                ('error_title', models.CharField(help_text='Error title', max_length=255)),
+                (
+                    'type',
+                    models.CharField(
+                        choices=[
+                            ('EMPLOYEE_MAPPING', 'EMPLOYEE_MAPPING'),
+                            ('CATEGORY_MAPPING', 'CATEGORY_MAPPING'),
+                            ('QBO_ERROR', 'QBO_ERROR'),
+                        ],
+                        help_text='Error type',
+                        max_length=50,
+                    ),
+                ),
+                (
+                    'is_resolved',
+                    models.BooleanField(default=False, help_text='Is resolved'),
+                ),
+                (
+                    'error_title',
+                    models.CharField(help_text='Error title', max_length=255),
+                ),
                 ('error_detail', models.TextField(help_text='Error detail')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='Created at datetime')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='Updated at datetime')),
-                ('expense_attribute', models.OneToOneField(help_text='Reference to Expense Attribute', on_delete=django.db.models.deletion.PROTECT, to='fyle_accounting_mappings.expenseattribute')),
-                ('expense_group', models.ForeignKey(help_text='Reference to Expense group', null=True, on_delete=django.db.models.deletion.PROTECT, to='fyle.expensegroup')),
-                ('workspace', models.ForeignKey(help_text='Reference to Workspace model', on_delete=django.db.models.deletion.PROTECT, to='workspaces.workspace')),
+                (
+                    'created_at',
+                    models.DateTimeField(
+                        auto_now_add=True, help_text='Created at datetime'
+                    ),
+                ),
+                (
+                    'updated_at',
+                    models.DateTimeField(
+                        auto_now=True, help_text='Updated at datetime'
+                    ),
+                ),
+                (
+                    'expense_attribute',
+                    models.OneToOneField(
+                        help_text='Reference to Expense Attribute',
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to='fyle_accounting_mappings.expenseattribute',
+                    ),
+                ),
+                (
+                    'expense_group',
+                    models.ForeignKey(
+                        help_text='Reference to Expense group',
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to='fyle.expensegroup',
+                    ),
+                ),
+                (
+                    'workspace',
+                    models.ForeignKey(
+                        help_text='Reference to Workspace model',
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to='workspaces.workspace',
+                    ),
+                ),
             ],
-            options={
-                'db_table': 'errors',
-            },
-        ),
+            options={'db_table': 'errors'},
+        )
     ]

@@ -12,22 +12,26 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='workspaceschedule',
-            name='fyle_job_id',
-        ),
+        migrations.RemoveField(model_name='workspaceschedule', name='fyle_job_id'),
         migrations.AddField(
             model_name='workspaceschedule',
             name='schedule',
-            field=models.OneToOneField(null=True, on_delete=django.db.models.deletion.PROTECT, to='django_q.Schedule'),
+            field=models.OneToOneField(
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                to='django_q.Schedule',
+            ),
         ),
         migrations.AddField(
             model_name='workspaceschedule',
             name='workspace',
-            field=models.OneToOneField(default=1, help_text='Reference to Workspace model', on_delete=django.db.models.deletion.PROTECT, to='workspaces.Workspace'),
+            field=models.OneToOneField(
+                default=1,
+                help_text='Reference to Workspace model',
+                on_delete=django.db.models.deletion.PROTECT,
+                to='workspaces.Workspace',
+            ),
             preserve_default=False,
         ),
-        migrations.DeleteModel(
-            name='WorkspaceSettings',
-        ),
+        migrations.DeleteModel(name='WorkspaceSettings'),
     ]

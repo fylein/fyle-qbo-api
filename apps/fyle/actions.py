@@ -10,6 +10,7 @@ from apps.tasks.models import TaskLog
 
 from .constants import DEFAULT_FYLE_CONDITIONS
 
+
 def get_expense_group_ids(workspace_id: int):
     configuration = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
     fund_source = []
@@ -20,30 +21,39 @@ def get_expense_group_ids(workspace_id: int):
         fund_source.append('CCC')
 
     expense_group_ids = ExpenseGroup.objects.filter(
-        workspace_id=workspace_id,
-        exported_at__isnull=True,
-        fund_source__in=fund_source
+        workspace_id=workspace_id, exported_at__isnull=True, fund_source__in=fund_source
     ).values_list('id', flat=True)
 
     return expense_group_ids
 
 
 def get_expense_fields(workspace_id: int):
-    default_attributes = ['EMPLOYEE', 'CATEGORY', 'PROJECT', 'COST_CENTER', 'TAX_GROUP', 'CORPORATE_CARD', 'MERCHANT']
+    default_attributes = [
+        'EMPLOYEE',
+        'CATEGORY',
+        'PROJECT',
+        'COST_CENTER',
+        'TAX_GROUP',
+        'CORPORATE_CARD',
+        'MERCHANT',
+    ]
 
-    attributes = ExpenseAttribute.objects.filter(
-        ~Q(attribute_type__in=default_attributes),
-        workspace_id=workspace_id
-    ).values('attribute_type', 'display_name').distinct()
+    attributes = (
+        ExpenseAttribute.objects.filter(
+            ~Q(attribute_type__in=default_attributes), workspace_id=workspace_id
+        )
+        .values('attribute_type', 'display_name')
+        .distinct()
+    )
 
     expense_fields = [
         {'attribute_type': 'COST_CENTER', 'display_name': 'Cost Center'},
-        {'attribute_type': 'PROJECT', 'display_name': 'Project'}
+        {'attribute_type': 'PROJECT', 'display_name': 'Project'},
     ]
 
     for attribute in attributes:
         expense_fields.append(attribute)
-    
+
     return expense_fields
 
 
@@ -84,9 +94,11 @@ def get_custom_fields(workspace_id: int):
     response.extend(DEFAULT_FYLE_CONDITIONS)
     for custom_field in custom_fields:
         if custom_field['type'] in ('SELECT', 'NUMBER', 'TEXT'):
-            response.append({
-                'field_name': custom_field['field_name'],
-                'type': custom_field['type'],
-                'is_custom': custom_field['is_custom']
-            })
+            response.append(
+                {
+                    'field_name': custom_field['field_name'],
+                    'type': custom_field['type'],
+                    'is_custom': custom_field['is_custom'],
+                }
+            )
     return response

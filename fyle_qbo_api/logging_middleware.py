@@ -9,7 +9,6 @@ logger.level = logging.WARNING
 
 
 class ErrorHandlerMiddleware:
-
     def __init__(self, get_response):
         self.get_response = get_response
 
@@ -22,7 +21,7 @@ class ErrorHandlerMiddleware:
                 message = {
                     'url': request.build_absolute_uri(),
                     'error': repr(exception),
-                    'traceback': traceback.format_exc()
+                    'traceback': traceback.format_exc(),
                 }
                 logger.error(str(message).replace('\n', ''))
 

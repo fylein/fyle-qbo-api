@@ -5,15 +5,17 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('quickbooks_online', '0013_bill_exchange_rate'),
-    ]
+    dependencies = [('quickbooks_online', '0013_bill_exchange_rate')]
 
     operations = [
         migrations.AddField(
             model_name='billlineitem',
             name='detail_type',
-            field=models.CharField(default='AccountBasedExpenseLineDetail', help_text='Detail type for the lineitem', max_length=255),
+            field=models.CharField(
+                default='AccountBasedExpenseLineDetail',
+                help_text='Detail type for the lineitem',
+                max_length=255,
+            ),
         ),
         migrations.AddField(
             model_name='billlineitem',
@@ -23,7 +25,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='chequelineitem',
             name='detail_type',
-            field=models.CharField(default='AccountBasedExpenseLineDetail', help_text='Detail type for the lineitem', max_length=255),
+            field=models.CharField(
+                default='AccountBasedExpenseLineDetail',
+                help_text='Detail type for the lineitem',
+                max_length=255,
+            ),
         ),
         migrations.AddField(
             model_name='chequelineitem',
@@ -33,7 +39,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='creditcardpurchaselineitem',
             name='detail_type',
-            field=models.CharField(default='AccountBasedExpenseLineDetail', help_text='Detail type for the lineitem', max_length=255),
+            field=models.CharField(
+                default='AccountBasedExpenseLineDetail',
+                help_text='Detail type for the lineitem',
+                max_length=255,
+            ),
         ),
         migrations.AddField(
             model_name='creditcardpurchaselineitem',
@@ -43,7 +53,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='qboexpenselineitem',
             name='detail_type',
-            field=models.CharField(default='AccountBasedExpenseLineDetail', help_text='Detail type for the lineitem', max_length=255),
+            field=models.CharField(
+                default='AccountBasedExpenseLineDetail',
+                help_text='Detail type for the lineitem',
+                max_length=255,
+            ),
         ),
         migrations.AddField(
             model_name='qboexpenselineitem',
@@ -53,21 +67,29 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='billlineitem',
             name='account_id',
-            field=models.CharField(help_text='QBO account id', max_length=255, null=True),
+            field=models.CharField(
+                help_text='QBO account id', max_length=255, null=True
+            ),
         ),
         migrations.AlterField(
             model_name='chequelineitem',
             name='account_id',
-            field=models.CharField(help_text='QBO account id', max_length=255, null=True),
+            field=models.CharField(
+                help_text='QBO account id', max_length=255, null=True
+            ),
         ),
         migrations.AlterField(
             model_name='creditcardpurchaselineitem',
             name='account_id',
-            field=models.CharField(help_text='QBO account id', max_length=255, null=True),
+            field=models.CharField(
+                help_text='QBO account id', max_length=255, null=True
+            ),
         ),
         migrations.AlterField(
             model_name='qboexpenselineitem',
             name='account_id',
-            field=models.CharField(help_text='QBO account id', max_length=255, null=True),
+            field=models.CharField(
+                help_text='QBO account id', max_length=255, null=True
+            ),
         ),
     ]

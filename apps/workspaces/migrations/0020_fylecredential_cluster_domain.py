@@ -5,14 +5,14 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('workspaces', '0019_workspacegeneralsettings_memo_structure'),
-    ]
+    dependencies = [('workspaces', '0019_workspacegeneralsettings_memo_structure')]
 
     operations = [
         migrations.AddField(
             model_name='fylecredential',
             name='cluster_domain',
-            field=models.CharField(help_text='Cluster Domain', max_length=255, null=True),
-        ),
+            field=models.CharField(
+                help_text='Cluster Domain', max_length=255, null=True
+            ),
+        )
     ]

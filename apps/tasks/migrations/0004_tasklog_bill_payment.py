@@ -15,6 +15,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='tasklog',
             name='bill_payment',
-            field=models.ForeignKey(help_text='Reference to BillPayment', null=True, on_delete=django.db.models.deletion.PROTECT, to='quickbooks_online.BillPayment'),
-        ),
+            field=models.ForeignKey(
+                help_text='Reference to BillPayment',
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                to='quickbooks_online.BillPayment',
+            ),
+        )
     ]

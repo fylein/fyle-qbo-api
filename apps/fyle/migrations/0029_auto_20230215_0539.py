@@ -16,7 +16,9 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='expense',
             name='is_skipped',
-            field=models.BooleanField(default=False, help_text='Expense is skipped or not', null=True),
+            field=models.BooleanField(
+                default=False, help_text='Expense is skipped or not', null=True
+            ),
         ),
         migrations.AddField(
             model_name='expense',
@@ -27,19 +29,86 @@ class Migration(migrations.Migration):
             name='ExpenseFilter',
             fields=[
                 ('id', models.AutoField(primary_key=True, serialize=False)),
-                ('condition', models.CharField(help_text='Condition for the filter', max_length=255)),
-                ('operator', models.CharField(choices=[('isnull', 'isnull'), ('in', 'in'), ('iexact', 'iexact'), ('icontains', 'icontains'), ('lt', 'lt'), ('lte', 'lte'), ('not_in', 'not_in')], help_text='Operator for the filter', max_length=255)),
-                ('values', django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=255), help_text='Values for the operator', null=True, size=None)),
-                ('rank', models.IntegerField(choices=[(1, 1), (2, 2)], help_text='Rank for the filter')),
-                ('join_by', models.CharField(choices=[('AND', 'AND'), ('OR', 'OR')], help_text='Used to join the filter (AND/OR)', max_length=3, null=True)),
-                ('is_custom', models.BooleanField(default=False, help_text='Custom Field or not')),
-                ('custom_field_type', models.CharField(choices=[('SELECT', 'SELECT'), ('NUMBER', 'NUMBER'), ('TEXT', 'TEXT')], help_text='Custom field type', max_length=255, null=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='Created at')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='Updated at')),
-                ('workspace', models.ForeignKey(help_text='To which workspace these filters belongs to', on_delete=django.db.models.deletion.PROTECT, to='workspaces.workspace')),
+                (
+                    'condition',
+                    models.CharField(
+                        help_text='Condition for the filter', max_length=255
+                    ),
+                ),
+                (
+                    'operator',
+                    models.CharField(
+                        choices=[
+                            ('isnull', 'isnull'),
+                            ('in', 'in'),
+                            ('iexact', 'iexact'),
+                            ('icontains', 'icontains'),
+                            ('lt', 'lt'),
+                            ('lte', 'lte'),
+                            ('not_in', 'not_in'),
+                        ],
+                        help_text='Operator for the filter',
+                        max_length=255,
+                    ),
+                ),
+                (
+                    'values',
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=models.CharField(max_length=255),
+                        help_text='Values for the operator',
+                        null=True,
+                        size=None,
+                    ),
+                ),
+                (
+                    'rank',
+                    models.IntegerField(
+                        choices=[(1, 1), (2, 2)], help_text='Rank for the filter'
+                    ),
+                ),
+                (
+                    'join_by',
+                    models.CharField(
+                        choices=[('AND', 'AND'), ('OR', 'OR')],
+                        help_text='Used to join the filter (AND/OR)',
+                        max_length=3,
+                        null=True,
+                    ),
+                ),
+                (
+                    'is_custom',
+                    models.BooleanField(default=False, help_text='Custom Field or not'),
+                ),
+                (
+                    'custom_field_type',
+                    models.CharField(
+                        choices=[
+                            ('SELECT', 'SELECT'),
+                            ('NUMBER', 'NUMBER'),
+                            ('TEXT', 'TEXT'),
+                        ],
+                        help_text='Custom field type',
+                        max_length=255,
+                        null=True,
+                    ),
+                ),
+                (
+                    'created_at',
+                    models.DateTimeField(auto_now_add=True, help_text='Created at'),
+                ),
+                (
+                    'updated_at',
+                    models.DateTimeField(auto_now=True, help_text='Updated at'),
+                ),
+                (
+                    'workspace',
+                    models.ForeignKey(
+                        help_text='To which workspace these filters belongs to',
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to='workspaces.workspace',
+                    ),
+                ),
             ],
-            options={
-                'db_table': 'expense_filters',
-            },
+            options={'db_table': 'expense_filters'},
         ),
     ]

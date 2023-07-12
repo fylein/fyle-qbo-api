@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('fyle', '0020_auto_20211206_0851'),
-    ]
+    dependencies = [('fyle', '0020_auto_20211206_0851')]
 
     operations = [
         migrations.RenameField(
@@ -18,6 +16,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='expensegroupsettings',
             name='ccc_export_date_type',
-            field=models.CharField(default='current_date', help_text='CCC Export Date', max_length=100),
+            field=models.CharField(
+                default='current_date', help_text='CCC Export Date', max_length=100
+            ),
         ),
     ]

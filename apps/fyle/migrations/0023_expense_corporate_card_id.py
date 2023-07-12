@@ -5,14 +5,14 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('fyle', '0022_expense_file_ids'),
-    ]
+    dependencies = [('fyle', '0022_expense_file_ids')]
 
     operations = [
         migrations.AddField(
             model_name='expense',
             name='corporate_card_id',
-            field=models.CharField(blank=True, help_text='Corporate Card ID', max_length=255, null=True),
-        ),
+            field=models.CharField(
+                blank=True, help_text='Corporate Card ID', max_length=255, null=True
+            ),
+        )
     ]

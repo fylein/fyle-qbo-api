@@ -2,8 +2,15 @@ import logging
 import traceback
 import requests
 
-from qbosdk.exceptions import WrongParamsError as QBOWrongParamsError, InvalidTokenError as QBOInvalidTokenError
-from fyle.platform.exceptions import WrongParamsError, InvalidTokenError, InternalServerError
+from qbosdk.exceptions import (
+    WrongParamsError as QBOWrongParamsError,
+    InvalidTokenError as QBOInvalidTokenError,
+)
+from fyle.platform.exceptions import (
+    WrongParamsError,
+    InvalidTokenError,
+    InternalServerError,
+)
 from apps.workspaces.models import QBOCredential
 
 
@@ -19,7 +26,7 @@ def handle_import_exceptions(task_name):
                 'workspace_id': workspace_id,
                 'alert': False,
                 'message': None,
-                'response': None
+                'response': None,
             }
             try:
                 return func(workspace_id, *args)

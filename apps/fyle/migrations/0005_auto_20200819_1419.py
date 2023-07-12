@@ -6,9 +6,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('fyle', '0004_expensegroupsettings'),
-    ]
+    dependencies = [('fyle', '0004_expensegroupsettings')]
 
     operations = [
         migrations.AddField(

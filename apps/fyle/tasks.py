@@ -20,7 +20,7 @@ logger.level = logging.INFO
 
 SOURCE_ACCOUNT_MAP = {
     'PERSONAL': 'PERSONAL_CASH_ACCOUNT',
-    'CCC': 'PERSONAL_CORPORATE_CREDIT_CARD_ACCOUNT'
+    'CCC': 'PERSONAL_CORPORATE_CREDIT_CARD_ACCOUNT',
 }
 
 
@@ -28,9 +28,7 @@ def get_task_log_and_fund_source(workspace_id: int):
     task_log, _ = TaskLog.objects.update_or_create(
         workspace_id=workspace_id,
         type='FETCHING_EXPENSES',
-        defaults={
-           'status': 'IN_PROGRESS'
-        }
+        defaults={'status': 'IN_PROGRESS'},
     )
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
@@ -54,19 +52,21 @@ def create_expense_groups(workspace_id: int, fund_source: List[str], task_log: T
 
     async_create_expense_groups(workspace_id, fund_source, task_log)
 
-    task_log.detail = {
-        'message': 'Creating expense groups'
-    }
+    task_log.detail = {'message': 'Creating expense groups'}
     task_log.save()
 
     return task_log
 
 
-def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_log: TaskLog):
+def async_create_expense_groups(
+    workspace_id: int, fund_source: List[str], task_log: TaskLog
+):
     try:
         with transaction.atomic():
 
-            expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
+            expense_group_settings = ExpenseGroupSettings.objects.get(
+                workspace_id=workspace_id
+            )
             workspace = Workspace.objects.get(pk=workspace_id)
             ccc_last_synced_at = workspace.ccc_last_synced_at
             last_synced_at = workspace.last_synced_at
@@ -76,7 +76,9 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
 
             if last_synced_at:
                 filter_by_timestamp.append(
-                    'gte:{0}'.format(datetime.strftime(last_synced_at, '%Y-%m-%dT%H:%M:%S.000Z'))
+                    'gte:{0}'.format(
+                        datetime.strftime(last_synced_at, '%Y-%m-%dT%H:%M:%S.000Z')
+                    )
                 )
 
             platform = PlatformConnector(fyle_credentials)
@@ -101,13 +103,15 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
                 if expense_group_settings.expense_state == 'PAID':
                     last_paid_at = last_synced_at
 
-                expenses.extend(platform.expenses.get(
-                    source_account_type=['PERSONAL_CASH_ACCOUNT'],
-                    state=expense_group_settings.expense_state,
-                    settled_at=settled_at,
-                    filter_credit_expenses=filter_credit_expenses,
-                    last_paid_at=last_paid_at
-                ))
+                expenses.extend(
+                    platform.expenses.get(
+                        source_account_type=['PERSONAL_CASH_ACCOUNT'],
+                        state=expense_group_settings.expense_state,
+                        settled_at=settled_at,
+                        filter_credit_expenses=filter_credit_expenses,
+                        last_paid_at=last_paid_at,
+                    )
+                )
 
             if expenses:
                 workspace.last_synced_at = datetime.now()
@@ -126,14 +130,16 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
                 if expense_group_settings.ccc_expense_state == 'PAID':
                     last_paid_at = ccc_last_synced_at
 
-                expenses.extend(platform.expenses.get(
-                    source_account_type=['PERSONAL_CORPORATE_CREDIT_CARD_ACCOUNT'],
-                    state=expense_group_settings.ccc_expense_state,
-                    settled_at=settled_at,
-                    approved_at=approved_at,
-                    filter_credit_expenses=filter_credit_expenses,
-                    last_paid_at=last_paid_at
-                ))
+                expenses.extend(
+                    platform.expenses.get(
+                        source_account_type=['PERSONAL_CORPORATE_CREDIT_CARD_ACCOUNT'],
+                        state=expense_group_settings.ccc_expense_state,
+                        settled_at=settled_at,
+                        approved_at=approved_at,
+                        filter_credit_expenses=filter_credit_expenses,
+                        last_paid_at=last_paid_at,
+                    )
+                )
 
             if len(expenses) != reimbursable_expense_count:
                 workspace.ccc_last_synced_at = datetime.now()
@@ -141,24 +147,29 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
             workspace.save()
 
             expense_objects = Expense.create_expense_objects(expenses, workspace_id)
-            expense_filters = ExpenseFilter.objects.filter(workspace_id=workspace_id).order_by('rank')
+            expense_filters = ExpenseFilter.objects.filter(
+                workspace_id=workspace_id
+            ).order_by('rank')
             filtered_expenses = expense_objects
             if expense_filters:
-                expenses_object_ids = [expense_object.id for expense_object in expense_objects]
+                expenses_object_ids = [
+                    expense_object.id for expense_object in expense_objects
+                ]
                 final_query = construct_expense_filter_query(expense_filters)
                 Expense.objects.filter(
                     final_query,
                     id__in=expenses_object_ids,
                     expensegroup__isnull=True,
-                    org_id=workspace.fyle_org_id
+                    org_id=workspace.fyle_org_id,
                 ).update(is_skipped=True)
-                
+
                 filtered_expenses = Expense.objects.filter(
                     is_skipped=False,
                     id__in=expenses_object_ids,
                     expensegroup__isnull=True,
-                    org_id=workspace.fyle_org_id)     
-                
+                    org_id=workspace.fyle_org_id,
+                )
+
             ExpenseGroup.create_expense_groups_by_report_id_fund_source(
                 filtered_expenses, workspace_id
             )
@@ -169,20 +180,20 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
 
     except FyleCredential.DoesNotExist:
         logger.info('Fyle credentials not found %s', workspace_id)
-        task_log.detail = {
-            'message': 'Fyle credentials do not exist in workspace'
-        }
+        task_log.detail = {'message': 'Fyle credentials do not exist in workspace'}
         task_log.status = 'FAILED'
         task_log.save()
 
     except Exception:
         error = traceback.format_exc()
-        task_log.detail = {
-            'error': error
-        }
+        task_log.detail = {'error': error}
         task_log.status = 'FATAL'
         task_log.save()
-        logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
+        logger.error(
+            'Something unexpected happened workspace_id: %s %s',
+            task_log.workspace_id,
+            task_log.detail,
+        )
 
 
 def sync_dimensions(fyle_credentials):

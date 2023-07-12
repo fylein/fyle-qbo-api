@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('fyle', '0017_expensegroupsettings_import_card_credits'),
-    ]
+    dependencies = [('fyle', '0017_expensegroupsettings_import_card_credits')]
 
     operations = [
         migrations.AddField(

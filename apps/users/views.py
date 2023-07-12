@@ -4,6 +4,7 @@ from rest_framework.response import Response
 
 from .actions import get_fyle_orgs_view
 
+
 class FyleOrgsView(generics.ListCreateAPIView):
     """
     FyleOrgs view
@@ -17,7 +18,4 @@ class FyleOrgsView(generics.ListCreateAPIView):
         """
         fyle_orgs = get_fyle_orgs_view(request.user)
 
-        return Response(
-            data=len(fyle_orgs),
-            status=status.HTTP_200_OK
-        )
+        return Response(data=len(fyle_orgs), status=status.HTTP_200_OK)

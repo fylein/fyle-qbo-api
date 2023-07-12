@@ -15,6 +15,11 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='generalmapping',
             name='workspace',
-            field=models.OneToOneField(help_text='Reference to Workspace model', on_delete=django.db.models.deletion.PROTECT, related_name='general_mappings', to='workspaces.workspace'),
-        ),
+            field=models.OneToOneField(
+                help_text='Reference to Workspace model',
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name='general_mappings',
+                to='workspaces.workspace',
+            ),
+        )
     ]

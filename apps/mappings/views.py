@@ -1,4 +1,3 @@
-
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import status
@@ -7,7 +6,6 @@ from .models import GeneralMapping
 from ..workspaces.models import WorkspaceGeneralSettings
 from apps.exceptions import handle_view_exceptions
 from .actions import trigger_auto_map_employees
-
 
 
 class AutoMapEmployeeView(generics.CreateAPIView):
@@ -22,7 +20,4 @@ class AutoMapEmployeeView(generics.CreateAPIView):
         """
         trigger_auto_map_employees(workspace_id=kwargs['workspace_id'])
 
-        return Response(
-            data={},
-            status=status.HTTP_200_OK
-        )
+        return Response(data={}, status=status.HTTP_200_OK)

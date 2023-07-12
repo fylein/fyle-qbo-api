@@ -14,17 +14,20 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='expense',
             name='fund_source',
-            field=models.CharField(default='PERSONAL', help_text='Expense fund source', max_length=255),
+            field=models.CharField(
+                default='PERSONAL', help_text='Expense fund source', max_length=255
+            ),
             preserve_default=False,
         ),
         migrations.AddField(
             model_name='expensegroup',
             name='fund_source',
-            field=models.CharField(default='PERSONAL', help_text='Expense fund source', max_length=255),
+            field=models.CharField(
+                default='PERSONAL', help_text='Expense fund source', max_length=255
+            ),
             preserve_default=False,
         ),
         migrations.AlterUniqueTogether(
-            name='expensegroup',
-            unique_together={('fyle_group_id', 'workspace')},
+            name='expensegroup', unique_together={('fyle_group_id', 'workspace')}
         ),
     ]

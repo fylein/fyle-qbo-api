@@ -14,7 +14,11 @@ from apps.workspaces.models import WorkspaceGeneralSettings
 from apps.workspaces.apis.import_settings.triggers import ImportSettingsTrigger
 
 from .helpers import schedule_or_delete_fyle_import_tasks
-from .queue import async_auto_create_expense_field_mapping, schedule_cost_centers_creation, schedule_fyle_attributes_creation
+from .queue import (
+    async_auto_create_expense_field_mapping,
+    schedule_cost_centers_creation,
+    schedule_fyle_attributes_creation,
+)
 
 
 @receiver(post_save, sender=Mapping)
@@ -34,7 +38,9 @@ def resolve_post_employees_mapping_errors(sender, instance: Mapping, **kwargs):
     """
     Resolve errors after mapping is created
     """
-    error = Error.objects.filter(expense_attribute_id=instance.source_employee_id).first()
+    error = Error.objects.filter(
+        expense_attribute_id=instance.source_employee_id
+    ).first()
     if error:
         error.is_resolved = True
         error.save()
@@ -47,13 +53,17 @@ def run_post_mapping_settings_triggers(sender, instance: MappingSetting, **kwarg
     :param instance: Row Instance of Sender Class
     :return: None
     """
-    workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=instance.workspace_id).first()
+    workspace_general_settings = WorkspaceGeneralSettings.objects.filter(
+        workspace_id=instance.workspace_id
+    ).first()
 
     if instance.source_field == 'PROJECT':
         schedule_or_delete_fyle_import_tasks(workspace_general_settings)
 
     if instance.source_field == 'COST_CENTER':
-        schedule_cost_centers_creation(instance.import_to_fyle, int(instance.workspace_id))
+        schedule_cost_centers_creation(
+            instance.import_to_fyle, int(instance.workspace_id)
+        )
 
     if instance.is_custom:
         schedule_fyle_attributes_creation(int(instance.workspace_id))
@@ -66,9 +76,10 @@ def run_post_mapping_settings_triggers(sender, instance: MappingSetting, **kwarg
         trigger: ImportSettingsTrigger = ImportSettingsTrigger(
             workspace_general_settings=None,
             mapping_settings=None,
-            workspace_id=instance.workspace_id
+            workspace_id=instance.workspace_id,
         )
         trigger.add_department_grouping(instance.source_field)
+
 
 @receiver(pre_save, sender=MappingSetting)
 def run_pre_mapping_settings_triggers(sender, instance: MappingSetting, **kwargs):
@@ -77,7 +88,13 @@ def run_pre_mapping_settings_triggers(sender, instance: MappingSetting, **kwargs
     :param instance: Row Instance of Sender Class
     :return: None
     """
-    default_attributes = ['CATEGORY', 'PROJECT', 'COST_CENTER', 'TAX_GROUP', 'CORPORATE_CARD']
+    default_attributes = [
+        'CATEGORY',
+        'PROJECT',
+        'COST_CENTER',
+        'TAX_GROUP',
+        'CORPORATE_CARD',
+    ]
 
     instance.source_field = instance.source_field.upper().replace(' ', '_')
 
@@ -91,8 +108,11 @@ def run_pre_mapping_settings_triggers(sender, instance: MappingSetting, **kwargs
 
         async_auto_create_expense_field_mapping(instance)
 
+
 @receiver(post_delete, sender=MappingSetting)
-def run_post_delete_mapping_settings_triggers(sender, instance: MappingSetting, **kwargs):
+def run_post_delete_mapping_settings_triggers(
+    sender, instance: MappingSetting, **kwargs
+):
     """
     :param sender: Sender Class
     :param instance: Row Instance of Sender Class
@@ -103,6 +123,6 @@ def run_post_delete_mapping_settings_triggers(sender, instance: MappingSetting, 
         trigger: ImportSettingsTrigger = ImportSettingsTrigger(
             workspace_general_settings=None,
             mapping_settings=None,
-            workspace_id=instance.workspace_id
+            workspace_id=instance.workspace_id,
         )
         trigger.remove_department_grouping(instance.source_field.lower())

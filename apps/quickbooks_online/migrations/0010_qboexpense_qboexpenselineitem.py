@@ -16,37 +16,104 @@ class Migration(migrations.Migration):
             name='QBOExpense',
             fields=[
                 ('id', models.AutoField(primary_key=True, serialize=False)),
-                ('expense_account_id', models.CharField(help_text='QBO account id', max_length=255)),
-                ('entity_id', models.CharField(help_text='QBO entity id', max_length=255)),
-                ('department_id', models.CharField(help_text='QBO department id', max_length=255, null=True)),
-                ('transaction_date', models.DateField(help_text='QBO Expense transaction date')),
-                ('currency', models.CharField(help_text='QBO Expense Currency', max_length=255)),
+                (
+                    'expense_account_id',
+                    models.CharField(help_text='QBO account id', max_length=255),
+                ),
+                (
+                    'entity_id',
+                    models.CharField(help_text='QBO entity id', max_length=255),
+                ),
+                (
+                    'department_id',
+                    models.CharField(
+                        help_text='QBO department id', max_length=255, null=True
+                    ),
+                ),
+                (
+                    'transaction_date',
+                    models.DateField(help_text='QBO Expense transaction date'),
+                ),
+                (
+                    'currency',
+                    models.CharField(help_text='QBO Expense Currency', max_length=255),
+                ),
                 ('private_note', models.TextField(help_text='QBO Expense Description')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='Created at')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='Updated at')),
-                ('expense_group', models.OneToOneField(help_text='Expense group reference', on_delete=django.db.models.deletion.PROTECT, to='fyle.ExpenseGroup')),
+                (
+                    'created_at',
+                    models.DateTimeField(auto_now_add=True, help_text='Created at'),
+                ),
+                (
+                    'updated_at',
+                    models.DateTimeField(auto_now=True, help_text='Updated at'),
+                ),
+                (
+                    'expense_group',
+                    models.OneToOneField(
+                        help_text='Expense group reference',
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to='fyle.ExpenseGroup',
+                    ),
+                ),
             ],
-            options={
-                'db_table': 'qbo_expenses',
-            },
+            options={'db_table': 'qbo_expenses'},
         ),
         migrations.CreateModel(
             name='QBOExpenseLineitem',
             fields=[
                 ('id', models.AutoField(primary_key=True, serialize=False)),
-                ('account_id', models.CharField(help_text='QBO account id', max_length=255)),
-                ('class_id', models.CharField(help_text='QBO class id', max_length=255, null=True)),
-                ('customer_id', models.CharField(help_text='QBO customer id', max_length=255, null=True)),
+                (
+                    'account_id',
+                    models.CharField(help_text='QBO account id', max_length=255),
+                ),
+                (
+                    'class_id',
+                    models.CharField(
+                        help_text='QBO class id', max_length=255, null=True
+                    ),
+                ),
+                (
+                    'customer_id',
+                    models.CharField(
+                        help_text='QBO customer id', max_length=255, null=True
+                    ),
+                ),
                 ('amount', models.FloatField(help_text='Expense amount')),
-                ('billable', models.BooleanField(help_text='Expense Billable or not', null=True)),
-                ('description', models.TextField(help_text='QBO expense lineitem description', null=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='Created at')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='Updated at')),
-                ('expense', models.OneToOneField(help_text='Reference to Fyle Expense', on_delete=django.db.models.deletion.PROTECT, to='fyle.Expense')),
-                ('qbo_expense', models.ForeignKey(help_text='Reference to QBO Expense', on_delete=django.db.models.deletion.PROTECT, to='quickbooks_online.QBOExpense')),
+                (
+                    'billable',
+                    models.BooleanField(help_text='Expense Billable or not', null=True),
+                ),
+                (
+                    'description',
+                    models.TextField(
+                        help_text='QBO expense lineitem description', null=True
+                    ),
+                ),
+                (
+                    'created_at',
+                    models.DateTimeField(auto_now_add=True, help_text='Created at'),
+                ),
+                (
+                    'updated_at',
+                    models.DateTimeField(auto_now=True, help_text='Updated at'),
+                ),
+                (
+                    'expense',
+                    models.OneToOneField(
+                        help_text='Reference to Fyle Expense',
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to='fyle.Expense',
+                    ),
+                ),
+                (
+                    'qbo_expense',
+                    models.ForeignKey(
+                        help_text='Reference to QBO Expense',
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to='quickbooks_online.QBOExpense',
+                    ),
+                ),
             ],
-            options={
-                'db_table': 'qbo_expense_lineitems',
-            },
+            options={'db_table': 'qbo_expense_lineitems'},
         ),
     ]

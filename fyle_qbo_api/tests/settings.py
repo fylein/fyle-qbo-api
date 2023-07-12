@@ -39,21 +39,19 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     # Installed Apps
     'rest_framework',
     'corsheaders',
     'fyle_rest_auth',
     'fyle_accounting_mappings',
     'django_filters',
-
     # User Created Apps
     'apps.users',
     'apps.workspaces',
     'apps.mappings',
     'apps.fyle',
     'apps.quickbooks_online',
-    'apps.tasks'
+    'apps.tasks',
 ]
 
 MIDDLEWARE = [
@@ -85,9 +83,9 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-            ],
+            ]
         },
-    },
+    }
 ]
 
 FYLE_REST_AUTH_SERIALIZERS = {
@@ -97,13 +95,13 @@ FYLE_REST_AUTH_SERIALIZERS = {
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
-        'apps.workspaces.permissions.WorkspacePermissions'
+        'apps.workspaces.permissions.WorkspacePermissions',
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'fyle_rest_auth.authentication.FyleJWTAuthentication',
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'PAGE_SIZE': 100
+    'PAGE_SIZE': 100,
 }
 
 WSGI_APPLICATION = 'fyle_qbo_api.wsgi.application'
@@ -119,7 +117,7 @@ Q_CLUSTER = {
     'poll': 1,
     'retry': 14400,
     'timeout': 3600,
-    'catch_up': False
+    'catch_up': False,
 }
 
 SERVICE_NAME = os.environ.get('SERVICE_NAME')
@@ -134,53 +132,38 @@ LOGGING = {
         },
         'requests': {
             'format': 'request {levelname} %s {asctime} {message}' % SERVICE_NAME,
-            'style': '{'
-        }
+            'style': '{',
+        },
     },
     'handlers': {
         'debug_logs': {
             'class': 'logging.StreamHandler',
             'stream': sys.stdout,
-            'formatter': 'verbose'
+            'formatter': 'verbose',
         },
         'request_logs': {
             'class': 'logging.StreamHandler',
             'stream': sys.stdout,
-            'formatter': 'requests'
+            'formatter': 'requests',
         },
     },
     'loggers': {
-        'django': {
-            'handlers': ['request_logs'],
-            'propagate': True,
-        },
-        'django.request': {
-            'handlers': ['request_logs'],
-            'propagate': False
-        },
+        'django': {'handlers': ['request_logs'], 'propagate': True},
+        'django.request': {'handlers': ['request_logs'], 'propagate': False},
         'fyle_qbo_api': {
             'handlers': ['debug_logs'],
             'level': 'ERROR',
-            'propagate': False
+            'propagate': False,
         },
-        'apps': {
-            'handlers': ['debug_logs'],
-            'level': 'ERROR',
-            'propagate': False
-        },
-        'django_q': {
-            'handlers': ['debug_logs'],
-            'propagate': True,
-        },
-    }
+        'apps': {'handlers': ['debug_logs'], 'level': 'ERROR', 'propagate': False},
+        'django_q': {'handlers': ['debug_logs'], 'propagate': True},
+    },
 }
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 if os.environ.get('DATABASE_URL', ''):
-    DATABASES = {
-        'default': dj_database_url.config()
-    }
+    DATABASES = {'default': dj_database_url.config()}
 else:
     DATABASES = {
         'default': {
@@ -213,9 +196,7 @@ CACHES = {
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 if os.environ.get('DATABASE_URL', ''):
-    DATABASES = {
-        'default': dj_database_url.config()
-    }
+    DATABASES = {'default': dj_database_url.config()}
 else:
     DATABASES = {
         'default': {
@@ -235,17 +216,11 @@ else:
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'
     },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
 # Internationalization
@@ -293,8 +268,4 @@ CACHE_EXPIRY = 3600
 
 CORS_ORIGIN_ALLOW_ALL = True
 
-CORS_ALLOW_HEADERS = [
-    'sentry-trace',
-    'authorization',
-    'content-type'
-]
+CORS_ALLOW_HEADERS = ['sentry-trace', 'authorization', 'content-type']

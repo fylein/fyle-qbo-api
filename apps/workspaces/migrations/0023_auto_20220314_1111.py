@@ -5,14 +5,12 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('workspaces', '0022_workspacegeneralsettings_skip_cards_mapping'),
-    ]
+    dependencies = [('workspaces', '0022_workspacegeneralsettings_skip_cards_mapping')]
 
     operations = [
         migrations.AlterField(
             model_name='qbocredential',
             name='refresh_token',
             field=models.TextField(help_text='Stores QBO refresh token', null=True),
-        ),
+        )
     ]

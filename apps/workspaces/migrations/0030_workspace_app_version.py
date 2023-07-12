@@ -5,14 +5,12 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('workspaces', '0029_lastexportdetail'),
-    ]
+    dependencies = [('workspaces', '0029_lastexportdetail')]
 
     operations = [
         migrations.AddField(
             model_name='workspace',
             name='app_version',
             field=models.CharField(default='v1', help_text='App version', max_length=2),
-        ),
+        )
     ]

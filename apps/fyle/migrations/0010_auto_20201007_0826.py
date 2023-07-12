@@ -5,17 +5,9 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('fyle', '0009_auto_20200929_0717'),
-    ]
+    dependencies = [('fyle', '0009_auto_20200929_0717')]
 
     operations = [
-        migrations.AlterUniqueTogether(
-            name='expensegroup',
-            unique_together=set(),
-        ),
-        migrations.RemoveField(
-            model_name='expensegroup',
-            name='fyle_group_id',
-        ),
+        migrations.AlterUniqueTogether(name='expensegroup', unique_together=set()),
+        migrations.RemoveField(model_name='expensegroup', name='fyle_group_id'),
     ]

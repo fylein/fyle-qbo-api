@@ -15,6 +15,11 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='expensegroupsettings',
             name='workspace',
-            field=models.OneToOneField(help_text='To which workspace this expense group setting belongs to', on_delete=django.db.models.deletion.PROTECT, related_name='expense_group_settings', to='workspaces.workspace'),
-        ),
+            field=models.OneToOneField(
+                help_text='To which workspace this expense group setting belongs to',
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name='expense_group_settings',
+                to='workspaces.workspace',
+            ),
+        )
     ]

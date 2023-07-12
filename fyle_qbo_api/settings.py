@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     # Installed Apps
     'rest_framework',
     'corsheaders',
@@ -48,14 +47,13 @@ INSTALLED_APPS = [
     'fyle_accounting_mappings',
     'django_q',
     'django_filters',
-
     # User Created Apps
     'apps.users',
     'apps.workspaces',
     'apps.mappings',
     'apps.fyle',
     'apps.quickbooks_online',
-    'apps.tasks'
+    'apps.tasks',
 ]
 
 MIDDLEWARE = [
@@ -88,9 +86,9 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-            ],
+            ]
         },
-    },
+    }
 ]
 
 FYLE_REST_AUTH_SERIALIZERS = {
@@ -100,21 +98,19 @@ FYLE_REST_AUTH_SERIALIZERS = {
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
-        'apps.workspaces.permissions.WorkspacePermissions'
+        'apps.workspaces.permissions.WorkspacePermissions',
     ),
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'fyle_rest_auth.authentication.FyleJWTAuthentication',
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'PAGE_SIZE': 100
+    'PAGE_SIZE': 100,
 }
 
 WSGI_APPLICATION = 'fyle_qbo_api.wsgi.application'
 
-FYLE_REST_AUTH_SETTINGS = {
-    'async_update_user': True
-}
+FYLE_REST_AUTH_SETTINGS = {'async_update_user': True}
 
 Q_CLUSTER = {
     'name': 'fyle_quickbooks_api',
@@ -135,7 +131,7 @@ Q_CLUSTER = {
     'recycle': 50,
     # The maximum resident set size in kilobytes before a worker will recycle and release resources.
     # Useful for limiting memory usage.
-    'max_rss': 100000 # 100mb
+    'max_rss': 100000,  # 100mb
 }
 
 SERVICE_NAME = os.environ.get('SERVICE_NAME')
@@ -150,54 +146,34 @@ LOGGING = {
         },
         'requests': {
             'format': 'request {levelname} %s {asctime} {message}' % SERVICE_NAME,
-            'style': '{'
-        }
+            'style': '{',
+        },
     },
     'handlers': {
         'debug_logs': {
             'class': 'logging.StreamHandler',
             'stream': sys.stdout,
-            'formatter': 'verbose'
+            'formatter': 'verbose',
         },
         'request_logs': {
             'class': 'logging.StreamHandler',
             'stream': sys.stdout,
-            'formatter': 'requests'
+            'formatter': 'requests',
         },
     },
     'loggers': {
-        'django': {
-            'handlers': ['request_logs'],
-            'propagate': True,
-        },
-        'django.request': {
-            'handlers': ['request_logs'],
-            'propagate': False
-        },
+        'django': {'handlers': ['request_logs'], 'propagate': True},
+        'django.request': {'handlers': ['request_logs'], 'propagate': False},
         'fyle_qbo_api': {
             'handlers': ['debug_logs'],
             'level': 'ERROR',
-            'propagate': False
+            'propagate': False,
         },
-        'apps': {
-            'handlers': ['debug_logs'],
-            'level': 'ERROR',
-            'propagate': False
-        },
-        'django_q': {
-            'handlers': ['debug_logs'],
-            'propagate': True,
-        },
-        'gunicorn': {
-            'handlers': ['request_logs'],
-            'level': 'INFO',
-            'propagate': False
-        },
-        'fyle_rest_auth': {
-            'handlers': ['debug_logs'],
-            'propagate': True,
-        }
-    }
+        'apps': {'handlers': ['debug_logs'], 'level': 'ERROR', 'propagate': False},
+        'django_q': {'handlers': ['debug_logs'], 'propagate': True},
+        'gunicorn': {'handlers': ['request_logs'], 'level': 'INFO', 'propagate': False},
+        'fyle_rest_auth': {'handlers': ['debug_logs'], 'propagate': True},
+    },
 }
 
 
@@ -205,12 +181,12 @@ LOGGING = {
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 # Defaulting django engine for qcluster
 if len(sys.argv) > 0 and sys.argv[1] == 'qcluster':
-    DATABASES = {
-        'default': dj_database_url.config()
-    }
+    DATABASES = {'default': dj_database_url.config()}
 else:
     DATABASES = {
-        'default': dj_database_url.config(engine='django_db_geventpool.backends.postgresql_psycopg2')
+        'default': dj_database_url.config(
+            engine='django_db_geventpool.backends.postgresql_psycopg2'
+        )
     }
 
 CACHES = {
@@ -220,10 +196,7 @@ CACHES = {
     }
 }
 
-DATABASES['cache_db'] = {
-    'ENGINE': 'django.db.backends.sqlite3',
-    'NAME': 'cache.db'
-}
+DATABASES['cache_db'] = {'ENGINE': 'django.db.backends.sqlite3', 'NAME': 'cache.db'}
 
 DATABASE_ROUTERS = ['fyle_qbo_api.cache_router.CacheRouter']
 
@@ -232,17 +205,11 @@ DATABASE_ROUTERS = ['fyle_qbo_api.cache_router.CacheRouter']
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'
     },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
 # Internationalization
@@ -284,7 +251,7 @@ E2E_TESTS_CLIENT_SECRET = os.environ.get('E2E_TESTS_CLIENT_SECRET')
 E2E_TESTS_REALM_ID = os.environ.get('E2E_TESTS_REALM_ID')
 
 # Cache Settings
-SENDGRID_SANDBOX_MODE_IN_DEBUG=False
+SENDGRID_SANDBOX_MODE_IN_DEBUG = False
 
 SENDGRID_API_KEY = os.environ.get('SENDGRID_KEY')
 EMAIL = os.environ.get('SENDGRID_EMAIL')
@@ -297,8 +264,4 @@ CORS_ORIGIN_ALLOW_ALL = True
 # Sentry
 Sentry.init()
 
-CORS_ALLOW_HEADERS = [
-    'sentry-trace',
-    'authorization',
-    'content-type'
-]
+CORS_ALLOW_HEADERS = ['sentry-trace', 'authorization', 'content-type']

@@ -21,15 +21,66 @@ class Migration(migrations.Migration):
             name='TaskLog',
             fields=[
                 ('id', models.AutoField(primary_key=True, serialize=False)),
-                ('type', models.CharField(help_text='Task type (FETCH_EXPENSES / CREATE_BILL)', max_length=50)),
-                ('task_id', models.CharField(help_text='Django Q task reference', max_length=255, null=True)),
+                (
+                    'type',
+                    models.CharField(
+                        help_text='Task type (FETCH_EXPENSES / CREATE_BILL)',
+                        max_length=50,
+                    ),
+                ),
+                (
+                    'task_id',
+                    models.CharField(
+                        help_text='Django Q task reference', max_length=255, null=True
+                    ),
+                ),
                 ('status', models.CharField(help_text='Task Status', max_length=255)),
-                ('detail', django.contrib.postgres.fields.jsonb.JSONField(default=apps.tasks.models.get_default, help_text='Task response', null=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='Created at datetime')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='Updated at datetime')),
-                ('bill', models.ForeignKey(help_text='Reference to Bill', null=True, on_delete=django.db.models.deletion.PROTECT, to='quickbooks_online.Bill')),
-                ('expense_group', models.ForeignKey(help_text='Reference to Expense group', null=True, on_delete=django.db.models.deletion.PROTECT, to='fyle.ExpenseGroup')),
-                ('workspace', models.ForeignKey(help_text='Reference to Workspace model', on_delete=django.db.models.deletion.PROTECT, to='workspaces.Workspace')),
+                (
+                    'detail',
+                    django.contrib.postgres.fields.jsonb.JSONField(
+                        default=apps.tasks.models.get_default,
+                        help_text='Task response',
+                        null=True,
+                    ),
+                ),
+                (
+                    'created_at',
+                    models.DateTimeField(
+                        auto_now_add=True, help_text='Created at datetime'
+                    ),
+                ),
+                (
+                    'updated_at',
+                    models.DateTimeField(
+                        auto_now=True, help_text='Updated at datetime'
+                    ),
+                ),
+                (
+                    'bill',
+                    models.ForeignKey(
+                        help_text='Reference to Bill',
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to='quickbooks_online.Bill',
+                    ),
+                ),
+                (
+                    'expense_group',
+                    models.ForeignKey(
+                        help_text='Reference to Expense group',
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to='fyle.ExpenseGroup',
+                    ),
+                ),
+                (
+                    'workspace',
+                    models.ForeignKey(
+                        help_text='Reference to Workspace model',
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to='workspaces.Workspace',
+                    ),
+                ),
             ],
-        ),
+        )
     ]

@@ -17,14 +17,64 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ExpenseGroupSettings',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('reimbursable_expense_group_fields', django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=100), default=apps.fyle.models.get_default_expense_group_fields, help_text='list of fields reimbursable expense grouped by', size=None)),
-                ('corporate_credit_card_expense_group_fields', django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=100), default=apps.fyle.models.get_default_expense_group_fields, help_text='list of fields ccc expenses grouped by', size=None)),
-                ('expense_states', django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=100), default=apps.fyle.models.get_default_expense_state, help_text='list of states to fetch expenses', size=None)),
-                ('export_date', models.CharField(default='CURRENT_DATE', help_text='Export Date', max_length=100)),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='Created at')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='Updated at')),
-                ('workspace', models.OneToOneField(help_text='To which workspace this expense group setting belongs to', on_delete=django.db.models.deletion.PROTECT, to='workspaces.Workspace')),
+                (
+                    'id',
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name='ID',
+                    ),
+                ),
+                (
+                    'reimbursable_expense_group_fields',
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=models.CharField(max_length=100),
+                        default=apps.fyle.models.get_default_expense_group_fields,
+                        help_text='list of fields reimbursable expense grouped by',
+                        size=None,
+                    ),
+                ),
+                (
+                    'corporate_credit_card_expense_group_fields',
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=models.CharField(max_length=100),
+                        default=apps.fyle.models.get_default_expense_group_fields,
+                        help_text='list of fields ccc expenses grouped by',
+                        size=None,
+                    ),
+                ),
+                (
+                    'expense_states',
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=models.CharField(max_length=100),
+                        default=apps.fyle.models.get_default_expense_state,
+                        help_text='list of states to fetch expenses',
+                        size=None,
+                    ),
+                ),
+                (
+                    'export_date',
+                    models.CharField(
+                        default='CURRENT_DATE', help_text='Export Date', max_length=100
+                    ),
+                ),
+                (
+                    'created_at',
+                    models.DateTimeField(auto_now_add=True, help_text='Created at'),
+                ),
+                (
+                    'updated_at',
+                    models.DateTimeField(auto_now=True, help_text='Updated at'),
+                ),
+                (
+                    'workspace',
+                    models.OneToOneField(
+                        help_text='To which workspace this expense group setting belongs to',
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to='workspaces.Workspace',
+                    ),
+                ),
             ],
-        ),
+        )
     ]

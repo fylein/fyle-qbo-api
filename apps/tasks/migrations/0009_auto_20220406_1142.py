@@ -15,6 +15,11 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='error',
             name='expense_attribute',
-            field=models.OneToOneField(help_text='Reference to Expense Attribute', null=True, on_delete=django.db.models.deletion.PROTECT, to='fyle_accounting_mappings.expenseattribute'),
-        ),
+            field=models.OneToOneField(
+                help_text='Reference to Expense Attribute',
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                to='fyle_accounting_mappings.expenseattribute',
+            ),
+        )
     ]

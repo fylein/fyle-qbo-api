@@ -19,5 +19,5 @@ from .views import AutoMapEmployeeView
 
 urlpatterns = [
     path('', include('fyle_accounting_mappings.urls')),
-    path('auto_map_employees/trigger/', AutoMapEmployeeView.as_view())
+    path('auto_map_employees/trigger/', AutoMapEmployeeView.as_view()),
 ]
