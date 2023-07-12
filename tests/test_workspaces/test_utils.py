@@ -1,8 +1,10 @@
 import json
 import logging
 from unittest import mock
-from apps.workspaces.utils import generate_qbo_refresh_token
+
 from django.conf import settings
+
+from apps.workspaces.utils import generate_qbo_refresh_token
 
 logger = logging.getLogger(__name__)
 

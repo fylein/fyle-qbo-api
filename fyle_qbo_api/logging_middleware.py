@@ -1,8 +1,8 @@
 import logging
 import traceback
 
-from django.http import HttpResponse
 from django.conf import settings
+from django.http import HttpResponse
 
 logger = logging.getLogger(__name__)
 logger.level = logging.WARNING

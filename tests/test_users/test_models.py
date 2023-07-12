@@ -1,6 +1,8 @@
-import pytest
 from datetime import datetime, timezone
+
+import pytest
 from fyle_rest_auth.models import User
+
 
 @pytest.mark.django_db
 def test_user_creation():

@@ -1,10 +1,10 @@
+import logging
+import os
 import sys
 import time
-import os
-import logging
 
-from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
 
 
 class LoggingEventHandler(FileSystemEventHandler):

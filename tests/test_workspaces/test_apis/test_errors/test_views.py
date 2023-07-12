@@ -1,11 +1,14 @@
-from fyle_qbo_api.tests import settings
-import pytest
 import json
+
+import pytest
 from django.urls import reverse
+
+from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings, WorkspaceSchedule
+from fyle_qbo_api.tests import settings
 from tests.helper import dict_compare_keys
-from apps.workspaces.models import FyleCredential, WorkspaceSchedule
-from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
+
 from .fixtures import data
+
 
 def test_errors(api_client, test_connection):
 

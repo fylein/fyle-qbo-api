@@ -15,10 +15,19 @@ Including another URLconf
 """
 from django.urls import path
 
-from .views import (ExpenseGroupView, ExpenseView,
-    ExpenseFieldsView, ExportableExpenseGroupsView,
-    ExpenseGroupSettingsView, RefreshFyleDimensionView, SyncFyleDimensionView,
-    ExpenseGroupSyncView, ExpenseFilterView, ExpenseFilterDeleteView, CustomFieldView)
+from .views import (
+    CustomFieldView,
+    ExpenseFieldsView,
+    ExpenseFilterDeleteView,
+    ExpenseFilterView,
+    ExpenseGroupSettingsView,
+    ExpenseGroupSyncView,
+    ExpenseGroupView,
+    ExpenseView,
+    ExportableExpenseGroupsView,
+    RefreshFyleDimensionView,
+    SyncFyleDimensionView,
+)
 
 urlpatterns = [
     path('expense_groups/', ExpenseGroupView.as_view(), name='expense-groups'),

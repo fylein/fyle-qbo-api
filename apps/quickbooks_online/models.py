@@ -4,13 +4,11 @@ QBO models
 from datetime import datetime
 from typing import List
 
-from django.db import models
 from django.conf import settings
+from django.db import models
+from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping, MappingSetting
 
-from fyle_accounting_mappings.models import Mapping, MappingSetting, ExpenseAttribute, DestinationAttribute,\
-    EmployeeMapping
-
-from apps.fyle.models import ExpenseGroup, Expense
+from apps.fyle.models import Expense, ExpenseGroup
 from apps.mappings.models import GeneralMapping
 from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
 

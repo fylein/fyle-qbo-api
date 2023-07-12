@@ -1,17 +1,15 @@
 """
 Mapping Signals
 """
-from django.db.models.signals import post_save, pre_save, post_delete
+from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
+from fyle_accounting_mappings.models import EmployeeMapping, Mapping, MappingSetting
 
-from fyle_accounting_mappings.models import MappingSetting, Mapping, EmployeeMapping
-
-from apps.tasks.models import Error
 from apps.mappings.tasks import upload_attributes_to_fyle
-from apps.workspaces.utils import delete_cards_mapping_settings
-from apps.workspaces.models import WorkspaceGeneralSettings
-
+from apps.tasks.models import Error
 from apps.workspaces.apis.import_settings.triggers import ImportSettingsTrigger
+from apps.workspaces.models import WorkspaceGeneralSettings
+from apps.workspaces.utils import delete_cards_mapping_settings
 
 from .helpers import schedule_or_delete_fyle_import_tasks
 from .queue import async_auto_create_expense_field_mapping, schedule_cost_centers_creation, schedule_fyle_attributes_creation

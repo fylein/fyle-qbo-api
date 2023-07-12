@@ -1,14 +1,14 @@
 from datetime import datetime, timezone
-from django.db.models import Q
 
+from django.db.models import Q
 from fyle_integrations_platform_connector import PlatformConnector
 
-from apps.workspaces.models import FyleCredential, Workspace
-from apps.workspaces.models import WorkspaceGeneralSettings
-from apps.fyle.models import ExpenseGroup, ExpenseAttribute
+from apps.fyle.models import ExpenseAttribute, ExpenseGroup
 from apps.tasks.models import TaskLog
+from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
 
 from .constants import DEFAULT_FYLE_CONDITIONS
+
 
 def get_expense_group_ids(workspace_id: int):
     configuration = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
@@ -19,11 +19,7 @@ def get_expense_group_ids(workspace_id: int):
     if configuration.corporate_credit_card_expenses_object:
         fund_source.append('CCC')
 
-    expense_group_ids = ExpenseGroup.objects.filter(
-        workspace_id=workspace_id,
-        exported_at__isnull=True,
-        fund_source__in=fund_source
-    ).values_list('id', flat=True)
+    expense_group_ids = ExpenseGroup.objects.filter(workspace_id=workspace_id, exported_at__isnull=True, fund_source__in=fund_source).values_list('id', flat=True)
 
     return expense_group_ids
 
@@ -31,19 +27,13 @@ def get_expense_group_ids(workspace_id: int):
 def get_expense_fields(workspace_id: int):
     default_attributes = ['EMPLOYEE', 'CATEGORY', 'PROJECT', 'COST_CENTER', 'TAX_GROUP', 'CORPORATE_CARD', 'MERCHANT']
 
-    attributes = ExpenseAttribute.objects.filter(
-        ~Q(attribute_type__in=default_attributes),
-        workspace_id=workspace_id
-    ).values('attribute_type', 'display_name').distinct()
+    attributes = ExpenseAttribute.objects.filter(~Q(attribute_type__in=default_attributes), workspace_id=workspace_id).values('attribute_type', 'display_name').distinct()
 
-    expense_fields = [
-        {'attribute_type': 'COST_CENTER', 'display_name': 'Cost Center'},
-        {'attribute_type': 'PROJECT', 'display_name': 'Project'}
-    ]
+    expense_fields = [{'attribute_type': 'COST_CENTER', 'display_name': 'Cost Center'}, {'attribute_type': 'PROJECT', 'display_name': 'Project'}]
 
     for attribute in attributes:
         expense_fields.append(attribute)
-    
+
     return expense_fields
 
 
@@ -84,9 +74,5 @@ def get_custom_fields(workspace_id: int):
     response.extend(DEFAULT_FYLE_CONDITIONS)
     for custom_field in custom_fields:
         if custom_field['type'] in ('SELECT', 'NUMBER', 'TEXT'):
-            response.append({
-                'field_name': custom_field['field_name'],
-                'type': custom_field['type'],
-                'is_custom': custom_field['is_custom']
-            })
+            response.append({'field_name': custom_field['field_name'], 'type': custom_field['type'], 'is_custom': custom_field['is_custom']})
     return response

@@ -1,10 +1,12 @@
 import os
+from datetime import datetime, timezone
 from unittest import mock
-from datetime import datetime,timezone
+
 import pytest
-from fyle_rest_auth.models import User,AuthToken
-from rest_framework.test import APIClient
 from fyle.platform import Platform
+from fyle_rest_auth.models import AuthToken, User
+from rest_framework.test import APIClient
+
 from apps.fyle.helpers import get_access_token
 from fyle_qbo_api.tests import settings
 from tests.test_workspaces.fixtures import data as fyle_data

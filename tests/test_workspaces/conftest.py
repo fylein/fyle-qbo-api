@@ -1,6 +1,9 @@
+from datetime import datetime, timezone
+
 import pytest
+
 from apps.workspaces.models import Workspace
-from datetime import datetime,timezone
+
 
 @pytest.fixture
 def add_workspace_to_database():

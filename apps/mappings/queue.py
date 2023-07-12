@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta
-from django_q.tasks import async_task
-from fyle_accounting_mappings.models import MappingSetting
 
 from django_q.models import Schedule
+from django_q.tasks import async_task
+from fyle_accounting_mappings.models import MappingSetting
 
 from apps.mappings.models import GeneralMapping
 from apps.workspaces.models import WorkspaceGeneralSettings
