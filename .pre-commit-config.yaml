@@ -15,12 +15,6 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
 
-  - repo: https://github.com/psf/black
-    rev: 22.3.0
-    hooks:
-      - id: black
-        args: [--line-length=250, --skip-string-normalization, --skip-magic-trailing-comma]
-
   - repo: https://github.com/timothycrosley/isort
     rev: 5.12.0
     hooks:
