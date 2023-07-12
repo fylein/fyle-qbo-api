@@ -1,8 +1,6 @@
-from apps.fyle.models import *
 from apps.fyle.models import _format_date, _group_expenses, get_default_ccc_expense_state
-
+from apps.fyle.models import *
 from .fixtures import data
-
 
 def test_default_fields():
     expense_group_field = get_default_expense_group_fields()
@@ -17,7 +15,7 @@ def test_default_fields():
 def test_create_expense_objects(db):
     payload = data['expenses']
     Expense.create_expense_objects(payload, 3)
-
+    
     expense = Expense.objects.all().order_by('id').last()
     assert expense.expense_id == 'txLAP0oIB5Yb'
 
@@ -25,14 +23,16 @@ def test_create_expense_objects(db):
 def test_expense_group_settings(create_temp_workspace, db):
     payload = data['expense_group_settings_payload']
 
-    ExpenseGroupSettings.update_expense_group_settings(payload, 98)
+    ExpenseGroupSettings.update_expense_group_settings(
+        payload, 98
+    )
 
     settings = ExpenseGroupSettings.objects.last()
 
     assert settings.expense_state == 'PAID'
     assert settings.ccc_export_date_type == 'spent_at'
     assert settings.ccc_expense_state == 'PAID'
-
+ 
 
 def test_create_reimbursement(db):
 
@@ -43,7 +43,7 @@ def test_create_reimbursement(db):
     pending_reimbursement = Reimbursement.objects.get(reimbursement_id='reimgCW1Og0BcM')
 
     pending_reimbursement.state = 'PENDING'
-    pending_reimbursement.settlement_id = 'setgCxsr2vTmZ'
+    pending_reimbursement.settlement_id= 'setgCxsr2vTmZ'
 
     reimbursements[0]['is_paid'] = True
 
@@ -58,12 +58,12 @@ def test_create_expense_groups_by_report_id_fund_source(db):
     payload = data['expenses']
     Expense.create_expense_objects(payload, workspace_id)
     expense_objects = Expense.objects.last()
-
+    
     expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
     expense_group_settings.reimbursable_export_date_type = 'last_spent_at'
     expense_group_settings.ccc_export_date_type = 'last_spent_at'
     expense_group_settings.save()
-
+    
     field = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type='PROJECT').last()
     field.attribute_type = 'KILLUA'
     field.save()

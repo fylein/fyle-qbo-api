@@ -17,4 +17,6 @@ from django.urls import path
 
 from .views import FyleOrgsView
 
-urlpatterns = [path('orgs/', FyleOrgsView.as_view(), name='orgs')]
+urlpatterns = [
+    path('orgs/', FyleOrgsView.as_view(), name='orgs')
+]

@@ -2,9 +2,9 @@ version: '3.7'
 
 services:
   api:
-    build:
+    build: 
       context: ./
-      args:
+      args: 
         CI: ENABLED
     entrypoint: bash run.sh
     restart: unless-stopped
@@ -12,7 +12,7 @@ services:
     - ./:/fyle-qbo-api
     depends_on:
     - db
-    environment:
+    environment: 
       SECRET_KEY: thisisthedjangosecretkey
       ALLOWED_HOSTS: "*"
       DEBUG: "False"
@@ -36,7 +36,7 @@ services:
       E2E_TESTS_REALM_ID: ${E2E_TESTS_REALM_ID}
   db:
     image: "postgres:15"
-    environment:
+    environment: 
       POSTGRES_DB: dummy
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres

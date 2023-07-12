@@ -13,19 +13,11 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from unicodedata import name
-
 from django.urls import path
 
-from .views import (
-    DestinationAttributesView,
-    EmployeeView,
-    PreferencesView,
-    QBOAttributesView,
-    RefreshQuickbooksDimensionView,
-    SearchedDestinationAttributesView,
-    SyncQuickbooksDimensionView,
-    VendorView,
-)
+from .views import VendorView, EmployeeView, \
+    PreferencesView, SyncQuickbooksDimensionView, RefreshQuickbooksDimensionView, \
+    DestinationAttributesView, QBOAttributesView, SearchedDestinationAttributesView
 
 urlpatterns = [
     path('preferences/', PreferencesView.as_view()),
@@ -35,5 +27,5 @@ urlpatterns = [
     path('refresh_dimensions/', RefreshQuickbooksDimensionView.as_view()),
     path('destination_attributes/', DestinationAttributesView.as_view(), name='destination-attributes'),
     path('mapping_options/', SearchedDestinationAttributesView.as_view(), name='searching-destination-attributes'),
-    path('qbo_attributes/', QBOAttributesView.as_view(), name='qbo-attributes'),
+    path('qbo_attributes/', QBOAttributesView.as_view(), name='qbo-attributes')
 ]

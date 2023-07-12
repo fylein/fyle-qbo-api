@@ -5,6 +5,14 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [('workspaces', '0040_workspacegeneralsettings_is_multi_currency_allowed')]
+    dependencies = [
+        ('workspaces', '0040_workspacegeneralsettings_is_multi_currency_allowed'),
+    ]
 
-    operations = [migrations.AddField(model_name='workspacegeneralsettings', name='import_items', field=models.BooleanField(default=False, help_text='Auto import Items to Fyle'))]
+    operations = [
+        migrations.AddField(
+            model_name='workspacegeneralsettings',
+            name='import_items',
+            field=models.BooleanField(default=False, help_text='Auto import Items to Fyle'),
+        ),
+    ]

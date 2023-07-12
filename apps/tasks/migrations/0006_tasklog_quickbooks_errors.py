@@ -6,6 +6,14 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [('tasks', '0005_tasklog_qbo_expense')]
+    dependencies = [
+        ('tasks', '0005_tasklog_qbo_expense'),
+    ]
 
-    operations = [migrations.AddField(model_name='tasklog', name='quickbooks_errors', field=django.contrib.postgres.fields.jsonb.JSONField(help_text='Quickbooks Errors', null=True))]
+    operations = [
+        migrations.AddField(
+            model_name='tasklog',
+            name='quickbooks_errors',
+            field=django.contrib.postgres.fields.jsonb.JSONField(help_text='Quickbooks Errors', null=True),
+        ),
+    ]

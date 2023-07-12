@@ -5,6 +5,14 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [('workspaces', '0024_qbocredential_is_expired')]
+    dependencies = [
+        ('workspaces', '0024_qbocredential_is_expired'),
+    ]
 
-    operations = [migrations.AddField(model_name='workspace', name='fyle_currency', field=models.CharField(help_text='Fyle Currency', max_length=5, null=True))]
+    operations = [
+        migrations.AddField(
+            model_name='workspace',
+            name='fyle_currency',
+            field=models.CharField(help_text='Fyle Currency', max_length=5, null=True),
+        ),
+    ]

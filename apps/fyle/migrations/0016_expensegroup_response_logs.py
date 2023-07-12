@@ -6,6 +6,14 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [('fyle', '0015_expense_org_id')]
+    dependencies = [
+        ('fyle', '0015_expense_org_id'),
+    ]
 
-    operations = [migrations.AddField(model_name='expensegroup', name='response_logs', field=django.contrib.postgres.fields.jsonb.JSONField(help_text='Reponse log of the export', null=True))]
+    operations = [
+        migrations.AddField(
+            model_name='expensegroup',
+            name='response_logs',
+            field=django.contrib.postgres.fields.jsonb.JSONField(help_text='Reponse log of the export', null=True),
+        ),
+    ]

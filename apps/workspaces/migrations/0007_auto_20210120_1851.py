@@ -5,9 +5,19 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [('workspaces', '0006_auto_20201228_0436')]
+    dependencies = [
+        ('workspaces', '0006_auto_20201228_0436'),
+    ]
 
     operations = [
-        migrations.AddField(model_name='workspacegeneralsettings', name='sync_fyle_to_qbo_payments', field=models.BooleanField(default=False, help_text='Auto Sync Payments from Fyle to QBO')),
-        migrations.AddField(model_name='workspacegeneralsettings', name='sync_qbo_to_fyle_payments', field=models.BooleanField(default=False, help_text='Auto Sync Payments from QBO to Fyle')),
+        migrations.AddField(
+            model_name='workspacegeneralsettings',
+            name='sync_fyle_to_qbo_payments',
+            field=models.BooleanField(default=False, help_text='Auto Sync Payments from Fyle to QBO'),
+        ),
+        migrations.AddField(
+            model_name='workspacegeneralsettings',
+            name='sync_qbo_to_fyle_payments',
+            field=models.BooleanField(default=False, help_text='Auto Sync Payments from QBO to Fyle'),
+        ),
     ]

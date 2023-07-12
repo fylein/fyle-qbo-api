@@ -7,7 +7,8 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = []
+    dependencies = [
+    ]
 
     operations = [
         migrations.CreateModel(
@@ -23,6 +24,8 @@ class Migration(migrations.Migration):
                 ('staff', models.BooleanField(default=False)),
                 ('admin', models.BooleanField(default=False)),
             ],
-            options={'abstract': False},
-        )
+            options={
+                'abstract': False,
+            },
+        ),
     ]

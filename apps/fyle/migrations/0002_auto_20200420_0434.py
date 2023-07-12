@@ -5,10 +5,26 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [('workspaces', '0002_workspacegeneralsettings'), ('fyle', '0001_initial')]
+    dependencies = [
+        ('workspaces', '0002_workspacegeneralsettings'),
+        ('fyle', '0001_initial'),
+    ]
 
     operations = [
-        migrations.AddField(model_name='expense', name='fund_source', field=models.CharField(default='PERSONAL', help_text='Expense fund source', max_length=255), preserve_default=False),
-        migrations.AddField(model_name='expensegroup', name='fund_source', field=models.CharField(default='PERSONAL', help_text='Expense fund source', max_length=255), preserve_default=False),
-        migrations.AlterUniqueTogether(name='expensegroup', unique_together={('fyle_group_id', 'workspace')}),
+        migrations.AddField(
+            model_name='expense',
+            name='fund_source',
+            field=models.CharField(default='PERSONAL', help_text='Expense fund source', max_length=255),
+            preserve_default=False,
+        ),
+        migrations.AddField(
+            model_name='expensegroup',
+            name='fund_source',
+            field=models.CharField(default='PERSONAL', help_text='Expense fund source', max_length=255),
+            preserve_default=False,
+        ),
+        migrations.AlterUniqueTogether(
+            name='expensegroup',
+            unique_together={('fyle_group_id', 'workspace')},
+        ),
     ]

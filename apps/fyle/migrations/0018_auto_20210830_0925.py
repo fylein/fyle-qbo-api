@@ -5,9 +5,19 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [('fyle', '0017_expensegroupsettings_import_card_credits')]
+    dependencies = [
+        ('fyle', '0017_expensegroupsettings_import_card_credits'),
+    ]
 
     operations = [
-        migrations.AddField(model_name='expense', name='tax_amount', field=models.FloatField(help_text='Tax Amount', null=True)),
-        migrations.AddField(model_name='expense', name='tax_group_id', field=models.CharField(help_text='Tax Group ID', max_length=255, null=True)),
+        migrations.AddField(
+            model_name='expense',
+            name='tax_amount',
+            field=models.FloatField(help_text='Tax Amount', null=True),
+        ),
+        migrations.AddField(
+            model_name='expense',
+            name='tax_group_id',
+            field=models.CharField(help_text='Tax Group ID', max_length=255, null=True),
+        ),
     ]

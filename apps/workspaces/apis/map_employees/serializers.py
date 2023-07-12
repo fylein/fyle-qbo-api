@@ -17,7 +17,10 @@ class MapEmployeesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Workspace
-        fields = ['workspace_general_settings', 'workspace_id']
+        fields = [
+            'workspace_general_settings',
+            'workspace_id'
+        ]
         read_only_fields = ['workspace_id']
 
     def get_workspace_id(self, instance):
@@ -34,7 +37,11 @@ class MapEmployeesSerializer(serializers.ModelSerializer):
             workspace_general_settings_instance.save()
 
         workspace_general_settings_instance, _ = WorkspaceGeneralSettings.objects.update_or_create(
-            workspace_id=workspace_id, defaults={'employee_field_mapping': workspace_general_settings['employee_field_mapping'], 'auto_map_employees': workspace_general_settings['auto_map_employees']}
+            workspace_id=workspace_id,
+            defaults={
+                'employee_field_mapping': workspace_general_settings['employee_field_mapping'],
+                'auto_map_employees': workspace_general_settings['auto_map_employees']
+            }
         )
 
         MapEmployeesTriggers.run_workspace_general_settings_triggers(workspace_general_settings_instance)
@@ -49,7 +56,8 @@ class MapEmployeesSerializer(serializers.ModelSerializer):
         if not data.get('workspace_general_settings').get('employee_field_mapping'):
             raise serializers.ValidationError('employee_field_mapping field is required')
 
-        if data.get('workspace_general_settings').get('auto_map_employees') and data.get('workspace_general_settings').get('auto_map_employees') not in ['EMAIL', 'NAME', 'EMPLOYEE_CODE']:
+        if data.get('workspace_general_settings').get('auto_map_employees') and \
+            data.get('workspace_general_settings').get('auto_map_employees') not in ['EMAIL', 'NAME', 'EMPLOYEE_CODE']:
             raise serializers.ValidationError('auto_map_employees can have only EMAIL / NAME / EMPLOYEE_CODE')
 
         return data

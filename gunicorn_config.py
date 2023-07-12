@@ -1,5 +1,4 @@
 import os
-
 from psycogreen.gevent import patch_psycopg
 
 # https://docs.gunicorn.org/en/stable/settings.html
@@ -85,16 +84,17 @@ def worker_int(worker):
     worker.log.info("worker received INT or QUIT signal")
 
     # get traceback info
-    import sys
     import threading
+    import sys
     import traceback
-
     id2name = dict([(th.ident, th.name) for th in threading.enumerate()])
     code = []
     for thread_id, stack in sys._current_frames().items():
-        code.append("\n# Thread: %s(%d)" % (id2name.get(thread_id, ""), thread_id))
+        code.append("\n# Thread: %s(%d)" % (id2name.get(thread_id, ""),
+                                            thread_id))
         for filename, line_no, name, line in traceback.extract_stack(stack):
-            code.append('File: "%s", line %d, in %s' % (filename, line_no, name))
+            code.append('File: "%s", line %d, in %s' % (filename,
+                                                        line_no, name))
             if line:
                 code.append("  %s" % (line.strip()))
     worker.log.debug("\n".join(code))

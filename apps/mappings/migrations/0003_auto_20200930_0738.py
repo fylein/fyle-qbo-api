@@ -5,9 +5,19 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [('mappings', '0002_auto_20200420_0434')]
+    dependencies = [
+        ('mappings', '0002_auto_20200420_0434'),
+    ]
 
     operations = [
-        migrations.AddField(model_name='generalmapping', name='default_ccc_vendor_id', field=models.CharField(help_text='QBO default CCC Vendor ID', max_length=255, null=True)),
-        migrations.AddField(model_name='generalmapping', name='default_ccc_vendor_name', field=models.CharField(help_text='QBO default CCC Vendor Name', max_length=255, null=True)),
+        migrations.AddField(
+            model_name='generalmapping',
+            name='default_ccc_vendor_id',
+            field=models.CharField(help_text='QBO default CCC Vendor ID', max_length=255, null=True),
+        ),
+        migrations.AddField(
+            model_name='generalmapping',
+            name='default_ccc_vendor_name',
+            field=models.CharField(help_text='QBO default CCC Vendor Name', max_length=255, null=True),
+        ),
     ]

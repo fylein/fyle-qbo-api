@@ -5,6 +5,14 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [('fyle', '0025_auto_20220330_1128')]
+    dependencies = [
+        ('fyle', '0025_auto_20220330_1128'),
+    ]
 
-    operations = [migrations.AddField(model_name='expense', name='payment_number', field=models.CharField(help_text='Expense payment number', max_length=55, null=True))]
+    operations = [
+        migrations.AddField(
+            model_name='expense',
+            name='payment_number',
+            field=models.CharField(help_text='Expense payment number', max_length=55, null=True),
+        ),
+    ]

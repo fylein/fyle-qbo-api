@@ -4,11 +4,13 @@ QBO models
 from datetime import datetime
 from typing import List
 
-from django.conf import settings
 from django.db import models
-from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping, MappingSetting
+from django.conf import settings
 
-from apps.fyle.models import Expense, ExpenseGroup
+from fyle_accounting_mappings.models import Mapping, MappingSetting, ExpenseAttribute, DestinationAttribute,\
+    EmployeeMapping
+
+from apps.fyle.models import ExpenseGroup, Expense
 from apps.mappings.models import GeneralMapping
 from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
 
@@ -40,7 +42,9 @@ def get_expense_purpose(workspace_id, lineitem, category, workspace_general_sett
         'purpose': '{0}'.format(lineitem.purpose) if lineitem.purpose else '',
         'report_number': '{0}'.format(lineitem.claim_number),
         'spent_on': '{0}'.format(lineitem.spent_at.date()) if lineitem.spent_at else '',
-        'expense_link': '{0}/app/main/#/enterprise/view_expense/{1}?org_id={2}'.format(settings.FYLE_EXPENSE_URL, lineitem.expense_id, org_id),
+        'expense_link': '{0}/app/main/#/enterprise/view_expense/{1}?org_id={2}'.format(
+            settings.FYLE_EXPENSE_URL, lineitem.expense_id, org_id
+        )
     }
 
     memo = ''
@@ -58,7 +62,7 @@ def construct_private_note(expense_group: ExpenseGroup):
     expense = expense_group.expenses.first()
     workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
     expense_type = 'Reimbursable'
-    if expense_group.fund_source == 'CCC':
+    if (expense_group.fund_source == 'CCC'):
         expense_type = 'Debit Card' if workspace_general_settings.corporate_credit_card_expenses_object == 'DEBIT CARD EXPENSE' else 'Credit card'
     merchant = ' spent on merchant {0}'.format(expense.vendor) if expense.vendor else ''
     spent_at = ' on {0} '.format(expense.spent_at.date()) if expense.spent_at else ''
@@ -72,20 +76,33 @@ def construct_private_note(expense_group: ExpenseGroup):
 
 def get_ccc_account_id(workspace_general_settings, general_mappings, expense, description):
     if workspace_general_settings.map_fyle_cards_qbo_account:
-        ccc_account = Mapping.objects.filter(source_type='CORPORATE_CARD', destination_type='CREDIT_CARD_ACCOUNT', source__source_id=expense.corporate_card_id, workspace_id=workspace_general_settings.workspace_id).first()
+        ccc_account = Mapping.objects.filter(
+            source_type='CORPORATE_CARD',
+            destination_type='CREDIT_CARD_ACCOUNT',
+            source__source_id=expense.corporate_card_id,
+            workspace_id=workspace_general_settings.workspace_id
+        ).first()
         if ccc_account:
             ccc_account_id = ccc_account.destination.destination_id
         else:
             ccc_account_id = general_mappings.default_ccc_account_id
     else:
-        ccc_account_mapping: EmployeeMapping = EmployeeMapping.objects.filter(source_employee__value=description.get('employee_email'), workspace_id=workspace_general_settings.workspace_id).first()
-        ccc_account_id = ccc_account_mapping.destination_card_account.destination_id if ccc_account_mapping and ccc_account_mapping.destination_card_account else general_mappings.default_ccc_account_id
+        ccc_account_mapping: EmployeeMapping = EmployeeMapping.objects.filter(
+            source_employee__value=description.get('employee_email'),
+            workspace_id=workspace_general_settings.workspace_id
+        ).first()
+        ccc_account_id = ccc_account_mapping.destination_card_account.destination_id \
+            if ccc_account_mapping and ccc_account_mapping.destination_card_account \
+            else general_mappings.default_ccc_account_id
 
     return ccc_account_id
 
 
 def get_class_id_or_none(expense_group: ExpenseGroup, lineitem: Expense):
-    class_setting: MappingSetting = MappingSetting.objects.filter(workspace_id=expense_group.workspace_id, destination_field='CLASS').first()
+    class_setting: MappingSetting = MappingSetting.objects.filter(
+        workspace_id=expense_group.workspace_id,
+        destination_field='CLASS'
+    ).first()
 
     class_id = None
 
@@ -98,7 +115,12 @@ def get_class_id_or_none(expense_group: ExpenseGroup, lineitem: Expense):
             attribute = ExpenseAttribute.objects.filter(attribute_type=class_setting.source_field).first()
             source_value = lineitem.custom_properties.get(attribute.display_name, None)
 
-        mapping: Mapping = Mapping.objects.filter(source_type=class_setting.source_field, destination_type='CLASS', source__value=source_value, workspace_id=expense_group.workspace_id).first()
+        mapping: Mapping = Mapping.objects.filter(
+            source_type=class_setting.source_field,
+            destination_type='CLASS',
+            source__value=source_value,
+            workspace_id=expense_group.workspace_id
+        ).first()
 
         if mapping:
             class_id = mapping.destination.destination_id
@@ -106,7 +128,10 @@ def get_class_id_or_none(expense_group: ExpenseGroup, lineitem: Expense):
 
 
 def get_customer_id_or_none(expense_group: ExpenseGroup, lineitem: Expense):
-    customer_setting: MappingSetting = MappingSetting.objects.filter(workspace_id=expense_group.workspace_id, destination_field='CUSTOMER').first()
+    customer_setting: MappingSetting = MappingSetting.objects.filter(
+        workspace_id=expense_group.workspace_id,
+        destination_field='CUSTOMER'
+    ).first()
 
     customer_id = None
 
@@ -119,7 +144,12 @@ def get_customer_id_or_none(expense_group: ExpenseGroup, lineitem: Expense):
             attribute = ExpenseAttribute.objects.filter(attribute_type=customer_setting.source_field).first()
             source_value = lineitem.custom_properties.get(attribute.display_name, None)
 
-        mapping: Mapping = Mapping.objects.filter(source_type=customer_setting.source_field, destination_type='CUSTOMER', source__value=source_value, workspace_id=expense_group.workspace_id).first()
+        mapping: Mapping = Mapping.objects.filter(
+            source_type=customer_setting.source_field,
+            destination_type='CUSTOMER',
+            source__value=source_value,
+            workspace_id=expense_group.workspace_id
+        ).first()
 
         if mapping:
             customer_id = mapping.destination.destination_id
@@ -128,7 +158,12 @@ def get_customer_id_or_none(expense_group: ExpenseGroup, lineitem: Expense):
 
 def get_tax_code_id_or_none(expense_group: ExpenseGroup, lineitem: Expense = None):
     tax_code = None
-    mapping: Mapping = Mapping.objects.filter(source_type='TAX_GROUP', destination_type='TAX_CODE', source__source_id=lineitem.tax_group_id, workspace_id=expense_group.workspace_id).first()
+    mapping: Mapping = Mapping.objects.filter(
+        source_type='TAX_GROUP',
+        destination_type='TAX_CODE',
+        source__source_id=lineitem.tax_group_id,
+        workspace_id=expense_group.workspace_id
+    ).first()
     if mapping:
         tax_code = mapping.destination.destination_id
 
@@ -136,7 +171,10 @@ def get_tax_code_id_or_none(expense_group: ExpenseGroup, lineitem: Expense = Non
 
 
 def get_department_id_or_none(expense_group: ExpenseGroup, lineitem: Expense = None):
-    department_setting: MappingSetting = MappingSetting.objects.filter(workspace_id=expense_group.workspace_id, destination_field='DEPARTMENT').first()
+    department_setting: MappingSetting = MappingSetting.objects.filter(
+        workspace_id=expense_group.workspace_id,
+        destination_field='DEPARTMENT'
+    ).first()
 
     department_id = None
 
@@ -150,9 +188,15 @@ def get_department_id_or_none(expense_group: ExpenseGroup, lineitem: Expense = N
                 attribute = ExpenseAttribute.objects.filter(attribute_type=department_setting.source_field).first()
                 source_value = lineitem.custom_properties.get(attribute.display_name, None)
         else:
-            source_value = expense_group.description[department_setting.source_field.lower()] if department_setting.source_field.lower() in expense_group.description else None
+            source_value = expense_group.description[department_setting.source_field.lower()] if \
+                department_setting.source_field.lower() in expense_group.description else None
 
-        mapping: Mapping = Mapping.objects.filter(source_type=department_setting.source_field, destination_type='DEPARTMENT', source__value=source_value, workspace_id=expense_group.workspace_id).first()
+        mapping: Mapping = Mapping.objects.filter(
+            source_type=department_setting.source_field,
+            destination_type='DEPARTMENT',
+            source__value=source_value,
+            workspace_id=expense_group.workspace_id
+        ).first()
 
         if mapping:
             department_id = mapping.destination.destination_id
@@ -162,13 +206,25 @@ def get_department_id_or_none(expense_group: ExpenseGroup, lineitem: Expense = N
 def get_category_mapping_and_detail_type(workspace_general_settings: WorkspaceGeneralSettings, category: str, workspace_id: int):
     # get the item-mapping if import_items is true
     if workspace_general_settings.import_items:
-        qbo_item: Mapping = Mapping.objects.filter(source_type='CATEGORY', destination_type='ACCOUNT', destination__display_name='Item', source__value=category, workspace_id=workspace_id).first()
+        qbo_item: Mapping = Mapping.objects.filter(
+            source_type='CATEGORY',
+            destination_type='ACCOUNT',
+            destination__display_name='Item',
+            source__value=category,
+            workspace_id=workspace_id
+        ).first()
         # if qbo_item is found, return item and ItemBasedExpenseLineDetail as detail_type
         if qbo_item:
             return qbo_item, 'ItemBasedExpenseLineDetail'
 
     # else get the account-mapping and return the detail_type as AccountBasedExpenseLineDetail
-    qbo_account: Mapping = Mapping.objects.filter(source_type='CATEGORY', destination_type='ACCOUNT', source__value=category, destination__display_name='Account', workspace_id=workspace_id).first()
+    qbo_account: Mapping = Mapping.objects.filter(
+        source_type='CATEGORY',
+        destination_type='ACCOUNT',
+        source__value=category,
+        destination__display_name='Account',
+        workspace_id=workspace_id
+    ).first()
 
     return qbo_account, 'AccountBasedExpenseLineDetail'
 
@@ -177,7 +233,6 @@ class Bill(models.Model):
     """
     QBO Bill
     """
-
     id = models.AutoField(primary_key=True)
     expense_group = models.OneToOneField(ExpenseGroup, on_delete=models.PROTECT, help_text='Expense group reference')
     accounts_payable_id = models.CharField(max_length=255, help_text='QBO Accounts Payable account id')
@@ -212,7 +267,10 @@ class Bill(models.Model):
 
         vendor_id = None
         if expense_group.fund_source == 'PERSONAL':
-            vendor_id = EmployeeMapping.objects.get(source_employee__value=description.get('employee_email'), workspace_id=expense_group.workspace_id).destination_vendor.destination_id
+            vendor_id = EmployeeMapping.objects.get(
+                source_employee__value=description.get('employee_email'),
+                workspace_id=expense_group.workspace_id
+            ).destination_vendor.destination_id
         elif expense_group.fund_source == 'CCC':
             vendor_id = general_mappings.default_ccc_vendor_id
 
@@ -228,8 +286,8 @@ class Bill(models.Model):
                 'department_id': department_id,
                 'transaction_date': get_transaction_date(expense_group),
                 'private_note': private_note,
-                'currency': expense.currency,
-            },
+                'currency': expense.currency
+            }
         )
         return bill_object
 
@@ -238,7 +296,6 @@ class BillLineitem(models.Model):
     """
     QBO Bill Lineitem
     """
-
     id = models.AutoField(primary_key=True)
     bill = models.ForeignKey(Bill, on_delete=models.PROTECT, help_text='Reference to bill')
     expense = models.OneToOneField(Expense, on_delete=models.PROTECT, help_text='Reference to Expense')
@@ -272,7 +329,8 @@ class BillLineitem(models.Model):
         bill_lineitem_objects = []
 
         for lineitem in expenses:
-            category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category == None) else '{0} / {1}'.format(lineitem.category, lineitem.sub_category)
+            category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category == None) else '{0} / {1}'.format(
+                lineitem.category, lineitem.sub_category)
 
             account, detail_type = get_category_mapping_and_detail_type(workspace_general_settings, category, expense_group.workspace_id)
 
@@ -293,8 +351,10 @@ class BillLineitem(models.Model):
                     'billable': lineitem.billable,
                     'detail_type': detail_type,
                     'item_id': account.destination.destination_id if detail_type == 'ItemBasedExpenseLineDetail' else None,
-                    'description': get_expense_purpose(expense_group.workspace_id, lineitem, category, workspace_general_settings),
-                },
+                    'description': get_expense_purpose(
+                        expense_group.workspace_id, lineitem, category, workspace_general_settings
+                    )
+                }
             )
 
             bill_lineitem_objects.append(bill_lineitem_object)
@@ -306,7 +366,6 @@ class Cheque(models.Model):
     """
     QBO Cheque
     """
-
     id = models.AutoField(primary_key=True)
     expense_group = models.OneToOneField(ExpenseGroup, on_delete=models.PROTECT, help_text='Expense group reference')
     bank_account_id = models.CharField(max_length=255, help_text='QBO Bank account id')
@@ -342,12 +401,15 @@ class Cheque(models.Model):
             expense_group=expense_group,
             defaults={
                 'bank_account_id': general_mappings.bank_account_id,
-                'entity_id': EmployeeMapping.objects.get(source_employee__value=description.get('employee_email'), workspace_id=expense_group.workspace_id).destination_employee.destination_id,
+                'entity_id': EmployeeMapping.objects.get(
+                    source_employee__value=description.get('employee_email'),
+                    workspace_id=expense_group.workspace_id
+                ).destination_employee.destination_id,
                 'department_id': department_id,
                 'transaction_date': get_transaction_date(expense_group),
                 'private_note': private_note,
-                'currency': expense.currency,
-            },
+                'currency': expense.currency
+            }
         )
         return cheque_object
 
@@ -356,7 +418,6 @@ class ChequeLineitem(models.Model):
     """
     QBO Cheque Lineitem
     """
-
     id = models.AutoField(primary_key=True)
     cheque = models.ForeignKey(Cheque, on_delete=models.PROTECT, help_text='Reference to cheque')
     expense = models.OneToOneField(Expense, on_delete=models.PROTECT, help_text='Reference to Expense')
@@ -390,7 +451,8 @@ class ChequeLineitem(models.Model):
         cheque_lineitem_objects = []
 
         for lineitem in expenses:
-            category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category == None) else '{0} / {1}'.format(lineitem.category, lineitem.sub_category)
+            category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category == None) else '{0} / {1}'.format(
+                lineitem.category, lineitem.sub_category)
 
             account, detail_type = get_category_mapping_and_detail_type(workspace_general_settings, category, expense_group.workspace_id)
 
@@ -411,8 +473,10 @@ class ChequeLineitem(models.Model):
                     'billable': lineitem.billable,
                     'detail_type': detail_type,
                     'item_id': account.destination.destination_id if detail_type == 'ItemBasedExpenseLineDetail' else None,
-                    'description': get_expense_purpose(expense_group.workspace_id, lineitem, category, workspace_general_settings),
-                },
+                    'description': get_expense_purpose(
+                        expense_group.workspace_id, lineitem, category, workspace_general_settings
+                    )
+                }
             )
 
             cheque_lineitem_objects.append(cheque_lineitem_object)
@@ -424,7 +488,6 @@ class QBOExpense(models.Model):
     """
     QBO Expense
     """
-
     id = models.AutoField(primary_key=True)
     expense_group = models.OneToOneField(ExpenseGroup, on_delete=models.PROTECT, help_text='Expense group reference')
     expense_account_id = models.CharField(max_length=255, help_text='QBO account id')
@@ -462,27 +525,35 @@ class QBOExpense(models.Model):
         if workspace_general_settings.map_merchant_to_vendor and expense_group.fund_source == 'CCC':
             merchant = expense.vendor if expense.vendor else ''
 
-            entity = DestinationAttribute.objects.filter(value__iexact=merchant, attribute_type='VENDOR', workspace_id=expense_group.workspace_id, active=True).first()
+            entity = DestinationAttribute.objects.filter(
+                value__iexact=merchant, attribute_type='VENDOR', workspace_id=expense_group.workspace_id, active=True
+            ).first()
 
             if not entity:
-                entity_id = DestinationAttribute.objects.filter(value='Debit Card Misc', workspace_id=expense_group.workspace_id).first().destination_id
+                entity_id = DestinationAttribute.objects.filter(
+                    value='Debit Card Misc', workspace_id=expense_group.workspace_id).first().destination_id
             else:
                 entity_id = entity.destination_id
 
         else:
-            entity = EmployeeMapping.objects.get(source_employee__value=description.get('employee_email'), workspace_id=expense_group.workspace_id)
-            entity_id = entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' else entity.destination_vendor.destination_id
+            entity = EmployeeMapping.objects.get(
+                source_employee__value=description.get('employee_email'),
+                workspace_id=expense_group.workspace_id
+            )
+            entity_id = entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' \
+                else entity.destination_vendor.destination_id
 
         qbo_expense_object, _ = QBOExpense.objects.update_or_create(
             expense_group=expense_group,
             defaults={
-                'expense_account_id': general_mappings.qbo_expense_account_id if expense_group.fund_source == 'PERSONAL' else general_mappings.default_debit_card_account_id,
+                'expense_account_id': general_mappings.qbo_expense_account_id if expense_group.fund_source == 'PERSONAL'\
+                    else general_mappings.default_debit_card_account_id,
                 'entity_id': entity_id,
                 'department_id': department_id,
                 'transaction_date': get_transaction_date(expense_group),
                 'private_note': private_note,
-                'currency': expense.currency,
-            },
+                'currency': expense.currency
+            }
         )
         return qbo_expense_object
 
@@ -491,7 +562,6 @@ class QBOExpenseLineitem(models.Model):
     """
     QBO Expense Lineitem
     """
-
     id = models.AutoField(primary_key=True)
     qbo_expense = models.ForeignKey(QBOExpense, on_delete=models.PROTECT, help_text='Reference to QBO Expense')
     expense = models.OneToOneField(Expense, on_delete=models.PROTECT, help_text='Reference to Fyle Expense')
@@ -525,7 +595,8 @@ class QBOExpenseLineitem(models.Model):
         qbo_expense_lineitem_objects = []
 
         for lineitem in expenses:
-            category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category == None) else '{0} / {1}'.format(lineitem.category, lineitem.sub_category)
+            category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category == None) else '{0} / {1}'.format(
+                lineitem.category, lineitem.sub_category)
 
             account, detail_type = get_category_mapping_and_detail_type(workspace_general_settings, category, expense_group.workspace_id)
 
@@ -546,8 +617,10 @@ class QBOExpenseLineitem(models.Model):
                     'billable': lineitem.billable,
                     'detail_type': detail_type,
                     'item_id': account.destination.destination_id if detail_type == 'ItemBasedExpenseLineDetail' else None,
-                    'description': get_expense_purpose(expense_group.workspace_id, lineitem, category, workspace_general_settings),
-                },
+                    'description': get_expense_purpose(
+                        expense_group.workspace_id, lineitem, category, workspace_general_settings
+                    )
+                }
             )
 
             qbo_expense_lineitem_objects.append(qbo_expense_lineitem_object)
@@ -559,7 +632,6 @@ class CreditCardPurchase(models.Model):
     """
     QBO CreditCardPurchase
     """
-
     id = models.AutoField(primary_key=True)
     expense_group = models.OneToOneField(ExpenseGroup, on_delete=models.PROTECT, help_text='Expense group reference')
     ccc_account_id = models.CharField(max_length=255, help_text='QBO CCC account id')
@@ -597,16 +669,23 @@ class CreditCardPurchase(models.Model):
         if map_merchant_to_vendor:
             merchant = expense.vendor if expense.vendor else ''
 
-            entity = DestinationAttribute.objects.filter(value__iexact=merchant, attribute_type='VENDOR', workspace_id=expense_group.workspace_id, active=True).first()
+            entity = DestinationAttribute.objects.filter(
+                value__iexact=merchant, attribute_type='VENDOR', workspace_id=expense_group.workspace_id, active=True
+            ).first()
 
             if not entity:
-                entity_id = DestinationAttribute.objects.filter(value='Credit Card Misc', workspace_id=expense_group.workspace_id).first().destination_id
+                entity_id = DestinationAttribute.objects.filter(
+                    value='Credit Card Misc', workspace_id=expense_group.workspace_id).first().destination_id
             else:
                 entity_id = entity.destination_id
 
         else:
-            entity = EmployeeMapping.objects.get(source_employee__value=description.get('employee_email'), workspace_id=expense_group.workspace_id)
-            entity_id = entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' else entity.destination_vendor.destination_id
+            entity = EmployeeMapping.objects.get(
+                source_employee__value=description.get('employee_email'),
+                workspace_id=expense_group.workspace_id
+            )
+            entity_id = entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' \
+                else entity.destination_vendor.destination_id
 
         ccc_account_id = get_ccc_account_id(workspace_general_settings, general_mappings, expense, description)
 
@@ -619,8 +698,8 @@ class CreditCardPurchase(models.Model):
                 'transaction_date': get_transaction_date(expense_group),
                 'private_note': private_note,
                 'currency': expense.currency,
-                'credit_card_purchase_number': expense.expense_number if map_merchant_to_vendor else '',
-            },
+                'credit_card_purchase_number': expense.expense_number if map_merchant_to_vendor else ''
+            }
         )
         return credit_card_purchase_object
 
@@ -629,9 +708,9 @@ class CreditCardPurchaseLineitem(models.Model):
     """
     QBO CreditCardPurchase Lineitem
     """
-
     id = models.AutoField(primary_key=True)
-    credit_card_purchase = models.ForeignKey(CreditCardPurchase, on_delete=models.PROTECT, help_text='Reference to credit card purchase')
+    credit_card_purchase = models.ForeignKey(CreditCardPurchase, on_delete=models.PROTECT,
+                                             help_text='Reference to credit card purchase')
     expense = models.OneToOneField(Expense, on_delete=models.PROTECT, help_text='Reference to Expense')
     account_id = models.CharField(max_length=255, help_text='QBO account id', null=True)
     class_id = models.CharField(max_length=255, help_text='QBO class id', null=True)
@@ -650,7 +729,10 @@ class CreditCardPurchaseLineitem(models.Model):
         db_table = 'credit_card_purchase_lineitems'
 
     @staticmethod
-    def create_credit_card_purchase_lineitems(expense_group: ExpenseGroup, workspace_general_settings: WorkspaceGeneralSettings):
+    def create_credit_card_purchase_lineitems(
+            expense_group: ExpenseGroup,
+            workspace_general_settings: WorkspaceGeneralSettings
+    ):
         """
         Create credit card purchase lineitems
         :param expense_group: expense group
@@ -663,7 +745,8 @@ class CreditCardPurchaseLineitem(models.Model):
         credit_card_purchase_lineitem_objects = []
 
         for lineitem in expenses:
-            category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category == None) else '{0} / {1}'.format(lineitem.category, lineitem.sub_category)
+            category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category == None) else '{0} / {1}'.format(
+                lineitem.category, lineitem.sub_category)
 
             account, detail_type = get_category_mapping_and_detail_type(workspace_general_settings, category, expense_group.workspace_id)
 
@@ -684,8 +767,10 @@ class CreditCardPurchaseLineitem(models.Model):
                     'detail_type': detail_type,
                     'item_id': account.destination.destination_id if detail_type == 'ItemBasedExpenseLineDetail' else None,
                     'billable': lineitem.billable,
-                    'description': get_expense_purpose(expense_group.workspace_id, lineitem, category, workspace_general_settings),
-                },
+                    'description': get_expense_purpose(
+                        expense_group.workspace_id, lineitem, category, workspace_general_settings
+                    )
+                }
             )
 
             credit_card_purchase_lineitem_objects.append(credit_card_purchase_lineitem_object)
@@ -697,7 +782,6 @@ class JournalEntry(models.Model):
     """
     QBO JournalEntry
     """
-
     id = models.AutoField(primary_key=True)
     expense_group = models.OneToOneField(ExpenseGroup, on_delete=models.PROTECT, help_text='Expense group reference')
     transaction_date = models.DateField(help_text='JournalEntry transaction date')
@@ -720,7 +804,14 @@ class JournalEntry(models.Model):
 
         private_note = construct_private_note(expense_group)
 
-        journal_entry_object, _ = JournalEntry.objects.update_or_create(expense_group=expense_group, defaults={'transaction_date': get_transaction_date(expense_group), 'private_note': private_note, 'currency': expense.currency})
+        journal_entry_object, _ = JournalEntry.objects.update_or_create(
+            expense_group=expense_group,
+            defaults={
+                'transaction_date': get_transaction_date(expense_group),
+                'private_note': private_note,
+                'currency': expense.currency
+            }
+        )
         return journal_entry_object
 
 
@@ -728,7 +819,6 @@ class JournalEntryLineitem(models.Model):
     """
     QBO JournalEntry Lineitem
     """
-
     id = models.AutoField(primary_key=True)
     journal_entry = models.ForeignKey(JournalEntry, on_delete=models.PROTECT, help_text='Reference to JournalEntry')
     expense = models.OneToOneField(Expense, on_delete=models.PROTECT, help_text='Reference to Expense')
@@ -751,7 +841,10 @@ class JournalEntryLineitem(models.Model):
         db_table = 'journal_entry_lineitems'
 
     @staticmethod
-    def create_journal_entry_lineitems(expense_group: ExpenseGroup, workspace_general_settings: WorkspaceGeneralSettings):
+    def create_journal_entry_lineitems(
+            expense_group: ExpenseGroup,
+            workspace_general_settings: WorkspaceGeneralSettings
+    ):
         """
         Create journal_entry lineitems
         :param expense_group: expense group
@@ -770,7 +863,10 @@ class JournalEntryLineitem(models.Model):
         workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
         employee_field_mapping = workspace_general_settings.employee_field_mapping
 
-        entity = EmployeeMapping.objects.get(source_employee__value=description.get('employee_email'), workspace_id=expense_group.workspace_id)
+        entity = EmployeeMapping.objects.get(
+            source_employee__value=description.get('employee_email'),
+            workspace_id=expense_group.workspace_id
+        )
 
         debit_account_id = None
 
@@ -782,17 +878,25 @@ class JournalEntryLineitem(models.Model):
         journal_entry_lineitem_objects = []
 
         for lineitem in expenses:
-            category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category == None) else '{0} / {1}'.format(lineitem.category, lineitem.sub_category)
+            category = lineitem.category if (lineitem.category == lineitem.sub_category or lineitem.sub_category == None) else '{0} / {1}'.format(
+                lineitem.category, lineitem.sub_category)
 
             if expense_group.fund_source == 'PERSONAL':
                 if employee_field_mapping == 'VENDOR':
-                    debit_account_id = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id).accounts_payable_id
+                    debit_account_id = GeneralMapping.objects.get(
+                        workspace_id=expense_group.workspace_id).accounts_payable_id
                 elif employee_field_mapping == 'EMPLOYEE':
-                    debit_account_id = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id).bank_account_id
+                    debit_account_id = GeneralMapping.objects.get(
+                        workspace_id=expense_group.workspace_id).bank_account_id
             elif expense_group.fund_source == 'CCC':
                 debit_account_id = get_ccc_account_id(workspace_general_settings, general_mappings, lineitem, description)
 
-            account: Mapping = Mapping.objects.filter(source_type='CATEGORY', destination_type='ACCOUNT', source__value=category, workspace_id=expense_group.workspace_id).first()
+            account: Mapping = Mapping.objects.filter(
+                source_type='CATEGORY',
+                destination_type='ACCOUNT',
+                source__value=category,
+                workspace_id=expense_group.workspace_id
+            ).first()
 
             class_id = get_class_id_or_none(expense_group, lineitem)
 
@@ -807,15 +911,18 @@ class JournalEntryLineitem(models.Model):
                     'debit_account_id': debit_account_id,
                     'account_id': account.destination.destination_id if account else None,
                     'class_id': class_id,
-                    'entity_id': entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' else entity.destination_vendor.destination_id,
+                    'entity_id': entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' \
+                        else entity.destination_vendor.destination_id,
                     'entity_type': entity_type,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
                     'tax_amount': lineitem.tax_amount,
                     'tax_code': get_tax_code_id_or_none(expense_group, lineitem),
                     'department_id': department_id,
-                    'description': get_expense_purpose(expense_group.workspace_id, lineitem, category, workspace_general_settings),
-                },
+                    'description': get_expense_purpose(
+                        expense_group.workspace_id, lineitem, category, workspace_general_settings
+                    )
+                }
             )
 
             journal_entry_lineitem_objects.append(journal_entry_lineitem_object)
@@ -826,7 +933,6 @@ class BillPayment(models.Model):
     """
     QBO BillPayment
     """
-
     id = models.AutoField(primary_key=True)
     expense_group = models.OneToOneField(ExpenseGroup, on_delete=models.PROTECT, help_text='Expense group reference')
     private_note = models.TextField(help_text='Bill Description')
@@ -862,7 +968,10 @@ class BillPayment(models.Model):
         expense = expense_group.expenses.first()
         department_id = get_department_id_or_none(expense_group)
 
-        vendor_id = EmployeeMapping.objects.get(source_employee__value=description.get('employee_email'), workspace_id=expense_group.workspace_id).destination_vendor.destination_id
+        vendor_id = EmployeeMapping.objects.get(
+            source_employee__value=description.get('employee_email'),
+            workspace_id=expense_group.workspace_id
+        ).destination_vendor.destination_id
 
         general_mappings = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
         bill_payment_object, _ = BillPayment.objects.update_or_create(
@@ -876,8 +985,8 @@ class BillPayment(models.Model):
                 'accounts_payable_id': general_mappings.accounts_payable_id,
                 'department_id': department_id,
                 'transaction_date': get_transaction_date(expense_group),
-                'bill_payment_number': '',
-            },
+                'bill_payment_number': ''
+            }
         )
 
         return bill_payment_object
@@ -887,7 +996,6 @@ class BillPaymentLineitem(models.Model):
     """
     QBO Bill Payment Lineitem
     """
-
     id = models.AutoField(primary_key=True)
     bill_payment = models.ForeignKey(BillPayment, on_delete=models.PROTECT, help_text='Reference to bill payment')
     amount = models.FloatField(help_text='Bill amount')
@@ -914,7 +1022,13 @@ class BillPaymentLineitem(models.Model):
         total_amount = 0
         for lineitem in expenses:
             total_amount = total_amount + lineitem.amount
-        bill_payment_lineitem_object, _ = BillPaymentLineitem.objects.update_or_create(bill_payment=bill_payment, linked_transaction_id=linked_transaction_id, defaults={'amount': total_amount})
+        bill_payment_lineitem_object, _ = BillPaymentLineitem.objects.update_or_create(
+            bill_payment=bill_payment,
+            linked_transaction_id=linked_transaction_id,
+            defaults={
+                'amount': total_amount,
+            }
+        )
         bill_payment_lineitem_objects.append(bill_payment_lineitem_object)
 
         return bill_payment_lineitem_objects
