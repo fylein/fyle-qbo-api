@@ -6,20 +6,20 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('fyle', '0012_expense_billable'),
+        ("fyle", "0012_expense_billable"),
     ]
 
     operations = [
         migrations.AlterModelTable(
-            name='expense',
-            table='expenses',
+            name="expense",
+            table="expenses",
         ),
         migrations.AlterModelTable(
-            name='expensegroup',
-            table='expense_groups',
+            name="expensegroup",
+            table="expense_groups",
         ),
         migrations.AlterModelTable(
-            name='expensegroupsettings',
-            table='expense_group_settings',
+            name="expensegroupsettings",
+            table="expense_group_settings",
         ),
     ]

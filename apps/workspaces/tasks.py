@@ -1,56 +1,70 @@
-from datetime import datetime, date
-from typing import List
 import logging
+from datetime import date, datetime
+from typing import List
 
 from django.conf import settings
-from django.db.models import Q
-
 from django.core.mail import EmailMessage
+from django.db.models import Q
 from django.template.loader import render_to_string
-from django_q.models import Schedule
 from django.utils.safestring import mark_safe
-
-from apps.workspaces.models import Workspace, WorkspaceSchedule, WorkspaceGeneralSettings, LastExportDetail, QBOCredential, FyleCredential
-from apps.fyle.tasks import async_create_expense_groups
-from apps.fyle.models import ExpenseGroup
-
-from apps.tasks.models import TaskLog
+from django_q.models import Schedule
 from fyle_accounting_mappings.models import ExpenseAttribute
-from apps.tasks.models import Error
-from apps.quickbooks_online.queue import (schedule_bills_creation, schedule_cheques_creation, 
-    schedule_journal_entry_creation, schedule_credit_card_purchase_creation, schedule_qbo_expense_creation)
-from .queue import schedule_email_notification
 
+from apps.fyle.models import ExpenseGroup
+from apps.fyle.tasks import async_create_expense_groups
+from apps.quickbooks_online.queue import (
+    schedule_bills_creation,
+    schedule_cheques_creation,
+    schedule_credit_card_purchase_creation,
+    schedule_journal_entry_creation,
+    schedule_qbo_expense_creation,
+)
+from apps.tasks.models import Error, TaskLog
+from apps.workspaces.models import (
+    FyleCredential,
+    LastExportDetail,
+    QBOCredential,
+    Workspace,
+    WorkspaceGeneralSettings,
+    WorkspaceSchedule,
+)
+
+from .queue import schedule_email_notification
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
 
 
-def schedule_sync(workspace_id: int, schedule_enabled: bool, hours: int, email_added: List, emails_selected: List):
-    ws_schedule, _ = WorkspaceSchedule.objects.get_or_create(
-        workspace_id=workspace_id
-    )
+def schedule_sync(
+    workspace_id: int,
+    schedule_enabled: bool,
+    hours: int,
+    email_added: List,
+    emails_selected: List,
+):
+    ws_schedule, _ = WorkspaceSchedule.objects.get_or_create(workspace_id=workspace_id)
 
-    schedule_email_notification(workspace_id=workspace_id, schedule_enabled=schedule_enabled, hours=hours)
+    schedule_email_notification(
+        workspace_id=workspace_id, schedule_enabled=schedule_enabled, hours=hours
+    )
 
     if schedule_enabled:
         ws_schedule.enabled = schedule_enabled
         ws_schedule.start_datetime = datetime.now()
         ws_schedule.interval_hours = hours
         ws_schedule.emails_selected = emails_selected
-        
+
         if email_added:
             ws_schedule.additional_email_options.append(email_added)
 
-
         schedule, _ = Schedule.objects.update_or_create(
-            func='apps.workspaces.tasks.run_sync_schedule',
-            args='{}'.format(workspace_id),
+            func="apps.workspaces.tasks.run_sync_schedule",
+            args="{}".format(workspace_id),
             defaults={
-                'schedule_type': Schedule.MINUTES,
-                'minutes': hours * 60,
-                'next_run': datetime.now()
-            }
+                "schedule_type": Schedule.MINUTES,
+                "minutes": hours * 60,
+                "next_run": datetime.now(),
+            },
         )
 
         ws_schedule.schedule = schedule
@@ -75,26 +89,24 @@ def run_sync_schedule(workspace_id):
     """
     task_log, _ = TaskLog.objects.update_or_create(
         workspace_id=workspace_id,
-        type='FETCHING_EXPENSES',
-        defaults={
-            'status': 'IN_PROGRESS'
-        }
+        type="FETCHING_EXPENSES",
+        defaults={"status": "IN_PROGRESS"},
     )
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
 
     fund_source = []
     if general_settings.reimbursable_expenses_object:
-        fund_source.append('PERSONAL')
+        fund_source.append("PERSONAL")
     if general_settings.corporate_credit_card_expenses_object:
-        fund_source.append('CCC')
+        fund_source.append("CCC")
 
     async_create_expense_groups(
         workspace_id=workspace_id, fund_source=fund_source, task_log=task_log
     )
 
-    if task_log.status == 'COMPLETE':
-        export_to_qbo(workspace_id, 'AUTO')
+    if task_log.status == "COMPLETE":
+        export_to_qbo(workspace_id, "AUTO")
 
 
 def export_to_qbo(workspace_id, export_mode=None):
@@ -106,132 +118,160 @@ def export_to_qbo(workspace_id, export_mode=None):
     if general_settings.reimbursable_expenses_object:
 
         expense_group_ids = ExpenseGroup.objects.filter(
-            fund_source='PERSONAL', exported_at__isnull=True, workspace_id=workspace_id
-        ).values_list('id', flat=True)
+            fund_source="PERSONAL", exported_at__isnull=True, workspace_id=workspace_id
+        ).values_list("id", flat=True)
 
         if len(expense_group_ids):
             is_expenses_exported = True
 
-        if general_settings.reimbursable_expenses_object == 'BILL':
+        if general_settings.reimbursable_expenses_object == "BILL":
             schedule_bills_creation(
                 workspace_id=workspace_id, expense_group_ids=expense_group_ids
             )
 
-        elif general_settings.reimbursable_expenses_object == 'EXPENSE':
+        elif general_settings.reimbursable_expenses_object == "EXPENSE":
             schedule_qbo_expense_creation(
                 workspace_id=workspace_id, expense_group_ids=expense_group_ids
             )
 
-        elif general_settings.reimbursable_expenses_object == 'CHECK':
+        elif general_settings.reimbursable_expenses_object == "CHECK":
             schedule_cheques_creation(
                 workspace_id=workspace_id, expense_group_ids=expense_group_ids
             )
 
-        elif general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY':
+        elif general_settings.reimbursable_expenses_object == "JOURNAL ENTRY":
             schedule_journal_entry_creation(
                 workspace_id=workspace_id, expense_group_ids=expense_group_ids
             )
 
     if general_settings.corporate_credit_card_expenses_object:
         expense_group_ids = ExpenseGroup.objects.filter(
-            fund_source='CCC', exported_at__isnull=True, workspace_id=workspace_id
-        ).values_list('id', flat=True)
+            fund_source="CCC", exported_at__isnull=True, workspace_id=workspace_id
+        ).values_list("id", flat=True)
 
         if len(expense_group_ids):
             is_expenses_exported = True
 
-        if general_settings.corporate_credit_card_expenses_object == 'JOURNAL ENTRY':
+        if general_settings.corporate_credit_card_expenses_object == "JOURNAL ENTRY":
             schedule_journal_entry_creation(
                 workspace_id=workspace_id, expense_group_ids=expense_group_ids
             )
 
-        elif general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE':
+        elif (
+            general_settings.corporate_credit_card_expenses_object
+            == "CREDIT CARD PURCHASE"
+        ):
             schedule_credit_card_purchase_creation(
                 workspace_id=workspace_id, expense_group_ids=expense_group_ids
             )
 
-        elif general_settings.corporate_credit_card_expenses_object == 'DEBIT CARD EXPENSE':
+        elif (
+            general_settings.corporate_credit_card_expenses_object
+            == "DEBIT CARD EXPENSE"
+        ):
             schedule_qbo_expense_creation(
                 workspace_id=workspace_id, expense_group_ids=expense_group_ids
             )
 
-        elif general_settings.corporate_credit_card_expenses_object == 'BILL':
+        elif general_settings.corporate_credit_card_expenses_object == "BILL":
             schedule_bills_creation(
                 workspace_id=workspace_id, expense_group_ids=expense_group_ids
             )
     if is_expenses_exported:
         last_export_detail.last_exported_at = last_exported_at
-        last_export_detail.export_mode = export_mode or 'MANUAL'
+        last_export_detail.export_mode = export_mode or "MANUAL"
         last_export_detail.save()
+
 
 def run_email_notification(workspace_id):
     expense_data = []
-    expense_html = ''
-    ws_schedule = WorkspaceSchedule.objects.get(
-        workspace_id=workspace_id, enabled=True
-    )
+    expense_html = ""
+    ws_schedule = WorkspaceSchedule.objects.get(workspace_id=workspace_id, enabled=True)
 
     task_logs = TaskLog.objects.filter(
-        ~Q(type__in=['CREATING_BILL_PAYMENT', 'FETCHING_EXPENSES']),
+        ~Q(type__in=["CREATING_BILL_PAYMENT", "FETCHING_EXPENSES"]),
         workspace_id=workspace_id,
-        status='FAILED',
+        status="FAILED",
     )
     workspace = Workspace.objects.get(id=workspace_id)
     try:
         qbo = QBOCredential.get_active_qbo_credentials(workspace_id)
-        errors = Error.objects.filter(workspace_id=workspace_id,is_resolved=False).order_by('id')[:10]
+        errors = Error.objects.filter(
+            workspace_id=workspace_id, is_resolved=False
+        ).order_by("id")[:10]
         for error in errors:
-            if error.type == 'EMPLOYEE_MAPPING' or error.type == 'CATEGORY_MAPPING':
-                html = '''<tr>
-                            <td> Mapping Error </td>'''
-            elif error.type == 'TAX_MAPPING':
-                html = '''<tr>
-                            <td> Tax Mapping Error </td>'''
-            elif error.type == 'QBO_ERROR':
-                html = '''<tr>
-                        <td> QuickBooks Online Error </td>'''
-            error_type = error.type.lower().title().replace('_', ' ')
+            if error.type == "EMPLOYEE_MAPPING" or error.type == "CATEGORY_MAPPING":
+                html = """<tr>
+                            <td> Mapping Error </td>"""
+            elif error.type == "TAX_MAPPING":
+                html = """<tr>
+                            <td> Tax Mapping Error </td>"""
+            elif error.type == "QBO_ERROR":
+                html = """<tr>
+                        <td> QuickBooks Online Error </td>"""
+            error_type = error.type.lower().title().replace("_", " ")
             expense_data = list(expense_data)
             expense_data.append(error_type)
-            if error.type == 'QBO_ERROR':
-                html_data = '''<td>''' + error.error_title + '''</td>
-                                <td>''' + error.error_detail + '''</td>
-                            </tr>'''
+            if error.type == "QBO_ERROR":
+                html_data = (
+                    """<td>"""
+                    + error.error_title
+                    + """</td>
+                                <td>"""
+                    + error.error_detail
+                    + """</td>
+                            </tr>"""
+                )
             else:
-                html_data = '''<td>''' + error_type + '''</td>
-                                <td style="padding-right: 8px">''' + error.error_title + '''</td>
-                            </tr>'''
-            html = '{0} {1}'.format(html,html_data)
-            expense_html = '{0} {1}'.format(expense_html, html)
+                html_data = (
+                    """<td>"""
+                    + error_type
+                    + """</td>
+                                <td style="padding-right: 8px">"""
+                    + error.error_title
+                    + """</td>
+                            </tr>"""
+                )
+            html = "{0} {1}".format(html, html_data)
+            expense_html = "{0} {1}".format(expense_html, html)
         expense_data = set(expense_data)
-        expense_data = ', '.join([str(data) for data in expense_data])
+        expense_data = ", ".join([str(data) for data in expense_data])
         for admin_email in ws_schedule.emails_selected:
-            attribute = ExpenseAttribute.objects.filter(workspace_id=workspace_id, value=admin_email).first()
+            attribute = ExpenseAttribute.objects.filter(
+                workspace_id=workspace_id, value=admin_email
+            ).first()
 
-            admin_name = 'Admin'
+            admin_name = "Admin"
             if attribute:
-                admin_name = attribute.detail['full_name']
+                admin_name = attribute.detail["full_name"]
             else:
                 for data in ws_schedule.additional_email_options:
-                    if data['email'] == admin_email:
-                        admin_name = data['name']
-            
-            if workspace.last_synced_at and workspace.ccc_last_synced_at:
-                export_time = max(workspace.last_synced_at, workspace.ccc_last_synced_at)
-            else:
-                export_time =  workspace.last_synced_at or workspace.ccc_last_synced_at
+                    if data["email"] == admin_email:
+                        admin_name = data["name"]
 
-            if task_logs and (ws_schedule.error_count is None or len(task_logs) > ws_schedule.error_count):
+            if workspace.last_synced_at and workspace.ccc_last_synced_at:
+                export_time = max(
+                    workspace.last_synced_at, workspace.ccc_last_synced_at
+                )
+            else:
+                export_time = workspace.last_synced_at or workspace.ccc_last_synced_at
+
+            if task_logs and (
+                ws_schedule.error_count is None
+                or len(task_logs) > ws_schedule.error_count
+            ):
                 context = {
-                    'name': admin_name,
-                    'errors': len(task_logs),
-                    'fyle_company': workspace.name,
-                    'qbo_company': qbo.company_name,
-                    'export_time': export_time.strftime("%d %b %Y | %H:%M"),
-                    'year': date.today().year,
-                    'app_url': "{0}/workspaces/main/dashboard".format(settings.FYLE_APP_URL),
-                    'task_logs': mark_safe(expense_html),
-                    'error_type': expense_data
+                    "name": admin_name,
+                    "errors": len(task_logs),
+                    "fyle_company": workspace.name,
+                    "qbo_company": qbo.company_name,
+                    "export_time": export_time.strftime("%d %b %Y | %H:%M"),
+                    "year": date.today().year,
+                    "app_url": "{0}/workspaces/main/dashboard".format(
+                        settings.FYLE_APP_URL
+                    ),
+                    "task_logs": mark_safe(expense_html),
+                    "error_type": expense_data,
                 }
                 message = render_to_string("mail_template.html", context)
 
@@ -249,13 +289,13 @@ def run_email_notification(workspace_id):
         ws_schedule.save()
 
     except QBOCredential.DoesNotExist:
-        logger.info(
-            'QBO Credentials not found for workspace_id %s',
-            workspace_id
-        )
+        logger.info("QBO Credentials not found for workspace_id %s", workspace_id)
+
 
 def async_update_fyle_credentials(fyle_org_id: str, refresh_token: str):
-    fyle_credentials = FyleCredential.objects.filter(workspace__fyle_org_id=fyle_org_id).first()
+    fyle_credentials = FyleCredential.objects.filter(
+        workspace__fyle_org_id=fyle_org_id
+    ).first()
     if fyle_credentials:
         fyle_credentials.refresh_token = refresh_token
         fyle_credentials.save()

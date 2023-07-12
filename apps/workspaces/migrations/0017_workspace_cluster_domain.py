@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('workspaces', '0016_auto_20210917_1035'),
+        ("workspaces", "0016_auto_20210917_1035"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='workspace',
-            name='cluster_domain',
-            field=models.CharField(help_text='fyle cluster domain', max_length=255, null=True),
+            model_name="workspace",
+            name="cluster_domain",
+            field=models.CharField(
+                help_text="fyle cluster domain", max_length=255, null=True
+            ),
         ),
     ]

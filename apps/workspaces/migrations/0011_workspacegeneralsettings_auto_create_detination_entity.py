@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('workspaces', '0010_workspacegeneralsettings_category_sync_version'),
+        ("workspaces", "0010_workspacegeneralsettings_category_sync_version"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='workspacegeneralsettings',
-            name='auto_create_destination_entity',
-            field=models.BooleanField(default=False, help_text='Auto create vendor / employee'),
+            model_name="workspacegeneralsettings",
+            name="auto_create_destination_entity",
+            field=models.BooleanField(
+                default=False, help_text="Auto create vendor / employee"
+            ),
         ),
     ]

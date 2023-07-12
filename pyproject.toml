@@ -1,4 +1,11 @@
 [tool.black]
 exclude = '''
-**/*.py --string-normalization
+# Exclude converting tuples into strings
+".*\.py" --no-qa B322
+
+# Exclude adding trailing commas at the end of dictionaries
+".*\.py" --no-qa C812
+
+# Exclude converting single quotes to double quotes
+".*\.py" --no-qa Q000 Q003
 '''

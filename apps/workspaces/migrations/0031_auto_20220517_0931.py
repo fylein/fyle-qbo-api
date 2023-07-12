@@ -6,13 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('workspaces', '0030_workspace_app_version'),
+        ("workspaces", "0030_workspace_app_version"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='workspace',
-            name='app_version',
-            field=models.CharField(choices=[('v1', 'v1'), ('v2', 'v2')], default='v1', help_text='App version', max_length=2),
+            model_name="workspace",
+            name="app_version",
+            field=models.CharField(
+                choices=[("v1", "v1"), ("v2", "v2")],
+                default="v1",
+                help_text="App version",
+                max_length=2,
+            ),
         ),
     ]

@@ -13,24 +13,54 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.urls import path, include
+from django.urls import include, path
 
-from .views import WorkspaceView, ReadyView, ConnectQBOView, GeneralSettingsView, \
-    ExportToQBOView, LastExportDetailView, WorkspaceAdminsView, SetupE2ETestView
+from .views import (
+    ConnectQBOView,
+    ExportToQBOView,
+    GeneralSettingsView,
+    LastExportDetailView,
+    ReadyView,
+    SetupE2ETestView,
+    WorkspaceAdminsView,
+    WorkspaceView,
+)
 
 urlpatterns = [
-    path('', WorkspaceView.as_view(), name='workspace'),
-    path('<int:workspace_id>/', WorkspaceView.as_view(), name='workspace-by-id'),
-    path('<int:workspace_id>/export_detail/', LastExportDetailView.as_view(), name='export-detail'),
-    path('<int:workspace_id>/settings/general/', GeneralSettingsView.as_view(), name='workspace-general-settings'),
-    path('<int:workspace_id>/connect_qbo/authorization_code/', ConnectQBOView.as_view()),
-    path('<int:workspace_id>/credentials/qbo/', ConnectQBOView.as_view(), name='get-qbo-credentials'),
-    path('<int:workspace_id>/exports/trigger/', ExportToQBOView.as_view(), name='export-to-qbo'),
-    path('<int:workspace_id>/fyle/', include('apps.fyle.urls')),
-    path('<int:workspace_id>/qbo/', include('apps.quickbooks_online.urls')),
-    path('<int:workspace_id>/mappings/', include('apps.mappings.urls')),
-    path('<int:workspace_id>/tasks/', include('apps.tasks.urls')),
-    path('<int:workspace_id>/admins/', WorkspaceAdminsView.as_view(), name='admin'),
-    path('ready/', ReadyView.as_view(), name='ready'),
-    path('<int:workspace_id>/setup_e2e_test/', SetupE2ETestView.as_view(), name='setup-e2e-test'),
+    path("", WorkspaceView.as_view(), name="workspace"),
+    path("<int:workspace_id>/", WorkspaceView.as_view(), name="workspace-by-id"),
+    path(
+        "<int:workspace_id>/export_detail/",
+        LastExportDetailView.as_view(),
+        name="export-detail",
+    ),
+    path(
+        "<int:workspace_id>/settings/general/",
+        GeneralSettingsView.as_view(),
+        name="workspace-general-settings",
+    ),
+    path(
+        "<int:workspace_id>/connect_qbo/authorization_code/", ConnectQBOView.as_view()
+    ),
+    path(
+        "<int:workspace_id>/credentials/qbo/",
+        ConnectQBOView.as_view(),
+        name="get-qbo-credentials",
+    ),
+    path(
+        "<int:workspace_id>/exports/trigger/",
+        ExportToQBOView.as_view(),
+        name="export-to-qbo",
+    ),
+    path("<int:workspace_id>/fyle/", include("apps.fyle.urls")),
+    path("<int:workspace_id>/qbo/", include("apps.quickbooks_online.urls")),
+    path("<int:workspace_id>/mappings/", include("apps.mappings.urls")),
+    path("<int:workspace_id>/tasks/", include("apps.tasks.urls")),
+    path("<int:workspace_id>/admins/", WorkspaceAdminsView.as_view(), name="admin"),
+    path("ready/", ReadyView.as_view(), name="ready"),
+    path(
+        "<int:workspace_id>/setup_e2e_test/",
+        SetupE2ETestView.as_view(),
+        name="setup-e2e-test",
+    ),
 ]

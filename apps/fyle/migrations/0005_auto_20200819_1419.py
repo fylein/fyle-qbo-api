@@ -7,23 +7,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('fyle', '0004_expensegroupsettings'),
+        ("fyle", "0004_expensegroupsettings"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='expense',
-            name='custom_properties',
+            model_name="expense",
+            name="custom_properties",
             field=django.contrib.postgres.fields.jsonb.JSONField(null=True),
         ),
         migrations.AddField(
-            model_name='expense',
-            name='rp_created_at',
-            field=models.DateTimeField(help_text='Report approved at', null=True),
+            model_name="expense",
+            name="rp_created_at",
+            field=models.DateTimeField(help_text="Report approved at", null=True),
         ),
         migrations.AlterField(
-            model_name='expensegroupsettings',
-            name='id',
+            model_name="expensegroupsettings",
+            name="id",
             field=models.AutoField(primary_key=True, serialize=False),
         ),
     ]
