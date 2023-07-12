@@ -4,23 +4,20 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
+
     dependencies = [
-        ("mappings", "0005_auto_20210120_1851"),
+        ('mappings', '0005_auto_20210120_1851'),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="generalmapping",
-            name="qbo_expense_account_id",
-            field=models.CharField(
-                help_text="QBO Expense Account id", max_length=40, null=True
-            ),
+            model_name='generalmapping',
+            name='qbo_expense_account_id',
+            field=models.CharField(help_text='QBO Expense Account id', max_length=40, null=True),
         ),
         migrations.AddField(
-            model_name="generalmapping",
-            name="qbo_expense_account_name",
-            field=models.CharField(
-                help_text="Name of the QBO Expense account", max_length=255, null=True
-            ),
+            model_name='generalmapping',
+            name='qbo_expense_account_name',
+            field=models.CharField(help_text='Name of the QBO Expense account', max_length=255, null=True),
         ),
     ]

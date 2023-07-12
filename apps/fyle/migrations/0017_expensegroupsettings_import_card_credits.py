@@ -4,14 +4,15 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
+
     dependencies = [
-        ("fyle", "0016_expensegroup_response_logs"),
+        ('fyle', '0016_expensegroup_response_logs'),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="expensegroupsettings",
-            name="import_card_credits",
-            field=models.BooleanField(default=False, help_text="Import Card Credits"),
+            model_name='expensegroupsettings',
+            name='import_card_credits',
+            field=models.BooleanField(default=False, help_text='Import Card Credits'),
         ),
     ]

@@ -4,16 +4,15 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
+
     dependencies = [
-        ("workspaces", "0003_auto_20200506_0739"),
+        ('workspaces', '0003_auto_20200506_0739'),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="workspacegeneralsettings",
-            name="import_projects",
-            field=models.BooleanField(
-                default=False, help_text="Auto import projects to Fyle"
-            ),
+            model_name='workspacegeneralsettings',
+            name='import_projects',
+            field=models.BooleanField(default=False, help_text='Auto import projects to Fyle'),
         ),
     ]

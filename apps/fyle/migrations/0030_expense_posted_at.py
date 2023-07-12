@@ -4,16 +4,15 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
+
     dependencies = [
-        ("fyle", "0029_auto_20230215_0539"),
+        ('fyle', '0029_auto_20230215_0539'),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="expense",
-            name="posted_at",
-            field=models.DateTimeField(
-                help_text="Date when the money is taken from the bank", null=True
-            ),
+            model_name='expense',
+            name='posted_at',
+            field=models.DateTimeField(help_text='Date when the money is taken from the bank', null=True),
         ),
     ]

@@ -4,29 +4,30 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
+
     dependencies = [
-        ("quickbooks_online", "0003_auto_20200421_1033"),
+        ('quickbooks_online', '0003_auto_20200421_1033'),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name="bill",
-            name="bill_number",
+            model_name='bill',
+            name='bill_number',
             field=models.CharField(max_length=255),
         ),
         migrations.AlterField(
-            model_name="cheque",
-            name="cheque_number",
+            model_name='cheque',
+            name='cheque_number',
             field=models.CharField(max_length=255),
         ),
         migrations.AlterField(
-            model_name="creditcardpurchase",
-            name="credit_card_purchase_number",
+            model_name='creditcardpurchase',
+            name='credit_card_purchase_number',
             field=models.CharField(max_length=255),
         ),
         migrations.AlterField(
-            model_name="journalentry",
-            name="journal_entry_number",
+            model_name='journalentry',
+            name='journal_entry_number',
             field=models.CharField(max_length=255),
         ),
     ]
