@@ -12,7 +12,10 @@ from apps.tasks.models import Error
 from tests.test_fyle.fixtures import data as fyle_data
 
 
-def test_resolve_post_mapping_errors(test_connection, mocker, db):
+@pytest.mark.django_db(databases=["default"])
+def test_resolve_post_mapping_errors(
+    test_connection, create_temp_workspace, add_mapping_expense_attributes, mocker, db
+):
     category_attribute = ExpenseAttribute.objects.filter(
         value="WET Paid", workspace_id=3, attribute_type="CATEGORY"
     ).first()
@@ -32,8 +35,8 @@ def test_resolve_post_mapping_errors(test_connection, mocker, db):
         source_type="CATEGORY",
         destination_type="ACCOUNT",
         # source__value=source_value,
-        source_id=5322,
-        destination_id=585,
+        source_id=4,
+        destination_id=1,
         workspace_id=3,
     )
     mapping.save()
@@ -42,12 +45,17 @@ def test_resolve_post_mapping_errors(test_connection, mocker, db):
     assert error.is_resolved == True
 
 
-@pytest.mark.django_db()
-def test_resolve_post_employees_mapping_errors(test_connection):
+@pytest.mark.django_db(databases=["default"])
+def test_resolve_post_employees_mapping_errors(
+    test_connection,
+    create_temp_workspace,
+    add_mapping_expense_attributes,
+    create_employee_mapping,
+):
     source_employee = ExpenseAttribute.objects.filter(
         value="ashwin.t+1@fyle.in", workspace_id=2, attribute_type="EMPLOYEE"
     ).first()
-
+    print(source_employee.__dict__)
     Error.objects.update_or_create(
         workspace_id=2,
         expense_attribute=source_employee,
@@ -58,10 +66,8 @@ def test_resolve_post_employees_mapping_errors(test_connection):
             "is_resolved": False,
         },
     )
-    employee_mapping = EmployeeMapping.objects.get(
-        source_employee_id=2082, workspace_id=2
-    )
-    employee_mapping.destination_employee_id = 748
+    employee_mapping = EmployeeMapping.objects.get(source_employee_id=7, workspace_id=2)
+    employee_mapping.destination_employee_id = 2
     employee_mapping.save()
 
     error = Error.objects.filter(
@@ -71,8 +77,10 @@ def test_resolve_post_employees_mapping_errors(test_connection):
     assert error.is_resolved == True
 
 
-@pytest.mark.django_db()
-def test_run_post_mapping_settings_triggers(test_connection, mocker):
+@pytest.mark.django_db(databases=["default"])
+def test_run_post_mapping_settings_triggers(
+    test_connection, create_temp_workspace, add_mapping_expense_attributes, mocker
+):
     mocker.patch(
         "fyle_integrations_platform_connector.apis.ExpenseCustomFields.post",
         return_value=[],

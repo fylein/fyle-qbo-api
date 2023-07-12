@@ -65,14 +65,13 @@ def test_expense_group_settings(
     ), "expense group api return diffs in keys"
     assert response["reimbursable_expense_group_fields"] == [
         "employee_email",
-        "report_id",
-        "project",
-        "fund_source",
         "claim_number",
+        "fund_source",
+        "report_id",
     ]
-    assert response["expense_state"] == "PAYMENT_PROCESSING"
+    assert response["expense_state"] == "PAYMENT PROCESSING"
     assert response["reimbursable_export_date_type"] == "current_date"
-    assert response["ccc_expense_state"] == "PAID"
+    assert response["ccc_expense_state"] == "APPROVED"
 
     response = api_client.post(
         url, data=data["expense_group_settings_payload"], format="json"

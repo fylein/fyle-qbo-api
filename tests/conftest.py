@@ -215,17 +215,13 @@ def add_expense_attributes():
     """
     workspace_ids = [1, 2, 3]
     for workspace_id in workspace_ids:
-        ExpenseAttribute.objects.update_or_create(
-            attribute_type="PROJECT",
-            value="Fyle{}".format(workspace_id),
-            workspace_id=workspace_id,
-            defaults={
-                "active": True,
-                "source_id": 1212,
-                "display_name": "fyle{}".format(workspace_id),
-                "detail": "detail{}".format(workspace_id),
-            },
-        )
+        attribute = {
+            "attribute_type": "PROJECT",
+            "value": "Fyle{}".format(workspace_id),
+            "source_id": 1212 + workspace_id,
+            "display_name": "fyle12{}".format(workspace_id),
+        }
+        ExpenseAttribute.create_or_update_expense_attribute(attribute, workspace_id)
 
 
 @pytest.fixture()

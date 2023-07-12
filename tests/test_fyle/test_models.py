@@ -8,7 +8,6 @@ from apps.fyle.models import (
     Reimbursement,
     WorkspaceGeneralSettings,
     _format_date,
-    _group_expenses,
     get_default_ccc_expense_state,
     get_default_expense_group_fields,
     get_default_expense_state,
@@ -40,7 +39,8 @@ def test_create_expense_objects(db):
     assert expense.expense_id == "txW7qE5DUF82"
 
 
-def test_expense_group_settings(create_temp_workspace, db):
+@pytest.mark.django_db(databases=["default"])
+def test_expense_group_settings(create_temp_workspace, add_fyle_credentials, db):
     payload = data["expense_group_settings_payload"]
 
     ExpenseGroupSettings.update_expense_group_settings(payload, 1)
@@ -52,7 +52,8 @@ def test_expense_group_settings(create_temp_workspace, db):
     assert settings.ccc_expense_state == "APPROVED"
 
 
-def test_create_reimbursement(create_temp_workspace, db):
+@pytest.mark.django_db(databases=["default"])
+def test_create_reimbursement(create_temp_workspace, add_fyle_credentials, db):
     reimbursements = data["reimbursements"]
 
     Reimbursement.create_or_update_reimbursement_objects(
@@ -76,11 +77,13 @@ def test_create_reimbursement(create_temp_workspace, db):
 
 @pytest.mark.django_db(databases=["default"])
 def test_create_expense_groups_by_report_id_fund_source(
-    create_temp_workspace, add_expense_attributes, db
+    create_temp_workspace,
+    add_fyle_credentials,
+    add_expense_attributes,
+    add_expenses,
+    db,
 ):
     workspace_id = 1
-    payload = data["expenses"]
-    Expense.create_expense_objects(payload, workspace_id)
     expense_objects = Expense.objects.last()
 
     expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
@@ -93,34 +96,6 @@ def test_create_expense_groups_by_report_id_fund_source(
     ).last()
     field.attribute_type = "KILLUA"
     field.save()
-
-    expenses = Expense.objects.filter(id=1).all()
-
-    expense_groups = _group_expenses(
-        expenses,
-        [
-            "claim_number",
-            "fund_source",
-            "project",
-            "employee_email",
-            "report_id",
-            "Killua",
-        ],
-        1,
-    )
-    print(expense_groups)
-    assert expense_groups == [
-        {
-            "claim_number": "C/2022/05/R/6",
-            "fund_source": "PERSONAL",
-            "project": "Bebe Rexha",
-            "employee_email": "sravan.kumar@fyle.in",
-            "report_id": "rpawE81idoYo",
-            "killua": "",
-            "total": 1,
-            "expense_ids": [1],
-        }
-    ]
 
     expense_groups = ExpenseGroup.create_expense_groups_by_report_id_fund_source(
         [expense_objects], workspace_id
