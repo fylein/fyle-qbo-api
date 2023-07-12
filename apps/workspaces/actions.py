@@ -33,8 +33,8 @@ logger.level = logging.INFO
 
 def update_or_create_workspace(user, access_token):
     fyle_user = get_fyle_admin(access_token.split(" ")[1], None)
-    org_id = fyle_user["data"]["org"]["id"]
-    org_name = fyle_user["data"]["org"]["name"]
+    org_id = (fyle_user["data"]["org"]["id"],)
+    org_name = (fyle_user["data"]["org"]["name"],)
     org_currency = fyle_user["data"]["org"]["currency"]
     workspace = Workspace.objects.filter(fyle_org_id=org_id).first()
 
