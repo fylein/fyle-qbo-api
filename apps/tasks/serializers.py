@@ -7,6 +7,7 @@ class TaskLogSerializer(serializers.ModelSerializer):
     """
     Task Log serializer
     """
+
     class Meta:
         model = TaskLog
         fields = '__all__'

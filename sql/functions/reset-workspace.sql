@@ -11,7 +11,7 @@ BEGIN
   WHERE tl.workspace_id = _workspace_id;
   GET DIAGNOSTICS rcount = ROW_COUNT;
   RAISE NOTICE 'Deleted % task_logs', rcount;
-  
+
   DELETE
   FROM errors er
   where er.workspace_id = _workspace_id;
@@ -29,7 +29,7 @@ BEGIN
   WHERE bl.bill_id IN (
       SELECT b.id FROM bills b WHERE b.expense_group_id IN (
           SELECT eg.id FROM expense_groups eg WHERE eg.workspace_id = _workspace_id
-      ) 
+      )
   );
   GET DIAGNOSTICS rcount = ROW_COUNT;
   RAISE NOTICE 'Deleted % bill_lineitems', rcount;
