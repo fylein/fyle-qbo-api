@@ -4,14 +4,15 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
+
     dependencies = [
-        ("fyle", "0010_auto_20201007_0826"),
+        ('fyle', '0010_auto_20201007_0826'),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="expensegroup",
-            name="exported_at",
-            field=models.DateTimeField(help_text="Exported at", null=True),
+            model_name='expensegroup',
+            name='exported_at',
+            field=models.DateTimeField(help_text='Exported at', null=True),
         ),
     ]

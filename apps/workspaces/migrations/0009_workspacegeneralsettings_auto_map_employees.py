@@ -4,18 +4,15 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
+
     dependencies = [
-        ("workspaces", "0008_auto_20210215_1055"),
+        ('workspaces', '0008_auto_20210215_1055'),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="workspacegeneralsettings",
-            name="auto_map_employees",
-            field=models.CharField(
-                help_text="Auto Map Employees type from QBO to Fyle",
-                max_length=50,
-                null=True,
-            ),
+            model_name='workspacegeneralsettings',
+            name='auto_map_employees',
+            field=models.CharField(help_text='Auto Map Employees type from QBO to Fyle', max_length=50, null=True),
         ),
     ]

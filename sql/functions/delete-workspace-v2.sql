@@ -11,7 +11,7 @@ BEGIN
   WHERE tl.workspace_id = _workspace_id;
   GET DIAGNOSTICS rcount = ROW_COUNT;
   RAISE NOTICE 'Deleted % task_logs', rcount;
-
+  
   DELETE
   FROM errors er
   where er.workspace_id = _workspace_id;
@@ -29,7 +29,7 @@ BEGIN
   WHERE bl.bill_id IN (
       SELECT b.id FROM bills b WHERE b.expense_group_id IN (
           SELECT eg.id FROM expense_groups eg WHERE eg.workspace_id = _workspace_id
-      )
+      ) 
   );
   GET DIAGNOSTICS rcount = ROW_COUNT;
   RAISE NOTICE 'Deleted % bill_lineitems', rcount;
@@ -149,7 +149,7 @@ BEGIN
   RAISE NOTICE 'Deleted % expenses', rcount;
 
   DELETE
-  FROM expenses
+  FROM expenses 
   WHERE is_skipped=true and org_id in (SELECT fyle_org_id FROM workspaces WHERE id=_workspace_id);
   GET DIAGNOSTICS rcount = ROW_COUNT;
   RAISE NOTICE 'Deleted % skipped expenses', rcount;
@@ -215,7 +215,7 @@ BEGIN
   WHERE ef.workspace_id = _workspace_id;
   GET DIAGNOSTICS rcount = ROW_COUNT;
   RAISE NOTICE 'Deleted % expense_fields', rcount;
-
+  
   DELETE
   FROM fyle_credentials fc
   WHERE fc.workspace_id = _workspace_id;

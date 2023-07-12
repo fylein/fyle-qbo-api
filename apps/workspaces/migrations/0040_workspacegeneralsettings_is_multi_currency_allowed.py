@@ -4,16 +4,15 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
+
     dependencies = [
-        ("workspaces", "0039_qbocredential_currency"),
+        ('workspaces', '0039_qbocredential_currency'),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="workspacegeneralsettings",
-            name="is_multi_currency_allowed",
-            field=models.BooleanField(
-                default=False, help_text="Multi Currency Allowed"
-            ),
+            model_name='workspacegeneralsettings',
+            name='is_multi_currency_allowed',
+            field=models.BooleanField(default=False, help_text='Multi Currency Allowed'),
         ),
     ]

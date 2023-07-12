@@ -4,30 +4,25 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
+
     dependencies = [
-        ("workspaces", "0015_workspacegeneralsettings_change_accounting_period"),
+        ('workspaces', '0015_workspacegeneralsettings_change_accounting_period'),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="qbocredential",
-            name="company_name",
-            field=models.CharField(
-                help_text="QBO Company Name", max_length=255, null=True
-            ),
+            model_name='qbocredential',
+            name='company_name',
+            field=models.CharField(help_text='QBO Company Name', max_length=255, null=True),
         ),
         migrations.AddField(
-            model_name="qbocredential",
-            name="country",
-            field=models.CharField(
-                help_text="QBO Country Name", max_length=255, null=True
-            ),
+            model_name='qbocredential',
+            name='country',
+            field=models.CharField(help_text='QBO Country Name', max_length=255, null=True),
         ),
         migrations.AddField(
-            model_name="workspacegeneralsettings",
-            name="import_tax_codes",
-            field=models.BooleanField(
-                default=False, help_text="Auto import tax codes to Fyle", null=True
-            ),
+            model_name='workspacegeneralsettings',
+            name='import_tax_codes',
+            field=models.BooleanField(default=False, help_text='Auto import tax codes to Fyle', null=True),
         ),
     ]
