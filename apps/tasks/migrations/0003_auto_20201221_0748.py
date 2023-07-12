@@ -6,12 +6,12 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("tasks", "0002_auto_20200420_0434"),
+        ('tasks', '0002_auto_20200420_0434'),
     ]
 
     operations = [
         migrations.AlterModelTable(
-            name="tasklog",
-            table="task_logs",
+            name='tasklog',
+            table='task_logs',
         ),
     ]

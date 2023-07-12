@@ -6,24 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("mappings", "0008_auto_20210908_0617"),
+        ('mappings', '0008_auto_20210908_0617'),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="generalmapping",
-            name="default_debit_card_account_id",
-            field=models.CharField(
-                help_text="QBO default debit card account id", max_length=40, null=True
-            ),
+            model_name='generalmapping',
+            name='default_debit_card_account_id',
+            field=models.CharField(help_text='QBO default debit card account id', max_length=40, null=True),
         ),
         migrations.AddField(
-            model_name="generalmapping",
-            name="default_debit_card_account_name",
-            field=models.CharField(
-                help_text="Name of the default debit card account",
-                max_length=255,
-                null=True,
-            ),
+            model_name='generalmapping',
+            name='default_debit_card_account_name',
+            field=models.CharField(help_text='Name of the default debit card account', max_length=255, null=True),
         ),
     ]

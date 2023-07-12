@@ -6,20 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("fyle", "0020_auto_20211206_0851"),
+        ('fyle', '0020_auto_20211206_0851'),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name="expensegroupsettings",
-            old_name="export_date_type",
-            new_name="reimbursable_export_date_type",
+            model_name='expensegroupsettings',
+            old_name='export_date_type',
+            new_name='reimbursable_export_date_type',
         ),
         migrations.AddField(
-            model_name="expensegroupsettings",
-            name="ccc_export_date_type",
-            field=models.CharField(
-                default="current_date", help_text="CCC Export Date", max_length=100
-            ),
+            model_name='expensegroupsettings',
+            name='ccc_export_date_type',
+            field=models.CharField(default='current_date', help_text='CCC Export Date', max_length=100),
         ),
     ]

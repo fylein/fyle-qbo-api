@@ -2,7 +2,7 @@ from django.apps import AppConfig
 
 
 class WorkspaceConfig(AppConfig):
-    name = "apps.workspaces"
+    name = 'apps.workspaces'
 
     def ready(self):
         super(WorkspaceConfig, self).ready()

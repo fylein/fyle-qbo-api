@@ -6,23 +6,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("quickbooks_online", "0004_auto_20200707_1534"),
+        ('quickbooks_online', '0004_auto_20200707_1534'),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="billlineitem",
-            name="billable",
-            field=models.BooleanField(help_text="Expense Billable or not", null=True),
+            model_name='billlineitem',
+            name='billable',
+            field=models.BooleanField(help_text='Expense Billable or not', null=True),
         ),
         migrations.AddField(
-            model_name="chequelineitem",
-            name="billable",
-            field=models.BooleanField(help_text="Expense Billable or not", null=True),
+            model_name='chequelineitem',
+            name='billable',
+            field=models.BooleanField(help_text='Expense Billable or not', null=True),
         ),
         migrations.AddField(
-            model_name="creditcardpurchaselineitem",
-            name="billable",
-            field=models.BooleanField(help_text="Expense Billable or not", null=True),
+            model_name='creditcardpurchaselineitem',
+            name='billable',
+            field=models.BooleanField(help_text='Expense Billable or not', null=True),
         ),
     ]

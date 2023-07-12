@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("workspaces", "0038_auto_20230321_0732"),
+        ('workspaces', '0038_auto_20230321_0732'),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="qbocredential",
-            name="currency",
-            field=models.CharField(help_text="QBO Currency", max_length=255, null=True),
+            model_name='qbocredential',
+            name='currency',
+            field=models.CharField(help_text='QBO Currency', max_length=255, null=True),
         ),
     ]

@@ -6,15 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("workspaces", "0034_auto_20220715_0655"),
+        ('workspaces', '0034_auto_20220715_0655'),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="workspacegeneralsettings",
-            name="auto_create_merchants_as_vendors",
-            field=models.BooleanField(
-                default=False, help_text="Auto create Fyle Merchants as QBO vendors"
-            ),
+            model_name='workspacegeneralsettings',
+            name='auto_create_merchants_as_vendors',
+            field=models.BooleanField(default=False, help_text='Auto create Fyle Merchants as QBO vendors'),
         ),
     ]

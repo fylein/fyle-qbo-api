@@ -6,15 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("workspaces", "0011_workspacegeneralsettings_auto_create_detination_entity"),
+        ('workspaces', '0011_workspacegeneralsettings_auto_create_detination_entity'),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="workspacegeneralsettings",
-            name="map_merchant_to_vendor",
-            field=models.BooleanField(
-                default=False, help_text="Map Merchant to Vendor for CCC Expenses"
-            ),
+            model_name='workspacegeneralsettings',
+            name='map_merchant_to_vendor',
+            field=models.BooleanField(default=False, help_text='Map Merchant to Vendor for CCC Expenses'),
         ),
     ]

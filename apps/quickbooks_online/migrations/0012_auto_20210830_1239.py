@@ -6,58 +6,58 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("quickbooks_online", "0011_auto_20210722_1446"),
+        ('quickbooks_online', '0011_auto_20210722_1446'),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="billlineitem",
-            name="tax_amount",
-            field=models.FloatField(help_text="Tax amount", null=True),
+            model_name='billlineitem',
+            name='tax_amount',
+            field=models.FloatField(help_text='Tax amount', null=True),
         ),
         migrations.AddField(
-            model_name="billlineitem",
-            name="tax_code",
-            field=models.CharField(help_text="Tax Group ID", max_length=255, null=True),
+            model_name='billlineitem',
+            name='tax_code',
+            field=models.CharField(help_text='Tax Group ID', max_length=255, null=True),
         ),
         migrations.AddField(
-            model_name="chequelineitem",
-            name="tax_amount",
-            field=models.FloatField(help_text="Tax amount", null=True),
+            model_name='chequelineitem',
+            name='tax_amount',
+            field=models.FloatField(help_text='Tax amount', null=True),
         ),
         migrations.AddField(
-            model_name="chequelineitem",
-            name="tax_code",
-            field=models.CharField(help_text="Tax Group ID", max_length=255, null=True),
+            model_name='chequelineitem',
+            name='tax_code',
+            field=models.CharField(help_text='Tax Group ID', max_length=255, null=True),
         ),
         migrations.AddField(
-            model_name="creditcardpurchaselineitem",
-            name="tax_amount",
-            field=models.FloatField(help_text="Tax amount", null=True),
+            model_name='creditcardpurchaselineitem',
+            name='tax_amount',
+            field=models.FloatField(help_text='Tax amount', null=True),
         ),
         migrations.AddField(
-            model_name="creditcardpurchaselineitem",
-            name="tax_code",
-            field=models.CharField(help_text="Tax Group ID", max_length=255, null=True),
+            model_name='creditcardpurchaselineitem',
+            name='tax_code',
+            field=models.CharField(help_text='Tax Group ID', max_length=255, null=True),
         ),
         migrations.AddField(
-            model_name="journalentrylineitem",
-            name="tax_amount",
-            field=models.FloatField(help_text="Tax amount", null=True),
+            model_name='journalentrylineitem',
+            name='tax_amount',
+            field=models.FloatField(help_text='Tax amount', null=True),
         ),
         migrations.AddField(
-            model_name="journalentrylineitem",
-            name="tax_code",
-            field=models.CharField(help_text="Tax Group ID", max_length=255, null=True),
+            model_name='journalentrylineitem',
+            name='tax_code',
+            field=models.CharField(help_text='Tax Group ID', max_length=255, null=True),
         ),
         migrations.AddField(
-            model_name="qboexpenselineitem",
-            name="tax_amount",
-            field=models.FloatField(help_text="Tax amount", null=True),
+            model_name='qboexpenselineitem',
+            name='tax_amount',
+            field=models.FloatField(help_text='Tax amount', null=True),
         ),
         migrations.AddField(
-            model_name="qboexpenselineitem",
-            name="tax_code",
-            field=models.CharField(help_text="Tax Group ID", max_length=255, null=True),
+            model_name='qboexpenselineitem',
+            name='tax_code',
+            field=models.CharField(help_text='Tax Group ID', max_length=255, null=True),
         ),
     ]

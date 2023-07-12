@@ -6,22 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("mappings", "0007_auto_20210722_1446"),
+        ('mappings', '0007_auto_20210722_1446'),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="generalmapping",
-            name="default_tax_code_id",
-            field=models.CharField(
-                help_text="QBO default Tax Code ID", max_length=255, null=True
-            ),
+            model_name='generalmapping',
+            name='default_tax_code_id',
+            field=models.CharField(help_text='QBO default Tax Code ID', max_length=255, null=True),
         ),
         migrations.AddField(
-            model_name="generalmapping",
-            name="default_tax_code_name",
-            field=models.CharField(
-                help_text="QBO default Tax Code name", max_length=255, null=True
-            ),
+            model_name='generalmapping',
+            name='default_tax_code_name',
+            field=models.CharField(help_text='QBO default Tax Code name', max_length=255, null=True),
         ),
     ]
