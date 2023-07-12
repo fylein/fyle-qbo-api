@@ -3,7 +3,6 @@ from unittest import mock
 
 import pytest
 from django.urls import reverse
-from fyle_accounting_mappings.models import DestinationAttribute
 
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import FyleCredential, Workspace

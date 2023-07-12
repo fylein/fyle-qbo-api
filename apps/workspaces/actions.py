@@ -123,7 +123,6 @@ def delete_qbo_refresh_token(workspace_id: int):
         revoke_refresh_token(refresh_token, settings.QBO_CLIENT_ID, settings.QBO_CLIENT_SECRET)
     except Exception as exception:
         logger.error(exception)
-        pass
 
     return Response(data={'workspace_id': workspace_id, 'message': 'QBO Refresh Token deleted'})
 

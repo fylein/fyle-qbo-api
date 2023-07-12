@@ -18,5 +18,5 @@ def test_post_delete_qbo_connection(db):
         workspace = Workspace.objects.get(id=workspace_id)
 
         assert workspace.qbo_realm_id == None
-    except:
+    except Exception:
         logger.info('null value in column "qbo_realm_id" of relation "workspaces" violates not-null constraint')

@@ -5,7 +5,10 @@ extend-ignore =
     # Comparison to None should be 'cond is None:' (E711)
     E711,
     # Line break occurred before a binary operator (W503)
-    W503
+    W503,
+    E231,
+    E501,
+    E251
 max-line-length = 99
 max-complexity = 19
 ban-relative-imports = true

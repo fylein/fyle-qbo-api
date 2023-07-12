@@ -100,7 +100,7 @@ def construct_expense_filter_query(expense_filters: List[ExpenseFilter]):
                 final_filter = final_filter | (constructed_expense_filter)
 
         # Set the join type for the additonal filter
-        join_by = expense_filter.join_by
+        expense_filter.join_by
 
     return final_filter
 

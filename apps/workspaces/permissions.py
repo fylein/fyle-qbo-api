@@ -46,7 +46,7 @@ class IsAuthenticatedForTest(permissions.BasePermission):
             decrypted_password = cipher_suite.decrypt(request.headers['X-E2E-Tests-Client-ID'].encode('utf-8')).decode('utf-8')
             if decrypted_password == settings.E2E_TESTS_CLIENT_SECRET:
                 return True
-        except:
+        except Exception:
             return False
 
         return False

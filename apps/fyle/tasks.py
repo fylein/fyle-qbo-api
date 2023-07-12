@@ -12,7 +12,6 @@ from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSe
 
 from .helpers import construct_expense_filter_query
 from .models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings
-from .serializers import ExpenseGroupSerializer
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO

@@ -10,7 +10,7 @@ from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.db import models
-from django.db.models import Count, JSONField, Q
+from django.db.models import Count, JSONField
 from fyle_accounting_mappings.models import ExpenseAttribute
 
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings

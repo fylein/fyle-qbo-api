@@ -1,10 +1,5 @@
 import json
 
-import pytest
-from django.urls import reverse
-
-from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings, WorkspaceSchedule
-from fyle_qbo_api.tests import settings
 from tests.helper import dict_compare_keys
 
 from .fixtures import data

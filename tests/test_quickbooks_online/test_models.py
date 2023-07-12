@@ -1,8 +1,7 @@
-from datetime import datetime, timezone
+from datetime import datetime
 
 import pytest
 from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute, Mapping, MappingSetting
-from fyle_rest_auth.models import User
 
 from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings
 from apps.mappings.models import GeneralMapping

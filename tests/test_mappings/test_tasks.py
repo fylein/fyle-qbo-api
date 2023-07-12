@@ -1,12 +1,6 @@
-from asyncio.log import logger
 from unittest import mock
-from unittest.mock import Mock
 
-import pytest
-from django.test import TestCase
-from django.utils import timezone
 from django_q.models import Schedule
-from fyle.platform.exceptions import InvalidTokenError as FylePlatformError
 from fyle_accounting_mappings.models import (
     CategoryMapping,
     DestinationAttribute,
@@ -18,7 +12,6 @@ from fyle_accounting_mappings.models import (
 from fyle_integrations_platform_connector import PlatformConnector
 from qbosdk.exceptions import WrongParamsError
 
-from apps.mappings.models import GeneralMapping
 from apps.mappings.queue import *
 from apps.mappings.tasks import *
 from apps.tasks.models import Error

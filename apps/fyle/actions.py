@@ -4,7 +4,6 @@ from django.db.models import Q
 from fyle_integrations_platform_connector import PlatformConnector
 
 from apps.fyle.models import ExpenseAttribute, ExpenseGroup
-from apps.tasks.models import TaskLog
 from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
 
 from .constants import DEFAULT_FYLE_CONDITIONS

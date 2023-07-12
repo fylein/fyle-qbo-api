@@ -1,5 +1,3 @@
-from apps.mappings.models import GeneralMapping
-from apps.workspaces.models import WorkspaceGeneralSettings
 
 
 def test_get_queryset(api_client, test_connection):

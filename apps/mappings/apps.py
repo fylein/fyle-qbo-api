@@ -6,4 +6,3 @@ class MappingsConfig(AppConfig):
 
     def ready(self):
         super(MappingsConfig, self).ready()
-        import apps.mappings.signals

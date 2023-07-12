@@ -1,8 +1,5 @@
-import ast
 import json
 import logging
-import random
-import string
 from unittest import mock
 
 import pytest
@@ -10,17 +7,6 @@ from fyle_accounting_mappings.models import DestinationAttribute
 from qbosdk.exceptions import WrongParamsError
 
 from apps.mappings.models import GeneralMapping
-from apps.quickbooks_online.models import (
-    Bill,
-    BillLineitem,
-    Cheque,
-    ChequeLineitem,
-    CreditCardPurchase,
-    JournalEntry,
-    JournalEntryLineitem,
-    QBOExpense,
-    QBOExpenseLineitem,
-)
 from apps.quickbooks_online.utils import QBOConnector, QBOCredential, WorkspaceGeneralSettings
 from tests.helper import dict_compare_keys
 
@@ -454,7 +440,7 @@ def test_post_qbo_expense_exception(mocker, db, create_qbo_expense):
         with mock.patch('qbosdk.apis.Purchases.post') as mock_call:
             mock_call.side_effect = [WrongParamsError(msg='invalid params', response=json.dumps({'Fault': {'Error': [{'code': '6240', 'Message': 'account period closed', 'Detail': 'Invalid parametrs'}], 'type': 'Invalid_params'}})), None]
             qbo_connection.post_qbo_expense(qbo_expense, qbo_expense_lineitems)
-    except:
+    except Exception:
         logger.info("Account period error")
 
 
@@ -475,7 +461,7 @@ def test_post_cheque_exception(mocker, db, create_cheque):
         with mock.patch('qbosdk.apis.Purchases.post') as mock_call:
             mock_call.side_effect = [WrongParamsError(msg='invalid params', response=json.dumps({'Fault': {'Error': [{'code': '6240', 'Message': 'account period closed', 'Detail': 'Invalid parametrs'}], 'type': 'Invalid_params'}})), None]
             qbo_connection.post_cheque(cheque, cheque_lineitems)
-    except:
+    except Exception:
         logger.info("Account period error")
 
 
@@ -496,7 +482,7 @@ def test_post_credit_card_purchase_exception(mocker, db, create_credit_card_purc
         with mock.patch('qbosdk.apis.Purchases.post') as mock_call:
             mock_call.side_effect = [WrongParamsError(msg='invalid params', response=json.dumps({'Fault': {'Error': [{'code': '6240', 'Message': 'account period closed', 'Detail': 'Invalid parametrs'}], 'type': 'Invalid_params'}})), None]
             qbo_connection.post_credit_card_purchase(credit_card_purchase, credit_card_purchase_lineitems)
-    except:
+    except Exception:
         logger.info("Account period error")
 
 
@@ -517,7 +503,7 @@ def test_post_journal_entry_exception(mocker, db, create_journal_entry):
         with mock.patch('qbosdk.apis.JournalEntries.post') as mock_call:
             mock_call.side_effect = [WrongParamsError(msg='invalid params', response=json.dumps({'Fault': {'Error': [{'code': '6240', 'Message': 'account period closed', 'Detail': 'Invalid parametrs'}], 'type': 'Invalid_params'}})), None]
             qbo_connection.post_journal_entry(journal_entry, journal_entry_lineitems, True)
-    except:
+    except Exception:
         logger.info("Account period error")
 
 

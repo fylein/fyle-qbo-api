@@ -11,7 +11,6 @@ from apps.exceptions import handle_view_exceptions
 from fyle_qbo_api.utils import LookupFieldMixin
 
 from .actions import get_preferences, refresh_quickbooks_dimensions, sync_quickbooks_dimensions
-from .tasks import create_bill_payment
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO

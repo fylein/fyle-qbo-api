@@ -1,7 +1,5 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics
-from rest_framework.response import Response
-from rest_framework.views import status
 
 from fyle_qbo_api.utils import LookupFieldMixin
 

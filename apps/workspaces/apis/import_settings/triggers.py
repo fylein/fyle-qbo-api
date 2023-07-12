@@ -1,4 +1,3 @@
-from datetime import timedelta
 from typing import Dict, List
 
 from django.db.models import Q

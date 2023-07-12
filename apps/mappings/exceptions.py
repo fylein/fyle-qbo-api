@@ -1,7 +1,6 @@
 import logging
 import traceback
 
-import requests
 from fyle.platform.exceptions import InternalServerError, InvalidTokenError, WrongParamsError
 from qbosdk.exceptions import InvalidTokenError as QBOInvalidTokenError
 from qbosdk.exceptions import WrongParamsError as QBOWrongParamsError

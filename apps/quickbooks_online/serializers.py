@@ -10,8 +10,6 @@ from .models import (
     CreditCardPurchaseLineitem,
     JournalEntry,
     JournalEntryLineitem,
-    QBOExpense,
-    QBOExpenseLineitem,
 )
 
 

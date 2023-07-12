@@ -1,6 +1,5 @@
 import logging
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import connection
 from fyle_rest_auth.utils import AuthUtils

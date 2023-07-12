@@ -1,8 +1,6 @@
 import logging
 
 from django_filters.rest_framework import DjangoFilterBackend
-from fyle_accounting_mappings.models import ExpenseAttribute
-from fyle_accounting_mappings.serializers import ExpenseAttributeSerializer
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import status

@@ -1,11 +1,8 @@
-import ast
 import json
 import logging
-import os
 import random
 from unittest import mock
 
-import pytest
 from django_q.models import Schedule
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute
 from qbosdk.exceptions import WrongParamsError
@@ -42,7 +39,7 @@ def test_get_or_create_credit_card_or_debit_card_vendor(mocker, db):
         with mock.patch('apps.quickbooks_online.utils.QBOConnector.get_or_create_vendor') as mock_call:
             mock_call.side_effect = [None, WrongParamsError(msg='wrong parameters', response='wrong parameters')]
             contact = get_or_create_credit_card_or_debit_card_vendor(workspace_id, 'samp_merchant', False, general_settings)
-    except:
+    except Exception:
         logger.info('wrong parameters')
 
     general_settings.auto_create_merchants_as_vendors = False
@@ -60,7 +57,7 @@ def test_get_or_create_credit_card_or_debit_card_vendor(mocker, db):
         with mock.patch('apps.quickbooks_online.utils.QBOConnector.get_or_create_vendor') as mock_call:
             mock_call.side_effect = WrongParamsError(msg='wrong parameters', response='wrong parameters')
             contact = get_or_create_credit_card_or_debit_card_vendor(workspace_id, 'samp_merchant', False, general_settings)
-    except:
+    except Exception:
         logger.info('wrong parameters')
 
 
@@ -89,7 +86,7 @@ def test_create_or_update_employee_mapping(mocker, db):
         mock_call.side_effect = WrongParamsError(msg={'Message': 'Invalid parametrs'}, response=json.dumps({'Fault': {'Error': [{'code': '6240', 'Message': 'Invalid parametrs', 'Detail': 'Invalid parametrs'}], 'type': 'Invalid_params'}}))
         try:
             create_or_update_employee_mapping(expense_group=expense_group, qbo_connection=qbo_connection, auto_map_employees_preference='NAME')
-        except:
+        except Exception:
             logger.info('Employee mapping not found')
 
 
@@ -722,7 +719,7 @@ def test_post_bill_payment_exceptions(mocker, db):
         try:
             mock_call.side_effect = QBOCredential.DoesNotExist()
             create_bill_payment(workspace_id)
-        except:
+        except Exception:
             logger.info('QBO credentials not found')
 
 
@@ -791,7 +788,7 @@ def test_check_qbo_object_status(mocker, db):
     expense_group = ExpenseGroup.objects.get(id=8)
     workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
     bill = Bill.create_bill(expense_group)
-    bill_lineitems = BillLineitem.create_bill_lineitems(expense_group, workspace_general_settings)
+    BillLineitem.create_bill_lineitems(expense_group, workspace_general_settings)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     task_log.expense_group = bill.expense_group
@@ -903,7 +900,7 @@ def test__validate_expense_group(mocker, db):
 
     try:
         __validate_expense_group(expense_group, general_settings)
-    except:
+    except Exception:
         logger.info('Mappings are missing')
 
     expense_group.description.update({'employee_email': 'ashwin.t@fyle.in'})
@@ -914,7 +911,7 @@ def test__validate_expense_group(mocker, db):
 
     try:
         __validate_expense_group(expense_group, general_settings)
-    except:
+    except Exception:
         logger.info('Mappings are missing')
 
     general_settings.corporate_credit_card_expenses_object = 'DEBIT CARD EXPENSE'
@@ -928,21 +925,21 @@ def test__validate_expense_group(mocker, db):
 
     try:
         __validate_expense_group(expense_group, general_settings)
-    except:
+    except Exception:
         logger.info('Mappings are missing')
 
     account = Mapping.objects.filter(source_type='CATEGORY', destination_type='ACCOUNT', source__value='Food', workspace_id=expense_group.workspace_id).delete()
 
     try:
         __validate_expense_group(expense_group, general_settings)
-    except:
+    except Exception:
         logger.info('Mappings are missing')
 
     general_mapping = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
     general_mapping.delete()
     try:
         __validate_expense_group(expense_group, general_settings)
-    except:
+    except Exception:
         logger.info('Mappings are missing')
 
 

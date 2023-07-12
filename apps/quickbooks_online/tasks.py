@@ -4,7 +4,6 @@ import traceback
 from datetime import datetime
 
 from django.db import transaction
-from django.db.models import Q
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping
 from fyle_integrations_platform_connector import PlatformConnector
 from qbosdk.exceptions import InvalidTokenError, WrongParamsError
@@ -12,7 +11,7 @@ from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 from apps.fyle.models import Expense, ExpenseGroup, Reimbursement
 from apps.mappings.models import GeneralMapping
 from apps.tasks.models import Error, TaskLog
-from apps.workspaces.models import FyleCredential, LastExportDetail, QBOCredential, WorkspaceGeneralSettings
+from apps.workspaces.models import FyleCredential, QBOCredential, WorkspaceGeneralSettings
 from fyle_qbo_api.exceptions import BulkError
 
 from .actions import update_last_export_details

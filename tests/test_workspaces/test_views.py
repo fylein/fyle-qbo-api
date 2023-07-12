@@ -1,9 +1,7 @@
 import json
 from unittest import mock
 
-import pytest
 from django.urls import reverse
-from fyle.platform import exceptions as fyle_exc
 from qbosdk import exceptions as qbo_exc
 
 from apps.workspaces.models import *
