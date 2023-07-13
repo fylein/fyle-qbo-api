@@ -10,13 +10,9 @@ from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 
 from apps.fyle.models import Expense, ExpenseGroup, Reimbursement
 from apps.mappings.models import GeneralMapping
-from apps.tasks.models import Error, TaskLog
-from apps.workspaces.models import FyleCredential, QBOCredential, WorkspaceGeneralSettings
-from fyle_qbo_api.exceptions import BulkError
-
-from .actions import update_last_export_details
-from .exceptions import handle_qbo_exceptions
-from .models import (
+from apps.quickbooks_online.actions import update_last_export_details
+from apps.quickbooks_online.exceptions import handle_qbo_exceptions
+from apps.quickbooks_online.models import (
     Bill,
     BillLineitem,
     BillPayment,
@@ -30,7 +26,10 @@ from .models import (
     QBOExpense,
     QBOExpenseLineitem,
 )
-from .utils import QBOConnector
+from apps.quickbooks_online.utils import QBOConnector
+from apps.tasks.models import Error, TaskLog
+from apps.workspaces.models import FyleCredential, QBOCredential, WorkspaceGeneralSettings
+from fyle_qbo_api.exceptions import BulkError
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -214,7 +213,7 @@ def create_bill(expense_group, task_log_id, last_export: bool):
         update_last_export_details(expense_group.workspace_id)
 
 
-def __validate_expense_group(expense_group: ExpenseGroup, general_settings: WorkspaceGeneralSettings):
+def __validate_expense_group(expense_group: ExpenseGroup, general_settings: WorkspaceGeneralSettings):  # noqa: C901
     bulk_errors = []
     row = 0
 

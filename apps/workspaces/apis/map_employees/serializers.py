@@ -1,8 +1,7 @@
 from rest_framework import serializers
 
+from apps.workspaces.apis.map_employees.triggers import MapEmployeesTriggers
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
-
-from .triggers import MapEmployeesTriggers
 
 
 class WorkspaceGeneralSettingsSerializer(serializers.ModelSerializer):

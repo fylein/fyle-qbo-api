@@ -2,8 +2,7 @@ import json
 
 from apps.workspaces.models import Workspace
 from tests.helper import dict_compare_keys
-
-from .fixtures import data
+from tests.test_workspaces.test_apis.test_import_settings.fixtures import data
 
 
 def test_import_settings(mocker, api_client, test_connection):

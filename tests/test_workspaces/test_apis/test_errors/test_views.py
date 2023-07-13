@@ -1,8 +1,7 @@
 import json
 
 from tests.helper import dict_compare_keys
-
-from .fixtures import data
+from tests.test_workspaces.test_apis.test_errors.fixtures import data
 
 
 def test_errors(api_client, test_connection):

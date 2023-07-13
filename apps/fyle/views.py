@@ -6,24 +6,23 @@ from rest_framework.response import Response
 from rest_framework.views import status
 
 from apps.exceptions import handle_view_exceptions
-from fyle_qbo_api.utils import LookupFieldMixin
-
-from .actions import (
+from apps.fyle.actions import (
     get_custom_fields,
     get_expense_fields,
     get_expense_group_ids,
     refresh_fyle_dimension,
     sync_fyle_dimensions,
 )
-from .models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings
-from .serializers import (
+from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings
+from apps.fyle.serializers import (
     ExpenseFieldSerializer,
     ExpenseFilterSerializer,
     ExpenseGroupSerializer,
     ExpenseGroupSettingsSerializer,
     ExpenseSerializer,
 )
-from .tasks import async_create_expense_groups, get_task_log_and_fund_source
+from apps.fyle.tasks import async_create_expense_groups, get_task_log_and_fund_source
+from fyle_qbo_api.utils import LookupFieldMixin
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO

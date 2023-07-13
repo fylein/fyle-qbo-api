@@ -15,7 +15,7 @@ Including another URLconf
 """
 from django.urls import path
 
-from .views import (
+from apps.fyle.views import (
     CustomFieldView,
     ExpenseFieldsView,
     ExpenseFilterDeleteView,

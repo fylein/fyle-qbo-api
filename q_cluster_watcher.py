@@ -26,6 +26,7 @@ class LoggingEventHandler(FileSystemEventHandler):
                 print('Modified {}'.format(event.src_path))
             self.counter = self.counter + 1
 
+
 if __name__ == '__main__':
     logging.basicConfig(
         level=logging.INFO,

@@ -16,11 +16,10 @@ from rest_framework.views import status
 from apps.fyle.helpers import get_cluster_domain
 from apps.fyle.models import ExpenseGroupSettings
 from apps.quickbooks_online.utils import QBOConnector
-
-from .models import FyleCredential, LastExportDetail, QBOCredential, Workspace
-from .serializers import QBOCredentialSerializer
-from .signals import post_delete_qbo_connection
-from .utils import assert_valid
+from apps.workspaces.models import FyleCredential, LastExportDetail, QBOCredential, Workspace
+from apps.workspaces.serializers import QBOCredentialSerializer
+from apps.workspaces.signals import post_delete_qbo_connection
+from apps.workspaces.utils import assert_valid
 
 User = get_user_model()
 logger = logging.getLogger(__name__)

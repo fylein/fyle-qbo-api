@@ -1,10 +1,9 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics
 
+from apps.tasks.models import TaskLog
+from apps.tasks.serializers import TaskLogSerializer
 from fyle_qbo_api.utils import LookupFieldMixin
-
-from .models import TaskLog
-from .serializers import TaskLogSerializer
 
 
 class TasksView(LookupFieldMixin, generics.ListAPIView):

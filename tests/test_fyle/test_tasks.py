@@ -9,8 +9,7 @@ from apps.fyle.tasks import create_expense_groups
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import FyleCredential
 from tests.helper import dict_compare_keys
-
-from .fixtures import data
+from tests.test_fyle.fixtures import data
 
 
 @pytest.mark.django_db()

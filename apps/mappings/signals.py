@@ -5,14 +5,17 @@ from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 from fyle_accounting_mappings.models import EmployeeMapping, Mapping, MappingSetting
 
+from apps.mappings.helpers import schedule_or_delete_fyle_import_tasks
+from apps.mappings.queue import (
+    async_auto_create_expense_field_mapping,
+    schedule_cost_centers_creation,
+    schedule_fyle_attributes_creation,
+)
 from apps.mappings.tasks import upload_attributes_to_fyle
 from apps.tasks.models import Error
 from apps.workspaces.apis.import_settings.triggers import ImportSettingsTrigger
 from apps.workspaces.models import WorkspaceGeneralSettings
 from apps.workspaces.utils import delete_cards_mapping_settings
-
-from .helpers import schedule_or_delete_fyle_import_tasks
-from .queue import async_auto_create_expense_field_mapping, schedule_cost_centers_creation, schedule_fyle_attributes_creation
 
 
 @receiver(post_save, sender=Mapping)
@@ -68,6 +71,7 @@ def run_post_mapping_settings_triggers(sender, instance: MappingSetting, **kwarg
         )
         trigger.add_department_grouping(instance.source_field)
 
+
 @receiver(pre_save, sender=MappingSetting)
 def run_pre_mapping_settings_triggers(sender, instance: MappingSetting, **kwargs):
     """
@@ -88,6 +92,7 @@ def run_pre_mapping_settings_triggers(sender, instance: MappingSetting, **kwargs
         )
 
         async_auto_create_expense_field_mapping(instance)
+
 
 @receiver(post_delete, sender=MappingSetting)
 def run_post_delete_mapping_settings_triggers(sender, instance: MappingSetting, **kwargs):

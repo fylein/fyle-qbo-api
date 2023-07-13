@@ -4,8 +4,7 @@ from apps.fyle.models import ExpenseGroupSettings
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import WorkspaceGeneralSettings, WorkspaceSchedule
 from apps.workspaces.tasks import run_email_notification, run_sync_schedule, schedule_sync
-
-from .fixtures import data
+from tests.test_workspaces.fixtures import data
 
 
 def test_run_sync_schedule(mocker, db):

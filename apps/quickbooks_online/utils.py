@@ -10,9 +10,7 @@ from qbosdk import QuickbooksOnlineSDK
 from qbosdk.exceptions import WrongParamsError
 
 from apps.mappings.models import GeneralMapping
-from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSettings
-
-from .models import (
+from apps.quickbooks_online.models import (
     Bill,
     BillLineitem,
     BillPayment,
@@ -26,6 +24,7 @@ from .models import (
     QBOExpense,
     QBOExpenseLineitem,
 )
+from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSettings
 
 logger = logging.getLogger(__name__)
 

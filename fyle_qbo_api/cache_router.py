@@ -2,6 +2,7 @@ app_to_database = {
     'django_cache': 'cache_db',
 }
 
+
 class CacheRouter:
 
     def db_for_read(self, model, **hints):

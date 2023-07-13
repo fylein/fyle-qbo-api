@@ -1,12 +1,9 @@
 from django_q.tasks import Chain
 
-from ..workspaces.models import WorkspaceGeneralSettings
-from .models import GeneralMapping
+from apps.mappings.models import GeneralMapping
 
 
 def trigger_auto_map_employees(workspace_id: int):
-    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id, auto_map_employees__isnull=False)
-
     chain = Chain()
 
     chain.append(

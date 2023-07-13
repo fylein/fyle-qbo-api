@@ -3,7 +3,14 @@ Workspace Serializers
 """
 from rest_framework import serializers
 
-from .models import FyleCredential, LastExportDetail, QBOCredential, Workspace, WorkspaceGeneralSettings, WorkspaceSchedule
+from apps.workspaces.models import (
+    FyleCredential,
+    LastExportDetail,
+    QBOCredential,
+    Workspace,
+    WorkspaceGeneralSettings,
+    WorkspaceSchedule,
+)
 
 
 class WorkspaceSerializer(serializers.ModelSerializer):

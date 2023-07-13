@@ -7,10 +7,9 @@ from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 from rest_framework.response import Response
 from rest_framework.views import status
 
+from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import LastExportDetail, QBOCredential, Workspace
-
-from .utils import QBOConnector
 
 
 def update_last_export_details(workspace_id):

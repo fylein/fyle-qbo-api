@@ -3,10 +3,9 @@ from datetime import datetime, timezone
 from django.db.models import Q
 from fyle_integrations_platform_connector import PlatformConnector
 
+from apps.fyle.constants import DEFAULT_FYLE_CONDITIONS
 from apps.fyle.models import ExpenseAttribute, ExpenseGroup
 from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
-
-from .constants import DEFAULT_FYLE_CONDITIONS
 
 
 def get_expense_group_ids(workspace_id: int):

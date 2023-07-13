@@ -8,12 +8,12 @@ from rest_framework.response import Response
 from rest_framework.views import status
 
 from apps.exceptions import handle_view_exceptions
+from apps.quickbooks_online.actions import get_preferences, refresh_quickbooks_dimensions, sync_quickbooks_dimensions
 from fyle_qbo_api.utils import LookupFieldMixin
-
-from .actions import get_preferences, refresh_quickbooks_dimensions, sync_quickbooks_dimensions
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
+
 
 class VendorView(LookupFieldMixin, generics.ListAPIView):
     """
@@ -24,6 +24,7 @@ class VendorView(LookupFieldMixin, generics.ListAPIView):
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = {'value': {'icontains'}, 'attribute_type': {'exact', 'in'}, 'active': {'exact'}}
     ordering_fields = ('value',)
+
 
 class EmployeeView(LookupFieldMixin, generics.ListAPIView):
     """

@@ -8,6 +8,7 @@ from apps.workspaces.utils import generate_qbo_refresh_token
 
 logger = logging.getLogger(__name__)
 
+
 def test_generate_qbo_refresh_token(db, mocker):
     mocker.patch(
         'apps.workspaces.utils.requests.post',

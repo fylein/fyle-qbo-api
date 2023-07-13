@@ -7,13 +7,12 @@ from django_q.tasks import Chain
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping, MappingSetting
 from fyle_integrations_platform_connector import PlatformConnector
 
+from apps.mappings.constants import FYLE_EXPENSE_SYSTEM_FIELDS
+from apps.mappings.exceptions import handle_import_exceptions
 from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import Error
 from apps.workspaces.models import FyleCredential, QBOCredential, WorkspaceGeneralSettings
-
-from .constants import FYLE_EXPENSE_SYSTEM_FIELDS
-from .exceptions import handle_import_exceptions
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO

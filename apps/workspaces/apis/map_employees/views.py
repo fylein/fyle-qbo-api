@@ -1,8 +1,7 @@
 from rest_framework import generics
 
+from apps.workspaces.apis.map_employees.serializers import MapEmployeesSerializer
 from apps.workspaces.models import Workspace
-
-from .serializers import MapEmployeesSerializer
 
 
 class MapEmployeesView(generics.RetrieveUpdateAPIView):

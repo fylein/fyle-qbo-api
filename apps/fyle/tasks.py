@@ -7,11 +7,10 @@ from django.db import transaction
 from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
 from fyle_integrations_platform_connector import PlatformConnector
 
+from apps.fyle.helpers import construct_expense_filter_query
+from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
-
-from .helpers import construct_expense_filter_query
-from .models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO

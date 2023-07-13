@@ -15,7 +15,7 @@ Including another URLconf
 """
 from django.urls import include, path
 
-from .views import (
+from apps.workspaces.views import (
     ConnectQBOView,
     ExportToQBOView,
     GeneralSettingsView,

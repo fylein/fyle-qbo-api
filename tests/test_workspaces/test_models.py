@@ -34,6 +34,7 @@ def test_workspace_creation():
     assert workspace.name == 'Fyle for labhvam'
     assert workspace.fyle_org_id == 'l@bhv@m'
 
+
 @pytest.mark.django_db
 def test_get_of_workspace(add_workspace_to_database):
     """
@@ -49,6 +50,7 @@ def test_get_default_chart_of_accounts():
     expected_accounts = ['Expense']
     actual_accounts = get_default_chart_of_accounts()
     assert actual_accounts == expected_accounts
+
 
 def test_get_default_memo_fields():
     expected_fields = ['employee_email', 'category', 'spent_on', 'report_number', 'purpose', 'expense_link']

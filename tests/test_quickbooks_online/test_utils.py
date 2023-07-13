@@ -9,8 +9,7 @@ from qbosdk.exceptions import WrongParamsError
 from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.utils import QBOConnector, QBOCredential, WorkspaceGeneralSettings
 from tests.helper import dict_compare_keys
-
-from .fixtures import data
+from tests.test_quickbooks_online.fixtures import data
 
 logger = logging.getLogger(__name__)
 

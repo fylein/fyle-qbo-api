@@ -1,8 +1,7 @@
 from rest_framework import generics
 
+from apps.workspaces.apis.export_settings.serializers import ExportSettingsSerializer
 from apps.workspaces.models import Workspace
-
-from .serializers import ExportSettingsSerializer
 
 
 class ExportSettingsView(generics.RetrieveUpdateAPIView):

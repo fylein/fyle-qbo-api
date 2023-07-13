@@ -1,7 +1,7 @@
 from fyle_accounting_mappings.models import ExpenseAttribute
 from rest_framework import serializers
 
-from .models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings, Reimbursement
+from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings, Reimbursement
 
 
 class ExpenseGroupSettingsSerializer(serializers.ModelSerializer):

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import GeneralMapping
+from apps.mappings.models import GeneralMapping
 
 
 class GeneralMappingSerializer(serializers.ModelSerializer):

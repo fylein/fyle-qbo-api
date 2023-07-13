@@ -28,8 +28,7 @@ from apps.workspaces.models import (
     WorkspaceGeneralSettings,
     WorkspaceSchedule,
 )
-
-from .queue import schedule_email_notification
+from apps.workspaces.queue import schedule_email_notification
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO

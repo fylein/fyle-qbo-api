@@ -1,7 +1,7 @@
 from fyle_accounting_mappings.models import DestinationAttribute
 from rest_framework import serializers
 
-from .models import (
+from apps.quickbooks_online.models import (
     Bill,
     BillLineitem,
     Cheque,

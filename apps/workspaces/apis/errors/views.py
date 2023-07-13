@@ -1,8 +1,7 @@
 from rest_framework import generics
 
 from apps.tasks.models import Error
-
-from .serializers import ErrorSerializer
+from apps.workspaces.apis.errors.serializers import ErrorSerializer
 
 
 class ErrorsView(generics.ListAPIView):

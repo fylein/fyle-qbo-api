@@ -7,8 +7,7 @@ from django.urls import reverse
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import FyleCredential, Workspace
 from tests.helper import dict_compare_keys
-
-from .fixtures import data
+from tests.test_fyle.fixtures import data
 
 
 def test_expense_group_view(api_client, test_connection):

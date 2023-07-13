@@ -8,7 +8,12 @@ extend-ignore =
     W503,
     E231,
     E501,
-    E251
+    E251,
+    E502,
+    E128,
+    E125,
+    E131,
+    E129
 max-line-length = 99
 max-complexity = 19
 ban-relative-imports = true

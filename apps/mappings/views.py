@@ -4,8 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import status
 
 from apps.exceptions import handle_view_exceptions
-
-from .actions import trigger_auto_map_employees
+from apps.mappings.actions import trigger_auto_map_employees
 
 
 class AutoMapEmployeeView(generics.CreateAPIView):

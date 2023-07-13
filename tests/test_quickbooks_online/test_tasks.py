@@ -8,19 +8,47 @@ from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMappin
 from qbosdk.exceptions import WrongParamsError
 
 from apps.fyle.models import Expense, ExpenseGroup, Reimbursement
-from apps.mappings.queue import *
+from apps.mappings.queue import schedule_bill_payment_creation
 from apps.quickbooks_online.exceptions import handle_quickbooks_error
-from apps.quickbooks_online.models import *
-from apps.quickbooks_online.queue import *
-from apps.quickbooks_online.tasks import *
-from apps.quickbooks_online.tasks import __validate_expense_group
+from apps.quickbooks_online.queue import (
+    schedule_bills_creation,
+    schedule_cheques_creation,
+    schedule_credit_card_purchase_creation,
+    schedule_journal_entry_creation,
+    schedule_qbo_expense_creation,
+    schedule_qbo_objects_status_sync,
+    schedule_reimbursements_sync,
+)
+from apps.quickbooks_online.tasks import (
+    Bill,
+    BillLineitem,
+    Cheque,
+    CreditCardPurchase,
+    Error,
+    GeneralMapping,
+    JournalEntry,
+    Mapping,
+    QBOExpense,
+    QBOExpenseLineitem,
+    __validate_expense_group,
+    async_sync_accounts,
+    check_qbo_object_status,
+    create_bill,
+    create_bill_payment,
+    create_cheque,
+    create_credit_card_purchase,
+    create_journal_entry,
+    create_or_update_employee_mapping,
+    create_qbo_expense,
+    get_or_create_credit_card_or_debit_card_vendor,
+    process_reimbursements,
+    update_last_export_details,
+)
 from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings
-from apps.workspaces.queue import *
 from fyle_qbo_api.exceptions import BulkError
-
-from .fixtures import data
+from tests.test_quickbooks_online.fixtures import data
 
 logger = logging.getLogger(__name__)
 
@@ -928,7 +956,7 @@ def test__validate_expense_group(mocker, db):
     except Exception:
         logger.info('Mappings are missing')
 
-    account = Mapping.objects.filter(source_type='CATEGORY', destination_type='ACCOUNT', source__value='Food', workspace_id=expense_group.workspace_id).delete()
+    Mapping.objects.filter(source_type='CATEGORY', destination_type='ACCOUNT', source__value='Food', workspace_id=expense_group.workspace_id).delete()
 
     try:
         __validate_expense_group(expense_group, general_settings)
