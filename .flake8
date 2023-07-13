@@ -21,7 +21,9 @@ extend-ignore =
     # E131 continuation line unaligned for hanging indent
     E131,
     # E129 visually indented line with same indent as next logical line
-    E129
+    E129,
+    # Multiple spaces after ',' (E241)
+    E241
 max-line-length = 99
 max-complexity = 19
 ban-relative-imports = true

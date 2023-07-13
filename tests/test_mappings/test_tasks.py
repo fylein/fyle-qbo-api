@@ -79,6 +79,7 @@ def test_auto_create_tax_codes_mappings(db, mocker):
     assert response == None
 
 
+# check this test
 def test_disable_category_for_items_mapping(db, mocker):
     workspace_id = 5
     workspace_general_setting = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
