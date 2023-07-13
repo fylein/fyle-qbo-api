@@ -14,7 +14,7 @@ import os
 
 import dj_database_url
 
-from .sentry import Sentry
+from fyle_qbo_api.sentry import Sentry
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -135,7 +135,7 @@ Q_CLUSTER = {
     'recycle': 50,
     # The maximum resident set size in kilobytes before a worker will recycle and release resources.
     # Useful for limiting memory usage.
-    'max_rss': 100000 # 100mb
+    'max_rss': 100000   # 100mb
 }
 
 SERVICE_NAME = os.environ.get('SERVICE_NAME')
@@ -284,7 +284,7 @@ E2E_TESTS_CLIENT_SECRET = os.environ.get('E2E_TESTS_CLIENT_SECRET')
 E2E_TESTS_REALM_ID = os.environ.get('E2E_TESTS_REALM_ID')
 
 # Cache Settings
-SENDGRID_SANDBOX_MODE_IN_DEBUG=False
+SENDGRID_SANDBOX_MODE_IN_DEBUG = False
 
 SENDGRID_API_KEY = os.environ.get('SENDGRID_KEY')
 EMAIL = os.environ.get('SENDGRID_EMAIL')

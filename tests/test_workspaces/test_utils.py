@@ -6,6 +6,7 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
+
 def test_generate_qbo_refresh_token(db, mocker):
     mocker.patch(
         'apps.workspaces.utils.requests.post',

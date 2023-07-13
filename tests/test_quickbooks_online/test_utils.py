@@ -6,14 +6,9 @@ from unittest import mock
 from qbosdk.exceptions import WrongParamsError
 from fyle_accounting_mappings.models import DestinationAttribute
 from apps.quickbooks_online.utils import QBOConnector, QBOCredential, WorkspaceGeneralSettings
-from apps.quickbooks_online.models import Bill, BillLineitem, Cheque, QBOExpense, QBOExpenseLineitem, CreditCardPurchase, JournalEntry, \
-    JournalEntryLineitem, ChequeLineitem
 from apps.mappings.models import GeneralMapping 
-from .fixtures import data
 from tests.helper import dict_compare_keys
-import random  
-import string  
-
+from tests.test_quickbooks_online.fixtures import data
 logger = logging.getLogger(__name__)
 
 

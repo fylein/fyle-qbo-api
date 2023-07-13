@@ -1,8 +1,16 @@
 from rest_framework import serializers
 
 from fyle_accounting_mappings.models import DestinationAttribute
-from .models import Bill, BillLineitem, Cheque, ChequeLineitem, CreditCardPurchase, CreditCardPurchaseLineitem,\
-    JournalEntry, JournalEntryLineitem, QBOExpense, QBOExpenseLineitem
+from apps.quickbooks_online.models import (
+    Bill,
+    BillLineitem,
+    Cheque,
+    ChequeLineitem,
+    CreditCardPurchase,
+    CreditCardPurchaseLineitem,
+    JournalEntry,
+    JournalEntryLineitem,
+)
 
 
 class BillSerializer(serializers.ModelSerializer):

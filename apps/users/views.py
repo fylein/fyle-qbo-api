@@ -2,7 +2,7 @@ from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .actions import get_fyle_orgs_view
+from apps.users.actions import get_fyle_orgs_view
 
 class FyleOrgsView(generics.ListCreateAPIView):
     """

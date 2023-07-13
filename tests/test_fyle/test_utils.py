@@ -3,8 +3,7 @@ import pytest
 from unittest import mock
 from apps.fyle.helpers import get_fyle_orgs
 from apps.workspaces.models import FyleCredential
-from fyle_integrations_platform_connector import PlatformConnector
-from .fixtures import data
+from tests.test_fyle.fixtures import data
 
 
 @pytest.mark.django_db()

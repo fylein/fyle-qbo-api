@@ -11,13 +11,12 @@ from fyle_integrations_platform_connector import PlatformConnector
 from fyle_accounting_mappings.models import MappingSetting, Mapping, DestinationAttribute, ExpenseAttribute,\
     EmployeeMapping
 
+from apps.mappings.constants import FYLE_EXPENSE_SYSTEM_FIELDS
+from apps.mappings.exceptions import handle_import_exceptions
 from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.utils import QBOConnector
 from apps.workspaces.models import QBOCredential, FyleCredential, WorkspaceGeneralSettings
 from apps.tasks.models import Error
-
-from .exceptions import handle_import_exceptions
-from .constants import FYLE_EXPENSE_SYSTEM_FIELDS
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO

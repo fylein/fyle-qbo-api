@@ -3,12 +3,10 @@ from django.db.models import Q
 
 from fyle_integrations_platform_connector import PlatformConnector
 
-from apps.workspaces.models import FyleCredential, Workspace
-from apps.workspaces.models import WorkspaceGeneralSettings
-from apps.fyle.models import ExpenseGroup, ExpenseAttribute
-from apps.tasks.models import TaskLog
+from apps.fyle.constants import DEFAULT_FYLE_CONDITIONS
+from apps.fyle.models import ExpenseAttribute, ExpenseGroup
+from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
 
-from .constants import DEFAULT_FYLE_CONDITIONS
 
 def get_expense_group_ids(workspace_id: int):
     configuration = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)

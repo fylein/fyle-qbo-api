@@ -7,14 +7,14 @@ from django_filters.rest_framework import DjangoFilterBackend
 from fyle_accounting_mappings.models import DestinationAttribute
 from fyle_accounting_mappings.serializers import DestinationAttributeSerializer
 
-from fyle_qbo_api.utils import LookupFieldMixin
-from .tasks import create_bill_payment
 from apps.exceptions import handle_view_exceptions
-from .actions import get_preferences, sync_quickbooks_dimensions, refresh_quickbooks_dimensions
-
+from apps.quickbooks_online.actions import get_preferences, refresh_quickbooks_dimensions, sync_quickbooks_dimensions
+from fyle_qbo_api.utils import LookupFieldMixin
+from apps.exceptions import handle_view_exceptions
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
+
 
 class VendorView(LookupFieldMixin, generics.ListAPIView):
     """
@@ -25,6 +25,7 @@ class VendorView(LookupFieldMixin, generics.ListAPIView):
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = {'value': {'icontains'}, 'attribute_type': {'exact', 'in'}, 'active': {'exact'}}
     ordering_fields = ('value',)
+
 
 class EmployeeView(LookupFieldMixin, generics.ListAPIView):
     """

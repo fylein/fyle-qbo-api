@@ -12,4 +12,4 @@ def test_get_queryset(api_client, test_connection):
         'type__in': 'CREATING_EXPENSE',
         'status__in': 'COMPLETE'
     })
-    assert response.status_code==200
+    assert response.status_code == 200

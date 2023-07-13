@@ -2,10 +2,10 @@ from rest_framework import serializers
 
 from fyle_accounting_mappings.models import MappingSetting
 
-from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from apps.fyle.models import ExpenseGroupSettings
 from apps.mappings.models import GeneralMapping
-from .triggers import ExportSettingsTrigger
+from apps.workspaces.apis.export_settings.triggers import ExportSettingsTrigger
+from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 
 
 class ReadWriteSerializerMethodField(serializers.SerializerMethodField):
@@ -194,7 +194,7 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
 
         expense_group_settings['import_card_credits'] = False
 
-        if  workspace_general_settings.get('corporate_credit_card_expenses_object') == 'JOURNAL ENTRY' or \
+        if workspace_general_settings.get('corporate_credit_card_expenses_object') == 'JOURNAL ENTRY' or \
             (map_merchant_to_vendor and \
                 workspace_general_settings['corporate_credit_card_expenses_object'] == 'CREDIT CARD PURCHASE') or\
             (workspace_general_settings.get('reimbursable_expenses_object') in ('JOURNAL ENTRY', 'EXPENSE')):

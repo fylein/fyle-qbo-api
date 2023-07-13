@@ -1,13 +1,17 @@
+import json
+from unittest import mock
+
+from django.urls import reverse
+from qbosdk import exceptions as qbo_exc
+
+from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSettings
 from fyle_qbo_api.tests import settings
 import pytest
 import json
 from django.urls import reverse
 from unittest import mock
 from tests.helper import dict_compare_keys
-from fyle.platform import exceptions as fyle_exc
-from qbosdk import exceptions as qbo_exc
-from apps.workspaces.models import *
-from .fixtures import data
+from tests.test_workspaces.fixtures import data
 
 
 def test_get_workspace(api_client, test_connection):

@@ -15,9 +15,16 @@ Including another URLconf
 from unicodedata import name
 from django.urls import path
 
-from .views import VendorView, EmployeeView, \
-    PreferencesView, SyncQuickbooksDimensionView, RefreshQuickbooksDimensionView, \
-    DestinationAttributesView, QBOAttributesView, SearchedDestinationAttributesView
+from apps.quickbooks_online.views import (
+    DestinationAttributesView,
+    EmployeeView,
+    PreferencesView,
+    QBOAttributesView,
+    RefreshQuickbooksDimensionView,
+    SearchedDestinationAttributesView,
+    SyncQuickbooksDimensionView,
+    VendorView,
+)
 
 urlpatterns = [
     path('preferences/', PreferencesView.as_view()),

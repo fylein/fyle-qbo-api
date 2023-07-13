@@ -110,6 +110,7 @@ def schedule_auto_map_ccc_employees(workspace_id: int):
         if schedule:
             schedule.delete()
 
+
 def schedule_tax_groups_creation(import_tax_codes, workspace_id):
     if import_tax_codes:
         schedule, _ = Schedule.objects.update_or_create(

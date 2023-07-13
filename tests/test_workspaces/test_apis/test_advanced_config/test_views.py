@@ -3,9 +3,8 @@ import pytest
 import json
 from django.urls import reverse
 from tests.helper import dict_compare_keys
-from apps.workspaces.models import FyleCredential, WorkspaceSchedule
-from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
-from .fixtures import data
+from tests.test_workspaces.test_apis.test_advanced_config.fixtures import data
+from apps.workspaces.models import Workspace
 
 def test_advanced_config(api_client, test_connection):
 

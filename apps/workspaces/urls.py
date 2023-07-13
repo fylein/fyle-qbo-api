@@ -15,8 +15,16 @@ Including another URLconf
 """
 from django.urls import path, include
 
-from .views import WorkspaceView, ReadyView, ConnectQBOView, GeneralSettingsView, \
-    ExportToQBOView, LastExportDetailView, WorkspaceAdminsView, SetupE2ETestView
+from apps.workspaces.views import (
+    ConnectQBOView,
+    ExportToQBOView,
+    GeneralSettingsView,
+    LastExportDetailView,
+    ReadyView,
+    SetupE2ETestView,
+    WorkspaceAdminsView,
+    WorkspaceView,
+)
 
 urlpatterns = [
     path('', WorkspaceView.as_view(), name='workspace'),

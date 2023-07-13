@@ -2,20 +2,32 @@ from typing import List, Dict
 from datetime import datetime, timedelta
 import logging
 import json
+import unidecode
 from django.conf import settings
 
 from qbosdk import QuickbooksOnlineSDK
 from qbosdk.exceptions import WrongParamsError
 
-import unidecode
+
 
 from fyle_accounting_mappings.models import DestinationAttribute
 
-from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSettings
 from apps.mappings.models import GeneralMapping
-
-from .models import BillLineitem, Bill, ChequeLineitem, Cheque, CreditCardPurchase, CreditCardPurchaseLineitem, \
-    JournalEntry, JournalEntryLineitem, BillPaymentLineitem, BillPayment, QBOExpense, QBOExpenseLineitem
+from apps.quickbooks_online.models import (
+    Bill,
+    BillLineitem,
+    BillPayment,
+    BillPaymentLineitem,
+    Cheque,
+    ChequeLineitem,
+    CreditCardPurchase,
+    CreditCardPurchaseLineitem,
+    JournalEntry,
+    JournalEntryLineitem,
+    QBOExpense,
+    QBOExpenseLineitem,
+)
+from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSettings
 
 logger = logging.getLogger(__name__)
 

@@ -12,16 +12,25 @@ from qbosdk import exceptions as qbo_exc
 
 from fyle_rest_auth.utils import AuthUtils
 
-from .models import Workspace, QBOCredential, WorkspaceGeneralSettings, LastExportDetail
-from .utils import generate_qbo_refresh_token
-from .tasks import export_to_qbo
-from .serializers import (WorkspaceSerializer, QBOCredentialSerializer, WorkSpaceGeneralSettingsSerializer, 
-                          LastExportDetailSerializer)
-from .permissions import IsAuthenticatedForTest
-from apps.exceptions import handle_view_exceptions
 
-from .actions import (update_or_create_workspace, connect_qbo_oauth, get_workspace_admin, setup_e2e_tests, 
-                      delete_qbo_refresh_token)
+from apps.exceptions import handle_view_exceptions
+from apps.workspaces.actions import (
+    connect_qbo_oauth,
+    delete_qbo_refresh_token,
+    get_workspace_admin,
+    setup_e2e_tests,
+    update_or_create_workspace,
+)
+from apps.workspaces.models import LastExportDetail, QBOCredential, Workspace, WorkspaceGeneralSettings
+from apps.workspaces.permissions import IsAuthenticatedForTest
+from apps.workspaces.serializers import (
+    LastExportDetailSerializer,
+    QBOCredentialSerializer,
+    WorkSpaceGeneralSettingsSerializer,
+    WorkspaceSerializer,
+)
+from apps.workspaces.tasks import export_to_qbo
+from apps.workspaces.utils import generate_qbo_refresh_token
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO

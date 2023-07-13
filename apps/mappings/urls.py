@@ -15,7 +15,7 @@ Including another URLconf
 """
 from django.urls import path, include
 
-from .views import AutoMapEmployeeView
+from apps.mappings.views import AutoMapEmployeeView
 
 urlpatterns = [
     path('', include('fyle_accounting_mappings.urls')),

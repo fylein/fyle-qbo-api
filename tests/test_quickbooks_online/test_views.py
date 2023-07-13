@@ -1,16 +1,10 @@
-from os import access
 from django.urls import reverse
-import pytest
 import json
 from unittest import mock
-from apps.tasks.models import TaskLog
 from apps.workspaces.models import QBOCredential
-from apps.fyle.models import Reimbursement, ExpenseGroup
-from .fixtures import data
+from tests.test_quickbooks_online.fixtures import data
 from qbosdk.exceptions import WrongParamsError, InvalidTokenError
 from fyle_accounting_mappings.models import DestinationAttribute
-
-
 
 def test_destination_attributes_view(api_client, test_connection):
 

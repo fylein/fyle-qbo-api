@@ -5,10 +5,8 @@ from django.db import transaction
 from fyle_accounting_mappings.models import MappingSetting
 
 from apps.mappings.models import GeneralMapping
-
+from apps.workspaces.apis.import_settings.triggers import ImportSettingsTrigger
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
-
-from .triggers import ImportSettingsTrigger
 
 
 class MappingSettingFilteredListSerializer(serializers.ListSerializer):

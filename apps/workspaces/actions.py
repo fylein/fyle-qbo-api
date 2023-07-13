@@ -18,12 +18,10 @@ from fyle_rest_auth.helpers import get_fyle_admin
 from apps.quickbooks_online.utils import QBOConnector
 from apps.fyle.models import ExpenseGroupSettings
 from apps.fyle.helpers import get_cluster_domain
-
-from .models import Workspace, LastExportDetail, FyleCredential, QBOCredential
-from .utils import assert_valid
-from .serializers import QBOCredentialSerializer
-from .signals import post_delete_qbo_connection
-
+from apps.workspaces.models import FyleCredential, LastExportDetail, QBOCredential, Workspace
+from apps.workspaces.serializers import QBOCredentialSerializer
+from apps.workspaces.signals import post_delete_qbo_connection
+from apps.workspaces.utils import assert_valid
 
 User = get_user_model()
 logger = logging.getLogger(__name__)

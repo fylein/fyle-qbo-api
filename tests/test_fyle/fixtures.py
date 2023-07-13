@@ -325,8 +325,7 @@ data = {
         {'id': 'txW7qE5DUF82', 'employee_email': 'ashwin.t@fyle.in', 'employee_name': 'Joanna', 'report_title': 'title1', 'category': 'Flight', 'sub_category': None, 'project': 'Aaron Abbott', 'project_id': 246855, 'expense_number': 'E/2022/05/T/20', 'org_id': 'or79Cob97KSh', 'claim_number': 'C/2022/05/R/6', 'amount': 5, 'tax_amount': 1.09, 'tax_group_id': 'tggu76WXIdjY', 'settled_at': '2022-05-23T13:37:01.524157+00:00', 'currency': 'USD', 'foreign_amount': None, 'foreign_currency': None, 'settlement_id': 'setCb41PcrHmO', 'reimbursable': True, 'billable': None, 'state': 'PAYMENT_PROCESSING', 'vendor': 'Ashwin', 'cost_center': None, 'corporate_card_id': None, 'purpose': None, 'report_id': 'rpYkgyHrGcg8', 'file_ids': [], 'spent_at': '2021-11-08T06:23:35.631000Z', 'posted_at': '2021-11-08T06:23:35.631000Z', 'approved_at': '2021-11-08T06:23:35.631000Z', 'expense_created_at': '2022-05-23T13:32:45.769742+00:00', 'expense_updated_at': '2022-05-23T13:37:01.524157+00:00', 'source_account_type': 'PERSONAL_CASH_ACCOUNT', 'verified_at': None, 'custom_properties': {'Custom Expense Field': None, 'Location': '', 'Operating System': '', 'Team': '', 'User Dimension': '', 'User Dimension Copy': '', 'Team Copy': '', 'Team 2 Postman': '', 'System Operating': '', 'Departments': '', 'Location Entity': '', 'Class': '', 'Tax Groups': '', 'Klass': ''}, 'payment_number': 'P/2022/05/R/9'}
     ],
     'reimbursements': [
-        {   
-            'id': 2,
+        {
             'amount': 76,
             'code': None,
             'created_at': '2022-01-20T16:30:44.584100',

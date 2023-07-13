@@ -1,6 +1,18 @@
-from apps.fyle.models import _format_date, _group_expenses, get_default_ccc_expense_state
-from apps.fyle.models import *
-from .fixtures import data
+from apps.fyle.models import (
+    Expense,
+    ExpenseGroup,
+    ExpenseGroupSettings,
+    Reimbursement,
+    WorkspaceGeneralSettings,
+    _format_date,
+    _group_expenses,
+    get_default_ccc_expense_state,
+    get_default_expense_group_fields,
+    get_default_expense_state,
+    parser,
+)
+from fyle_accounting_mappings.models import ExpenseAttribute
+from tests.test_fyle.fixtures import data
 
 def test_default_fields():
     expense_group_field = get_default_expense_group_fields()
