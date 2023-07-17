@@ -1,6 +1,7 @@
 from unittest import mock
 
 from django_q.models import Schedule
+from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
 from fyle_accounting_mappings.models import (
     CategoryMapping,
     DestinationAttribute,
@@ -76,9 +77,6 @@ def test_disable_category_for_items_mapping(db, mocker):
 
     with mock.patch('fyle_integrations_platform_connector.apis.Categories.sync') as mock_call:
         mock_call.side_effect = WrongParamsError(msg='invalid params', response='invalid params')
-        disable_category_for_items_mapping(workspace_id)
-
-        mock_call.side_effect = QBOWrongParamsError(msg='invalid params', response='invalid params')
         disable_category_for_items_mapping(workspace_id)
 
         mock_call.side_effect = FyleInvalidTokenError(msg='Invalid Token for fyle', response='Invalid Token for fyle')

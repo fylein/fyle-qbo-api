@@ -27,11 +27,27 @@ def test_resolve_post_mapping_errors(test_connection, mocker, db):
 
 
 @pytest.mark.django_db()
-def test_resolve_post_employees_mapping_errors(test_connection):
-    source_employee = ExpenseAttribute.objects.filter(value='ashwin.t+1@fyle.in', workspace_id=2, attribute_type='EMPLOYEE').first()
+def test_resolve_post_employees_mapping_errors(test_connection, db):
+    source_employee = ExpenseAttribute.objects.filter(
+        value='ashwin.t+1@fyle.in',
+        workspace_id=2,
+        attribute_type='EMPLOYEE'
+    ).first()
 
-    Error.objects.update_or_create(workspace_id=2, expense_attribute=source_employee, defaults={'type': 'EMPLOYEE_MAPPING', 'error_title': source_employee.value, 'error_detail': 'Employee mapping is missing', 'is_resolved': False})
-    employee_mapping = EmployeeMapping.objects.get(source_employee_id=2082, workspace_id=2)
+    Error.objects.update_or_create(
+        workspace_id=2,
+        expense_attribute=source_employee,
+        defaults={
+            'type': 'EMPLOYEE_MAPPING',
+            'error_title': source_employee.value,
+            'error_detail': 'Employee mapping is missing',
+            'is_resolved': False
+        }
+    )
+    employee_mapping = EmployeeMapping.objects.get(
+       source_employee_id=2082,
+        workspace_id=2
+    )
     employee_mapping.destination_employee_id = 748
     employee_mapping.save()
 
