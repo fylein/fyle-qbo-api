@@ -6,10 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('fyle', '0014_auto_20210120_1831'),
-        ('quickbooks_online', '0007_auto_20201221_0748'),
-    ]
+    dependencies = [('fyle', '0014_auto_20210120_1831'), ('quickbooks_online', '0007_auto_20201221_0748')]
 
     operations = [
         migrations.CreateModel(
@@ -28,27 +25,11 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True, help_text='Created at')),
                 ('updated_at', models.DateTimeField(auto_now=True, help_text='Updated at')),
             ],
-            options={
-                'db_table': 'bill_payments',
-            },
+            options={'db_table': 'bill_payments'},
         ),
-        migrations.AddField(
-            model_name='bill',
-            name='paid_on_qbo',
-            field=models.BooleanField(default=False, help_text='Payment status in QBO'),
-        ),
-        migrations.AddField(
-            model_name='bill',
-            name='payment_synced',
-            field=models.BooleanField(default=False, help_text='Payment synced status'),
-        ),
-        migrations.AddField(
-            model_name='billpayment',
-            name='expense_group',
-            field=models.OneToOneField(default=1, help_text='Expense group reference',
-                                       on_delete=django.db.models.deletion.PROTECT, to='fyle.ExpenseGroup'),
-            preserve_default=False,
-        ),
+        migrations.AddField(model_name='bill', name='paid_on_qbo', field=models.BooleanField(default=False, help_text='Payment status in QBO')),
+        migrations.AddField(model_name='bill', name='payment_synced', field=models.BooleanField(default=False, help_text='Payment synced status')),
+        migrations.AddField(model_name='billpayment', name='expense_group', field=models.OneToOneField(default=1, help_text='Expense group reference', on_delete=django.db.models.deletion.PROTECT, to='fyle.ExpenseGroup'), preserve_default=False),
         migrations.CreateModel(
             name='BillPaymentLineitem',
             fields=[
@@ -60,8 +41,6 @@ class Migration(migrations.Migration):
                 ('bill_payment', models.ForeignKey(help_text='Reference to bill payment', on_delete=django.db.models.deletion.PROTECT, to='quickbooks_online.BillPayment')),
                 ('expense', models.OneToOneField(help_text='Reference to Expense', on_delete=django.db.models.deletion.PROTECT, to='fyle.Expense')),
             ],
-            options={
-                'db_table': 'bill_payment_lineitems',
-            },
+            options={'db_table': 'bill_payment_lineitems'},
         ),
     ]

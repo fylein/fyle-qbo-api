@@ -13,11 +13,8 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.urls import path, include
+from django.urls import include, path
 
 from apps.mappings.views import AutoMapEmployeeView
 
-urlpatterns = [
-    path('', include('fyle_accounting_mappings.urls')),
-    path('auto_map_employees/trigger/', AutoMapEmployeeView.as_view())
-]
+urlpatterns = [path('', include('fyle_accounting_mappings.urls')), path('auto_map_employees/trigger/', AutoMapEmployeeView.as_view())]

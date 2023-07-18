@@ -6,17 +6,10 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('workspaces', '0006_auto_20201228_0436'),
-        ('fyle', '0013_auto_20201221_0748'),
-    ]
+    dependencies = [('workspaces', '0006_auto_20201228_0436'), ('fyle', '0013_auto_20201221_0748')]
 
     operations = [
-        migrations.AddField(
-            model_name='expense',
-            name='paid_on_qbo',
-            field=models.BooleanField(default=False, help_text='Expense Payment status on QBO'),
-        ),
+        migrations.AddField(model_name='expense', name='paid_on_qbo', field=models.BooleanField(default=False, help_text='Expense Payment status on QBO')),
         migrations.CreateModel(
             name='Reimbursement',
             fields=[
@@ -28,8 +21,6 @@ class Migration(migrations.Migration):
                 ('updated_at', models.DateTimeField(auto_now=True, help_text='Updated at')),
                 ('workspace', models.ForeignKey(help_text='To which workspace this reimbursement belongs to', on_delete=django.db.models.deletion.PROTECT, to='workspaces.Workspace')),
             ],
-            options={
-                'db_table': 'reimbursements',
-            },
+            options={'db_table': 'reimbursements'},
         ),
     ]

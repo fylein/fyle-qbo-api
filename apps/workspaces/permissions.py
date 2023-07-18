@@ -1,9 +1,8 @@
+from cryptography.fernet import Fernet
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from rest_framework import permissions
-from django.conf import settings
-
-from cryptography.fernet import Fernet
 
 from apps.workspaces.models import Workspace
 
@@ -20,7 +19,7 @@ class WorkspacePermissions(permissions.BasePermission):
             if cache_users:
                 cache.set(workspace_id, workspace_users, 172800)
             return True
-        
+
         return False
 
     def has_permission(self, request, view):
@@ -34,10 +33,12 @@ class WorkspacePermissions(permissions.BasePermission):
             workspace_users = Workspace.objects.filter(pk=workspace_id).values_list('user', flat=True)
             return self.validate_and_cache(workspace_users, user, workspace_id, True)
 
+
 class IsAuthenticatedForTest(permissions.BasePermission):
     """
     Custom auth for preparing a workspace for e2e tests
     """
+
     def has_permission(self, request, view):
         # Client sends a token in the header, which we decrypt and compare with the Client Secret
         cipher_suite = Fernet(settings.ENCRYPTION_KEY)
@@ -45,7 +46,7 @@ class IsAuthenticatedForTest(permissions.BasePermission):
             decrypted_password = cipher_suite.decrypt(request.headers['X-E2E-Tests-Client-ID'].encode('utf-8')).decode('utf-8')
             if decrypted_password == settings.E2E_TESTS_CLIENT_SECRET:
                 return True
-        except:
+        except Exception:
             return False
 
         return False

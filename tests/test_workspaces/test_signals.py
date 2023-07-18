@@ -1,6 +1,7 @@
-from apps.workspaces.signals import post_delete_qbo_connection
-from apps.workspaces.models import Workspace
 import logging
+
+from apps.workspaces.models import Workspace
+from apps.workspaces.signals import post_delete_qbo_connection
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,5 @@ def test_post_delete_qbo_connection(db):
         workspace = Workspace.objects.get(id=workspace_id)
 
         assert workspace.qbo_realm_id == None
-    except:
+    except Exception:
         logger.info('null value in column "qbo_realm_id" of relation "workspaces" violates not-null constraint')
-        

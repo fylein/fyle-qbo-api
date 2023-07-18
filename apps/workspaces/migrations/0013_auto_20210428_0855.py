@@ -5,19 +5,9 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('workspaces', '0012_workspacegeneralsettings_map_merchant_to_vendor'),
-    ]
+    dependencies = [('workspaces', '0012_workspacegeneralsettings_map_merchant_to_vendor')]
 
     operations = [
-        migrations.AddField(
-            model_name='workspace',
-            name='destination_synced_at',
-            field=models.DateTimeField(help_text='Datetime when destination dimensions were pulled', null=True),
-        ),
-        migrations.AddField(
-            model_name='workspace',
-            name='source_synced_at',
-            field=models.DateTimeField(help_text='Datetime when source dimensions were pulled', null=True),
-        ),
+        migrations.AddField(model_name='workspace', name='destination_synced_at', field=models.DateTimeField(help_text='Datetime when destination dimensions were pulled', null=True)),
+        migrations.AddField(model_name='workspace', name='source_synced_at', field=models.DateTimeField(help_text='Datetime when source dimensions were pulled', null=True)),
     ]

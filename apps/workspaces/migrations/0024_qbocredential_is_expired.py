@@ -5,14 +5,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('workspaces', '0023_auto_20220314_1111'),
-    ]
+    dependencies = [('workspaces', '0023_auto_20220314_1111')]
 
-    operations = [
-        migrations.AddField(
-            model_name='qbocredential',
-            name='is_expired',
-            field=models.BooleanField(default=False, help_text='QBO token expiry flag'),
-        ),
-    ]
+    operations = [migrations.AddField(model_name='qbocredential', name='is_expired', field=models.BooleanField(default=False, help_text='QBO token expiry flag'))]

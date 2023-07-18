@@ -1,9 +1,9 @@
 """
 Mapping Signals
 """
-from django.db.models.signals import post_save, pre_save, post_delete
+from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
-from fyle_accounting_mappings.models import Mapping, EmployeeMapping, MappingSetting
+from fyle_accounting_mappings.models import EmployeeMapping, Mapping, MappingSetting
 
 from apps.mappings.helpers import schedule_or_delete_fyle_import_tasks
 from apps.mappings.queue import (
@@ -13,11 +13,9 @@ from apps.mappings.queue import (
 )
 from apps.mappings.tasks import upload_attributes_to_fyle
 from apps.tasks.models import Error
-from apps.mappings.tasks import upload_attributes_to_fyle
-from apps.workspaces.utils import delete_cards_mapping_settings
-from apps.workspaces.models import WorkspaceGeneralSettings
-
 from apps.workspaces.apis.import_settings.triggers import ImportSettingsTrigger
+from apps.workspaces.models import WorkspaceGeneralSettings
+from apps.workspaces.utils import delete_cards_mapping_settings
 
 
 @receiver(post_save, sender=Mapping)
@@ -66,11 +64,7 @@ def run_post_mapping_settings_triggers(sender, instance: MappingSetting, **kwarg
 
     if instance.destination_field == 'DEPARTMENT':
         # add_department_grouping() doesn't require workspace_general_settings and mapping_settings, hence sending them as None
-        trigger: ImportSettingsTrigger = ImportSettingsTrigger(
-            workspace_general_settings=None,
-            mapping_settings=None,
-            workspace_id=instance.workspace_id
-        )
+        trigger: ImportSettingsTrigger = ImportSettingsTrigger(workspace_general_settings=None, mapping_settings=None, workspace_id=instance.workspace_id)
         trigger.add_department_grouping(instance.source_field)
 
 
@@ -86,12 +80,7 @@ def run_pre_mapping_settings_triggers(sender, instance: MappingSetting, **kwargs
     instance.source_field = instance.source_field.upper().replace(' ', '_')
 
     if instance.source_field not in default_attributes:
-        upload_attributes_to_fyle(
-            workspace_id=int(instance.workspace_id),
-            qbo_attribute_type=instance.destination_field,
-            fyle_attribute_type=instance.source_field,
-            source_placeholder=instance.source_placeholder,
-        )
+        upload_attributes_to_fyle(workspace_id=int(instance.workspace_id), qbo_attribute_type=instance.destination_field, fyle_attribute_type=instance.source_field, source_placeholder=instance.source_placeholder)
 
         async_auto_create_expense_field_mapping(instance)
 
@@ -105,9 +94,5 @@ def run_post_delete_mapping_settings_triggers(sender, instance: MappingSetting, 
     """
     if instance.destination_field == 'DEPARTMENT':
         # remove_department_grouping() doesn't require workspace_general_settings and mapping_settings, hence sending them as None
-        trigger: ImportSettingsTrigger = ImportSettingsTrigger(
-            workspace_general_settings=None,
-            mapping_settings=None,
-            workspace_id=instance.workspace_id
-        )
+        trigger: ImportSettingsTrigger = ImportSettingsTrigger(workspace_general_settings=None, mapping_settings=None, workspace_id=instance.workspace_id)
         trigger.remove_department_grouping(instance.source_field.lower())

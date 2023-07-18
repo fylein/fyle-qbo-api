@@ -26,5 +26,5 @@ urlpatterns = [
     path('<int:workspace_id>/map_employees/', MapEmployeesView.as_view()),
     path('<int:workspace_id>/import_settings/', ImportSettingsView.as_view()),
     path('<int:workspace_id>/advanced_configurations/', AdvancedConfigurationsView.as_view()),
-    path('<int:workspace_id>/errors/', ErrorsView.as_view())
+    path('<int:workspace_id>/errors/', ErrorsView.as_view()),
 ]

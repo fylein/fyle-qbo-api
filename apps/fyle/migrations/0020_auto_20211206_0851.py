@@ -5,24 +5,10 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('fyle', '0019_auto_20211108_0422'),
-    ]
+    dependencies = [('fyle', '0019_auto_20211108_0422')]
 
     operations = [
-        migrations.AlterField(
-            model_name='expense',
-            name='custom_properties',
-            field=models.JSONField(null=True),
-        ),
-        migrations.AlterField(
-            model_name='expensegroup',
-            name='description',
-            field=models.JSONField(help_text='Description', max_length=255, null=True),
-        ),
-        migrations.AlterField(
-            model_name='expensegroup',
-            name='response_logs',
-            field=models.JSONField(help_text='Reponse log of the export', null=True),
-        ),
+        migrations.AlterField(model_name='expense', name='custom_properties', field=models.JSONField(null=True)),
+        migrations.AlterField(model_name='expensegroup', name='description', field=models.JSONField(help_text='Description', max_length=255, null=True)),
+        migrations.AlterField(model_name='expensegroup', name='response_logs', field=models.JSONField(help_text='Reponse log of the export', null=True)),
     ]

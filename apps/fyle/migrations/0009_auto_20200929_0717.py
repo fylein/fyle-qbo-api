@@ -6,15 +6,10 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('fyle', '0008_auto_20200901_1038'),
-    ]
+    dependencies = [('fyle', '0008_auto_20200901_1038')]
 
     operations = [
-        migrations.RemoveField(
-            model_name='expensegroupsettings',
-            name='expense_states',
-        ),
+        migrations.RemoveField(model_name='expensegroupsettings', name='expense_states'),
         migrations.AddField(
             model_name='expensegroupsettings',
             name='expense_state',

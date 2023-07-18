@@ -1,16 +1,15 @@
 import logging
-from rest_framework.response import Response
-from rest_framework.views import status
-from rest_framework import generics
-from django_filters.rest_framework import DjangoFilterBackend
 
+from django_filters.rest_framework import DjangoFilterBackend
 from fyle_accounting_mappings.models import DestinationAttribute
 from fyle_accounting_mappings.serializers import DestinationAttributeSerializer
+from rest_framework import generics
+from rest_framework.response import Response
+from rest_framework.views import status
 
 from apps.exceptions import handle_view_exceptions
 from apps.quickbooks_online.actions import get_preferences, refresh_quickbooks_dimensions, sync_quickbooks_dimensions
 from fyle_qbo_api.utils import LookupFieldMixin
-from apps.exceptions import handle_view_exceptions
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -20,6 +19,7 @@ class VendorView(LookupFieldMixin, generics.ListAPIView):
     """
     Vendor view
     """
+
     queryset = DestinationAttribute.objects.all()
     serializer_class = DestinationAttributeSerializer
     filter_backends = (DjangoFilterBackend,)
@@ -31,6 +31,7 @@ class EmployeeView(LookupFieldMixin, generics.ListAPIView):
     """
     Employee view
     """
+
     queryset = DestinationAttribute.objects.all()
     serializer_class = DestinationAttributeSerializer
     filter_backends = (DjangoFilterBackend,)
@@ -56,9 +57,7 @@ class SyncQuickbooksDimensionView(generics.ListCreateAPIView):
     def post(self, request, *args, **kwargs):
         sync_quickbooks_dimensions(kwargs['workspace_id'])
 
-        return Response(
-            status=status.HTTP_200_OK
-        )
+        return Response(status=status.HTTP_200_OK)
 
 
 class RefreshQuickbooksDimensionView(generics.ListCreateAPIView):
@@ -73,15 +72,14 @@ class RefreshQuickbooksDimensionView(generics.ListCreateAPIView):
         """
         refresh_quickbooks_dimensions(kwargs['workspace_id'])
 
-        return Response(
-            status=status.HTTP_200_OK
-        )
+        return Response(status=status.HTTP_200_OK)
 
 
 class DestinationAttributesView(LookupFieldMixin, generics.ListAPIView):
     """
     Destination Attributes view
     """
+
     queryset = DestinationAttribute.objects.all()
     serializer_class = DestinationAttributeSerializer
     pagination_class = None
@@ -94,6 +92,7 @@ class SearchedDestinationAttributesView(LookupFieldMixin, generics.ListAPIView):
     """
     Destination Attributes view
     """
+
     queryset = DestinationAttribute.objects.all()
     serializer_class = DestinationAttributeSerializer
     filter_backends = (DjangoFilterBackend,)
@@ -105,6 +104,7 @@ class QBOAttributesView(LookupFieldMixin, generics.ListAPIView):
     """
     GET Paginated QBO Attributes view
     """
+
     queryset = DestinationAttribute.objects.distinct('attribute_type')
     serializer_class = DestinationAttributeSerializer
     pagination_class = None

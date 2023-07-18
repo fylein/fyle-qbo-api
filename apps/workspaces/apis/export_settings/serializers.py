@@ -1,6 +1,5 @@
-from rest_framework import serializers
-
 from fyle_accounting_mappings.models import MappingSetting
+from rest_framework import serializers
 
 from apps.fyle.models import ExpenseGroupSettings
 from apps.mappings.models import GeneralMapping
@@ -26,11 +25,7 @@ class ReadWriteSerializerMethodField(serializers.SerializerMethodField):
 class WorkspaceGeneralSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkspaceGeneralSettings
-        fields = [
-            'reimbursable_expenses_object',
-            'corporate_credit_card_expenses_object',
-            'is_simplify_report_closure_enabled'
-        ]
+        fields = ['reimbursable_expenses_object', 'corporate_credit_card_expenses_object', 'is_simplify_report_closure_enabled']
         read_only_fields = ['is_simplify_report_closure_enabled']
 
 
@@ -44,14 +39,7 @@ class ExpenseGroupSettingsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ExpenseGroupSettings
-        fields = [
-            'reimbursable_expense_group_fields',
-            'corporate_credit_card_expense_group_fields',
-            'expense_state',
-            'ccc_expense_state',
-            'reimbursable_export_date_type',
-            'ccc_export_date_type'
-        ]
+        fields = ['reimbursable_expense_group_fields', 'corporate_credit_card_expense_group_fields', 'expense_state', 'ccc_expense_state', 'reimbursable_export_date_type', 'ccc_export_date_type']
 
 
 class GeneralMappingsSerializer(serializers.ModelSerializer):
@@ -64,56 +52,32 @@ class GeneralMappingsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = GeneralMapping
-        fields = [
-            'accounts_payable',
-            'qbo_expense_account',
-            'bank_account',
-            'default_ccc_account',
-            'default_debit_card_account',
-            'default_ccc_vendor'
-        ]
+        fields = ['accounts_payable', 'qbo_expense_account', 'bank_account', 'default_ccc_account', 'default_debit_card_account', 'default_ccc_vendor']
 
     def get_accounts_payable(self, instance):
-        return {
-            'name': instance.accounts_payable_name,
-            'id': instance.accounts_payable_id
-        }
+        return {'name': instance.accounts_payable_name, 'id': instance.accounts_payable_id}
 
     def get_qbo_expense_account(self, instance):
-        return {
-            'name': instance.qbo_expense_account_name,
-            'id': instance.qbo_expense_account_id
-        }
+        return {'name': instance.qbo_expense_account_name, 'id': instance.qbo_expense_account_id}
 
     def get_bank_account(self, instance):
-        return {
-            'name': instance.bank_account_name,
-            'id': instance.bank_account_id
-        }
+        return {'name': instance.bank_account_name, 'id': instance.bank_account_id}
 
     def get_default_ccc_account(self, instance):
-        return {
-            'name': instance.default_ccc_account_name,
-            'id': instance.default_ccc_account_id
-        }
+        return {'name': instance.default_ccc_account_name, 'id': instance.default_ccc_account_id}
 
     def get_default_debit_card_account(self, instance):
-        return {
-            'name': instance.default_debit_card_account_name,
-            'id': instance.default_debit_card_account_id
-        }
+        return {'name': instance.default_debit_card_account_name, 'id': instance.default_debit_card_account_id}
 
     def get_default_ccc_vendor(self, instance):
-        return {
-            'name': instance.default_ccc_vendor_name,
-            'id': instance.default_ccc_vendor_id
-        }
+        return {'name': instance.default_ccc_vendor_name, 'id': instance.default_ccc_vendor_id}
 
 
 class ExportSettingsSerializer(serializers.ModelSerializer):
     """
     Serializer for the ExportSettings Form/API
     """
+
     workspace_general_settings = WorkspaceGeneralSettingsSerializer()
     expense_group_settings = ExpenseGroupSettingsSerializer()
     general_mappings = GeneralMappingsSerializer()
@@ -121,12 +85,7 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Workspace
-        fields = [
-            'workspace_general_settings',
-            'expense_group_settings',
-            'general_mappings',
-            'workspace_id'
-        ]
+        fields = ['workspace_general_settings', 'expense_group_settings', 'general_mappings', 'workspace_id']
         read_only_fields = ['workspace_id']
 
     def get_workspace_id(self, instance):
@@ -144,25 +103,21 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
         if workspace_general_settings_instance.map_merchant_to_vendor:
             map_merchant_to_vendor = workspace_general_settings_instance.map_merchant_to_vendor
 
-        category_sync_version = workspace_general_settings_instance.category_sync_version \
-            if workspace_general_settings_instance.category_sync_version else 'v2'
+        category_sync_version = workspace_general_settings_instance.category_sync_version if workspace_general_settings_instance.category_sync_version else 'v2'
 
         enable_cards_mapping = False
-        if workspace_general_settings.get('corporate_credit_card_expenses_object') and \
-                (workspace_general_settings.get('corporate_credit_card_expenses_object') not in (
-                'BILL', 'DEBIT CARD EXPENSE')):
+        if workspace_general_settings.get('corporate_credit_card_expenses_object') and (workspace_general_settings.get('corporate_credit_card_expenses_object') not in ('BILL', 'DEBIT CARD EXPENSE')):
             enable_cards_mapping = True
 
         WorkspaceGeneralSettings.objects.update_or_create(
             workspace=instance,
             defaults={
                 'reimbursable_expenses_object': workspace_general_settings.get('reimbursable_expenses_object'),
-                'corporate_credit_card_expenses_object': workspace_general_settings.get(
-                    'corporate_credit_card_expenses_object'),
+                'corporate_credit_card_expenses_object': workspace_general_settings.get('corporate_credit_card_expenses_object'),
                 'map_merchant_to_vendor': map_merchant_to_vendor,
                 'category_sync_version': category_sync_version,
-                'map_fyle_cards_qbo_account': enable_cards_mapping
-            }
+                'map_fyle_cards_qbo_account': enable_cards_mapping,
+            },
         )
 
         export_trigger = ExportSettingsTrigger(workspace_general_settings, instance.id)
@@ -170,15 +125,7 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
         export_trigger.post_save_workspace_general_settings()
 
         if enable_cards_mapping:
-            MappingSetting.objects.update_or_create(
-                destination_field='CREDIT_CARD_ACCOUNT',
-                workspace_id=instance.id,
-                defaults={
-                    'source_field': 'CORPORATE_CARD',
-                    'import_to_fyle': False,
-                    'is_custom': False
-                }
-            )
+            MappingSetting.objects.update_or_create(destination_field='CREDIT_CARD_ACCOUNT', workspace_id=instance.id, defaults={'source_field': 'CORPORATE_CARD', 'import_to_fyle': False, 'is_custom': False})
 
         if not expense_group_settings['reimbursable_expense_group_fields']:
             expense_group_settings['reimbursable_expense_group_fields'] = ['employee_email', 'report_id', 'fund_source']
@@ -194,10 +141,11 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
 
         expense_group_settings['import_card_credits'] = False
 
-        if workspace_general_settings.get('corporate_credit_card_expenses_object') == 'JOURNAL ENTRY' or \
-            (map_merchant_to_vendor and \
-                workspace_general_settings['corporate_credit_card_expenses_object'] == 'CREDIT CARD PURCHASE') or\
-            (workspace_general_settings.get('reimbursable_expenses_object') in ('JOURNAL ENTRY', 'EXPENSE')):
+        if (
+            workspace_general_settings.get('corporate_credit_card_expenses_object') == 'JOURNAL ENTRY'
+            or (map_merchant_to_vendor and workspace_general_settings['corporate_credit_card_expenses_object'] == 'CREDIT CARD PURCHASE')
+            or (workspace_general_settings.get('reimbursable_expenses_object') in ('JOURNAL ENTRY', 'EXPENSE'))
+        ):
             expense_group_settings['import_card_credits'] = True
 
         ExpenseGroupSettings.update_expense_group_settings(expense_group_settings, instance.id)
@@ -216,8 +164,8 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
                 'default_debit_card_account_name': general_mappings.get('default_debit_card_account').get('name'),
                 'default_debit_card_account_id': general_mappings.get('default_debit_card_account').get('id'),
                 'default_ccc_vendor_name': general_mappings.get('default_ccc_vendor').get('name'),
-                'default_ccc_vendor_id': general_mappings.get('default_ccc_vendor').get('id')
-            }
+                'default_ccc_vendor_id': general_mappings.get('default_ccc_vendor').get('id'),
+            },
         )
 
         if instance.onboarding_state == 'EXPORT_SETTINGS':

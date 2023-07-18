@@ -6,9 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('workspaces', '0028_workspacegeneralsettings_import_vendors_as_merchants'),
-    ]
+    dependencies = [('workspaces', '0028_workspacegeneralsettings_import_vendors_as_merchants')]
 
     operations = [
         migrations.CreateModel(
@@ -24,8 +22,6 @@ class Migration(migrations.Migration):
                 ('updated_at', models.DateTimeField(auto_now=True, help_text='Updated at datetime')),
                 ('workspace', models.OneToOneField(help_text='Reference to Workspace model', on_delete=django.db.models.deletion.PROTECT, to='workspaces.workspace')),
             ],
-            options={
-                'db_table': 'last_export_details',
-            },
-        ),
+            options={'db_table': 'last_export_details'},
+        )
     ]

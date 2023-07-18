@@ -10,6 +10,7 @@ class GeneralMapping(models.Model):
     """
     General Mappings
     """
+
     id = models.AutoField(primary_key=True)
     accounts_payable_name = models.CharField(max_length=255, help_text='Accounts payable bank account name', null=True)
     accounts_payable_id = models.CharField(max_length=40, help_text='QBO accounts payable bank account id', null=True)

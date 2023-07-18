@@ -1,14 +1,15 @@
-import pytest
 from datetime import datetime, timezone
+
+import pytest
 from fyle_rest_auth.models import User
+
 
 @pytest.mark.django_db
 def test_user_creation():
     '''
     Test Post of User Profile
     '''
-    user = User(password='', last_login=datetime.now(tz=timezone.utc), email='labhvam.s@fyle.in',
-                         user_id='usqywo0f3nLY', full_name='', active='t', staff='f', admin='t')
+    user = User(password='', last_login=datetime.now(tz=timezone.utc), email='labhvam.s@fyle.in', user_id='usqywo0f3nLY', full_name='', active='t', staff='f', admin='t')
 
     user.save()
 

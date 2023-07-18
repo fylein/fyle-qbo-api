@@ -7,14 +7,12 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('workspaces', '0018_workspacegeneralsettings_charts_of_accounts'),
-    ]
+    dependencies = [('workspaces', '0018_workspacegeneralsettings_charts_of_accounts')]
 
     operations = [
         migrations.AddField(
             model_name='workspacegeneralsettings',
             name='memo_structure',
             field=django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=100), default=apps.workspaces.models.get_default_memo_fields, help_text='list of system fields for creating custom memo', size=None),
-        ),
+        )
     ]

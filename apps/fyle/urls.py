@@ -40,5 +40,5 @@ urlpatterns = [
     path('expense_filters/<int:pk>/', ExpenseFilterDeleteView.as_view(), name='expense-filters'),
     path('expense_filters/', ExpenseFilterView.as_view(), name='expense-filters'),
     path('expenses/', ExpenseView.as_view(), name='expenses'),
-    path('custom_fields/', CustomFieldView.as_view(), name='custom-field')
+    path('custom_fields/', CustomFieldView.as_view(), name='custom-field'),
 ]

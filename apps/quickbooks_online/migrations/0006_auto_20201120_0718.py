@@ -5,29 +5,11 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('quickbooks_online', '0005_auto_20201119_0947'),
-    ]
+    dependencies = [('quickbooks_online', '0005_auto_20201119_0947')]
 
     operations = [
-        migrations.AlterField(
-            model_name='billlineitem',
-            name='description',
-            field=models.TextField(help_text='QBO bill lineitem description', null=True),
-        ),
-        migrations.AlterField(
-            model_name='chequelineitem',
-            name='description',
-            field=models.TextField(help_text='QBO cheque lineitem description', null=True),
-        ),
-        migrations.AlterField(
-            model_name='creditcardpurchaselineitem',
-            name='description',
-            field=models.TextField(help_text='QBO credit card purchase lineitem description', null=True),
-        ),
-        migrations.AlterField(
-            model_name='journalentrylineitem',
-            name='description',
-            field=models.TextField(help_text='QBO JournalEntry lineitem description', null=True),
-        ),
+        migrations.AlterField(model_name='billlineitem', name='description', field=models.TextField(help_text='QBO bill lineitem description', null=True)),
+        migrations.AlterField(model_name='chequelineitem', name='description', field=models.TextField(help_text='QBO cheque lineitem description', null=True)),
+        migrations.AlterField(model_name='creditcardpurchaselineitem', name='description', field=models.TextField(help_text='QBO credit card purchase lineitem description', null=True)),
+        migrations.AlterField(model_name='journalentrylineitem', name='description', field=models.TextField(help_text='QBO JournalEntry lineitem description', null=True)),
     ]

@@ -12,7 +12,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from unicodedata import name
+
 from django.urls import path
 
 from apps.quickbooks_online.views import (
@@ -34,5 +34,5 @@ urlpatterns = [
     path('refresh_dimensions/', RefreshQuickbooksDimensionView.as_view()),
     path('destination_attributes/', DestinationAttributesView.as_view(), name='destination-attributes'),
     path('mapping_options/', SearchedDestinationAttributesView.as_view(), name='searching-destination-attributes'),
-    path('qbo_attributes/', QBOAttributesView.as_view(), name='qbo-attributes')
+    path('qbo_attributes/', QBOAttributesView.as_view(), name='qbo-attributes'),
 ]
