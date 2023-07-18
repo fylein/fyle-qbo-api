@@ -128,3 +128,25 @@ Django Rest Framework API for Fyle Quickbooks Online Integration
     ```
     docker-compose -f docker-compose-pipeline.yml exec api /bin/bash tests/sql_fixtures/migration_fixtures/create_migration.sh
     ```
+
+### Working with pre commit hooks ###
+* Run below command to install pre commit, if it is not already installed.
+pre commit version must be at least 3.3.1.
+```shell
+brew install pre-commit
+```
+* To set up pre commit hook in your local development environment run below command.
+This step may take a little longer to complete.
+Once done pre commit hooks will automatically run on changed files when you do `git commit`.
+```shell
+pre-commit install --install-hooks
+```
+* To run pre commit hooks on all files run below command
+```shell
+pre-commit run --all-files
+```
+
+* To skip pre commit hooks in case of emergency
+```shell
+git commit --no-verify -m "Commit_message"
+```
