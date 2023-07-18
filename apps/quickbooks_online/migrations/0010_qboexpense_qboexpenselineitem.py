@@ -6,10 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('fyle', '0015_expense_org_id'),
-        ('quickbooks_online', '0009_remove_billpaymentlineitem_expense'),
-    ]
+    dependencies = [('fyle', '0015_expense_org_id'), ('quickbooks_online', '0009_remove_billpaymentlineitem_expense')]
 
     operations = [
         migrations.CreateModel(
@@ -26,9 +23,7 @@ class Migration(migrations.Migration):
                 ('updated_at', models.DateTimeField(auto_now=True, help_text='Updated at')),
                 ('expense_group', models.OneToOneField(help_text='Expense group reference', on_delete=django.db.models.deletion.PROTECT, to='fyle.ExpenseGroup')),
             ],
-            options={
-                'db_table': 'qbo_expenses',
-            },
+            options={'db_table': 'qbo_expenses'},
         ),
         migrations.CreateModel(
             name='QBOExpenseLineitem',
@@ -45,8 +40,6 @@ class Migration(migrations.Migration):
                 ('expense', models.OneToOneField(help_text='Reference to Fyle Expense', on_delete=django.db.models.deletion.PROTECT, to='fyle.Expense')),
                 ('qbo_expense', models.ForeignKey(help_text='Reference to QBO Expense', on_delete=django.db.models.deletion.PROTECT, to='quickbooks_online.QBOExpense')),
             ],
-            options={
-                'db_table': 'qbo_expense_lineitems',
-            },
+            options={'db_table': 'qbo_expense_lineitems'},
         ),
     ]

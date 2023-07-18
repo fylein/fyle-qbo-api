@@ -5,31 +5,13 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('mappings', '0006_auto_20210504_1913'),
-    ]
+    dependencies = [('mappings', '0006_auto_20210504_1913')]
 
     operations = [
-        migrations.AlterUniqueTogether(
-            name='costcentermapping',
-            unique_together=None,
-        ),
-        migrations.RemoveField(
-            model_name='costcentermapping',
-            name='workspace',
-        ),
-        migrations.AlterUniqueTogether(
-            name='projectmapping',
-            unique_together=None,
-        ),
-        migrations.RemoveField(
-            model_name='projectmapping',
-            name='workspace',
-        ),
-        migrations.DeleteModel(
-            name='CostCenterMapping',
-        ),
-        migrations.DeleteModel(
-            name='ProjectMapping',
-        ),
+        migrations.AlterUniqueTogether(name='costcentermapping', unique_together=None),
+        migrations.RemoveField(model_name='costcentermapping', name='workspace'),
+        migrations.AlterUniqueTogether(name='projectmapping', unique_together=None),
+        migrations.RemoveField(model_name='projectmapping', name='workspace'),
+        migrations.DeleteModel(name='CostCenterMapping'),
+        migrations.DeleteModel(name='ProjectMapping'),
     ]

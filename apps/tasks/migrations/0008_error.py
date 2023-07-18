@@ -6,12 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('fyle_accounting_mappings', '0014_mappingsetting_source_placeholder'),
-        ('fyle', '0025_auto_20220330_1128'),
-        ('workspaces', '0027_workspace_onboarding_state'),
-        ('tasks', '0007_auto_20211206_0851'),
-    ]
+    dependencies = [('fyle_accounting_mappings', '0014_mappingsetting_source_placeholder'), ('fyle', '0025_auto_20220330_1128'), ('workspaces', '0027_workspace_onboarding_state'), ('tasks', '0007_auto_20211206_0851')]
 
     operations = [
         migrations.CreateModel(
@@ -28,8 +23,6 @@ class Migration(migrations.Migration):
                 ('expense_group', models.ForeignKey(help_text='Reference to Expense group', null=True, on_delete=django.db.models.deletion.PROTECT, to='fyle.expensegroup')),
                 ('workspace', models.ForeignKey(help_text='Reference to Workspace model', on_delete=django.db.models.deletion.PROTECT, to='workspaces.workspace')),
             ],
-            options={
-                'db_table': 'errors',
-            },
-        ),
+            options={'db_table': 'errors'},
+        )
     ]

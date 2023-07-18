@@ -7,29 +7,11 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('workspaces', '0032_auto_20220602_1157'),
-    ]
+    dependencies = [('workspaces', '0032_auto_20220602_1157')]
 
     operations = [
-        migrations.AddField(
-            model_name='workspaceschedule',
-            name='additional_email_options',
-            field=models.JSONField(default=list, help_text='Email and Name of person to send email', null=True),
-        ),
-        migrations.AddField(
-            model_name='workspaceschedule',
-            name='emails_selected',
-            field=django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=255), help_text='Emails that has to be send mail', null=True, size=None),
-        ),
-        migrations.AddField(
-            model_name='workspaceschedule',
-            name='error_count',
-            field=models.IntegerField(help_text='Number of errors in export', null=True),
-        ),
-        migrations.AlterField(
-            model_name='workspaceschedule',
-            name='workspace',
-            field=models.OneToOneField(help_text='Reference to Workspace model', on_delete=django.db.models.deletion.PROTECT, to='workspaces.workspace'),
-        ),
+        migrations.AddField(model_name='workspaceschedule', name='additional_email_options', field=models.JSONField(default=list, help_text='Email and Name of person to send email', null=True)),
+        migrations.AddField(model_name='workspaceschedule', name='emails_selected', field=django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=255), help_text='Emails that has to be send mail', null=True, size=None)),
+        migrations.AddField(model_name='workspaceschedule', name='error_count', field=models.IntegerField(help_text='Number of errors in export', null=True)),
+        migrations.AlterField(model_name='workspaceschedule', name='workspace', field=models.OneToOneField(help_text='Reference to Workspace model', on_delete=django.db.models.deletion.PROTECT, to='workspaces.workspace')),
     ]

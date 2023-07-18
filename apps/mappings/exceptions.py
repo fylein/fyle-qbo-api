@@ -1,11 +1,11 @@
 import logging
 import traceback
-import requests
 
-from qbosdk.exceptions import WrongParamsError as QBOWrongParamsError, InvalidTokenError as QBOInvalidTokenError
-from fyle.platform.exceptions import WrongParamsError, InvalidTokenError, InternalServerError
+from fyle.platform.exceptions import InternalServerError, InvalidTokenError, WrongParamsError
+from qbosdk.exceptions import InvalidTokenError as QBOInvalidTokenError
+from qbosdk.exceptions import WrongParamsError as QBOWrongParamsError
+
 from apps.workspaces.models import QBOCredential
-
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -14,13 +14,7 @@ logger.level = logging.INFO
 def handle_import_exceptions(task_name):
     def decorator(func):
         def new_fn(workspace_id: int, *args):
-            error = {
-                'task': task_name,
-                'workspace_id': workspace_id,
-                'alert': False,
-                'message': None,
-                'response': None
-            }
+            error = {'task': task_name, 'workspace_id': workspace_id, 'alert': False, 'message': None, 'response': None}
             try:
                 return func(workspace_id, *args)
             except InvalidTokenError:

@@ -1,15 +1,7 @@
-from pkg_resources import working_set
-import pytest
-import json
-from django.urls import reverse
-
 from apps.mappings.models import GeneralMapping
 from apps.workspaces.models import WorkspaceGeneralSettings
-from apps.workspaces.models import Workspace
-from .fixtures import data
 
 
-    
 def test_auto_map_employee(api_client, test_connection):
 
     url = '/api/workspaces/3/mappings/auto_map_employees/trigger/'
@@ -35,4 +27,3 @@ def test_auto_map_employee(api_client, test_connection):
 
     response = api_client.post(url)
     assert response.status_code == 400
-    

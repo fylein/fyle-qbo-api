@@ -5,21 +5,10 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('mappings', '0003_auto_20200930_0738'),
-    ]
+    dependencies = [('mappings', '0003_auto_20200930_0738')]
 
     operations = [
-        migrations.AlterModelTable(
-            name='costcentermapping',
-            table='cost_center_mappings',
-        ),
-        migrations.AlterModelTable(
-            name='generalmapping',
-            table='general_mappings',
-        ),
-        migrations.AlterModelTable(
-            name='projectmapping',
-            table='project_mappings',
-        ),
+        migrations.AlterModelTable(name='costcentermapping', table='cost_center_mappings'),
+        migrations.AlterModelTable(name='generalmapping', table='general_mappings'),
+        migrations.AlterModelTable(name='projectmapping', table='project_mappings'),
     ]

@@ -1,31 +1,23 @@
 from datetime import datetime, timezone
-from django_q.tasks import Chain
+
 from django.db.models import Q
+from django_q.tasks import Chain
+from fyle_accounting_mappings.models import MappingSetting
+from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 from rest_framework.response import Response
 from rest_framework.views import status
 
-
-from qbosdk.exceptions import WrongParamsError, InvalidTokenError
-from fyle_accounting_mappings.models import MappingSetting
-
-from apps.workspaces.models import QBOCredential, Workspace, LastExportDetail
+from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import TaskLog
+from apps.workspaces.models import LastExportDetail, QBOCredential, Workspace
 
-from .utils import QBOConnector
 
 def update_last_export_details(workspace_id):
     last_export_detail = LastExportDetail.objects.get(workspace_id=workspace_id)
 
-    failed_exports = TaskLog.objects.filter(
-        ~Q(type='CREATING_BILL_PAYMENT'), workspace_id=workspace_id, status__in=['FAILED', 'FATAL']
-    ).count()
+    failed_exports = TaskLog.objects.filter(~Q(type='CREATING_BILL_PAYMENT'), workspace_id=workspace_id, status__in=['FAILED', 'FATAL']).count()
 
-    successful_exports = TaskLog.objects.filter(
-        ~Q(type__in=['CREATING_BILL_PAYMENT', 'FETCHING_EXPENSES']),
-        workspace_id=workspace_id,
-        status='COMPLETE',
-        updated_at__gt=last_export_detail.last_exported_at
-    ).count()
+    successful_exports = TaskLog.objects.filter(~Q(type__in=['CREATING_BILL_PAYMENT', 'FETCHING_EXPENSES']), workspace_id=workspace_id, status='COMPLETE', updated_at__gt=last_export_detail.last_exported_at).count()
 
     last_export_detail.failed_expense_groups_count = failed_exports
     last_export_detail.successful_expense_groups_count = successful_exports
@@ -43,28 +35,15 @@ def get_preferences(workspace_id: int):
 
         preferences = qbo_connector.get_company_preference()
 
-        return Response(
-            data=preferences,
-            status=status.HTTP_200_OK
-        )
+        return Response(data=preferences, status=status.HTTP_200_OK)
     except QBOCredential.DoesNotExist:
-        return Response(
-            data={
-                'message': 'QBO credentials not found in workspace'
-            },
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        return Response(data={'message': 'QBO credentials not found in workspace'}, status=status.HTTP_400_BAD_REQUEST)
     except (WrongParamsError, InvalidTokenError):
         if qbo_credentials:
             qbo_credentials.refresh_token = None
             qbo_credentials.is_expired = True
             qbo_credentials.save()
-        return Response(
-            data={
-                'message': 'Invalid token or Quickbooks Online connection expired'
-            },
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        return Response(data={'message': 'Invalid token or Quickbooks Online connection expired'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 def refresh_quickbooks_dimensions(workspace_id: int):
@@ -80,8 +59,7 @@ def refresh_quickbooks_dimensions(workspace_id: int):
         elif mapping_setting.source_field == 'COST_CENTER':
             chain.append('apps.mappings.tasks.auto_create_cost_center_mappings', int(workspace_id))
         elif mapping_setting.is_custom:
-            chain.append('apps.mappings.tasks.async_auto_create_custom_field_mappings',
-                        int(workspace_id))
+            chain.append('apps.mappings.tasks.async_auto_create_custom_field_mappings', int(workspace_id))
 
     if chain.length() > 0:
         chain.run()

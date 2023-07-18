@@ -5,49 +5,15 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('quickbooks_online', '0002_cheque_chequelineitem_creditcardpurchase_creditcardpurchaselineitem_journalentry_journalentrylineite'),
-    ]
+    dependencies = [('quickbooks_online', '0002_cheque_chequelineitem_creditcardpurchase_creditcardpurchaselineitem_journalentry_journalentrylineite')]
 
     operations = [
-        migrations.AlterField(
-            model_name='bill',
-            name='bill_number',
-            field=models.CharField(max_length=255, unique=True),
-        ),
-        migrations.AlterField(
-            model_name='bill',
-            name='currency',
-            field=models.CharField(help_text='Bill Currency', max_length=255),
-        ),
-        migrations.AlterField(
-            model_name='cheque',
-            name='cheque_number',
-            field=models.CharField(max_length=255, unique=True),
-        ),
-        migrations.AlterField(
-            model_name='cheque',
-            name='currency',
-            field=models.CharField(help_text='Cheque Currency', max_length=255),
-        ),
-        migrations.AlterField(
-            model_name='creditcardpurchase',
-            name='credit_card_purchase_number',
-            field=models.CharField(max_length=255, unique=True),
-        ),
-        migrations.AlterField(
-            model_name='creditcardpurchase',
-            name='currency',
-            field=models.CharField(help_text='CreditCardPurchase Currency', max_length=255),
-        ),
-        migrations.AlterField(
-            model_name='journalentry',
-            name='currency',
-            field=models.CharField(help_text='JournalEntry Currency', max_length=255),
-        ),
-        migrations.AlterField(
-            model_name='journalentry',
-            name='journal_entry_number',
-            field=models.CharField(max_length=255, unique=True),
-        ),
+        migrations.AlterField(model_name='bill', name='bill_number', field=models.CharField(max_length=255, unique=True)),
+        migrations.AlterField(model_name='bill', name='currency', field=models.CharField(help_text='Bill Currency', max_length=255)),
+        migrations.AlterField(model_name='cheque', name='cheque_number', field=models.CharField(max_length=255, unique=True)),
+        migrations.AlterField(model_name='cheque', name='currency', field=models.CharField(help_text='Cheque Currency', max_length=255)),
+        migrations.AlterField(model_name='creditcardpurchase', name='credit_card_purchase_number', field=models.CharField(max_length=255, unique=True)),
+        migrations.AlterField(model_name='creditcardpurchase', name='currency', field=models.CharField(help_text='CreditCardPurchase Currency', max_length=255)),
+        migrations.AlterField(model_name='journalentry', name='currency', field=models.CharField(help_text='JournalEntry Currency', max_length=255)),
+        migrations.AlterField(model_name='journalentry', name='journal_entry_number', field=models.CharField(max_length=255, unique=True)),
     ]

@@ -6,10 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('fyle', '0002_auto_20200420_0434'),
-        ('quickbooks_online', '0001_initial'),
-    ]
+    dependencies = [('fyle', '0002_auto_20200420_0434'), ('quickbooks_online', '0001_initial')]
 
     operations = [
         migrations.CreateModel(

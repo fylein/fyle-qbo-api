@@ -5,21 +5,6 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('quickbooks_online', '0010_qboexpense_qboexpenselineitem'),
-    ]
+    dependencies = [('quickbooks_online', '0010_qboexpense_qboexpenselineitem')]
 
-    operations = [
-        migrations.RemoveField(
-            model_name='bill',
-            name='bill_number',
-        ),
-        migrations.RemoveField(
-            model_name='cheque',
-            name='cheque_number',
-        ),
-        migrations.RemoveField(
-            model_name='journalentry',
-            name='journal_entry_number',
-        ),
-    ]
+    operations = [migrations.RemoveField(model_name='bill', name='bill_number'), migrations.RemoveField(model_name='cheque', name='cheque_number'), migrations.RemoveField(model_name='journalentry', name='journal_entry_number')]

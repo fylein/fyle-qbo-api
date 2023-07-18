@@ -6,14 +6,10 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('workspaces', '0033_auto_20220714_0911'),
-    ]
+    dependencies = [('workspaces', '0033_auto_20220714_0911')]
 
     operations = [
         migrations.AlterField(
-            model_name='workspaceschedule',
-            name='workspace',
-            field=models.OneToOneField(help_text='Reference to Workspace model', on_delete=django.db.models.deletion.PROTECT, related_name='workspace_schedules', to='workspaces.workspace'),
-        ),
+            model_name='workspaceschedule', name='workspace', field=models.OneToOneField(help_text='Reference to Workspace model', on_delete=django.db.models.deletion.PROTECT, related_name='workspace_schedules', to='workspaces.workspace')
+        )
     ]

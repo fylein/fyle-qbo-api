@@ -6,14 +6,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('fyle', '0021_auto_20211210_0726'),
-    ]
+    dependencies = [('fyle', '0021_auto_20211210_0726')]
 
-    operations = [
-        migrations.AddField(
-            model_name='expense',
-            name='file_ids',
-            field=django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=255), help_text='File IDs', null=True, size=None),
-        ),
-    ]
+    operations = [migrations.AddField(model_name='expense', name='file_ids', field=django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=255), help_text='File IDs', null=True, size=None))]
