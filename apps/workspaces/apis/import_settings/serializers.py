@@ -1,14 +1,10 @@
+from django.db import transaction
+from fyle_accounting_mappings.models import MappingSetting
 from rest_framework import serializers
 
-from django.db import transaction
-
-from fyle_accounting_mappings.models import MappingSetting
-
 from apps.mappings.models import GeneralMapping
-
+from apps.workspaces.apis.import_settings.triggers import ImportSettingsTrigger
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
-
-from .triggers import ImportSettingsTrigger
 
 
 class MappingSettingFilteredListSerializer(serializers.ListSerializer):
@@ -35,22 +31,14 @@ class ReadWriteSerializerMethodField(serializers.SerializerMethodField):
         super(serializers.SerializerMethodField, self).__init__(**kwargs)
 
     def to_internal_value(self, data):
-        return {
-            self.field_name: data
-        }
+        return {self.field_name: data}
 
 
 class MappingSettingSerializer(serializers.ModelSerializer):
     class Meta:
         model = MappingSetting
         list_serializer_class = MappingSettingFilteredListSerializer
-        fields = [
-            'source_field',
-            'destination_field',
-            'import_to_fyle',
-            'is_custom',
-            'source_placeholder'
-        ]
+        fields = ['source_field', 'destination_field', 'import_to_fyle', 'is_custom', 'source_placeholder']
 
 
 class WorkspaceGeneralSettingsSerializer(serializers.ModelSerializer):
@@ -64,21 +52,17 @@ class GeneralMappingsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = GeneralMapping
-        fields = [
-            'default_tax_code'
-        ]
+        fields = ['default_tax_code']
 
     def get_default_tax_code(self, instance):
-        return {
-            'name': instance.default_tax_code_name,
-            'id': instance.default_tax_code_id
-        }
+        return {'name': instance.default_tax_code_name, 'id': instance.default_tax_code_id}
 
 
 class ImportSettingsSerializer(serializers.ModelSerializer):
     """
     Serializer for the ImportSettings Form/API
     """
+
     workspace_general_settings = WorkspaceGeneralSettingsSerializer()
     general_mappings = GeneralMappingsSerializer()
     mapping_settings = MappingSettingSerializer(many=True)
@@ -86,12 +70,7 @@ class ImportSettingsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Workspace
-        fields = [
-            'workspace_general_settings',
-            'general_mappings',
-            'mapping_settings',
-            'workspace_id'
-        ]
+        fields = ['workspace_general_settings', 'general_mappings', 'mapping_settings', 'workspace_id']
         read_only_fields = ['workspace_id']
 
     def get_workspace_id(self, instance):
@@ -109,41 +88,21 @@ class ImportSettingsSerializer(serializers.ModelSerializer):
                 'import_items': workspace_general_settings.get('import_items'),
                 'charts_of_accounts': workspace_general_settings.get('charts_of_accounts'),
                 'import_tax_codes': workspace_general_settings.get('import_tax_codes'),
-                'import_vendors_as_merchants': workspace_general_settings.get('import_vendors_as_merchants')
-            }
+                'import_vendors_as_merchants': workspace_general_settings.get('import_vendors_as_merchants'),
+            },
         )
 
-        GeneralMapping.objects.update_or_create(
-            workspace=instance,
-            defaults={
-                'default_tax_code_name': general_mappings.get('default_tax_code').get('name'),
-                'default_tax_code_id': general_mappings.get('default_tax_code').get('id')
-            }
-        )
+        GeneralMapping.objects.update_or_create(workspace=instance, defaults={'default_tax_code_name': general_mappings.get('default_tax_code').get('name'), 'default_tax_code_id': general_mappings.get('default_tax_code').get('id')})
 
-        trigger: ImportSettingsTrigger = ImportSettingsTrigger(
-            workspace_general_settings=workspace_general_settings,
-            mapping_settings=mapping_settings,
-            workspace_id=instance.id
-        )
+        trigger: ImportSettingsTrigger = ImportSettingsTrigger(workspace_general_settings=workspace_general_settings, mapping_settings=mapping_settings, workspace_id=instance.id)
 
         trigger.post_save_workspace_general_settings(workspace_general_settings_instance)
         trigger.pre_save_mapping_settings()
 
         if workspace_general_settings['import_tax_codes']:
-            mapping_settings.append({
-                'source_field': 'TAX_GROUP',
-                'destination_field': 'TAX_CODE',
-                'import_to_fyle': True,
-                'is_custom': False
-            })
-        
-        mapping_settings.append({
-            'source_field': 'CATEGORY',
-            'destination_field': 'ACCOUNT',
-            'import_to_fyle': False,
-            'is_custom': False
-        })
+            mapping_settings.append({'source_field': 'TAX_GROUP', 'destination_field': 'TAX_CODE', 'import_to_fyle': True, 'is_custom': False})
+
+        mapping_settings.append({'source_field': 'CATEGORY', 'destination_field': 'ACCOUNT', 'import_to_fyle': False, 'is_custom': False})
 
         with transaction.atomic():
             for setting in mapping_settings:
@@ -154,8 +113,8 @@ class ImportSettingsSerializer(serializers.ModelSerializer):
                         'source_field': setting['source_field'],
                         'import_to_fyle': setting['import_to_fyle'] if 'import_to_fyle' in setting else False,
                         'is_custom': setting['is_custom'] if 'is_custom' in setting else False,
-                        'source_placeholder': setting['source_placeholder'] if 'source_placeholder' in setting else None
-                    }
+                        'source_placeholder': setting['source_placeholder'] if 'source_placeholder' in setting else None,
+                    },
                 )
 
         trigger.post_save_mapping_settings(workspace_general_settings_instance)

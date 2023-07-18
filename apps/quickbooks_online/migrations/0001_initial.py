@@ -8,9 +8,7 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-        ('fyle', '0001_initial'),
-    ]
+    dependencies = [('fyle', '0001_initial')]
 
     operations = [
         migrations.CreateModel(

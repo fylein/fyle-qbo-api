@@ -10,11 +10,7 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-        ('quickbooks_online', '0001_initial'),
-        ('workspaces', '0001_initial'),
-        ('fyle', '0001_initial'),
-    ]
+    dependencies = [('quickbooks_online', '0001_initial'), ('workspaces', '0001_initial'), ('fyle', '0001_initial')]
 
     operations = [
         migrations.CreateModel(
@@ -31,5 +27,5 @@ class Migration(migrations.Migration):
                 ('expense_group', models.ForeignKey(help_text='Reference to Expense group', null=True, on_delete=django.db.models.deletion.PROTECT, to='fyle.ExpenseGroup')),
                 ('workspace', models.ForeignKey(help_text='Reference to Workspace model', on_delete=django.db.models.deletion.PROTECT, to='workspaces.Workspace')),
             ],
-        ),
+        )
     ]

@@ -6,9 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('workspaces', '0001_initial'),
-    ]
+    dependencies = [('workspaces', '0001_initial')]
 
     operations = [
         migrations.CreateModel(
@@ -22,5 +20,5 @@ class Migration(migrations.Migration):
                 ('updated_at', models.DateTimeField(auto_now=True, help_text='Updated at')),
                 ('workspace', models.OneToOneField(help_text='Reference to Workspace model', on_delete=django.db.models.deletion.PROTECT, to='workspaces.Workspace')),
             ],
-        ),
+        )
     ]

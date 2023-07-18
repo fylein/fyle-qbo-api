@@ -1,20 +1,18 @@
-from fyle_qbo_api.tests import settings
-import pytest
 import json
-from django.urls import reverse
 from unittest import mock
-from tests.helper import dict_compare_keys
-from fyle.platform import exceptions as fyle_exc
+
+from django.urls import reverse
 from qbosdk import exceptions as qbo_exc
-from apps.workspaces.models import *
-from .fixtures import data
+
+from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSettings
+from fyle_qbo_api.tests import settings
+from tests.helper import dict_compare_keys
+from tests.test_workspaces.fixtures import data
 
 
 def test_get_workspace(api_client, test_connection):
 
-    url = reverse(
-        'workspace'
-    )
+    url = reverse('workspace')
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
     response = api_client.get(url)
@@ -27,11 +25,7 @@ def test_get_workspace(api_client, test_connection):
 
 def test_patch_of_workspace(api_client, test_connection):
 
-    url = reverse(
-        'workspace-by-id', kwargs={
-            'workspace_id': 3
-        }
-    )
+    url = reverse('workspace-by-id', kwargs={'workspace_id': 3})
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
     response = api_client.patch(url)
@@ -42,13 +36,8 @@ def test_patch_of_workspace(api_client, test_connection):
 
 
 def test_post_of_workspace(mocker, api_client, test_connection):
-    mocker.patch(
-        'apps.workspaces.actions.get_fyle_admin',
-        return_value={'data': {'org': {'name': 'Test Trip', 'id': 'orZu2yrz7zdy', 'currency': 'USD'}}}
-    )
-    url = reverse(
-        'workspace'
-    )
+    mocker.patch('apps.workspaces.actions.get_fyle_admin', return_value={'data': {'org': {'name': 'Test Trip', 'id': 'orZu2yrz7zdy', 'currency': 'USD'}}})
+    url = reverse('workspace')
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
     response = api_client.post(url)
@@ -56,7 +45,7 @@ def test_post_of_workspace(mocker, api_client, test_connection):
 
     response = json.loads(response.content)
     assert dict_compare_keys(response, data['workspace']) == [], 'workspaces api returns a diff in the keys'
-    
+
     workspace = Workspace.objects.filter(fyle_org_id='or79Cob97KSh').first()
     workspace.fyle_org_id = 'asdfghj'
     workspace.save()
@@ -66,13 +55,8 @@ def test_post_of_workspace(mocker, api_client, test_connection):
 
 
 def test_post_of_new_workspace(mocker, api_client, test_connection):
-    mocker.patch(
-        'apps.workspaces.actions.get_fyle_admin',
-        return_value={'data': {'org': {'name': 'Test Trip', 'id': 'orZu2y7zdy', 'currency': 'USD'}}}
-    )
-    url = reverse(
-        'workspace'
-    )
+    mocker.patch('apps.workspaces.actions.get_fyle_admin', return_value={'data': {'org': {'name': 'Test Trip', 'id': 'orZu2y7zdy', 'currency': 'USD'}}})
+    url = reverse('workspace')
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
     response = api_client.post(url)
@@ -91,7 +75,7 @@ def test_get_configuration_detail(db, api_client, test_connection):
     response = json.loads(response.content)
     assert dict_compare_keys(response, data['general_settings']) == [], 'configuration api returns a diff in keys'
 
-    workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first() 
+    workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
     workspace_general_settings.delete()
 
     response = api_client.get(url)
@@ -110,24 +94,9 @@ def test_ready_view(api_client, test_connection):
 
 
 def test_post_connect_qbo_view(mocker, api_client, test_connection):
-    mocker.patch(
-        'apps.workspaces.views.generate_qbo_refresh_token',
-        return_value='asdfghjk'
-    )
-    mocker.patch(
-        'qbosdk.apis.CompanyInfo.get',
-        return_value=data['company_info']
-    )
-    mocker.patch(
-        'apps.quickbooks_online.utils.QBOConnector.get_company_preference',
-        return_value={
-            'CurrencyPrefs': {
-                'HomeCurrency': {
-                    'value': 'USD'
-                }
-            }
-        }
-    )
+    mocker.patch('apps.workspaces.views.generate_qbo_refresh_token', return_value='asdfghjk')
+    mocker.patch('qbosdk.apis.CompanyInfo.get', return_value=data['company_info'])
+    mocker.patch('apps.quickbooks_online.utils.QBOConnector.get_company_preference', return_value={'CurrencyPrefs': {'HomeCurrency': {'value': 'USD'}}})
 
     code = 'sdfg'
     url = '/api/workspaces/5/connect_qbo/authorization_code/'
@@ -140,24 +109,13 @@ def test_post_connect_qbo_view(mocker, api_client, test_connection):
     workspace.onboarding_state = 'CONNECTION'
     workspace.save()
 
-    response = api_client.post(
-        url,
-        data={
-            'code': code,
-            'realm_id': '123146326950399',
-        }    
-    )
+    response = api_client.post(url, data={'code': code, 'realm_id': '123146326950399'})
 
     assert response.status_code == 200
 
-    response = api_client.post(
-        url,
-        data={
-            'code': code,
-            'realm_id': '12248888999009'
-        }
-    )
+    response = api_client.post(url, data={'code': code, 'realm_id': '12248888999009'})
     assert response.status_code == 400
+
 
 def test_patch_connect_qbo_view(mocker, api_client, test_connection):
     url = '/api/workspaces/5/connect_qbo/authorization_code/'
@@ -172,84 +130,53 @@ def test_patch_connect_qbo_view(mocker, api_client, test_connection):
 
 def test_connect_qbo_view_exceptions(api_client, test_connection):
     workspace_id = 1
-    
+
     code = 'qwertyu'
     url = '/api/workspaces/{}/connect_qbo/authorization_code/'.format(workspace_id)
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
-    
+
     with mock.patch('apps.workspaces.views.generate_qbo_refresh_token') as mock_call:
         mock_call.side_effect = qbo_exc.UnauthorizedClientError(msg='Invalid Authorization Code', response='Invalid Authorization Code')
-        
-        response = api_client.post(
-            url,
-            data={'code': code}    
-        )
+
+        response = api_client.post(url, data={'code': code})
         assert response.status_code == 401
 
         mock_call.side_effect = qbo_exc.NotFoundClientError(msg='Fyle Application not found', response='Fyle Application not found')
-        
-        response = api_client.post(
-            url,
-            data={'code': code}    
-        )
+
+        response = api_client.post(url, data={'code': code})
         assert response.status_code == 401
 
         mock_call.side_effect = qbo_exc.WrongParamsError(msg='Some of the parameters are wrong', response='Some of the parameters are wrong')
-        
-        response = api_client.post(
-            url,
-            data={'code': code}    
-        )
+
+        response = api_client.post(url, data={'code': code})
         assert response.status_code == 401
 
         mock_call.side_effect = qbo_exc.InternalServerError(msg='Wrong/Expired Authorization code', response='Wrong/Expired Authorization code')
-        
-        response = api_client.post(
-            url,
-            data={'code': code}    
-        )
+
+        response = api_client.post(url, data={'code': code})
         assert response.status_code == 401
 
 
 @mock.patch('apps.workspaces.views.connection')
 def test_prepare_e2e_test_view(mock_db, mocker, api_client, test_connection):
-    url = reverse(
-        'setup-e2e-test', kwargs={
-            'workspace_id': 3
-        }
-    )
+    url = reverse('setup-e2e-test', kwargs={'workspace_id': 3})
 
     api_client.credentials(HTTP_X_E2E_Tests_Client_ID='dummy_id')
     response = api_client.post(url)
     assert response.status_code == 403
 
-    mocker.patch(
-        'cryptography.fernet.Fernet.decrypt',
-        return_value=settings.E2E_TESTS_CLIENT_SECRET.encode('utf-8')
-    )
-   
-    mocker.patch(
-        'apps.quickbooks_online.utils.QBOConnector.sync_dimensions',
-        return_value=None
-    )
-    mocker.patch(
-        'fyle_integrations_platform_connector.fyle_integrations_platform_connector.PlatformConnector.import_fyle_dimensions',
-        return_value=[]
-    )
-    mocker.patch(
-        'apps.workspaces.models.QBOCredential.objects.create',
-        return_value=None
-    )
+    mocker.patch('cryptography.fernet.Fernet.decrypt', return_value=settings.E2E_TESTS_CLIENT_SECRET.encode('utf-8'))
+
+    mocker.patch('apps.quickbooks_online.utils.QBOConnector.sync_dimensions', return_value=None)
+    mocker.patch('fyle_integrations_platform_connector.fyle_integrations_platform_connector.PlatformConnector.import_fyle_dimensions', return_value=[])
+    mocker.patch('apps.workspaces.models.QBOCredential.objects.create', return_value=None)
 
     api_client.credentials(HTTP_X_E2E_Tests_Client_ID='dummy_id')
     response = api_client.post(url)
     assert response.status_code == 400
 
-    mocker.patch(
-        'apps.quickbooks_online.utils.QBOConnector.get_company_preference',
-        return_value=None
-    )
+    mocker.patch('apps.quickbooks_online.utils.QBOConnector.get_company_preference', return_value=None)
     healthy_token = QBOCredential.objects.get(workspace_id=3)
     healthy_token.is_expired = False
     healthy_token.save()
@@ -258,21 +185,14 @@ def test_prepare_e2e_test_view(mock_db, mocker, api_client, test_connection):
     response = api_client.post(url)
     assert response.status_code == 200
 
-    url = reverse(
-        'setup-e2e-test', kwargs={
-            'workspace_id': 6
-        }
-    )
+    url = reverse('setup-e2e-test', kwargs={'workspace_id': 6})
     api_client.credentials(HTTP_X_E2E_Tests_Client_ID='gAAAAABi8oWVoonxF0K_g2TQnFdlpOJvGsBYa9rPtwfgM-puStki_qYbi0PdipWHqIBIMip94MDoaTP4MXOfERDeEGrbARCxPw==')
     response = api_client.post(url)
     assert response.status_code == 400
 
 
 def test_export_to_qbo(mocker, api_client, test_connection):
-    mocker.patch(
-        'apps.workspaces.views.export_to_qbo',
-        return_value=None
-    )
+    mocker.patch('apps.workspaces.views.export_to_qbo', return_value=None)
 
     workspace_id = 3
     url = '/api/workspaces/{}/exports/trigger/'.format(workspace_id)

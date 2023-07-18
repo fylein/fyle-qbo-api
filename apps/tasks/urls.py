@@ -15,8 +15,6 @@ Including another URLconf
 """
 from django.urls import path
 
-from .views import TasksView
+from apps.tasks.views import TasksView
 
-urlpatterns = [
-    path('all/', TasksView.as_view())
-]
+urlpatterns = [path('all/', TasksView.as_view())]

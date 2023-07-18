@@ -6,14 +6,18 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('fyle', '0026_expense_payment_number'),
-    ]
+    dependencies = [('fyle', '0026_expense_payment_number')]
 
     operations = [
         migrations.AddField(
             model_name='expensegroupsettings',
             name='ccc_expense_state',
-            field=models.CharField(choices=[('APPROVED', 'APPROVED'), ('PAID', 'PAID'), ('PAYMENT_PROCESSING', 'PAYMENT_PROCESSING')], default=apps.fyle.models.get_default_ccc_expense_state, help_text='state at which the ccc expenses are fetched (APPROVED/PAID)', max_length=100, null=True),
-        ),
+            field=models.CharField(
+                choices=[('APPROVED', 'APPROVED'), ('PAID', 'PAID'), ('PAYMENT_PROCESSING', 'PAYMENT_PROCESSING')],
+                default=apps.fyle.models.get_default_ccc_expense_state,
+                help_text='state at which the ccc expenses are fetched (APPROVED/PAID)',
+                max_length=100,
+                null=True,
+            ),
+        )
     ]

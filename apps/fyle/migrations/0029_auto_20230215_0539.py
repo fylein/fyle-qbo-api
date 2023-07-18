@@ -7,22 +7,11 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('workspaces', '0037_auto_20230125_0735'),
-        ('fyle', '0028_auto_20230112_1050'),
-    ]
+    dependencies = [('workspaces', '0037_auto_20230125_0735'), ('fyle', '0028_auto_20230112_1050')]
 
     operations = [
-        migrations.AddField(
-            model_name='expense',
-            name='is_skipped',
-            field=models.BooleanField(default=False, help_text='Expense is skipped or not', null=True),
-        ),
-        migrations.AddField(
-            model_name='expense',
-            name='report_title',
-            field=models.TextField(blank=True, help_text='Report title', null=True),
-        ),
+        migrations.AddField(model_name='expense', name='is_skipped', field=models.BooleanField(default=False, help_text='Expense is skipped or not', null=True)),
+        migrations.AddField(model_name='expense', name='report_title', field=models.TextField(blank=True, help_text='Report title', null=True)),
         migrations.CreateModel(
             name='ExpenseFilter',
             fields=[
@@ -38,8 +27,6 @@ class Migration(migrations.Migration):
                 ('updated_at', models.DateTimeField(auto_now=True, help_text='Updated at')),
                 ('workspace', models.ForeignKey(help_text='To which workspace these filters belongs to', on_delete=django.db.models.deletion.PROTECT, to='workspaces.workspace')),
             ],
-            options={
-                'db_table': 'expense_filters',
-            },
+            options={'db_table': 'expense_filters'},
         ),
     ]

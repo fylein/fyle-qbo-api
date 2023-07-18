@@ -1,8 +1,7 @@
 from rest_framework import generics
 
+from apps.workspaces.apis.advanced_configurations.serializers import AdvancedConfigurationsSerializer
 from apps.workspaces.models import Workspace
-
-from .serializers import AdvancedConfigurationsSerializer
 
 
 class AdvancedConfigurationsView(generics.RetrieveUpdateAPIView):

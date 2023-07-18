@@ -5,14 +5,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('fyle', '0011_expensegroup_exported_at'),
-    ]
+    dependencies = [('fyle', '0011_expensegroup_exported_at')]
 
-    operations = [
-        migrations.AddField(
-            model_name='expense',
-            name='billable',
-            field=models.BooleanField(help_text='Expense Billable or not', null=True),
-        ),
-    ]
+    operations = [migrations.AddField(model_name='expense', name='billable', field=models.BooleanField(help_text='Expense Billable or not', null=True))]
