@@ -41,10 +41,9 @@ class CloneSettingsSerializer(serializers.ModelSerializer):
 
     def get_advanced_configurations(self, instance):
         return AdvancedConfigurationsSerializer(instance).data
-    
+
     def get_employee_mappings(self, instance):
         return MapEmployeesSerializer(instance).data
-
 
     def update(self, instance, validated):
         export_settings = validated.pop('export_settings')
@@ -63,19 +62,16 @@ class CloneSettingsSerializer(serializers.ModelSerializer):
         advanced_configurations_serializer = AdvancedConfigurationsSerializer(
             instance, data=advanced_configurations, partial=True
         )
-        
+
         employee_mapping_serializer = MapEmployeesSerializer(
             instance, data=employee_mapping, partial=True
         )
-
 
         if export_settings_serializer.is_valid(raise_exception=True) and \
             import_settings_serializer.is_valid(raise_exception=True) and \
                 advanced_configurations_serializer.is_valid(raise_exception=True) and \
                     employee_mapping_serializer.is_valid(raise_exception=True):
 
-            # Doing all these in a transaction block to make sure we revert
-            # to old state when one of the serializer fails
             with transaction.atomic():
                 export_settings_serializer.save()
                 import_settings_serializer.save()

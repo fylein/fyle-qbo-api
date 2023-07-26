@@ -103,7 +103,6 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
         if workspace_general_settings_instance:
             map_merchant_to_vendor = workspace_general_settings_instance.map_merchant_to_vendor
 
-
         enable_cards_mapping = False
         if workspace_general_settings.get('corporate_credit_card_expenses_object') and (workspace_general_settings.get('corporate_credit_card_expenses_object') not in ('BILL', 'DEBIT CARD EXPENSE')):
             enable_cards_mapping = True
