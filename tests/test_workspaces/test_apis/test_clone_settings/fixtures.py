@@ -139,7 +139,7 @@ data = {
         "export_settings": {
             "workspace_general_settings": {
                 "reimbursable_expenses_object": "EXPENSE",
-                "corporate_credit_card_expenses_object": "CREDIT CARD PURCHASE",
+                "corporate_credit_card_expenses_object": None,
                 "is_simplify_report_closure_enabled": True
             },
             "expense_group_settings": {
@@ -147,18 +147,20 @@ data = {
                     "fund_source",
                     "claim_number",
                     "employee_email",
-                    "report_id"
+                    "report_id",
+                    "test_placeholder"
                 ],
                 "corporate_credit_card_expense_group_fields": [
                     "fund_source",
-                    "expense_id",
-                    "spent_at",
-                    "employee_email"
+                    "claim_number",
+                    "employee_email",
+                    "report_id",
+                    "test_placeholder"
                 ],
                 "expense_state": "PAYMENT_PROCESSING",
-                "ccc_expense_state": "APPROVED",
+                "ccc_expense_state": None,
                 "reimbursable_export_date_type": "current_date",
-                "ccc_export_date_type": "spent_at"
+                "ccc_export_date_type": "current_date"
             },
             "general_mappings": {
                 "accounts_payable": {
@@ -174,8 +176,8 @@ data = {
                     "id": None
                 },
                 "default_ccc_account": {
-                    "name": "Mastercard",
-                    "id": "41"
+                    "name": None,
+                    "id": None
                 },
                 "default_debit_card_account": {
                     "name": None,
@@ -190,15 +192,13 @@ data = {
         },
         "import_settings": {
             "workspace_general_settings": {
-                "import_categories": True,
+                "import_categories": False,
                 "import_items": False,
                 "charts_of_accounts": [
-                    "Expense",
-                    "Other Expense",
-                    "Fixed Asset"
+                    "Expense"
                 ],
                 "import_tax_codes": False,
-                "import_vendors_as_merchants": True
+                "import_vendors_as_merchants": False
             },
             "general_mappings": {
                 "default_tax_code": {
@@ -207,6 +207,13 @@ data = {
                 }
             },
             "mapping_settings": [
+                {
+                    "source_field": "TEST_PLACEHOLDER",
+                    "destination_field": "DEPARTMENT",
+                    "import_to_fyle": True,
+                    "is_custom": True,
+                    "source_placeholder": None
+                },
                 {
                     "source_field": "COST_CENTER",
                     "destination_field": "CUSTOMER",
@@ -244,9 +251,7 @@ data = {
                 "enabled": True,
                 "interval_hours": 24,
                 "additional_email_options": [],
-                "emails_selected": [
-                    "ashwin.t@fyle.in"
-                ]
+                "emails_selected": []
             },
             "workspace_id": 1
         },
