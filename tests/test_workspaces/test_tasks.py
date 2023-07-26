@@ -1,5 +1,4 @@
 from fyle_accounting_mappings.models import ExpenseAttribute
-from fyle_integrations_platform_connector import PlatformConnector
 
 from apps.fyle.models import ExpenseGroupSettings
 from apps.tasks.models import TaskLog
