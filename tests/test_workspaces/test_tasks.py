@@ -1,10 +1,27 @@
 from fyle_accounting_mappings.models import ExpenseAttribute
+from fyle_integrations_platform_connector import PlatformConnector
 
 from apps.fyle.models import ExpenseGroupSettings
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import WorkspaceGeneralSettings, WorkspaceSchedule
-from apps.workspaces.tasks import run_email_notification, run_sync_schedule, schedule_sync
+from apps.workspaces.tasks import run_email_notification, run_sync_schedule, \
+    schedule_sync, async_add_admins_to_workspace
+from apps.users.models import User
+
 from tests.test_workspaces.fixtures import data
+from ..test_fyle.fixtures import data as fyle_data
+
+
+def test_async_add_admins_to_workspace(db, mocker):
+    old_users_count = User.objects.count()
+    mocker.patch(
+        'fyle.platform.apis.v1beta.admin.Employees.list_all',
+        return_value=fyle_data['get_all_employees']
+    )
+    async_add_admins_to_workspace(1, 'usqywo0f3nBY')
+    new_users_count = User.objects.count()
+
+    assert new_users_count > old_users_count
 
 
 def test_run_sync_schedule(mocker, db):
