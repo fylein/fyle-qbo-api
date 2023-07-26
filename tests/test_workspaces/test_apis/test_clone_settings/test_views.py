@@ -32,6 +32,11 @@ def test_clone_settings(api_client, test_connection):
     response = json.loads(response.content)
     assert dict_compare_keys(response, data['clone_settings_response']) == [], 'clone settings api returns a diff in the keys'
 
+    response = api_client.get(url)
+    assert response.status_code == 200
+    response = json.loads(response.content)
+    assert dict_compare_keys(response, data['clone_settings_response']) == [], 'clone settings api returns a diff in the keys'
+
     response = api_client.put(
         url,
         data=data['clone_settings_missing_values'],
