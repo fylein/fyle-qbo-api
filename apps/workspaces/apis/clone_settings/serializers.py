@@ -67,8 +67,10 @@ class CloneSettingsSerializer(serializers.ModelSerializer):
             instance, data=employee_mapping, partial=True
         )
 
-        if export_settings_serializer.is_valid(raise_exception=True) and import_settings_serializer.is_valid(raise_exception=True) and \
-                employee_mapping_serializer.is_valid(raise_exception=True) and advanced_configurations_serializer.is_valid(raise_exception=True):
+        if export_settings_serializer.is_valid(raise_exception=True) and \
+            import_settings_serializer.is_valid(raise_exception=True) and \
+                employee_mapping_serializer.is_valid(raise_exception=True) and \
+                advanced_configurations_serializer.is_valid(raise_exception=True):
 
             with transaction.atomic():
                 export_settings_serializer.save()
