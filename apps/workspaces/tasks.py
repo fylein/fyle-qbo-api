@@ -9,6 +9,7 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django_q.models import Schedule
 from fyle_accounting_mappings.models import ExpenseAttribute
+from fyle_integrations_platform_connector import PlatformConnector
 
 from apps.fyle.models import ExpenseGroup
 from apps.fyle.tasks import async_create_expense_groups
@@ -29,9 +30,30 @@ from apps.workspaces.models import (
     WorkspaceSchedule,
 )
 from apps.workspaces.queue import schedule_email_notification
+from apps.users.models import User
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
+
+
+def async_add_admins_to_workspace(workspace_id: int, current_user_id: str):
+    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+    platform = PlatformConnector(fyle_credentials)
+
+    users = []
+    admins = platform.employees.get_admins()
+
+    for admin in admins:
+        # Skip current user since it is already added
+        if current_user_id != admin['user_id']:
+            users.append(User(email=admin['email'], user_id=admin['user_id'], full_name=admin['full_name']))
+
+    if len(users):
+        created_users = User.objects.bulk_create(users, batch_size=50)
+        workspace = Workspace.objects.get(id=workspace_id)
+
+        for user in created_users:
+            workspace.user.add(user)
 
 
 def schedule_sync(workspace_id: int, schedule_enabled: bool, hours: int, email_added: List, emails_selected: List):
