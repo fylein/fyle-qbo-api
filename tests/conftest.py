@@ -45,9 +45,7 @@ def test_connection(db):
 
     auth_token = AuthToken(id=1, refresh_token=refresh_token, user=user)
     auth_token.save()
-    
-    
-    print('user', user.id)
+
     workspace = Workspace.objects.create(
         name='Test Workspace 2',
         fyle_org_id='fyle_org_id_dummy',
