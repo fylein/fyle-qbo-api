@@ -103,6 +103,8 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
         if workspace_general_settings_instance:
             map_merchant_to_vendor = workspace_general_settings_instance.map_merchant_to_vendor
 
+        category_sync_version = workspace_general_settings_instance.category_sync_version if workspace_general_settings_instance.category_sync_version else 'v2'
+
         enable_cards_mapping = False
         if workspace_general_settings.get('corporate_credit_card_expenses_object') and (workspace_general_settings.get('corporate_credit_card_expenses_object') not in ('BILL', 'DEBIT CARD EXPENSE')):
             enable_cards_mapping = True
@@ -113,6 +115,7 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
                 'reimbursable_expenses_object': workspace_general_settings.get('reimbursable_expenses_object'),
                 'corporate_credit_card_expenses_object': workspace_general_settings.get('corporate_credit_card_expenses_object'),
                 'map_merchant_to_vendor': map_merchant_to_vendor,
+                'category_sync_version': category_sync_version,
                 'map_fyle_cards_qbo_account': enable_cards_mapping,
             },
         )
