@@ -3,6 +3,7 @@ import logging
 from unittest import mock
 
 import pytest
+from fyle.platform.exceptions import NoPrivilegeError
 from fyle_accounting_mappings.models import DestinationAttribute
 from qbosdk.exceptions import WrongParamsError
 
@@ -534,6 +535,10 @@ def test_sync_dimensions_exception(db):
 
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
+
+    with mock.patch('fyle.platform.apis.v1beta.admin.expense_fields.list_all') as mock_call:
+        mock_call.side_effect = NoPrivilegeError
+        qbo_connection.sync_dimensions()
 
     with mock.patch('apps.quickbooks_online.utils.QBOConnector.sync_accounts') as mock_call:
         mock_call.side_effect = Exception()
