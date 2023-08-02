@@ -2,9 +2,10 @@ import logging
 from datetime import datetime
 
 from django.conf import settings
-from django.contrib.auth import get_user_model
-from django.core.cache import cache
 from django.db import transaction
+from django.core.cache import cache
+from django.contrib.auth import get_user_model
+from django_q.tasks import async_task
 from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute
 from fyle_integrations_platform_connector import PlatformConnector
 from fyle_rest_auth.helpers import get_fyle_admin
@@ -50,6 +51,8 @@ def update_or_create_workspace(user, access_token):
         cluster_domain = get_cluster_domain(auth_tokens.refresh_token)
 
         FyleCredential.objects.update_or_create(refresh_token=auth_tokens.refresh_token, workspace_id=workspace.id, cluster_domain=cluster_domain)
+        async_task('apps.workspaces.tasks.async_add_admins_to_workspace', workspace.id, user.user_id)
+
     return workspace
 
 
