@@ -16,5 +16,14 @@ Including another URLconf
 from django.urls import path
 
 from apps.users.views import FyleOrgsView
+from apps.workspaces.apis.clone_settings.views \
+    import CloneSettingsExistsView
 
-urlpatterns = [path('orgs/', FyleOrgsView.as_view(), name='orgs')]
+
+urlpatterns = [
+    path('orgs/', FyleOrgsView.as_view(), name='orgs'),
+    path(
+        'clone_settings/exists/',
+        CloneSettingsExistsView.as_view()
+    ),
+]
