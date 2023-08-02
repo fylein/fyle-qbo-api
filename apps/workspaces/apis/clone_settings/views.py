@@ -3,9 +3,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from apps.workspaces.models import Workspace
-
-from .helpers import get_latest_workspace
-from .serializers import CloneSettingsSerializer
+from apps.workspaces.apis.clone_settings.serializers import CloneSettingsSerializer
+from apps.workspaces.apis.clone_settings.helpers import get_latest_workspace
 
 
 class CloneSettingsView(generics.RetrieveUpdateAPIView):

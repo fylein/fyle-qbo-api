@@ -99,11 +99,12 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
         workspace_general_settings_instance = WorkspaceGeneralSettings.objects.filter(workspace_id=instance.id).first()
 
         map_merchant_to_vendor = True
-
+        category_sync_version = 'v2'
         if workspace_general_settings_instance:
-            map_merchant_to_vendor = workspace_general_settings_instance.map_merchant_to_vendor
-
-        category_sync_version = workspace_general_settings_instance.category_sync_version if workspace_general_settings_instance.category_sync_version else 'v2'
+            if workspace_general_settings_instance.map_merchant_to_vendor:
+                map_merchant_to_vendor = workspace_general_settings_instance.map_merchant_to_vendor
+            if workspace_general_settings_instance.category_sync_version:
+                category_sync_version = workspace_general_settings_instance.category_sync_version
 
         enable_cards_mapping = False
         if workspace_general_settings.get('corporate_credit_card_expenses_object') and (workspace_general_settings.get('corporate_credit_card_expenses_object') not in ('BILL', 'DEBIT CARD EXPENSE')):

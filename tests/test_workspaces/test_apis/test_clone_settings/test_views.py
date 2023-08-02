@@ -1,14 +1,14 @@
 
 import json
 from apps.workspaces.models import Workspace
-from .fixtures import data
 from tests.helper import dict_compare_keys
+from .fixtures import data
 
 
-def assert_4xx_cases(api_client, url, data):
+def assert_4xx_cases(api_client, url, payload):
     response = api_client.put(
         url,
-        data=data,
+        data=payload,
         format='json'
     )
 
@@ -30,12 +30,14 @@ def test_clone_settings(api_client, test_connection):
 
     assert response.status_code == 200
     response = json.loads(response.content)
-    assert dict_compare_keys(response, data['clone_settings_response']) == [], 'clone settings api returns a diff in the keys'
+    assert dict_compare_keys(response, data['clone_settings_response']) == [], \
+        'clone settings api returns a diff in the keys'
 
     response = api_client.get(url)
     assert response.status_code == 200
     response = json.loads(response.content)
-    assert dict_compare_keys(response, data['clone_settings_response']) == [], 'clone settings api returns a diff in the keys'
+    assert dict_compare_keys(response, data['clone_settings_response']) == [], \
+        'clone settings api returns a diff in the keys'
 
     response = api_client.put(
         url,
@@ -87,7 +89,8 @@ def test_clone_settings_exists(api_client, test_connection):
 
     assert response.status_code == 200
     response = json.loads(response.content)
-    assert dict_compare_keys(response, data['clone_settings_exists']) == [], 'clone settings api returns a diff in the keys'
+    assert dict_compare_keys(response, data['clone_settings_exists']) == [], \
+        'clone settings api returns a diff in the keys'
 
     Workspace.objects.update(onboarding_state='EXPORT_SETTINGS')
 
@@ -99,4 +102,5 @@ def test_clone_settings_exists(api_client, test_connection):
 
     assert response.status_code == 200
     response = json.loads(response.content)
-    assert dict_compare_keys(response, data['clone_settings_not_exists']) == [], 'clone settings api returns a diff in the keys'
+    assert dict_compare_keys(response, data['clone_settings_not_exists']) == [], \
+        'clone settings api returns a diff in the keys'

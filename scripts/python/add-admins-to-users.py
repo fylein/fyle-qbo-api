@@ -1,6 +1,7 @@
 from time import sleep
-from fyle_integrations_platform_connector import PlatformConnector
 from django.db.models import Q
+
+from fyle_integrations_platform_connector import PlatformConnector
 
 from apps.workspaces.models import FyleCredential, Workspace
 from apps.users.models import User

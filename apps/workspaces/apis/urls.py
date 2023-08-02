@@ -19,8 +19,8 @@ from apps.workspaces.apis.advanced_configurations.views import AdvancedConfigura
 from apps.workspaces.apis.errors.views import ErrorsView
 from apps.workspaces.apis.export_settings.views import ExportSettingsView
 from apps.workspaces.apis.import_settings.views import ImportSettingsView
-from .clone_settings.views import CloneSettingsView
 from apps.workspaces.apis.map_employees.views import MapEmployeesView
+from apps.workspaces.apis.clone_settings.views import CloneSettingsView
 
 urlpatterns = [
     path('<int:workspace_id>/export_settings/', ExportSettingsView.as_view()),
