@@ -23,6 +23,11 @@ APP_VERSION_CHOICES = (('v1', 'v1'), ('v2', 'v2'))
 
 EXPORT_MODE_CHOICES = (('MANUAL', 'MANUAL'), ('AUTO', 'AUTO'))
 
+NAME_IN_JOURNAL_ENTRY = (
+    ('MERCHANT', 'MERCHANT'),
+    ('EMPLOYEE', 'EMPLOYEE')
+)
+
 
 def get_default_onboarding_state():
     return 'CONNECTION'
@@ -80,6 +85,10 @@ def get_default_memo_fields():
     return ['employee_email', 'category', 'spent_on', 'report_number', 'purpose', 'expense_link']
 
 
+def get_default_name_JE():
+    return ['MERCHANT', 'EMPLOYEE']
+
+
 class WorkspaceGeneralSettings(models.Model):
     """
     Workspace General Settings
@@ -110,6 +119,7 @@ class WorkspaceGeneralSettings(models.Model):
     skip_cards_mapping = models.BooleanField(default=False, help_text='Skip cards mapping')
     import_vendors_as_merchants = models.BooleanField(default=False, help_text='Auto import vendors from qbo as merchants to Fyle')
     is_multi_currency_allowed = models.BooleanField(default=False, help_text='Multi Currency Allowed')
+    name_in_journal_entry = models.CharField(max_length=100, help_text='Name in jounral entry for ccc expense only', default=get_default_name_JE,choices=NAME_IN_JOURNAL_ENTRY)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 

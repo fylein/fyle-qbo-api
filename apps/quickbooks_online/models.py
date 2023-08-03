@@ -7,7 +7,6 @@ from typing import List
 from django.conf import settings
 from django.db import models
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping, MappingSetting
-
 from apps.fyle.models import Expense, ExpenseGroup
 from apps.mappings.models import GeneralMapping
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
@@ -751,6 +750,7 @@ class JournalEntryLineitem(models.Model):
 
     @staticmethod
     def create_journal_entry_lineitems(expense_group: ExpenseGroup, workspace_general_settings: WorkspaceGeneralSettings):
+        from apps.quickbooks_online.helper import create_vendor_destionation_attribute
         """
         Create journal_entry lineitems
         :param expense_group: expense group
@@ -799,6 +799,33 @@ class JournalEntryLineitem(models.Model):
 
             department_id = get_department_id_or_none(expense_group, lineitem)
 
+            if expense_group.fund_source == 'PERSONAL':
+                entity_id = entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' else entity.destination_vendor.destination_id
+            else:
+                # check workspace_general_settings.Name in Journal Entry (CCC)
+                if workspace_general_settings.name_in_journal_entry == 'MERCHANT':
+                    vendor = DestinationAttribute.objects.filter(value__iexact=lineitem.vendor, workspace_id=expense_group.workspace_id, attribute_type='VENDOR').first()
+                    if vendor:
+                        entity_id = vendor.destination_id
+                    else:
+                        if workspace_general_settings.auto_create_merchants_as_vendors and employee_field_mapping == 'VENDOR':
+                            created_vendor = create_vendor_destionation_attribute(lineitem.vendor, expense_group.workspace_id, workspace_general_settings)
+                            entity_id = created_vendor.destination_id
+                        else:
+                            created_vendor = create_vendor_destionation_attribute('Credit Card Misc', expense_group.workspace_id, workspace_general_settings)
+                            entity_id = created_vendor.destination_id
+                else:
+                    vendor = DestinationAttribute.objects.filter(value__iexact=lineitem.employee_name, workspace_id=expense_group.workspace_id, attribute_type=employee_field_mapping).first()
+                    if vendor:
+                        entity_id = entity.destination_vendor.destination_id if employee_field_mapping == 'VENDOR' else entity.destination_employee.destination_id
+                    else:
+                        if workspace_general_settings.import_vendors_as_merchants and employee_field_mapping == 'VENDOR':
+                            created_vendor = create_vendor_destionation_attribute(lineitem.employee_name, expense_group.workspace_id, workspace_general_settings)
+                            entity_id = created_vendor.destination_id
+                        else:
+                            created_vendor = create_vendor_destionation_attribute('Credit Card Misc', expense_group.workspace_id, workspace_general_settings)
+                            entity_id = created_vendor.destination_id
+
             journal_entry_lineitem_object, _ = JournalEntryLineitem.objects.update_or_create(
                 journal_entry=qbo_journal_entry,
                 expense_id=lineitem.id,
@@ -806,7 +833,7 @@ class JournalEntryLineitem(models.Model):
                     'debit_account_id': debit_account_id,
                     'account_id': account.destination.destination_id if account else None,
                     'class_id': class_id,
-                    'entity_id': entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' else entity.destination_vendor.destination_id,
+                    'entity_id': entity_id,
                     'entity_type': entity_type,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,

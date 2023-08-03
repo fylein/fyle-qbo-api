@@ -27,6 +27,7 @@ from apps.quickbooks_online.utils import Bill, BillLineitem, QBOExpense, QBOExpe
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import WorkspaceGeneralSettings
 from tests.test_fyle.fixtures import data
+from tests.test_quickbooks_online.fixtures import data as vendor
 
 
 def test_create_bill(db):
@@ -79,8 +80,10 @@ def test_qbo_expense(db):
     assert qbo_expense.entity_id == '60'
 
 
-def test_create_journal_entry(db):
+def test_create_journal_entry(mocker,db):
 
+    mocker.patch('qbosdk.apis.Vendors.post', return_value=vendor['post_vendor_resp'])
+    mocker.patch('qbosdk.apis.Vendors.search_vendor_by_display_name', return_value=None)
     expense_group = ExpenseGroup.objects.get(id=14)
     workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
     journal_entry = JournalEntry.create_journal_entry(expense_group)
@@ -100,6 +103,7 @@ def test_create_journal_entry(db):
 
     for journal_entry_lineitem in journal_entry_lineitems:
         assert journal_entry_lineitem.amount == 1.0
+        assert journal_entry_lineitem.entity_id == '31'
         assert journal_entry_lineitem.description == 'ashwin.t@fyle.in - Food - 2022-05-17 - C/2022/05/R/5 -  - None/app/main/#/enterprise/view_expense/txj8kWkDTyog?org_id=or79Cob97KSh'
 
     assert journal_entry.currency == 'USD'
