@@ -17,6 +17,7 @@ def assert_4xx_cases(api_client, url, payload):
 
 def test_clone_settings(api_client, test_connection):
     workspace = Workspace.objects.get(id=1)
+    workspace.name_in_journal_entry = 'MERCHANT'
     workspace.onboarding_state = 'COMPLETE'
     workspace.save()
 
@@ -27,6 +28,7 @@ def test_clone_settings(api_client, test_connection):
         data=data['clone_settings'],
         format='json'
     )
+    print('lklk', workspace.__dict__, data['clone_settings'])
 
     assert response.status_code == 200
     response = json.loads(response.content)
