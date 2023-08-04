@@ -768,7 +768,6 @@ class JournalEntryLineitem(models.Model):
         workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
         employee_field_mapping = workspace_general_settings.employee_field_mapping
 
-
         debit_account_id = None
 
         if employee_field_mapping == 'EMPLOYEE':
