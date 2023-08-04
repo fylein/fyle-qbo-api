@@ -7,7 +7,8 @@ from fyle_accounting_mappings.models import DestinationAttribute
 from qbosdk.exceptions import WrongParamsError
 
 from apps.mappings.models import GeneralMapping
-from apps.quickbooks_online.utils import QBOConnector, QBOCredential, WorkspaceGeneralSettings
+from apps.fyle.models import ExpenseGroup
+from apps.quickbooks_online.utils import QBOConnector, QBOCredential, WorkspaceGeneralSettings, create_entity_id
 from tests.helper import dict_compare_keys
 from tests.test_quickbooks_online.fixtures import data
 
@@ -562,3 +563,15 @@ def test_sync_dimensions_exception(db):
     with mock.patch('apps.quickbooks_online.utils.QBOConnector.sync_tax_codes') as mock_call:
         mock_call.side_effect = Exception()
         qbo_connection.sync_dimensions()
+
+
+def test_create_entity_id(mocker, db):
+    mocker.patch('qbosdk.apis.Vendors.post', return_value=data['post_vendor_resp'])
+    mocker.patch('qbosdk.apis.Vendors.search_vendor_by_display_name', return_value=None)
+    expense_group = ExpenseGroup.objects.get(id=14)
+    workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
+
+    entity_ids = create_entity_id(expense_group, workspace_general_settings)
+
+    for ids in entity_ids:
+        assert ids['entity_id'] == '55'
