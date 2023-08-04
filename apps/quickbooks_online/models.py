@@ -749,8 +749,7 @@ class JournalEntryLineitem(models.Model):
         db_table = 'journal_entry_lineitems'
 
     @staticmethod
-    def create_journal_entry_lineitems(expense_group: ExpenseGroup, workspace_general_settings: WorkspaceGeneralSettings):
-        from apps.quickbooks_online.helper import create_vendor_destionation_attribute
+    def create_journal_entry_lineitems(expense_group: ExpenseGroup, workspace_general_settings: WorkspaceGeneralSettings, entity_ids):
         """
         Create journal_entry lineitems
         :param expense_group: expense group
@@ -769,7 +768,6 @@ class JournalEntryLineitem(models.Model):
         workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
         employee_field_mapping = workspace_general_settings.employee_field_mapping
 
-        entity = EmployeeMapping.objects.get(source_employee__value=description.get('employee_email'), workspace_id=expense_group.workspace_id)
 
         debit_account_id = None
 
@@ -799,32 +797,7 @@ class JournalEntryLineitem(models.Model):
 
             department_id = get_department_id_or_none(expense_group, lineitem)
 
-            if expense_group.fund_source == 'PERSONAL':
-                entity_id = entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' else entity.destination_vendor.destination_id
-            else:
-                # check workspace_general_settings.Name in Journal Entry (CCC)
-                if workspace_general_settings.name_in_journal_entry == 'MERCHANT':
-                    vendor = DestinationAttribute.objects.filter(value__iexact=lineitem.vendor, workspace_id=expense_group.workspace_id, attribute_type='VENDOR').first()
-                    if vendor:
-                        entity_id = vendor.destination_id
-                    else:
-                        if workspace_general_settings.auto_create_merchants_as_vendors and employee_field_mapping == 'VENDOR':
-                            created_vendor = create_vendor_destionation_attribute(lineitem.vendor, expense_group.workspace_id, workspace_general_settings)
-                            entity_id = created_vendor.destination_id
-                        else:
-                            created_vendor = create_vendor_destionation_attribute('Credit Card Misc', expense_group.workspace_id, workspace_general_settings)
-                            entity_id = created_vendor.destination_id
-                else:
-                    vendor = DestinationAttribute.objects.filter(value__iexact=lineitem.employee_name, workspace_id=expense_group.workspace_id, attribute_type=employee_field_mapping).first()
-                    if vendor:
-                        entity_id = entity.destination_vendor.destination_id if employee_field_mapping == 'VENDOR' else entity.destination_employee.destination_id
-                    else:
-                        if workspace_general_settings.import_vendors_as_merchants and employee_field_mapping == 'VENDOR':
-                            created_vendor = create_vendor_destionation_attribute(lineitem.employee_name, expense_group.workspace_id, workspace_general_settings)
-                            entity_id = created_vendor.destination_id
-                        else:
-                            created_vendor = create_vendor_destionation_attribute('Credit Card Misc', expense_group.workspace_id, workspace_general_settings)
-                            entity_id = created_vendor.destination_id
+            entity_id = next((ids['entity_id'] for ids in entity_ids if ids['id'] == lineitem.id), None)
 
             journal_entry_lineitem_object, _ = JournalEntryLineitem.objects.update_or_create(
                 journal_entry=qbo_journal_entry,
@@ -843,7 +816,6 @@ class JournalEntryLineitem(models.Model):
                     'description': get_expense_purpose(expense_group.workspace_id, lineitem, category, workspace_general_settings),
                 },
             )
-
             journal_entry_lineitem_objects.append(journal_entry_lineitem_object)
         return journal_entry_lineitem_objects
 

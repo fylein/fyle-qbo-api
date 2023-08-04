@@ -23,7 +23,7 @@ from apps.quickbooks_online.models import (
     get_transaction_date,
 )
 from apps.quickbooks_online.tasks import create_bill
-from apps.quickbooks_online.utils import Bill, BillLineitem, QBOExpense, QBOExpenseLineitem
+from apps.quickbooks_online.utils import Bill, BillLineitem, QBOExpense, QBOExpenseLineitem, create_entity_id
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import WorkspaceGeneralSettings
 from tests.test_fyle.fixtures import data
@@ -87,7 +87,8 @@ def test_create_journal_entry(mocker,db):
     expense_group = ExpenseGroup.objects.get(id=14)
     workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
     journal_entry = JournalEntry.create_journal_entry(expense_group)
-    journal_entry_lineitems = JournalEntryLineitem.create_journal_entry_lineitems(expense_group, workspace_general_settings)
+    entity_ids = create_entity_id(expense_group, workspace_general_settings)
+    journal_entry_lineitems = JournalEntryLineitem.create_journal_entry_lineitems(expense_group, workspace_general_settings, entity_ids)
 
     for journal_entry_lineitem in journal_entry_lineitems:
         assert journal_entry_lineitem.amount == 1188.0
@@ -99,7 +100,8 @@ def test_create_journal_entry(mocker,db):
     expense_group = ExpenseGroup.objects.get(id=17)
     workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
     journal_entry = JournalEntry.create_journal_entry(expense_group)
-    journal_entry_lineitems = JournalEntryLineitem.create_journal_entry_lineitems(expense_group, workspace_general_settings)
+    entity_ids = create_entity_id(expense_group, workspace_general_settings)
+    journal_entry_lineitems = JournalEntryLineitem.create_journal_entry_lineitems(expense_group, workspace_general_settings, entity_ids)
 
     for journal_entry_lineitem in journal_entry_lineitems:
         assert journal_entry_lineitem.amount == 1.0

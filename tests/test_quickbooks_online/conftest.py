@@ -295,7 +295,15 @@ def create_journal_entry(db):
     expense_group = ExpenseGroup.objects.get(id=12)
     workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
     journal_entry = JournalEntry.create_journal_entry(expense_group)
-    journal_entry_lineitems = JournalEntryLineitem.create_journal_entry_lineitems(expense_group, workspace_general_settings)
+    entity_ids = []
+    expenses = expense_group.expenses.all()
+    for x in expenses:
+        y = {
+            'id': x.id,
+            'entity_id': '173'
+        }
+        entity_ids.append(y)
+    journal_entry_lineitems = JournalEntryLineitem.create_journal_entry_lineitems(expense_group, workspace_general_settings, entity_ids)
 
     return journal_entry, journal_entry_lineitems
 

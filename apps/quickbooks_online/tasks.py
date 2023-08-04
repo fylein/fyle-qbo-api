@@ -26,7 +26,7 @@ from apps.quickbooks_online.models import (
     QBOExpense,
     QBOExpenseLineitem,
 )
-from apps.quickbooks_online.utils import QBOConnector
+from apps.quickbooks_online.utils import QBOConnector, create_entity_id
 from apps.tasks.models import Error, TaskLog
 from apps.workspaces.models import FyleCredential, QBOCredential, WorkspaceGeneralSettings
 from fyle_qbo_api.exceptions import BulkError
@@ -495,9 +495,11 @@ def create_journal_entry(expense_group, task_log_id, last_export: bool):
     __validate_expense_group(expense_group, general_settings)
 
     with transaction.atomic():
+        entity_ids = create_entity_id(expense_group, general_settings)
+
         journal_entry_object = JournalEntry.create_journal_entry(expense_group)
 
-        journal_entry_lineitems_objects = JournalEntryLineitem.create_journal_entry_lineitems(expense_group, general_settings)
+        journal_entry_lineitems_objects = JournalEntryLineitem.create_journal_entry_lineitems(expense_group, general_settings, entity_ids)
 
         created_journal_entry = qbo_connection.post_journal_entry(journal_entry_object, journal_entry_lineitems_objects, general_settings.je_single_credit_line)
 
