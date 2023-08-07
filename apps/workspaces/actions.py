@@ -105,9 +105,10 @@ def get_workspace_admin(workspace_id: int):
     users = workspace.user.all()
     for user in users:
         admin = User.objects.get(user_id=user)
-        name = ExpenseAttribute.objects.get(value=admin.email, workspace_id=workspace_id, attribute_type='EMPLOYEE').detail['full_name']
+        employee = ExpenseAttribute.objects.filter(value=admin.email, workspace_id=workspace_id, attribute_type='EMPLOYEE').first()
+        if employee:
+            admin_email.append({'name': employee.detail['name'], 'email': admin.email})
 
-        admin_email.append({'name': name, 'email': admin.email})
     return admin_email
 
 
