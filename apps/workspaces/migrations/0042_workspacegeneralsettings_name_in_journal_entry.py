@@ -15,10 +15,10 @@ class Migration(migrations.Migration):
             model_name='workspacegeneralsettings',
             name='name_in_journal_entry',
             field=models.CharField(
-                choices=[('MERCHANT', 'MERCHANT'), 
-                ('EMPLOYEE', 'EMPLOYEE')], 
-                default=apps.workspaces.models.get_default_name_JE, 
-                help_text='Name in jounral entry for ccc expense only', 
+                choices=[('MERCHANT', 'MERCHANT'),
+                ('EMPLOYEE', 'EMPLOYEE')],
+                default=apps.workspaces.models.get_default_name_JE,
+                help_text='Name in jounral entry for ccc expense only',
                 max_length=100
             ),
         ),

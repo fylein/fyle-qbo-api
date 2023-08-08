@@ -120,8 +120,8 @@ class WorkspaceGeneralSettings(models.Model):
     import_vendors_as_merchants = models.BooleanField(default=False, help_text='Auto import vendors from qbo as merchants to Fyle')
     is_multi_currency_allowed = models.BooleanField(default=False, help_text='Multi Currency Allowed')
     name_in_journal_entry = models.CharField(
-        max_length=100, 
-        help_text='Name in jounral entry for ccc expense only', 
+        max_length=100,
+        help_text='Name in jounral entry for ccc expense only',
         default=get_default_name_JE,choices=NAME_IN_JOURNAL_ENTRY)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
