@@ -1074,8 +1074,7 @@ def create_entity_id(expense_group: ExpenseGroup, general_settings: WorkspaceGen
                 source_employee__value=expense_group.description.get('employee_email'),
                 workspace_id=expense_group.workspace_id
             )
-            entity_id = entity.destination_employee.destination_id if 
-            employee_field_mapping == 'EMPLOYEE' else entity.destination_vendor.destination_id
+            entity_id = entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' else entity.destination_vendor.destination_id
         else:
             # check workspace_general_settings.Name in Journal Entry (CCC)
             if general_settings.name_in_journal_entry == 'MERCHANT':
