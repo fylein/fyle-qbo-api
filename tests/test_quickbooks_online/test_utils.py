@@ -594,7 +594,7 @@ def test_create_entity_id(mocker, db):
     for ids in entity_ids:
         assert ids['entity_id'] == '56'
 
-    #Personal expense
+    # Personal expense
     expense_group = ExpenseGroup.objects.get(id=14)
     workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
     workspace_general_settings.employee_field_mapping = 'EMPLOYEE'
