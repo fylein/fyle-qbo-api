@@ -568,8 +568,37 @@ def test_sync_dimensions_exception(db):
 def test_create_entity_id(mocker, db):
     mocker.patch('qbosdk.apis.Vendors.post', return_value=data['post_vendor_resp'])
     mocker.patch('qbosdk.apis.Vendors.search_vendor_by_display_name', return_value=None)
+
+    # CCC expesnse with name Merchant
+    expense_group = ExpenseGroup.objects.filter(fund_source='CCC').first()
+    workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
+    workspace_general_settings.corporate_credit_card_expenses_object = 'JOURNAL ENTRY'
+    workspace_general_settings.name_in_journal_entry = 'MERCHANT'
+    workspace_general_settings.employee_field_mapping = 'VENDOR'
+    workspace_general_settings.save()
+    entity_ids = create_entity_id(expense_group, workspace_general_settings)
+
+    for ids in entity_ids:
+        assert ids['entity_id'] == '31'
+
+    # CCC expesnse with name Employee
+    workspace_general_settings.name_in_journal_entry = 'EMPLOYEE'
+    workspace_general_settings.save()
+
+    employee_attributes = DestinationAttribute.objects.filter(attribute_type='VENDOR', workspace_id=3).first()
+    employee_attributes.value = 'Joanna'
+    employee_attributes.save()
+
+    entity_ids = create_entity_id(expense_group, workspace_general_settings)
+
+    for ids in entity_ids:
+        assert ids['entity_id'] == '56'
+
+    #Personal expense
     expense_group = ExpenseGroup.objects.get(id=14)
     workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
+    workspace_general_settings.employee_field_mapping = 'EMPLOYEE'
+    workspace_general_settings.save()
 
     entity_ids = create_entity_id(expense_group, workspace_general_settings)
 

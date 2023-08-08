@@ -28,7 +28,6 @@ def test_clone_settings(api_client, test_connection):
         data=data['clone_settings'],
         format='json'
     )
-    print('lklk', workspace.__dict__, data['clone_settings'])
 
     assert response.status_code == 200
     response = json.loads(response.content)

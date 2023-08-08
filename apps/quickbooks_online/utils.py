@@ -1070,12 +1070,16 @@ def create_entity_id(expense_group: ExpenseGroup, general_settings: WorkspaceGen
     for lineitem in expenses:
         employee_field_mapping = general_settings.employee_field_mapping
         if expense_group.fund_source == 'PERSONAL':
-            entity = EmployeeMapping.objects.get(source_employee__value=expense_group.description.get('employee_email'), workspace_id=expense_group.workspace_id)
+            entity = EmployeeMapping.objects.get(
+                source_employee__value=expense_group.description.get('employee_email'), 
+                workspace_id=expense_group.workspace_id
+            )
             entity_id = entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' else entity.destination_vendor.destination_id
         else:
             # check workspace_general_settings.Name in Journal Entry (CCC)
             if general_settings.name_in_journal_entry == 'MERCHANT':
-                vendor = DestinationAttribute.objects.filter(value__iexact=lineitem.vendor, workspace_id=expense_group.workspace_id, attribute_type='VENDOR').first()
+                vendor = DestinationAttribute.objects.filter(value__iexact=lineitem.vendor, 
+                workspace_id=expense_group.workspace_id, attribute_type='VENDOR').first()
                 if vendor:
                     entity_id = vendor.destination_id
                 else:
@@ -1086,10 +1090,10 @@ def create_entity_id(expense_group: ExpenseGroup, general_settings: WorkspaceGen
                         created_vendor = qbo_connection.get_or_create_vendor('Credit Card Misc', create=True)
                         entity_id = created_vendor.destination_id
             else:
-                vendor = DestinationAttribute.objects.filter(value__iexact=lineitem.employee_name, workspace_id=expense_group.workspace_id,
-                attribute_type=employee_field_mapping).first()
+                vendor = DestinationAttribute.objects.filter(value__iexact=lineitem.employee_name, 
+                workspace_id=expense_group.workspace_id,attribute_type=employee_field_mapping).first()
                 if vendor:
-                    entity_id = vendor.destination_id if employee_field_mapping == 'VENDOR' else entity.destination_id
+                    entity_id = vendor.destination_id 
                 else:
                     if general_settings.import_vendors_as_merchants and employee_field_mapping == 'VENDOR':
                         created_vendor = qbo_connection.get_or_create_vendor(lineitem.employee_name, create=True)
