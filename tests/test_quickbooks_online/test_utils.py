@@ -580,19 +580,50 @@ def test_create_entity_id(mocker, db):
 
     for ids in entity_ids:
         assert ids['entity_id'] == '31'
+    
+    vendor_attributes = DestinationAttribute.objects.filter(attribute_type='VENDOR', workspace_id=3).last()
+    vendor_attributes.value = 'Allison Hill'
+    vendor_attributes.save()
+
+    entity_ids = create_entity_id(expense_group, workspace_general_settings)
+
+    for ids in entity_ids:
+        assert ids['entity_id'] == '59'
+
+    workspace_general_settings.auto_create_merchants_as_vendors = True
+    workspace_general_settings.save()
+
+    vendor_attributes.value = 'Joanna hill'
+    vendor_attributes.save()
+
+    entity_ids = create_entity_id(expense_group, workspace_general_settings)
+
+    for ids in entity_ids:
+        assert ids['entity_id'] == '31'
 
     # CCC expesnse with name Employee
     workspace_general_settings.name_in_journal_entry = 'EMPLOYEE'
     workspace_general_settings.save()
 
-    employee_attributes = DestinationAttribute.objects.filter(attribute_type='VENDOR', workspace_id=3).first()
-    employee_attributes.value = 'Joanna'
-    employee_attributes.save()
+    vendor_attributes = DestinationAttribute.objects.filter(attribute_type='VENDOR', workspace_id=3).first()
+    vendor_attributes.value = 'Joanna'
+    vendor_attributes.save()
 
     entity_ids = create_entity_id(expense_group, workspace_general_settings)
 
     for ids in entity_ids:
         assert ids['entity_id'] == '56'
+
+    workspace_general_settings.import_vendors_as_merchants = True
+    workspace_general_settings.save()
+
+    vendor_attributes.value = 'Joann hill'
+    vendor_attributes.save()
+
+    entity_ids = create_entity_id(expense_group, workspace_general_settings)
+
+    for ids in entity_ids:
+        assert ids['entity_id'] == '31'
 
     # Personal expense
     expense_group = ExpenseGroup.objects.get(id=14)

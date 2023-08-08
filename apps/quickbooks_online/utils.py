@@ -1078,6 +1078,7 @@ def create_entity_id(expense_group: ExpenseGroup, general_settings: WorkspaceGen
         else:
             # check workspace_general_settings.Name in Journal Entry (CCC)
             if general_settings.name_in_journal_entry == 'MERCHANT':
+                print('opop', lineitem.vendor)
                 vendor = DestinationAttribute.objects.filter(value__iexact=lineitem.vendor,
                 workspace_id=expense_group.workspace_id, attribute_type='VENDOR').first()
                 if vendor:
