@@ -580,7 +580,7 @@ def test_create_entity_id(mocker, db):
 
     for ids in entity_ids:
         assert ids['entity_id'] == '31'
-    
+
     vendor_attributes = DestinationAttribute.objects.filter(attribute_type='VENDOR', workspace_id=3).last()
     vendor_attributes.value = 'Allison Hill'
     vendor_attributes.save()
