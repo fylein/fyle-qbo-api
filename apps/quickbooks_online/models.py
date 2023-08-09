@@ -749,7 +749,7 @@ class JournalEntryLineitem(models.Model):
         db_table = 'journal_entry_lineitems'
 
     @staticmethod
-    def create_journal_entry_lineitems(expense_group: ExpenseGroup, workspace_general_settings: WorkspaceGeneralSettings, entity_ids):
+    def create_journal_entry_lineitems(expense_group: ExpenseGroup, workspace_general_settings: WorkspaceGeneralSettings, entity_map):
         """
         Create journal_entry lineitems
         :param expense_group: expense group
@@ -796,7 +796,7 @@ class JournalEntryLineitem(models.Model):
 
             department_id = get_department_id_or_none(expense_group, lineitem)
 
-            entity_id = next((ids['entity_id'] for ids in entity_ids if ids['id'] == lineitem.id), None)
+            entity_id = next((entity[lineitem.id] for entity in entity_map if lineitem.id in entity), None)
 
             journal_entry_lineitem_object, _ = JournalEntryLineitem.objects.update_or_create(
                 journal_entry=qbo_journal_entry,

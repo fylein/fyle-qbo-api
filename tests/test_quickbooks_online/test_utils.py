@@ -3,12 +3,12 @@ import logging
 from unittest import mock
 
 import pytest
-from fyle_accounting_mappings.models import DestinationAttribute
+from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping
 from qbosdk.exceptions import WrongParamsError
 
 from apps.mappings.models import GeneralMapping
 from apps.fyle.models import ExpenseGroup
-from apps.quickbooks_online.utils import QBOConnector, QBOCredential, WorkspaceGeneralSettings, create_entity_id
+from apps.quickbooks_online.utils import QBOConnector, QBOCredential, WorkspaceGeneralSettings
 from tests.helper import dict_compare_keys
 from tests.test_quickbooks_online.fixtures import data
 
@@ -565,7 +565,10 @@ def test_sync_dimensions_exception(db):
         qbo_connection.sync_dimensions()
 
 
-def test_create_entity_id(mocker, db):
+def test_create_entity_id_map(mocker, db):
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+
     mocker.patch('qbosdk.apis.Vendors.post', return_value=data['post_vendor_resp'])
     mocker.patch('qbosdk.apis.Vendors.search_vendor_by_display_name', return_value=None)
 
@@ -576,19 +579,20 @@ def test_create_entity_id(mocker, db):
     workspace_general_settings.name_in_journal_entry = 'MERCHANT'
     workspace_general_settings.employee_field_mapping = 'VENDOR'
     workspace_general_settings.save()
-    entity_ids = create_entity_id(expense_group, workspace_general_settings)
+    entity_ids = qbo_connection.create_entity_id_map(expense_group, workspace_general_settings)
+    expense = expense_group.expenses.all()
 
     for ids in entity_ids:
-        assert ids['entity_id'] == '31'
+        assert ids[expense[0].id] == data['post_vendor_resp']['Vendor']['Id']
 
     vendor_attributes = DestinationAttribute.objects.filter(attribute_type='VENDOR', workspace_id=3).last()
     vendor_attributes.value = 'Allison Hill'
     vendor_attributes.save()
 
-    entity_ids = create_entity_id(expense_group, workspace_general_settings)
+    entity_ids = qbo_connection.create_entity_id_map(expense_group, workspace_general_settings)
 
     for ids in entity_ids:
-        assert ids['entity_id'] == '59'
+        assert ids[expense[0].id] == vendor_attributes.destination_id
 
     workspace_general_settings.auto_create_merchants_as_vendors = True
     workspace_general_settings.save()
@@ -596,42 +600,43 @@ def test_create_entity_id(mocker, db):
     vendor_attributes.value = 'Joanna hill'
     vendor_attributes.save()
 
-    entity_ids = create_entity_id(expense_group, workspace_general_settings)
+    entity_ids = qbo_connection.create_entity_id_map(expense_group, workspace_general_settings)
 
     for ids in entity_ids:
-        assert ids['entity_id'] == '31'
+        assert ids[expense[0].id] == data['post_vendor_resp']['Vendor']['Id']
 
     # CCC expesnse with name Employee
     workspace_general_settings.name_in_journal_entry = 'EMPLOYEE'
     workspace_general_settings.save()
 
-    vendor_attributes = DestinationAttribute.objects.filter(attribute_type='VENDOR', workspace_id=3).first()
-    vendor_attributes.value = 'Joanna'
-    vendor_attributes.save()
+    employee_attributes = EmployeeMapping.objects.filter(
+        source_employee__value=expense_group.description.get('employee_email'),
+        workspace_id=expense_group.workspace_id
+    ).first()
 
-    entity_ids = create_entity_id(expense_group, workspace_general_settings)
+    entity_ids = qbo_connection.create_entity_id_map(expense_group, workspace_general_settings)
 
     for ids in entity_ids:
-        assert ids['entity_id'] == '56'
+        assert ids[expense[0].id] == employee_attributes.destination_vendor.destination_id
 
     workspace_general_settings.import_vendors_as_merchants = True
-    workspace_general_settings.save()
-
-    vendor_attributes.value = 'Joann hill'
-    vendor_attributes.save()
-
-    entity_ids = create_entity_id(expense_group, workspace_general_settings)
-
-    for ids in entity_ids:
-        assert ids['entity_id'] == '31'
-
-    # Personal expense
-    expense_group = ExpenseGroup.objects.get(id=14)
-    workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
     workspace_general_settings.employee_field_mapping = 'EMPLOYEE'
     workspace_general_settings.save()
 
-    entity_ids = create_entity_id(expense_group, workspace_general_settings)
+    entity_ids = qbo_connection.create_entity_id_map(expense_group, workspace_general_settings)
 
     for ids in entity_ids:
-        assert ids['entity_id'] == '55'
+        assert ids[expense[0].id] == employee_attributes.destination_employee.destination_id
+
+    # Personal expense
+    expense_group = ExpenseGroup.objects.get(id=14)
+    expense = expense_group.expenses.all()
+    employee_attributes = EmployeeMapping.objects.filter(
+        source_employee__value=expense_group.description.get('employee_email'),
+        workspace_id=expense_group.workspace_id
+    ).first()
+
+    entity_ids = qbo_connection.create_entity_id_map(expense_group, workspace_general_settings)
+
+    for ids in entity_ids:
+        assert ids[expense[0].id] == employee_attributes.destination_employee.destination_id

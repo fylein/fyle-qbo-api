@@ -299,8 +299,7 @@ def create_journal_entry(db):
     expenses = expense_group.expenses.all()
     for x in expenses:
         y = {
-            'id': x.id,
-            'entity_id': '173'
+            x.id: '173'
         }
         entity_ids.append(y)
     journal_entry_lineitems = JournalEntryLineitem.create_journal_entry_lineitems(expense_group, workspace_general_settings, entity_ids)
