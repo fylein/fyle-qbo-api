@@ -1069,7 +1069,7 @@ class QBOConnector:
                 workspace_id=general_settings.workspace_id
             )
             return entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' else entity.destination_vendor.destination_id
-        elif general_settings.name_in_journal_entry == 'MERCHANT' and general_settings.auto_create_merchants_as_vendors and employee_field_mapping == 'VENDOR' and value:
+        elif general_settings.name_in_journal_entry == 'MERCHANT' and general_settings.auto_create_merchants_as_vendors and value:
             created_vendor = self.get_or_create_vendor(value, create=True)
             return created_vendor.destination_id
         else:
