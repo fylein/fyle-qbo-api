@@ -1074,7 +1074,7 @@ class QBOConnector:
             return created_vendor.destination_id
 
     def create_entity_id_map(self, expense_group: ExpenseGroup, general_settings: WorkspaceGeneralSettings):
-        entity_ids = []
+        entity_ids = {}
         expenses = expense_group.expenses.all()
         entity = EmployeeMapping.objects.get(
             source_employee__value=expense_group.description.get('employee_email'),
@@ -1102,9 +1102,6 @@ class QBOConnector:
                     else:
                         entity_id = self.__get_entity_id(general_settings, lineitem.vendor, employee_field_mapping)
 
-            mapped_entity = {
-                lineitem.id: entity_id
-            }
-            entity_ids.append(mapped_entity)
+            entity_ids[lineitem.id] = entity_id
 
         return entity_ids

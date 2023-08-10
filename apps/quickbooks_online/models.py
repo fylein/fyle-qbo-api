@@ -796,8 +796,6 @@ class JournalEntryLineitem(models.Model):
 
             department_id = get_department_id_or_none(expense_group, lineitem)
 
-            entity_id = next((entity[lineitem.id] for entity in entity_map if lineitem.id in entity), None)
-
             journal_entry_lineitem_object, _ = JournalEntryLineitem.objects.update_or_create(
                 journal_entry=qbo_journal_entry,
                 expense_id=lineitem.id,
@@ -805,7 +803,7 @@ class JournalEntryLineitem(models.Model):
                     'debit_account_id': debit_account_id,
                     'account_id': account.destination.destination_id if account else None,
                     'class_id': class_id,
-                    'entity_id': entity_id,
+                    'entity_id': entity_map[lineitem.id],
                     'entity_type': entity_type,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
