@@ -1063,7 +1063,7 @@ class QBOConnector:
 
     def __get_entity_id(self, general_settings: WorkspaceGeneralSettings, value: str, employee_field_mapping: str,
     fund_source: str):
-        if (fund_source == 'PERSONAL') or (fund_source == 'CCC' and general_settings.name_in_journal_entry == 'EMPLOYEE'):
+        if fund_source == 'PERSONAL' or (fund_source == 'CCC' and general_settings.name_in_journal_entry == 'EMPLOYEE'):
             entity = EmployeeMapping.objects.get(
                 source_employee__value=value,
                 workspace_id=general_settings.workspace_id
@@ -1076,7 +1076,7 @@ class QBOConnector:
             created_vendor = self.get_or_create_vendor('Credit Card Misc', create=True)
             return created_vendor.destination_id
 
-    def create_entity_id_map(self, expense_group: ExpenseGroup, general_settings: WorkspaceGeneralSettings):
+    def get_or_create_entity(self, expense_group: ExpenseGroup, general_settings: WorkspaceGeneralSettings):
         entity_map = {}
         expenses = expense_group.expenses.all()
         employee_field_mapping = general_settings.employee_field_mapping
@@ -1085,13 +1085,11 @@ class QBOConnector:
                 entity_id = self.__get_entity_id(general_settings,
                     expense_group.description.get('employee_email'),
                     employee_field_mapping, expense_group.fund_source)
-            # This if will return the entity id if the export type is CCC
             elif general_settings.name_in_journal_entry == 'MERCHANT':
-                # check workspace_general_settings.Name is Merchant in Journal Entry (CCC)
-                merchant = DestinationAttribute.objects.filter(value__iexact=lineitem.vendor,
+                vendor = DestinationAttribute.objects.filter(value__iexact=lineitem.vendor,
                 workspace_id=expense_group.workspace_id, attribute_type='VENDOR').first()
-                if merchant:
-                    entity_id = merchant.destination_id
+                if vendor:
+                    entity_id = vendor.destination_id
                 else:
                     entity_id = self.__get_entity_id(general_settings, lineitem.vendor,
                         employee_field_mapping, expense_group.fund_source)

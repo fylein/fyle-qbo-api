@@ -565,7 +565,7 @@ def test_sync_dimensions_exception(db):
         qbo_connection.sync_dimensions()
 
 
-def test_create_entity_id_map(mocker, db):
+def test_get_or_create_entity(mocker, db):
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
 
@@ -579,7 +579,7 @@ def test_create_entity_id_map(mocker, db):
     workspace_general_settings.name_in_journal_entry = 'MERCHANT'
     workspace_general_settings.employee_field_mapping = 'VENDOR'
     workspace_general_settings.save()
-    entity_ids = qbo_connection.create_entity_id_map(expense_group, workspace_general_settings)
+    entity_ids = qbo_connection.get_or_create_entity(expense_group, workspace_general_settings)
     expenses = expense_group.expenses.all()
     for expense in expenses:
         assert entity_ids[expense.id] == data['post_vendor_resp']['Vendor']['Id']
@@ -588,7 +588,7 @@ def test_create_entity_id_map(mocker, db):
     vendor_attributes.value = 'Allison Hill'
     vendor_attributes.save()
 
-    entity_ids = qbo_connection.create_entity_id_map(expense_group, workspace_general_settings)
+    entity_ids = qbo_connection.get_or_create_entity(expense_group, workspace_general_settings)
 
     for expense in expenses:
         assert entity_ids[expense.id] == vendor_attributes.destination_id
@@ -599,7 +599,7 @@ def test_create_entity_id_map(mocker, db):
     vendor_attributes.value = 'Joanna hill'
     vendor_attributes.save()
 
-    entity_ids = qbo_connection.create_entity_id_map(expense_group, workspace_general_settings)
+    entity_ids = qbo_connection.get_or_create_entity(expense_group, workspace_general_settings)
 
     for expense in expenses:
         assert entity_ids[expense.id] == data['post_vendor_resp']['Vendor']['Id']
@@ -613,7 +613,7 @@ def test_create_entity_id_map(mocker, db):
         workspace_id=expense_group.workspace_id
     ).first()
 
-    entity_ids = qbo_connection.create_entity_id_map(expense_group, workspace_general_settings)
+    entity_ids = qbo_connection.get_or_create_entity(expense_group, workspace_general_settings)
 
     for expense in expenses:
         assert entity_ids[expense.id] == employee_attributes.destination_vendor.destination_id
@@ -622,7 +622,7 @@ def test_create_entity_id_map(mocker, db):
     workspace_general_settings.employee_field_mapping = 'EMPLOYEE'
     workspace_general_settings.save()
 
-    entity_ids = qbo_connection.create_entity_id_map(expense_group, workspace_general_settings)
+    entity_ids = qbo_connection.get_or_create_entity(expense_group, workspace_general_settings)
 
     for expense in expenses:
         assert entity_ids[expense.id] == employee_attributes.destination_employee.destination_id
@@ -635,7 +635,7 @@ def test_create_entity_id_map(mocker, db):
         workspace_id=expense_group.workspace_id
     ).first()
 
-    entity_ids = qbo_connection.create_entity_id_map(expense_group, workspace_general_settings)
+    entity_ids = qbo_connection.get_or_create_entity(expense_group, workspace_general_settings)
 
     for expense in expenses:
         assert entity_ids[expense.id] == employee_attributes.destination_employee.destination_id

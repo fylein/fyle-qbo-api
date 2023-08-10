@@ -85,10 +85,6 @@ def get_default_memo_fields():
     return ['employee_email', 'category', 'spent_on', 'report_number', 'purpose', 'expense_link']
 
 
-def get_default_name_JE():
-    return ['MERCHANT', 'EMPLOYEE']
-
-
 class WorkspaceGeneralSettings(models.Model):
     """
     Workspace General Settings
@@ -121,8 +117,8 @@ class WorkspaceGeneralSettings(models.Model):
     is_multi_currency_allowed = models.BooleanField(default=False, help_text='Multi Currency Allowed')
     name_in_journal_entry = models.CharField(
         max_length=100,
-        help_text='Name in jounral entry for ccc expense only',
-        default=get_default_name_JE,choices=NAME_IN_JOURNAL_ENTRY)
+        help_text='Name in journal entry for ccc expense only',
+        default='EMPLOYEE',choices=NAME_IN_JOURNAL_ENTRY)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 

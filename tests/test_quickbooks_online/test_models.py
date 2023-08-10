@@ -89,7 +89,7 @@ def test_create_journal_entry(mocker,db):
     expense_group = ExpenseGroup.objects.get(id=14)
     workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
     journal_entry = JournalEntry.create_journal_entry(expense_group)
-    entity_ids = qbo_connection.create_entity_id_map(expense_group, workspace_general_settings)
+    entity_ids = qbo_connection.get_or_create_entity(expense_group, workspace_general_settings)
     journal_entry_lineitems = JournalEntryLineitem.create_journal_entry_lineitems(expense_group, workspace_general_settings, entity_ids)
 
     for journal_entry_lineitem in journal_entry_lineitems:
@@ -103,7 +103,7 @@ def test_create_journal_entry(mocker,db):
     expense_group = ExpenseGroup.objects.get(id=17)
     workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
     journal_entry = JournalEntry.create_journal_entry(expense_group)
-    entity_ids = qbo_connection.create_entity_id_map(expense_group, workspace_general_settings)
+    entity_ids = qbo_connection.get_or_create_entity(expense_group, workspace_general_settings)
     journal_entry_lineitems = JournalEntryLineitem.create_journal_entry_lineitems(expense_group, workspace_general_settings, entity_ids)
 
     for journal_entry_lineitem in journal_entry_lineitems:

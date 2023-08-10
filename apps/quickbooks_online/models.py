@@ -2,7 +2,7 @@
 QBO models
 """
 from datetime import datetime
-from typing import List
+from typing import List, Dict
 
 from django.conf import settings
 from django.db import models
@@ -749,7 +749,7 @@ class JournalEntryLineitem(models.Model):
         db_table = 'journal_entry_lineitems'
 
     @staticmethod
-    def create_journal_entry_lineitems(expense_group: ExpenseGroup, workspace_general_settings: WorkspaceGeneralSettings, entity_map):
+    def create_journal_entry_lineitems(expense_group: ExpenseGroup, workspace_general_settings: WorkspaceGeneralSettings, entity_map: Dict):
         """
         Create journal_entry lineitems
         :param expense_group: expense group
