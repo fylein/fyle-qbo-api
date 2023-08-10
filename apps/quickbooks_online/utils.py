@@ -1062,15 +1062,14 @@ class QBOConnector:
         return created_bill_payment
 
     def __get_entity_id(self, general_settings: WorkspaceGeneralSettings, value: str, employee_field_mapping: str,
-    isEmployee: bool):
-        value = value if value else 'Credit Card Misc'
-        if isEmployee:
+    fund_source: str):
+        if (fund_source == 'PERSONAL') or (fund_source == 'CCC' and general_settings.name_in_journal_entry == 'EMPLOYEE'):
             entity = EmployeeMapping.objects.get(
                 source_employee__value=value,
                 workspace_id=general_settings.workspace_id
             )
             return entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' else entity.destination_vendor.destination_id
-        elif general_settings.name_in_journal_entry == 'MERCHANT' and general_settings.auto_create_merchants_as_vendors and employee_field_mapping == 'VENDOR':
+        elif general_settings.name_in_journal_entry == 'MERCHANT' and general_settings.auto_create_merchants_as_vendors and employee_field_mapping == 'VENDOR' and value:
             created_vendor = self.get_or_create_vendor(value, create=True)
             return created_vendor.destination_id
         else:
@@ -1085,7 +1084,7 @@ class QBOConnector:
             if expense_group.fund_source == 'PERSONAL':
                 entity_id = self.__get_entity_id(general_settings,
                     expense_group.description.get('employee_email'),
-                    employee_field_mapping, True)
+                    employee_field_mapping, expense_group.fund_source)
             # This if will return the entity id if the export type is CCC
             elif general_settings.name_in_journal_entry == 'MERCHANT':
                 # check workspace_general_settings.Name is Merchant in Journal Entry (CCC)
@@ -1094,11 +1093,12 @@ class QBOConnector:
                 if merchant:
                     entity_id = merchant.destination_id
                 else:
-                    entity_id = self.__get_entity_id(general_settings, lineitem.vendor, employee_field_mapping, False)
+                    entity_id = self.__get_entity_id(general_settings, lineitem.vendor,
+                        employee_field_mapping, expense_group.fund_source)
             else:
                 entity_id = self.__get_entity_id(general_settings,
                     expense_group.description.get('employee_email'),
-                    employee_field_mapping, True)
+                    employee_field_mapping, expense_group.fund_source)
 
             entity_map[lineitem.id] = entity_id
 
