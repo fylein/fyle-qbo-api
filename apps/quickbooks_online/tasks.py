@@ -495,9 +495,11 @@ def create_journal_entry(expense_group, task_log_id, last_export: bool):
     __validate_expense_group(expense_group, general_settings)
 
     with transaction.atomic():
+        entity_map = qbo_connection.get_or_create_entity(expense_group, general_settings)
+
         journal_entry_object = JournalEntry.create_journal_entry(expense_group)
 
-        journal_entry_lineitems_objects = JournalEntryLineitem.create_journal_entry_lineitems(expense_group, general_settings)
+        journal_entry_lineitems_objects = JournalEntryLineitem.create_journal_entry_lineitems(expense_group, general_settings, entity_map)
 
         created_journal_entry = qbo_connection.post_journal_entry(journal_entry_object, journal_entry_lineitems_objects, general_settings.je_single_credit_line)
 

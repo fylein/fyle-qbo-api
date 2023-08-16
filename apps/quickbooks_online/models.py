@@ -2,12 +2,11 @@
 QBO models
 """
 from datetime import datetime
-from typing import List
+from typing import List, Dict
 
 from django.conf import settings
 from django.db import models
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping, MappingSetting
-
 from apps.fyle.models import Expense, ExpenseGroup
 from apps.mappings.models import GeneralMapping
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
@@ -750,7 +749,7 @@ class JournalEntryLineitem(models.Model):
         db_table = 'journal_entry_lineitems'
 
     @staticmethod
-    def create_journal_entry_lineitems(expense_group: ExpenseGroup, workspace_general_settings: WorkspaceGeneralSettings):
+    def create_journal_entry_lineitems(expense_group: ExpenseGroup, workspace_general_settings: WorkspaceGeneralSettings, entity_map: Dict):
         """
         Create journal_entry lineitems
         :param expense_group: expense group
@@ -768,8 +767,6 @@ class JournalEntryLineitem(models.Model):
         general_mappings = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
         workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
         employee_field_mapping = workspace_general_settings.employee_field_mapping
-
-        entity = EmployeeMapping.objects.get(source_employee__value=description.get('employee_email'), workspace_id=expense_group.workspace_id)
 
         debit_account_id = None
 
@@ -806,7 +803,7 @@ class JournalEntryLineitem(models.Model):
                     'debit_account_id': debit_account_id,
                     'account_id': account.destination.destination_id if account else None,
                     'class_id': class_id,
-                    'entity_id': entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' else entity.destination_vendor.destination_id,
+                    'entity_id': entity_map[lineitem.id],
                     'entity_type': entity_type,
                     'customer_id': customer_id,
                     'amount': lineitem.amount,
@@ -816,7 +813,6 @@ class JournalEntryLineitem(models.Model):
                     'description': get_expense_purpose(expense_group.workspace_id, lineitem, category, workspace_general_settings),
                 },
             )
-
             journal_entry_lineitem_objects.append(journal_entry_lineitem_object)
         return journal_entry_lineitem_objects
 

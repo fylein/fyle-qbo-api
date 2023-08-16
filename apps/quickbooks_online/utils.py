@@ -5,10 +5,10 @@ from typing import Dict, List
 
 import unidecode
 from django.conf import settings
-from fyle_accounting_mappings.models import DestinationAttribute
+from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping
 from qbosdk import QuickbooksOnlineSDK
 from qbosdk.exceptions import WrongParamsError
-
+from apps.fyle.models import ExpenseGroup
 from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.models import (
     Bill,
@@ -1060,3 +1060,44 @@ class QBOConnector:
         bill_payment_payload = self.__construct_bill_payment(bill_payment, bill_payment_lineitems)
         created_bill_payment = self.connection.bill_payments.post(bill_payment_payload)
         return created_bill_payment
+
+    def __get_entity_id(self, general_settings: WorkspaceGeneralSettings, value: str, employee_field_mapping: str,
+    fund_source: str):
+        if fund_source == 'PERSONAL' or (fund_source == 'CCC' and general_settings.name_in_journal_entry == 'EMPLOYEE'):
+            entity = EmployeeMapping.objects.get(
+                source_employee__value=value,
+                workspace_id=general_settings.workspace_id
+            )
+            return entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' else entity.destination_vendor.destination_id
+        elif general_settings.name_in_journal_entry == 'MERCHANT' and general_settings.auto_create_merchants_as_vendors and value:
+            created_vendor = self.get_or_create_vendor(value, create=True)
+            return created_vendor.destination_id
+        else:
+            created_vendor = self.get_or_create_vendor('Credit Card Misc', create=True)
+            return created_vendor.destination_id
+
+    def get_or_create_entity(self, expense_group: ExpenseGroup, general_settings: WorkspaceGeneralSettings):
+        entity_map = {}
+        expenses = expense_group.expenses.all()
+        employee_field_mapping = general_settings.employee_field_mapping
+        for lineitem in expenses:
+            if expense_group.fund_source == 'PERSONAL':
+                entity_id = self.__get_entity_id(general_settings,
+                    expense_group.description.get('employee_email'),
+                    employee_field_mapping, expense_group.fund_source)
+            elif general_settings.name_in_journal_entry == 'MERCHANT':
+                vendor = DestinationAttribute.objects.filter(value__iexact=lineitem.vendor,
+                workspace_id=expense_group.workspace_id, attribute_type='VENDOR').first()
+                if vendor:
+                    entity_id = vendor.destination_id
+                else:
+                    entity_id = self.__get_entity_id(general_settings, lineitem.vendor,
+                        employee_field_mapping, expense_group.fund_source)
+            else:
+                entity_id = self.__get_entity_id(general_settings,
+                    expense_group.description.get('employee_email'),
+                    employee_field_mapping, expense_group.fund_source)
+
+            entity_map[lineitem.id] = entity_id
+
+        return entity_map
