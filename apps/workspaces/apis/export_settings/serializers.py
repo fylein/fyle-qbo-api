@@ -25,7 +25,7 @@ class ReadWriteSerializerMethodField(serializers.SerializerMethodField):
 class WorkspaceGeneralSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkspaceGeneralSettings
-        fields = ['reimbursable_expenses_object', 'corporate_credit_card_expenses_object', 'is_simplify_report_closure_enabled']
+        fields = ['reimbursable_expenses_object', 'corporate_credit_card_expenses_object', 'is_simplify_report_closure_enabled', 'name_in_journal_entry']
         read_only_fields = ['is_simplify_report_closure_enabled']
 
 
@@ -118,6 +118,7 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
                 'map_merchant_to_vendor': map_merchant_to_vendor,
                 'category_sync_version': category_sync_version,
                 'map_fyle_cards_qbo_account': enable_cards_mapping,
+                'name_in_journal_entry': workspace_general_settings.get('name_in_journal_entry'),
             },
         )
 

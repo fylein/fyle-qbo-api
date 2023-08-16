@@ -23,10 +23,11 @@ from apps.quickbooks_online.models import (
     get_transaction_date,
 )
 from apps.quickbooks_online.tasks import create_bill
-from apps.quickbooks_online.utils import Bill, BillLineitem, QBOExpense, QBOExpenseLineitem
+from apps.quickbooks_online.utils import Bill, BillLineitem, QBOExpense, QBOExpenseLineitem, QBOConnector, QBOCredential
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import WorkspaceGeneralSettings
 from tests.test_fyle.fixtures import data
+from tests.test_quickbooks_online.fixtures import data as vendor
 
 
 def test_create_bill(db):
@@ -79,16 +80,22 @@ def test_qbo_expense(db):
     assert qbo_expense.entity_id == '60'
 
 
-def test_create_journal_entry(db):
+def test_create_journal_entry(mocker,db):
 
+    mocker.patch('qbosdk.apis.Vendors.post', return_value=vendor['post_vendor_resp'])
+    mocker.patch('qbosdk.apis.Vendors.search_vendor_by_display_name', return_value=None)
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
     expense_group = ExpenseGroup.objects.get(id=14)
     workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
     journal_entry = JournalEntry.create_journal_entry(expense_group)
-    journal_entry_lineitems = JournalEntryLineitem.create_journal_entry_lineitems(expense_group, workspace_general_settings)
+    entity_ids = qbo_connection.get_or_create_entity(expense_group, workspace_general_settings)
+    journal_entry_lineitems = JournalEntryLineitem.create_journal_entry_lineitems(expense_group, workspace_general_settings, entity_ids)
 
     for journal_entry_lineitem in journal_entry_lineitems:
         assert journal_entry_lineitem.amount == 1188.0
         assert journal_entry_lineitem.description == 'user9@fyleforgotham.in - Office Party - 2020-05-13 - C/2021/04/R/42 -  - None/app/main/#/enterprise/view_expense/txU2qpKmrUR9?org_id=or79Cob97KSh'
+        assert journal_entry_lineitem.entity_id == '55'
 
     assert journal_entry.currency == 'USD'
     assert journal_entry.transaction_date == datetime.now().strftime('%Y-%m-%d')
@@ -96,10 +103,12 @@ def test_create_journal_entry(db):
     expense_group = ExpenseGroup.objects.get(id=17)
     workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
     journal_entry = JournalEntry.create_journal_entry(expense_group)
-    journal_entry_lineitems = JournalEntryLineitem.create_journal_entry_lineitems(expense_group, workspace_general_settings)
+    entity_ids = qbo_connection.get_or_create_entity(expense_group, workspace_general_settings)
+    journal_entry_lineitems = JournalEntryLineitem.create_journal_entry_lineitems(expense_group, workspace_general_settings, entity_ids)
 
     for journal_entry_lineitem in journal_entry_lineitems:
         assert journal_entry_lineitem.amount == 1.0
+        assert journal_entry_lineitem.entity_id == '31'
         assert journal_entry_lineitem.description == 'ashwin.t@fyle.in - Food - 2022-05-17 - C/2022/05/R/5 -  - None/app/main/#/enterprise/view_expense/txj8kWkDTyog?org_id=or79Cob97KSh'
 
     assert journal_entry.currency == 'USD'
