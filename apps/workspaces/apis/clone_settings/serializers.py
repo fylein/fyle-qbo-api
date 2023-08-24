@@ -72,10 +72,10 @@ class CloneSettingsSerializer(serializers.ModelSerializer):
             advanced_configurations_serializer.is_valid(raise_exception=True):
 
             with transaction.atomic():
+                employee_mapping_serializer.save()
                 export_settings_serializer.save()
                 import_settings_serializer.save()
                 advanced_configurations_serializer.save()
-                employee_mapping_serializer.save()
 
         return instance
 
