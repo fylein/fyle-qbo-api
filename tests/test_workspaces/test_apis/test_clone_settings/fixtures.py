@@ -5,7 +5,8 @@ data = {
             "workspace_general_settings": {
                 "reimbursable_expenses_object": "EXPENSE",
                 "corporate_credit_card_expenses_object": None,
-                "is_simplify_report_closure_enabled": True
+                "is_simplify_report_closure_enabled": True,
+                "name_in_journal_entry": "MERCHANT"
             },
             "expense_group_settings": {
                 "reimbursable_expense_group_fields": [
@@ -140,7 +141,8 @@ data = {
             "workspace_general_settings": {
                 "reimbursable_expenses_object": "EXPENSE",
                 "corporate_credit_card_expenses_object": None,
-                "is_simplify_report_closure_enabled": True
+                "is_simplify_report_closure_enabled": True,
+                "name_in_journal_entry": "MERCHANT"
             },
             "expense_group_settings": {
                 "reimbursable_expense_group_fields": [
