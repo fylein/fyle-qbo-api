@@ -1,12 +1,20 @@
 import json
 
-from apps.workspaces.models import Workspace
+import pytest
+
+from apps.workspaces.models import Workspace, FyleCredential
 from tests.helper import dict_compare_keys
 from tests.test_workspaces.test_apis.test_advanced_config.fixtures import data
 
-
-def test_advanced_config(api_client, test_connection):
-
+@pytest.mark.django_db()
+def test_advanced_config(api_client, test_connection, db):
+    FyleCredential.objects.update_or_create(
+        workspace_id=3,
+        defaults={
+            'refresh_token': 'ey.ey.ey',
+            'cluster_domain': 'cluster_domain'
+        }
+    )
     workspace = Workspace.objects.get(id=3)
     workspace.onboarding_state = 'ADVANCED_CONFIGURATION'
     workspace.save()
