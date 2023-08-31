@@ -6,6 +6,7 @@ from apps.workspaces.models import Workspace, FyleCredential
 from tests.helper import dict_compare_keys
 from tests.test_workspaces.test_apis.test_advanced_config.fixtures import data
 
+
 @pytest.mark.django_db()
 def test_advanced_config(api_client, test_connection, db):
     FyleCredential.objects.update_or_create(
