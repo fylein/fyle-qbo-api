@@ -9140,7 +9140,7 @@ data = {
                     'id': 22330021,
                     'is_enabled': True,
                     'name': 'Patents & Licenses - Exempted',
-                    'org_id': 'orPJvXuoLqvJ',
+                    'org_id': 'orPJvXuoasfnn1J',
                     'restricted_project_ids': None,
                     'sub_category': None,
                     'system_category': None,

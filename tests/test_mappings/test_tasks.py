@@ -242,7 +242,7 @@ def test_auto_create_category_mappings_with_items(db, mocker):
     assert category != None
     assert category.value == 'Patents & Licenses - Included'
 
-    category = ExpenseAttribute.objects.filter(value='Patents & Licenses - Expempted', workspace_id=workspace_id).first()
+    category = ExpenseAttribute.objects.filter(value='Patents & Licenses - Exempted', workspace_id=workspace_id).first()
 
     assert category == None
 
