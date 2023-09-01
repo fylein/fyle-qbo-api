@@ -45,6 +45,7 @@ from apps.tasks.models import Error
 from apps.workspaces.models import FyleCredential, QBOCredential, WorkspaceGeneralSettings
 from tests.helper import dict_compare_keys
 from tests.test_mappings.fixtures import data
+from tests.test_fyle.fixtures import data as fyle_data
 
 
 def test_auto_create_tax_codes_mappings(db, mocker):
@@ -86,13 +87,14 @@ def test_disable_category_for_items_mapping(db, mocker):
     workspace_general_setting.save()
 
     # mocking all the sdk calls
-    mocker.patch('fyle_integrations_platform_connector.apis.Categories.sync', return_value=[])
+    mocker.patch('fyle.platform.apis.v1beta.admin.Categories.list_all', return_value=fyle_data['get_all_categories'])
     mocker.patch('fyle_integrations_platform_connector.apis.Categories.post_bulk', return_value=[])
     mocker.patch('qbosdk.apis.Items.get', return_value=[])
 
     # adding test data to the database
     destination_attribute = DestinationAttribute.objects.create(attribute_type='ACCOUNT', display_name='Item', value='Concrete', destination_id=3, workspace_id=workspace_id, active=False)
     expense_attribute = ExpenseAttribute.objects.create(attribute_type='CATEGORY', display_name='Category', value='Concrete', source_id='253737253737', workspace_id=workspace_id, active=True)
+
     Mapping.objects.create(source_type='CATEGORY', destination_type='ACCOUNT', destination_id=destination_attribute.id, source_id=expense_attribute.id, workspace_id=workspace_id)
 
     disable_category_for_items_mapping(workspace_id)
@@ -228,14 +230,24 @@ def test_auto_create_category_mappings_with_items(db, mocker):
     assert mappings == 46
 
     mocker.patch('qbosdk.apis.Accounts.get', return_value=[])
-    mocker.patch('fyle_integrations_platform_connector.apis.Categories.sync', return_value=[])
+    mocker.patch('fyle.platform.apis.v1beta.admin.Categories.list_all', return_value=fyle_data['get_all_categories'])
     mocker.patch('fyle_integrations_platform_connector.apis.Categories.post_bulk', return_value=[])
     mocker.patch('qbosdk.apis.Items.get', return_value=[])
 
     response = auto_create_category_mappings(workspace_id=workspace_id)
     assert response == []
 
+    category = ExpenseAttribute.objects.filter(value='Patents & Licenses - Included', workspace_id=workspace_id).first()
+
+    assert category != None
+    assert category.value == 'Patents & Licenses - Included'
+
+    category = ExpenseAttribute.objects.filter(value='Patents & Licenses - Exempted', workspace_id=workspace_id).first()
+
+    assert category == None
+
     item_count = Mapping.objects.filter(destination_type='ACCOUNT', source_type='CATEGORY', destination__display_name='Item', workspace_id=workspace_id).count()
+
     assert item_count == 0
 
 
@@ -452,7 +464,7 @@ def test_schedule_fyle_attributes_creation(db, mocker):
 def test_post_merchants(db, mocker):
     mocker.patch('fyle_integrations_platform_connector.apis.Merchants.get', return_value=data['get_merchants'])
     mocker.patch('fyle_integrations_platform_connector.apis.Merchants.post', return_value=[])
-    mocker.patch('fyle_integrations_platform_connector.apis.Merchants.sync', return_value=[])
+    mocker.patch('fyle.platform.apis.v1beta.admin.expense_fields', return_value=data['get_merchants'])
     workspace_id = 5
     fyle_credentials = FyleCredential.objects.all()
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
