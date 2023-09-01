@@ -42,7 +42,7 @@ from apps.mappings.tasks import (
     resolve_expense_attribute_errors,
 )
 from apps.tasks.models import Error
-from apps.workspaces.models import FyleCredential, QBOCredential, Workspace, WorkspaceGeneralSettings
+from apps.workspaces.models import FyleCredential, QBOCredential, WorkspaceGeneralSettings
 from tests.helper import dict_compare_keys
 from tests.test_mappings.fixtures import data
 from tests.test_fyle.fixtures import data as fyle_data
