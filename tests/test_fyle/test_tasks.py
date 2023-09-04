@@ -85,6 +85,7 @@ def test_create_expense_group_skipped_flow(mocker, api_client, test_connection):
             if expense.employee_email == 'jhonsnow@fyle.in':
                 assert expense.is_skipped == True
 
+
 def test_get_updated_accounting_export_summary():
     updated_accounting_export_summary = __get_updated_accounting_export_summary('tx_123', True)
     expected_updated_accounting_export_summary = {
@@ -108,6 +109,7 @@ def test_get_updated_accounting_export_summary():
 
     assert updated_accounting_export_summary == expected_updated_accounting_export_summary
 
+
 def test_mark_accounting_export_summary_as_synced(db):
     expenses = Expense.objects.filter(org_id='or79Cob97KSh')
     for expense in expenses:
@@ -115,13 +117,14 @@ def test_mark_accounting_export_summary_as_synced(db):
         expense.save()
 
     expenses = Expense.objects.filter(org_id='or79Cob97KSh')
-    
+
     __mark_accounting_export_summary_as_synced(expenses)
 
     expenses = Expense.objects.filter(org_id='or79Cob97KSh')
 
     for expense in expenses:
         assert expense.accounting_export_summary['synced'] == True
+
 
 def test_mark_expenses_as_skipped(db):
     expense_group = ExpenseGroup.objects.filter(workspace_id=3).first()
@@ -147,7 +150,10 @@ def test_post_accounting_export_summary(db, mocker):
 
     assert Expense.objects.filter(id=expense_id).first().accounting_export_summary['synced'] == False
 
-    mocker.patch('fyle_integrations_platform_connector.apis.Expenses.post_bulk_accounting_export_summary', return_value=[])
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.Expenses.post_bulk_accounting_export_summary',
+        return_value=[]
+    )
     post_accounting_export_summary('or79Cob97KSh', 3)
 
     assert Expense.objects.filter(id=expense_id).first().accounting_export_summary['synced'] == True
