@@ -1,4 +1,5 @@
 import logging
+import json
 from datetime import datetime
 
 from django.conf import settings
@@ -14,7 +15,7 @@ from qbosdk import revoke_refresh_token
 from rest_framework.response import Response
 from rest_framework.views import status
 
-from apps.fyle.helpers import get_cluster_domain
+from apps.fyle.helpers import get_cluster_domain, post_request
 from apps.fyle.models import ExpenseGroupSettings
 from apps.quickbooks_online.utils import QBOConnector
 from apps.workspaces.models import FyleCredential, LastExportDetail, QBOCredential, Workspace
@@ -122,6 +123,8 @@ def delete_qbo_refresh_token(workspace_id: int):
 
     post_delete_qbo_connection(workspace_id)
 
+    post_to_integration_settings(workspace_id, False)
+
     try:
         revoke_refresh_token(refresh_token, settings.QBO_CLIENT_ID, settings.QBO_CLIENT_SECRET)
     except Exception as exception:
@@ -197,3 +200,23 @@ def setup_e2e_tests(workspace_id: int, connection):
         error_message = 'No healthy tokens found, please try again later.'
         logger.error(error)
         return Response(status=status.HTTP_400_BAD_REQUEST, data={'message': error_message})
+
+
+def post_to_integration_settings(workspace_id: int, active: bool):
+    """
+    Post to integration settings
+    """
+    refresh_token = FyleCredential.objects.get(workspace_id=workspace_id).refresh_token
+    url = '{}/integrations/'.format(settings.INTEGRATIONS_SETTINGS_API)
+    payload = {
+        'tpa_id': settings.FYLE_CLIENT_ID,
+        'tpa_name': 'Fyle Quickbooks Integration',
+        'type': 'ACCOUNTING',
+        'is_active': active,
+        'connected_at': datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+    }
+
+    try:
+        post_request(url, json.dumps(payload), refresh_token)
+    except Exception as error:
+        logger.error(error)
