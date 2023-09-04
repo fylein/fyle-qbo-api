@@ -198,7 +198,7 @@ def mark_expenses_as_skipped(final_query: Q, expenses_object_ids: List, workspac
     :param workspace: workspace object
     :return: None
     """
-    # We'll iterate through the list of expenses to be skipped, construct the updated accounting export summary and update the expense object
+    # We'll iterate through the list of expenses to be skipped, construct accounting export summary and update expenses
     expense_to_be_updated = []
     expenses_to_be_skipped = Expense.objects.filter(
         final_query,

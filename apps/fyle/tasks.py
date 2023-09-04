@@ -3,13 +3,13 @@ import traceback
 from datetime import datetime
 from typing import List
 
-from django.db import transaction
-from django.db.models import Q
 from django.conf import settings
+from django.db import transaction
 from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
 from fyle_integrations_platform_connector import PlatformConnector
 
-from apps.fyle.helpers import construct_expense_filter_query, mark_accounting_export_summary_as_synced, mark_expenses_as_skipped
+from apps.fyle.helpers import construct_expense_filter_query, mark_accounting_export_summary_as_synced, \
+    mark_expenses_as_skipped
 from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings

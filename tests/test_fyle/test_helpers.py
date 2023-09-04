@@ -1,9 +1,9 @@
 from asyncio.log import logger
+from django.conf import settings
 
 import pytest
 from rest_framework.response import Response
 from rest_framework.views import status
-from django.conf import settings
 
 from apps.fyle.helpers import (
     Q,
@@ -14,7 +14,8 @@ from apps.fyle.helpers import (
     post_request,
 )
 from apps.fyle.models import ExpenseFilter, Expense, ExpenseGroup
-from apps.fyle.helpers import mark_accounting_export_summary_as_synced, get_updated_accounting_export_summary, mark_expenses_as_skipped
+from apps.fyle.helpers import mark_accounting_export_summary_as_synced, get_updated_accounting_export_summary, \
+    mark_expenses_as_skipped
 from apps.workspaces.models import Workspace
 
 
