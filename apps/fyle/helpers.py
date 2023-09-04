@@ -227,7 +227,11 @@ def mark_expenses_as_skipped(final_query: Q, expenses_object_ids: List, workspac
                 id=expense.id,
                 is_skipped=True,
                 accounting_export_summary=get_updated_accounting_export_summary(
-                    expense.expense_id, 'SKIPPED', None, '{}/workspaces/main/export_log'.format(settings.QBO_INTEGRATION_APP_URL), False
+                    expense.expense_id,
+                    'SKIPPED',
+                    None,
+                    '{}/workspaces/main/export_log'.format(settings.QBO_INTEGRATION_APP_URL),
+                    False
                 )
             )
         )
@@ -247,7 +251,11 @@ def update_expenses_in_progress(in_progress_expenses: List[Expense]) -> None:
             Expense(
                 id=expense.id,
                 accounting_export_summary=get_updated_accounting_export_summary(
-                    expense.expense_id, 'IN_PROGRESS', None, '{}/workspaces/main/dashboard'.format(settings.QBO_INTEGRATION_APP_URL), False
+                    expense.expense_id,
+                    'IN_PROGRESS',
+                    None,
+                    '{}/workspaces/main/dashboard'.format(settings.QBO_INTEGRATION_APP_URL),
+                    False
                 )
             )
         )
