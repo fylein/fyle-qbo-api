@@ -53,6 +53,12 @@ def create_expense_groups(workspace_id: int, fund_source: List[str], task_log: T
 
 
 def __get_updated_accounting_export_summary(expense_id: str, is_synced: bool) -> dict:
+    """
+    Get updated accounting export summary
+    :param expense_id: expense id
+    :param is_synced: is synced
+    :return: updated accounting export summary
+    """
     return {
         'id': expense_id,
         'state': 'SKIPPED',
@@ -63,6 +69,14 @@ def __get_updated_accounting_export_summary(expense_id: str, is_synced: bool) ->
 
 
 def __mark_expenses_as_skipped(final_query: Q, expenses_object_ids: List, workspace: Workspace) -> None:
+    """
+    Mark expenses as skipped in bulk
+    :param final_query: final query
+    :param expenses_object_ids: expenses object ids
+    :param workspace: workspace object
+    :return: None
+    """
+    # We'll iterate through the list of expenses to be skipped, construct the updated accounting export summary and update the expense object
     expense_to_be_updated = []
     expenses_to_be_skipped = Expense.objects.filter(
         final_query,
@@ -72,12 +86,11 @@ def __mark_expenses_as_skipped(final_query: Q, expenses_object_ids: List, worksp
     )
 
     for expense in expenses_to_be_skipped:
-        updated_accounting_export_summary = __get_updated_accounting_export_summary(expense.expense_id, False)
         expense_to_be_updated.append(
             Expense(
                 id=expense.id,
                 is_skipped=True,
-                accounting_export_summary=updated_accounting_export_summary
+                accounting_export_summary=__get_updated_accounting_export_summary(expense.expense_id, False)
             )
         )
 
@@ -197,6 +210,12 @@ def sync_dimensions(fyle_credentials):
 
 
 def __mark_accounting_export_summary_as_synced(expenses: List[Expense]) -> None:
+    """
+    Mark accounting export summary as synced in bulk
+    :param expenses: List of expenses
+    :return: None
+    """
+    # Mark all expenses as synced
     expense_to_be_updated = []
     for expense in expenses:
         expense.accounting_export_summary['synced'] = True
@@ -212,6 +231,13 @@ def __mark_accounting_export_summary_as_synced(expenses: List[Expense]) -> None:
 
 
 def post_accounting_export_summary(org_id: str, workspace_id: int) -> None:
+    """
+    Post accounting export summary to Fyle
+    :param org_id: org id
+    :param workspace_id: workspace id
+    :return: None
+    """
+    # Iterate through all expenses which are not synced and post accounting export summary to Fyle in batches
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
     platform = PlatformConnector(fyle_credentials)
     expenses_count = Expense.objects.filter(
