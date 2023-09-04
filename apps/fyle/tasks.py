@@ -7,10 +7,13 @@ from django.db import transaction
 from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
 from fyle_integrations_platform_connector import PlatformConnector
 
-from apps.fyle.helpers import construct_expense_filter_query
+from apps.fyle.helpers import construct_expense_filter_query, mark_accounting_export_summary_as_synced, \
+    mark_expenses_as_skipped
 from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
+
+from .queue import async_post_accounting_export_summary
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -126,7 +129,8 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
             if expense_filters:
                 expenses_object_ids = [expense_object.id for expense_object in expense_objects]
                 final_query = construct_expense_filter_query(expense_filters)
-                Expense.objects.filter(final_query, id__in=expenses_object_ids, expensegroup__isnull=True, org_id=workspace.fyle_org_id).update(is_skipped=True)
+                mark_expenses_as_skipped(final_query, expenses_object_ids, workspace)
+                async_post_accounting_export_summary(workspace.fyle_org_id, workspace_id)
 
                 filtered_expenses = Expense.objects.filter(is_skipped=False, id__in=expenses_object_ids, expensegroup__isnull=True, org_id=workspace.fyle_org_id)
 
@@ -156,3 +160,35 @@ def sync_dimensions(fyle_credentials):
         platform.import_fyle_dimensions(import_taxes=True)
     except FyleInvalidTokenError:
         logger.info('Invalid Token for fyle')
+
+
+def post_accounting_export_summary(org_id: str, workspace_id: int) -> None:
+    """
+    Post accounting export summary to Fyle
+    :param org_id: org id
+    :param workspace_id: workspace id
+    :return: None
+    """
+    # Iterate through all expenses which are not synced and post accounting export summary to Fyle in batches
+    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+    platform = PlatformConnector(fyle_credentials)
+    expenses_count = Expense.objects.filter(
+        org_id=org_id, accounting_export_summary__synced=False
+    ).count()
+
+    page_size = 200
+    for offset in range(0, expenses_count, page_size):
+        limit = offset + page_size
+        paginated_expenses = Expense.objects.filter(
+            org_id=org_id, accounting_export_summary__synced=False
+        )[offset:limit]
+
+        payload = []
+
+        for expense in paginated_expenses:
+            accounting_export_summary = expense.accounting_export_summary
+            accounting_export_summary.pop('synced')
+            payload.append(expense.accounting_export_summary)
+
+        platform.expenses.post_bulk_accounting_export_summary(payload)
+        mark_accounting_export_summary_as_synced(paginated_expenses)
