@@ -1,5 +1,5 @@
 import json
-from typing import List
+from typing import List, Union
 
 import requests
 from django.conf import settings
@@ -174,20 +174,34 @@ def mark_accounting_export_summary_as_synced(expenses: List[Expense]) -> None:
     Expense.objects.bulk_update(expense_to_be_updated, ['accounting_export_summary'], batch_size=50)
 
 
-def get_updated_accounting_export_summary(expense_id: str, is_synced: bool) -> dict:
+def get_updated_accounting_export_summary(
+        expense_id: str, state: str, error_type: Union[str, None], url: Union[str, None], is_synced: bool) -> dict:
     """
     Get updated accounting export summary
     :param expense_id: expense id
+    :param state: state
+    :param error_type: error type
+    :param url: url
     :param is_synced: is synced
     :return: updated accounting export summary
     """
     return {
         'id': expense_id,
-        'state': 'SKIPPED',
-        'error_type': None,
-        'url': '{}/workspaces/main/export_log'.format(settings.QBO_INTEGRATION_APP_URL),
+        'state': state,
+        'error_type': error_type,
+        'url': url,
         'synced': is_synced
     }
+
+
+def __bulk_update_expenses(expense_to_be_updated: List[Expense]) -> None:
+    """
+    Bulk update expenses
+    :param expense_to_be_updated: expenses to be updated
+    :return: None
+    """
+    if expense_to_be_updated:
+        Expense.objects.bulk_update(expense_to_be_updated, ['is_skipped', 'accounting_export_summary'], batch_size=50)
 
 
 def mark_expenses_as_skipped(final_query: Q, expenses_object_ids: List, workspace: Workspace) -> None:
@@ -212,9 +226,30 @@ def mark_expenses_as_skipped(final_query: Q, expenses_object_ids: List, workspac
             Expense(
                 id=expense.id,
                 is_skipped=True,
-                accounting_export_summary=get_updated_accounting_export_summary(expense.expense_id, False)
+                accounting_export_summary=get_updated_accounting_export_summary(
+                    expense.expense_id, 'SKIPPED', None, '{}/workspaces/main/export_log'.format(settings.QBO_INTEGRATION_APP_URL), False
+                )
             )
         )
 
-    if expense_to_be_updated:
-        Expense.objects.bulk_update(expense_to_be_updated, ['is_skipped', 'accounting_export_summary'], batch_size=50)
+    __bulk_update_expenses(expense_to_be_updated)
+
+
+def update_expenses_in_progress(in_progress_expenses: List[Expense]) -> None:
+    """
+    Update expenses in progress in bulk
+    :param in_progress_expenses: in progress expenses
+    :return: None
+    """
+    expense_to_be_updated = []
+    for expense in in_progress_expenses:
+        expense_to_be_updated.append(
+            Expense(
+                id=expense.id,
+                accounting_export_summary=get_updated_accounting_export_summary(
+                    expense.expense_id, 'IN_PROGRESS', None, '{}/workspaces/main/dashboard'.format(settings.QBO_INTEGRATION_APP_URL), False
+                )
+            )
+        )
+
+    __bulk_update_expenses(expense_to_be_updated)

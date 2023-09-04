@@ -5,13 +5,21 @@ from django.db.models import Q
 from django_q.models import Schedule
 from django_q.tasks import Chain, async_task
 
-from apps.fyle.models import ExpenseGroup
+from apps.fyle.models import ExpenseGroup, Expense
+from apps.fyle.helpers import update_expenses_in_progress
+from apps.fyle.queue import async_post_accounting_export_summary
 from apps.tasks.models import TaskLog
-from apps.workspaces.models import FyleCredential, WorkspaceGeneralSettings
+from apps.workspaces.models import FyleCredential, WorkspaceGeneralSettings, Workspace
 
 
 def async_run_post_configration_triggers(workspace_general_settings: WorkspaceGeneralSettings):
     async_task('apps.quickbooks_online.tasks.async_sync_accounts', int(workspace_general_settings.workspace_id))
+
+
+def __update_expense_and_post_summary(in_progress_expenses: List[Expense], workspace_id: int) -> None:
+    fyle_org_id = Workspace.objects.get(pk=workspace_id).fyle_org_id
+    update_expenses_in_progress(in_progress_expenses)
+    async_post_accounting_export_summary(fyle_org_id, workspace_id)
 
 
 def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
@@ -28,6 +36,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
 
         fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
         chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials)
+        in_progress_expenses = []
 
         for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_BILL'})
@@ -41,8 +50,10 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
                 last_export = True
 
             chain.append('apps.quickbooks_online.tasks.create_bill', expense_group, task_log.id, last_export)
+            in_progress_expenses.extend(expense_group.expenses.all())
 
         if chain.length() > 1:
+            __update_expense_and_post_summary(in_progress_expenses, workspace_id)
             chain.run()
 
 
@@ -60,6 +71,7 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
 
         fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
         chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials)
+        in_progress_expenses = []
 
         for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_CHECK'})
@@ -73,8 +85,10 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
                 last_export = True
 
             chain.append('apps.quickbooks_online.tasks.create_cheque', expense_group, task_log.id, last_export)
+            in_progress_expenses.extend(expense_group.expenses.all())
 
         if chain.length() > 1:
+            __update_expense_and_post_summary(in_progress_expenses, workspace_id)
             chain.run()
 
 
@@ -94,6 +108,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
 
         fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
         chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials)
+        in_progress_expenses = []
 
         for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_JOURNAL_ENTRY'})
@@ -107,8 +122,10 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
                 last_export = True
 
             chain.append('apps.quickbooks_online.tasks.create_journal_entry', expense_group, task_log.id, last_export)
+            in_progress_expenses.extend(expense_group.expenses.all())
 
         if chain.length() > 1:
+            __update_expense_and_post_summary(in_progress_expenses, workspace_id)
             chain.run()
 
 
@@ -128,6 +145,7 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
 
         fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
         chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials)
+        in_progress_expenses = []
 
         for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_CREDIT_CARD_PURCHASE'})
@@ -141,8 +159,10 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
                 last_export = True
 
             chain.append('apps.quickbooks_online.tasks.create_credit_card_purchase', expense_group, task_log.id, last_export)
+            in_progress_expenses.extend(expense_group.expenses.all())
 
         if chain.length() > 1:
+            __update_expense_and_post_summary(in_progress_expenses, workspace_id)
             chain.run()
 
 
@@ -160,6 +180,7 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
 
         fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
         chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials)
+        in_progress_expenses = []
 
         for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(
@@ -175,8 +196,10 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
                 last_export = True
 
             chain.append('apps.quickbooks_online.tasks.create_qbo_expense', expense_group, task_log.id, last_export)
+            in_progress_expenses.extend(expense_group.expenses.all())
 
         if chain.length() > 1:
+            __update_expense_and_post_summary(in_progress_expenses, workspace_id)
             chain.run()
 
 
