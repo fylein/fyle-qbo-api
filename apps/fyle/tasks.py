@@ -3,7 +3,6 @@ import traceback
 from datetime import datetime
 from typing import List
 
-from django.conf import settings
 from django.db import transaction
 from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
 from fyle_integrations_platform_connector import PlatformConnector
