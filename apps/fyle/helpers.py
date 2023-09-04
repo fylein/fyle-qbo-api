@@ -261,3 +261,26 @@ def update_expenses_in_progress(in_progress_expenses: List[Expense]) -> None:
         )
 
     __bulk_update_expenses(expense_to_be_updated)
+
+
+def update_failed_expenses(in_progress_expenses: List[Expense], is_mapping_error: bool) -> None:
+    """
+    Update failed expenses
+    :param in_progress_expenses: In progress expenses
+    """
+    expense_to_be_updated = []
+    for expense in in_progress_expenses:
+        expense_to_be_updated.append(
+            Expense(
+                id=expense.id,
+                accounting_export_summary=get_updated_accounting_export_summary(
+                    expense.expense_id,
+                    'ERROR',
+                    'MAPPING' if is_mapping_error else 'ACCOUNTING_INTEGRATION_ERROR',
+                    '{}/workspaces/main/dashboard'.format(settings.QBO_INTEGRATION_APP_URL),
+                    False
+                )
+            )
+        )
+
+    __bulk_update_expenses(expense_to_be_updated)

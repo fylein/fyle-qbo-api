@@ -15,7 +15,7 @@ from apps.fyle.helpers import (
 )
 from apps.fyle.models import ExpenseFilter, Expense, ExpenseGroup
 from apps.fyle.helpers import mark_accounting_export_summary_as_synced, get_updated_accounting_export_summary, \
-    mark_expenses_as_skipped, update_expenses_in_progress, __bulk_update_expenses
+    mark_expenses_as_skipped, update_expenses_in_progress, __bulk_update_expenses, update_failed_expenses
 from apps.workspaces.models import Workspace
 
 
@@ -455,6 +455,32 @@ def test_bulk_update_expenses(db):
         assert expense.accounting_export_summary['state'] == 'SKIPPED'
         assert expense.accounting_export_summary['error_type'] == None
         assert expense.accounting_export_summary['url'] == '{}/workspaces/main/export_log'.format(
+            settings.QBO_INTEGRATION_APP_URL
+        )
+        assert expense.accounting_export_summary['id'] == expense.expense_id
+
+
+def test_update_failed_expenses(db):
+    expenses = Expense.objects.filter(org_id='or79Cob97KSh')
+    for expense in expenses:
+        expense.accounting_export_summary = get_updated_accounting_export_summary(
+            expense.expense_id,
+            'ERROR',
+            'MAPPING',
+            '{}/workspaces/main/dashboard'.format(settings.QBO_INTEGRATION_APP_URL),
+            False
+        )
+        expense.save()
+
+    update_failed_expenses(expenses, True)
+
+    expenses = Expense.objects.filter(org_id='or79Cob97KSh')
+
+    for expense in expenses:
+        assert expense.accounting_export_summary['synced'] == False
+        assert expense.accounting_export_summary['state'] == 'ERROR'
+        assert expense.accounting_export_summary['error_type'] == 'MAPPING'
+        assert expense.accounting_export_summary['url'] == '{}/workspaces/main/dashboard'.format(
             settings.QBO_INTEGRATION_APP_URL
         )
         assert expense.accounting_export_summary['id'] == expense.expense_id
