@@ -5,7 +5,8 @@ import requests
 from django.conf import settings
 from django.db.models import Q
 
-from apps.fyle.models import ExpenseFilter
+from apps.fyle.models import ExpenseFilter, Expense
+from apps.workspaces.models import Workspace
 
 
 def post_request(url, body, refresh_token=None):
@@ -150,3 +151,70 @@ def construct_expense_filter(expense_filter):
 
     # Return the constructed expense filter
     return constructed_expense_filter
+
+
+def mark_accounting_export_summary_as_synced(expenses: List[Expense]) -> None:
+    """
+    Mark accounting export summary as synced in bulk
+    :param expenses: List of expenses
+    :return: None
+    """
+    # Mark all expenses as synced
+    expense_to_be_updated = []
+    for expense in expenses:
+        expense.accounting_export_summary['synced'] = True
+        updated_accounting_export_summary = expense.accounting_export_summary
+        expense_to_be_updated.append(
+            Expense(
+                id=expense.id,
+                accounting_export_summary=updated_accounting_export_summary
+            )
+        )
+
+    Expense.objects.bulk_update(expense_to_be_updated, ['accounting_export_summary'], batch_size=50)
+
+
+def get_updated_accounting_export_summary(expense_id: str, is_synced: bool) -> dict:
+    """
+    Get updated accounting export summary
+    :param expense_id: expense id
+    :param is_synced: is synced
+    :return: updated accounting export summary
+    """
+    return {
+        'id': expense_id,
+        'state': 'SKIPPED',
+        'error_type': None,
+        'url': '{}/workspaces/main/export_log'.format(settings.QBO_INTEGRATION_APP_URL),
+        'synced': is_synced
+    }
+
+
+def mark_expenses_as_skipped(final_query: Q, expenses_object_ids: List, workspace: Workspace) -> None:
+    """
+    Mark expenses as skipped in bulk
+    :param final_query: final query
+    :param expenses_object_ids: expenses object ids
+    :param workspace: workspace object
+    :return: None
+    """
+    # We'll iterate through the list of expenses to be skipped, construct the updated accounting export summary and update the expense object
+    expense_to_be_updated = []
+    expenses_to_be_skipped = Expense.objects.filter(
+        final_query,
+        id__in=expenses_object_ids,
+        expensegroup__isnull=True,
+        org_id=workspace.fyle_org_id
+    )
+
+    for expense in expenses_to_be_skipped:
+        expense_to_be_updated.append(
+            Expense(
+                id=expense.id,
+                is_skipped=True,
+                accounting_export_summary=get_updated_accounting_export_summary(expense.expense_id, False)
+            )
+        )
+
+    if expense_to_be_updated:
+        Expense.objects.bulk_update(expense_to_be_updated, ['is_skipped', 'accounting_export_summary'], batch_size=50)

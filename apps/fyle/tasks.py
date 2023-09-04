@@ -9,7 +9,7 @@ from django.conf import settings
 from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
 from fyle_integrations_platform_connector import PlatformConnector
 
-from apps.fyle.helpers import construct_expense_filter_query
+from apps.fyle.helpers import construct_expense_filter_query, mark_accounting_export_summary_as_synced, mark_expenses_as_skipped
 from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
@@ -50,52 +50,6 @@ def create_expense_groups(workspace_id: int, fund_source: List[str], task_log: T
     task_log.save()
 
     return task_log
-
-
-def __get_updated_accounting_export_summary(expense_id: str, is_synced: bool) -> dict:
-    """
-    Get updated accounting export summary
-    :param expense_id: expense id
-    :param is_synced: is synced
-    :return: updated accounting export summary
-    """
-    return {
-        'id': expense_id,
-        'state': 'SKIPPED',
-        'error_type': None,
-        'url': '{}/workspaces/main/export_log'.format(settings.QBO_INTEGRATION_APP_URL),
-        'synced': is_synced
-    }
-
-
-def __mark_expenses_as_skipped(final_query: Q, expenses_object_ids: List, workspace: Workspace) -> None:
-    """
-    Mark expenses as skipped in bulk
-    :param final_query: final query
-    :param expenses_object_ids: expenses object ids
-    :param workspace: workspace object
-    :return: None
-    """
-    # We'll iterate through the list of expenses to be skipped, construct the updated accounting export summary and update the expense object
-    expense_to_be_updated = []
-    expenses_to_be_skipped = Expense.objects.filter(
-        final_query,
-        id__in=expenses_object_ids,
-        expensegroup__isnull=True,
-        org_id=workspace.fyle_org_id
-    )
-
-    for expense in expenses_to_be_skipped:
-        expense_to_be_updated.append(
-            Expense(
-                id=expense.id,
-                is_skipped=True,
-                accounting_export_summary=__get_updated_accounting_export_summary(expense.expense_id, False)
-            )
-        )
-
-    if expense_to_be_updated:
-        Expense.objects.bulk_update(expense_to_be_updated, ['is_skipped', 'accounting_export_summary'], batch_size=50)
 
 
 def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_log: TaskLog):
@@ -176,7 +130,7 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
             if expense_filters:
                 expenses_object_ids = [expense_object.id for expense_object in expense_objects]
                 final_query = construct_expense_filter_query(expense_filters)
-                __mark_expenses_as_skipped(final_query, expenses_object_ids, workspace)
+                mark_expenses_as_skipped(final_query, expenses_object_ids, workspace)
                 async_post_accounting_export_summary(workspace.fyle_org_id, workspace_id)
 
                 filtered_expenses = Expense.objects.filter(is_skipped=False, id__in=expenses_object_ids, expensegroup__isnull=True, org_id=workspace.fyle_org_id)
@@ -209,27 +163,6 @@ def sync_dimensions(fyle_credentials):
         logger.info('Invalid Token for fyle')
 
 
-def __mark_accounting_export_summary_as_synced(expenses: List[Expense]) -> None:
-    """
-    Mark accounting export summary as synced in bulk
-    :param expenses: List of expenses
-    :return: None
-    """
-    # Mark all expenses as synced
-    expense_to_be_updated = []
-    for expense in expenses:
-        expense.accounting_export_summary['synced'] = True
-        updated_accounting_export_summary = expense.accounting_export_summary
-        expense_to_be_updated.append(
-            Expense(
-                id=expense.id,
-                accounting_export_summary=updated_accounting_export_summary
-            )
-        )
-
-    Expense.objects.bulk_update(expense_to_be_updated, ['accounting_export_summary'], batch_size=50)
-
-
 def post_accounting_export_summary(org_id: str, workspace_id: int) -> None:
     """
     Post accounting export summary to Fyle
@@ -259,4 +192,4 @@ def post_accounting_export_summary(org_id: str, workspace_id: int) -> None:
             payload.append(expense.accounting_export_summary)
 
         platform.expenses.post_bulk_accounting_export_summary(payload)
-        __mark_accounting_export_summary_as_synced(paginated_expenses)
+        mark_accounting_export_summary_as_synced(paginated_expenses)
