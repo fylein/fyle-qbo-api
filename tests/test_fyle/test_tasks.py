@@ -147,7 +147,7 @@ def test_post_accounting_export_summary(db, mocker):
 
     assert Expense.objects.filter(id=expense_id).first().accounting_export_summary['synced'] == False
 
-    mocker.patch('fyle_integrations_platform_connector.apis.Expenses.post_bulk_accounting_export_summary', return_value=data['expenses'])
+    mocker.patch('fyle_integrations_platform_connector.apis.Expenses.post_bulk_accounting_export_summary', return_value=[])
     post_accounting_export_summary('or79Cob97KSh', 3)
 
     assert Expense.objects.filter(id=expense_id).first().accounting_export_summary['synced'] == True
