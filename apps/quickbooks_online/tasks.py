@@ -5,6 +5,7 @@ import traceback
 from datetime import datetime
 
 from django.db import transaction
+
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping
 from fyle_integrations_platform_connector import PlatformConnector
 from qbosdk.exceptions import InvalidTokenError, WrongParamsError
@@ -33,6 +34,8 @@ from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import Error, TaskLog
 from apps.workspaces.models import FyleCredential, QBOCredential, WorkspaceGeneralSettings, Workspace
 from fyle_qbo_api.exceptions import BulkError
+
+from .actions import generate_export_url_and_update_expense
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -212,6 +215,8 @@ def create_bill(expense_group, task_log_id, last_export: bool):
 
     load_attachments(qbo_connection, created_bill['Bill']['Id'], 'Bill', expense_group)
 
+    generate_export_url_and_update_expense(expense_group)
+
     if last_export:
         update_last_export_details(expense_group.workspace_id)
 
@@ -372,6 +377,8 @@ def create_cheque(expense_group, task_log_id, last_export: bool):
 
         load_attachments(qbo_connection, created_cheque['Purchase']['Id'], 'Purchase', expense_group)
 
+    generate_export_url_and_update_expense(expense_group)
+
     if last_export:
         update_last_export_details(expense_group.workspace_id)
 
@@ -423,6 +430,8 @@ def create_qbo_expense(expense_group, task_log_id, last_export: bool):
 
     load_attachments(qbo_connection, created_qbo_expense['Purchase']['Id'], 'Purchase', expense_group)
 
+    generate_export_url_and_update_expense(expense_group)
+
     if last_export:
         update_last_export_details(expense_group.workspace_id)
 
@@ -473,6 +482,8 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id, last_e
 
         load_attachments(qbo_connection, created_credit_card_purchase['Purchase']['Id'], 'Purchase', expense_group)
 
+    generate_export_url_and_update_expense(expense_group)
+
     if last_export:
         update_last_export_details(expense_group.workspace_id)
 
@@ -520,6 +531,8 @@ def create_journal_entry(expense_group, task_log_id, last_export: bool):
         resolve_errors_for_exported_expense_group(expense_group)
 
     load_attachments(qbo_connection, created_journal_entry['JournalEntry']['Id'], 'JournalEntry', expense_group)
+
+    generate_export_url_and_update_expense(expense_group)
 
     if last_export:
         update_last_export_details(expense_group.workspace_id)

@@ -190,6 +190,7 @@ FYLE_APP_URL = os.environ.get('APP_URL')
 FYLE_EXPENSE_URL = os.environ.get('FYLE_APP_URL')
 
 QBO_INTEGRATION_APP_URL = os.environ.get('QBO_INTEGRATION_APP_URL')
+QBO_APP_URL = os.environ.get('QBO_APP_URL')
 
 
 # QBO Settings
