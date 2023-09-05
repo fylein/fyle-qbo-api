@@ -17,9 +17,12 @@ def generate_export_type_and_id(expense_group: ExpenseGroup) -> tuple:
             export_type = 'check'
         else:
             export_type = 'expense'
-            if expense_group.fund_source == 'CCC' and expense_group.response_logs['Purchase']['PaymentType'] == 'CreditCard' and expense_group.response_logs['Purchase'].get('Credit'):
+            if expense_group.fund_source == 'CCC' and \
+                expense_group.response_logs['Purchase']['PaymentType'] == 'CreditCard' and \
+                    expense_group.response_logs['Purchase'].get('Credit'):
                 export_type = 'creditcardcredit'
-            elif expense_group.fund_source == 'CCC' and expense_group.response_logs['Purchase']['PaymentType'] == 'Cash':
+            elif expense_group.fund_source == 'CCC' \
+                and expense_group.response_logs['Purchase']['PaymentType'] == 'Cash':
                 export_type = 'expense'
 
     return export_type, export_id
