@@ -8,7 +8,7 @@ import pytest
 
 from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings
 from apps.fyle.tasks import create_expense_groups, post_accounting_export_summary
-from apps.fyle.helpers import mark_expenses_as_skipped
+from apps.fyle.actions import mark_expenses_as_skipped
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import FyleCredential, Workspace
 from tests.helper import dict_compare_keys
