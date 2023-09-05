@@ -28,7 +28,7 @@ number_of_expenses_without_accounting_export_summary = Expense.objects.filter(
 ).count()
 print('Number of expenses without accounting export summary - {}'.format(number_of_expenses_without_accounting_export_summary))
 for workspace in workspaces:
-    task_logs_count =  TaskLog.objects.filter(
+    task_logs_count = TaskLog.objects.filter(
         type__in=export_types,
         workspace_id=workspace.id,
         status__in=task_statuses
