@@ -35,6 +35,7 @@ services:
       E2E_TESTS_CLIENT_SECRET: ${E2E_TESTS_CLIENT_SECRET}
       E2E_TESTS_REALM_ID: ${E2E_TESTS_REALM_ID}
       INTEGRATIONS_SETTINGS_API: http://localhost:8006/api
+      QBO_APP_URL: https://lolo.qbo.com
   db:
     image: "postgres:15"
     environment:
