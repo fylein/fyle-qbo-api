@@ -1,4 +1,5 @@
 import json
+from typing import List
 import logging
 import traceback
 from datetime import datetime
@@ -9,6 +10,8 @@ from fyle_integrations_platform_connector import PlatformConnector
 from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 
 from apps.fyle.models import Expense, ExpenseGroup, Reimbursement
+from apps.fyle.actions import update_expenses_in_progress
+from apps.fyle.queue import async_post_accounting_export_summary
 from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.actions import update_last_export_details
 from apps.quickbooks_online.exceptions import handle_qbo_exceptions
@@ -28,7 +31,7 @@ from apps.quickbooks_online.models import (
 )
 from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import Error, TaskLog
-from apps.workspaces.models import FyleCredential, QBOCredential, WorkspaceGeneralSettings
+from apps.workspaces.models import FyleCredential, QBOCredential, WorkspaceGeneralSettings, Workspace
 from fyle_qbo_api.exceptions import BulkError
 
 logger = logging.getLogger(__name__)
@@ -659,3 +662,9 @@ def async_sync_accounts(workspace_id):
         qbo_connection.sync_accounts()
     except (WrongParamsError, InvalidTokenError) as exception:
         logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
+
+
+def update_expense_and_post_summary(in_progress_expenses: List[Expense], workspace_id: int) -> None:
+    fyle_org_id = Workspace.objects.get(pk=workspace_id).fyle_org_id
+    update_expenses_in_progress(in_progress_expenses)
+    async_post_accounting_export_summary(fyle_org_id, workspace_id)
