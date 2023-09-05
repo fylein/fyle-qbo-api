@@ -5,9 +5,8 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping
 
-from apps.fyle.queue import async_post_accounting_export_summary
 from apps.quickbooks_online.queue import async_run_post_configration_triggers
-from apps.workspaces.models import Workspace, WorkspaceGeneralSettings, LastExportDetail
+from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from apps.workspaces.utils import delete_cards_mapping_settings
 
 
