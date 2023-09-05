@@ -103,7 +103,9 @@ class Expense(models.Model):
     paid_on_qbo = models.BooleanField(help_text='Expense Payment status on QBO', default=False)
     payment_number = models.CharField(max_length=55, help_text='Expense payment number', null=True)
     is_skipped = models.BooleanField(null=True, default=False, help_text='Expense is skipped or not')
-    workspace = models.ForeignKey(Workspace, on_delete=models.PROTECT, help_text='To which workspace this expense belongs to', null=True)
+    workspace = models.ForeignKey(
+        Workspace, on_delete=models.PROTECT, help_text='To which workspace this expense belongs to', null=True
+    )
 
     class Meta:
         db_table = 'expenses'
