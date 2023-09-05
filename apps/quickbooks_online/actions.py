@@ -1,15 +1,27 @@
 from datetime import datetime, timezone
+import logging
 
+from django.conf import settings
 from django.db.models import Q
+
 from django_q.tasks import Chain
+
 from fyle_accounting_mappings.models import MappingSetting
 from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 from rest_framework.response import Response
 from rest_framework.views import status
 
+from apps.fyle.models import ExpenseGroup
+from apps.fyle.actions import update_complete_expenses
 from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import LastExportDetail, QBOCredential, Workspace
+
+from .helpers import generate_export_type_and_id
+
+
+logger = logging.getLogger(__name__)
+logger.level = logging.INFO
 
 
 def update_last_export_details(workspace_id):
@@ -83,3 +95,24 @@ def sync_quickbooks_dimensions(workspace_id: int):
 
         workspace.destination_synced_at = datetime.now()
         workspace.save(update_fields=['destination_synced_at'])
+
+
+def generate_export_url_and_update_expense(expense_group: ExpenseGroup) -> None:
+    """
+    Generate export url and update expense
+    :param expense_group: Expense Group
+    :return: None
+    """
+    try:
+        export_type, export_id = generate_export_type_and_id(expense_group)
+        url = '{qbo_app_url}/app/{export_type}?txnId={export_id}'.format(
+            qbo_app_url=settings.QBO_APP_URL,
+            export_type=export_type,
+            export_id=export_id
+        )
+    except Exception as error:
+        # Defaulting it to QBO app url, worst case scenario if we're not able to parse it properly
+        url = settings.QBO_APP_URL
+        logger.error('Error while generating export url %s', error)
+
+    update_complete_expenses(expense_group.expenses.all(), url)

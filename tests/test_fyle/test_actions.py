@@ -3,7 +3,7 @@ from django.db.models import Q
 
 from apps.fyle.models import Expense, ExpenseGroup
 from apps.fyle.actions import update_expenses_in_progress, mark_expenses_as_skipped, \
-    mark_accounting_export_summary_as_synced, update_failed_expenses
+    mark_accounting_export_summary_as_synced, update_failed_expenses, update_complete_expenses
 from apps.fyle.helpers import get_updated_accounting_export_summary
 from apps.workspaces.models import Workspace
 
@@ -80,6 +80,32 @@ def test_update_failed_expenses(db):
         assert expense.accounting_export_summary['synced'] == False
         assert expense.accounting_export_summary['state'] == 'ERROR'
         assert expense.accounting_export_summary['error_type'] == 'MAPPING'
+        assert expense.accounting_export_summary['url'] == '{}/workspaces/main/dashboard'.format(
+            settings.QBO_INTEGRATION_APP_URL
+        )
+        assert expense.accounting_export_summary['id'] == expense.expense_id
+
+
+def test_update_complete_expenses(db):
+    expenses = Expense.objects.filter(org_id='or79Cob97KSh')
+    for expense in expenses:
+        expense.accounting_export_summary = get_updated_accounting_export_summary(
+            expense.expense_id,
+            'COMPLETE',
+            None,
+            '{}/workspaces/main/dashboard'.format(settings.QBO_INTEGRATION_APP_URL),
+            False
+        )
+        expense.save()
+
+    update_complete_expenses(expenses, False)
+
+    expenses = Expense.objects.filter(org_id='or79Cob97KSh')
+
+    for expense in expenses:
+        assert expense.accounting_export_summary['synced'] == False
+        assert expense.accounting_export_summary['state'] == 'COMPLETE'
+        assert expense.accounting_export_summary['error_type'] == None
         assert expense.accounting_export_summary['url'] == '{}/workspaces/main/dashboard'.format(
             settings.QBO_INTEGRATION_APP_URL
         )
