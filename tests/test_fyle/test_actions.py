@@ -62,16 +62,6 @@ def test_mark_accounting_export_summary_as_synced(db):
 
 def test_update_failed_expenses(db):
     expenses = Expense.objects.filter(org_id='or79Cob97KSh')
-    for expense in expenses:
-        expense.accounting_export_summary = get_updated_accounting_export_summary(
-            expense.expense_id,
-            'ERROR',
-            'MAPPING',
-            '{}/workspaces/main/dashboard'.format(settings.QBO_INTEGRATION_APP_URL),
-            False
-        )
-        expense.save()
-
     update_failed_expenses(expenses, True)
 
     expenses = Expense.objects.filter(org_id='or79Cob97KSh')
@@ -88,17 +78,8 @@ def test_update_failed_expenses(db):
 
 def test_update_complete_expenses(db):
     expenses = Expense.objects.filter(org_id='or79Cob97KSh')
-    for expense in expenses:
-        expense.accounting_export_summary = get_updated_accounting_export_summary(
-            expense.expense_id,
-            'COMPLETE',
-            None,
-            '{}/workspaces/main/dashboard'.format(settings.QBO_INTEGRATION_APP_URL),
-            False
-        )
-        expense.save()
 
-    update_complete_expenses(expenses, False)
+    update_complete_expenses(expenses, 'https://qbo.google.com')
 
     expenses = Expense.objects.filter(org_id='or79Cob97KSh')
 
@@ -106,7 +87,5 @@ def test_update_complete_expenses(db):
         assert expense.accounting_export_summary['synced'] == False
         assert expense.accounting_export_summary['state'] == 'COMPLETE'
         assert expense.accounting_export_summary['error_type'] == None
-        assert expense.accounting_export_summary['url'] == '{}/workspaces/main/dashboard'.format(
-            settings.QBO_INTEGRATION_APP_URL
-        )
+        assert expense.accounting_export_summary['url'] == 'https://qbo.google.com'
         assert expense.accounting_export_summary['id'] == expense.expense_id
