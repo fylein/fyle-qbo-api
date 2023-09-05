@@ -5,7 +5,7 @@ import traceback
 from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 
 from apps.fyle.models import ExpenseGroup
-from apps.fyle.helpers import update_failed_expenses
+from apps.fyle.actions import update_failed_expenses
 from apps.quickbooks_online.actions import update_last_export_details
 from apps.tasks.models import Error, TaskLog
 from apps.workspaces.models import FyleCredential, QBOCredential

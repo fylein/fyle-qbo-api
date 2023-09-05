@@ -6,20 +6,12 @@ from django_q.models import Schedule
 from django_q.tasks import Chain, async_task
 
 from apps.fyle.models import ExpenseGroup, Expense
-from apps.fyle.helpers import update_expenses_in_progress
-from apps.fyle.queue import async_post_accounting_export_summary
 from apps.tasks.models import TaskLog
-from apps.workspaces.models import FyleCredential, WorkspaceGeneralSettings, Workspace
+from apps.workspaces.models import FyleCredential, WorkspaceGeneralSettings
 
 
 def async_run_post_configration_triggers(workspace_general_settings: WorkspaceGeneralSettings):
     async_task('apps.quickbooks_online.tasks.async_sync_accounts', int(workspace_general_settings.workspace_id))
-
-
-def __update_expense_and_post_summary(in_progress_expenses: List[Expense], workspace_id: int) -> None:
-    fyle_org_id = Workspace.objects.get(pk=workspace_id).fyle_org_id
-    update_expenses_in_progress(in_progress_expenses)
-    async_post_accounting_export_summary(fyle_org_id, workspace_id)
 
 
 def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
@@ -32,10 +24,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
     if expense_group_ids:
         expense_groups = ExpenseGroup.objects.filter(Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']), workspace_id=workspace_id, id__in=expense_group_ids, bill__id__isnull=True, exported_at__isnull=True).all()
 
-        chain = Chain()
-
-        fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials)
+        chain_tasks = []
         in_progress_expenses = []
 
         for index, expense_group in enumerate(expense_groups):
@@ -49,12 +38,39 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
             if expense_groups.count() == index + 1:
                 last_export = True
 
-            chain.append('apps.quickbooks_online.tasks.create_bill', expense_group, task_log.id, last_export)
+            chain_tasks.append({
+                'target': 'apps.quickbooks_online.tasks.create_bill',
+                'expense_group': expense_group,
+                'task_log_id': task_log.id,
+                'last_export': last_export
+            })
             in_progress_expenses.extend(expense_group.expenses.all())
 
-        if chain.length() > 1:
-            __update_expense_and_post_summary(in_progress_expenses, workspace_id)
-            chain.run()
+        if len(chain_tasks) > 0:
+            fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+            __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks)
+
+
+def __create_chain_and_run(fyle_credentials: FyleCredential, in_progress_expenses: List[Expense],
+        workspace_id: int, chain_tasks: List[dict]) -> None:
+    """
+    Create chain and run
+    :param fyle_credentials: Fyle credentials
+    :param in_progress_expenses: List of in progress expenses
+    :param workspace_id: workspace id
+    :param chain_tasks: List of chain tasks
+    :return: None
+    """
+    chain = Chain()
+
+    chain.append('apps.quickbooks_online.tasks.update_expense_and_post_summary', in_progress_expenses, workspace_id)
+    chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials)
+
+    for task in chain_tasks:
+        chain.append(task['target'], task['expense_group'], task['task_log_id'], task['last_export'])
+
+    chain.append('apps.fyle.tasks.post_accounting_export_summary', fyle_credentials.workspace.fyle_org_id, workspace_id)
+    chain.run()
 
 
 def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
@@ -67,10 +83,7 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
     if expense_group_ids:
         expense_groups = ExpenseGroup.objects.filter(Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']), workspace_id=workspace_id, id__in=expense_group_ids, cheque__id__isnull=True, exported_at__isnull=True).all()
 
-        chain = Chain()
-
-        fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials)
+        chain_tasks = []
         in_progress_expenses = []
 
         for index, expense_group in enumerate(expense_groups):
@@ -84,12 +97,17 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
             if expense_groups.count() == index + 1:
                 last_export = True
 
-            chain.append('apps.quickbooks_online.tasks.create_cheque', expense_group, task_log.id, last_export)
+            chain_tasks.append({
+                'target': 'apps.quickbooks_online.tasks.create_cheque',
+                'expense_group': expense_group,
+                'task_log_id': task_log.id,
+                'last_export': last_export
+            })
             in_progress_expenses.extend(expense_group.expenses.all())
 
-        if chain.length() > 1:
-            __update_expense_and_post_summary(in_progress_expenses, workspace_id)
-            chain.run()
+        if len(chain_tasks) > 0:
+            fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+            __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks)
 
 
 def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[str]):
@@ -104,10 +122,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
             Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']), workspace_id=workspace_id, id__in=expense_group_ids, journalentry__id__isnull=True, exported_at__isnull=True
         ).all()
 
-        chain = Chain()
-
-        fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials)
+        chain_tasks = []
         in_progress_expenses = []
 
         for index, expense_group in enumerate(expense_groups):
@@ -121,12 +136,17 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
             if expense_groups.count() == index + 1:
                 last_export = True
 
-            chain.append('apps.quickbooks_online.tasks.create_journal_entry', expense_group, task_log.id, last_export)
+            chain_tasks.append({
+                'target': 'apps.quickbooks_online.tasks.create_journal_entry',
+                'expense_group': expense_group,
+                'task_log_id': task_log.id,
+                'last_export': last_export
+            })
             in_progress_expenses.extend(expense_group.expenses.all())
 
-        if chain.length() > 1:
-            __update_expense_and_post_summary(in_progress_expenses, workspace_id)
-            chain.run()
+        if len(chain_tasks) > 0:
+            fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+            __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks)
 
 
 def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids: List[str]):
@@ -141,10 +161,7 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
             Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']), workspace_id=workspace_id, id__in=expense_group_ids, creditcardpurchase__id__isnull=True, exported_at__isnull=True
         ).all()
 
-        chain = Chain()
-
-        fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials)
+        chain_tasks = []
         in_progress_expenses = []
 
         for index, expense_group in enumerate(expense_groups):
@@ -158,12 +175,17 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
             if expense_groups.count() == index + 1:
                 last_export = True
 
-            chain.append('apps.quickbooks_online.tasks.create_credit_card_purchase', expense_group, task_log.id, last_export)
+            chain_tasks.append({
+                'target': 'apps.quickbooks_online.tasks.create_credit_card_purchase',
+                'expense_group': expense_group,
+                'task_log_id': task_log.id,
+                'last_export': last_export
+            })
             in_progress_expenses.extend(expense_group.expenses.all())
 
-        if chain.length() > 1:
-            __update_expense_and_post_summary(in_progress_expenses, workspace_id)
-            chain.run()
+        if len(chain_tasks) > 0:
+            fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+            __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks)
 
 
 def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str]):
@@ -176,10 +198,7 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
     if expense_group_ids:
         expense_groups = ExpenseGroup.objects.filter(Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']), workspace_id=workspace_id, id__in=expense_group_ids, qboexpense__id__isnull=True, exported_at__isnull=True).all()
 
-        chain = Chain()
-
-        fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials)
+        chain_tasks = []
         in_progress_expenses = []
 
         for index, expense_group in enumerate(expense_groups):
@@ -195,12 +214,17 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
             if expense_groups.count() == index + 1:
                 last_export = True
 
-            chain.append('apps.quickbooks_online.tasks.create_qbo_expense', expense_group, task_log.id, last_export)
+            chain_tasks.append({
+                'target': 'apps.quickbooks_online.tasks.create_qbo_expense',
+                'expense_group': expense_group,
+                'task_log_id': task_log.id,
+                'last_export': last_export
+            })
             in_progress_expenses.extend(expense_group.expenses.all())
 
-        if chain.length() > 1:
-            __update_expense_and_post_summary(in_progress_expenses, workspace_id)
-            chain.run()
+        if len(chain_tasks) > 0:
+            fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+            __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks)
 
 
 def schedule_qbo_objects_status_sync(sync_qbo_to_fyle_payments, workspace_id):

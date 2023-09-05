@@ -36,13 +36,3 @@ def post_delete_qbo_connection(workspace_id):
         workspace.onboarding_state = 'CONNECTION'
         workspace.qbo_realm_id = None
         workspace.save()
-
-
-@receiver(post_save, sender=LastExportDetail)
-def run_post_save_last_export_detail(sender, instance: LastExportDetail, **kwargs):
-    """
-    :param sender: Sender Class
-    :param instance: Row Instance of Sender Class
-    :return: None
-    """
-    async_post_accounting_export_summary(instance.workspace.fyle_org_id, instance.workspace.id)
