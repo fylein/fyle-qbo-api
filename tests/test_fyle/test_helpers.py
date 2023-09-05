@@ -13,7 +13,7 @@ from apps.fyle.helpers import (
     get_request,
     post_request,
 )
-from apps.fyle.models import ExpenseFilter, Expense, ExpenseGroup
+from apps.fyle.models import ExpenseFilter, Expense
 from apps.fyle.helpers import get_updated_accounting_export_summary
 from apps.fyle.actions import __bulk_update_expenses
 

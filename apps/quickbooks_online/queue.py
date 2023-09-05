@@ -7,7 +7,7 @@ from django_q.tasks import Chain, async_task
 
 from apps.fyle.models import ExpenseGroup, Expense
 from apps.tasks.models import TaskLog
-from apps.workspaces.models import FyleCredential, WorkspaceGeneralSettings, Workspace
+from apps.workspaces.models import FyleCredential, WorkspaceGeneralSettings
 
 
 def async_run_post_configration_triggers(workspace_general_settings: WorkspaceGeneralSettings):
@@ -38,7 +38,12 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
             if expense_groups.count() == index + 1:
                 last_export = True
 
-            chain_tasks.append({'target': 'apps.quickbooks_online.tasks.create_bill', 'expense_group': expense_group, 'task_log_id': task_log.id, 'last_export': last_export})
+            chain_tasks.append({
+                'target': 'apps.quickbooks_online.tasks.create_bill',
+                'expense_group': expense_group,
+                'task_log_id': task_log.id,
+                'last_export': last_export
+            })
             in_progress_expenses.extend(expense_group.expenses.all())
 
         if len(chain_tasks) > 0:
@@ -46,8 +51,8 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
             __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks)
 
 
-def __create_chain_and_run(
-        fyle_credentials: FyleCredential, in_progress_expenses: List[Expense], workspace_id: int, chain_tasks: List[dict]) -> None:
+def __create_chain_and_run(fyle_credentials: FyleCredential, in_progress_expenses: List[Expense],
+        workspace_id: int, chain_tasks: List[dict]) -> None:
     """
     Create chain and run
     :param fyle_credentials: Fyle credentials
@@ -91,7 +96,12 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
             if expense_groups.count() == index + 1:
                 last_export = True
 
-            chain_tasks.append({'target': 'apps.quickbooks_online.tasks.create_cheque', 'expense_group': expense_group, 'task_log_id': task_log.id, 'last_export': last_export})
+            chain_tasks.append({
+                'target': 'apps.quickbooks_online.tasks.create_cheque',
+                'expense_group': expense_group,
+                'task_log_id': task_log.id,
+                'last_export': last_export
+            })
             in_progress_expenses.extend(expense_group.expenses.all())
 
         if len(chain_tasks) > 0:
@@ -125,7 +135,12 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
             if expense_groups.count() == index + 1:
                 last_export = True
 
-            chain_tasks.append({'target': 'apps.quickbooks_online.tasks.create_journal_entry', 'expense_group': expense_group, 'task_log_id': task_log.id, 'last_export': last_export})
+            chain_tasks.append({
+                'target': 'apps.quickbooks_online.tasks.create_journal_entry',
+                'expense_group': expense_group,
+                'task_log_id': task_log.id,
+                'last_export': last_export
+            })
             in_progress_expenses.extend(expense_group.expenses.all())
 
         if len(chain_tasks) > 0:
@@ -159,7 +174,12 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
             if expense_groups.count() == index + 1:
                 last_export = True
 
-            chain_tasks.append({'target': 'apps.quickbooks_online.tasks.create_credit_card_purchase', 'expense_group': expense_group, 'task_log_id': task_log.id, 'last_export': last_export})
+            chain_tasks.append({
+                'target': 'apps.quickbooks_online.tasks.create_credit_card_purchase',
+                'expense_group': expense_group,
+                'task_log_id': task_log.id,
+                'last_export': last_export
+            })
             in_progress_expenses.extend(expense_group.expenses.all())
 
         if len(chain_tasks) > 0:
@@ -193,7 +213,12 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
             if expense_groups.count() == index + 1:
                 last_export = True
 
-            chain_tasks.append({'target': 'apps.quickbooks_online.tasks.create_qbo_expense', 'expense_group': expense_group, 'task_log_id': task_log.id, 'last_export': last_export})
+            chain_tasks.append({
+                'target': 'apps.quickbooks_online.tasks.create_qbo_expense',
+                'expense_group': expense_group,
+                'task_log_id': task_log.id,
+                'last_export': last_export
+            })
             in_progress_expenses.extend(expense_group.expenses.all())
 
         if len(chain_tasks) > 0:

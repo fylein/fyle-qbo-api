@@ -5,8 +5,7 @@ import requests
 from django.conf import settings
 from django.db.models import Q
 
-from apps.fyle.models import ExpenseFilter, Expense
-from apps.workspaces.models import Workspace
+from apps.fyle.models import ExpenseFilter
 
 
 def post_request(url, body, refresh_token=None):

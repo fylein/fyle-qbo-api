@@ -2,7 +2,8 @@ from django.conf import settings
 from django.db.models import Q
 
 from apps.fyle.models import Expense, ExpenseGroup
-from apps.fyle.actions import update_expenses_in_progress, mark_expenses_as_skipped, mark_accounting_export_summary_as_synced
+from apps.fyle.actions import update_expenses_in_progress, mark_expenses_as_skipped, \
+    mark_accounting_export_summary_as_synced
 from apps.fyle.helpers import get_updated_accounting_export_summary
 from apps.workspaces.models import Workspace
 
