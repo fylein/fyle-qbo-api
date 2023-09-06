@@ -196,6 +196,12 @@ def update_failed_expenses(in_progress_expenses: List[Expense], is_mapping_error
 
 
 def update_complete_expenses(exported_expenses: List[Expense], url: str) -> None:
+    """
+    Update complete expenses
+    :param exported_expenses: Exported expenses
+    :param url: Export url
+    :return: None
+    """
     expense_to_be_updated = []
     for expense in exported_expenses:
         expense_to_be_updated.append(
