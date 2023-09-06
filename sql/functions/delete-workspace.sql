@@ -3,6 +3,7 @@ DROP FUNCTION if exists delete_workspace;
 CREATE OR REPLACE FUNCTION delete_workspace(IN _workspace_id integer) RETURNS void AS $$
 DECLARE
   rcount integer;
+  _org_id varchar(255);
 BEGIN
   RAISE NOTICE 'Deleting data from workspace % ', _workspace_id;
 
@@ -211,6 +212,12 @@ BEGIN
   RAISE NOTICE 'Deleted % expense_group_settings', rcount;
 
   DELETE
+  FROM expense_fields ef
+  WHERE ef.workspace_id = _workspace_id;
+  GET DIAGNOSTICS rcount = ROW_COUNT;
+  RAISE NOTICE 'Deleted % expense_fields', rcount;
+
+  DELETE
   FROM fyle_credentials fc
   WHERE fc.workspace_id = _workspace_id;
   GET DIAGNOSTICS rcount = ROW_COUNT;
@@ -276,11 +283,16 @@ BEGIN
   GET DIAGNOSTICS rcount = ROW_COUNT;
   RAISE NOTICE 'Deleted % users', rcount;
 
+  _org_id := (SELECT fyle_org_id FROM workspaces WHERE id = _workspace_id);
+
   DELETE
   FROM workspaces w
   WHERE w.id = _workspace_id;
   GET DIAGNOSTICS rcount = ROW_COUNT;
   RAISE NOTICE 'Deleted % workspaces', rcount;
+
+  RAISE NOTICE E'\n\n\n\n\n\n\n\n\nSwitch to integration_settings db and run the below query to delete the integration';
+  RAISE NOTICE E'select delete_integration(''%'');\n\n\n\n\n\n\n\n\n\n\n', _org_id;
 
 RETURN;
 END
