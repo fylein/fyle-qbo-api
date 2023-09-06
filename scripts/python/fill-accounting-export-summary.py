@@ -74,6 +74,8 @@ for workspace in workspaces:
                 )
         print('Updating {} expenses in batches of 50'.format(len(expense_to_be_updated)))
         __bulk_update_expenses(expense_to_be_updated)
+
+
 number_of_expenses_without_accounting_export_summary = Expense.objects.filter(
     accounting_export_summary__state__isnull=True
 ).count()
