@@ -195,6 +195,6 @@ def post_accounting_export_summary(org_id: str, workspace_id: int) -> None:
                 platform.expenses.post_bulk_accounting_export_summary(payload)
                 mark_accounting_export_summary_as_synced(paginated_expenses)
             except InternalServerError:
-                logger.info(
+                logger.error(
                     'Internal server error while posting accounting export summary to Fyle workspace_id: %s', workspace_id
                 )
