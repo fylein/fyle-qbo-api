@@ -172,13 +172,13 @@ def mark_accounting_export_summary_as_synced(expenses: List[Expense]) -> None:
     Expense.objects.bulk_update(expense_to_be_updated, ['accounting_export_summary'], batch_size=50)
 
 
-def update_failed_expenses(in_progress_expenses: List[Expense], is_mapping_error: bool) -> None:
+def update_failed_expenses(failed_expenses: List[Expense], is_mapping_error: bool) -> None:
     """
     Update failed expenses
-    :param in_progress_expenses: In progress expenses
+    :param failed_expenses: Failed expenses
     """
     expense_to_be_updated = []
-    for expense in in_progress_expenses:
+    for expense in failed_expenses:
         expense_to_be_updated.append(
             Expense(
                 id=expense.id,

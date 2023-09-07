@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List
 
 from django.db import transaction
-from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
+from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError, InternalServerError
 from fyle_integrations_platform_connector import PlatformConnector
 
 from apps.fyle.helpers import construct_expense_filter_query
@@ -190,5 +190,11 @@ def post_accounting_export_summary(org_id: str, workspace_id: int) -> None:
             accounting_export_summary.pop('synced')
             payload.append(expense.accounting_export_summary)
 
-        platform.expenses.post_bulk_accounting_export_summary(payload)
-        mark_accounting_export_summary_as_synced(paginated_expenses)
+        if len(payload):
+            try:
+                platform.expenses.post_bulk_accounting_export_summary(payload)
+                mark_accounting_export_summary_as_synced(paginated_expenses)
+            except InternalServerError:
+                logger.info(
+                    'Internal server error while posting accounting export summary to Fyle workspace_id: %s', workspace_id
+                )
