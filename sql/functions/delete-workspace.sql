@@ -141,11 +141,7 @@ BEGIN
 
   DELETE
   FROM expenses e
-  WHERE e.id IN (
-      SELECT expense_id FROM expense_groups_expenses ege WHERE ege.expensegroup_id IN (
-          SELECT eg.id FROM expense_groups eg WHERE eg.workspace_id = _workspace_id
-      )
-  );
+  WHERE e.workspace_id = _workspace_id;
   GET DIAGNOSTICS rcount = ROW_COUNT;
   RAISE NOTICE 'Deleted % expenses', rcount;
 
