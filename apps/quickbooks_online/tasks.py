@@ -12,7 +12,7 @@ from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 
 from apps.fyle.models import Expense, ExpenseGroup, Reimbursement
 from apps.fyle.actions import update_expenses_in_progress
-from apps.fyle.queue import async_post_accounting_export_summary
+from apps.fyle.tasks import post_accounting_export_summary
 from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.actions import update_last_export_details
 from apps.quickbooks_online.exceptions import handle_qbo_exceptions
@@ -680,4 +680,4 @@ def async_sync_accounts(workspace_id):
 def update_expense_and_post_summary(in_progress_expenses: List[Expense], workspace_id: int) -> None:
     fyle_org_id = Workspace.objects.get(pk=workspace_id).fyle_org_id
     update_expenses_in_progress(in_progress_expenses)
-    async_post_accounting_export_summary(fyle_org_id, workspace_id)
+    post_accounting_export_summary(fyle_org_id, workspace_id)

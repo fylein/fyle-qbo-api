@@ -100,6 +100,7 @@ class Expense(models.Model):
     fund_source = models.CharField(max_length=255, help_text='Expense fund source')
     verified_at = models.DateTimeField(help_text='Report verified at', null=True)
     custom_properties = JSONField(null=True)
+    previous_export_state = models.CharField(max_length=255, help_text='Previous export state', null=True)
     accounting_export_summary = JSONField(default=dict)
     paid_on_qbo = models.BooleanField(help_text='Expense Payment status on QBO', default=False)
     payment_number = models.CharField(max_length=55, help_text='Expense payment number', null=True)

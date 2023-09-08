@@ -14,7 +14,7 @@ def async_run_post_configration_triggers(workspace_general_settings: WorkspaceGe
     async_task('apps.quickbooks_online.tasks.async_sync_accounts', int(workspace_general_settings.workspace_id))
 
 
-def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
+def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool):
     """
     Schedule bills creation
     :param expense_group_ids: List of expense group ids
@@ -44,7 +44,10 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
                 'task_log_id': task_log.id,
                 'last_export': last_export
             })
-            in_progress_expenses.extend(expense_group.expenses.all())
+
+            # Don't include expenses with previous export state as ERROR and it's an auto import/export run
+            if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
+                in_progress_expenses.extend(expense_group.expenses.all())
 
         if len(chain_tasks) > 0:
             fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
@@ -73,7 +76,7 @@ def __create_chain_and_run(fyle_credentials: FyleCredential, in_progress_expense
     chain.run()
 
 
-def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
+def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool):
     """
     Schedule cheque creation
     :param expense_group_ids: List of expense group ids
@@ -103,14 +106,17 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
                 'task_log_id': task_log.id,
                 'last_export': last_export
             })
-            in_progress_expenses.extend(expense_group.expenses.all())
+
+            # Don't include expenses with previous export state as ERROR and it's an auto import/export run
+            if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
+                in_progress_expenses.extend(expense_group.expenses.all())
 
         if len(chain_tasks) > 0:
             fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
             __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks)
 
 
-def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[str]):
+def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool):
     """
     Schedule journal_entry creation
     :param expense_group_ids: List of expense group ids
@@ -142,14 +148,16 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
                 'task_log_id': task_log.id,
                 'last_export': last_export
             })
-            in_progress_expenses.extend(expense_group.expenses.all())
+            # Don't include expenses with previous export state as ERROR and it's an auto import/export run
+            if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
+                in_progress_expenses.extend(expense_group.expenses.all())
 
         if len(chain_tasks) > 0:
             fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
             __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks)
 
 
-def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids: List[str]):
+def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool):
     """
     Schedule credit card purchase creation
     :param expense_group_ids: List of expense group ids
@@ -181,14 +189,17 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
                 'task_log_id': task_log.id,
                 'last_export': last_export
             })
-            in_progress_expenses.extend(expense_group.expenses.all())
+
+            # Don't include expenses with previous export state as ERROR and it's an auto import/export run
+            if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
+                in_progress_expenses.extend(expense_group.expenses.all())
 
         if len(chain_tasks) > 0:
             fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
             __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks)
 
 
-def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str]):
+def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool):
     """
     Schedule QBO expense creation
     :param expense_group_ids: List of expense group ids
@@ -220,7 +231,10 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
                 'task_log_id': task_log.id,
                 'last_export': last_export
             })
-            in_progress_expenses.extend(expense_group.expenses.all())
+
+            # Don't include expenses with previous export state as ERROR and it's an auto import/export run
+            if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
+                in_progress_expenses.extend(expense_group.expenses.all())
 
         if len(chain_tasks) > 0:
             fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
