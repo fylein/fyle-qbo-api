@@ -1,6 +1,7 @@
 """
 Fyle Models
 """
+from collections import defaultdict
 from datetime import datetime
 from typing import Dict, List
 
@@ -329,12 +330,26 @@ class ExpenseGroup(models.Model):
 
         if general_settings.reimbursable_expenses_object == 'EXPENSE' and 'expense_id' not in reimbursable_expense_group_fields:
             total_amount = 0
-            for expense in reimbursable_expenses:
-                total_amount += expense.amount
+            if 'spent_at' in reimbursable_expense_group_fields:
+                grouped_data = defaultdict(list)
+                for expense in reimbursable_expenses:
+                    spent_at = expense.spent_at
+                    grouped_data[spent_at].append(expense)
+                grouped_expenses = list(grouped_data.values())
+                reimbursable_expenses = []
+                for expense_group in grouped_expenses:
+                    total_amount = 0
+                    for expense in expense_group:
+                        total_amount += expense.amount
+                    if total_amount < 0:
+                        expense_group = list(filter(lambda expense: expense.amount > 0, expense_group))
+                    reimbursable_expenses.extend(expense_group)
+            else:
+                for expense in reimbursable_expenses:
+                    total_amount += expense.amount
 
-            if total_amount < 0:
-                reimbursable_expenses = list(filter(lambda expense: expense.amount > 0, reimbursable_expenses))
-
+                if total_amount < 0:
+                    reimbursable_expenses = list(filter(lambda expense: expense.amount > 0, reimbursable_expenses))
         elif general_settings.reimbursable_expenses_object != 'JOURNAL ENTRY':
             reimbursable_expenses = list(filter(lambda expense: expense.amount > 0, reimbursable_expenses))
 
