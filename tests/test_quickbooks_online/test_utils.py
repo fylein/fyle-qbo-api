@@ -6,8 +6,8 @@ import pytest
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping
 from qbosdk.exceptions import WrongParamsError
 
-from apps.mappings.models import GeneralMapping
 from apps.fyle.models import ExpenseGroup
+from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.utils import QBOConnector, QBOCredential, WorkspaceGeneralSettings
 from tests.helper import dict_compare_keys
 from tests.test_quickbooks_online.fixtures import data
@@ -277,8 +277,9 @@ def test_construct_cheque_item_and_account_based(create_cheque_item_and_account_
     cheque, cheque_lineitems = create_cheque_item_and_account_based
     cheque_object = qbo_connection._QBOConnector__construct_cheque(cheque=cheque, cheque_lineitems=cheque_lineitems)
 
-    assert cheque_object['Line'][1]['DetailType'] == 'ItemBasedExpenseLineDetail'
-    assert cheque_object['Line'][0]['DetailType'] == 'AccountBasedExpenseLineDetail'
+    assert cheque_object['Line'][0]['DetailType'] == 'ItemBasedExpenseLineDetail'
+    assert cheque_object['Line'][1]['DetailType'] == 'AccountBasedExpenseLineDetail'
+
     assert dict_compare_keys(cheque_object, data['cheque_item_and_account_based_payload']) == [], 'construct cheque api return diffs in keys'
 
 

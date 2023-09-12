@@ -5,6 +5,7 @@ from apps.fyle.models import (
     ExpenseGroup,
     ExpenseGroupSettings,
     Reimbursement,
+    Workspace,
     WorkspaceGeneralSettings,
     _format_date,
     _group_expenses,
@@ -63,6 +64,29 @@ def test_create_reimbursement(db):
 
     paid_reimbursement = Reimbursement.objects.get(reimbursement_id='reimgCW1Og0BcM')
     paid_reimbursement.state == 'PAID'
+
+
+def test_create_expense_groups_by_report_id_fund_source_spent_at(db):
+    expenses = data['expenses_spent_at']
+
+    expense_objects = Expense.create_expense_objects(expenses, 1)
+
+    workspace = Workspace.objects.get(id=1)
+
+    expense_group_setting = ExpenseGroupSettings.objects.get(workspace_id=1)
+    expense_group_setting.reimbursable_export_date_type = 'spent_at'
+    reimbursable_expense_group_fields = expense_group_setting.reimbursable_expense_group_fields
+    reimbursable_expense_group_fields.append('spent_at')
+    expense_group_setting.reimbursable_expense_group_fields = reimbursable_expense_group_fields
+    expense_group_setting.save()
+
+    assert len(expense_objects) == 3
+
+    ExpenseGroup.create_expense_groups_by_report_id_fund_source(expense_objects, 1)
+
+    expense_group = ExpenseGroup.objects.filter(workspace=workspace).order_by('-created_at').first()
+
+    assert expense_group.expenses.count() == 2
 
 
 def test_create_expense_groups_by_report_id_fund_source(db):
