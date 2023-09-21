@@ -50,7 +50,7 @@ for workspace in workspaces:
             error_type = None
             url = None
             if task_log.status == 'FAILED' or task_log.status == 'FATAL':
-                error_type = 'ACCOUNTING_INTEGRATION_ERROR' if task_log.quickbooks_errors else 'MAPPING_ERROR'
+                error_type = 'ACCOUNTING_INTEGRATION_ERROR' if task_log.quickbooks_errors else 'ERROR'
                 url = '{}/workspaces/main/dashboard'.format(settings.QBO_INTEGRATION_APP_URL)
             else:
                 export_type, export_id = generate_export_type_and_id(expense_group)
@@ -59,7 +59,7 @@ for workspace in workspaces:
                     export_type=export_type,
                     export_id=export_id
                 )
-            for expense in expense_group.expenses.all():
+            for expense in expense_group.expenses.filter(accounting_export_summary__state__isnull=True):
                 expense_to_be_updated.append(
                     Expense(
                         id=expense.id,
