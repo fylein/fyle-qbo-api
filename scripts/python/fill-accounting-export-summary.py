@@ -50,7 +50,7 @@ for workspace in workspaces:
             error_type = None
             url = None
             if task_log.status == 'FAILED' or task_log.status == 'FATAL':
-                error_type = 'ACCOUNTING_INTEGRATION_ERROR' if task_log.quickbooks_errors else 'ERROR'
+                error_type = 'ACCOUNTING_INTEGRATION_ERROR' if task_log.quickbooks_errors else 'MAPPING'
                 url = '{}/workspaces/main/dashboard'.format(settings.QBO_INTEGRATION_APP_URL)
             else:
                 export_type, export_id = generate_export_type_and_id(expense_group)
