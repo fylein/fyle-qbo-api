@@ -274,25 +274,25 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
         expense_group.fund_source == 'CCC'
         and ((general_settings.corporate_credit_card_expenses_object in ('CREDIT CARD PURCHASE', 'DEBIT CARD EXPENSE') and general_settings.map_merchant_to_vendor) or general_settings.corporate_credit_card_expenses_object == 'BILL')
     ):
+        if not (general_settings.corporate_credit_card_expenses_object == 'JOURNAL ENTRY' and general_settings.name_in_journal_entry == 'EMPLOYEE'):
+            employee_attribute = ExpenseAttribute.objects.filter(value=expense_group.description.get('employee_email'), workspace_id=expense_group.workspace_id, attribute_type='EMPLOYEE').first()
 
-        employee_attribute = ExpenseAttribute.objects.filter(value=expense_group.description.get('employee_email'), workspace_id=expense_group.workspace_id, attribute_type='EMPLOYEE').first()
+            try:
+                entity = EmployeeMapping.objects.get(source_employee=employee_attribute, workspace_id=expense_group.workspace_id)
 
-        try:
-            entity = EmployeeMapping.objects.get(source_employee=employee_attribute, workspace_id=expense_group.workspace_id)
+                if general_settings.employee_field_mapping == 'EMPLOYEE':
+                    entity = entity.destination_employee
+                else:
+                    entity = entity.destination_vendor if entity.destination_vendor and entity.destination_vendor.active else None
 
-            if general_settings.employee_field_mapping == 'EMPLOYEE':
-                entity = entity.destination_employee
-            else:
-                entity = entity.destination_vendor if entity.destination_vendor and entity.destination_vendor.active else None
-
-            if not entity:
-                raise EmployeeMapping.DoesNotExist
-        except EmployeeMapping.DoesNotExist:
-            bulk_errors.append({'row': None, 'expense_group_id': expense_group.id, 'value': expense_group.description.get('employee_email'), 'type': 'Employee Mapping', 'message': 'Employee mapping not found'})
-            if employee_attribute:
-                Error.objects.update_or_create(
-                    workspace_id=expense_group.workspace_id, expense_attribute=employee_attribute, defaults={'type': 'EMPLOYEE_MAPPING', 'error_title': employee_attribute.value, 'error_detail': 'Employee mapping is missing', 'is_resolved': False}
-                )
+                if not entity:
+                    raise EmployeeMapping.DoesNotExist
+            except EmployeeMapping.DoesNotExist:
+                bulk_errors.append({'row': None, 'expense_group_id': expense_group.id, 'value': expense_group.description.get('employee_email'), 'type': 'Employee Mapping', 'message': 'Employee mapping not found'})
+                if employee_attribute:
+                    Error.objects.update_or_create(
+                        workspace_id=expense_group.workspace_id, expense_attribute=employee_attribute, defaults={'type': 'EMPLOYEE_MAPPING', 'error_title': employee_attribute.value, 'error_detail': 'Employee mapping is missing', 'is_resolved': False}
+                    )
 
     expenses = expense_group.expenses.all()
 
