@@ -278,7 +278,6 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
     if general_settings.import_tax_codes and not (general_mapping.default_tax_code_id or general_mapping.default_tax_code_name):
         bulk_errors.append({'row': None, 'expense_group_id': expense_group.id, 'value': 'Default Tax Code', 'type': 'General Mapping', 'message': 'Default Tax Code not found'})
 
-    
     is_fund_source_ccc = expense_group.fund_source == 'CCC'
     is_credit_or_debit_purchase = general_settings.corporate_credit_card_expenses_object in ('CREDIT CARD PURCHASE', 'DEBIT CARD EXPENSE')
     is_mapped_to_vendor = general_settings.map_merchant_to_vendor
@@ -287,7 +286,6 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
     is_name_in_je_merchant = general_settings.name_in_journal_entry == 'MERCHANT'
 
     if not (is_fund_source_ccc and ((is_credit_or_debit_purchase and is_mapped_to_vendor) or is_bill or (is_journal_entry and is_name_in_je_merchant))):
-
         employee_attribute = ExpenseAttribute.objects.filter(value=expense_group.description.get('employee_email'), workspace_id=expense_group.workspace_id, attribute_type='EMPLOYEE').first()
 
         try:
