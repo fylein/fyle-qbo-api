@@ -1,18 +1,14 @@
 import json
-from typing import List
 import logging
 import traceback
 from datetime import datetime
 
 from django.db import transaction
-
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping
 from fyle_integrations_platform_connector import PlatformConnector
 from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 
 from apps.fyle.models import Expense, ExpenseGroup, Reimbursement
-from apps.fyle.actions import update_expenses_in_progress
-from apps.fyle.tasks import post_accounting_export_summary
 from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.actions import update_last_export_details
 from apps.quickbooks_online.exceptions import handle_qbo_exceptions
@@ -32,10 +28,8 @@ from apps.quickbooks_online.models import (
 )
 from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import Error, TaskLog
-from apps.workspaces.models import FyleCredential, QBOCredential, WorkspaceGeneralSettings, Workspace
+from apps.workspaces.models import FyleCredential, QBOCredential, WorkspaceGeneralSettings
 from fyle_qbo_api.exceptions import BulkError
-
-from .actions import generate_export_url_and_update_expense
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -215,8 +209,6 @@ def create_bill(expense_group, task_log_id, last_export: bool):
 
     load_attachments(qbo_connection, created_bill['Bill']['Id'], 'Bill', expense_group)
 
-    generate_export_url_and_update_expense(expense_group)
-
     if last_export:
         update_last_export_details(expense_group.workspace_id)
 
@@ -280,27 +272,28 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
 
     if not (
         expense_group.fund_source == 'CCC'
-        and ((general_settings.corporate_credit_card_expenses_object in ('CREDIT CARD PURCHASE', 'DEBIT CARD EXPENSE') and general_settings.map_merchant_to_vendor) or general_settings.corporate_credit_card_expenses_object == 'BILL')
+        and ((general_settings.corporate_credit_card_expenses_object in ('CREDIT CARD PURCHASE', 'DEBIT CARD EXPENSE') and general_settings.map_merchant_to_vendor) 
+        or general_settings.corporate_credit_card_expenses_object == 'BILL' or general_settings.corporate_credit_card_expenses_object == 'JOURNAL ENTRY' and general_settings.name_in_journal_entry == 'EMPLOYEE')
     ):
-        if not (general_settings.corporate_credit_card_expenses_object == 'JOURNAL ENTRY' and general_settings.name_in_journal_entry == 'EMPLOYEE'):
-            employee_attribute = ExpenseAttribute.objects.filter(value=expense_group.description.get('employee_email'), workspace_id=expense_group.workspace_id, attribute_type='EMPLOYEE').first()
 
-            try:
-                entity = EmployeeMapping.objects.get(source_employee=employee_attribute, workspace_id=expense_group.workspace_id)
+        employee_attribute = ExpenseAttribute.objects.filter(value=expense_group.description.get('employee_email'), workspace_id=expense_group.workspace_id, attribute_type='EMPLOYEE').first()
 
-                if general_settings.employee_field_mapping == 'EMPLOYEE':
-                    entity = entity.destination_employee
-                else:
-                    entity = entity.destination_vendor if entity.destination_vendor and entity.destination_vendor.active else None
+        try:
+            entity = EmployeeMapping.objects.get(source_employee=employee_attribute, workspace_id=expense_group.workspace_id)
 
-                if not entity:
-                    raise EmployeeMapping.DoesNotExist
-            except EmployeeMapping.DoesNotExist:
-                bulk_errors.append({'row': None, 'expense_group_id': expense_group.id, 'value': expense_group.description.get('employee_email'), 'type': 'Employee Mapping', 'message': 'Employee mapping not found'})
-                if employee_attribute:
-                    Error.objects.update_or_create(
-                        workspace_id=expense_group.workspace_id, expense_attribute=employee_attribute, defaults={'type': 'EMPLOYEE_MAPPING', 'error_title': employee_attribute.value, 'error_detail': 'Employee mapping is missing', 'is_resolved': False}
-                    )
+            if general_settings.employee_field_mapping == 'EMPLOYEE':
+                entity = entity.destination_employee
+            else:
+                entity = entity.destination_vendor if entity.destination_vendor and entity.destination_vendor.active else None
+
+            if not entity:
+                raise EmployeeMapping.DoesNotExist
+        except EmployeeMapping.DoesNotExist:
+            bulk_errors.append({'row': None, 'expense_group_id': expense_group.id, 'value': expense_group.description.get('employee_email'), 'type': 'Employee Mapping', 'message': 'Employee mapping not found'})
+            if employee_attribute:
+                Error.objects.update_or_create(
+                    workspace_id=expense_group.workspace_id, expense_attribute=employee_attribute, defaults={'type': 'EMPLOYEE_MAPPING', 'error_title': employee_attribute.value, 'error_detail': 'Employee mapping is missing', 'is_resolved': False}
+                )
 
     expenses = expense_group.expenses.all()
 
@@ -377,8 +370,6 @@ def create_cheque(expense_group, task_log_id, last_export: bool):
 
         load_attachments(qbo_connection, created_cheque['Purchase']['Id'], 'Purchase', expense_group)
 
-    generate_export_url_and_update_expense(expense_group)
-
     if last_export:
         update_last_export_details(expense_group.workspace_id)
 
@@ -430,8 +421,6 @@ def create_qbo_expense(expense_group, task_log_id, last_export: bool):
 
     load_attachments(qbo_connection, created_qbo_expense['Purchase']['Id'], 'Purchase', expense_group)
 
-    generate_export_url_and_update_expense(expense_group)
-
     if last_export:
         update_last_export_details(expense_group.workspace_id)
 
@@ -482,8 +471,6 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id, last_e
 
         load_attachments(qbo_connection, created_credit_card_purchase['Purchase']['Id'], 'Purchase', expense_group)
 
-    generate_export_url_and_update_expense(expense_group)
-
     if last_export:
         update_last_export_details(expense_group.workspace_id)
 
@@ -531,8 +518,6 @@ def create_journal_entry(expense_group, task_log_id, last_export: bool):
         resolve_errors_for_exported_expense_group(expense_group)
 
     load_attachments(qbo_connection, created_journal_entry['JournalEntry']['Id'], 'JournalEntry', expense_group)
-
-    generate_export_url_and_update_expense(expense_group)
 
     if last_export:
         update_last_export_details(expense_group.workspace_id)
@@ -675,9 +660,3 @@ def async_sync_accounts(workspace_id):
         qbo_connection.sync_accounts()
     except (WrongParamsError, InvalidTokenError) as exception:
         logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
-
-
-def update_expense_and_post_summary(in_progress_expenses: List[Expense], workspace_id: int) -> None:
-    fyle_org_id = Workspace.objects.get(pk=workspace_id).fyle_org_id
-    update_expenses_in_progress(in_progress_expenses)
-    post_accounting_export_summary(fyle_org_id, workspace_id)
