@@ -1,4 +1,5 @@
 from asyncio.log import logger
+from django.conf import settings
 
 import pytest
 from rest_framework.response import Response
@@ -12,7 +13,9 @@ from apps.fyle.helpers import (
     get_request,
     post_request,
 )
-from apps.fyle.models import ExpenseFilter
+from apps.fyle.models import ExpenseFilter, Expense
+from apps.fyle.helpers import get_updated_accounting_export_summary
+from apps.fyle.actions import __bulk_update_expenses
 
 
 def test_post_request(mocker):
@@ -340,3 +343,65 @@ def test_multiple_construct_expense_filter():
     response = Q(**filter_2) | Q(**filter_3)
 
     assert final_filter == response
+
+
+def test_get_updated_accounting_export_summary():
+    updated_accounting_export_summary = get_updated_accounting_export_summary(
+        'tx_123',
+        'SKIPPED',
+        None,
+        '{}/workspaces/main/export_log'.format(settings.QBO_INTEGRATION_APP_URL),
+        True
+    )
+    expected_updated_accounting_export_summary = {
+        'id': 'tx_123',
+        'state': 'SKIPPED',
+        'error_type': None,
+        'url': '{}/workspaces/main/export_log'.format(settings.QBO_INTEGRATION_APP_URL),
+        'synced': True
+    }
+
+    assert updated_accounting_export_summary == expected_updated_accounting_export_summary
+
+    updated_accounting_export_summary = get_updated_accounting_export_summary(
+        'tx_123',
+        'SKIPPED',
+        None,
+        '{}/workspaces/main/export_log'.format(settings.QBO_INTEGRATION_APP_URL),
+        False
+    )
+    expected_updated_accounting_export_summary = {
+        'id': 'tx_123',
+        'state': 'SKIPPED',
+        'error_type': None,
+        'url': '{}/workspaces/main/export_log'.format(settings.QBO_INTEGRATION_APP_URL),
+        'synced': False
+    }
+
+    assert updated_accounting_export_summary == expected_updated_accounting_export_summary
+
+
+def test_bulk_update_expenses(db):
+    expenses = Expense.objects.filter(org_id='or79Cob97KSh')
+    for expense in expenses:
+        expense.accounting_export_summary = get_updated_accounting_export_summary(
+            expense.expense_id,
+            'SKIPPED',
+            None,
+            '{}/workspaces/main/export_log'.format(settings.QBO_INTEGRATION_APP_URL),
+            True
+        )
+        expense.save()
+
+    __bulk_update_expenses(expenses)
+
+    expenses = Expense.objects.filter(org_id='or79Cob97KSh')
+
+    for expense in expenses:
+        assert expense.accounting_export_summary['synced'] == True
+        assert expense.accounting_export_summary['state'] == 'SKIPPED'
+        assert expense.accounting_export_summary['error_type'] == None
+        assert expense.accounting_export_summary['url'] == '{}/workspaces/main/export_log'.format(
+            settings.QBO_INTEGRATION_APP_URL
+        )
+        assert expense.accounting_export_summary['id'] == expense.expense_id

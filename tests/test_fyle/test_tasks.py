@@ -1,13 +1,16 @@
 import json
 from unittest import mock
 
-import pytest
+from django.db.models import Q
 from django.urls import reverse
 
+import pytest
+
 from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings
-from apps.fyle.tasks import create_expense_groups
+from apps.fyle.tasks import create_expense_groups, post_accounting_export_summary
+from apps.fyle.actions import mark_expenses_as_skipped
 from apps.tasks.models import TaskLog
-from apps.workspaces.models import FyleCredential
+from apps.workspaces.models import FyleCredential, Workspace
 from tests.helper import dict_compare_keys
 from tests.test_fyle.fixtures import data
 
@@ -80,3 +83,22 @@ def test_create_expense_group_skipped_flow(mocker, api_client, test_connection):
         for expense in expenses:
             if expense.employee_email == 'jhonsnow@fyle.in':
                 assert expense.is_skipped == True
+
+
+def test_post_accounting_export_summary(db, mocker):
+    expense_group = ExpenseGroup.objects.filter(workspace_id=3).first()
+    expense_id = expense_group.expenses.first().id
+    expense_group.expenses.remove(expense_id)
+
+    workspace = Workspace.objects.get(id=3)
+    mark_expenses_as_skipped(Q(), [expense_id], workspace)
+
+    assert Expense.objects.filter(id=expense_id).first().accounting_export_summary['synced'] == False
+
+    mocker.patch(
+        'fyle_integrations_platform_connector.apis.Expenses.post_bulk_accounting_export_summary',
+        return_value=[]
+    )
+    post_accounting_export_summary('or79Cob97KSh', 3)
+
+    assert Expense.objects.filter(id=expense_id).first().accounting_export_summary['synced'] == True

@@ -5,7 +5,7 @@ from django.db.models import Q
 from django_q.models import Schedule
 from django_q.tasks import Chain, async_task
 
-from apps.fyle.models import ExpenseGroup
+from apps.fyle.models import ExpenseGroup, Expense
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import FyleCredential, WorkspaceGeneralSettings
 
@@ -14,7 +14,7 @@ def async_run_post_configration_triggers(workspace_general_settings: WorkspaceGe
     async_task('apps.quickbooks_online.tasks.async_sync_accounts', int(workspace_general_settings.workspace_id))
 
 
-def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
+def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool):
     """
     Schedule bills creation
     :param expense_group_ids: List of expense group ids
@@ -24,10 +24,8 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
     if expense_group_ids:
         expense_groups = ExpenseGroup.objects.filter(Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']), workspace_id=workspace_id, id__in=expense_group_ids, bill__id__isnull=True, exported_at__isnull=True).all()
 
-        chain = Chain()
-
-        fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials)
+        chain_tasks = []
+        in_progress_expenses = []
 
         for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_BILL'})
@@ -40,13 +38,45 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str]):
             if expense_groups.count() == index + 1:
                 last_export = True
 
-            chain.append('apps.quickbooks_online.tasks.create_bill', expense_group, task_log.id, last_export)
+            chain_tasks.append({
+                'target': 'apps.quickbooks_online.tasks.create_bill',
+                'expense_group': expense_group,
+                'task_log_id': task_log.id,
+                'last_export': last_export
+            })
 
-        if chain.length() > 1:
-            chain.run()
+            # Don't include expenses with previous export state as ERROR and it's an auto import/export run
+            if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
+                in_progress_expenses.extend(expense_group.expenses.all())
+
+        if len(chain_tasks) > 0:
+            fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+            __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks)
 
 
-def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
+def __create_chain_and_run(fyle_credentials: FyleCredential, in_progress_expenses: List[Expense],
+        workspace_id: int, chain_tasks: List[dict]) -> None:
+    """
+    Create chain and run
+    :param fyle_credentials: Fyle credentials
+    :param in_progress_expenses: List of in progress expenses
+    :param workspace_id: workspace id
+    :param chain_tasks: List of chain tasks
+    :return: None
+    """
+    chain = Chain()
+
+    chain.append('apps.quickbooks_online.tasks.update_expense_and_post_summary', in_progress_expenses, workspace_id)
+    chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials)
+
+    for task in chain_tasks:
+        chain.append(task['target'], task['expense_group'], task['task_log_id'], task['last_export'])
+
+    chain.append('apps.fyle.tasks.post_accounting_export_summary', fyle_credentials.workspace.fyle_org_id, workspace_id)
+    chain.run()
+
+
+def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool):
     """
     Schedule cheque creation
     :param expense_group_ids: List of expense group ids
@@ -56,10 +86,8 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
     if expense_group_ids:
         expense_groups = ExpenseGroup.objects.filter(Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']), workspace_id=workspace_id, id__in=expense_group_ids, cheque__id__isnull=True, exported_at__isnull=True).all()
 
-        chain = Chain()
-
-        fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials)
+        chain_tasks = []
+        in_progress_expenses = []
 
         for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_CHECK'})
@@ -72,13 +100,23 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str]):
             if expense_groups.count() == index + 1:
                 last_export = True
 
-            chain.append('apps.quickbooks_online.tasks.create_cheque', expense_group, task_log.id, last_export)
+            chain_tasks.append({
+                'target': 'apps.quickbooks_online.tasks.create_cheque',
+                'expense_group': expense_group,
+                'task_log_id': task_log.id,
+                'last_export': last_export
+            })
 
-        if chain.length() > 1:
-            chain.run()
+            # Don't include expenses with previous export state as ERROR and it's an auto import/export run
+            if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
+                in_progress_expenses.extend(expense_group.expenses.all())
+
+        if len(chain_tasks) > 0:
+            fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+            __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks)
 
 
-def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[str]):
+def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool):
     """
     Schedule journal_entry creation
     :param expense_group_ids: List of expense group ids
@@ -90,10 +128,8 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
             Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']), workspace_id=workspace_id, id__in=expense_group_ids, journalentry__id__isnull=True, exported_at__isnull=True
         ).all()
 
-        chain = Chain()
-
-        fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials)
+        chain_tasks = []
+        in_progress_expenses = []
 
         for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_JOURNAL_ENTRY'})
@@ -106,13 +142,22 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
             if expense_groups.count() == index + 1:
                 last_export = True
 
-            chain.append('apps.quickbooks_online.tasks.create_journal_entry', expense_group, task_log.id, last_export)
+            chain_tasks.append({
+                'target': 'apps.quickbooks_online.tasks.create_journal_entry',
+                'expense_group': expense_group,
+                'task_log_id': task_log.id,
+                'last_export': last_export
+            })
+            # Don't include expenses with previous export state as ERROR and it's an auto import/export run
+            if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
+                in_progress_expenses.extend(expense_group.expenses.all())
 
-        if chain.length() > 1:
-            chain.run()
+        if len(chain_tasks) > 0:
+            fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+            __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks)
 
 
-def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids: List[str]):
+def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool):
     """
     Schedule credit card purchase creation
     :param expense_group_ids: List of expense group ids
@@ -124,10 +169,8 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
             Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']), workspace_id=workspace_id, id__in=expense_group_ids, creditcardpurchase__id__isnull=True, exported_at__isnull=True
         ).all()
 
-        chain = Chain()
-
-        fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials)
+        chain_tasks = []
+        in_progress_expenses = []
 
         for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_CREDIT_CARD_PURCHASE'})
@@ -140,13 +183,23 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
             if expense_groups.count() == index + 1:
                 last_export = True
 
-            chain.append('apps.quickbooks_online.tasks.create_credit_card_purchase', expense_group, task_log.id, last_export)
+            chain_tasks.append({
+                'target': 'apps.quickbooks_online.tasks.create_credit_card_purchase',
+                'expense_group': expense_group,
+                'task_log_id': task_log.id,
+                'last_export': last_export
+            })
 
-        if chain.length() > 1:
-            chain.run()
+            # Don't include expenses with previous export state as ERROR and it's an auto import/export run
+            if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
+                in_progress_expenses.extend(expense_group.expenses.all())
+
+        if len(chain_tasks) > 0:
+            fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+            __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks)
 
 
-def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str]):
+def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool):
     """
     Schedule QBO expense creation
     :param expense_group_ids: List of expense group ids
@@ -156,10 +209,8 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
     if expense_group_ids:
         expense_groups = ExpenseGroup.objects.filter(Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']), workspace_id=workspace_id, id__in=expense_group_ids, qboexpense__id__isnull=True, exported_at__isnull=True).all()
 
-        chain = Chain()
-
-        fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-        chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials)
+        chain_tasks = []
+        in_progress_expenses = []
 
         for index, expense_group in enumerate(expense_groups):
             task_log, _ = TaskLog.objects.get_or_create(
@@ -174,10 +225,20 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
             if expense_groups.count() == index + 1:
                 last_export = True
 
-            chain.append('apps.quickbooks_online.tasks.create_qbo_expense', expense_group, task_log.id, last_export)
+            chain_tasks.append({
+                'target': 'apps.quickbooks_online.tasks.create_qbo_expense',
+                'expense_group': expense_group,
+                'task_log_id': task_log.id,
+                'last_export': last_export
+            })
 
-        if chain.length() > 1:
-            chain.run()
+            # Don't include expenses with previous export state as ERROR and it's an auto import/export run
+            if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
+                in_progress_expenses.extend(expense_group.expenses.all())
+
+        if len(chain_tasks) > 0:
+            fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+            __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks)
 
 
 def schedule_qbo_objects_status_sync(sync_qbo_to_fyle_payments, workspace_id):

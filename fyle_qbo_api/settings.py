@@ -189,6 +189,9 @@ FYLE_BASE_URL = os.environ.get('FYLE_BASE_URL')
 FYLE_APP_URL = os.environ.get('APP_URL')
 FYLE_EXPENSE_URL = os.environ.get('FYLE_APP_URL')
 
+QBO_INTEGRATION_APP_URL = os.environ.get('QBO_INTEGRATION_APP_URL')
+QBO_APP_URL = os.environ.get('QBO_APP_URL')
+
 
 # QBO Settings
 QBO_CLIENT_ID = os.environ.get('QBO_CLIENT_ID')
@@ -199,6 +202,7 @@ QBO_ENVIRONMENT = os.environ.get('QBO_ENVIRONMENT')
 ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY')
 E2E_TESTS_CLIENT_SECRET = os.environ.get('E2E_TESTS_CLIENT_SECRET')
 E2E_TESTS_REALM_ID = os.environ.get('E2E_TESTS_REALM_ID')
+INTEGRATIONS_SETTINGS_API = os.environ.get('INTEGRATIONS_SETTINGS_API')
 
 # Cache Settings
 SENDGRID_SANDBOX_MODE_IN_DEBUG = False

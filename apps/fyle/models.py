@@ -1,6 +1,7 @@
 """
 Fyle Models
 """
+from collections import defaultdict
 from datetime import datetime
 from typing import Dict, List
 
@@ -99,9 +100,14 @@ class Expense(models.Model):
     fund_source = models.CharField(max_length=255, help_text='Expense fund source')
     verified_at = models.DateTimeField(help_text='Report verified at', null=True)
     custom_properties = JSONField(null=True)
+    previous_export_state = models.CharField(max_length=255, help_text='Previous export state', null=True)
+    accounting_export_summary = JSONField(default=dict)
     paid_on_qbo = models.BooleanField(help_text='Expense Payment status on QBO', default=False)
     payment_number = models.CharField(max_length=55, help_text='Expense payment number', null=True)
     is_skipped = models.BooleanField(null=True, default=False, help_text='Expense is skipped or not')
+    workspace = models.ForeignKey(
+        Workspace, on_delete=models.PROTECT, help_text='To which workspace this expense belongs to', null=True
+    )
 
     class Meta:
         db_table = 'expenses'
@@ -154,6 +160,7 @@ class Expense(models.Model):
                     'verified_at': expense['verified_at'],
                     'custom_properties': expense['custom_properties'],
                     'payment_number': expense['payment_number'],
+                    'workspace_id': workspace_id
                 },
             )
 
@@ -324,12 +331,26 @@ class ExpenseGroup(models.Model):
 
         if general_settings.reimbursable_expenses_object == 'EXPENSE' and 'expense_id' not in reimbursable_expense_group_fields:
             total_amount = 0
-            for expense in reimbursable_expenses:
-                total_amount += expense.amount
+            if 'spent_at' in reimbursable_expense_group_fields:
+                grouped_data = defaultdict(list)
+                for expense in reimbursable_expenses:
+                    spent_at = expense.spent_at
+                    grouped_data[spent_at].append(expense)
+                grouped_expenses = list(grouped_data.values())
+                reimbursable_expenses = []
+                for expense_group in grouped_expenses:
+                    total_amount = 0
+                    for expense in expense_group:
+                        total_amount += expense.amount
+                    if total_amount < 0:
+                        expense_group = list(filter(lambda expense: expense.amount > 0, expense_group))
+                    reimbursable_expenses.extend(expense_group)
+            else:
+                for expense in reimbursable_expenses:
+                    total_amount += expense.amount
 
-            if total_amount < 0:
-                reimbursable_expenses = list(filter(lambda expense: expense.amount > 0, reimbursable_expenses))
-
+                if total_amount < 0:
+                    reimbursable_expenses = list(filter(lambda expense: expense.amount > 0, reimbursable_expenses))
         elif general_settings.reimbursable_expenses_object != 'JOURNAL ENTRY':
             reimbursable_expenses = list(filter(lambda expense: expense.amount > 0, reimbursable_expenses))
 

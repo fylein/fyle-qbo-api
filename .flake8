@@ -28,3 +28,4 @@ max-line-length = 99
 max-complexity = 19
 ban-relative-imports = true
 select = B,C,E,F,N,W,I25
+exclude=*env

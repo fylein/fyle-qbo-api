@@ -1,5 +1,5 @@
 import json
-from typing import List
+from typing import List, Union
 
 import requests
 from django.conf import settings
@@ -22,7 +22,7 @@ def post_request(url, body, refresh_token=None):
 
     response = requests.post(url, headers=api_headers, data=body)
 
-    if response.status_code == 200:
+    if response.status_code in [200, 201]:
         return json.loads(response.text)
     else:
         raise Exception(response.text)
@@ -150,3 +150,23 @@ def construct_expense_filter(expense_filter):
 
     # Return the constructed expense filter
     return constructed_expense_filter
+
+
+def get_updated_accounting_export_summary(
+        expense_id: str, state: str, error_type: Union[str, None], url: Union[str, None], is_synced: bool) -> dict:
+    """
+    Get updated accounting export summary
+    :param expense_id: expense id
+    :param state: state
+    :param error_type: error type
+    :param url: url
+    :param is_synced: is synced
+    :return: updated accounting export summary
+    """
+    return {
+        'id': expense_id,
+        'state': state,
+        'error_type': error_type,
+        'url': url,
+        'synced': is_synced
+    }
