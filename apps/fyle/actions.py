@@ -5,6 +5,8 @@ from django.conf import settings
 from django.db.models import Q
 
 from fyle_integrations_platform_connector import PlatformConnector
+from fyle.platform.internals.decorators import retry
+from fyle.platform.exceptions import InternalServerError
 from fyle_accounting_mappings.models import ExpenseAttribute
 
 from apps.fyle.constants import DEFAULT_FYLE_CONDITIONS
@@ -224,3 +226,14 @@ def update_complete_expenses(exported_expenses: List[Expense], url: str) -> None
         )
 
     __bulk_update_expenses(expense_to_be_updated)
+
+
+@retry(n=3, backoff=1, exceptions=InternalServerError)
+def bulk_post_accounting_export_summary(platform: PlatformConnector, payload: List[dict]):
+    """
+    Bulk post accounting export summary with retry of 3 times and backoff of 1 second which handles InternalServerError
+    :param platform: Platform connector object
+    :param payload: Payload
+    :return: None
+    """
+    platform.expenses.post_bulk_accounting_export_summary(payload)
