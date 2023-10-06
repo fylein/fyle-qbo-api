@@ -227,6 +227,7 @@ def update_complete_expenses(exported_expenses: List[Expense], url: str) -> None
 
     __bulk_update_expenses(expense_to_be_updated)
 
+
 @retry(n=3, backoff=1, exceptions=InternalServerError)
 def bulk_post_accounting_export_summary(platform: PlatformConnector, payload: List[dict]):
     """
