@@ -1,11 +1,22 @@
+from unittest import mock
+
 from django.conf import settings
 from django.db.models import Q
 
+from fyle_integrations_platform_connector import PlatformConnector
+from fyle.platform.exceptions import InternalServerError, RetryException
+
 from apps.fyle.models import Expense, ExpenseGroup
-from apps.fyle.actions import update_expenses_in_progress, mark_expenses_as_skipped, \
-    mark_accounting_export_summary_as_synced, update_failed_expenses, update_complete_expenses
+from apps.fyle.actions import (
+    update_expenses_in_progress,
+    mark_expenses_as_skipped,
+    mark_accounting_export_summary_as_synced,
+    update_failed_expenses,
+    update_complete_expenses,
+    bulk_post_accounting_export_summary
+)
 from apps.fyle.helpers import get_updated_accounting_export_summary
-from apps.workspaces.models import Workspace
+from apps.workspaces.models import Workspace, FyleCredential
 
 
 def test_update_expenses_in_progress(db):
@@ -89,3 +100,15 @@ def test_update_complete_expenses(db):
         assert expense.accounting_export_summary['error_type'] == None
         assert expense.accounting_export_summary['url'] == 'https://qbo.google.com'
         assert expense.accounting_export_summary['id'] == expense.expense_id
+
+
+def test_bulk_post_accounting_export_summary(db):
+    fyle_credentails = FyleCredential.objects.get(workspace_id=3)
+    platform = PlatformConnector(fyle_credentails)
+
+    with mock.patch('fyle.platform.apis.v1beta.admin.Expenses.post_bulk_accounting_export_summary') as mock_call:
+        mock_call.side_effect = InternalServerError('Timeout')
+        try:
+            bulk_post_accounting_export_summary(platform, {})
+        except RetryException:
+            assert mock_call.call_count == 3
