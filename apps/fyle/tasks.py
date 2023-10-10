@@ -196,6 +196,7 @@ def post_accounting_export_summary(org_id: str, workspace_id: int) -> None:
 
         if payload:
             try:
+                logger.info('Accounting Export Summary Payload Workspace ID - %s - Payload - %s', workspace_id, payload)
                 bulk_post_accounting_export_summary(platform, payload)
                 mark_accounting_export_summary_as_synced(paginated_expenses)
             except RetryException:
