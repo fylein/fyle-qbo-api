@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from typing import List
+import logging
 
 from django.conf import settings
 from django.db.models import Q
@@ -14,6 +15,10 @@ from apps.fyle.models import ExpenseGroup, Expense
 from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
 
 from .helpers import get_updated_accounting_export_summary
+
+
+logger = logging.getLogger(__name__)
+logger.level = logging.INFO
 
 
 def get_expense_group_ids(workspace_id: int):
@@ -164,6 +169,7 @@ def mark_accounting_export_summary_as_synced(expenses: List[Expense]) -> None:
     for expense in expenses:
         expense.accounting_export_summary['synced'] = True
         updated_accounting_export_summary = expense.accounting_export_summary
+        logger.info('updated_accounting_export_summary - %s', updated_accounting_export_summary)
         expense_to_be_updated.append(
             Expense(
                 id=expense.id,
