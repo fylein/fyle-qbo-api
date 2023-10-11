@@ -27,6 +27,7 @@ from apps.fyle.views import (
     ExportableExpenseGroupsView,
     RefreshFyleDimensionView,
     SyncFyleDimensionView,
+    ExportView
 )
 
 urlpatterns = [
@@ -41,4 +42,5 @@ urlpatterns = [
     path('expense_filters/', ExpenseFilterView.as_view(), name='expense-filters'),
     path('expenses/', ExpenseView.as_view(), name='expenses'),
     path('custom_fields/', CustomFieldView.as_view(), name='custom-field'),
+    path('exports/', ExportView.as_view(), name='exports')
 ]
