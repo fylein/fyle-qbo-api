@@ -12,6 +12,7 @@ from apps.fyle.helpers import (
     get_cluster_domain,
     get_request,
     post_request,
+    get_source_account_type
 )
 from apps.fyle.models import ExpenseFilter, Expense
 from apps.fyle.helpers import get_updated_accounting_export_summary
@@ -405,3 +406,9 @@ def test_bulk_update_expenses(db):
             settings.QBO_INTEGRATION_APP_URL
         )
         assert expense.accounting_export_summary['id'] == expense.expense_id
+
+
+def test_get_source_account_type():
+    source_account = get_source_account_type(['PERSONAL', 'CCC'])
+
+    assert source_account == ['PERSONAL_CASH_ACCOUNT', 'PERSONAL_CORPORATE_CREDIT_CARD_ACCOUNT']
