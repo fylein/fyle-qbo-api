@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import List, Dict
 
 from django.db import transaction
-from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError, RetryException
+from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
 from fyle_integrations_platform_connector import PlatformConnector
 
 from apps.fyle.models import Expense, ExpenseGroupSettings, ExpenseFilter, ExpenseGroup
