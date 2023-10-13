@@ -985,7 +985,7 @@ def test_schedule_credit_card_purchase_creation(db):
     task_log.status = 'READY'
     task_log.save()
 
-    schedule_credit_card_purchase_creation(workspace_id, [17], False)
+    schedule_credit_card_purchase_creation(workspace_id, [17], False, 'CCC')
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'CREATING_CREDIT_CARD_PURCHASE'
@@ -1002,7 +1002,7 @@ def test_schedule_bills_creation(db):
     task_log.status = 'READY'
     task_log.save()
 
-    schedule_bills_creation(workspace_id, [23], False)
+    schedule_bills_creation(workspace_id, [23], False, 'PERSONAL')
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'CREATING_BILL'
@@ -1019,7 +1019,7 @@ def test_schedule_cheques_creation(db):
     task_log.status = 'READY'
     task_log.save()
 
-    schedule_cheques_creation(workspace_id, [23], False)
+    schedule_cheques_creation(workspace_id, [23], False, 'PERSONAL')
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'CREATING_CHECK'
@@ -1036,7 +1036,7 @@ def test_schedule_qbo_expense_creation(db):
     task_log.status = 'READY'
     task_log.save()
 
-    schedule_qbo_expense_creation(workspace_id, [23], False)
+    schedule_qbo_expense_creation(workspace_id, [23], False, 'PERSONAL')
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'CREATING_EXPENSE'
@@ -1053,7 +1053,7 @@ def test_schedule_journal_entry_creation(db):
     task_log.status = 'READY'
     task_log.save()
 
-    schedule_journal_entry_creation(workspace_id, [23], False)
+    schedule_journal_entry_creation(workspace_id, [23], False, 'PERSONAL')
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'CREATING_JOURNAL_ENTRY'

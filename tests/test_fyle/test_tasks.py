@@ -7,7 +7,7 @@ from django.urls import reverse
 import pytest
 
 from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings
-from apps.fyle.tasks import create_expense_groups, post_accounting_export_summary
+from apps.fyle.tasks import create_expense_groups, post_accounting_export_summary, import_and_export_expenses
 from apps.fyle.actions import mark_expenses_as_skipped
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import FyleCredential, Workspace
@@ -91,6 +91,11 @@ def test_post_accounting_export_summary(db, mocker):
     expense_group.expenses.remove(expense_id)
 
     workspace = Workspace.objects.get(id=3)
+
+    expense = Expense.objects.filter(id=expense_id).first()
+    expense.workspace_id = 3
+    expense.save()
+
     mark_expenses_as_skipped(Q(), [expense_id], workspace)
 
     assert Expense.objects.filter(id=expense_id).first().accounting_export_summary['synced'] == False
@@ -102,3 +107,7 @@ def test_post_accounting_export_summary(db, mocker):
     post_accounting_export_summary('or79Cob97KSh', 3)
 
     assert Expense.objects.filter(id=expense_id).first().accounting_export_summary['synced'] == True
+
+
+def test_import_and_export_expenses(db):
+    import_and_export_expenses('rp1s1L3QtMpF', 'or79Cob97KSh')

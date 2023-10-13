@@ -7,14 +7,14 @@ from django.db.models import Q
 
 from fyle_integrations_platform_connector import PlatformConnector
 from fyle.platform.internals.decorators import retry
-from fyle.platform.exceptions import InternalServerError
+from fyle.platform.exceptions import InternalServerError, RetryException
 from fyle_accounting_mappings.models import ExpenseAttribute
 
 from apps.fyle.constants import DEFAULT_FYLE_CONDITIONS
 from apps.fyle.models import ExpenseGroup, Expense
 from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
 
-from .helpers import get_updated_accounting_export_summary
+from .helpers import get_updated_accounting_export_summary, get_batched_expenses
 
 
 logger = logging.getLogger(__name__)
@@ -243,3 +243,26 @@ def bulk_post_accounting_export_summary(platform: PlatformConnector, payload: Li
     :return: None
     """
     platform.expenses.post_bulk_accounting_export_summary(payload)
+
+
+def create_generator_and_post_in_batches(accounting_export_summary_batches: List[dict], platform: PlatformConnector, workspace_id: int) -> None:
+    """
+    Create generator and post in batches
+    :param accounting_export_summary_batches: Accounting export summary batches
+    :param platform: Platform connector object
+    :param workspace_id: Workspace id
+    :return: None
+    """
+    for batched_payload in accounting_export_summary_batches:
+        try:
+            if batched_payload:
+                logger.info('Accounting Export Summary Payload Workspace ID - %s - Payload - %s', workspace_id, batched_payload)
+                bulk_post_accounting_export_summary(platform, batched_payload)
+
+                batched_expenses = get_batched_expenses(batched_payload, workspace_id)
+                mark_accounting_export_summary_as_synced(batched_expenses)
+        except RetryException:
+            logger.error(
+                'Internal server error while posting accounting export summary to Fyle workspace_id: %s',
+                workspace_id
+            )

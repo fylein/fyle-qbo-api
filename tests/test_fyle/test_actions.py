@@ -13,7 +13,8 @@ from apps.fyle.actions import (
     mark_accounting_export_summary_as_synced,
     update_failed_expenses,
     update_complete_expenses,
-    bulk_post_accounting_export_summary
+    bulk_post_accounting_export_summary,
+    create_generator_and_post_in_batches
 )
 from apps.fyle.helpers import get_updated_accounting_export_summary
 from apps.workspaces.models import Workspace, FyleCredential
@@ -112,3 +113,21 @@ def test_bulk_post_accounting_export_summary(db):
             bulk_post_accounting_export_summary(platform, {})
         except RetryException:
             assert mock_call.call_count == 3
+
+
+def test_create_generator_and_post_in_batches(db):
+    fyle_credentails = FyleCredential.objects.get(workspace_id=3)
+    platform = PlatformConnector(fyle_credentails)
+
+    with mock.patch('fyle.platform.apis.v1beta.admin.Expenses.post_bulk_accounting_export_summary') as mock_call:
+        mock_call.side_effect = RetryException('Timeout')
+        try:
+            create_generator_and_post_in_batches([{
+                'id': 'txxTi9ZfdepC'
+            }], platform, 3)
+
+            # Exception should be handled
+            assert True
+        except RetryException:
+            # This should not be reached
+            assert False
