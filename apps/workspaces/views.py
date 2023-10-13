@@ -25,7 +25,7 @@ from apps.workspaces.serializers import (
     WorkSpaceGeneralSettingsSerializer,
     WorkspaceSerializer,
 )
-from apps.workspaces.tasks import export_to_qbo
+from apps.workspaces.actions import export_to_qbo
 from apps.workspaces.utils import generate_qbo_refresh_token
 
 logger = logging.getLogger(__name__)

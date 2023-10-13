@@ -16,9 +16,16 @@ from rest_framework.response import Response
 from rest_framework.views import status
 
 from apps.fyle.helpers import get_cluster_domain, post_request
-from apps.fyle.models import ExpenseGroupSettings
+from apps.fyle.models import ExpenseGroupSettings, ExpenseGroup
+from apps.quickbooks_online.queue import (
+    schedule_bills_creation,
+    schedule_cheques_creation,
+    schedule_credit_card_purchase_creation,
+    schedule_journal_entry_creation,
+    schedule_qbo_expense_creation,
+)
 from apps.quickbooks_online.utils import QBOConnector
-from apps.workspaces.models import FyleCredential, LastExportDetail, QBOCredential, Workspace
+from apps.workspaces.models import FyleCredential, LastExportDetail, QBOCredential, Workspace, WorkspaceGeneralSettings
 from apps.workspaces.serializers import QBOCredentialSerializer
 from apps.workspaces.signals import post_delete_qbo_connection
 from apps.workspaces.utils import assert_valid
@@ -220,3 +227,92 @@ def post_to_integration_settings(workspace_id: int, active: bool):
         post_request(url, json.dumps(payload), refresh_token)
     except Exception as error:
         logger.error(error)
+
+
+def export_to_qbo(workspace_id, export_mode=None):
+    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+    last_export_detail = LastExportDetail.objects.get(workspace_id=workspace_id)
+    last_exported_at = datetime.now()
+    is_expenses_exported = False
+    export_mode = export_mode or 'MANUAL'
+
+    if general_settings.reimbursable_expenses_object:
+
+        expense_group_ids = ExpenseGroup.objects.filter(fund_source='PERSONAL', exported_at__isnull=True, workspace_id=workspace_id).values_list('id', flat=True)
+
+        if len(expense_group_ids):
+            is_expenses_exported = True
+
+        if general_settings.reimbursable_expenses_object == 'BILL':
+            schedule_bills_creation(
+                workspace_id=workspace_id,
+                expense_group_ids=expense_group_ids,
+                is_auto_export=export_mode == 'AUTO',
+                fund_source='PERSONAL'
+            )
+
+        elif general_settings.reimbursable_expenses_object == 'EXPENSE':
+            schedule_qbo_expense_creation(
+                workspace_id=workspace_id,
+                expense_group_ids=expense_group_ids,
+                is_auto_export=export_mode == 'AUTO',
+                fund_source='PERSONAL'
+            )
+
+        elif general_settings.reimbursable_expenses_object == 'CHECK':
+            schedule_cheques_creation(
+                workspace_id=workspace_id,
+                expense_group_ids=expense_group_ids,
+                is_auto_export=export_mode == 'AUTO',
+                fund_source='PERSONAL'
+            )
+
+        elif general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY':
+            schedule_journal_entry_creation(
+                workspace_id=workspace_id,
+                expense_group_ids=expense_group_ids,
+                is_auto_export=export_mode == 'AUTO',
+                fund_source='PERSONAL'
+            )
+
+    if general_settings.corporate_credit_card_expenses_object:
+        expense_group_ids = ExpenseGroup.objects.filter(fund_source='CCC', exported_at__isnull=True, workspace_id=workspace_id).values_list('id', flat=True)
+
+        if len(expense_group_ids):
+            is_expenses_exported = True
+
+        if general_settings.corporate_credit_card_expenses_object == 'JOURNAL ENTRY':
+            schedule_journal_entry_creation(
+                workspace_id=workspace_id,
+                expense_group_ids=expense_group_ids,
+                is_auto_export=export_mode == 'AUTO',
+                fund_source='CCC'
+            )
+
+        elif general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE':
+            schedule_credit_card_purchase_creation(
+                workspace_id=workspace_id,
+                expense_group_ids=expense_group_ids,
+                is_auto_export=export_mode == 'AUTO',
+                fund_source='CCC'
+            )
+
+        elif general_settings.corporate_credit_card_expenses_object == 'DEBIT CARD EXPENSE':
+            schedule_qbo_expense_creation(
+                workspace_id=workspace_id,
+                expense_group_ids=expense_group_ids,
+                is_auto_export=export_mode == 'AUTO',
+                fund_source='CCC'
+            )
+
+        elif general_settings.corporate_credit_card_expenses_object == 'BILL':
+            schedule_bills_creation(
+                workspace_id=workspace_id,
+                expense_group_ids=expense_group_ids,
+                is_auto_export=export_mode == 'AUTO',
+                fund_source='CCC'
+            )
+    if is_expenses_exported:
+        last_export_detail.last_exported_at = last_exported_at
+        last_export_detail.export_mode = export_mode
+        last_export_detail.save()
