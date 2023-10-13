@@ -99,6 +99,9 @@ class ExportView(generics.CreateAPIView):
     """
     Export View
     """
+    authentication_classes = []
+    permission_classes = []
+
     def post(self, request, *args, **kwargs):
         async_import_and_export_expenses(request.data)
 
