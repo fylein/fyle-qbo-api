@@ -7,7 +7,7 @@ import requests
 from django.conf import settings
 from django.db.models import Q
 
-from apps.fyle.models import ExpenseFilter, ExpenseGroupSettings
+from apps.fyle.models import ExpenseFilter, ExpenseGroupSettings, Expense
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import WorkspaceGeneralSettings
 
@@ -234,3 +234,14 @@ def handle_import_exception(task_log: TaskLog) -> None:
     task_log.status = 'FATAL'
     task_log.save()
     logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
+
+
+def get_batched_expenses(batched_payload: List[dict], workspace_id: int) -> List[Expense]:
+    """
+    Get batched expenses
+    :param batched_payload: batched payload
+    :param workspace_id: workspace id
+    :return: batched expenses
+    """
+    expense_ids = [expense['id'] for expense in batched_payload]
+    return Expense.objects.filter(expense_id__in=expense_ids, workspace_id=workspace_id)

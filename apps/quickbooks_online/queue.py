@@ -14,11 +14,13 @@ def async_run_post_configration_triggers(workspace_general_settings: WorkspaceGe
     async_task('apps.quickbooks_online.tasks.async_sync_accounts', int(workspace_general_settings.workspace_id))
 
 
-def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool):
+def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, fund_source: str):
     """
     Schedule bills creation
     :param expense_group_ids: List of expense group ids
     :param workspace_id: workspace id
+    :param is_auto_export: is auto export
+    :param fund_source: Fund source
     :return: None
     """
     if expense_group_ids:
@@ -51,36 +53,39 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_
 
         if len(chain_tasks) > 0:
             fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-            __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks)
+            __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks, fund_source)
 
 
 def __create_chain_and_run(fyle_credentials: FyleCredential, in_progress_expenses: List[Expense],
-        workspace_id: int, chain_tasks: List[dict]) -> None:
+        workspace_id: int, chain_tasks: List[dict], fund_source: str) -> None:
     """
     Create chain and run
     :param fyle_credentials: Fyle credentials
     :param in_progress_expenses: List of in progress expenses
     :param workspace_id: workspace id
     :param chain_tasks: List of chain tasks
+    :param fund_source: Fund source
     :return: None
     """
     chain = Chain()
 
-    chain.append('apps.quickbooks_online.tasks.update_expense_and_post_summary', in_progress_expenses, workspace_id)
+    chain.append('apps.quickbooks_online.tasks.update_expense_and_post_summary', in_progress_expenses, workspace_id, fund_source)
     chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials)
 
     for task in chain_tasks:
         chain.append(task['target'], task['expense_group'], task['task_log_id'], task['last_export'])
 
-    chain.append('apps.fyle.tasks.post_accounting_export_summary', fyle_credentials.workspace.fyle_org_id, workspace_id)
+    chain.append('apps.fyle.tasks.post_accounting_export_summary', fyle_credentials.workspace.fyle_org_id, workspace_id, fund_source)
     chain.run()
 
 
-def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool):
+def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, fund_source: str):
     """
     Schedule cheque creation
     :param expense_group_ids: List of expense group ids
     :param workspace_id: workspace id
+    :param is_auto_export: is auto export
+    :param fund_source: Fund source
     :return: None
     """
     if expense_group_ids:
@@ -113,10 +118,10 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], i
 
         if len(chain_tasks) > 0:
             fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-            __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks)
+            __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks, fund_source)
 
 
-def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool):
+def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, fund_source: str):
     """
     Schedule journal_entry creation
     :param expense_group_ids: List of expense group ids
@@ -154,14 +159,16 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
 
         if len(chain_tasks) > 0:
             fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-            __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks)
+            __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks, fund_source)
 
 
-def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool):
+def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, fund_source: str):
     """
     Schedule credit card purchase creation
     :param expense_group_ids: List of expense group ids
     :param workspace_id: workspace id
+    :param is_auto_export: is auto export
+    :param fund_source: Fund source
     :return: None
     """
     if expense_group_ids:
@@ -196,14 +203,16 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
 
         if len(chain_tasks) > 0:
             fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-            __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks)
+            __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks, fund_source)
 
 
-def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool):
+def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, fund_source: str):
     """
     Schedule QBO expense creation
     :param expense_group_ids: List of expense group ids
     :param workspace_id: workspace id
+    :param is_auto_export: is auto export
+    :param fund_source: Fund source
     :return: None
     """
     if expense_group_ids:
@@ -238,7 +247,7 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
 
         if len(chain_tasks) > 0:
             fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-            __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks)
+            __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks, fund_source)
 
 
 def schedule_qbo_objects_status_sync(sync_qbo_to_fyle_payments, workspace_id):

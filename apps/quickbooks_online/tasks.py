@@ -680,7 +680,14 @@ def async_sync_accounts(workspace_id):
         logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
 
 
-def update_expense_and_post_summary(in_progress_expenses: List[Expense], workspace_id: int) -> None:
+def update_expense_and_post_summary(in_progress_expenses: List[Expense], workspace_id: int, fund_source: str) -> None:
+    """
+    Update expense and post accounting export summary
+    :param in_progress_expenses: List of expenses
+    :param workspace_id: Workspace ID
+    :param fund_source: Fund source
+    :return: None
+    """
     fyle_org_id = Workspace.objects.get(pk=workspace_id).fyle_org_id
     update_expenses_in_progress(in_progress_expenses)
-    post_accounting_export_summary(fyle_org_id, workspace_id)
+    post_accounting_export_summary(fyle_org_id, workspace_id, fund_source)

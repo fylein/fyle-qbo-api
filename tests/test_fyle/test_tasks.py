@@ -91,6 +91,11 @@ def test_post_accounting_export_summary(db, mocker):
     expense_group.expenses.remove(expense_id)
 
     workspace = Workspace.objects.get(id=3)
+
+    expense = Expense.objects.filter(id=expense_id).first()
+    expense.workspace_id = 3
+    expense.save()
+
     mark_expenses_as_skipped(Q(), [expense_id], workspace)
 
     assert Expense.objects.filter(id=expense_id).first().accounting_export_summary['synced'] == False
