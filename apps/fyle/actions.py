@@ -253,10 +253,7 @@ def create_generator_and_post_in_batches(accounting_export_summary_batches: List
     :param workspace_id: Workspace id
     :return: None
     """
-    page_size = 200
-    generator = (accounting_export_summary_batches[i:i + page_size] for i in range(0, len(accounting_export_summary_batches), page_size))
-
-    for batched_payload in generator:
+    for batched_payload in accounting_export_summary_batches:
         try:
             if batched_payload:
                 logger.info('Accounting Export Summary Payload Workspace ID - %s - Payload - %s', workspace_id, batched_payload)

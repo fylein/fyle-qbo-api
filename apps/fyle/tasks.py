@@ -165,7 +165,7 @@ def sync_dimensions(fyle_credentials):
         logger.info('Invalid Token for fyle')
 
 
-def post_accounting_export_summary(org_id: str, workspace_id: int, fund_source: str=None) -> None:
+def post_accounting_export_summary(org_id: str, workspace_id: int, fund_source: str = None) -> None:
     """
     Post accounting export summary to Fyle
     :param org_id: org id
@@ -190,7 +190,7 @@ def post_accounting_export_summary(org_id: str, workspace_id: int, fund_source: 
     page_size = 200
     for offset in range(0, expenses_count, page_size):
         limit = offset + page_size
-        paginated_expenses = Expense.objects.filter(**filters)[offset:limit]
+        paginated_expenses = Expense.objects.filter(**filters).order_by('id')[offset:limit]
 
         payload = []
 
@@ -199,7 +199,7 @@ def post_accounting_export_summary(org_id: str, workspace_id: int, fund_source: 
             accounting_export_summary.pop('synced')
             payload.append(expense.accounting_export_summary)
 
-        accounting_export_summary_batches.extend(payload)
+        accounting_export_summary_batches.append(payload)
 
     create_generator_and_post_in_batches(accounting_export_summary_batches, platform, workspace_id)
 
