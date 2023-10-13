@@ -244,4 +244,4 @@ def get_batched_expenses(batched_payload: List[dict], workspace_id: int) -> List
     :return: batched expenses
     """
     expense_ids = [expense['id'] for expense in batched_payload]
-    return Expense.objects.filter(expense_id__in=expense_ids, org_id=workspace_id)
+    return Expense.objects.filter(expense_id__in=expense_ids, workspace_id=workspace_id)
