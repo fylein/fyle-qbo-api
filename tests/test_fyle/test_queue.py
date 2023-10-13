@@ -27,6 +27,7 @@ def test_create_chain_and_run(db):
     __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks, 'PERSONAL')
     assert True
 
+
 # This test is just for cov :D
 def test_async_import_and_export_expenses(db):
     body = {
