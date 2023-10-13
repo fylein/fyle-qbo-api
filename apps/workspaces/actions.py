@@ -247,28 +247,32 @@ def export_to_qbo(workspace_id, export_mode=None):
             schedule_bills_creation(
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
-                is_auto_export=export_mode == 'AUTO'
+                is_auto_export=export_mode == 'AUTO',
+                fund_source='PERSONAL'
             )
 
         elif general_settings.reimbursable_expenses_object == 'EXPENSE':
             schedule_qbo_expense_creation(
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
-                is_auto_export=export_mode == 'AUTO'
+                is_auto_export=export_mode == 'AUTO',
+                fund_source='PERSONAL'
             )
 
         elif general_settings.reimbursable_expenses_object == 'CHECK':
             schedule_cheques_creation(
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
-                is_auto_export=export_mode == 'AUTO'
+                is_auto_export=export_mode == 'AUTO',
+                fund_source='PERSONAL'
             )
 
         elif general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY':
             schedule_journal_entry_creation(
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
-                is_auto_export=export_mode == 'AUTO'
+                is_auto_export=export_mode == 'AUTO',
+                fund_source='PERSONAL'
             )
 
     if general_settings.corporate_credit_card_expenses_object:
@@ -281,28 +285,32 @@ def export_to_qbo(workspace_id, export_mode=None):
             schedule_journal_entry_creation(
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
-                is_auto_export=export_mode == 'AUTO'
+                is_auto_export=export_mode == 'AUTO',
+                fund_source='CCC'
             )
 
         elif general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE':
             schedule_credit_card_purchase_creation(
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
-                is_auto_export=export_mode == 'AUTO'
+                is_auto_export=export_mode == 'AUTO',
+                fund_source='CCC'
             )
 
         elif general_settings.corporate_credit_card_expenses_object == 'DEBIT CARD EXPENSE':
             schedule_qbo_expense_creation(
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
-                is_auto_export=export_mode == 'AUTO'
+                is_auto_export=export_mode == 'AUTO',
+                fund_source='CCC'
             )
 
         elif general_settings.corporate_credit_card_expenses_object == 'BILL':
             schedule_bills_creation(
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
-                is_auto_export=export_mode == 'AUTO'
+                is_auto_export=export_mode == 'AUTO',
+                fund_source='CCC'
             )
     if is_expenses_exported:
         last_export_detail.last_exported_at = last_exported_at
