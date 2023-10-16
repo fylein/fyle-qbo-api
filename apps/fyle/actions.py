@@ -169,7 +169,6 @@ def mark_accounting_export_summary_as_synced(expenses: List[Expense]) -> None:
     for expense in expenses:
         expense.accounting_export_summary['synced'] = True
         updated_accounting_export_summary = expense.accounting_export_summary
-        logger.info('updated_accounting_export_summary - %s', updated_accounting_export_summary)
         expense_to_be_updated.append(
             Expense(
                 id=expense.id,
@@ -256,7 +255,6 @@ def create_generator_and_post_in_batches(accounting_export_summary_batches: List
     for batched_payload in accounting_export_summary_batches:
         try:
             if batched_payload:
-                logger.info('Accounting Export Summary Payload Workspace ID - %s - Payload - %s', workspace_id, batched_payload)
                 bulk_post_accounting_export_summary(platform, batched_payload)
 
                 batched_expenses = get_batched_expenses(batched_payload, workspace_id)
