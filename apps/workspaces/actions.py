@@ -60,6 +60,7 @@ def update_or_create_workspace(user, access_token):
 
         FyleCredential.objects.update_or_create(refresh_token=auth_tokens.refresh_token, workspace_id=workspace.id, cluster_domain=cluster_domain)
         async_task('apps.workspaces.tasks.async_add_admins_to_workspace', workspace.id, user.user_id)
+        async_task('apps.workspaces.tasks.async_create_admin_subcriptions', workspace.id)
 
     return workspace
 

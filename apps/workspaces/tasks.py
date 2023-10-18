@@ -195,3 +195,18 @@ def async_update_fyle_credentials(fyle_org_id: str, refresh_token: str):
     if fyle_credentials:
         fyle_credentials.refresh_token = refresh_token
         fyle_credentials.save()
+
+
+def async_create_admin_subcriptions(workspace_id: int) -> None:
+    """
+    Create admin subscriptions
+    :param workspace_id: workspace id
+    :return: None
+    """
+    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+    platform = PlatformConnector(fyle_credentials)
+    payload = {
+        'is_enabled': True,
+        'webhook_url': '{}/workspaces/{}/fyle/exports/'.format(settings.API_URL, workspace_id)
+    }
+    platform.subscriptions.post(payload)
