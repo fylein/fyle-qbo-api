@@ -20,7 +20,7 @@ RUN if [ "$CI" = "ENABLED" ]; then \
 
 # Installing requirements
 COPY requirements.txt /tmp/requirements.txt
-RUN pip install --upgrade pip && pip install -r /tmp/requirements.txt && pip install flake8
+RUN pip install --upgrade pip && pip install -r /tmp/requirements.txt
 
 
 # Copy Project to the container
