@@ -244,6 +244,41 @@ def bulk_post_accounting_export_summary(platform: PlatformConnector, payload: Li
     platform.expenses.post_bulk_accounting_export_summary(payload)
 
 
+def __handle_post_accounting_export_summary_exception(exception: Exception, workspace_id: int) -> None:
+    """
+    Handle post accounting export summary exception
+    :param exception: Exception
+    :param workspace_id: Workspace id
+    :return: None
+    """
+    error_response = exception.__dict__
+    expense_to_be_updated = []
+    if (
+        'message' in error_response and error_response['message'] == 'Some of the parameters are wrong'
+        and 'response' in error_response and 'data' in error_response['response'] and error_response['response']['data']
+    ):
+        logger.info('Error while syncing workspace %s %s',workspace_id, error_response)
+        for expense in error_response['response']['data']:
+            if expense['message'] == 'Permission denied to perform this action.':
+                expense_instance = Expense.objects.get(expense_id=expense['key'], workspace_id=workspace_id)
+                expense_to_be_updated.append(
+                    Expense(
+                        id=expense_instance.id,
+                        accounting_export_summary=get_updated_accounting_export_summary(
+                            expense_instance.expense_id,
+                            'DELETED',
+                            None,
+                            '{}/workspaces/main/dashboard'.format(settings.QBO_INTEGRATION_APP_URL),
+                            True
+                        )
+                    )
+                )
+        if expense_to_be_updated:
+            Expense.objects.bulk_update(expense_to_be_updated, ['accounting_export_summary'], batch_size=50)
+    else:
+        logger.error('Error while syncing accounting export summary, workspace_id: %s %s', workspace_id, str(error_response))
+
+
 def create_generator_and_post_in_batches(accounting_export_summary_batches: List[dict], platform: PlatformConnector, workspace_id: int) -> None:
     """
     Create generator and post in batches
@@ -264,3 +299,5 @@ def create_generator_and_post_in_batches(accounting_export_summary_batches: List
                 'Internal server error while posting accounting export summary to Fyle workspace_id: %s',
                 workspace_id
             )
+        except Exception as exception:
+            __handle_post_accounting_export_summary_exception(exception, workspace_id)
