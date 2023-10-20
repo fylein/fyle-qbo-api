@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: CI Environment
     steps:
+      - uses: actions/checkout@v2
       - name: Bring up Services and test for token health
         run: |
           docker-compose -f docker-compose-pipeline.yml build
