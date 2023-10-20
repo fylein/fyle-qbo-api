@@ -9,7 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: CI Environment
     steps:
-        continue-on-error: true
       - name: Bring up Services and test for token health
         run: |
           docker-compose -f docker-compose-pipeline.yml build
