@@ -16,9 +16,11 @@ jobs:
           key: qbo-api-${{ hashFiles('requirements.txt') }}
           restore-keys: |
             qbo-api-${{ hashFiles('requirements.txt') }}
-      - name: Bring up Services and test for token health
+      - name: Build docker image
         run: |
           docker-compose -f docker-compose-pipeline.yml build
+      - name: Bring up Services and test for token health
+        run: |
           docker-compose -f docker-compose-pipeline.yml up -d
           docker-compose -f docker-compose-pipeline.yml exec -T api pytest tests/ --cov --cov-report=xml --cov-fail-under=96 --junit-xml=test-reports/report.xml
           echo "STATUS=$(cat pytest-coverage.txt | grep 'Required test' | awk '{ print $1 }')" >> $GITHUB_ENV
