@@ -13,9 +13,9 @@ jobs:
       - uses: satackey/action-docker-layer-caching@v0.0.11
         continue-on-error: true
         with:
-        key: qbo-api-${{ hashFiles('requirements.txt') }}
-        restore-keys: |
-          qbo-api-${{ hashFiles('requirements.txt') }}
+          key: qbo-api-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            qbo-api-${{ hashFiles('requirements.txt') }}
       - name: Bring up Services and test for token health
         run: |
           docker-compose -f docker-compose-pipeline.yml build
