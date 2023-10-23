@@ -10,15 +10,14 @@ jobs:
     environment: CI Environment
     steps:
       - uses: actions/checkout@v2
+      - run: docker-compose pull
       - uses: satackey/action-docker-layer-caching@v0.0.11
         continue-on-error: true
         with:
           key: qbo-api-${{ hashFiles('requirements.txt') }}
           restore-keys: |
             qbo-api-${{ hashFiles('requirements.txt') }}
-      - name: Build docker image
-        run: |
-          docker-compose -f docker-compose-pipeline.yml build
+      - run: docker-compose -f docker-compose-pipeline.yml build
       - name: Bring up Services and test for token health
         run: |
           docker-compose -f docker-compose-pipeline.yml up -d
