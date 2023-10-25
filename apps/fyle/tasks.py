@@ -201,6 +201,11 @@ def post_accounting_export_summary(org_id: str, workspace_id: int, fund_source: 
 
         accounting_export_summary_batches.append(payload)
 
+    logger.info(
+        'Posting accounting export summary to Fyle workspace_id: %s, payload: %s',
+        workspace_id,
+        accounting_export_summary_batches
+    )
     create_generator_and_post_in_batches(accounting_export_summary_batches, platform, workspace_id)
 
 
