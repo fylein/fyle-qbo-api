@@ -4,7 +4,7 @@ from django.conf import settings
 from django.db.models import Q
 
 from fyle_integrations_platform_connector import PlatformConnector
-from fyle.platform.exceptions import InternalServerError, RetryException
+from fyle.platform.exceptions import InternalServerError, RetryException, WrongParamsError
 
 from apps.fyle.models import Expense, ExpenseGroup
 from apps.fyle.actions import (
@@ -131,3 +131,36 @@ def test_create_generator_and_post_in_batches(db):
         except RetryException:
             # This should not be reached
             assert False
+
+
+def test_handle_post_accounting_export_summary_exception(db):
+    fyle_credentails = FyleCredential.objects.get(workspace_id=3)
+    platform = PlatformConnector(fyle_credentails)
+    expense = Expense.objects.filter(org_id='or79Cob97KSh').first()
+    expense.workspace_id = 3
+    expense.save()
+
+    expense_id = expense.expense_id
+
+    with mock.patch('fyle.platform.apis.v1beta.admin.Expenses.post_bulk_accounting_export_summary') as mock_call:
+        mock_call.side_effect = WrongParamsError('Some of the parameters are wrong', {
+            'data': [
+                {
+                    'message': 'Permission denied to perform this action.',
+                    'key': expense_id
+                }
+            ]
+        })
+        create_generator_and_post_in_batches([{
+            'id': expense_id
+        }], platform, 3)
+
+    expense = Expense.objects.get(expense_id=expense_id)
+
+    assert expense.accounting_export_summary['synced'] == True
+    assert expense.accounting_export_summary['state'] == 'DELETED'
+    assert expense.accounting_export_summary['error_type'] == None
+    assert expense.accounting_export_summary['url'] == '{}/workspaces/main/dashboard'.format(
+        settings.QBO_INTEGRATION_APP_URL
+    )
+    assert expense.accounting_export_summary['id'] == expense_id
