@@ -44,6 +44,8 @@ def update_or_create_workspace(user, access_token):
 
     if workspace:
         workspace.user.add(User.objects.get(user_id=user))
+        workspace.name = org_name
+        workspace.save()
         cache.delete(str(workspace.id))
     else:
         workspace = Workspace.objects.create(name=org_name, fyle_org_id=org_id, fyle_currency=org_currency, app_version='v2')

@@ -2,8 +2,9 @@ from fyle_accounting_mappings.models import ExpenseAttribute
 
 from apps.fyle.models import ExpenseGroupSettings
 from apps.tasks.models import TaskLog
-from apps.workspaces.models import WorkspaceGeneralSettings, WorkspaceSchedule
+from apps.workspaces.models import Workspace, WorkspaceGeneralSettings, WorkspaceSchedule
 from apps.workspaces.tasks import (
+    async_update_workspace_name,
     run_email_notification,
     run_sync_schedule,
     schedule_sync,
@@ -115,3 +116,15 @@ def test_async_create_admin_subcriptions(db, mocker):
         return_value={}
     )
     async_create_admin_subcriptions(3)
+
+
+def test_async_update_workspace_name(db, mocker):
+    mocker.patch(
+        'apps.workspaces.tasks.get_fyle_admin',
+        return_value={'data': {'org': {'name': 'Test Org'}}}
+    )
+    workspace = Workspace.objects.get(id=1)
+    async_update_workspace_name(workspace, 'Bearer access_token')
+
+    workspace = Workspace.objects.get(id=1)
+    assert workspace.name == 'Test Org'
