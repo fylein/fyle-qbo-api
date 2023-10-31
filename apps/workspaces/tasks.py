@@ -11,6 +11,8 @@ from django_q.models import Schedule
 from fyle_accounting_mappings.models import ExpenseAttribute
 from fyle_integrations_platform_connector import PlatformConnector
 
+from fyle_rest_auth.helpers import get_fyle_admin
+
 from apps.fyle.tasks import async_create_expense_groups
 from apps.tasks.models import Error, TaskLog
 from apps.workspaces.models import (
@@ -210,3 +212,11 @@ def async_create_admin_subcriptions(workspace_id: int) -> None:
         'webhook_url': '{}/workspaces/{}/fyle/exports/'.format(settings.API_URL, workspace_id)
     }
     platform.subscriptions.post(payload)
+
+
+def async_update_workspace_name(workspace: Workspace, access_token: str):
+    fyle_user = get_fyle_admin(access_token.split(' ')[1], None)
+    org_name = fyle_user['data']['org']['name']
+
+    workspace.name = org_name
+    workspace.save()
