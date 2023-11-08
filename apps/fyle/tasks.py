@@ -237,7 +237,7 @@ def import_and_export_expenses(report_id: str, org_id: str) -> None:
 
             group_expenses_and_save(expenses, task_log, workspace)
 
-        export_to_qbo(workspace.id, 'AUTO')
+        export_to_qbo(workspace.id)
 
     except Exception:
         handle_import_exception(task_log)
