@@ -111,19 +111,19 @@ def construct_task_settings_payload(workspace_id):
         'import_tax_codes': {
             'destination_field': '',
             'destination_sync_method': '',
-            'is_auto_sync_enabled' : False,
+            'is_auto_sync_enabled': False,
             'import': False,
         },
         'import_vendors_as_merchants': {
             'destination_field': '',
             'destination_sync_method': '',
-            'is_auto_sync_enabled' : False,
+            'is_auto_sync_enabled': False,
             'import': False,
         },
         'import_categories': {
             'destination_field': '',
             'destination_sync_method': '',
-            'is_auto_sync_enabled' : False,
+            'is_auto_sync_enabled': False,
             'import': False,
         },
         'mapping_settings': [],
@@ -137,10 +137,10 @@ def construct_task_settings_payload(workspace_id):
                 'source_field': mapping_setting.source_field,
                 'destination_field': mapping_setting.destination_field,
                 'destination_sync_method': SYNC_METHODS[mapping_setting.destination_field],
-                'is_auto_sync_enabled' : get_auto_sync_permission(mapping_setting),
+                'is_auto_sync_enabled': get_auto_sync_permission(mapping_setting),
                 'is_custom': False,
             })
 
-    # Make a call to the SDK 
+    # Make a call to the SDK
     # chain_import_fields_to_fyle(workspace_id, task_settings)
     pass

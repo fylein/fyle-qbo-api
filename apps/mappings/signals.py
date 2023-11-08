@@ -5,7 +5,6 @@ from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 from fyle_accounting_mappings.models import EmployeeMapping, Mapping, MappingSetting
 
-from apps.mappings.helpers import schedule_or_delete_fyle_import_tasks
 from apps.mappings.queues import (
     async_auto_create_expense_field_mapping,
     schedule_cost_centers_creation,

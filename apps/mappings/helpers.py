@@ -17,6 +17,7 @@ def schedule_or_delete_fyle_import_tasks(configuration: WorkspaceGeneralSettings
     elif not configuration.import_categories and not configuration.import_items and not configuration.import_vendors_as_merchants:
         Schedule.objects.filter(func='apps.mappings.tasks.auto_import_and_map_fyle_fields', args='{}'.format(configuration.workspace_id)).delete()
 
+
 def get_auto_sync_permission(mapping_setting: MappingSetting):
     """
     Get the auto sync permission
