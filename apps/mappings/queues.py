@@ -5,7 +5,18 @@ from django_q.tasks import async_task
 from fyle_accounting_mappings.models import MappingSetting
 
 from apps.mappings.models import GeneralMapping
-from apps.workspaces.models import WorkspaceGeneralSettings
+from apps.workspaces.models import WorkspaceGeneralSettings, QBOCredential
+from apps.mappings.helpers import get_auto_sync_permission
+
+SYNC_METHODS = {
+    'ACCOUNT': 'accounts',
+    'ITEM': 'items',
+    'VENDOR': 'vendors',
+    'DEPARTMENT': 'departments',
+    'TAX_CODE': 'tax_codes',
+    'CLASS': 'classes',
+    'CUSTOMER': 'customers',
+}
 
 
 def async_auto_create_expense_field_mapping(mapping_setting: MappingSetting):
@@ -86,3 +97,50 @@ def schedule_auto_map_employees(employee_mapping_preference: str, workspace_id: 
 
 def async_disable_category_for_items_mapping(workspace_id: int):
     async_task('apps.mappings.tasks.disable_category_for_items_mapping', workspace_id)
+
+
+def construct_task_settings_payload(workspace_id):
+    """
+    Chain import fields to Fyle
+    :param workspace_id: Workspace Id
+    """
+    mapping_settings = MappingSetting.objects.filter(workspace_id=workspace_id, import_to_fyle=True)
+    credentials = QBOCredential.objects.get(workspace_id=workspace_id)
+
+    task_settings = {
+        'import_tax_codes': {
+            'destination_field': '',
+            'destination_sync_method': '',
+            'is_auto_sync_enabled' : False,
+            'import': False,
+        },
+        'import_vendors_as_merchants': {
+            'destination_field': '',
+            'destination_sync_method': '',
+            'is_auto_sync_enabled' : False,
+            'import': False,
+        },
+        'import_categories': {
+            'destination_field': '',
+            'destination_sync_method': '',
+            'is_auto_sync_enabled' : False,
+            'import': False,
+        },
+        'mapping_settings': [],
+        'credentails': credentials,
+        'sdk_connection_string': 'apps.quickbooks_online.utils.QBOConnector',
+    }
+
+    for mapping_setting in mapping_settings:
+        if mapping_setting.source_field in ['PROJECT']:
+            task_settings['mapping_settings'].append({
+                'source_field': mapping_setting.source_field,
+                'destination_field': mapping_setting.destination_field,
+                'destination_sync_method': SYNC_METHODS[mapping_setting.destination_field],
+                'is_auto_sync_enabled' : get_auto_sync_permission(mapping_setting),
+                'is_custom': False,
+            })
+
+    # Make a call to the SDK 
+    # chain_import_fields_to_fyle(workspace_id, task_settings)
+    pass

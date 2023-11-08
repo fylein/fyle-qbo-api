@@ -9,7 +9,7 @@ from fyle_accounting_mappings.models import MappingSetting
 from qbosdk import InternalServerError, NotFoundClientError, UnauthorizedClientError, WrongParamsError
 
 from apps.fyle.models import ExpenseGroupSettings
-from apps.mappings.queue import (
+from apps.mappings.queues import (
     schedule_auto_map_ccc_employees,
     schedule_auto_map_employees,
     schedule_bill_payment_creation,

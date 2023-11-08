@@ -13,7 +13,7 @@ from fyle_accounting_mappings.models import (
 from fyle_integrations_platform_connector import PlatformConnector
 from qbosdk.exceptions import WrongParamsError
 
-from apps.mappings.queue import (
+from apps.mappings.queues import (
     schedule_auto_map_ccc_employees,
     schedule_auto_map_employees,
     schedule_cost_centers_creation,
