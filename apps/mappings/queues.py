@@ -99,7 +99,7 @@ def async_disable_category_for_items_mapping(workspace_id: int):
     async_task('apps.mappings.tasks.disable_category_for_items_mapping', workspace_id)
 
 
-def construct_task_settings_payload(workspace_id):
+def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
     """
     Chain import fields to Fyle
     :param workspace_id: Workspace Id
@@ -108,29 +108,15 @@ def construct_task_settings_payload(workspace_id):
     credentials = QBOCredential.objects.get(workspace_id=workspace_id)
 
     task_settings = {
-        'import_tax_codes': {
-            'destination_field': '',
-            'destination_sync_method': '',
-            'is_auto_sync_enabled': False,
-            'import': False,
-        },
-        'import_vendors_as_merchants': {
-            'destination_field': '',
-            'destination_sync_method': '',
-            'is_auto_sync_enabled': False,
-            'import': False,
-        },
-        'import_categories': {
-            'destination_field': '',
-            'destination_sync_method': '',
-            'is_auto_sync_enabled': False,
-            'import': False,
-        },
+        'import_tax': None,
+        'import_vendors_as_merchants': None,
+        'import_categories': None,
         'mapping_settings': [],
         'credentails': credentials,
         'sdk_connection_string': 'apps.quickbooks_online.utils.QBOConnector',
     }
 
+    # For now we are only adding PROJECTS support that is why we are hardcoding it
     for mapping_setting in mapping_settings:
         if mapping_setting.source_field in ['PROJECT']:
             task_settings['mapping_settings'].append({
