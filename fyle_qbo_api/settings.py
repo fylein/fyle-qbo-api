@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'fyle_rest_auth',
     'fyle_accounting_mappings',
+    'fyle_integrations_imports',
     'django_q',
     'django_filters',
     # User Created Apps
