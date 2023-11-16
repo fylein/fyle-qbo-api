@@ -44,7 +44,7 @@ def format_special_characters(value: str) -> str:
     return formatted_string
 
 
-CHARTS_OF_ACCOUNTS = ['Expense', 'Other Expense', 'Fixed Asset', 'Cost of Goods Sold', 'Current Liability', 'Equity', 'Other Current Asset', 'Other Current Liability', 'Long Term Liability', 'Current Asset', 'Income', 'Other Income']
+CHARTS_OF_ACCOUNTS = ['Expense', 'Other Expense', 'Fixed Asset', 'Cost of Goods Sold', 'Current Liability', 'Equity', 'Other Current Asset', 'Other Current Liability', 'Long Term Liability', 'Current Asset', 'Income', 'Other Income', 'Other Asset']
 
 
 class QBOConnector:
