@@ -44,6 +44,8 @@ def update_or_create_workspace(user, access_token):
 
     if workspace:
         workspace.user.add(User.objects.get(user_id=user))
+        workspace.name = org_name
+        workspace.save()
         cache.delete(str(workspace.id))
     else:
         workspace = Workspace.objects.create(name=org_name, fyle_org_id=org_id, fyle_currency=org_currency, app_version='v2')
@@ -60,6 +62,7 @@ def update_or_create_workspace(user, access_token):
 
         FyleCredential.objects.update_or_create(refresh_token=auth_tokens.refresh_token, workspace_id=workspace.id, cluster_domain=cluster_domain)
         async_task('apps.workspaces.tasks.async_add_admins_to_workspace', workspace.id, user.user_id)
+        async_task('apps.workspaces.tasks.async_create_admin_subcriptions', workspace.id)
 
     return workspace
 
@@ -229,16 +232,21 @@ def post_to_integration_settings(workspace_id: int, active: bool):
         logger.error(error)
 
 
-def export_to_qbo(workspace_id, export_mode=None):
+def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[]):
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
     last_export_detail = LastExportDetail.objects.get(workspace_id=workspace_id)
     last_exported_at = datetime.now()
     is_expenses_exported = False
     export_mode = export_mode or 'MANUAL'
+    expense_group_filters = {
+        'exported_at__isnull': True,
+        'workspace_id': workspace_id
+    }
+    if expense_group_ids:
+        expense_group_filters['id__in'] = expense_group_ids
 
     if general_settings.reimbursable_expenses_object:
-
-        expense_group_ids = ExpenseGroup.objects.filter(fund_source='PERSONAL', exported_at__isnull=True, workspace_id=workspace_id).values_list('id', flat=True)
+        expense_group_ids = ExpenseGroup.objects.filter(fund_source='PERSONAL', **expense_group_filters).values_list('id', flat=True)
 
         if len(expense_group_ids):
             is_expenses_exported = True
@@ -276,7 +284,7 @@ def export_to_qbo(workspace_id, export_mode=None):
             )
 
     if general_settings.corporate_credit_card_expenses_object:
-        expense_group_ids = ExpenseGroup.objects.filter(fund_source='CCC', exported_at__isnull=True, workspace_id=workspace_id).values_list('id', flat=True)
+        expense_group_ids = ExpenseGroup.objects.filter(fund_source='CCC', **expense_group_filters).values_list('id', flat=True)
 
         if len(expense_group_ids):
             is_expenses_exported = True

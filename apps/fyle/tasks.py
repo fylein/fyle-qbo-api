@@ -201,6 +201,11 @@ def post_accounting_export_summary(org_id: str, workspace_id: int, fund_source: 
 
         accounting_export_summary_batches.append(payload)
 
+    logger.info(
+        'Posting accounting export summary to Fyle workspace_id: %s, payload: %s',
+        workspace_id,
+        accounting_export_summary_batches
+    )
     create_generator_and_post_in_batches(accounting_export_summary_batches, platform, workspace_id)
 
 
@@ -232,7 +237,12 @@ def import_and_export_expenses(report_id: str, org_id: str) -> None:
 
             group_expenses_and_save(expenses, task_log, workspace)
 
-        export_to_qbo(workspace.id, 'AUTO')
+        # Export only selected expense groups
+        expense_ids = Expense.objects.filter(report_id=report_id, org_id=org_id).values_list('id', flat=True)
+        expense_groups = ExpenseGroup.objects.filter(expenses__id__in=[expense_ids], workspace_id=workspace.id).distinct('id').values('id')
+        expense_group_ids = [expense_group['id'] for expense_group in expense_groups]
+
+        export_to_qbo(workspace.id, None, expense_group_ids)
 
     except Exception:
         handle_import_exception(task_log)
