@@ -109,13 +109,6 @@ def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
     mapping_settings = MappingSetting.objects.filter(workspace_id=workspace_id, import_to_fyle=True)
     credentials = QBOCredential.objects.get(workspace_id=workspace_id)
 
-
-    print("""
-
-        construct_tasks_and_chain_import_fields_to_fyle
-        
-    """)
-
     task_settings: TaskSettings = {
         'import_tax': None,
         'import_vendors_as_merchants': None,

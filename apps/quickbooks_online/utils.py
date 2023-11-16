@@ -374,12 +374,6 @@ class QBOConnector:
         """
         Get customers
         """
-        print("""
-
-
-            sync_customers
-
-        """)
         customers_count = self.connection.customers.count()
         if customers_count < SYNC_UPPER_LIMIT['customers']:
             customers = self.connection.customers.get()
