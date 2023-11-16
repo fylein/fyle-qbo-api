@@ -25,6 +25,12 @@ BEGIN
   GET DIAGNOSTICS rcount = ROW_COUNT;
   RAISE NOTICE 'Deleted % errors', rcount;
 
+  DELETE 
+  FROM import_logs il
+  WHERE il.workspace_id = _workspace_id;
+  GET DIAGNOSTICS rcount = ROW_COUNT;
+  RAISE NOTICE 'Deleted % import_logs', rcount;
+
   DELETE
   FROM bill_lineitems bl
   WHERE bl.bill_id IN (
