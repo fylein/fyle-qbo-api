@@ -53,7 +53,7 @@ def handle_import_exceptions(task_name):
     return decorator
 
 
-def new_handle_import_exceptions(func):
+def handle_import_exceptions_v2(func):
     def new_fn(expense_attribute_instance, *args):
         import_log: ImportLog = args[0]
         workspace_id = import_log.workspace_id
