@@ -245,8 +245,7 @@ def create_fyle_categories_payload(categories: List[DestinationAttribute], works
                 'code': destination_id_of_category,
                 # Always keep Unspecified category enabled
                 'is_enabled': category.active if category.value != 'Unspecified' else True
-            }
-        )
+            })
     else:
         existing_category_names = ExpenseAttribute.objects.filter(attribute_type='CATEGORY', workspace_id=workspace_id).values_list('value', flat=True)
 
