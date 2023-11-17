@@ -219,7 +219,15 @@ def test_create_fyle_category_payload(db):
 
     qbo_attributes = remove_duplicates(qbo_attributes)
 
-    fyle_category_payload = create_fyle_categories_payload(qbo_attributes, 2)
+    fyle_category_payload = create_fyle_categories_payload(qbo_attributes, 2, [
+        ExpenseAttribute(
+            attribute_type='CATEGORY',
+            value='Unspecified',
+            source_id='Unspecified',
+            display_name='Category',
+            workspace_id=1
+        )
+    ])
     assert dict_compare_keys(fyle_category_payload[0], data['fyle_category_payload'][0]) == [], 'category upload api return diffs in keys'
 
 
