@@ -238,6 +238,9 @@ def create_fyle_categories_payload(categories: List[DestinationAttribute], works
 
     if updated_categories:
         for category in updated_categories:
+            if category.value == 'Unspecified':
+                category.active = True
+
             destination_id_of_category = category.mapping.first().destination.destination_id
             payload.append({'id': category.source_id, 'name': category.value, 'code': destination_id_of_category, 'is_enabled': category.active})
     else:
