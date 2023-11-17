@@ -7,6 +7,8 @@ from fyle_accounting_mappings.models import MappingSetting
 from apps.mappings.models import GeneralMapping
 from apps.workspaces.models import WorkspaceGeneralSettings, QBOCredential
 from apps.mappings.helpers import get_auto_sync_permission
+from fyle_integrations_imports.queues import chain_import_fields_to_fyle
+from fyle_integrations_imports.dataclasses import TaskSetting
 
 SYNC_METHODS = {
     'ACCOUNT': 'accounts',
@@ -107,26 +109,25 @@ def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
     mapping_settings = MappingSetting.objects.filter(workspace_id=workspace_id, import_to_fyle=True)
     credentials = QBOCredential.objects.get(workspace_id=workspace_id)
 
-    task_settings = {
+    task_settings: TaskSetting = {
         'import_tax': None,
         'import_vendors_as_merchants': None,
         'import_categories': None,
         'mapping_settings': [],
-        'credentails': credentials,
+        'credentials': credentials,
         'sdk_connection_string': 'apps.quickbooks_online.utils.QBOConnector',
     }
 
     # For now we are only adding PROJECTS support that is why we are hardcoding it
-    for mapping_setting in mapping_settings:
-        if mapping_setting.source_field in ['PROJECT']:
-            task_settings['mapping_settings'].append({
-                'source_field': mapping_setting.source_field,
-                'destination_field': mapping_setting.destination_field,
-                'destination_sync_method': SYNC_METHODS[mapping_setting.destination_field],
-                'is_auto_sync_enabled': get_auto_sync_permission(mapping_setting),
-                'is_custom': False,
-            })
+    if mapping_settings:
+        for mapping_setting in mapping_settings:
+            if mapping_setting.source_field in ['PROJECT']:
+                task_settings['mapping_settings'].append({
+                    'source_field': mapping_setting.source_field,
+                    'destination_field': mapping_setting.destination_field,
+                    'destination_sync_method': SYNC_METHODS[mapping_setting.destination_field],
+                    'is_auto_sync_enabled': get_auto_sync_permission(mapping_setting),
+                    'is_custom': False,
+                })
 
-    # Make a call to the SDK
-    # chain_import_fields_to_fyle(workspace_id, task_settings)
-    pass
+    chain_import_fields_to_fyle(workspace_id, task_settings)
