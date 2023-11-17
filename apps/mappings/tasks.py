@@ -239,6 +239,8 @@ def create_fyle_categories_payload(categories: List[DestinationAttribute], works
     if updated_categories:
         for category in updated_categories:
             if category.value == 'Unspecified':
+                # Unspecified category should always be enabled
+                # If it is disabled, then enable it
                 category.active = True
 
             destination_id_of_category = category.mapping.first().destination.destination_id
