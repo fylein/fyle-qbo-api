@@ -8,7 +8,7 @@ from apps.mappings.models import GeneralMapping
 from apps.workspaces.models import WorkspaceGeneralSettings, QBOCredential
 from apps.mappings.helpers import get_auto_sync_permission
 from fyle_integrations_imports.queues import chain_import_fields_to_fyle
-from fyle_integrations_imports.dataclasses import TasksSettings
+from fyle_integrations_imports.dataclasses import TaskSetting
 
 SYNC_METHODS = {
     'ACCOUNT': 'accounts',
@@ -109,7 +109,7 @@ def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
     mapping_settings = MappingSetting.objects.filter(workspace_id=workspace_id, import_to_fyle=True)
     credentials = QBOCredential.objects.get(workspace_id=workspace_id)
 
-    task_settings: TasksSettings = {
+    task_settings: TaskSetting = {
         'import_tax': None,
         'import_vendors_as_merchants': None,
         'import_categories': None,

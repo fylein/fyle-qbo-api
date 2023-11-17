@@ -72,11 +72,6 @@ def handle_import_exceptions_v2(func):
             error['alert'] = True
             import_log.status = 'FAILED'
 
-        except (QBOCredential.DoesNotExist):
-            error['message'] = 'Invalid Token or QBO credentials does not exist workspace_id - {0}'.format(workspace_id)
-            error['alert'] = False
-            import_log.status = 'FAILED'
-
         except InvalidTokenError:
             error['message'] = 'Invalid Token for fyle'
             error['alert'] = False
@@ -87,8 +82,8 @@ def handle_import_exceptions_v2(func):
             error['alert'] = True
             import_log.status = 'FAILED'
         
-        except (QBOWrongParamsError, QBOInvalidTokenError) as exception:
-            error['message'] = 'QBO token expired'
+        except (QBOWrongParamsError, QBOInvalidTokenError, QBOCredential.DoesNotExist) as exception:
+            error['message'] = 'Invalid Token or QBO credentials does not exist workspace_id - {0}'.format(workspace_id)
             error['alert'] = False
             import_log.status = 'FAILED'
 
