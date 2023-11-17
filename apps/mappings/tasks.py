@@ -238,13 +238,15 @@ def create_fyle_categories_payload(categories: List[DestinationAttribute], works
 
     if updated_categories:
         for category in updated_categories:
-            if category.value == 'Unspecified':
-                # Unspecified category should always be enabled
-                # If it is disabled, then enable it
-                category.active = True
-
             destination_id_of_category = category.mapping.first().destination.destination_id
-            payload.append({'id': category.source_id, 'name': category.value, 'code': destination_id_of_category, 'is_enabled': category.active})
+            payload.append({
+                'id': category.source_id,
+                'name': category.value,
+                'code': destination_id_of_category,
+                # Always keep Unspecified category enabled
+                'is_enabled': category.active if category.value != 'Unspecified' else True,
+            }
+        )
     else:
         existing_category_names = ExpenseAttribute.objects.filter(attribute_type='CATEGORY', workspace_id=workspace_id).values_list('value', flat=True)
 
