@@ -76,15 +76,16 @@ def handle_import_exceptions_v2(func):
             error['message'] = 'Invalid Token for fyle'
             error['alert'] = False
             import_log.status = 'FAILED'
-        
+
         except InternalServerError:
             error['message'] = 'Internal server error while importing to Fyle'
             error['alert'] = True
             import_log.status = 'FAILED'
-        
+
         except (QBOWrongParamsError, QBOInvalidTokenError, QBOCredential.DoesNotExist) as exception:
             error['message'] = 'Invalid Token or QBO credentials does not exist workspace_id - {0}'.format(workspace_id)
             error['alert'] = False
+            error['response'] = exception.__dict__
             import_log.status = 'FAILED'
 
         except Exception:
@@ -98,7 +99,7 @@ def handle_import_exceptions_v2(func):
             logger.error(error)
         else:
             logger.info(error)
-        
+
         import_log.error_log = error
         import_log.save()
 
