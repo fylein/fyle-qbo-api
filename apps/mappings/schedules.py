@@ -18,7 +18,7 @@ def schedule_or_delete_fyle_import_tasks(workspace_general_settings: WorkspaceGe
 
     if task_to_be_scheduled:
         Schedule.objects.update_or_create(
-            func='apps.mappings.queues.construct_task_settings_payload',
+            func='apps.mappings.queues.construct_tasks_and_chain_import_fields_to_fyle',
             args='{}'.format(workspace_general_settings.workspace_id),
             defaults={
                 'schedule_type': Schedule.MINUTES,
@@ -30,13 +30,13 @@ def schedule_or_delete_fyle_import_tasks(workspace_general_settings: WorkspaceGe
 
     import_fields_count = MappingSetting.objects.filter(
         import_to_fyle=True,
-        workspace_id=workspace_general_settings.workspace_id, 
+        workspace_id=workspace_general_settings.workspace_id,
         source_field__in=['PROJECT']
     ).count()
 
     # If the import fields count is 0, delete the schedule
     if import_fields_count == 0:
         Schedule.objects.filter(
-            func='apps.mappings.queues.construct_task_settings_payload',
+            func='apps.mappings.queues.construct_tasks_and_chain_import_fields_to_fyle',
             args='{}'.format(workspace_general_settings.workspace_id)
         ).delete()

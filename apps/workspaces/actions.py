@@ -232,16 +232,21 @@ def post_to_integration_settings(workspace_id: int, active: bool):
         logger.error(error)
 
 
-def export_to_qbo(workspace_id, export_mode=None):
+def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[]):
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
     last_export_detail = LastExportDetail.objects.get(workspace_id=workspace_id)
     last_exported_at = datetime.now()
     is_expenses_exported = False
     export_mode = export_mode or 'MANUAL'
+    expense_group_filters = {
+        'exported_at__isnull': True,
+        'workspace_id': workspace_id
+    }
+    if expense_group_ids:
+        expense_group_filters['id__in'] = expense_group_ids
 
     if general_settings.reimbursable_expenses_object:
-
-        expense_group_ids = ExpenseGroup.objects.filter(fund_source='PERSONAL', exported_at__isnull=True, workspace_id=workspace_id).values_list('id', flat=True)
+        expense_group_ids = ExpenseGroup.objects.filter(fund_source='PERSONAL', **expense_group_filters).values_list('id', flat=True)
 
         if len(expense_group_ids):
             is_expenses_exported = True
@@ -279,7 +284,7 @@ def export_to_qbo(workspace_id, export_mode=None):
             )
 
     if general_settings.corporate_credit_card_expenses_object:
-        expense_group_ids = ExpenseGroup.objects.filter(fund_source='CCC', exported_at__isnull=True, workspace_id=workspace_id).values_list('id', flat=True)
+        expense_group_ids = ExpenseGroup.objects.filter(fund_source='CCC', **expense_group_filters).values_list('id', flat=True)
 
         if len(expense_group_ids):
             is_expenses_exported = True
