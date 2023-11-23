@@ -24,11 +24,11 @@ def test_handle_import_exceptions(db):
     import_log = ImportLog.objects.get(workspace_id=workspace_id, attribute_type='PROJECT')
     project = Project(workspace_id, 'CUSTOMER', None,  qbo_connection, 'customers', True)
 
-    # WrongParamsError 
+    # WrongParamsError
     @handle_import_exceptions_v2
     def to_be_decoreated(expense_attribute_instance, import_log):
         raise WrongParamsError('This is WrongParamsError')
-    
+
     to_be_decoreated(project, import_log)
 
     assert import_log.status == 'FAILED'
@@ -36,11 +36,11 @@ def test_handle_import_exceptions(db):
     assert import_log.error_log['message'] == 'This is WrongParamsError'
     assert import_log.error_log['alert'] == True
 
-    # FyleInvalidTokenError 
+    # FyleInvalidTokenError
     @handle_import_exceptions_v2
     def to_be_decoreated(expense_attribute_instance, import_log):
         raise InvalidTokenError('This is FyleInvalidTokenError')
-    
+
     to_be_decoreated(project, import_log)
 
     assert import_log.status == 'FAILED'
@@ -48,11 +48,11 @@ def test_handle_import_exceptions(db):
     assert import_log.error_log['message'] == 'Invalid Token for fyle'
     assert import_log.error_log['alert'] == False
 
-    # InternalServerError 
+    # InternalServerError
     @handle_import_exceptions_v2
     def to_be_decoreated(expense_attribute_instance, import_log):
         raise InternalServerError('This is InternalServerError')
-    
+
     to_be_decoreated(project, import_log)
 
     assert import_log.status == 'FAILED'
@@ -60,11 +60,11 @@ def test_handle_import_exceptions(db):
     assert import_log.error_log['message'] == 'Internal server error while importing to Fyle'
     assert import_log.error_log['alert'] == True
 
-    # QBOWrongParamsError 
+    # QBOWrongParamsError
     @handle_import_exceptions_v2
     def to_be_decoreated(expense_attribute_instance, import_log):
         raise QBOWrongParamsError('This is InternalServerError')
-    
+
     to_be_decoreated(project, import_log)
 
     assert import_log.status == 'FAILED'
@@ -72,11 +72,11 @@ def test_handle_import_exceptions(db):
     assert import_log.error_log['message'] == 'Invalid Token or QBO credentials does not exist workspace_id - 3'
     assert import_log.error_log['alert'] == False
 
-    # QBOInvalidTokenError 
+    # QBOInvalidTokenError
     @handle_import_exceptions_v2
     def to_be_decoreated(expense_attribute_instance, import_log):
         raise QBOInvalidTokenError('This is InternalServerError')
-    
+
     to_be_decoreated(project, import_log)
 
     assert import_log.status == 'FAILED'
@@ -84,11 +84,11 @@ def test_handle_import_exceptions(db):
     assert import_log.error_log['message'] == 'Invalid Token or QBO credentials does not exist workspace_id - 3'
     assert import_log.error_log['alert'] == False
 
-    # QBOCredential.DoesNotExist 
+    # QBOCredential.DoesNotExist
     @handle_import_exceptions_v2
     def to_be_decoreated(expense_attribute_instance, import_log):
         raise QBOCredential.DoesNotExist('This is InternalServerError')
-    
+
     to_be_decoreated(project, import_log)
 
     assert import_log.status == 'FAILED'
@@ -100,7 +100,7 @@ def test_handle_import_exceptions(db):
     @handle_import_exceptions_v2
     def to_be_decoreated(expense_attribute_instance, import_log):
         raise Exception('This is a general Exception')
-    
+
     to_be_decoreated(project, import_log)
 
     assert import_log.status == 'FATAL'

@@ -10,6 +10,7 @@ from fyle_integrations_platform_connector import PlatformConnector
 from fyle_integrations_imports.modules import Project
 from tests.test_fyle_integrations_imports.test_modules.fixtures import projects_data
 
+
 def test_sync_destination_attributes(mocker, db):
     workspace_id = 3
 
@@ -18,7 +19,7 @@ def test_sync_destination_attributes(mocker, db):
 
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
-    
+
     destination_attributes_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='CUSTOMER').count()
     assert destination_attributes_count == 29
 
@@ -94,7 +95,7 @@ def test_auto_create_destination_attributes(mocker, db):
         )
         mock_call.side_effect = [
             projects_data['create_new_auto_create_projects_expense_attributes_0'],
-            projects_data['create_new_auto_create_projects_expense_attributes_1'] 
+            projects_data['create_new_auto_create_projects_expense_attributes_1']
         ]
 
         expense_attributes_count = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'PROJECT').count()
@@ -102,7 +103,7 @@ def test_auto_create_destination_attributes(mocker, db):
         assert expense_attributes_count == 0
 
         mappings_count = Mapping.objects.filter(workspace_id=workspace_id, source_type='PROJECT', destination_type='CUSTOMER').count()
-        
+
         assert mappings_count == 0
 
         project.trigger_import()
@@ -112,7 +113,7 @@ def test_auto_create_destination_attributes(mocker, db):
         assert expense_attributes_count == projects_data['create_new_auto_create_projects_expense_attributes_0'][0]['count'] + projects_data['create_new_auto_create_projects_expense_attributes_1'][0]['count']
 
         mappings_count = Mapping.objects.filter(workspace_id=workspace_id, source_type='PROJECT', destination_type='CUSTOMER').count()
-        
+
         assert mappings_count == 41
 
     # disable case for project import
@@ -131,11 +132,11 @@ def test_auto_create_destination_attributes(mocker, db):
         )
         mock_call.side_effect = [
             projects_data['create_new_auto_create_projects_expense_attributes_3'],
-            projects_data['create_new_auto_create_projects_expense_attributes_4'] 
+            projects_data['create_new_auto_create_projects_expense_attributes_4']
         ]
 
         destination_attribute = DestinationAttribute.objects.filter(workspace_id=workspace_id, value='David').first()
-        
+
         assert destination_attribute.active == True
 
         expense_attribute = ExpenseAttribute.objects.filter(workspace_id=workspace_id, value='David').first()
@@ -154,7 +155,7 @@ def test_auto_create_destination_attributes(mocker, db):
         project.trigger_import()
 
         destination_attribute = DestinationAttribute.objects.filter(workspace_id=workspace_id, value='David').first()
-        
+
         assert destination_attribute.active == False
 
         expense_attribute = ExpenseAttribute.objects.filter(workspace_id=workspace_id, value='David').first()
@@ -163,7 +164,7 @@ def test_auto_create_destination_attributes(mocker, db):
 
         post_run_expense_attribute_disabled_count = ExpenseAttribute.objects.filter(workspace_id=workspace_id, active=False, attribute_type='PROJECT').count()
 
-        assert post_run_expense_attribute_disabled_count ==  pre_run_expense_attribute_disabled_count + projects_data['create_new_auto_create_projects_expense_attributes_4'][0]['count']
+        assert post_run_expense_attribute_disabled_count == pre_run_expense_attribute_disabled_count + projects_data['create_new_auto_create_projects_expense_attributes_4'][0]['count']
 
     # not re-enable case for project import
     with mock.patch('fyle.platform.apis.v1beta.admin.Projects.list_all') as mock_call:
@@ -182,11 +183,11 @@ def test_auto_create_destination_attributes(mocker, db):
         )
         mock_call.side_effect = [
             projects_data['create_new_auto_create_projects_expense_attributes_3'],
-            projects_data['create_new_auto_create_projects_expense_attributes_3'] 
+            projects_data['create_new_auto_create_projects_expense_attributes_3']
         ]
 
         pre_run_destination_attribute_count = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'CUSTOMER', active=False).count()
-        
+
         assert pre_run_destination_attribute_count == 2
 
         pre_run_expense_attribute_count = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'PROJECT', active=False).count()

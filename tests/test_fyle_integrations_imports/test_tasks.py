@@ -4,6 +4,7 @@ from fyle_integrations_imports.models import ImportLog
 from apps.workspaces.models import QBOCredential
 from tests.test_fyle_integrations_imports.test_modules.fixtures import projects_data
 
+
 def test_trigger_import_via_schedule(mocker, db):
     workspace_id = 3
     # delete all the import logs
@@ -24,7 +25,7 @@ def test_trigger_import_via_schedule(mocker, db):
         )
         mock_call.side_effect = [
             projects_data['create_new_auto_create_projects_expense_attributes_0'],
-            projects_data['create_new_auto_create_projects_expense_attributes_1'] 
+            projects_data['create_new_auto_create_projects_expense_attributes_1']
         ]
 
         trigger_import_via_schedule(

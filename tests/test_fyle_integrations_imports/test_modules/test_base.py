@@ -1,26 +1,29 @@
-from fyle_integrations_imports.modules.base import Base
-import pytest
 from datetime import (
     datetime,
     timezone,
     timedelta
 )
 from fyle_accounting_mappings.models import (
-    DestinationAttribute, 
+    DestinationAttribute,
     ExpenseAttribute,
     Mapping
 )
 from unittest import mock
-from fyle_integrations_platform_connector import PlatformConnector
 from apps.workspaces.models import Workspace
+from apps.workspaces.models import QBOCredential
+from apps.quickbooks_online.utils import QBOConnector
 from fyle_integrations_imports.modules.projects import Project
 from fyle_integrations_imports.models import ImportLog
-from tests.test_fyle_integrations_imports.helpers import *
+from tests.test_fyle_integrations_imports.helpers import (
+    get_base_class_instance,
+    get_platform_connection
+)
 from tests.test_fyle_integrations_imports.test_modules.fixtures import projects_data
+
 
 def test_remove_duplicates(db):
     attributes = DestinationAttribute.objects.filter(attribute_type='CUSTOMER')
-    
+
     assert len(attributes) == 152
 
     for attribute in attributes:
@@ -62,7 +65,6 @@ def test_construct_attributes_filter(db):
     date_string = '2023-08-06 12:50:05.875029'
     sync_after = datetime.strptime(date_string, '%Y-%m-%d %H:%M:%S.%f')
 
-
     base = get_base_class_instance(workspace_id=1, source_field='CATEGORY', destination_field='ACCOUNT', platform_class_name='categories', sync_after=sync_after)
 
     assert base.construct_attributes_filter('CATEGORY') == {'attribute_type': 'CATEGORY', 'workspace_id': 1, 'updated_at__gte': sync_after}
@@ -90,12 +92,12 @@ def test_expense_attributes_sync_after(db):
         expense_attribute.save()
         paginated_expense_attribute_values.append(expense_attribute.value)
 
-
     filters = project.construct_attributes_filter('PROJECT', paginated_expense_attribute_values)
 
     expense_attributes = ExpenseAttribute.objects.filter(**filters)
 
     assert expense_attributes.count() == 100
+
 
 def test_auto_create_destination_attributes(mocker, db):
     workspace_id = 3
@@ -127,7 +129,7 @@ def test_auto_create_destination_attributes(mocker, db):
         )
         mock_call.side_effect = [
             projects_data['create_new_auto_create_projects_expense_attributes_0'],
-            projects_data['create_new_auto_create_projects_expense_attributes_1'] 
+            projects_data['create_new_auto_create_projects_expense_attributes_1']
         ]
         project.trigger_import()
 

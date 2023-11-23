@@ -30,6 +30,6 @@ def test_schedule_creation(db):
         func='apps.mappings.queues.construct_tasks_and_chain_import_fields_to_fyle',
         args='{}'.format(workspace_id),
     ).first()
-    
+
     assert schedule.func == 'apps.mappings.queues.construct_tasks_and_chain_import_fields_to_fyle'
     assert schedule.args == '3'

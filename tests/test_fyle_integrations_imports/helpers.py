@@ -6,9 +6,9 @@ from apps.quickbooks_online.utils import QBOConnector
 
 def get_base_class_instance(
         workspace_id: int = 1,
-        source_field: str='PROJECT',
+        source_field: str = 'PROJECT',
         destination_field: str = 'PROJECT',
-        platform_class_name: str='projects',
+        platform_class_name: str = 'projects',
         sync_after: str = None,
         destination_sync_method: str = 'customers'
     ):
@@ -27,6 +27,7 @@ def get_base_class_instance(
     )
 
     return base
+
 
 def get_platform_connection(workspace_id):
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
