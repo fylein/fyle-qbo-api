@@ -13,7 +13,7 @@ from fyle_accounting_mappings.models import (
 from fyle_integrations_platform_connector import PlatformConnector
 from qbosdk.exceptions import WrongParamsError
 
-from apps.mappings.queue import (
+from apps.mappings.queues import (
     schedule_auto_map_ccc_employees,
     schedule_auto_map_employees,
     schedule_cost_centers_creation,
@@ -28,7 +28,6 @@ from apps.mappings.tasks import (
     auto_create_category_mappings,
     auto_create_cost_center_mappings,
     auto_create_expense_fields_mappings,
-    auto_create_project_mappings,
     auto_create_tax_codes_mappings,
     auto_create_vendors_as_merchants,
     auto_import_and_map_fyle_fields,
@@ -158,52 +157,6 @@ def test_schedule_tax_groups_creation(db):
     assert schedule == None
 
 
-def test_auto_create_project_mappings(db, mocker):
-    workspace_id = 4
-    mocker.patch('fyle_integrations_platform_connector.apis.Projects.sync', return_value=[])
-    mocker.patch('fyle_integrations_platform_connector.apis.Projects.post_bulk', return_value=[])
-    mocker.patch('qbosdk.apis.Customers.count', return_value=5)
-    mocker.patch('qbosdk.apis.Customers.get', return_value=[])
-    mocker.patch('qbosdk.apis.Departments.get', return_value=[])
-
-    response = auto_create_project_mappings(workspace_id=workspace_id)
-    assert response == None
-
-    mapping_setting = MappingSetting.objects.get(source_field='PROJECT', workspace_id=workspace_id)
-    mapping_setting.destination_field = 'CUSTOMER'
-    mapping_setting.save()
-
-    expense_attributes_to_enable = ExpenseAttribute.objects.filter(mapping__isnull=False, mapping__source_type='PROJECT', attribute_type='PROJECT', workspace_id=workspace_id).first()
-
-    expense_attributes_to_enable.active = False
-    expense_attributes_to_enable.save()
-
-    response = auto_create_project_mappings(workspace_id=workspace_id)
-    assert response == None
-
-    projects = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='PROJECT').count()
-    mappings = Mapping.objects.filter(workspace_id=workspace_id, destination_type='PROJECT').count()
-
-    assert mappings == projects
-
-    with mock.patch('fyle_integrations_platform_connector.apis.Projects.sync') as mock_call:
-        mock_call.side_effect = WrongParamsError(msg='invalid params', response='invalid params')
-        auto_create_project_mappings(workspace_id=workspace_id)
-
-        mock_call.side_effect = Exception
-        auto_create_project_mappings(workspace_id=workspace_id)
-
-        mock_call.side_effect = FyleInvalidTokenError(msg='Invalid Token for fyle', response='Invalid Token for fyle')
-        auto_create_project_mappings(workspace_id=workspace_id)
-
-    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-    fyle_credentials.delete()
-
-    response = auto_create_project_mappings(workspace_id=workspace_id)
-
-    assert response == None
-
-
 def test_remove_duplicates(db):
 
     attributes = DestinationAttribute.objects.filter(attribute_type='EMPLOYEE')
@@ -271,10 +224,10 @@ def test_auto_create_category_mappings(db, mocker):
 
     with mock.patch('fyle_integrations_platform_connector.apis.Projects.sync') as mock_call:
         mock_call.side_effect = WrongParamsError(msg='invalid params', response='invalid params')
-        auto_create_project_mappings(workspace_id=workspace_id)
+        auto_create_category_mappings(workspace_id=workspace_id)
 
         mock_call.side_effect = FyleInvalidTokenError(msg='Invalid Token for fyle', response='Invalid Token for fyle')
-        auto_create_project_mappings(workspace_id=workspace_id)
+        auto_create_category_mappings(workspace_id=workspace_id)
 
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
     fyle_credentials.delete()

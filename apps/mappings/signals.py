@@ -5,13 +5,14 @@ from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 from fyle_accounting_mappings.models import EmployeeMapping, Mapping, MappingSetting
 
-from apps.mappings.helpers import schedule_or_delete_fyle_import_tasks
-from apps.mappings.queue import (
+from apps.mappings.queues import (
     async_auto_create_expense_field_mapping,
     schedule_cost_centers_creation,
     schedule_fyle_attributes_creation,
 )
 from apps.mappings.tasks import upload_attributes_to_fyle
+# TODO: Fix the naming convention when we remove the old schedule_or_delete_fyle_import_tasks import from helpers.py
+from apps.mappings.schedules import schedule_or_delete_fyle_import_tasks as new_schedule_or_delete_fyle_import_tasks
 from apps.tasks.models import Error
 from apps.workspaces.apis.import_settings.triggers import ImportSettingsTrigger
 from apps.workspaces.models import WorkspaceGeneralSettings
@@ -51,7 +52,7 @@ def run_post_mapping_settings_triggers(sender, instance: MappingSetting, **kwarg
     workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=instance.workspace_id).first()
 
     if instance.source_field == 'PROJECT':
-        schedule_or_delete_fyle_import_tasks(workspace_general_settings)
+        new_schedule_or_delete_fyle_import_tasks(workspace_general_settings, instance)
 
     if instance.source_field == 'COST_CENTER':
         schedule_cost_centers_creation(instance.import_to_fyle, int(instance.workspace_id))

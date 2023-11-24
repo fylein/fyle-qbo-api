@@ -8,7 +8,7 @@ from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMappin
 from qbosdk.exceptions import WrongParamsError
 
 from apps.fyle.models import Expense, ExpenseGroup, Reimbursement
-from apps.mappings.queue import schedule_bill_payment_creation
+from apps.mappings.queues import schedule_bill_payment_creation
 from apps.quickbooks_online.exceptions import handle_quickbooks_error
 from apps.quickbooks_online.queue import (
     schedule_bills_creation,

@@ -142,54 +142,6 @@ def disable_or_enable_expense_attributes(source_field: str, destination_field: s
         return expense_attributes_ids
 
 
-def create_fyle_projects_payload(projects: List[DestinationAttribute], existing_project_names: list, updated_projects: List[ExpenseAttribute] = None):
-    """
-    Create Fyle Projects Payload from QBO Customer / Projects
-    :param projects: QBO Projects
-    :param existing_project_names: Existing Projects in Fyle
-    :return: Fyle Projects Payload
-    """
-    payload = []
-    existing_project_names = [project_name.lower() for project_name in existing_project_names]
-    if updated_projects:
-        for project in updated_projects:
-            destination_id_of_project = project.mapping.first().destination.destination_id
-            payload.append({'id': project.source_id, 'name': project.value, 'code': destination_id_of_project, 'description': 'Project - {0}, Id - {1}'.format(project.value, destination_id_of_project), 'is_enabled': project.active})
-    else:
-        for project in projects:
-            if project.value.lower() not in existing_project_names:
-                payload.append({'name': project.value, 'code': project.destination_id, 'description': 'Project - {0}, Id - {1}'.format(project.value, project.destination_id), 'is_enabled': project.active})
-
-    return payload
-
-
-def post_projects_in_batches(platform: PlatformConnector, workspace_id: int, destination_field: str):
-    existing_project_names = ExpenseAttribute.objects.filter(attribute_type='PROJECT', workspace_id=workspace_id).values_list('value', flat=True)
-    qbo_attributes_count = DestinationAttribute.objects.filter(attribute_type=destination_field, workspace_id=workspace_id).count()
-
-    page_size = 200
-    for offset in range(0, qbo_attributes_count, page_size):
-        limit = offset + page_size
-        paginated_qbo_attributes = DestinationAttribute.objects.filter(attribute_type=destination_field, workspace_id=workspace_id).order_by('value', 'id')[offset:limit]
-
-        paginated_qbo_attributes = remove_duplicates(paginated_qbo_attributes)
-
-        fyle_payload: List[Dict] = create_fyle_projects_payload(paginated_qbo_attributes, existing_project_names)
-        if fyle_payload:
-            platform.projects.post_bulk(fyle_payload)
-            platform.projects.sync()
-
-        Mapping.bulk_create_mappings(paginated_qbo_attributes, 'PROJECT', destination_field, workspace_id)
-
-    if destination_field == 'CUSTOMER':
-        project_ids_to_be_changed = disable_or_enable_expense_attributes('PROJECT', 'CUSTOMER', workspace_id)
-        if project_ids_to_be_changed:
-            expense_attributes = ExpenseAttribute.objects.filter(id__in=project_ids_to_be_changed)
-            fyle_payload: List[Dict] = create_fyle_projects_payload(projects=[], existing_project_names=[], updated_projects=expense_attributes)
-            platform.projects.post_bulk(fyle_payload)
-            platform.projects.sync()
-
-
 @handle_import_exceptions(task_name='Auto Create Tax Code Mappings')
 def auto_create_tax_codes_mappings(workspace_id: int):
     """
@@ -207,24 +159,6 @@ def auto_create_tax_codes_mappings(workspace_id: int):
 
     sync_qbo_attribute(mapping_setting.destination_field, workspace_id)
     upload_tax_groups_to_fyle(platform, workspace_id)
-
-
-@handle_import_exceptions(task_name='Auto Create Project Mappings')
-def auto_create_project_mappings(workspace_id: int):
-    """
-    Create Project Mappings
-    :return: mappings
-    """
-    fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
-    platform = PlatformConnector(fyle_credentials)
-
-    platform.projects.sync()
-
-    mapping_setting = MappingSetting.objects.get(source_field='PROJECT', workspace_id=workspace_id)
-
-    sync_qbo_attribute(mapping_setting.destination_field, workspace_id)
-
-    post_projects_in_batches(platform, workspace_id, mapping_setting.destination_field)
 
 
 def create_fyle_categories_payload(categories: List[DestinationAttribute], workspace_id: int, updated_categories: List[ExpenseAttribute] = None):
@@ -792,7 +726,6 @@ def auto_import_and_map_fyle_fields(workspace_id):
     Auto import and map fyle fields
     """
     workspace_general_settings: WorkspaceGeneralSettings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
-    project_mapping = MappingSetting.objects.filter(source_field='PROJECT', workspace_id=workspace_general_settings.workspace_id).first()
 
     chain = Chain()
 
@@ -801,9 +734,6 @@ def auto_import_and_map_fyle_fields(workspace_id):
 
     if workspace_general_settings.import_categories or workspace_general_settings.import_items:
         chain.append('apps.mappings.tasks.auto_create_category_mappings', workspace_id)
-
-    if project_mapping and project_mapping.import_to_fyle:
-        chain.append('apps.mappings.tasks.auto_create_project_mappings', workspace_id)
 
     if chain.length() > 0:
         chain.run()
