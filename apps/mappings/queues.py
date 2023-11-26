@@ -119,12 +119,20 @@ def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
         'sdk_connection_string': 'apps.quickbooks_online.utils.QBOConnector',
     }
 
-    task_settings['import_categories'] = {
-        'destination_field': 'ACCOUNT',
-        'destination_sync_method': SYNC_METHODS['ACCOUNT'],
-        'is_auto_sync_enabled': get_auto_sync_permission(workspace_general_settings),
-        'is_3d_mapping': False,
-    }
+    if workspace_general_settings.import_categories or workspace_general_settings.import_items:
+        if workspace_general_settings.import_categories:
+            destination_sync_methods = [SYNC_METHODS['ACCOUNT']]
+        if workspace_general_settings.import_items:
+            items_sync_method = [SYNC_METHODS['ITEM']]
+            if destination_sync_methods:
+                destination_sync_methods = destination_sync_methods.append(SYNC_METHODS['ITEM']) if destination_sync_methods else items_sync_method
+
+        task_settings['import_categories'] = {
+            'destination_field': 'ACCOUNT',
+            'destination_sync_methods': destination_sync_methods,
+            'is_auto_sync_enabled': get_auto_sync_permission(workspace_general_settings),
+            'is_3d_mapping': False,
+        }
 
     # For now we are only adding PROJECTS support that is why we are hardcoding it
     if mapping_settings:
@@ -133,7 +141,7 @@ def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
                 task_settings['mapping_settings'].append({
                     'source_field': mapping_setting.source_field,
                     'destination_field': mapping_setting.destination_field,
-                    'destination_sync_method': SYNC_METHODS[mapping_setting.destination_field],
+                    'destination_sync_methods': SYNC_METHODS[mapping_setting.destination_field],
                     'is_auto_sync_enabled': get_auto_sync_permission(workspace_general_settings, mapping_setting),
                     'is_custom': False,
                 })
