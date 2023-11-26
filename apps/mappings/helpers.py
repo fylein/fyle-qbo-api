@@ -18,13 +18,13 @@ def schedule_or_delete_fyle_import_tasks(configuration: WorkspaceGeneralSettings
         Schedule.objects.filter(func='apps.mappings.tasks.auto_import_and_map_fyle_fields', args='{}'.format(configuration.workspace_id)).delete()
 
 
-def get_auto_sync_permission(mapping_setting: MappingSetting):
+def get_auto_sync_permission(workspace_general_settings: WorkspaceGeneralSettings, mapping_setting: MappingSetting = None):
     """
     Get the auto sync permission
     :return: bool
     """
     is_auto_sync_status_allowed = False
-    if (mapping_setting.destination_field == 'CUSTOMER' and mapping_setting.source_field == 'PROJECT') or mapping_setting.source_field == 'CATEGORY':
+    if (mapping_setting.destination_field == 'CUSTOMER' and mapping_setting.source_field == 'PROJECT') or workspace_general_settings.import_categories:
         is_auto_sync_status_allowed = True
 
     return is_auto_sync_status_allowed
