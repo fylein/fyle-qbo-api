@@ -12,7 +12,7 @@ try:
         for schedule in existing_import_enabled_schedules:
             configuration = WorkspaceGeneralSettings.objects.get(workspace_id=schedule['args'])
             mapping_setting = MappingSetting.objects.filter(source_field='PROJECT', workspace_id=schedule['args'], import_to_fyle=True).first()
-            if not configuration.import_categories and not configuration.import_vendors_as_merchants:
+            if not configuration.import_categories and not configuration.import_items and not configuration.import_vendors_as_merchants:
                 print('Deleting schedule for workspace_id: ', schedule['args'])
                 Schedule.objects.get(
                     func='apps.mappings.tasks.auto_import_and_map_fyle_fields',
