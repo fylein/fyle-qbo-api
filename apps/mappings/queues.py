@@ -132,7 +132,7 @@ def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
             'destination_sync_methods': destination_sync_methods,
             'is_auto_sync_enabled': get_auto_sync_permission(workspace_general_settings),
             'is_3d_mapping': False,
-            'charts_of_accounts': workspace_general_settings.charts_of_accounts,
+            'charts_of_accounts': workspace_general_settings.charts_of_accounts if 'accounts' in destination_sync_methods else None,
         }
 
     # For now we are only adding PROJECTS support that is why we are hardcoding it
