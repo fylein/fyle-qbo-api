@@ -11,6 +11,7 @@ from apps.mappings.queues import (
     schedule_fyle_attributes_creation,
     schedule_tax_groups_creation,
 )
+from apps.mappings.schedules import schedule_or_delete_fyle_import_tasks as new_schedule_or_delete_fyle_import_tasks
 from apps.workspaces.models import WorkspaceGeneralSettings
 
 
@@ -132,4 +133,5 @@ class ImportSettingsTrigger:
 
         self.__update_expense_group_settings_for_departments()
 
+        new_schedule_or_delete_fyle_import_tasks(workspace_general_settings_instance, None)
         schedule_or_delete_fyle_import_tasks(workspace_general_settings_instance)
