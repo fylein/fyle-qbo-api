@@ -12,7 +12,6 @@ from apps.mappings.queues import (
     schedule_fyle_attributes_creation,
     schedule_tax_groups_creation,
 )
-from apps.mappings.schedules import schedule_or_delete_fyle_import_tasks as new_schedule_or_delete_fyle_import_tasks
 from apps.workspaces.models import WorkspaceGeneralSettings
 
 
