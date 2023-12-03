@@ -14,7 +14,7 @@ def schedule_or_delete_fyle_import_tasks(configuration: WorkspaceGeneralSettings
     if configuration.import_vendors_as_merchants:
         start_datetime = datetime.now()
         Schedule.objects.update_or_create(func='apps.mappings.tasks.auto_import_and_map_fyle_fields', args='{}'.format(configuration.workspace_id), defaults={'schedule_type': Schedule.MINUTES, 'minutes': 24 * 60, 'next_run': start_datetime})
-    elif not configuration.import_vendors_as_merchants:
+    else:
         Schedule.objects.filter(func='apps.mappings.tasks.auto_import_and_map_fyle_fields', args='{}'.format(configuration.workspace_id)).delete()
 
 
