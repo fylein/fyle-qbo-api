@@ -5,7 +5,6 @@ from fyle_accounting_mappings.models import MappingSetting
 
 from apps.fyle.models import ExpenseGroupSettings
 from apps.mappings.helpers import schedule_or_delete_fyle_import_tasks
-from apps.mappings.schedules import schedule_or_delete_fyle_import_tasks as new_schedule_or_delete_fyle_import_tasks
 from apps.mappings.queues import (
     async_disable_category_for_items_mapping,
     schedule_cost_centers_creation,
