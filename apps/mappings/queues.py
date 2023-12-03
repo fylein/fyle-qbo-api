@@ -120,12 +120,11 @@ def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
     }
 
     if workspace_general_settings.import_categories or workspace_general_settings.import_items:
+        destination_sync_methods = []
         if workspace_general_settings.import_categories:
-            destination_sync_methods = [SYNC_METHODS['ACCOUNT']]
+            destination_sync_methods.append(SYNC_METHODS['ACCOUNT'])
         if workspace_general_settings.import_items:
-            items_sync_method = [SYNC_METHODS['ITEM']]
-            if destination_sync_methods:
-                destination_sync_methods = destination_sync_methods.append(SYNC_METHODS['ITEM']) if destination_sync_methods else items_sync_method
+            destination_sync_methods.append(SYNC_METHODS['ITEM'])
 
         task_settings['import_categories'] = {
             'destination_field': 'ACCOUNT',
