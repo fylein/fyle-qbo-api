@@ -51,7 +51,7 @@ def resolve_expense_attribute_errors(source_attribute_type: str, workspace_id: i
     if errored_attribute_ids:
         mapped_attribute_ids = []
 
-        if source_attribute_type in ('CATEGORY', 'TAX_GROUP'):
+        if source_attribute_type in ('TAX_GROUP'):
             mapped_attribute_ids: List[int] = Mapping.objects.filter(source_id__in=errored_attribute_ids).values_list('source_id', flat=True)
 
         elif source_attribute_type == 'EMPLOYEE':
@@ -78,70 +78,6 @@ def remove_duplicates(qbo_attributes: List[DestinationAttribute]):
     return unique_attributes
 
 
-@handle_import_exceptions(task_name='Disable Category for Items Mapping')
-def disable_category_for_items_mapping(workspace_id: int):
-    """
-    Disable Category for Items Mapping
-    :param workspace_id: Workspace Id
-    :return: None
-    """
-    fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
-    platform = PlatformConnector(fyle_credentials)
-    platform.categories.sync()
-
-    qbo_credentials: QBOCredential = QBOCredential.get_active_qbo_credentials(workspace_id)
-    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
-    qbo_connection.sync_items()
-
-    category_ids_to_be_disabled = disable_or_enable_expense_attributes('CATEGORY', 'ACCOUNT', workspace_id, display_name='Item')
-    if category_ids_to_be_disabled:
-        expense_attributes = ExpenseAttribute.objects.filter(id__in=category_ids_to_be_disabled)
-        fyle_payload: List[Dict] = create_fyle_categories_payload(categories=[], workspace_id=workspace_id, updated_categories=expense_attributes)
-
-        platform.categories.post_bulk(fyle_payload)
-        platform.categories.sync()
-
-
-def disable_or_enable_expense_attributes(source_field: str, destination_field: str, workspace_id: int, display_name: str = None):
-    """
-    Disable or Enable Expense Attributes
-    :param source_field: Source Field
-    :param destination_field: Destination Field
-    :param workspace_id: Workspace Id
-    :param display_name: Display Name(optional)
-    :return: None
-    """
-    # construct filters for the default cases
-    filters = {'attribute_type': destination_field, 'mapping__isnull': False, 'mapping__destination_type': destination_field, 'active': False, 'workspace_id': workspace_id}
-
-    # if display_name is present, add it to the filters
-    if display_name:
-        filters['display_name'] = display_name
-
-    # Get All the inactive destination attribute ids
-    destination_attribute_ids = DestinationAttribute.objects.filter(**filters).values_list('id', flat=True)
-
-    # Get all the expense attributes that are mapped to these destination_attribute_ids
-    expense_attributes_to_disable = ExpenseAttribute.objects.filter(attribute_type=source_field, mapping__destination_id__in=destination_attribute_ids, active=True)
-
-    expense_attributes_to_enable = []
-
-    if source_field not in ('CATEGORY', 'PROJECT'):
-        expense_attributes_to_enable = ExpenseAttribute.objects.filter(
-            ~Q(mapping__destination_id__in=destination_attribute_ids), mapping__isnull=False, mapping__source_type=source_field, attribute_type=source_field, active=False, workspace_id=workspace_id
-        )
-
-    # if there are any expense attributes present, set active to False
-    if expense_attributes_to_disable or expense_attributes_to_enable:
-        expense_attributes_ids = [expense_attribute.id for expense_attribute in expense_attributes_to_disable]
-        expense_attributes_to_disable.update(active=False)
-        if source_field not in ('CATEGORY', 'PROJECT'):
-            expense_attributes_ids = expense_attributes_ids + [expense_attribute.id for expense_attribute in expense_attributes_to_enable]
-            expense_attributes_to_enable.update(active=True)
-
-        return expense_attributes_ids
-
-
 @handle_import_exceptions(task_name='Auto Create Tax Code Mappings')
 def auto_create_tax_codes_mappings(workspace_id: int):
     """
@@ -159,30 +95,6 @@ def auto_create_tax_codes_mappings(workspace_id: int):
 
     sync_qbo_attribute(mapping_setting.destination_field, workspace_id)
     upload_tax_groups_to_fyle(platform, workspace_id)
-
-
-
-@handle_import_exceptions(task_name='Auto Create Category Mappings')
-def auto_create_category_mappings(workspace_id):
-    """
-    Create Category Mappings
-    :return: mappings
-    """
-    fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
-    platform = PlatformConnector(fyle_credentials)
-    fyle_categories = upload_categories_to_fyle(platform, workspace_id=workspace_id)
-    category_mappings = Mapping.bulk_create_mappings(fyle_categories, 'CATEGORY', 'ACCOUNT', workspace_id)
-
-    # disabling fields
-    category_ids_to_be_changed = disable_or_enable_expense_attributes('CATEGORY', 'ACCOUNT', workspace_id)
-    if category_ids_to_be_changed:
-        expense_attributes = ExpenseAttribute.objects.filter(id__in=category_ids_to_be_changed)
-        fyle_payload: List[Dict] = create_fyle_categories_payload(categories=[], workspace_id=workspace_id, updated_categories=expense_attributes)
-        platform.categories.post_bulk(fyle_payload)
-        platform.categories.sync()
-
-    resolve_expense_attribute_errors(source_attribute_type='CATEGORY', workspace_id=workspace_id)
-    return category_mappings
 
 
 def get_existing_source_and_mappings(destination_type: str, workspace_id: int):
