@@ -98,17 +98,13 @@ def schedule_auto_map_employees(employee_mapping_preference: str, workspace_id: 
 
 
 def async_disable_category_for_items_mapping(workspace_id: int):
-    print("""
-
-        async_disable_category_for_items_mapping: async_disable_category_for_items_mapping
-        """)
-    # credentials = QBOCredential.objects.get(workspace_id=workspace_id)
-    # async_task(
-    #     'fyle_integrations_imports.tasks.disable_category_for_items_mapping',
-    #     workspace_id,
-    #     'apps.quickbooks_online.utils.QBOConnector',
-    #     credentials
-    # )
+    credentials = QBOCredential.objects.get(workspace_id=workspace_id)
+    async_task(
+        'fyle_integrations_imports.tasks.disable_category_for_items_mapping',
+        workspace_id,
+        'apps.quickbooks_online.utils.QBOConnector',
+        credentials
+    )
 
 
 def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
@@ -116,16 +112,9 @@ def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
     Chain import fields to Fyle
     :param workspace_id: Workspace Id
     """
-    print("""
-
-        construct_tasks_and_chain_import_fields_to_fyle
-
-        """)
     mapping_settings = MappingSetting.objects.filter(workspace_id=workspace_id, import_to_fyle=True)
     workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
     credentials = QBOCredential.objects.get(workspace_id=workspace_id)
-
-    print(workspace_general_settings)
 
     task_settings: TaskSetting = {
         'import_tax': None,
@@ -137,20 +126,15 @@ def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
     }
     destination_sync_methods = []
     if workspace_general_settings.import_categories or workspace_general_settings.import_items:
-        print('import_categories or import_items')
         if workspace_general_settings.import_categories:
-            print('import_categories')
             destination_sync_methods = [SYNC_METHODS['ACCOUNT']]
-            print(destination_sync_methods)
         if workspace_general_settings.import_items:
-            print('import_items')
             items_sync_method = SYNC_METHODS['ITEM']
             if destination_sync_methods:
                 destination_sync_methods.extend([items_sync_method])
             else:
                 destination_sync_methods = [items_sync_method]
 
-        print(destination_sync_methods)
         task_settings['import_categories'] = {
             'destination_field': 'ACCOUNT',
             'destination_sync_methods': destination_sync_methods,
