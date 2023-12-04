@@ -2,7 +2,6 @@ import logging
 from typing import Dict, List
 
 from dateutil import parser
-from django.db.models import Q
 from django_q.tasks import Chain
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping, MappingSetting
 from fyle_integrations_platform_connector import PlatformConnector
