@@ -161,69 +161,6 @@ def auto_create_tax_codes_mappings(workspace_id: int):
     upload_tax_groups_to_fyle(platform, workspace_id)
 
 
-def create_fyle_categories_payload(categories: List[DestinationAttribute], workspace_id: int, updated_categories: List[ExpenseAttribute] = None):
-    """
-    Create Fyle Categories Payload from QBO Customer / Categories
-    :param workspace_id: Workspace integer id
-    :param categories: QBO Categories
-    :return: Fyle Categories Payload
-    """
-    payload = []
-
-    if updated_categories:
-        for category in updated_categories:
-            destination_id_of_category = category.mapping.first().destination.destination_id
-            payload.append({
-                'id': category.source_id,
-                'name': category.value,
-                'code': destination_id_of_category,
-                # Always keep Unspecified category enabled
-                'is_enabled': category.active if category.value != 'Unspecified' else True
-            })
-    else:
-        existing_category_names = ExpenseAttribute.objects.filter(attribute_type='CATEGORY', workspace_id=workspace_id).values_list('value', flat=True)
-
-        existing_category_names_lower_case = [existing_category_name.lower() for existing_category_name in existing_category_names]
-
-        for category in categories:
-            if category.value.lower() not in existing_category_names_lower_case and category.value.lower() not in DEFAULT_FYLE_CATEGORIES:
-                payload.append({'name': category.value, 'code': category.destination_id, 'is_enabled': category.active})
-
-    return payload
-
-
-def upload_categories_to_fyle(platform: PlatformConnector, workspace_id):
-    """
-    Upload categories to Fyle
-    """
-    qbo_credentials: QBOCredential = QBOCredential.get_active_qbo_credentials(workspace_id)
-    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
-    general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
-    qbo_attributes = []
-
-    platform.categories.sync()
-
-    if general_settings.import_categories:
-        qbo_connection.sync_accounts()
-        qbo_accounts: List[DestinationAttribute] = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT', detail__account_type__in=general_settings.charts_of_accounts, display_name='Account').all()
-        qbo_attributes = qbo_accounts
-
-    if general_settings.import_items:
-        qbo_connection.sync_items()
-        qbo_items: List[DestinationAttribute] = DestinationAttribute.objects.filter(workspace_id=workspace_id, display_name='Item', attribute_type='ACCOUNT').all()
-
-        if qbo_items:
-            qbo_attributes = qbo_attributes.union(qbo_items) if qbo_attributes else qbo_items
-
-    qbo_attributes = remove_duplicates(qbo_attributes)
-    fyle_payload: List[Dict] = create_fyle_categories_payload(qbo_attributes, workspace_id)
-
-    if fyle_payload:
-        platform.categories.post_bulk(fyle_payload)
-        platform.categories.sync()
-
-    return qbo_attributes
-
 
 @handle_import_exceptions(task_name='Auto Create Category Mappings')
 def auto_create_category_mappings(workspace_id):
