@@ -15,6 +15,10 @@ class WorkspacePermissions(permissions.BasePermission):
     """
 
     def validate_and_cache(self, workspace_users, user: User, workspace_id: str, cache_users: bool = False):
+        print('workspace_users', workspace_users)
+        print('user.id', user.id)
+        print('workspace_id', workspace_id)
+        print('allowed', user.id in workspace_users)
         if user.id in workspace_users:
             if cache_users:
                 cache.set(workspace_id, workspace_users, 172800)

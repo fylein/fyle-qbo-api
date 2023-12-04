@@ -108,11 +108,13 @@ class ConnectQBOView(generics.CreateAPIView, generics.RetrieveUpdateAPIView):
         authorization_code = request.data.get('code')
         realm_id = request.data.get('realm_id')
         redirect_uri = request.data.get('redirect_uri')
+        print('Connect QBO')
         try:
             # Generate a refresh token from the authorization code
             refresh_token = generate_qbo_refresh_token(authorization_code, redirect_uri)
             return connect_qbo_oauth(refresh_token, realm_id, kwargs['workspace_id'])
         except (qbo_exc.UnauthorizedClientError, qbo_exc.NotFoundClientError, qbo_exc.WrongParamsError, qbo_exc.InternalServerError) as e:
+            print('Something went wrong', e.__dict__)
             logger.info('Invalid/Expired Authorization Code or QBO application not found - %s', {'error': e.response})
             return Response({'message': 'Invalid/Expired Authorization Code or QBO application not found'}, status=status.HTTP_401_UNAUTHORIZED)
 
