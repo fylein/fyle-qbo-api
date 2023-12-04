@@ -124,7 +124,7 @@ def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
         'credentials': credentials,
         'sdk_connection_string': 'apps.quickbooks_online.utils.QBOConnector',
     }
-    destination_sync_methods = []
+
     if workspace_general_settings.import_categories or workspace_general_settings.import_items:
         destination_sync_methods = []
         if workspace_general_settings.import_categories:
