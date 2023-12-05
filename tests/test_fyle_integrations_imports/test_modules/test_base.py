@@ -69,7 +69,7 @@ def test_construct_attributes_filter(db):
     sync_after = datetime.strptime(date_string, '%Y-%m-%d %H:%M:%S.%f')
 
     base = get_base_class_instance(workspace_id=1, source_field='COST_CENTER', destination_field='CUSTOMER', platform_class_name='cost_centers', sync_after=sync_after)
- 
+
     filters = base.construct_attributes_filter('COST_CENTER', False,  paginated_destination_attribute_values)
 
     assert filters == {'attribute_type': 'COST_CENTER', 'workspace_id': 1, 'value__in': paginated_destination_attribute_values}
@@ -218,10 +218,11 @@ def test_resolve_expense_attribute_errors(db):
     category_list = []
     category_list.append(
         Mapping(
-        workspace_id=workspace_id,
-        source_id=source_category.id,
-        destination_id=destination_attribute.id
-    ))
+            workspace_id=workspace_id,
+            source_id=source_category.id,
+            destination_id=destination_attribute.id
+        )
+    )
     Mapping.objects.bulk_create(category_list)
 
     category.resolve_expense_attribute_errors()

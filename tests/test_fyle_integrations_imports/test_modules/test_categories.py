@@ -8,7 +8,6 @@ from apps.quickbooks_online.utils import QBOConnector
 from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSettings, FyleCredential
 from fyle_integrations_platform_connector import PlatformConnector
 from fyle_integrations_imports.modules.categories import Category
-from apps.tasks.models import Error
 from tests.test_fyle_integrations_imports.test_modules.fixtures import categories_data
 
 
@@ -64,7 +63,6 @@ def test_sync_destination_attributes(mocker, db):
     assert destination_attributes_count == 68
 
 
-
 def test_sync_expense_atrributes(mocker, db):
     workspace_id = 2
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
@@ -99,7 +97,6 @@ def test_sync_expense_atrributes(mocker, db):
     assert categories_count == 284
 
 
-
 def test_auto_create_destination_attributes(mocker, db):
     workspace_id = 2
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
@@ -128,7 +125,7 @@ def test_auto_create_destination_attributes(mocker, db):
         )
         mock_call.side_effect = [
             categories_data['create_new_auto_create_categories_expense_attributes_0'],
-            categories_data['create_new_auto_create_categories_expense_attributes_1'] 
+            categories_data['create_new_auto_create_categories_expense_attributes_1']
         ]
 
         expense_attributes_count = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'CATEGORY').count()
@@ -175,7 +172,7 @@ def test_auto_create_destination_attributes(mocker, db):
         ]
 
         destination_attribute = DestinationAttribute.objects.filter(workspace_id=workspace_id, value='Levi', attribute_type='ACCOUNT').first()
-        
+
         assert destination_attribute.active == True
 
         expense_attribute = ExpenseAttribute.objects.filter(workspace_id=workspace_id, value='Levi', attribute_type='CATEGORY').first()
@@ -194,7 +191,7 @@ def test_auto_create_destination_attributes(mocker, db):
         category.trigger_import()
 
         destination_attribute = DestinationAttribute.objects.filter(workspace_id=workspace_id, value='Levi', attribute_type='ACCOUNT').first()
-        
+
         assert destination_attribute.active == False
 
         expense_attribute = ExpenseAttribute.objects.filter(workspace_id=workspace_id, value='Levi', attribute_type='CATEGORY').first()
@@ -203,7 +200,7 @@ def test_auto_create_destination_attributes(mocker, db):
 
         post_run_expense_attribute_disabled_count = ExpenseAttribute.objects.filter(workspace_id=workspace_id, active=False, attribute_type='CATEGORY').count()
 
-        assert post_run_expense_attribute_disabled_count ==  pre_run_expense_attribute_disabled_count + 1
+        assert post_run_expense_attribute_disabled_count == pre_run_expense_attribute_disabled_count + 1
 
     # not re-enable case for categories import
     with mock.patch('fyle.platform.apis.v1beta.admin.Categories.list_all') as mock_call:
@@ -222,7 +219,7 @@ def test_auto_create_destination_attributes(mocker, db):
         ]
 
         pre_run_destination_attribute_count = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'ACCOUNT', active=False).count()
-        
+
         assert pre_run_destination_attribute_count == 1
 
         pre_run_expense_attribute_count = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'CATEGORY', active=False).count()
@@ -257,7 +254,7 @@ def test_auto_create_destination_attributes(mocker, db):
         )
         mock_call.side_effect = [
             categories_data['create_new_auto_create_categories_expense_attributes_2'],
-            categories_data['create_new_auto_create_categories_expense_attributes_3'] 
+            categories_data['create_new_auto_create_categories_expense_attributes_3']
         ]
 
         expense_attributes_count = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'CATEGORY').count()
@@ -307,7 +304,7 @@ def test_auto_create_destination_attributes(mocker, db):
         ]
 
         destination_attribute = DestinationAttribute.objects.filter(workspace_id=workspace_id, value='Concrete', attribute_type='ACCOUNT', display_name='Item').first()
-        
+
         assert destination_attribute.active == True
 
         expense_attribute = ExpenseAttribute.objects.filter(workspace_id=workspace_id, value='Concrete', attribute_type='CATEGORY').first()
@@ -326,7 +323,7 @@ def test_auto_create_destination_attributes(mocker, db):
         category.trigger_import()
 
         destination_attribute = DestinationAttribute.objects.filter(workspace_id=workspace_id, value='Concrete', attribute_type='ACCOUNT', display_name='Item').first()
-        
+
         assert destination_attribute.active == False
 
         expense_attribute = ExpenseAttribute.objects.filter(workspace_id=workspace_id, value='Concrete', attribute_type='CATEGORY').first()
@@ -335,7 +332,7 @@ def test_auto_create_destination_attributes(mocker, db):
 
         post_run_expense_attribute_disabled_count = ExpenseAttribute.objects.filter(workspace_id=workspace_id, active=False, attribute_type='CATEGORY').count()
 
-        assert post_run_expense_attribute_disabled_count ==  pre_run_expense_attribute_disabled_count + 1
+        assert post_run_expense_attribute_disabled_count == pre_run_expense_attribute_disabled_count + 1
 
     # not re-enable case for items import
     with mock.patch('fyle.platform.apis.v1beta.admin.Categories.list_all') as mock_call:
@@ -357,7 +354,7 @@ def test_auto_create_destination_attributes(mocker, db):
         ]
 
         pre_run_destination_attribute_count = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'ACCOUNT', active=False, display_name='Item').count()
-        
+
         assert pre_run_destination_attribute_count == 1
 
         pre_run_expense_attribute_count = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'CATEGORY', active=False).count()
@@ -395,7 +392,7 @@ def test_auto_create_destination_attributes(mocker, db):
         ]
 
         pre_run_destination_attribute_count = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'ACCOUNT', active=False, display_name='Item').count()
-        
+
         assert pre_run_destination_attribute_count == 0
 
         pre_run_expense_attribute_count = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'CATEGORY', active=False).count()

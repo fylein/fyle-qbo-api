@@ -5997,7 +5997,7 @@ projects_data = {
 }
 
 categories_data = {
-    "create_new_auto_create_categories_destination_attributes_accounts_sync" : [
+    "create_new_auto_create_categories_destination_attributes_accounts_sync": [
         {
             'Name':'Utility',
             'SubAccount':False,
@@ -6119,7 +6119,7 @@ categories_data = {
             }
         },
     ],
-    "create_new_auto_create_categories_destination_attributes_accounts" : [
+    "create_new_auto_create_categories_destination_attributes_accounts": [
         {
             'Name':'Utility',
             'SubAccount':False,
@@ -6438,7 +6438,6 @@ categories_data = {
                         323494
                     ],
                     'restricted_spender_user_ids':[
-                        
                     ],
                     'sub_category':None,
                     'system_category':'Train',
@@ -6459,7 +6458,6 @@ categories_data = {
                         323492
                     ],
                     'restricted_spender_user_ids':[
-                        
                     ],
                     'sub_category':None,
                     'system_category':'Fuel',

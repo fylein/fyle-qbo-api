@@ -3,7 +3,6 @@ from unittest import mock
 from django_q.models import Schedule
 from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
 from fyle_accounting_mappings.models import (
-    CategoryMapping,
     DestinationAttribute,
     EmployeeMapping,
     ExpenseAttribute,
@@ -39,9 +38,7 @@ from apps.mappings.tasks import (
 )
 from apps.tasks.models import Error
 from apps.workspaces.models import FyleCredential, QBOCredential, WorkspaceGeneralSettings
-from tests.helper import dict_compare_keys
 from tests.test_mappings.fixtures import data
-from tests.test_fyle.fixtures import data as fyle_data
 
 
 def test_auto_create_tax_codes_mappings(db, mocker):
