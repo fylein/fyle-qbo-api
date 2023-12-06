@@ -98,7 +98,13 @@ def schedule_auto_map_employees(employee_mapping_preference: str, workspace_id: 
 
 
 def async_disable_category_for_items_mapping(workspace_id: int):
-    async_task('apps.mappings.tasks.disable_category_for_items_mapping', workspace_id)
+    credentials = QBOCredential.objects.get(workspace_id=workspace_id)
+    async_task(
+        'fyle_integrations_imports.tasks.disable_category_for_items_mapping',
+        workspace_id,
+        'apps.quickbooks_online.utils.QBOConnector',
+        credentials
+    )
 
 
 def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
@@ -119,11 +125,20 @@ def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
         'sdk_connection_string': 'apps.quickbooks_online.utils.QBOConnector',
     }
 
-    task_settings['import_categories'] = {
-        'destination_field': 'ACCOUNT',
-        'destination_sync_method': SYNC_METHODS['ACCOUNT'],
-        'is_auto_sync_enabled': get_auto_sync_permission(workspace_general_settings),
-    }
+    if workspace_general_settings.import_categories or workspace_general_settings.import_items:
+        destination_sync_methods = []
+        if workspace_general_settings.import_categories:
+            destination_sync_methods.append(SYNC_METHODS['ACCOUNT'])
+        if workspace_general_settings.import_items:
+            destination_sync_methods.append(SYNC_METHODS['ITEM'])
+
+        task_settings['import_categories'] = {
+            'destination_field': 'ACCOUNT',
+            'destination_sync_methods': destination_sync_methods,
+            'is_auto_sync_enabled': get_auto_sync_permission(workspace_general_settings),
+            'is_3d_mapping': False,
+            'charts_of_accounts': workspace_general_settings.charts_of_accounts if 'accounts' in destination_sync_methods else None,
+        }
 
     # For now we are only adding PROJECTS support that is why we are hardcoding it
     if mapping_settings:
@@ -132,7 +147,7 @@ def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
                 task_settings['mapping_settings'].append({
                     'source_field': mapping_setting.source_field,
                     'destination_field': mapping_setting.destination_field,
-                    'destination_sync_method': SYNC_METHODS[mapping_setting.destination_field],
+                    'destination_sync_methods': SYNC_METHODS[mapping_setting.destination_field],
                     'is_auto_sync_enabled': get_auto_sync_permission(workspace_general_settings, mapping_setting),
                     'is_custom': False,
                 })

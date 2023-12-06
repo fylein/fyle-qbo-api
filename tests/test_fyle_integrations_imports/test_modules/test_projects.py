@@ -23,7 +23,7 @@ def test_sync_destination_attributes(mocker, db):
     destination_attributes_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='CUSTOMER').count()
     assert destination_attributes_count == 29
 
-    project = Project(3, 'CUSTOMER', None,  qbo_connection, 'customers', True)
+    project = Project(3, 'CUSTOMER', None,  qbo_connection, ['customers'], True)
     project.sync_destination_attributes()
 
     destination_attributes_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='CUSTOMER').count()
@@ -68,7 +68,7 @@ def test_auto_create_destination_attributes(mocker, db):
     workspace_id = 3
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
-    project = Project(3, 'CUSTOMER', None,  qbo_connection, 'customers', True)
+    project = Project(3, 'CUSTOMER', None,  qbo_connection, ['customers'], True)
     project.sync_after = None
 
     Workspace.objects.filter(id=workspace_id).update(fyle_org_id='or5qYLrvnoF9')
