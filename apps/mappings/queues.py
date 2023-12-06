@@ -98,7 +98,13 @@ def schedule_auto_map_employees(employee_mapping_preference: str, workspace_id: 
 
 
 def async_disable_category_for_items_mapping(workspace_id: int):
-    async_task('apps.mappings.tasks.disable_category_for_items_mapping', workspace_id)
+    credentials = QBOCredential.objects.get(workspace_id=workspace_id)
+    async_task(
+        'fyle_integrations_imports.tasks.disable_category_for_items_mapping',
+        workspace_id,
+        'apps.quickbooks_online.utils.QBOConnector',
+        credentials
+    )
 
 
 def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
