@@ -256,8 +256,6 @@ def test_resolve_expense_attribute_errors(db):
         attribute_type='CATEGORY'
     ).first()
 
-    print(source_category)
-
     category_mapping_count = Mapping.objects.filter(workspace_id=workspace_id, source_id=source_category.id).count()
 
     # category mapping is not present
