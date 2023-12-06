@@ -1,6 +1,4 @@
 from unittest import mock
-from datetime import datetime
-from django.db.models import Q
 from fyle_accounting_mappings.models import (
     DestinationAttribute,
     ExpenseAttribute,
