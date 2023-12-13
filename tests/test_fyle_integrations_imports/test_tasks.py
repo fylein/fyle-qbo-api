@@ -34,7 +34,7 @@ def test_trigger_import_via_schedule(mocker, db):
             source_field='PROJECT',
             sdk_connection_string='apps.quickbooks_online.utils.QBOConnector',
             credentials=credentials,
-            destination_sync_method='customers',
+            destination_sync_methods=['customers'],
             is_auto_sync_enabled=True,
             is_custom= False
         )
