@@ -97,16 +97,6 @@ def schedule_auto_map_employees(employee_mapping_preference: str, workspace_id: 
             schedule.delete()
 
 
-def async_disable_category_for_items_mapping(workspace_id: int):
-    credentials = QBOCredential.objects.get(workspace_id=workspace_id)
-    async_task(
-        'fyle_integrations_imports.tasks.disable_category_for_items_mapping',
-        workspace_id,
-        'apps.quickbooks_online.utils.QBOConnector',
-        credentials
-    )
-
-
 def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
     """
     Chain import fields to Fyle
@@ -120,6 +110,7 @@ def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
         'import_tax': None,
         'import_vendors_as_merchants': None,
         'import_categories': None,
+        'import_items': None,
         'mapping_settings': [],
         'credentials': credentials,
         'sdk_connection_string': 'apps.quickbooks_online.utils.QBOConnector',
@@ -139,6 +130,9 @@ def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
             'is_3d_mapping': False,
             'charts_of_accounts': workspace_general_settings.charts_of_accounts if 'accounts' in destination_sync_methods else None,
         }
+
+    if not workspace_general_settings.import_items:
+        task_settings['import_items'] = False
 
     # For now we are only adding PROJECTS support that is why we are hardcoding it
     if mapping_settings:

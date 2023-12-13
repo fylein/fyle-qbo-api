@@ -6,7 +6,6 @@ from fyle_accounting_mappings.models import MappingSetting
 from apps.fyle.models import ExpenseGroupSettings
 from apps.mappings.helpers import schedule_or_delete_fyle_import_tasks
 from apps.mappings.queues import (
-    async_disable_category_for_items_mapping,
     schedule_cost_centers_creation,
     schedule_fyle_attributes_creation,
     schedule_tax_groups_creation,
@@ -83,9 +82,6 @@ class ImportSettingsTrigger:
 
         schedule_or_delete_fyle_import_tasks(workspace_general_settings_instance)
         new_schedule_or_delete_fyle_import_tasks(workspace_general_settings_instance)
-
-        if not workspace_general_settings_instance.import_items:
-            async_disable_category_for_items_mapping(self.__workspace_id)
 
     def __remove_old_department_source_field(self, current_mappings_settings: List[MappingSetting], new_mappings_settings: List[Dict]):
         """
