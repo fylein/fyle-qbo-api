@@ -1,6 +1,6 @@
 from typing import Dict
 
-from apps.mappings.queues import async_disable_category_for_items_mapping
+from apps.mappings.schedules import schedule_or_delete_fyle_import_tasks as new_schedule_or_delete_fyle_import_tasks
 from apps.workspaces.models import WorkspaceGeneralSettings
 
 
@@ -21,4 +21,4 @@ class ExportSettingsTrigger:
             # Disable category for items mapping and set import-items to flase
             workspace_general_settings.import_items = False
             workspace_general_settings.save()
-            async_disable_category_for_items_mapping(self.__workspace_id)
+            new_schedule_or_delete_fyle_import_tasks(workspace_general_settings)

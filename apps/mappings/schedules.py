@@ -6,8 +6,8 @@ from fyle_accounting_mappings.models import MappingSetting
 
 def schedule_or_delete_fyle_import_tasks(workspace_general_settings: WorkspaceGeneralSettings, mapping_setting_instance: MappingSetting = None):
     """
-    Schedule or delete Fyle import tasks based on the configuration.
-    :param configuration: Workspace Configuration Instance
+    Schedule or delete Fyle import tasks based on the workspace_general_settings and mapping_settings.
+    :param workspace_general_settings: Workspace workspace_general_settings Instance
     :param instance: Mapping Setting Instance
     :return: None
     """
@@ -16,7 +16,7 @@ def schedule_or_delete_fyle_import_tasks(workspace_general_settings: WorkspaceGe
     if mapping_setting_instance and mapping_setting_instance.import_to_fyle:
         task_to_be_scheduled = mapping_setting_instance
 
-    if task_to_be_scheduled:
+    if task_to_be_scheduled or workspace_general_settings.import_categories or workspace_general_settings.import_items:
         Schedule.objects.update_or_create(
             func='apps.mappings.queues.construct_tasks_and_chain_import_fields_to_fyle',
             args='{}'.format(workspace_general_settings.workspace_id),
@@ -35,7 +35,7 @@ def schedule_or_delete_fyle_import_tasks(workspace_general_settings: WorkspaceGe
     ).count()
 
     # If the import fields count is 0, delete the schedule
-    if import_fields_count == 0:
+    if import_fields_count == 0 and not workspace_general_settings.import_categories and not workspace_general_settings.import_items:
         Schedule.objects.filter(
             func='apps.mappings.queues.construct_tasks_and_chain_import_fields_to_fyle',
             args='{}'.format(workspace_general_settings.workspace_id)
