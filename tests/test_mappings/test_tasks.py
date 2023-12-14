@@ -15,7 +15,6 @@ from qbosdk.exceptions import WrongParamsError
 from apps.mappings.queues import (
     schedule_auto_map_ccc_employees,
     schedule_auto_map_employees,
-    schedule_cost_centers_creation,
     schedule_fyle_attributes_creation,
     schedule_tax_groups_creation,
 )
@@ -24,14 +23,12 @@ from apps.mappings.tasks import (
     async_auto_create_custom_field_mappings,
     async_auto_map_ccc_account,
     async_auto_map_employees,
-    auto_create_cost_center_mappings,
     auto_create_expense_fields_mappings,
     auto_create_tax_codes_mappings,
     auto_create_vendors_as_merchants,
     auto_import_and_map_fyle_fields,
     auto_map_ccc_employees,
     auto_map_employees,
-    create_fyle_cost_centers_payload,
     post_merchants,
     remove_duplicates,
     resolve_expense_attribute_errors,
@@ -180,67 +177,6 @@ def test_schedule_auto_map_ccc_employees(db):
     schedule_auto_map_ccc_employees(workspace_id=workspace_id)
 
     schedule = Schedule.objects.filter(func='apps.mappings.tasks.async_auto_map_ccc_account', args='{}'.format(workspace_id)).first()
-
-    assert schedule == None
-
-
-def test_create_cost_center_payload(db):
-    existing_cost_center_names = ExpenseAttribute.objects.filter(attribute_type='COST_CENTER', workspace_id=4).values_list('value', flat=True)
-
-    qbo_attributes = DestinationAttribute.objects.filter(attribute_type='CLASS', workspace_id=4).first()
-    qbo_attributes.value = 'sample333'
-    qbo_attributes.save()
-
-    qbo_attributes = DestinationAttribute.objects.filter(attribute_type='CLASS', workspace_id=4).order_by('value', 'id')
-
-    qbo_attributes = remove_duplicates(qbo_attributes)
-
-    cost_center_payload = create_fyle_cost_centers_payload(qbo_attributes, existing_cost_center_names)
-    assert cost_center_payload == [{'description': 'Cost Center - sample333, Id - 5000000000000142238', 'is_enabled': True, 'name': 'sample333'}]
-
-
-def test_auto_create_cost_center_mappings(db, mocker):
-    workspace_id = 4
-    mocker.patch('qbosdk.apis.Classes.get', return_value=[])
-    mocker.patch('fyle_integrations_platform_connector.apis.CostCenters.sync', return_value=[])
-    mocker.patch('fyle_integrations_platform_connector.apis.CostCenters.post_bulk', return_value=[])
-
-    qbo_attributes = DestinationAttribute.objects.filter(attribute_type='CLASS', workspace_id=4).first()
-    qbo_attributes.value = 'sample333'
-    qbo_attributes.save()
-
-    response = auto_create_cost_center_mappings(workspace_id=workspace_id)
-    cost_center = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='CLASS').count()
-    mappings = Mapping.objects.filter(workspace_id=workspace_id, source_type='COST_CENTER').count()
-
-    assert cost_center == 5
-    assert mappings == 5
-
-    with mock.patch('fyle_integrations_platform_connector.apis.CostCenters.sync') as mock_call:
-        mock_call.side_effect = WrongParamsError(msg='invalid params', response='invalid params')
-        auto_create_cost_center_mappings(workspace_id)
-
-        mock_call.side_effect = FyleInvalidTokenError(msg='Invalid Token for fyle', response='Invalid Token for fyle')
-        auto_create_cost_center_mappings(workspace_id)
-
-    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-    fyle_credentials.delete()
-
-    response = auto_create_cost_center_mappings(workspace_id=workspace_id)
-    assert response == None
-
-
-def test_schedule_cost_centers_creation(db):
-    workspace_id = 3
-    schedule_cost_centers_creation(import_to_fyle=True, workspace_id=workspace_id)
-
-    schedule = Schedule.objects.filter(func='apps.mappings.tasks.auto_create_cost_center_mappings', args='{}'.format(workspace_id)).first()
-
-    assert schedule.func == 'apps.mappings.tasks.auto_create_cost_center_mappings'
-
-    schedule_cost_centers_creation(import_to_fyle=False, workspace_id=workspace_id)
-
-    schedule = Schedule.objects.filter(func='apps.mappings.tasks.auto_create_cost_center_mappings', args='{}'.format(workspace_id)).first()
 
     assert schedule == None
 
