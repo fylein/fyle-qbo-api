@@ -50,10 +50,7 @@ def run_post_mapping_settings_triggers(sender, instance: MappingSetting, **kwarg
     """
     workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=instance.workspace_id).first()
 
-    if instance.source_field == 'PROJECT':
-        new_schedule_or_delete_fyle_import_tasks(workspace_general_settings, instance)
-
-    if instance.source_field == 'COST_CENTER':
+    if instance.source_field in ['PROJECT', 'COST_CENTER']:
         new_schedule_or_delete_fyle_import_tasks(workspace_general_settings, instance)
 
     if instance.is_custom:
