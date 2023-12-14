@@ -25,16 +25,6 @@ def async_auto_create_expense_field_mapping(mapping_setting: MappingSetting):
     async_task('apps.mappings.tasks.auto_create_expense_fields_mappings', int(mapping_setting.workspace_id), mapping_setting.destination_field, mapping_setting.source_field)
 
 
-def schedule_cost_centers_creation(import_to_fyle, workspace_id):
-    if import_to_fyle:
-        schedule, _ = Schedule.objects.update_or_create(func='apps.mappings.tasks.auto_create_cost_center_mappings', args='{}'.format(workspace_id), defaults={'schedule_type': Schedule.MINUTES, 'minutes': 24 * 60, 'next_run': datetime.now()})
-    else:
-        schedule: Schedule = Schedule.objects.filter(func='apps.mappings.tasks.auto_create_cost_center_mappings', args='{}'.format(workspace_id)).first()
-
-        if schedule:
-            schedule.delete()
-
-
 def schedule_fyle_attributes_creation(workspace_id: int):
     mapping_settings = MappingSetting.objects.filter(is_custom=True, import_to_fyle=True, workspace_id=workspace_id).all()
     if mapping_settings:
@@ -137,7 +127,7 @@ def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
     # For now we are only adding PROJECTS support that is why we are hardcoding it
     if mapping_settings:
         for mapping_setting in mapping_settings:
-            if mapping_setting.source_field in ['PROJECT']:
+            if mapping_setting.source_field in ['PROJECT', 'COST_CENTER']:
                 task_settings['mapping_settings'].append({
                     'source_field': mapping_setting.source_field,
                     'destination_field': mapping_setting.destination_field,
