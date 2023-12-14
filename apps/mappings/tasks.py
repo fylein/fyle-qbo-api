@@ -359,24 +359,6 @@ def sync_qbo_attribute(qbo_attribute_type: str, workspace_id: int):
         qbo_connection.sync_vendors()
 
 
-def create_fyle_cost_centers_payload(qbo_attributes: List[DestinationAttribute], existing_fyle_cost_centers: list):
-    """
-    Create Fyle Cost Centers Payload from QBO Objects
-    :param existing_fyle_cost_centers: Existing cost center names
-    :param qbo_attributes: QBO Objects
-    :return: Fyle Cost Centers Payload
-    """
-    fyle_cost_centers_payload = []
-
-    for qbo_attribute in qbo_attributes:
-        if qbo_attribute.value not in existing_fyle_cost_centers:
-            fyle_cost_centers_payload.append(
-                {'name': qbo_attribute.value, 'is_enabled': True if qbo_attribute.active is None else qbo_attribute.active, 'description': 'Cost Center - {0}, Id - {1}'.format(qbo_attribute.value, qbo_attribute.destination_id)}
-            )
-
-    return fyle_cost_centers_payload
-
-
 def create_fyle_tax_group_payload(qbo_attributes: List[DestinationAttribute], existing_fyle_tax_groups: list):
     """
     Create Fyle Cost Centers Payload from QBO Objects
@@ -391,46 +373,6 @@ def create_fyle_tax_group_payload(qbo_attributes: List[DestinationAttribute], ex
             fyle_tax_group_payload.append({'name': qbo_attribute.value, 'is_enabled': True, 'percentage': round((qbo_attribute.detail['tax_rate'] / 100), 2)})
 
     return fyle_tax_group_payload
-
-
-def post_cost_centers_in_batches(platform: PlatformConnector, workspace_id: int, qbo_attribute_type: str):
-    existing_cost_center_names = ExpenseAttribute.objects.filter(attribute_type='COST_CENTER', workspace_id=workspace_id).values_list('value', flat=True)
-
-    qbo_attributes_count = DestinationAttribute.objects.filter(attribute_type=qbo_attribute_type, workspace_id=workspace_id).count()
-
-    page_size = 200
-
-    for offset in range(0, qbo_attributes_count, page_size):
-        limit = offset + page_size
-        paginated_qbo_attributes = DestinationAttribute.objects.filter(attribute_type=qbo_attribute_type, workspace_id=workspace_id).order_by('value', 'id')[offset:limit]
-
-        paginated_qbo_attributes = remove_duplicates(paginated_qbo_attributes)
-
-        fyle_payload: List[Dict] = create_fyle_cost_centers_payload(paginated_qbo_attributes, existing_cost_center_names)
-
-        if fyle_payload:
-            platform.cost_centers.post_bulk(fyle_payload)
-            platform.cost_centers.sync()
-
-        Mapping.bulk_create_mappings(paginated_qbo_attributes, 'COST_CENTER', qbo_attribute_type, workspace_id)
-
-
-@handle_import_exceptions(task_name='Auto Create Cost Center Mappings')
-def auto_create_cost_center_mappings(workspace_id):
-    """
-    Create Cost Center Mappings
-    """
-    fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
-
-    platform = PlatformConnector(fyle_credentials)
-
-    mapping_setting = MappingSetting.objects.get(source_field='COST_CENTER', import_to_fyle=True, workspace_id=workspace_id)
-
-    platform.cost_centers.sync()
-
-    sync_qbo_attribute(mapping_setting.destination_field, workspace_id)
-
-    post_cost_centers_in_batches(platform, workspace_id, mapping_setting.destination_field)
 
 
 def create_fyle_expense_custom_field_payload(qbo_attributes: List[DestinationAttribute], workspace_id: int, fyle_attribute: str, platform: PlatformConnector, source_placeholder: str = None):
