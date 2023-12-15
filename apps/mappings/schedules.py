@@ -31,7 +31,7 @@ def schedule_or_delete_fyle_import_tasks(workspace_general_settings: WorkspaceGe
     import_fields_count = MappingSetting.objects.filter(
         import_to_fyle=True,
         workspace_id=workspace_general_settings.workspace_id,
-        source_field__in=['PROJECT']
+        source_field__in=['PROJECT', 'COST_CENTER']
     ).count()
 
     # If the import fields count is 0, delete the schedule

@@ -46,24 +46,6 @@ def test_run_post_mapping_settings_triggers(test_connection, mocker):
 
     mocker.patch('fyle.platform.apis.v1beta.admin.ExpenseFields.list_all', return_value=fyle_data['get_all_expense_fields'])
 
-    mapping_setting = MappingSetting(source_field='PROJECT', destination_field='PROJECT', workspace_id=2, import_to_fyle=True, is_custom=False)
-
-    mapping_setting.save()
-
-    schedule = Schedule.objects.filter(func='apps.mappings.tasks.auto_create_project_mappings', args='{}'.format(2)).first()
-
-    assert schedule.func == 'apps.mappings.tasks.auto_create_project_mappings'
-    assert schedule.args == '2'
-
-    mapping_setting = MappingSetting(source_field='COST_CENTER', destination_field='CLASS', workspace_id=1, import_to_fyle=True, is_custom=False)
-
-    mapping_setting.save()
-
-    schedule = Schedule.objects.filter(func='apps.mappings.tasks.auto_create_cost_center_mappings', args='{}'.format(1)).first()
-
-    assert schedule.func == 'apps.mappings.tasks.auto_create_cost_center_mappings'
-    assert schedule.args == '1'
-
     mapping_setting = MappingSetting(source_field='PROJECT', destination_field='DEPARTMENT', workspace_id=1, import_to_fyle=False, is_custom=False)
 
     mapping_setting.save()
