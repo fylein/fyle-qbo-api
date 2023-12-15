@@ -7564,3 +7564,416 @@ categories_data = {
         }
     ]
 }
+
+cost_center_data = {
+    "create_new_auto_create_cost_centers_destination_attributes": [
+        {
+            "FullyQualifiedName": "France",
+            "domain": "QBO",
+            "Name": "France",
+            "SyncToken": "0",
+            "SubClass": False,
+            "sparse": False,
+            "Active": True,
+            "Id": "5000000000000007280",
+            "MetaData": {"CreateTime": "2015-07-22T13:57:27-07:00", "LastUpdatedTime": "2015-07-22T13:57:27-07:00"},
+        },
+        {
+            "FullyQualifiedName": "Denmark",
+            "domain": "QBO",
+            "Name": "Denmark",
+            "SyncToken": "0",
+            "SubClass": False,
+            "sparse": False,
+            "Active": True,
+            "Id": "9",
+            "MetaData": {"CreateTime": "2015-07-22T13:57:27-07:00", "LastUpdatedTime": "2015-07-22T13:57:27-07:00"},
+        },
+    ],
+    "create_new_auto_create_cost_centers_destination_attributes_subsequent_run": [
+        {
+            "FullyQualifiedName": "France",
+            "domain": "QBO",
+            "Name": "France",
+            "SyncToken": "0",
+            "SubClass": False,
+            "sparse": False,
+            "Active": True,
+            "Id": "5000000000000007280",
+            "MetaData": {"CreateTime": "2015-07-22T13:57:27-07:00", "LastUpdatedTime": "2015-07-22T13:57:27-07:00"},
+        },
+        {
+            "FullyQualifiedName": "Denmark",
+            "domain": "QBO",
+            "Name": "Denmark",
+            "SyncToken": "0",
+            "SubClass": False,
+            "sparse": False,
+            "Active": True,
+            "Id": "9",
+            "MetaData": {"CreateTime": "2015-07-22T13:57:27-07:00", "LastUpdatedTime": "2015-07-22T13:57:27-07:00"},
+        },
+        {
+            "FullyQualifiedName": "Australia",
+            "domain": "QBO",
+            "Name": "Australia",
+            "SyncToken": "0",
+            "SubClass": False,
+            "sparse": False,
+            "Active": True,
+            "Id": "5000000000000007282",
+            "MetaData": {"CreateTime": "2015-07-22T13:57:27-07:00", "LastUpdatedTime": "2015-07-22T13:57:27-07:00"},
+        },
+        {
+            "FullyQualifiedName": "Poland",
+            "domain": "QBO",
+            "Name": "Poland",
+            "SyncToken": "0",
+            "SubClass": False,
+            "sparse": False,
+            "Active": True,
+            "Id": "10",
+            "MetaData": {"CreateTime": "2015-07-22T13:57:27-07:00", "LastUpdatedTime": "2015-07-22T13:57:27-07:00"},
+        },
+    ],
+    'create_new_auto_create_cost_centers_expense_attributes_0': [
+        {
+            'count':6,
+            'data':[
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Enterprise, Id - 600',
+                    'id':19728,
+                    'is_enabled':True,
+                    'name':'Enterprise',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Midsize Business, Id - 500',
+                    'id':19730,
+                    'is_enabled':True,
+                    'name':'Midsize Business',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Service Line 1, Id - 100',
+                    'id':19731,
+                    'is_enabled':True,
+                    'name':'Service Line 1',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Service Line 2, Id - 200',
+                    'id':19732,
+                    'is_enabled':True,
+                    'name':'Service Line 2',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Service Line 3, Id - 300',
+                    'id':19733,
+                    'is_enabled':True,
+                    'name':'Service Line 3',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Small Business, Id - 400',
+                    'id':19734,
+                    'is_enabled':True,
+                    'name':'Small Business',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                }
+            ],
+            'offset':0
+        }
+    ],
+    'create_new_auto_create_cost_centers_expense_attributes_1': [
+        {
+            'count':8,
+            'data':[
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Enterprise, Id - 600',
+                    'id':19728,
+                    'is_enabled':True,
+                    'name':'Enterprise',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Midsize Business, Id - 500',
+                    'id':19730,
+                    'is_enabled':True,
+                    'name':'Midsize Business',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Service Line 1, Id - 100',
+                    'id':19731,
+                    'is_enabled':True,
+                    'name':'Service Line 1',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Service Line 2, Id - 200',
+                    'id':19732,
+                    'is_enabled':True,
+                    'name':'Service Line 2',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Service Line 3, Id - 300',
+                    'id':19733,
+                    'is_enabled':True,
+                    'name':'Service Line 3',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Small Business, Id - 400',
+                    'id':19734,
+                    'is_enabled':True,
+                    'name':'Small Business',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Denmark, Id - 4002',
+                    'id':197341,
+                    'is_enabled':True,
+                    'name':'Denmark',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - France, Id - 4001',
+                    'id':197342,
+                    'is_enabled':True,
+                    'name':'France',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                }
+            ],
+            'offset':0
+        }
+    ],
+    'create_new_auto_create_cost_centers_expense_attributes_2': [
+        {
+            'count':10,
+            'data':[
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Enterprise, Id - 600',
+                    'id':19728,
+                    'is_enabled':True,
+                    'name':'Enterprise',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Midsize Business, Id - 500',
+                    'id':19730,
+                    'is_enabled':True,
+                    'name':'Midsize Business',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Service Line 1, Id - 100',
+                    'id':19731,
+                    'is_enabled':True,
+                    'name':'Service Line 1',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Service Line 2, Id - 200',
+                    'id':19732,
+                    'is_enabled':True,
+                    'name':'Service Line 2',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Service Line 3, Id - 300',
+                    'id':19733,
+                    'is_enabled':True,
+                    'name':'Service Line 3',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Small Business, Id - 400',
+                    'id':19734,
+                    'is_enabled':True,
+                    'name':'Small Business',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Denmark, Id - 4002',
+                    'id':197341,
+                    'is_enabled':True,
+                    'name':'Denmark',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - France, Id - 4001',
+                    'id':197342,
+                    'is_enabled':True,
+                    'name':'France',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Poland, Id - 4002',
+                    'id':197343,
+                    'is_enabled':True,
+                    'name':'Poland',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Australia, Id - 4001',
+                    'id':197344,
+                    'is_enabled':True,
+                    'name':'Australia',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                }
+            ],
+            'offset':0
+        }
+    ],
+    "create_fyle_cost_centers_payload_create_new_case":[
+        {
+            "name": "Adidas",
+            "is_enabled": True,
+            "description": "Cost Center - Adidas, Id - 5100000000000030664",
+        },
+        {
+            "name": "cc1",
+            "is_enabled": True,
+            "description": "Cost Center - cc1, Id - 5100000000000030665",
+        },
+        {
+            "name": "cc2",
+            "is_enabled": True,
+            "description": "Cost Center - cc2, Id - 5100000000000030666",
+        },
+        {
+            "name": "Coachella",
+            "is_enabled": True,
+            "description": "Cost Center - Coachella, Id - 5100000000000030667",
+        },
+        {
+            "name": "Employees",
+            "is_enabled": True,
+            "description": "Cost Center - Employees, Id - 200200000000000042900",
+        },
+        {
+            "name": "Parties",
+            "is_enabled": True,
+            "description": "Cost Center - Parties, Id - 200200000000000042901",
+        },
+        {
+            "name": "Promotional Items",
+            "is_enabled": True,
+            "description": "Cost Center - Promotional Items, Id - 200200000000000042903",
+        },
+        {
+            "name": "Radio",
+            "is_enabled": True,
+            "description": "Cost Center - Radio, Id - 5100000000000030668",
+        },
+        {
+            "name": "Retreats",
+            "is_enabled": True,
+            "description": "Cost Center - Retreats, Id - 200200000000000042902",
+        },
+        {
+            "name": "Test",
+            "is_enabled": True,
+            "description": "Cost Center - Test, Id - 5100000000000030855",
+        }
+    ]
+}

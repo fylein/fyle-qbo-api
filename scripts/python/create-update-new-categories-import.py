@@ -9,8 +9,6 @@ existing_import_enabled_schedules = Schedule.objects.filter(
 try:
     # Create/update new schedules in a transaction block
     with transaction.atomic():
-        deleted_count = 0
-        updated_count = 0
         for schedule in existing_import_enabled_schedules:
             random_number = random.randint(1, 23)
             configuration = WorkspaceGeneralSettings.objects.get(workspace_id=schedule['args'])
@@ -29,5 +27,7 @@ try:
                     minutes=24 * 60,
                     next_run=datetime.now() + timedelta(hours=random_number)
                 )
+        # remove this sanity check after running this script
+        raise Exception("This is a sanity check")
 except Exception as e:
     print(e)
