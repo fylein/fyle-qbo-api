@@ -6,7 +6,6 @@ from fyle_accounting_mappings.models import MappingSetting
 from apps.fyle.models import ExpenseGroupSettings
 from apps.mappings.helpers import schedule_or_delete_fyle_import_tasks
 from apps.mappings.queues import (
-    schedule_cost_centers_creation,
     schedule_fyle_attributes_creation,
     schedule_tax_groups_creation,
 )
@@ -99,15 +98,6 @@ class ImportSettingsTrigger:
         Post save action for mapping settings
         """
         mapping_settings = self.__mapping_settings
-
-        cost_center_mapping_available = False
-
-        for setting in mapping_settings:
-            if setting['source_field'] == 'COST_CENTER':
-                cost_center_mapping_available = True
-
-        if not cost_center_mapping_available:
-            schedule_cost_centers_creation(False, self.__workspace_id)
 
         schedule_fyle_attributes_creation(self.__workspace_id)
 

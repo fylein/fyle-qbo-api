@@ -7,7 +7,6 @@ from fyle_accounting_mappings.models import EmployeeMapping, Mapping, MappingSet
 
 from apps.mappings.queues import (
     async_auto_create_expense_field_mapping,
-    schedule_cost_centers_creation,
     schedule_fyle_attributes_creation,
 )
 from apps.mappings.tasks import upload_attributes_to_fyle
@@ -51,11 +50,8 @@ def run_post_mapping_settings_triggers(sender, instance: MappingSetting, **kwarg
     """
     workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=instance.workspace_id).first()
 
-    if instance.source_field == 'PROJECT':
+    if instance.source_field in ['PROJECT', 'COST_CENTER']:
         new_schedule_or_delete_fyle_import_tasks(workspace_general_settings, instance)
-
-    if instance.source_field == 'COST_CENTER':
-        schedule_cost_centers_creation(instance.import_to_fyle, int(instance.workspace_id))
 
     if instance.is_custom:
         schedule_fyle_attributes_creation(int(instance.workspace_id))
