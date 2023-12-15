@@ -15,6 +15,7 @@ try:
             mapping_setting = MappingSetting.objects.filter(source_field='COST_CENTER', workspace_id=schedule['args'], import_to_fyle=True).first()
             if mapping_setting:
                 print('Creating schedule for workspace_id: ', schedule['args'])
+                # adding the new schedule
                 Schedule.objects.update_or_create(
                     func='apps.mappings.queues.construct_tasks_and_chain_import_fields_to_fyle',
                     args=schedule['args'],
@@ -24,6 +25,11 @@ try:
                         'next_run':datetime.now() + timedelta(hours=random_number)
                     }
                 )
+                # deleting the old schedule
+                Schedule.objects.filter(
+                    func='apps.mappings.tasks.auto_create_cost_center_mappings',
+                    args=schedule['args']
+                ).delete()
         # remove this sanity check after running this script
         raise Exception("This is a sanity check")
 except Exception as e:
