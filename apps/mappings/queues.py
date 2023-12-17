@@ -127,13 +127,13 @@ def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
     # For now we are only adding PROJECTS support that is why we are hardcoding it
     if mapping_settings:
         for mapping_setting in mapping_settings:
-            if mapping_setting.source_field in ['PROJECT', 'COST_CENTER']:
+            if mapping_setting.source_field in ['PROJECT', 'COST_CENTER'] or mapping_setting.is_custom:
                 task_settings['mapping_settings'].append({
                     'source_field': mapping_setting.source_field,
                     'destination_field': mapping_setting.destination_field,
                     'destination_sync_methods': [SYNC_METHODS[mapping_setting.destination_field]],
                     'is_auto_sync_enabled': get_auto_sync_permission(workspace_general_settings, mapping_setting),
-                    'is_custom': False,
+                    'is_custom': mapping_setting.is_custom
                 })
 
     chain_import_fields_to_fyle(workspace_id, task_settings)

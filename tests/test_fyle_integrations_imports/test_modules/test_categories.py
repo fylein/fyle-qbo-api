@@ -447,7 +447,6 @@ def test_construct_fyle_payload(db):
     paginated_destination_attributes = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT', display_name='Account')
 
     paginated_destination_attribute_values = [attribute.value for attribute in paginated_destination_attributes]
-    print(paginated_destination_attribute_values)
     existing_fyle_attributes_map = category.get_existing_fyle_attributes(paginated_destination_attribute_values)
 
     fyle_payload = category.construct_fyle_payload(
