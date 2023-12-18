@@ -45,6 +45,7 @@ def test_sync_expense_atrributes(mocker, db):
     expense_attribute_count = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type='LUKE').count()
     assert expense_attribute_count == 2
 
+
 def test_auto_create_destination_attributes(mocker, db):
     workspace_id = 3
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
@@ -79,7 +80,7 @@ def test_auto_create_destination_attributes(mocker, db):
         assert expense_attributes_count == 0
 
         mappings_count = Mapping.objects.filter(workspace_id=workspace_id, source_type='LUKE', destination_type='CLASS').count()
-        
+
         assert mappings_count == 0
 
         expense_custom_field.trigger_import()
@@ -89,7 +90,7 @@ def test_auto_create_destination_attributes(mocker, db):
         assert expense_attributes_count == 2
 
         mappings_count = Mapping.objects.filter(workspace_id=workspace_id, source_type='LUKE', destination_type='CLASS').count()
-        
+
         assert mappings_count == 2
 
     # create new case for projects import
@@ -115,7 +116,7 @@ def test_auto_create_destination_attributes(mocker, db):
         assert expense_attributes_count == 2
 
         mappings_count = Mapping.objects.filter(workspace_id=workspace_id, source_type='LUKE', destination_type='CLASS').count()
-        
+
         assert mappings_count == 2
 
         expense_custom_field.trigger_import()
@@ -125,7 +126,7 @@ def test_auto_create_destination_attributes(mocker, db):
         assert expense_attributes_count == 4
 
         mappings_count = Mapping.objects.filter(workspace_id=workspace_id, source_type='LUKE', destination_type='CLASS').count()
-        
+
         assert mappings_count == 4
 
 

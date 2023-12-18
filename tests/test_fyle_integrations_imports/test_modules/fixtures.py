@@ -7977,7 +7977,7 @@ cost_center_data = {
         }
     ]
 }
-expense_custom_field_data={
+expense_custom_field_data = {
     'create_new_auto_create_expense_custom_fields_expense_attributes_0':[
         {
             "count": 2,
