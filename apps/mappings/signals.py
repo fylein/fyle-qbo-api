@@ -108,7 +108,7 @@ def run_pre_mapping_settings_triggers(sender, instance: MappingSetting, **kwargs
                 # if the import_log is present and the last_successful_run_at is less than 30mins then we need to update it
                 # so that the schedule can run
                 if last_successful_run_at and offset_aware_time_difference\
-                 and (offset_aware_time_difference < last_successful_run_at):
+                    and (offset_aware_time_difference < last_successful_run_at):
                     import_log.last_successful_run_at = offset_aware_time_difference
                     last_successful_run_at = offset_aware_time_difference
                     import_log.save()
@@ -136,9 +136,9 @@ def run_pre_mapping_settings_triggers(sender, instance: MappingSetting, **kwargs
             expense_custom_field.construct_payload_and_import_to_fyle(platform, import_log)
             expense_custom_field.sync_expense_attributes(platform)
 
-            # NOTE: We are not setting the import_log status to COMPLETE 
+            # NOTE: We are not setting the import_log status to COMPLETE
             # since the post_save trigger will run the import again in async manner
-    
+
         except WrongParamsError as error:
             logger.error(
                 'Error while creating %s workspace_id - %s in Fyle %s %s',

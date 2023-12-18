@@ -36,7 +36,7 @@ def schedule_or_delete_fyle_import_tasks(workspace_general_settings: WorkspaceGe
 
     custom_field_import_fields_count = MappingSetting.objects.filter(
         import_to_fyle=True,
-        workspace_id=workspace_general_settings.workspace_id, 
+        workspace_id=workspace_general_settings.workspace_id,
         is_custom=True
     ).count()
 
