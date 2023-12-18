@@ -6,7 +6,7 @@ from tests.test_workspaces.test_apis.test_import_settings.fixtures import data
 
 
 def test_import_settings(mocker, api_client, test_connection):
-    mocker.patch('fyle_integrations_platform_connector.apis.ExpenseCustomFields.get_by_id', return_value={'options': ['samp'], 'updated_at': '2020-06-11T13:14:55.201598+00:00'})
+    mocker.patch('fyle_integrations_platform_connector.apis.ExpenseCustomFields.get_by_id', return_value={'options': ['samp'],"is_mandatory": False, 'updated_at': '2020-06-11T13:14:55.201598+00:00'})
     mocker.patch('fyle_integrations_platform_connector.apis.ExpenseCustomFields.post', return_value=None)
     mocker.patch('fyle_integrations_platform_connector.apis.ExpenseCustomFields.sync', return_value=None)
     workspace = Workspace.objects.get(id=3)
