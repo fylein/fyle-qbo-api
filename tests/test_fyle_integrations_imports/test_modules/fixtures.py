@@ -7977,3 +7977,267 @@ cost_center_data = {
         }
     ]
 }
+expense_custom_field_data = {
+    'create_new_auto_create_expense_custom_fields_expense_attributes_0':[
+        {
+            "count": 2,
+            "data": [
+                {
+                    "category_ids": [
+                        259385
+                    ],
+                    "code": None,
+                    "column_name": "text_column3",
+                    "created_at": "2023-10-10T11:06:12.906551+00:00",
+                    "default_value": None,
+                    "field_name": "Luke",
+                    "id": 229506,
+                    "is_custom": True,
+                    "is_enabled": True,
+                    "is_mandatory": False,
+                    "options": [
+                        "France",
+                        "Denmark"
+                    ],
+                    "org_id": "or5qYLrvnoF9",
+                    "parent_field_id": None,
+                    "placeholder": "Select Luke",
+                    "seq": 1,
+                    "type": "SELECT",
+                    "updated_at": "2023-10-10T13:24:33.787371+00:00"
+                },
+                {
+                    "category_ids": [
+                        259385,
+                    ],
+                    "code": None,
+                    "column_name": "text_column4",
+                    "created_at": "2023-10-10T11:07:08.534779+00:00",
+                    "default_value": None,
+                    "field_name": "Cube",
+                    "id": 229507,
+                    "is_custom": True,
+                    "is_enabled": True,
+                    "is_mandatory": False,
+                    "options": [
+                        "Butter Cookies 1",
+                        "Butter Cookies 2",
+                        "Enterprise",
+                        "Killua Class",
+                        "Midsize Business",
+                        "Naruto test 1",
+                        "Serizawa test 1",
+                        "Serizawa test 2",
+                        "Service Line 1",
+                        "Service Line 2",
+                        "Service Line 3",
+                        "Small Business"
+                    ],
+                    "org_id": "or5qYLrvnoF9",
+                    "parent_field_id": None,
+                    "placeholder": "Select Cube",
+                    "seq": 1,
+                    "type": "SELECT",
+                    "updated_at": "2023-10-10T13:24:33.787371+00:00"
+                }
+            ],
+            "offset": 0
+        }
+    ],
+    'create_new_auto_create_expense_custom_fields_expense_attributes_1':[
+        {
+            "count": 2,
+            "data": [
+                {
+                    "category_ids": [
+                        259385
+                    ],
+                    "code": None,
+                    "column_name": "text_column3",
+                    "created_at": "2023-10-10T11:06:12.906551+00:00",
+                    "default_value": None,
+                    "field_name": "Luke",
+                    "id": 229506,
+                    "is_custom": True,
+                    "is_enabled": True,
+                    "is_mandatory": False,
+                    "options": [
+                        "France",
+                        "Denmark",
+                        "Australia",
+                        "Poland"
+                    ],
+                    "org_id": "or5qYLrvnoF9",
+                    "parent_field_id": None,
+                    "placeholder": "Select Luke",
+                    "seq": 1,
+                    "type": "SELECT",
+                    "updated_at": "2023-10-10T13:24:33.787371+00:00"
+                },
+                {
+                    "category_ids": [
+                        259385,
+                    ],
+                    "code": None,
+                    "column_name": "text_column4",
+                    "created_at": "2023-10-10T11:07:08.534779+00:00",
+                    "default_value": None,
+                    "field_name": "Cube",
+                    "id": 229507,
+                    "is_custom": True,
+                    "is_enabled": True,
+                    "is_mandatory": False,
+                    "options": [
+                        "Butter Cookies 1",
+                        "Butter Cookies 2",
+                        "Enterprise",
+                        "Killua Class",
+                        "Midsize Business",
+                        "Naruto test 1",
+                        "Serizawa test 1",
+                        "Serizawa test 2",
+                        "Service Line 1",
+                        "Service Line 2",
+                        "Service Line 3",
+                        "Small Business"
+                    ],
+                    "org_id": "or5qYLrvnoF9",
+                    "parent_field_id": None,
+                    "placeholder": "Select Cube",
+                    "seq": 1,
+                    "type": "SELECT",
+                    "updated_at": "2023-10-10T13:24:33.787371+00:00"
+                }
+            ],
+            "offset": 0
+        }
+    ],
+    "create_new_auto_create_expense_custom_fields_destination_attributes": [
+        {
+            "FullyQualifiedName": "France",
+            "domain": "QBO",
+            "Name": "France",
+            "SyncToken": "0",
+            "SubClass": False,
+            "sparse": False,
+            "Active": True,
+            "Id": "5000000000000007280",
+            "MetaData": {"CreateTime": "2015-07-22T13:57:27-07:00", "LastUpdatedTime": "2015-07-22T13:57:27-07:00"},
+        },
+        {
+            "FullyQualifiedName": "Denmark",
+            "domain": "QBO",
+            "Name": "Denmark",
+            "SyncToken": "0",
+            "SubClass": False,
+            "sparse": False,
+            "Active": True,
+            "Id": "9",
+            "MetaData": {"CreateTime": "2015-07-22T13:57:27-07:00", "LastUpdatedTime": "2015-07-22T13:57:27-07:00"},
+        },
+    ],
+    "create_new_auto_create_expense_custom_fields_destination_attributes_subsequent_run": [
+        {
+            "FullyQualifiedName": "France",
+            "domain": "QBO",
+            "Name": "France",
+            "SyncToken": "0",
+            "SubClass": False,
+            "sparse": False,
+            "Active": True,
+            "Id": "5000000000000007280",
+            "MetaData": {"CreateTime": "2015-07-22T13:57:27-07:00", "LastUpdatedTime": "2015-07-22T13:57:27-07:00"},
+        },
+        {
+            "FullyQualifiedName": "Denmark",
+            "domain": "QBO",
+            "Name": "Denmark",
+            "SyncToken": "0",
+            "SubClass": False,
+            "sparse": False,
+            "Active": True,
+            "Id": "9",
+            "MetaData": {"CreateTime": "2015-07-22T13:57:27-07:00", "LastUpdatedTime": "2015-07-22T13:57:27-07:00"},
+        },
+        {
+            "FullyQualifiedName": "Australia",
+            "domain": "QBO",
+            "Name": "Australia",
+            "SyncToken": "0",
+            "SubClass": False,
+            "sparse": False,
+            "Active": True,
+            "Id": "5000000000000007282",
+            "MetaData": {"CreateTime": "2015-07-22T13:57:27-07:00", "LastUpdatedTime": "2015-07-22T13:57:27-07:00"},
+        },
+        {
+            "FullyQualifiedName": "Poland",
+            "domain": "QBO",
+            "Name": "Poland",
+            "SyncToken": "0",
+            "SubClass": False,
+            "sparse": False,
+            "Active": True,
+            "Id": "10",
+            "MetaData": {"CreateTime": "2015-07-22T13:57:27-07:00", "LastUpdatedTime": "2015-07-22T13:57:27-07:00"},
+        },
+    ],
+    'create_new_auto_create_expense_custom_fields_get_by_id': {
+        'category_ids':[
+            259385,
+            259386,
+            259387,
+            259388,
+            259389,
+            259390,
+            259391,
+            259392,
+            259393,
+            259394,
+            259395,
+            259396,
+            259397,
+            259398,
+            259399,
+        ],
+        'code':None,
+        'column_name':'text_column3',
+        'created_at':'2023-10-10T11:06:12.906551+00:00',
+        'default_value':None,
+        'field_name':'Luke',
+        'id':229506,
+        'is_custom':True,
+        'is_enabled':True,
+        'is_mandatory':False,
+        "options": [
+            "France",
+            "Denmark"
+        ],
+        'org_id':'or5qYLrvnoF9',
+        'parent_field_id':None,
+        'placeholder':'Select Luke',
+        'seq':1,
+        'type':'SELECT',
+        'updated_at':'2023-10-11T07:42:24.133074+00:00'
+    },
+    "create_fyle_expense_custom_fields_payload_create_new_case": {
+        'field_name':'Luke',
+        'type':'SELECT',
+        'is_enabled':True,
+        'is_mandatory':False,
+        'placeholder':'Select Luke',
+        'options':[
+            'Adidas',
+            'cc1',
+            'cc2',
+            'Coachella',
+            'Employees',
+            'Parties',
+            'Promotional Items',
+            'Radio',
+            'Retreats',
+            'Test'
+        ],
+        'code':None
+    }
+}

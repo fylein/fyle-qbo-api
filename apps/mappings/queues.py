@@ -1,7 +1,6 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from django_q.models import Schedule
-from django_q.tasks import async_task
 from fyle_accounting_mappings.models import MappingSetting
 
 from apps.mappings.models import GeneralMapping
@@ -9,33 +8,7 @@ from apps.workspaces.models import WorkspaceGeneralSettings, QBOCredential
 from apps.mappings.helpers import get_auto_sync_permission
 from fyle_integrations_imports.queues import chain_import_fields_to_fyle
 from fyle_integrations_imports.dataclasses import TaskSetting
-
-SYNC_METHODS = {
-    'ACCOUNT': 'accounts',
-    'ITEM': 'items',
-    'VENDOR': 'vendors',
-    'DEPARTMENT': 'departments',
-    'TAX_CODE': 'tax_codes',
-    'CLASS': 'classes',
-    'CUSTOMER': 'customers',
-}
-
-
-def async_auto_create_expense_field_mapping(mapping_setting: MappingSetting):
-    async_task('apps.mappings.tasks.auto_create_expense_fields_mappings', int(mapping_setting.workspace_id), mapping_setting.destination_field, mapping_setting.source_field)
-
-
-def schedule_fyle_attributes_creation(workspace_id: int):
-    mapping_settings = MappingSetting.objects.filter(is_custom=True, import_to_fyle=True, workspace_id=workspace_id).all()
-    if mapping_settings:
-        schedule, _ = Schedule.objects.get_or_create(
-            func='apps.mappings.tasks.async_auto_create_custom_field_mappings', args='{0}'.format(workspace_id), defaults={'schedule_type': Schedule.MINUTES, 'minutes': 24 * 60, 'next_run': datetime.now() + timedelta(hours=24)}
-        )
-    else:
-        schedule: Schedule = Schedule.objects.filter(func='apps.mappings.tasks.async_auto_create_custom_field_mappings', args='{0}'.format(workspace_id)).first()
-
-        if schedule:
-            schedule.delete()
+from apps.mappings.constants import SYNC_METHODS
 
 
 def schedule_bill_payment_creation(sync_fyle_to_qbo_payments, workspace_id):
@@ -127,13 +100,13 @@ def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
     # For now we are only adding PROJECTS support that is why we are hardcoding it
     if mapping_settings:
         for mapping_setting in mapping_settings:
-            if mapping_setting.source_field in ['PROJECT', 'COST_CENTER']:
+            if mapping_setting.source_field in ['PROJECT', 'COST_CENTER'] or mapping_setting.is_custom:
                 task_settings['mapping_settings'].append({
                     'source_field': mapping_setting.source_field,
                     'destination_field': mapping_setting.destination_field,
                     'destination_sync_methods': [SYNC_METHODS[mapping_setting.destination_field]],
                     'is_auto_sync_enabled': get_auto_sync_permission(workspace_general_settings, mapping_setting),
-                    'is_custom': False,
+                    'is_custom': mapping_setting.is_custom
                 })
 
     chain_import_fields_to_fyle(workspace_id, task_settings)

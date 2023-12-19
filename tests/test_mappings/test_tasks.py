@@ -15,15 +15,12 @@ from qbosdk.exceptions import WrongParamsError
 from apps.mappings.queues import (
     schedule_auto_map_ccc_employees,
     schedule_auto_map_employees,
-    schedule_fyle_attributes_creation,
     schedule_tax_groups_creation,
 )
 from apps.mappings.tasks import (
     Chain,
-    async_auto_create_custom_field_mappings,
     async_auto_map_ccc_account,
     async_auto_map_employees,
-    auto_create_expense_fields_mappings,
     auto_create_tax_codes_mappings,
     auto_create_vendors_as_merchants,
     auto_import_and_map_fyle_fields,
@@ -179,35 +176,6 @@ def test_schedule_auto_map_ccc_employees(db):
     schedule = Schedule.objects.filter(func='apps.mappings.tasks.async_auto_map_ccc_account', args='{}'.format(workspace_id)).first()
 
     assert schedule == None
-
-
-def test_schedule_fyle_attributes_creation(db, mocker):
-    mocker.patch('apps.quickbooks_online.utils.QBOConnector.sync_customers', return_value=None)
-    mocker.patch('fyle_integrations_platform_connector.apis.ExpenseCustomFields.get_by_id', return_value={'options': ['samp'], 'updated_at': '2020-06-11T13:14:55.201598+00:00'})
-
-    workspace_id = 4
-    schedule_fyle_attributes_creation(workspace_id)
-
-    mocker.patch('fyle_integrations_platform_connector.apis.ExpenseCustomFields.post', return_value=[])
-
-    schedule = Schedule.objects.filter(func='apps.mappings.tasks.async_auto_create_custom_field_mappings', args='{}'.format(workspace_id)).first()
-    assert schedule.func == 'apps.mappings.tasks.async_auto_create_custom_field_mappings'
-
-    async_auto_create_custom_field_mappings(workspace_id)
-
-    mapping_settings = MappingSetting.objects.filter(is_custom=True, import_to_fyle=True, workspace_id=workspace_id)
-    mapping_settings.delete()
-
-    schedule_fyle_attributes_creation(workspace_id)
-    schedule = Schedule.objects.filter(func='apps.mappings.tasks.async_auto_create_custom_field_mappings', args='{}'.format(workspace_id)).first()
-
-    assert schedule == None
-
-    mocker.patch('apps.mappings.tasks.upload_attributes_to_fyle', return_value=['CUSTOMER'])
-
-    with mock.patch('fyle_accounting_mappings.models.Mapping.bulk_create_mappings') as mock_call:
-        mock_call.side_effect = WrongParamsError(msg='invalid params', response='invalid params')
-        auto_create_expense_fields_mappings(workspace_id, 'CUSTOMER', 'CUSTOMER', 'Select CUSTOMER')
 
 
 def test_post_merchants(db, mocker):
