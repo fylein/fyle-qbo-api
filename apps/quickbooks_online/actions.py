@@ -14,10 +14,13 @@ from rest_framework.views import status
 from apps.fyle.models import ExpenseGroup
 from apps.fyle.actions import update_complete_expenses
 from apps.quickbooks_online.utils import QBOConnector
+from apps.mappings.helpers import get_auto_sync_permission
 from apps.tasks.models import TaskLog
+from apps.workspaces.models import WorkspaceGeneralSettings
 from apps.workspaces.models import LastExportDetail, QBOCredential, Workspace
 
 from .helpers import generate_export_type_and_id
+from apps.mappings.constants import SYNC_METHODS
 
 
 logger = logging.getLogger(__name__)
@@ -63,15 +66,26 @@ def refresh_quickbooks_dimensions(workspace_id: int):
     quickbooks_connector = QBOConnector(quickbooks_credentials, workspace_id=workspace_id)
 
     mapping_settings = MappingSetting.objects.filter(workspace_id=workspace_id, import_to_fyle=True)
+    credentials = QBOCredential.objects.get(workspace_id=workspace_id)
+    workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+
     chain = Chain()
 
     for mapping_setting in mapping_settings:
-        if mapping_setting.source_field == 'PROJECT':
-            chain.append('apps.mappings.tasks.auto_import_and_map_fyle_fields', int(workspace_id))
-        elif mapping_setting.source_field == 'COST_CENTER':
-            chain.append('apps.mappings.tasks.auto_create_cost_center_mappings', int(workspace_id))
-        elif mapping_setting.is_custom:
-            chain.append('apps.mappings.tasks.async_auto_create_custom_field_mappings', int(workspace_id))
+        if mapping_setting.source_field in ['PROJECT', 'COST_CENTER'] or mapping_setting.is_custom:
+            chain.append(
+                'fyle_integrations_imports.tasks.trigger_import_via_schedule',
+                workspace_id,
+                mapping_setting.destination_field,
+                mapping_setting.source_field,
+                'apps.quickbooks_online.utils.QBOConnector',
+                credentials,
+                [SYNC_METHODS[mapping_setting.destination_field]],
+                get_auto_sync_permission(workspace_general_settings, mapping_setting),
+                False,
+                None,
+                mapping_setting.is_custom
+            )
 
     if chain.length() > 0:
         chain.run()

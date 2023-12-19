@@ -5995,3 +5995,2249 @@ projects_data = {
         }
     ]
 }
+
+categories_data = {
+    "create_new_auto_create_categories_destination_attributes_accounts_sync": [
+        {
+            'Name':'Utility',
+            'SubAccount':False,
+            'FullyQualifiedName':'Utility',
+            'Active':True,
+            'Classification':'Expense',
+            'AccountType':'Expense',
+            'AccountSubType':'Entertainment',
+            'AcctNum':'3506',
+            'CurrentBalance':0,
+            'CurrentBalanceWithSubAccounts':0,
+            'CurrencyRef':{
+                'value':'USD',
+                'name':'United States Dollar'
+            },
+            'domain':'QBO',
+            'sparse':False,
+            'Id':'103',
+            'SyncToken':'0',
+            'MetaData':{
+                'CreateTime':'2021-02-28T19:29:03-08:00',
+                'LastUpdatedTime':'2021-02-28T19:29:03-08:00'
+            }
+        },
+        {
+            'Name':'Lolsob',
+            'SubAccount':False,
+            'FullyQualifiedName':'Lolsob',
+            'Active':True,
+            'Classification':'Expense',
+            'AccountType':'Expense',
+            'AccountSubType':'Entertainment',
+            'AcctNum':'3506',
+            'CurrentBalance':0,
+            'CurrentBalanceWithSubAccounts':0,
+            'CurrencyRef':{
+                'value':'USD',
+                'name':'United States Dollar'
+            },
+            'domain':'QBO',
+            'sparse':False,
+            'Id':'104',
+            'SyncToken':'0',
+            'MetaData':{
+                'CreateTime':'2021-02-28T19:29:03-08:00',
+                'LastUpdatedTime':'2021-02-28T19:29:03-08:00'
+            }
+        },
+        {
+            'Name':'Levi',
+            'SubAccount':False,
+            'FullyQualifiedName':'Levi',
+            'Active':True,
+            'Classification':'Expense',
+            'AccountType':'Expense',
+            'AccountSubType':'Entertainment',
+            'AcctNum':'3506',
+            'CurrentBalance':0,
+            'CurrentBalanceWithSubAccounts':0,
+            'CurrencyRef':{
+                'value':'USD',
+                'name':'United States Dollar'
+            },
+            'domain':'QBO',
+            'sparse':False,
+            'Id':'105',
+            'SyncToken':'0',
+            'MetaData':{
+                'CreateTime':'2021-02-28T19:29:03-08:00',
+                'LastUpdatedTime':'2021-02-28T19:29:03-08:00'
+            }
+        },
+        {
+            'Name':'Utilitylol',
+            'SubAccount':False,
+            'FullyQualifiedName':'Utilitylol',
+            'Active':True,
+            'Classification':'Expense',
+            'AccountType':'Expense',
+            'AccountSubType':'Entertainment',
+            'AcctNum':'35061',
+            'CurrentBalance':0,
+            'CurrentBalanceWithSubAccounts':0,
+            'CurrencyRef':{
+                'value':'USD',
+                'name':'United States Dollar'
+            },
+            'domain':'QBO',
+            'sparse':False,
+            'Id':'106',
+            'SyncToken':'0',
+            'MetaData':{
+                'CreateTime':'2021-02-28T19:29:03-08:00',
+                'LastUpdatedTime':'2021-02-28T19:29:03-08:00'
+            }
+        },
+        {
+            'Name':'Lolsoblol',
+            'SubAccount':False,
+            'FullyQualifiedName':'Lolsoblol',
+            'Active':True,
+            'Classification':'Expense',
+            'AccountType':'Expense',
+            'AccountSubType':'Entertainment',
+            'AcctNum':'35062',
+            'CurrentBalance':0,
+            'CurrentBalanceWithSubAccounts':0,
+            'CurrencyRef':{
+                'value':'USD',
+                'name':'United States Dollar'
+            },
+            'domain':'QBO',
+            'sparse':False,
+            'Id':'107',
+            'SyncToken':'0',
+            'MetaData':{
+                'CreateTime':'2021-02-28T19:29:03-08:00',
+                'LastUpdatedTime':'2021-02-28T19:29:03-08:00'
+            }
+        },
+    ],
+    "create_new_auto_create_categories_destination_attributes_accounts": [
+        {
+            'Name':'Utility',
+            'SubAccount':False,
+            'FullyQualifiedName':'Utility',
+            'Active':True,
+            'Classification':'Expense',
+            'AccountType':'Expense',
+            'AccountSubType':'Entertainment',
+            'AcctNum':'3506',
+            'CurrentBalance':0,
+            'CurrentBalanceWithSubAccounts':0,
+            'CurrencyRef':{
+                'value':'USD',
+                'name':'United States Dollar'
+            },
+            'domain':'QBO',
+            'sparse':False,
+            'Id':'103',
+            'SyncToken':'0',
+            'MetaData':{
+                'CreateTime':'2021-02-28T19:29:03-08:00',
+                'LastUpdatedTime':'2021-02-28T19:29:03-08:00'
+            }
+        },
+        {
+            'Name':'Lolsob',
+            'SubAccount':False,
+            'FullyQualifiedName':'Lolsob',
+            'Active':True,
+            'Classification':'Expense',
+            'AccountType':'Expense',
+            'AccountSubType':'Entertainment',
+            'AcctNum':'3506',
+            'CurrentBalance':0,
+            'CurrentBalanceWithSubAccounts':0,
+            'CurrencyRef':{
+                'value':'USD',
+                'name':'United States Dollar'
+            },
+            'domain':'QBO',
+            'sparse':False,
+            'Id':'104',
+            'SyncToken':'0',
+            'MetaData':{
+                'CreateTime':'2021-02-28T19:29:03-08:00',
+                'LastUpdatedTime':'2021-02-28T19:29:03-08:00'
+            }
+        },
+        {
+            'Name':'Levi',
+            'SubAccount':False,
+            'FullyQualifiedName':'Levi',
+            'Active':True,
+            'Classification':'Expense',
+            'AccountType':'Expense',
+            'AccountSubType':'Entertainment',
+            'AcctNum':'3506',
+            'CurrentBalance':0,
+            'CurrentBalanceWithSubAccounts':0,
+            'CurrencyRef':{
+                'value':'USD',
+                'name':'United States Dollar'
+            },
+            'domain':'QBO',
+            'sparse':False,
+            'Id':'105',
+            'SyncToken':'0',
+            'MetaData':{
+                'CreateTime':'2021-02-28T19:29:03-08:00',
+                'LastUpdatedTime':'2021-02-28T19:29:03-08:00'
+            }
+        }
+    ],
+    "create_new_auto_create_categories_destination_attributes_accounts_disable_case": [
+        {
+            'Name':'Utility',
+            'SubAccount':False,
+            'FullyQualifiedName':'Utility',
+            'Active':True,
+            'Classification':'Expense',
+            'AccountType':'Expense',
+            'AccountSubType':'Entertainment',
+            'AcctNum':'3506',
+            'CurrentBalance':0,
+            'CurrentBalanceWithSubAccounts':0,
+            'CurrencyRef':{
+                'value':'USD',
+                'name':'United States Dollar'
+            },
+            'domain':'QBO',
+            'sparse':False,
+            'Id':'103',
+            'SyncToken':'0',
+            'MetaData':{
+                'CreateTime':'2021-02-28T19:29:03-08:00',
+                'LastUpdatedTime':'2021-02-28T19:29:03-08:00'
+            }
+        },
+        {
+            'Name':'Lolsob',
+            'SubAccount':False,
+            'FullyQualifiedName':'Lolsob',
+            'Active':True,
+            'Classification':'Expense',
+            'AccountType':'Expense',
+            'AccountSubType':'Entertainment',
+            'AcctNum':'3506',
+            'CurrentBalance':0,
+            'CurrentBalanceWithSubAccounts':0,
+            'CurrencyRef':{
+                'value':'USD',
+                'name':'United States Dollar'
+            },
+            'domain':'QBO',
+            'sparse':False,
+            'Id':'104',
+            'SyncToken':'0',
+            'MetaData':{
+                'CreateTime':'2021-02-28T19:29:03-08:00',
+                'LastUpdatedTime':'2021-02-28T19:29:03-08:00'
+            }
+        }
+    ],
+    "create_new_auto_create_categories_destination_attributes_items_sync": [
+        {
+            "Name": "Concrete",
+            "Description": "Concrete for fountain installation",
+            "Active": True,
+            "FullyQualifiedName": "Concrete",
+            "Taxable": True,
+            "UnitPrice": 0,
+            "Type": "Service",
+            "IncomeAccountRef": {"value": "48", "name": "Fountains and Garden Lighting"},
+            "PurchaseCost": 0,
+            "TrackQtyOnHand": False,
+            "domain": "QBO",
+            "sparse": False,
+            "Id": "3",
+            "SyncToken": "1",
+            "MetaData": {"CreateTime": "2019-12-16T10:36:03-08:00", "LastUpdatedTime": "2019-12-19T12:47:47-08:00"},
+        },
+        {
+            "Name": "Lighting",
+            "Description": "Garden Lighting",
+            "Active": True,
+            "FullyQualifiedName": "Lighting",
+            "Taxable": True,
+            "UnitPrice": 0,
+            "Type": "Service",
+            "IncomeAccountRef": {"value": "48", "name": "Fountains and Garden Lighting"},
+            "PurchaseCost": 0,
+            "TrackQtyOnHand": False,
+            "domain": "QBO",
+            "sparse": False,
+            "Id": "8",
+            "SyncToken": "1",
+            "MetaData": {"CreateTime": "2019-12-16T10:44:40-08:00", "LastUpdatedTime": "2019-12-19T12:47:38-08:00"},
+        },
+        {
+            "Name": "Maintenance & Repair",
+            "Description": "Maintenance & Repair",
+            "Active": True,
+            "FullyQualifiedName": "Maintenance & Repair",
+            "Taxable": False,
+            "UnitPrice": 0,
+            "Type": "Service",
+            "IncomeAccountRef": {"value": "53", "name": "Maintenance and Repair"},
+            "PurchaseCost": 0,
+            "TrackQtyOnHand": False,
+            "domain": "QBO",
+            "sparse": False,
+            "Id": "9",
+            "SyncToken": "0",
+            "MetaData": {"CreateTime": "2019-12-16T10:45:18-08:00", "LastUpdatedTime": "2019-12-16T10:45:18-08:00"},
+        },
+        {
+            "Name": "LightingLOL",
+            "Description": "Garden LightingLOL",
+            "Active": True,
+            "FullyQualifiedName": "LightingLOL",
+            "Taxable": True,
+            "UnitPrice": 0,
+            "Type": "Service",
+            "IncomeAccountRef": {"value": "48", "name": "Fountains and Garden LightingLOL"},
+            "PurchaseCost": 0,
+            "TrackQtyOnHand": False,
+            "domain": "QBO",
+            "sparse": False,
+            "Id": "81",
+            "SyncToken": "1",
+            "MetaData": {"CreateTime": "2019-12-16T10:44:40-08:00", "LastUpdatedTime": "2019-12-19T12:47:38-08:00"},
+        },
+        {
+            "Name": "Maintenance & RepairLOL",
+            "Description": "Maintenance & RepairLOL",
+            "Active": True,
+            "FullyQualifiedName": "Maintenance & RepairLOL",
+            "Taxable": False,
+            "UnitPrice": 0,
+            "Type": "Service",
+            "IncomeAccountRef": {"value": "53", "name": "Maintenance and RepairLOL"},
+            "PurchaseCost": 0,
+            "TrackQtyOnHand": False,
+            "domain": "QBO",
+            "sparse": False,
+            "Id": "92",
+            "SyncToken": "0",
+            "MetaData": {"CreateTime": "2019-12-16T10:45:18-08:00", "LastUpdatedTime": "2019-12-16T10:45:18-08:00"},
+        }
+    ],
+    "create_new_auto_create_categories_destination_attributes_items": [
+        {
+            "Name": "Concrete",
+            "Description": "Concrete for fountain installation",
+            "Active": True,
+            "FullyQualifiedName": "Concrete",
+            "Taxable": True,
+            "UnitPrice": 0,
+            "Type": "Service",
+            "IncomeAccountRef": {"value": "48", "name": "Fountains and Garden Lighting"},
+            "PurchaseCost": 0,
+            "TrackQtyOnHand": False,
+            "domain": "QBO",
+            "sparse": False,
+            "Id": "3",
+            "SyncToken": "1",
+            "MetaData": {"CreateTime": "2019-12-16T10:36:03-08:00", "LastUpdatedTime": "2019-12-19T12:47:47-08:00"},
+        },
+        {
+            "Name": "Lighting",
+            "Description": "Garden Lighting",
+            "Active": True,
+            "FullyQualifiedName": "Lighting",
+            "Taxable": True,
+            "UnitPrice": 0,
+            "Type": "Service",
+            "IncomeAccountRef": {"value": "48", "name": "Fountains and Garden Lighting"},
+            "PurchaseCost": 0,
+            "TrackQtyOnHand": False,
+            "domain": "QBO",
+            "sparse": False,
+            "Id": "8",
+            "SyncToken": "1",
+            "MetaData": {"CreateTime": "2019-12-16T10:44:40-08:00", "LastUpdatedTime": "2019-12-19T12:47:38-08:00"},
+        },
+        {
+            "Name": "Maintenance & Repair",
+            "Description": "Maintenance & Repair",
+            "Active": True,
+            "FullyQualifiedName": "Maintenance & Repair",
+            "Taxable": False,
+            "UnitPrice": 0,
+            "Type": "Service",
+            "IncomeAccountRef": {"value": "53", "name": "Maintenance and Repair"},
+            "PurchaseCost": 0,
+            "TrackQtyOnHand": False,
+            "domain": "QBO",
+            "sparse": False,
+            "Id": "9",
+            "SyncToken": "0",
+            "MetaData": {"CreateTime": "2019-12-16T10:45:18-08:00", "LastUpdatedTime": "2019-12-16T10:45:18-08:00"},
+        }
+    ],
+    "create_new_auto_create_categories_destination_attributes_items_disabled_case":[
+        {
+            "Name": "Lighting",
+            "Description": "Garden Lighting",
+            "Active": True,
+            "FullyQualifiedName": "Lighting",
+            "Taxable": True,
+            "UnitPrice": 0,
+            "Type": "Service",
+            "IncomeAccountRef": {"value": "48", "name": "Fountains and Garden Lighting"},
+            "PurchaseCost": 0,
+            "TrackQtyOnHand": False,
+            "domain": "QBO",
+            "sparse": False,
+            "Id": "8",
+            "SyncToken": "1",
+            "MetaData": {"CreateTime": "2019-12-16T10:44:40-08:00", "LastUpdatedTime": "2019-12-19T12:47:38-08:00"},
+        },
+        {
+            "Name": "Maintenance & Repair",
+            "Description": "Maintenance & Repair",
+            "Active": True,
+            "FullyQualifiedName": "Maintenance & Repair",
+            "Taxable": False,
+            "UnitPrice": 0,
+            "Type": "Service",
+            "IncomeAccountRef": {"value": "53", "name": "Maintenance and Repair"},
+            "PurchaseCost": 0,
+            "TrackQtyOnHand": False,
+            "domain": "QBO",
+            "sparse": False,
+            "Id": "9",
+            "SyncToken": "0",
+            "MetaData": {"CreateTime": "2019-12-16T10:45:18-08:00", "LastUpdatedTime": "2019-12-16T10:45:18-08:00"},
+        }
+    ],
+    "create_new_auto_create_categories_expense_attributes_0": [
+        {
+            'count':2,
+            'data':[
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Train',
+                    'id':268774,
+                    'is_enabled':True,
+                    'name':'Train',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323490,
+                        323492,
+                        323493,
+                        323494
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Train',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Fuel',
+                    'id':268775,
+                    'is_enabled':True,
+                    'name':'Fuel',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323486,
+                        323489,
+                        323491,
+                        323492
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Fuel',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+            ],
+            'offset':0
+        }
+    ],
+    "create_new_auto_create_categories_expense_attributes_1": [
+        {
+            'count':5,
+            'data':[
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Train',
+                    'id':268774,
+                    'is_enabled':True,
+                    'name':'Train',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323490,
+                        323492,
+                        323493,
+                        323494
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Train',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Fuel',
+                    'id':268775,
+                    'is_enabled':True,
+                    'name':'Fuel',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323486,
+                        323489,
+                        323491,
+                        323492
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Fuel',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Utility',
+                    'id':2687741,
+                    'is_enabled':True,
+                    'name':'Utility',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323490,
+                        323492,
+                        323493,
+                        323494
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Utility',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Lolsob',
+                    'id':2687752,
+                    'is_enabled':True,
+                    'name':'Lolsob',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323486,
+                        323489,
+                        323491,
+                        323492
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Lolsob',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Levi',
+                    'id':2687753,
+                    'is_enabled':True,
+                    'name':'Levi',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323486,
+                        323489,
+                        323491,
+                        323492
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Levi',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+            ],
+            'offset':0
+        }
+    ],
+    "create_new_auto_create_categories_expense_attributes_2":[
+        {
+            'count':5,
+            'data':[
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Train',
+                    'id':268774,
+                    'is_enabled':True,
+                    'name':'Train',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323490,
+                        323492,
+                        323493,
+                        323494
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Train',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Fuel',
+                    'id':268775,
+                    'is_enabled':True,
+                    'name':'Fuel',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323486,
+                        323489,
+                        323491,
+                        323492
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Fuel',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Utility',
+                    'id':2687741,
+                    'is_enabled':True,
+                    'name':'Utility',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323490,
+                        323492,
+                        323493,
+                        323494
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Utility',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Lolsob',
+                    'id':2687752,
+                    'is_enabled':True,
+                    'name':'Lolsob',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323486,
+                        323489,
+                        323491,
+                        323492
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Lolsob',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Levi',
+                    'id':2687753,
+                    'is_enabled':False,
+                    'name':'Levi',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323486,
+                        323489,
+                        323491,
+                        323492
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Levi',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+            ],
+            'offset':0
+        }
+    ],
+    "create_new_auto_create_categories_expense_attributes_3":[
+        {
+            'count':8,
+            'data':[
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Train',
+                    'id':268774,
+                    'is_enabled':True,
+                    'name':'Train',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323490,
+                        323492,
+                        323493,
+                        323494
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Train',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Fuel',
+                    'id':268775,
+                    'is_enabled':True,
+                    'name':'Fuel',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323486,
+                        323489,
+                        323491,
+                        323492
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Fuel',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Utility',
+                    'id':2687741,
+                    'is_enabled':True,
+                    'name':'Utility',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323490,
+                        323492,
+                        323493,
+                        323494
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Utility',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Lolsob',
+                    'id':2687752,
+                    'is_enabled':True,
+                    'name':'Lolsob',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323486,
+                        323489,
+                        323491,
+                        323492
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Lolsob',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Levi',
+                    'id':2687753,
+                    'is_enabled':False,
+                    'name':'Levi',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323486,
+                        323489,
+                        323491,
+                        323492
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Levi',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Maintenance & Repair',
+                    'id':2687757,
+                    'is_enabled':True,
+                    'name':'Maintenance & Repair',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323486,
+                        323489,
+                        323491,
+                        323492
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Maintenance & Repair',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Lighting',
+                    'id':2687758,
+                    'is_enabled':True,
+                    'name':'Lighting',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323486,
+                        323489,
+                        323491,
+                        323492
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Lighting',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Concrete',
+                    'id':2687759,
+                    'is_enabled':True,
+                    'name':'Concrete',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323486,
+                        323489,
+                        323491,
+                        323492
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Concrete',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+            ],
+            'offset':0
+        }
+    ],
+    "create_new_auto_create_categories_expense_attributes_4":[
+        {
+            'count':8,
+            'data':[
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Train',
+                    'id':268774,
+                    'is_enabled':True,
+                    'name':'Train',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323490,
+                        323492,
+                        323493,
+                        323494
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Train',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Fuel',
+                    'id':268775,
+                    'is_enabled':True,
+                    'name':'Fuel',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323486,
+                        323489,
+                        323491,
+                        323492
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Fuel',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Utility',
+                    'id':2687741,
+                    'is_enabled':True,
+                    'name':'Utility',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323490,
+                        323492,
+                        323493,
+                        323494
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Utility',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Lolsob',
+                    'id':2687752,
+                    'is_enabled':True,
+                    'name':'Lolsob',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323486,
+                        323489,
+                        323491,
+                        323492
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Lolsob',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Levi',
+                    'id':2687753,
+                    'is_enabled':False,
+                    'name':'Levi',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323486,
+                        323489,
+                        323491,
+                        323492
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Levi',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Maintenance & Repair',
+                    'id':2687757,
+                    'is_enabled':True,
+                    'name':'Maintenance & Repair',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323486,
+                        323489,
+                        323491,
+                        323492
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Maintenance & Repair',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Lighting',
+                    'id':2687758,
+                    'is_enabled':True,
+                    'name':'Lighting',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323486,
+                        323489,
+                        323491,
+                        323492
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Lighting',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Concrete',
+                    'id':2687759,
+                    'is_enabled':False,
+                    'name':'Concrete',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323486,
+                        323489,
+                        323491,
+                        323492
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Concrete',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+            ],
+            'offset':0
+        }
+    ],
+    "create_new_auto_create_categories_expense_attributes_5":[
+        {
+            'count':8,
+            'data':[
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Train',
+                    'id':268774,
+                    'is_enabled':True,
+                    'name':'Train',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323490,
+                        323492,
+                        323493,
+                        323494
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Train',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Fuel',
+                    'id':268775,
+                    'is_enabled':True,
+                    'name':'Fuel',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323486,
+                        323489,
+                        323491,
+                        323492
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Fuel',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Utility',
+                    'id':2687741,
+                    'is_enabled':True,
+                    'name':'Utility',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323490,
+                        323492,
+                        323493,
+                        323494
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Utility',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Lolsob',
+                    'id':2687752,
+                    'is_enabled':True,
+                    'name':'Lolsob',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323486,
+                        323489,
+                        323491,
+                        323492
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Lolsob',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Levi',
+                    'id':2687753,
+                    'is_enabled':False,
+                    'name':'Levi',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323486,
+                        323489,
+                        323491,
+                        323492
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Levi',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Maintenance & Repair',
+                    'id':2687757,
+                    'is_enabled':False,
+                    'name':'Maintenance & Repair',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323486,
+                        323489,
+                        323491,
+                        323492
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Maintenance & Repair',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Lighting',
+                    'id':2687758,
+                    'is_enabled':False,
+                    'name':'Lighting',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323486,
+                        323489,
+                        323491,
+                        323492
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Lighting',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-08-30T18:58:09.203161+00:00',
+                    'display_name':'Concrete',
+                    'id':2687759,
+                    'is_enabled':False,
+                    'name':'Concrete',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_project_ids':[
+                        323486,
+                        323489,
+                        323491,
+                        323492
+                    ],
+                    'restricted_spender_user_ids':[
+                    ],
+                    'sub_category':None,
+                    'system_category':'Concrete',
+                    'updated_at':'2023-08-30T18:58:09.203161+00:00'
+                },
+            ],
+            'offset':0
+        }
+    ],
+    "create_fyle_category_payload_create_new_case":[
+        {
+            'name':'Advertising',
+            'code':'7',
+            'is_enabled':True
+        },
+        {
+            'name':'Arizona Dept. of Revenue Payable',
+            'code':'89',
+            'is_enabled':True
+        },
+        {
+            'name':'Automobile',
+            'code':'55',
+            'is_enabled':True
+        },
+        {
+            'name':'Fuel',
+            'code':'56',
+            'is_enabled':True
+        },
+        {
+            'name':'Bank Charges',
+            'code':'8',
+            'is_enabled':True
+        },
+        {
+            'name':'Board of Equalization Payable',
+            'code':'90',
+            'is_enabled':True
+        },
+        {
+            'name':'California Department of Tax and Fee Administration Payable',
+            'code':'91',
+            'is_enabled':True
+        },
+        {
+            'name':'Commissions & fees',
+            'code':'9',
+            'is_enabled':True
+        },
+        {
+            'name':'Cost of Goods Sold',
+            'code':'80',
+            'is_enabled':True
+        },
+        {
+            'name':'Depreciation',
+            'code':'40',
+            'is_enabled':True
+        },
+        {
+            'name':'Disposal Fees',
+            'code':'28',
+            'is_enabled':True
+        },
+        {
+            'name':'Dues & Subscriptions',
+            'code':'10',
+            'is_enabled':True
+        },
+        {
+            'name':'Equipment Rental',
+            'code':'29',
+            'is_enabled':True
+        },
+        {
+            'name':'Insurance',
+            'code':'11',
+            'is_enabled':True
+        },
+        {
+            'name':'Workers Compensation',
+            'code':'57',
+            'is_enabled':True
+        },
+        {
+            'name':'Inventory Asset',
+            'code':'81',
+            'is_enabled':True
+        },
+        {
+            'name':'Job Expenses',
+            'code':'58',
+            'is_enabled':True
+        },
+        {
+            'name':'Cost of Labor',
+            'code':'59',
+            'is_enabled':True
+        },
+        {
+            'name':'Installation',
+            'code':'60',
+            'is_enabled':True
+        },
+        {
+            'name':'Maintenance and Repairs',
+            'code':'61',
+            'is_enabled':True
+        },
+        {
+            'name':'Equipment Rental',
+            'code':'62',
+            'is_enabled':True
+        },
+        {
+            'name':'Job Materials',
+            'code':'63',
+            'is_enabled':True
+        },
+        {
+            'name':'Decks and Patios',
+            'code':'64',
+            'is_enabled':True
+        },
+        {
+            'name':'Fountain and Garden Lighting',
+            'code':'65',
+            'is_enabled':True
+        },
+        {
+            'name':'Plants and Soil',
+            'code':'66',
+            'is_enabled':True
+        },
+        {
+            'name':'Sprinklers and Drip Systems',
+            'code':'67',
+            'is_enabled':True
+        },
+        {
+            'name':'Permits',
+            'code':'68',
+            'is_enabled':True
+        },
+        {
+            'name':'Legal & Professional Fees',
+            'code':'12',
+            'is_enabled':True
+        },
+        {
+            'name':'Accounting',
+            'code':'69',
+            'is_enabled':True
+        },
+        {
+            'name':'Bookkeeper',
+            'code':'70',
+            'is_enabled':True
+        },
+        {
+            'name':'Lawyer',
+            'code':'71',
+            'is_enabled':True
+        },
+        {
+            'name':'Loan Payable',
+            'code':'43',
+            'is_enabled':True
+        },
+        {
+            'name':'Maintenance and Repair',
+            'code':'72',
+            'is_enabled':True
+        },
+        {
+            'name':'Building Repairs',
+            'code':'73',
+            'is_enabled':True
+        },
+        {
+            'name':'Computer Repairs',
+            'code':'74',
+            'is_enabled':True
+        },
+        {
+            'name':'Equipment Repairs',
+            'code':'75',
+            'is_enabled':True
+        },
+        {
+            'name':'Meals and Entertainment',
+            'code':'13',
+            'is_enabled':True
+        },
+        {
+            'name':'Miscellaneous',
+            'code':'14',
+            'is_enabled':True
+        },
+        {
+            'name':'Notes Payable',
+            'code':'44',
+            'is_enabled':True
+        },
+        {
+            'name':'Office Expenses',
+            'code':'15',
+            'is_enabled':True
+        },
+        {
+            'name':'Opening Balance Equity',
+            'code':'34',
+            'is_enabled':True
+        },
+        {
+            'name':'Out Of Scope Agency Payable',
+            'code':'92',
+            'is_enabled':True
+        },
+        {
+            'name':'Penalties & Settlements',
+            'code':'27',
+            'is_enabled':True
+        },
+        {
+            'name':'Prepaid Expenses',
+            'code':'3',
+            'is_enabled':True
+        },
+        {
+            'name':'Promotional',
+            'code':'16',
+            'is_enabled':True
+        },
+        {
+            'name':'Purchases',
+            'code':'78',
+            'is_enabled':True
+        },
+        {
+            'name':'Rent or Lease',
+            'code':'17',
+            'is_enabled':True
+        },
+        {
+            'name':'Retained Earnings',
+            'code':'2',
+            'is_enabled':True
+        },
+        {
+            'name':'Stationery & Printing',
+            'code':'19',
+            'is_enabled':True
+        },
+        {
+            'name':'Supplies',
+            'code':'20',
+            'is_enabled':True
+        },
+        {
+            'name':'Taxes & Licenses',
+            'code':'21',
+            'is_enabled':True
+        },
+        {
+            'name':'Travel',
+            'code':'22',
+            'is_enabled':True
+        },
+        {
+            'name':'Travel Meals',
+            'code':'23',
+            'is_enabled':True
+        },
+        {
+            'name':'Truck',
+            'code':'37',
+            'is_enabled':True
+        },
+        {
+            'name':'Depreciation',
+            'code':'39',
+            'is_enabled':True
+        },
+        {
+            'name':'Original Cost',
+            'code':'38',
+            'is_enabled':True
+        },
+        {
+            'name':'Unapplied Cash Bill Payment Expense',
+            'code':'88',
+            'is_enabled':True
+        },
+        {
+            'name':'Uncategorized Asset',
+            'code':'32',
+            'is_enabled':True
+        },
+        {
+            'name':'Uncategorized Expense',
+            'code':'31',
+            'is_enabled':True
+        },
+        {
+            'name':'Undeposited Funds',
+            'code':'4',
+            'is_enabled':True
+        },
+        {
+            'name':'Utilities',
+            'code':'24',
+            'is_enabled':True
+        },
+        {
+            'name':'Gas and Electric',
+            'code':'76',
+            'is_enabled':True
+        },
+        {
+            'name':'Telephone',
+            'code':'77',
+            'is_enabled':True
+        }
+    ],
+    "create_fyle_category_payload_create_disable_case": [
+        {
+            'name':'Arizona Dept. of Revenue Payable',
+            'code':'89',
+            'is_enabled':True
+        },
+        {
+            'name':'Board of Equalization Payable',
+            'code':'90',
+            'is_enabled':True
+        },
+        {
+            'name':'California Department of Tax and Fee Administration Payable',
+            'code':'91',
+            'is_enabled':True
+        },
+        {
+            'name':'Loan Payable',
+            'code':'43',
+            'is_enabled':True
+        },
+        {
+            'name':'Opening Balance Equity',
+            'code':'34',
+            'is_enabled':True
+        },
+        {
+            'name':'Out Of Scope Agency Payable',
+            'code':'92',
+            'is_enabled':True
+        },
+        {
+            'name':'Truck',
+            'code':'37',
+            'is_enabled':True
+        },
+        {
+            'name':'Original Cost',
+            'code':'38',
+            'is_enabled':True
+        },
+        {
+            'name':'Uncategorized Asset',
+            'code':'32',
+            'is_enabled':True
+        },
+        {
+            'name':'Advertising',
+            'code':'7',
+            'is_enabled':False,
+            'id':'135716'
+        },
+        {
+            'name':'Fuel',
+            'code':'56',
+            'is_enabled':False,
+            'id':'135446'
+        }
+    ]
+}
+
+cost_center_data = {
+    "create_new_auto_create_cost_centers_destination_attributes": [
+        {
+            "FullyQualifiedName": "France",
+            "domain": "QBO",
+            "Name": "France",
+            "SyncToken": "0",
+            "SubClass": False,
+            "sparse": False,
+            "Active": True,
+            "Id": "5000000000000007280",
+            "MetaData": {"CreateTime": "2015-07-22T13:57:27-07:00", "LastUpdatedTime": "2015-07-22T13:57:27-07:00"},
+        },
+        {
+            "FullyQualifiedName": "Denmark",
+            "domain": "QBO",
+            "Name": "Denmark",
+            "SyncToken": "0",
+            "SubClass": False,
+            "sparse": False,
+            "Active": True,
+            "Id": "9",
+            "MetaData": {"CreateTime": "2015-07-22T13:57:27-07:00", "LastUpdatedTime": "2015-07-22T13:57:27-07:00"},
+        },
+    ],
+    "create_new_auto_create_cost_centers_destination_attributes_subsequent_run": [
+        {
+            "FullyQualifiedName": "France",
+            "domain": "QBO",
+            "Name": "France",
+            "SyncToken": "0",
+            "SubClass": False,
+            "sparse": False,
+            "Active": True,
+            "Id": "5000000000000007280",
+            "MetaData": {"CreateTime": "2015-07-22T13:57:27-07:00", "LastUpdatedTime": "2015-07-22T13:57:27-07:00"},
+        },
+        {
+            "FullyQualifiedName": "Denmark",
+            "domain": "QBO",
+            "Name": "Denmark",
+            "SyncToken": "0",
+            "SubClass": False,
+            "sparse": False,
+            "Active": True,
+            "Id": "9",
+            "MetaData": {"CreateTime": "2015-07-22T13:57:27-07:00", "LastUpdatedTime": "2015-07-22T13:57:27-07:00"},
+        },
+        {
+            "FullyQualifiedName": "Australia",
+            "domain": "QBO",
+            "Name": "Australia",
+            "SyncToken": "0",
+            "SubClass": False,
+            "sparse": False,
+            "Active": True,
+            "Id": "5000000000000007282",
+            "MetaData": {"CreateTime": "2015-07-22T13:57:27-07:00", "LastUpdatedTime": "2015-07-22T13:57:27-07:00"},
+        },
+        {
+            "FullyQualifiedName": "Poland",
+            "domain": "QBO",
+            "Name": "Poland",
+            "SyncToken": "0",
+            "SubClass": False,
+            "sparse": False,
+            "Active": True,
+            "Id": "10",
+            "MetaData": {"CreateTime": "2015-07-22T13:57:27-07:00", "LastUpdatedTime": "2015-07-22T13:57:27-07:00"},
+        },
+    ],
+    'create_new_auto_create_cost_centers_expense_attributes_0': [
+        {
+            'count':6,
+            'data':[
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Enterprise, Id - 600',
+                    'id':19728,
+                    'is_enabled':True,
+                    'name':'Enterprise',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Midsize Business, Id - 500',
+                    'id':19730,
+                    'is_enabled':True,
+                    'name':'Midsize Business',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Service Line 1, Id - 100',
+                    'id':19731,
+                    'is_enabled':True,
+                    'name':'Service Line 1',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Service Line 2, Id - 200',
+                    'id':19732,
+                    'is_enabled':True,
+                    'name':'Service Line 2',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Service Line 3, Id - 300',
+                    'id':19733,
+                    'is_enabled':True,
+                    'name':'Service Line 3',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Small Business, Id - 400',
+                    'id':19734,
+                    'is_enabled':True,
+                    'name':'Small Business',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                }
+            ],
+            'offset':0
+        }
+    ],
+    'create_new_auto_create_cost_centers_expense_attributes_1': [
+        {
+            'count':8,
+            'data':[
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Enterprise, Id - 600',
+                    'id':19728,
+                    'is_enabled':True,
+                    'name':'Enterprise',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Midsize Business, Id - 500',
+                    'id':19730,
+                    'is_enabled':True,
+                    'name':'Midsize Business',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Service Line 1, Id - 100',
+                    'id':19731,
+                    'is_enabled':True,
+                    'name':'Service Line 1',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Service Line 2, Id - 200',
+                    'id':19732,
+                    'is_enabled':True,
+                    'name':'Service Line 2',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Service Line 3, Id - 300',
+                    'id':19733,
+                    'is_enabled':True,
+                    'name':'Service Line 3',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Small Business, Id - 400',
+                    'id':19734,
+                    'is_enabled':True,
+                    'name':'Small Business',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Denmark, Id - 4002',
+                    'id':197341,
+                    'is_enabled':True,
+                    'name':'Denmark',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - France, Id - 4001',
+                    'id':197342,
+                    'is_enabled':True,
+                    'name':'France',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                }
+            ],
+            'offset':0
+        }
+    ],
+    'create_new_auto_create_cost_centers_expense_attributes_2': [
+        {
+            'count':10,
+            'data':[
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Enterprise, Id - 600',
+                    'id':19728,
+                    'is_enabled':True,
+                    'name':'Enterprise',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Midsize Business, Id - 500',
+                    'id':19730,
+                    'is_enabled':True,
+                    'name':'Midsize Business',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Service Line 1, Id - 100',
+                    'id':19731,
+                    'is_enabled':True,
+                    'name':'Service Line 1',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Service Line 2, Id - 200',
+                    'id':19732,
+                    'is_enabled':True,
+                    'name':'Service Line 2',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Service Line 3, Id - 300',
+                    'id':19733,
+                    'is_enabled':True,
+                    'name':'Service Line 3',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Small Business, Id - 400',
+                    'id':19734,
+                    'is_enabled':True,
+                    'name':'Small Business',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Denmark, Id - 4002',
+                    'id':197341,
+                    'is_enabled':True,
+                    'name':'Denmark',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - France, Id - 4001',
+                    'id':197342,
+                    'is_enabled':True,
+                    'name':'France',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Poland, Id - 4002',
+                    'id':197343,
+                    'is_enabled':True,
+                    'name':'Poland',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-15T06:06:10.923262+00:00',
+                    'description':'Cost Center - Australia, Id - 4001',
+                    'id':197344,
+                    'is_enabled':True,
+                    'name':'Australia',
+                    'org_id':'or5qYLrvnoF9',
+                    'restricted_spender_user_ids':None,
+                    'updated_at':'2023-09-15T06:06:10.923262+00:00'
+                }
+            ],
+            'offset':0
+        }
+    ],
+    "create_fyle_cost_centers_payload_create_new_case":[
+        {
+            "name": "Adidas",
+            "is_enabled": True,
+            "description": "Cost Center - Adidas, Id - 5100000000000030664",
+        },
+        {
+            "name": "cc1",
+            "is_enabled": True,
+            "description": "Cost Center - cc1, Id - 5100000000000030665",
+        },
+        {
+            "name": "cc2",
+            "is_enabled": True,
+            "description": "Cost Center - cc2, Id - 5100000000000030666",
+        },
+        {
+            "name": "Coachella",
+            "is_enabled": True,
+            "description": "Cost Center - Coachella, Id - 5100000000000030667",
+        },
+        {
+            "name": "Employees",
+            "is_enabled": True,
+            "description": "Cost Center - Employees, Id - 200200000000000042900",
+        },
+        {
+            "name": "Parties",
+            "is_enabled": True,
+            "description": "Cost Center - Parties, Id - 200200000000000042901",
+        },
+        {
+            "name": "Promotional Items",
+            "is_enabled": True,
+            "description": "Cost Center - Promotional Items, Id - 200200000000000042903",
+        },
+        {
+            "name": "Radio",
+            "is_enabled": True,
+            "description": "Cost Center - Radio, Id - 5100000000000030668",
+        },
+        {
+            "name": "Retreats",
+            "is_enabled": True,
+            "description": "Cost Center - Retreats, Id - 200200000000000042902",
+        },
+        {
+            "name": "Test",
+            "is_enabled": True,
+            "description": "Cost Center - Test, Id - 5100000000000030855",
+        }
+    ]
+}
+expense_custom_field_data = {
+    'create_new_auto_create_expense_custom_fields_expense_attributes_0':[
+        {
+            "count": 2,
+            "data": [
+                {
+                    "category_ids": [
+                        259385
+                    ],
+                    "code": None,
+                    "column_name": "text_column3",
+                    "created_at": "2023-10-10T11:06:12.906551+00:00",
+                    "default_value": None,
+                    "field_name": "Luke",
+                    "id": 229506,
+                    "is_custom": True,
+                    "is_enabled": True,
+                    "is_mandatory": False,
+                    "options": [
+                        "France",
+                        "Denmark"
+                    ],
+                    "org_id": "or5qYLrvnoF9",
+                    "parent_field_id": None,
+                    "placeholder": "Select Luke",
+                    "seq": 1,
+                    "type": "SELECT",
+                    "updated_at": "2023-10-10T13:24:33.787371+00:00"
+                },
+                {
+                    "category_ids": [
+                        259385,
+                    ],
+                    "code": None,
+                    "column_name": "text_column4",
+                    "created_at": "2023-10-10T11:07:08.534779+00:00",
+                    "default_value": None,
+                    "field_name": "Cube",
+                    "id": 229507,
+                    "is_custom": True,
+                    "is_enabled": True,
+                    "is_mandatory": False,
+                    "options": [
+                        "Butter Cookies 1",
+                        "Butter Cookies 2",
+                        "Enterprise",
+                        "Killua Class",
+                        "Midsize Business",
+                        "Naruto test 1",
+                        "Serizawa test 1",
+                        "Serizawa test 2",
+                        "Service Line 1",
+                        "Service Line 2",
+                        "Service Line 3",
+                        "Small Business"
+                    ],
+                    "org_id": "or5qYLrvnoF9",
+                    "parent_field_id": None,
+                    "placeholder": "Select Cube",
+                    "seq": 1,
+                    "type": "SELECT",
+                    "updated_at": "2023-10-10T13:24:33.787371+00:00"
+                }
+            ],
+            "offset": 0
+        }
+    ],
+    'create_new_auto_create_expense_custom_fields_expense_attributes_1':[
+        {
+            "count": 2,
+            "data": [
+                {
+                    "category_ids": [
+                        259385
+                    ],
+                    "code": None,
+                    "column_name": "text_column3",
+                    "created_at": "2023-10-10T11:06:12.906551+00:00",
+                    "default_value": None,
+                    "field_name": "Luke",
+                    "id": 229506,
+                    "is_custom": True,
+                    "is_enabled": True,
+                    "is_mandatory": False,
+                    "options": [
+                        "France",
+                        "Denmark",
+                        "Australia",
+                        "Poland"
+                    ],
+                    "org_id": "or5qYLrvnoF9",
+                    "parent_field_id": None,
+                    "placeholder": "Select Luke",
+                    "seq": 1,
+                    "type": "SELECT",
+                    "updated_at": "2023-10-10T13:24:33.787371+00:00"
+                },
+                {
+                    "category_ids": [
+                        259385,
+                    ],
+                    "code": None,
+                    "column_name": "text_column4",
+                    "created_at": "2023-10-10T11:07:08.534779+00:00",
+                    "default_value": None,
+                    "field_name": "Cube",
+                    "id": 229507,
+                    "is_custom": True,
+                    "is_enabled": True,
+                    "is_mandatory": False,
+                    "options": [
+                        "Butter Cookies 1",
+                        "Butter Cookies 2",
+                        "Enterprise",
+                        "Killua Class",
+                        "Midsize Business",
+                        "Naruto test 1",
+                        "Serizawa test 1",
+                        "Serizawa test 2",
+                        "Service Line 1",
+                        "Service Line 2",
+                        "Service Line 3",
+                        "Small Business"
+                    ],
+                    "org_id": "or5qYLrvnoF9",
+                    "parent_field_id": None,
+                    "placeholder": "Select Cube",
+                    "seq": 1,
+                    "type": "SELECT",
+                    "updated_at": "2023-10-10T13:24:33.787371+00:00"
+                }
+            ],
+            "offset": 0
+        }
+    ],
+    "create_new_auto_create_expense_custom_fields_destination_attributes": [
+        {
+            "FullyQualifiedName": "France",
+            "domain": "QBO",
+            "Name": "France",
+            "SyncToken": "0",
+            "SubClass": False,
+            "sparse": False,
+            "Active": True,
+            "Id": "5000000000000007280",
+            "MetaData": {"CreateTime": "2015-07-22T13:57:27-07:00", "LastUpdatedTime": "2015-07-22T13:57:27-07:00"},
+        },
+        {
+            "FullyQualifiedName": "Denmark",
+            "domain": "QBO",
+            "Name": "Denmark",
+            "SyncToken": "0",
+            "SubClass": False,
+            "sparse": False,
+            "Active": True,
+            "Id": "9",
+            "MetaData": {"CreateTime": "2015-07-22T13:57:27-07:00", "LastUpdatedTime": "2015-07-22T13:57:27-07:00"},
+        },
+    ],
+    "create_new_auto_create_expense_custom_fields_destination_attributes_subsequent_run": [
+        {
+            "FullyQualifiedName": "France",
+            "domain": "QBO",
+            "Name": "France",
+            "SyncToken": "0",
+            "SubClass": False,
+            "sparse": False,
+            "Active": True,
+            "Id": "5000000000000007280",
+            "MetaData": {"CreateTime": "2015-07-22T13:57:27-07:00", "LastUpdatedTime": "2015-07-22T13:57:27-07:00"},
+        },
+        {
+            "FullyQualifiedName": "Denmark",
+            "domain": "QBO",
+            "Name": "Denmark",
+            "SyncToken": "0",
+            "SubClass": False,
+            "sparse": False,
+            "Active": True,
+            "Id": "9",
+            "MetaData": {"CreateTime": "2015-07-22T13:57:27-07:00", "LastUpdatedTime": "2015-07-22T13:57:27-07:00"},
+        },
+        {
+            "FullyQualifiedName": "Australia",
+            "domain": "QBO",
+            "Name": "Australia",
+            "SyncToken": "0",
+            "SubClass": False,
+            "sparse": False,
+            "Active": True,
+            "Id": "5000000000000007282",
+            "MetaData": {"CreateTime": "2015-07-22T13:57:27-07:00", "LastUpdatedTime": "2015-07-22T13:57:27-07:00"},
+        },
+        {
+            "FullyQualifiedName": "Poland",
+            "domain": "QBO",
+            "Name": "Poland",
+            "SyncToken": "0",
+            "SubClass": False,
+            "sparse": False,
+            "Active": True,
+            "Id": "10",
+            "MetaData": {"CreateTime": "2015-07-22T13:57:27-07:00", "LastUpdatedTime": "2015-07-22T13:57:27-07:00"},
+        },
+    ],
+    'create_new_auto_create_expense_custom_fields_get_by_id': {
+        'category_ids':[
+            259385,
+            259386,
+            259387,
+            259388,
+            259389,
+            259390,
+            259391,
+            259392,
+            259393,
+            259394,
+            259395,
+            259396,
+            259397,
+            259398,
+            259399,
+        ],
+        'code':None,
+        'column_name':'text_column3',
+        'created_at':'2023-10-10T11:06:12.906551+00:00',
+        'default_value':None,
+        'field_name':'Luke',
+        'id':229506,
+        'is_custom':True,
+        'is_enabled':True,
+        'is_mandatory':False,
+        "options": [
+            "France",
+            "Denmark"
+        ],
+        'org_id':'or5qYLrvnoF9',
+        'parent_field_id':None,
+        'placeholder':'Select Luke',
+        'seq':1,
+        'type':'SELECT',
+        'updated_at':'2023-10-11T07:42:24.133074+00:00'
+    },
+    "create_fyle_expense_custom_fields_payload_create_new_case": {
+        'field_name':'Luke',
+        'type':'SELECT',
+        'is_enabled':True,
+        'is_mandatory':False,
+        'placeholder':'Select Luke',
+        'options':[
+            'Adidas',
+            'cc1',
+            'cc2',
+            'Coachella',
+            'Employees',
+            'Parties',
+            'Promotional Items',
+            'Radio',
+            'Retreats',
+            'Test'
+        ],
+        'code':None
+    }
+}

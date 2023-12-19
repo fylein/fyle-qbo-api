@@ -1,5 +1,4 @@
 import pytest
-from django_q.models import Schedule
 from fyle_accounting_mappings.models import EmployeeMapping, ExpenseAttribute, Mapping, MappingSetting
 
 from apps.fyle.models import ExpenseGroupSettings
@@ -46,24 +45,6 @@ def test_run_post_mapping_settings_triggers(test_connection, mocker):
 
     mocker.patch('fyle.platform.apis.v1beta.admin.ExpenseFields.list_all', return_value=fyle_data['get_all_expense_fields'])
 
-    mapping_setting = MappingSetting(source_field='PROJECT', destination_field='PROJECT', workspace_id=2, import_to_fyle=True, is_custom=False)
-
-    mapping_setting.save()
-
-    schedule = Schedule.objects.filter(func='apps.mappings.tasks.auto_create_project_mappings', args='{}'.format(2)).first()
-
-    assert schedule.func == 'apps.mappings.tasks.auto_create_project_mappings'
-    assert schedule.args == '2'
-
-    mapping_setting = MappingSetting(source_field='COST_CENTER', destination_field='CLASS', workspace_id=1, import_to_fyle=True, is_custom=False)
-
-    mapping_setting.save()
-
-    schedule = Schedule.objects.filter(func='apps.mappings.tasks.auto_create_cost_center_mappings', args='{}'.format(1)).first()
-
-    assert schedule.func == 'apps.mappings.tasks.auto_create_cost_center_mappings'
-    assert schedule.args == '1'
-
     mapping_setting = MappingSetting(source_field='PROJECT', destination_field='DEPARTMENT', workspace_id=1, import_to_fyle=False, is_custom=False)
 
     mapping_setting.save()
@@ -71,14 +52,6 @@ def test_run_post_mapping_settings_triggers(test_connection, mocker):
     expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=1)
     assert 'project' in expense_group_settings.reimbursable_expense_group_fields
     assert 'project' in expense_group_settings.corporate_credit_card_expense_group_fields
-
-    mapping_setting = MappingSetting(source_field='SAMPLEs', destination_field='SAMPLEs', workspace_id=1, import_to_fyle=True, is_custom=True)
-    mapping_setting.save()
-
-    schedule = Schedule.objects.filter(func='apps.mappings.tasks.async_auto_create_custom_field_mappings', args='{}'.format(1)).first()
-
-    assert schedule.func == 'apps.mappings.tasks.async_auto_create_custom_field_mappings'
-    assert schedule.args == '1'
 
 
 @pytest.mark.django_db()
@@ -104,7 +77,7 @@ def test_run_pre_mapping_settings_triggers(db, mocker, test_connection):
     custom_mappings = Mapping.objects.filter(workspace_id=workspace_id, source_type='CUSTOM_INTENTs').count()
     assert custom_mappings == 0
 
-    mapping_setting = MappingSetting(source_field='CUSTOM_INTENTs', destination_field='CUSTOM_INTENTs', workspace_id=workspace_id, import_to_fyle=True, is_custom=True)
+    mapping_setting = MappingSetting(source_field='CUSTOM_INTENTs', destination_field='CLASS', workspace_id=workspace_id, import_to_fyle=True, is_custom=True)
     mapping_setting.save()
 
     custom_mappings = Mapping.objects.last()
