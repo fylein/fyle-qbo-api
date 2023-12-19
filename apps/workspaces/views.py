@@ -125,9 +125,9 @@ class ConnectQBOView(generics.CreateAPIView, generics.RetrieveUpdateAPIView):
         """
         Get QBO Credentials in Workspace
         """
-        qbo_credentials = QBOCredential.objects.get(workspace=kwargs['workspace_id'], is_expired=False)
+        qbo_credentials = QBOCredential.objects.get(workspace=kwargs['workspace_id'])
 
-        return Response(data=QBOCredentialSerializer(qbo_credentials).data, status=status.HTTP_200_OK if qbo_credentials.refresh_token else status.HTTP_400_BAD_REQUEST)
+        return Response(data=QBOCredentialSerializer(qbo_credentials).data, status=status.HTTP_200_OK if qbo_credentials.refresh_token and not qbo_credentials.is_expired else status.HTTP_400_BAD_REQUEST)
 
 
 class GeneralSettingsView(generics.RetrieveAPIView):
