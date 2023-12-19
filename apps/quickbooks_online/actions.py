@@ -20,21 +20,11 @@ from apps.workspaces.models import WorkspaceGeneralSettings
 from apps.workspaces.models import LastExportDetail, QBOCredential, Workspace
 
 from .helpers import generate_export_type_and_id
+from apps.mappings.constants import SYNC_METHODS
 
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
-
-
-SYNC_METHODS = {
-    'ACCOUNT': 'accounts',
-    'ITEM': 'items',
-    'VENDOR': 'vendors',
-    'DEPARTMENT': 'departments',
-    'TAX_CODE': 'tax_codes',
-    'CLASS': 'classes',
-    'CUSTOMER': 'customers',
-}
 
 
 def update_last_export_details(workspace_id):
@@ -82,7 +72,7 @@ def refresh_quickbooks_dimensions(workspace_id: int):
     chain = Chain()
 
     for mapping_setting in mapping_settings:
-        if mapping_setting.source_field in ['PROJECT', 'COST_CENTER']:
+        if mapping_setting.source_field in ['PROJECT', 'COST_CENTER'] or mapping_setting.is_custom:
             chain.append(
                 'fyle_integrations_imports.tasks.trigger_import_via_schedule',
                 workspace_id,
@@ -94,10 +84,8 @@ def refresh_quickbooks_dimensions(workspace_id: int):
                 get_auto_sync_permission(workspace_general_settings, mapping_setting),
                 False,
                 None,
-                False
+                mapping_setting.is_custom
             )
-        elif mapping_setting.is_custom:
-            chain.append('apps.mappings.tasks.async_auto_create_custom_field_mappings', int(workspace_id))
 
     if chain.length() > 0:
         chain.run()

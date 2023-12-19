@@ -6,8 +6,7 @@ from fyle_accounting_mappings.models import MappingSetting
 from apps.fyle.models import ExpenseGroupSettings
 from apps.mappings.helpers import schedule_or_delete_fyle_import_tasks
 from apps.mappings.queues import (
-    schedule_fyle_attributes_creation,
-    schedule_tax_groups_creation,
+    schedule_tax_groups_creation
 )
 from apps.workspaces.models import WorkspaceGeneralSettings
 from apps.mappings.schedules import schedule_or_delete_fyle_import_tasks as new_schedule_or_delete_fyle_import_tasks
@@ -99,10 +98,6 @@ class ImportSettingsTrigger:
         """
         mapping_settings = self.__mapping_settings
 
-        schedule_fyle_attributes_creation(self.__workspace_id)
-
-        # Removal of department grouping will be taken care from post_delete() signal
-
         # Update department mapping to some other Fyle field
         current_mapping_settings = MappingSetting.objects.filter(workspace_id=self.__workspace_id).all()
 
@@ -120,5 +115,5 @@ class ImportSettingsTrigger:
 
         self.__update_expense_group_settings_for_departments()
 
-        new_schedule_or_delete_fyle_import_tasks(workspace_general_settings_instance, None)
+        new_schedule_or_delete_fyle_import_tasks(workspace_general_settings_instance, self.__mapping_settings)
         schedule_or_delete_fyle_import_tasks(workspace_general_settings_instance)
