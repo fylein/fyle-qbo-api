@@ -14,7 +14,7 @@ def schedule_or_delete_fyle_import_tasks(workspace_general_settings: WorkspaceGe
     """
     task_to_be_scheduled = None
     for mapping_setting in mapping_settings:
-        if mapping_setting['import_to_fyle']:
+        if mapping_setting['import_to_fyle'] and mapping_setting['source_field'] in ['PROJECT', 'COST_CENTER'] or mapping_setting['is_custom']:
             task_to_be_scheduled = True
             break
 
