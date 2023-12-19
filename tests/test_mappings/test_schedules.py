@@ -16,15 +16,16 @@ def test_schedule_creation(db):
     configuration.save()
 
     MappingSetting.objects.filter(workspace_id=workspace_id).delete()
-    mapping_setting = MappingSetting.objects.create(
-        source_field='PROJECT',
-        destination_field='CUSTOMER',
-        workspace_id=workspace_id,
-        import_to_fyle=True,
-        is_custom=False
-    )
+    mapping_settings =  [
+        {
+            'source_field': 'PROJECT',
+            'destination_field': 'CUSTOMER',
+            'import_to_fyle': True,
+            'is_custom': False
+        }
+    ]
 
-    schedule_or_delete_fyle_import_tasks(configuration, mapping_setting)
+    schedule_or_delete_fyle_import_tasks(configuration, mapping_settings)
 
     schedule = Schedule.objects.filter(
         func='apps.mappings.queues.construct_tasks_and_chain_import_fields_to_fyle',
