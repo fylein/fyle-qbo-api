@@ -1,12 +1,10 @@
 import logging
 from typing import Dict, List
 
-from dateutil import parser
 from django_q.tasks import Chain
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping, MappingSetting
 from fyle_integrations_platform_connector import PlatformConnector
 
-from apps.mappings.constants import FYLE_EXPENSE_SYSTEM_FIELDS
 from apps.mappings.exceptions import handle_import_exceptions
 from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.utils import QBOConnector
@@ -373,107 +371,6 @@ def create_fyle_tax_group_payload(qbo_attributes: List[DestinationAttribute], ex
             fyle_tax_group_payload.append({'name': qbo_attribute.value, 'is_enabled': True, 'percentage': round((qbo_attribute.detail['tax_rate'] / 100), 2)})
 
     return fyle_tax_group_payload
-
-
-def create_fyle_expense_custom_field_payload(qbo_attributes: List[DestinationAttribute], workspace_id: int, fyle_attribute: str, platform: PlatformConnector, source_placeholder: str = None):
-    """
-    Create Fyle Expense Custom Field Payload from QBO Objects
-    :param workspace_id: Workspace ID
-    :param qbo_attributes: QBO Objects
-    :param fyle_attribute: Fyle Attribute
-    :return: Fyle Expense Custom Field Payload
-    """
-    fyle_expense_custom_field_options = []
-
-    if fyle_attribute.lower() not in FYLE_EXPENSE_SYSTEM_FIELDS:
-        existing_attribute = ExpenseAttribute.objects.filter(attribute_type=fyle_attribute, workspace_id=workspace_id).values_list('detail', flat=True).first()
-
-        custom_field_id = None
-        placeholder = None
-        is_mandatory = False
-        if existing_attribute is not None:
-            custom_field_id = existing_attribute['custom_field_id']
-            placeholder = existing_attribute['placeholder'] if 'placeholder' in existing_attribute else None
-            is_mandatory = existing_attribute['is_mandatory'] if 'is_mandatory' in existing_attribute else False
-            expense_field = platform.expense_custom_fields.get_by_id(custom_field_id)
-            fyle_expense_custom_field_options = expense_field['options']
-            last_imported_at = expense_field['updated_at']
-            qbo_attributes = [qbo_attribute for qbo_attribute in qbo_attributes if qbo_attribute.updated_at > parser.parse(last_imported_at)]
-
-        [fyle_expense_custom_field_options.append(qbo_attribute.value) for qbo_attribute in qbo_attributes]
-        fyle_expense_custom_field_options = list(set(fyle_expense_custom_field_options))
-        fyle_attribute = fyle_attribute.replace('_', ' ').title()
-
-        new_placeholder = None
-
-        # Here is the explanation of what's happening in the if-else ladder below
-        # source_field is the field that's save in mapping settings, this field user may or may not fill in the custom field form
-        # placeholder is the field that's saved in the detail column of destination attributes
-        # fyle_attribute is what we're constructing when both of these fields would not be available
-
-        if not (source_placeholder or placeholder):
-            # If source_placeholder and placeholder are both None, then we're creating adding a self constructed placeholder
-            new_placeholder = 'Select {0}'.format(fyle_attribute)
-        elif not source_placeholder and placeholder:
-            # If source_placeholder is None but placeholder is not, then we're choosing same place holder as 1 in detail section
-            new_placeholder = placeholder
-        elif source_placeholder and not placeholder:
-            # If source_placeholder is not None but placeholder is None, then we're choosing the placeholder as filled by user in form
-            new_placeholder = source_placeholder
-        else:
-            # Else, we're choosing the placeholder as filled by user in form or None
-            new_placeholder = source_placeholder
-
-        expense_custom_field_payload = {'field_name': fyle_attribute, 'type': 'SELECT', 'is_enabled': True, 'is_mandatory': is_mandatory, 'placeholder': new_placeholder, 'options': fyle_expense_custom_field_options, 'code': None}
-
-        if custom_field_id:
-            expense_custom_field_payload['id'] = custom_field_id
-
-        return expense_custom_field_payload
-
-
-def upload_attributes_to_fyle(workspace_id: int, qbo_attribute_type: str, fyle_attribute_type: str, source_placeholder: str = None):
-    """
-    Upload attributes to Fyle
-    """
-    fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
-
-    platform = PlatformConnector(fyle_credentials)
-
-    qbo_attributes: List[DestinationAttribute] = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type=qbo_attribute_type)
-
-    if qbo_attributes.count():
-        qbo_attributes = remove_duplicates(qbo_attributes)
-
-        fyle_custom_field_payload = create_fyle_expense_custom_field_payload(qbo_attributes=qbo_attributes, workspace_id=workspace_id, fyle_attribute=fyle_attribute_type, platform=platform, source_placeholder=source_placeholder)
-
-        if fyle_custom_field_payload:
-            platform.expense_custom_fields.post(fyle_custom_field_payload)
-            platform.expense_custom_fields.sync()
-
-    return qbo_attributes
-
-
-@handle_import_exceptions(task_name='Auto Create Expense Fields Mappings')
-def auto_create_expense_fields_mappings(workspace_id: int, qbo_attribute_type: str, fyle_attribute_type: str, source_placeholder: str = None):
-    """
-    Create Fyle Attributes Mappings
-    :return: mappings
-    """
-    fyle_attributes = upload_attributes_to_fyle(workspace_id, qbo_attribute_type, fyle_attribute_type, source_placeholder)
-    if fyle_attributes:
-        Mapping.bulk_create_mappings(fyle_attributes, fyle_attribute_type, qbo_attribute_type, workspace_id)
-
-
-@handle_import_exceptions(task_name='Async Auto Create Custom Fields Mappings')
-def async_auto_create_custom_field_mappings(workspace_id):
-    mapping_settings = MappingSetting.objects.filter(is_custom=True, import_to_fyle=True, workspace_id=workspace_id).all()
-
-    if mapping_settings:
-        for mapping_setting in mapping_settings:
-            if mapping_setting.import_to_fyle:
-                sync_qbo_attribute(mapping_setting.destination_field, workspace_id)
-                auto_create_expense_fields_mappings(workspace_id, mapping_setting.destination_field, mapping_setting.source_field, mapping_setting.source_placeholder)
 
 
 def create_fyle_merchants_payload(vendors, existing_merchants_name):

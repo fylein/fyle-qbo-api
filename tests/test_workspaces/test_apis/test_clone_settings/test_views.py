@@ -3,6 +3,7 @@ import json
 from apps.workspaces.models import Workspace
 from tests.helper import dict_compare_keys
 from .fixtures import data
+from tests.test_fyle_integrations_imports.test_modules.fixtures import expense_custom_field_data
 
 
 def assert_4xx_cases(api_client, url, payload):
@@ -15,11 +16,16 @@ def assert_4xx_cases(api_client, url, payload):
     assert response.status_code == 400
 
 
-def test_clone_settings(api_client, test_connection):
+def test_clone_settings(mocker, api_client, test_connection):
     workspace = Workspace.objects.get(id=1)
     workspace.name_in_journal_entry = 'MERCHANT'
     workspace.onboarding_state = 'COMPLETE'
     workspace.save()
+
+    mocker.patch(
+        'fyle.platform.apis.v1beta.admin.expense_fields.list_all',
+        return_value=expense_custom_field_data['create_new_auto_create_expense_custom_fields_expense_attributes_0']
+    )
 
     url = '/api/v2/workspaces/1/clone_settings/'
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
