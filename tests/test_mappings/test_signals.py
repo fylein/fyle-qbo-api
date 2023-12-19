@@ -1,5 +1,4 @@
 import pytest
-from django_q.models import Schedule
 from fyle_accounting_mappings.models import EmployeeMapping, ExpenseAttribute, Mapping, MappingSetting
 
 from apps.fyle.models import ExpenseGroupSettings
