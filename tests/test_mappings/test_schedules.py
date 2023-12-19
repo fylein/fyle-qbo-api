@@ -16,7 +16,7 @@ def test_schedule_creation(db):
     configuration.save()
 
     MappingSetting.objects.filter(workspace_id=workspace_id).delete()
-    mapping_settings =  [
+    mapping_settings = [
         {
             'source_field': 'PROJECT',
             'destination_field': 'CUSTOMER',
