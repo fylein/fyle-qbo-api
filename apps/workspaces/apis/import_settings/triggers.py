@@ -115,5 +115,5 @@ class ImportSettingsTrigger:
 
         self.__update_expense_group_settings_for_departments()
 
-        new_schedule_or_delete_fyle_import_tasks(workspace_general_settings_instance, None)
+        new_schedule_or_delete_fyle_import_tasks(workspace_general_settings_instance, self.__mapping_settings)
         schedule_or_delete_fyle_import_tasks(workspace_general_settings_instance)

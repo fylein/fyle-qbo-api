@@ -8,16 +8,7 @@ from apps.workspaces.models import WorkspaceGeneralSettings, QBOCredential
 from apps.mappings.helpers import get_auto_sync_permission
 from fyle_integrations_imports.queues import chain_import_fields_to_fyle
 from fyle_integrations_imports.dataclasses import TaskSetting
-
-SYNC_METHODS = {
-    'ACCOUNT': 'accounts',
-    'ITEM': 'items',
-    'VENDOR': 'vendors',
-    'DEPARTMENT': 'departments',
-    'TAX_CODE': 'tax_codes',
-    'CLASS': 'classes',
-    'CUSTOMER': 'customers',
-}
+from apps.mappings.constants import SYNC_METHODS
 
 
 def schedule_bill_payment_creation(sync_fyle_to_qbo_payments, workspace_id):
