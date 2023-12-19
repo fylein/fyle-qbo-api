@@ -20,21 +20,11 @@ from apps.workspaces.models import WorkspaceGeneralSettings
 from apps.workspaces.models import LastExportDetail, QBOCredential, Workspace
 
 from .helpers import generate_export_type_and_id
+from apps.mappings.constants import SYNC_METHODS
 
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
-
-
-SYNC_METHODS = {
-    'ACCOUNT': 'accounts',
-    'ITEM': 'items',
-    'VENDOR': 'vendors',
-    'DEPARTMENT': 'departments',
-    'TAX_CODE': 'tax_codes',
-    'CLASS': 'classes',
-    'CUSTOMER': 'customers',
-}
 
 
 def update_last_export_details(workspace_id):

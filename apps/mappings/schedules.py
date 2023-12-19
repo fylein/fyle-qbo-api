@@ -26,24 +26,24 @@ def schedule_or_delete_fyle_import_tasks(workspace_general_settings: WorkspaceGe
                 'next_run': datetime.now()
             }
         )
-        return
 
-    import_fields_count = MappingSetting.objects.filter(
-        import_to_fyle=True,
-        workspace_id=workspace_general_settings.workspace_id,
-        source_field__in=['PROJECT', 'COST_CENTER']
-    ).count()
+    else:
+        import_fields_count = MappingSetting.objects.filter(
+            import_to_fyle=True,
+            workspace_id=workspace_general_settings.workspace_id,
+            source_field__in=['PROJECT', 'COST_CENTER']
+        ).count()
 
-    custom_field_import_fields_count = MappingSetting.objects.filter(
-        import_to_fyle=True,
-        workspace_id=workspace_general_settings.workspace_id, 
-        is_custom=True
-    ).count()
+        custom_field_import_fields_count = MappingSetting.objects.filter(
+            import_to_fyle=True,
+            workspace_id=workspace_general_settings.workspace_id,
+            is_custom=True
+        ).count()
 
-    # If the import fields count is 0, delete the schedule
-    if import_fields_count == 0 and custom_field_import_fields_count == 0\
-        and not workspace_general_settings.import_categories and not workspace_general_settings.import_items:
-        Schedule.objects.filter(
-            func='apps.mappings.queues.construct_tasks_and_chain_import_fields_to_fyle',
-            args='{}'.format(workspace_general_settings.workspace_id)
-        ).delete()
+        # If the import fields count is 0, delete the schedule
+        if import_fields_count == 0 and custom_field_import_fields_count == 0\
+            and not workspace_general_settings.import_categories and not workspace_general_settings.import_items:
+            Schedule.objects.filter(
+                func='apps.mappings.queues.construct_tasks_and_chain_import_fields_to_fyle',
+                args='{}'.format(workspace_general_settings.workspace_id)
+            ).delete()
