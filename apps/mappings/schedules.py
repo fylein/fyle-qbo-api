@@ -37,9 +37,7 @@ def schedule_or_delete_fyle_import_tasks(workspace_general_settings: WorkspaceGe
         ).count()
 
         # If the import fields count is 0, delete the schedule
-        if import_fields_count == 0\
-            and not workspace_general_settings.import_categories and not workspace_general_settings.import_items\
-            and not workspace_general_settings.import_tax_codes and not workspace_general_settings.import_vendors_as_merchants:
+        if import_fields_count == 0:
             Schedule.objects.filter(
                 func='apps.mappings.queues.construct_tasks_and_chain_import_fields_to_fyle',
                 args='{}'.format(workspace_general_settings.workspace_id)
