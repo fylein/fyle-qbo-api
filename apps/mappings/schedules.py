@@ -1,3 +1,4 @@
+from django.db.models import Q
 from datetime import datetime
 from typing import Dict, List
 from django_q.models import Schedule
@@ -31,7 +32,9 @@ def schedule_or_delete_fyle_import_tasks(workspace_general_settings: WorkspaceGe
         )
 
     else:
+        # Have added the TAX_GROUP in not case because the mapping_settings persists even after import_tax_codes is set to False
         import_fields_count = MappingSetting.objects.filter(
+            ~Q(source_field__in=['TAX_GROUP']),
             import_to_fyle=True,
             workspace_id=workspace_general_settings.workspace_id
         ).count()
