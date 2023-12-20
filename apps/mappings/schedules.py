@@ -32,17 +32,13 @@ def schedule_or_delete_fyle_import_tasks(workspace_general_settings: WorkspaceGe
         )
 
     else:
-        # Have added the TAX_GROUP in not case because the mapping_settings persists even after import_tax_codes is set to False
         import_fields_count = MappingSetting.objects.filter(
-            ~Q(source_field__in=['TAX_GROUP']),
             import_to_fyle=True,
             workspace_id=workspace_general_settings.workspace_id
         ).count()
 
         # If the import fields count is 0, delete the schedule
-        if import_fields_count == 0\
-            and not workspace_general_settings.import_categories and not workspace_general_settings.import_items\
-            and not workspace_general_settings.import_tax_codes and not workspace_general_settings.import_vendors_as_merchants:
+        if import_fields_count == 0:
             Schedule.objects.filter(
                 func='apps.mappings.queues.construct_tasks_and_chain_import_fields_to_fyle',
                 args='{}'.format(workspace_general_settings.workspace_id)
