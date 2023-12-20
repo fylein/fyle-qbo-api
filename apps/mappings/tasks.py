@@ -1,8 +1,7 @@
 import logging
-from typing import Dict, List
+from typing import List
 
-from django_q.tasks import Chain
-from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping, MappingSetting
+from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute
 from fyle_integrations_platform_connector import PlatformConnector
 
 from apps.mappings.exceptions import handle_import_exceptions
@@ -13,29 +12,6 @@ from apps.workspaces.models import FyleCredential, QBOCredential, WorkspaceGener
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
-
-DEFAULT_FYLE_CATEGORIES = [
-    'train',
-    'fuel',
-    'office supplies',
-    'utility',
-    'entertainment',
-    'others',
-    'mileage',
-    'food',
-    'per diem',
-    'bus',
-    'taxi',
-    'mail',
-    'lodging',
-    'professional services',
-    'airlines',
-    'software',
-    'parking',
-    'unspecified',
-    'rental',
-    'groceries',
-]
 
 
 def resolve_expense_attribute_errors(source_attribute_type: str, workspace_id: int, destination_attribute_type: str = None):
@@ -48,10 +24,7 @@ def resolve_expense_attribute_errors(source_attribute_type: str, workspace_id: i
     if errored_attribute_ids:
         mapped_attribute_ids = []
 
-        if source_attribute_type in ('TAX_GROUP'):
-            mapped_attribute_ids: List[int] = Mapping.objects.filter(source_id__in=errored_attribute_ids).values_list('source_id', flat=True)
-
-        elif source_attribute_type == 'EMPLOYEE':
+        if source_attribute_type == 'EMPLOYEE':
             if destination_attribute_type == 'EMPLOYEE':
                 params = {'source_employee_id__in': errored_attribute_ids, 'destination_employee_id__isnull': False}
             else:
@@ -60,38 +33,6 @@ def resolve_expense_attribute_errors(source_attribute_type: str, workspace_id: i
 
         if mapped_attribute_ids:
             Error.objects.filter(expense_attribute_id__in=mapped_attribute_ids).update(is_resolved=True)
-
-
-def remove_duplicates(qbo_attributes: List[DestinationAttribute]):
-    unique_attributes = []
-
-    attribute_values = []
-
-    for attribute in qbo_attributes:
-        if attribute.value.lower() not in attribute_values:
-            unique_attributes.append(attribute)
-            attribute_values.append(attribute.value.lower())
-
-    return unique_attributes
-
-
-@handle_import_exceptions(task_name='Auto Create Tax Code Mappings')
-def auto_create_tax_codes_mappings(workspace_id: int):
-    """
-    Create Tax Codes Mappings
-    :return: None
-    """
-
-    fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
-
-    platform = PlatformConnector(fyle_credentials)
-
-    platform.tax_groups.sync()
-
-    mapping_setting = MappingSetting.objects.get(source_field='TAX_GROUP', workspace_id=workspace_id)
-
-    sync_qbo_attribute(mapping_setting.destination_field, workspace_id)
-    upload_tax_groups_to_fyle(platform, workspace_id)
 
 
 def get_existing_source_and_mappings(destination_type: str, workspace_id: int):
@@ -318,106 +259,3 @@ def async_auto_map_ccc_account(workspace_id: int):
             platform.employees.sync()
 
             auto_map_ccc_employees(default_ccc_account_id, workspace_id)
-
-
-def upload_tax_groups_to_fyle(platform_connection: PlatformConnector, workspace_id: int):
-    existing_tax_codes_name = ExpenseAttribute.objects.filter(attribute_type='TAX_GROUP', workspace_id=workspace_id).values_list('value', flat=True)
-
-    qbo_attributes = DestinationAttribute.objects.filter(attribute_type='TAX_CODE', workspace_id=workspace_id).order_by('value', 'id')
-
-    qbo_attributes = remove_duplicates(qbo_attributes)
-
-    fyle_payload: List[Dict] = create_fyle_tax_group_payload(qbo_attributes, existing_tax_codes_name)
-
-    if fyle_payload:
-        platform_connection.tax_groups.post_bulk(fyle_payload)
-
-    platform_connection.tax_groups.sync()
-    Mapping.bulk_create_mappings(qbo_attributes, 'TAX_GROUP', 'TAX_CODE', workspace_id)
-    resolve_expense_attribute_errors(source_attribute_type='TAX_GROUP', workspace_id=workspace_id)
-
-
-def sync_qbo_attribute(qbo_attribute_type: str, workspace_id: int):
-    qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
-    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
-
-    if qbo_attribute_type == 'CUSTOMER':
-        qbo_connection.sync_customers()
-
-    elif qbo_attribute_type == 'DEPARTMENT':
-        qbo_connection.sync_departments()
-
-    elif qbo_attribute_type == 'CLASS':
-        qbo_connection.sync_classes()
-
-    elif qbo_attribute_type == 'TAX_CODE':
-        qbo_connection.sync_tax_codes()
-
-    elif qbo_attribute_type == 'VENDOR':
-        qbo_connection.sync_vendors()
-
-
-def create_fyle_tax_group_payload(qbo_attributes: List[DestinationAttribute], existing_fyle_tax_groups: list):
-    """
-    Create Fyle Cost Centers Payload from QBO Objects
-    :param existing_fyle_tax_groups: Existing cost center names
-    :param qbo_attributes: QBO Objects
-    :return: Fyle Cost Centers Payload
-    """
-
-    fyle_tax_group_payload = []
-    for qbo_attribute in qbo_attributes:
-        if qbo_attribute.value not in existing_fyle_tax_groups:
-            fyle_tax_group_payload.append({'name': qbo_attribute.value, 'is_enabled': True, 'percentage': round((qbo_attribute.detail['tax_rate'] / 100), 2)})
-
-    return fyle_tax_group_payload
-
-
-def create_fyle_merchants_payload(vendors, existing_merchants_name):
-    payload: List[str] = []
-    for vendor in vendors:
-        if vendor.value not in existing_merchants_name:
-            payload.append(vendor.value)
-
-    return payload
-
-
-def post_merchants(platform_connection: PlatformConnector, workspace_id: int):
-    existing_merchants_name = ExpenseAttribute.objects.filter(attribute_type='MERCHANT', workspace_id=workspace_id).values_list('value', flat=True)
-
-    qbo_attributes = DestinationAttribute.objects.filter(attribute_type='VENDOR', active=True, workspace_id=workspace_id).order_by('value', 'id')
-
-    qbo_attributes = remove_duplicates(qbo_attributes)
-
-    fyle_payload: List[str] = create_fyle_merchants_payload(qbo_attributes, existing_merchants_name)
-
-    if fyle_payload:
-        platform_connection.merchants.post(fyle_payload)
-        platform_connection.merchants.sync()
-
-
-@handle_import_exceptions(task_name='Auto Create Vendors as Merchants')
-def auto_create_vendors_as_merchants(workspace_id):
-    fyle_credentials: FyleCredential = FyleCredential.objects.get(workspace_id=workspace_id)
-
-    fyle_connection = PlatformConnector(fyle_credentials)
-
-    fyle_connection.merchants.sync()
-
-    sync_qbo_attribute('VENDOR', workspace_id)
-    post_merchants(fyle_connection, workspace_id)
-
-
-def auto_import_and_map_fyle_fields(workspace_id):
-    """
-    Auto import and map fyle fields
-    """
-    workspace_general_settings: WorkspaceGeneralSettings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
-
-    chain = Chain()
-
-    if workspace_general_settings.import_vendors_as_merchants:
-        chain.append('apps.mappings.tasks.auto_create_vendors_as_merchants', workspace_id)
-
-    if chain.length() > 0:
-        chain.run()
