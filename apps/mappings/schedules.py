@@ -1,4 +1,3 @@
-from django.db.models import Q
 from datetime import datetime
 from typing import Dict, List
 from django_q.models import Schedule
