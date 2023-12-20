@@ -4,10 +4,6 @@ from django.db.models import Q
 from fyle_accounting_mappings.models import MappingSetting
 
 from apps.fyle.models import ExpenseGroupSettings
-from apps.mappings.helpers import schedule_or_delete_fyle_import_tasks
-from apps.mappings.queues import (
-    schedule_tax_groups_creation
-)
 from apps.workspaces.models import WorkspaceGeneralSettings
 from apps.mappings.schedules import schedule_or_delete_fyle_import_tasks as new_schedule_or_delete_fyle_import_tasks
 
@@ -76,9 +72,6 @@ class ImportSettingsTrigger:
         """
         Post save action for workspace general settings
         """
-        schedule_tax_groups_creation(import_tax_codes=self.__workspace_general_settings.get('import_tax_codes'), workspace_id=self.__workspace_id)
-
-        schedule_or_delete_fyle_import_tasks(workspace_general_settings_instance)
         new_schedule_or_delete_fyle_import_tasks(workspace_general_settings_instance)
 
     def __remove_old_department_source_field(self, current_mappings_settings: List[MappingSetting], new_mappings_settings: List[Dict]):
@@ -116,4 +109,3 @@ class ImportSettingsTrigger:
         self.__update_expense_group_settings_for_departments()
 
         new_schedule_or_delete_fyle_import_tasks(workspace_general_settings_instance, self.__mapping_settings)
-        schedule_or_delete_fyle_import_tasks(workspace_general_settings_instance)

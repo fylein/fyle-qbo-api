@@ -12,8 +12,7 @@ from apps.fyle.models import ExpenseGroupSettings
 from apps.mappings.queues import (
     schedule_auto_map_ccc_employees,
     schedule_auto_map_employees,
-    schedule_bill_payment_creation,
-    schedule_tax_groups_creation,
+    schedule_bill_payment_creation
 )
 from apps.quickbooks_online.queue import schedule_qbo_objects_status_sync, schedule_reimbursements_sync
 from apps.workspaces.models import WorkspaceGeneralSettings
@@ -135,8 +134,6 @@ def create_or_update_general_settings(general_settings_payload: Dict, workspace_
         expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
         expense_group_settings.import_card_credits = True
         expense_group_settings.save()
-
-    schedule_tax_groups_creation(import_tax_codes=general_settings.import_tax_codes, workspace_id=workspace_id)
 
     schedule_auto_map_employees(general_settings_payload['auto_map_employees'], workspace_id)
 
