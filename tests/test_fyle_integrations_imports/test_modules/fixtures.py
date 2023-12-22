@@ -8241,3 +8241,460 @@ expense_custom_field_data = {
         'code':None
     }
 }
+
+tax_groups_data = {
+    "create_new_auto_create_tax_groups_destination_attributes": [
+        {
+            "SyncToken": "0",
+            "domain": "QBO",
+            "TaxGroup": True,
+            "Name": "California",
+            "Taxable": True,
+            "PurchaseTaxRateList": {"TaxRateDetail": [{"TaxRateRef": {"value": "6", "name": "ON TAX PURCHASE"}, "TaxTypeApplicable": "TaxOnAmount", "TaxOrder": 0}]},
+            "sparse": False,
+            "Active": True,
+            "Description": "California",
+            "MetaData": {"CreateTime": "2014-09-18T12:17:04-07:00", "LastUpdatedTime": "2014-09-18T12:17:04-07:00"},
+            "Id": "2",
+            "SalesTaxRateList": {"TaxRateDetail": [{"TaxTypeApplicable": "TaxOnAmount", "TaxRateRef": {"name": "California", "value": "3"}, "TaxOrder": 0}]},
+        }
+    ],
+    "create_new_auto_create_tax_groups_destination_attributes_get_by_id": {
+        "RateValue": 2,
+        "AgencyRef": {"value": "1"},
+        "domain": "QBO",
+        "Name": "California",
+        "SyncToken": "0",
+        "SpecialTaxType": "NONE",
+        "DisplayType": "ReadOnly",
+        "sparse": False,
+        "Active": True,
+        "MetaData": {"CreateTime": "2014-09-18T12:17:04-07:00", "LastUpdatedTime": "2014-09-18T12:17:04-07:00"},
+        "Id": "2",
+        "Description": "Sales Tax",
+    },
+    "create_new_auto_create_tax_groups_destination_attributes_subsequent_case": [
+        {
+            "SyncToken": "0",
+            "domain": "QBO",
+            "TaxGroup": True,
+            "Name": "California",
+            "Taxable": True,
+            "PurchaseTaxRateList": {"TaxRateDetail": [{"TaxRateRef": {"value": "6", "name": "ON TAX PURCHASE"}, "TaxTypeApplicable": "TaxOnAmount", "TaxOrder": 0}]},
+            "sparse": False,
+            "Active": True,
+            "Description": "California",
+            "MetaData": {"CreateTime": "2014-09-18T12:17:04-07:00", "LastUpdatedTime": "2014-09-18T12:17:04-07:00"},
+            "Id": "2",
+            "SalesTaxRateList": {"TaxRateDetail": [{"TaxTypeApplicable": "TaxOnAmount", "TaxRateRef": {"name": "California", "value": "3"}, "TaxOrder": 0}]},
+        },
+        {
+            "SyncToken": "0",
+            "domain": "QBO",
+            "TaxGroup": True,
+            "Name": "Mumbai",
+            "Taxable": True,
+            "PurchaseTaxRateList": {"TaxRateDetail": [{"TaxRateRef": {"value": "6", "name": "ON TAX PURCHASE"}, "TaxTypeApplicable": "TaxOnAmount", "TaxOrder": 0}]},
+            "sparse": False,
+            "Active": True,
+            "Description": "Mumbai",
+            "MetaData": {"CreateTime": "2014-09-18T12:17:04-07:00", "LastUpdatedTime": "2014-09-18T12:17:04-07:00"},
+            "Id": "2",
+            "SalesTaxRateList": {"TaxRateDetail": [{"TaxTypeApplicable": "TaxOnAmount", "TaxRateRef": {"name": "Mumbai", "value": "3"}, "TaxOrder": 0}]},
+        }
+    ],
+    "create_new_auto_create_tax_groups_destination_attributes_subsequent_case_get_by_id": {
+        "RateValue": 2,
+        "AgencyRef": {"value": "1"},
+        "domain": "QBO",
+        "Name": "Mumbai",
+        "SyncToken": "0",
+        "SpecialTaxType": "NONE",
+        "DisplayType": "ReadOnly",
+        "sparse": False,
+        "Active": True,
+        "MetaData": {"CreateTime": "2014-09-18T12:17:04-07:00", "LastUpdatedTime": "2014-09-18T12:17:04-07:00"},
+        "Id": "3",
+        "Description": "Sales Tax",
+    },
+    "create_new_auto_create_tax_groups_expense_attributes_0":[
+        {
+            'count':3,
+            'data':[
+                {
+                    'code':None,
+                    'created_at':'2023-09-14T05:46:05.968869+00:00',
+                    'id':'tg151Bx7lDBP',
+                    'is_enabled':True,
+                    'name':'G10 Capital Acquisition',
+                    'org_id':'or5qYLrvnoF9',
+                    'percentage':0.1,
+                    'updated_at':'2023-09-14T05:46:05.968869+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-14T05:46:05.968869+00:00',
+                    'id':'tg151Bx7lDBPlol1',
+                    'is_enabled':True,
+                    'name':'G199001201 Capital Acquisition',
+                    'org_id':'or5qYLrvnoF9',
+                    'percentage':0.2,
+                    'updated_at':'2023-09-14T05:46:05.968869+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-14T05:46:05.968869+00:00',
+                    'id':'tg151Bx7lDBPlol2',
+                    'is_enabled':True,
+                    'name':'G199001202 Capital Acquisition',
+                    'org_id':'or5qYLrvnoF9',
+                    'percentage':0.2,
+                    'updated_at':'2023-09-14T05:46:05.968869+00:00'
+                },
+            ],
+            'offset':0
+        }
+    ],
+    "create_new_auto_create_tax_groups_expense_attributes_1":[
+        {
+            'count':4,
+            'data':[
+                {
+                    'code':None,
+                    'created_at':'2023-09-14T05:46:05.968869+00:00',
+                    'id':'tg151Bx7lDBP',
+                    'is_enabled':True,
+                    'name':'G10 Capital Acquisition',
+                    'org_id':'or5qYLrvnoF9',
+                    'percentage':0.1,
+                    'updated_at':'2023-09-14T05:46:05.968869+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-14T05:46:05.968869+00:00',
+                    'id':'tg151Bx7lDBPlol1',
+                    'is_enabled':True,
+                    'name':'G199001201 Capital Acquisition',
+                    'org_id':'or5qYLrvnoF9',
+                    'percentage':0.2,
+                    'updated_at':'2023-09-14T05:46:05.968869+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-14T05:46:05.968869+00:00',
+                    'id':'tg151Bx7lDBPlol2',
+                    'is_enabled':True,
+                    'name':'G199001202 Capital Acquisition',
+                    'org_id':'or5qYLrvnoF9',
+                    'percentage':0.2,
+                    'updated_at':'2023-09-14T05:46:05.968869+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-14T05:46:05.968869+00:00',
+                    'id':'tg151Bx7lDBPlol3',
+                    'is_enabled':True,
+                    'name':'California @2%',
+                    'org_id':'or5qYLrvnoF9',
+                    'percentage':0.2,
+                    'updated_at':'2023-09-14T05:46:05.968869+00:00'
+                },
+            ],
+            'offset':0
+        }
+    ],
+    "create_new_auto_create_tax_groups_expense_attributes_2":[
+        {
+            'count':5,
+            'data':[
+                {
+                    'code':None,
+                    'created_at':'2023-09-14T05:46:05.968869+00:00',
+                    'id':'tg151Bx7lDBP',
+                    'is_enabled':True,
+                    'name':'G10 Capital Acquisition',
+                    'org_id':'or5qYLrvnoF9',
+                    'percentage':0.1,
+                    'updated_at':'2023-09-14T05:46:05.968869+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-14T05:46:05.968869+00:00',
+                    'id':'tg151Bx7lDBPlol1',
+                    'is_enabled':True,
+                    'name':'G199001201 Capital Acquisition',
+                    'org_id':'or5qYLrvnoF9',
+                    'percentage':0.2,
+                    'updated_at':'2023-09-14T05:46:05.968869+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-14T05:46:05.968869+00:00',
+                    'id':'tg151Bx7lDBPlol2',
+                    'is_enabled':True,
+                    'name':'G199001202 Capital Acquisition',
+                    'org_id':'or5qYLrvnoF9',
+                    'percentage':0.2,
+                    'updated_at':'2023-09-14T05:46:05.968869+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-14T05:46:05.968869+00:00',
+                    'id':'tg151Bx7lDBPlol3',
+                    'is_enabled':True,
+                    'name':'California @2%',
+                    'org_id':'or5qYLrvnoF9',
+                    'percentage':0.2,
+                    'updated_at':'2023-09-14T05:46:05.968869+00:00'
+                },
+                {
+                    'code':None,
+                    'created_at':'2023-09-14T05:46:05.968869+00:00',
+                    'id':'tg151Bx7lDBPlol3',
+                    'is_enabled':True,
+                    'name':'Mumbai @2%',
+                    'org_id':'or5qYLrvnoF9',
+                    'percentage':0.2,
+                    'updated_at':'2023-09-14T05:46:05.968869+00:00'
+                },
+            ],
+            'offset':0
+        }
+    ],
+    "create_fyle_tax_groups_payload_create_new_case": [{'name': '0.0% ECG @0%', 'is_enabled': True, 'percentage': 0.0}, {'name': '0.0% ECS @0%', 'is_enabled': True, 'percentage': 0.0}, {'name': '0.0% Z @0%', 'is_enabled': True, 'percentage': 0.0}, {'name': '12.5% TR @12.5%', 'is_enabled': True, 'percentage': 0.12}, {'name': '20.0% ECG @0%', 'is_enabled': True, 'percentage': 0.0}, {'name': '20.0% ECS @0%', 'is_enabled': True, 'percentage': 0.0}, {'name': '20.0% RC @0%', 'is_enabled': True, 'percentage': 0.0}, {'name': '20.0% RC CIS @0%', 'is_enabled': True, 'percentage': 0.0}, {'name': '20.0% RC MPCCs @0%', 'is_enabled': True, 'percentage': 0.0}, {'name': '20.0% RC SG @0%', 'is_enabled': True, 'percentage': 0.0}, {'name': '20.0% S @20%', 'is_enabled': True, 'percentage': 0.2}, {'name': '5.0% R @5%', 'is_enabled': True, 'percentage': 0.05}, {'name': '5.0% RC CIS @0%', 'is_enabled': True, 'percentage': 0.0}, {'name': 'Exempt @0%', 'is_enabled': True, 'percentage': 0.0}, {'name': 'Fyle Tax @10%', 'is_enabled': True, 'percentage': 0.1}, {'name': 'Fyle UK Purchase Tax @20%', 'is_enabled': True, 'percentage': 0.2}, {'name': 'GST @21%', 'is_enabled': True, 'percentage': 0.21}, {'name': 'KSK @10%', 'is_enabled': True, 'percentage': 0.1}, {'name': 'KSK Tax @10%', 'is_enabled': True, 'percentage': 0.1}, {'name': 'No VAT @0%', 'is_enabled': True, 'percentage': 0.0}, {'name': 'Platform Tax @2%', 'is_enabled': True, 'percentage': 0.02}, {'name': 'PVA Import 0.0% @0%', 'is_enabled': True, 'percentage': 0.0}, {'name': 'PVA Import 20.0% @0%', 'is_enabled': True, 'percentage': 0.0}, {'name': 'Staging Tax @10%', 'is_enabled': True, 'percentage': 0.1}]
+}
+
+merchants_data = {
+    "create_new_auto_create_merchants_destination_attributes": [
+        {
+            "PrimaryEmailAddr": {"Address": "Books@Intuit.com"},
+            "Vendor1099": False,
+            "domain": "QBO",
+            "GivenName": "Bessie",
+            "DisplayName": "Books by Bessie",
+            'CurrencyRef': {'value': 'USD', 'name': 'United States Dollar'},
+            "BillAddr": {"City": "Palo Alto", "Line1": "15 Main St.", "PostalCode": "94303", "Lat": "37.445013", "Long": "-122.1391443", "CountrySubDivisionCode": "CA", "Id": "31"},
+            "SyncToken": "0",
+            "PrintOnCheckName": "Books by Bessie",
+            "FamilyName": "Williams",
+            "PrimaryPhone": {"FreeFormNumber": "(650) 555-7745"},
+            "AcctNum": "1345",
+            "CompanyName": "Books by Bessie",
+            "WebAddr": {"URI": "http://www.booksbybessie.co"},
+            "sparse": False,
+            "Active": True,
+            "Balance": 0,
+            "Id": "30",
+            "MetaData": {"CreateTime": "2014-09-12T10:07:56-07:00", "LastUpdatedTime": "2014-09-17T11:13:46-07:00"},
+        },
+        {
+            "PrimaryEmailAddr": {"Address": "Books@Intuit.com"},
+            "Vendor1099": False,
+            "domain": "QBO",
+            "GivenName": "jessie",
+            "DisplayName": "Books by jessie",
+            'CurrencyRef': {'value': 'USD', 'name': 'United States Dollar'},
+            "BillAddr": {"City": "Palo Alto", "Line1": "15 Main St.", "PostalCode": "94303", "Lat": "37.445013", "Long": "-122.1391443", "CountrySubDivisionCode": "CA", "Id": "31"},
+            "SyncToken": "0",
+            "PrintOnCheckName": "Books by jessie",
+            "FamilyName": "Williams",
+            "PrimaryPhone": {"FreeFormNumber": "(650) 555-7745"},
+            "AcctNum": "1345",
+            "CompanyName": "Books by jessie",
+            "WebAddr": {"URI": "http://www.booksbyjessie.co"},
+            "sparse": False,
+            "Active": True,
+            "Balance": 0,
+            "Id": "31",
+            "MetaData": {"CreateTime": "2014-09-12T10:07:56-07:00", "LastUpdatedTime": "2014-09-17T11:13:46-07:00"},
+        }
+    ],
+    "create_new_auto_create_merchants_destination_attributes_subsequent_run": [
+        {
+            "PrimaryEmailAddr": {"Address": "Books@Intuit.com"},
+            "Vendor1099": False,
+            "domain": "QBO",
+            "GivenName": "Bessie",
+            "DisplayName": "Books by Bessie",
+            'CurrencyRef': {'value': 'USD', 'name': 'United States Dollar'},
+            "BillAddr": {"City": "Palo Alto", "Line1": "15 Main St.", "PostalCode": "94303", "Lat": "37.445013", "Long": "-122.1391443", "CountrySubDivisionCode": "CA", "Id": "31"},
+            "SyncToken": "0",
+            "PrintOnCheckName": "Books by Bessie",
+            "FamilyName": "Williams",
+            "PrimaryPhone": {"FreeFormNumber": "(650) 555-7745"},
+            "AcctNum": "1345",
+            "CompanyName": "Books by Bessie",
+            "WebAddr": {"URI": "http://www.booksbybessie.co"},
+            "sparse": False,
+            "Active": True,
+            "Balance": 0,
+            "Id": "30",
+            "MetaData": {"CreateTime": "2014-09-12T10:07:56-07:00", "LastUpdatedTime": "2014-09-17T11:13:46-07:00"},
+        },
+        {
+            "PrimaryEmailAddr": {"Address": "Books@Intuit.com"},
+            "Vendor1099": False,
+            "domain": "QBO",
+            "GivenName": "jessie",
+            "DisplayName": "Books by jessie",
+            'CurrencyRef': {'value': 'USD', 'name': 'United States Dollar'},
+            "BillAddr": {"City": "Palo Alto", "Line1": "15 Main St.", "PostalCode": "94303", "Lat": "37.445013", "Long": "-122.1391443", "CountrySubDivisionCode": "CA", "Id": "31"},
+            "SyncToken": "0",
+            "PrintOnCheckName": "Books by jessie",
+            "FamilyName": "Williams",
+            "PrimaryPhone": {"FreeFormNumber": "(650) 555-7745"},
+            "AcctNum": "1345",
+            "CompanyName": "Books by jessie",
+            "WebAddr": {"URI": "http://www.booksbyjessie.co"},
+            "sparse": False,
+            "Active": True,
+            "Balance": 0,
+            "Id": "31",
+            "MetaData": {"CreateTime": "2014-09-12T10:07:56-07:00", "LastUpdatedTime": "2014-09-17T11:13:46-07:00"},
+        },
+        {
+            "PrimaryEmailAddr": {"Address": "Books@Intuit.com"},
+            "Vendor1099": False,
+            "domain": "QBO",
+            "GivenName": "lessies",
+            "DisplayName": "Books by lessies",
+            'CurrencyRef': {'value': 'USD', 'name': 'United States Dollar'},
+            "BillAddr": {"City": "Palo Alto", "Line1": "15 Main St.", "PostalCode": "94303", "Lat": "37.445013", "Long": "-122.1391443", "CountrySubDivisionCode": "CA", "Id": "31"},
+            "SyncToken": "0",
+            "PrintOnCheckName": "Books by lessies",
+            "FamilyName": "Williams",
+            "PrimaryPhone": {"FreeFormNumber": "(650) 555-7745"},
+            "AcctNum": "1345",
+            "CompanyName": "Books by lessies",
+            "WebAddr": {"URI": "http://www.booksbylessies.co"},
+            "sparse": False,
+            "Active": True,
+            "Balance": 0,
+            "Id": "32",
+            "MetaData": {"CreateTime": "2014-09-12T10:07:56-07:00", "LastUpdatedTime": "2014-09-17T11:13:46-07:00"},
+        }
+    ],
+    'create_new_auto_create_merchants_expense_attributes_0': [
+        {
+            'count':1,
+            'data':[
+                {
+                    'category_ids':[
+                        259385,
+                        259386,
+                        259387,
+                        259388,
+                        259389,
+                        273385
+                    ],
+                    'code':None,
+                    'column_name':'merchant',
+                    'created_at':'2023-06-01T04:46:25.644307+00:00',
+                    'default_value':'',
+                    'field_name':'Merchant',
+                    'id':225221,
+                    'is_custom':False,
+                    'is_enabled':True,
+                    'is_mandatory':False,
+                    'options':[
+                        'ADP',
+                        'Goner',
+                        'Keventers',
+                        'Whirpool'
+                    ],
+                    'org_id':'or5qYLrvnoF9',
+                    'parent_field_id':None,
+                    'placeholder':'E.g. Uber',
+                    'seq':1,
+                    'type':'SELECT',
+                    'updated_at':'2023-10-23T12:20:00.035384+00:00'
+                }
+            ],
+            'offset':0
+        }
+    ],
+    'create_new_auto_create_merchants_expense_attributes_1': [
+        {
+            'count':1,
+            'data':[
+                {
+                    'category_ids':[
+                        259385,
+                        259386,
+                        259387,
+                        259388,
+                        259389,
+                        273385
+                    ],
+                    'code':None,
+                    'column_name':'merchant',
+                    'created_at':'2023-06-01T04:46:25.644307+00:00',
+                    'default_value':'',
+                    'field_name':'Merchant',
+                    'id':225221,
+                    'is_custom':False,
+                    'is_enabled':True,
+                    'is_mandatory':False,
+                    'options':[
+                        'ADP',
+                        'Goner',
+                        'Keventers',
+                        'Whirpool',
+                        'Books by jessie',
+                        'Books by Bessie'
+                    ],
+                    'org_id':'or5qYLrvnoF9',
+                    'parent_field_id':None,
+                    'placeholder':'E.g. Uber',
+                    'seq':1,
+                    'type':'SELECT',
+                    'updated_at':'2023-10-23T12:20:00.035384+00:00'
+                }
+            ],
+            'offset':0
+        }
+    ],
+    'create_new_auto_create_merchants_expense_attributes_2': [
+        {
+            'count':1,
+            'data':[
+                {
+                    'category_ids':[
+                        259385,
+                        259386,
+                        259387,
+                        259388,
+                        259389,
+                        273385
+                    ],
+                    'code':None,
+                    'column_name':'merchant',
+                    'created_at':'2023-06-01T04:46:25.644307+00:00',
+                    'default_value':'',
+                    'field_name':'Merchant',
+                    'id':225221,
+                    'is_custom':False,
+                    'is_enabled':True,
+                    'is_mandatory':False,
+                    'options':[
+                        'ADP',
+                        'Goner',
+                        'Keventers',
+                        'Whirpool',
+                        'Books by jessie',
+                        'Books by Bessie',
+                        'Books by lessies'
+                    ],
+                    'org_id':'or5qYLrvnoF9',
+                    'parent_field_id':None,
+                    'placeholder':'E.g. Uber',
+                    'seq':1,
+                    'type':'SELECT',
+                    'updated_at':'2023-10-23T12:20:00.035384+00:00'
+                }
+            ],
+            'offset':0
+        }
+    ],
+    "create_fyle_merchants_payload_create_new_case": ['Andrew Haberbosch', 'Town Electric & Gas Service', 'Vendor KS', "Garcia's Event Space", 'Gina Han', 'Arun', 'Ashwin', 'Bank of AnyCity', 'Basket Case', 'Brijesh Jain', 'Brittney Hughes', 'Burc Gunes', 'Cass Hayden', 'Celeste Hunter', 'City Water Co', 'Colleen Grist', 'Fyle For QBO Paymrnt Sync', "Hall's Promo Items", 'Heather Gottas', 'Import Setting vendor', 'Jacque Hudspeth', 'James Taylor', 'Jane Horton', 'Jennifer Hargreaves', 'Julie Hickey', 'Kimberly Howell', 'Kristina Gibson', 'Kristina Holmgren', 'Kyle Kilat', 'Mark Howard', 'Matt Damon', 'Mauro Giansiracusa', 'Michelle Long', 'Mindy Khoo', 'Monica Haslip', 'Olivier Helleboid', 'Organization of Outstanding Event Planners', 'QBO V2 Supplier', 'Rajeswari Jayaraman', 'Sanjeev Kak', 'Sravan KSK', 'Sravan Kumar', 'Sukanya Kanogart', 'Tom Hurlbutt', 'Venue Rental']
+}
