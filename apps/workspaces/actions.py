@@ -28,7 +28,7 @@ from apps.quickbooks_online.utils import QBOConnector
 from apps.workspaces.models import FyleCredential, LastExportDetail, QBOCredential, Workspace, WorkspaceGeneralSettings
 from apps.workspaces.serializers import QBOCredentialSerializer
 from apps.workspaces.signals import post_delete_qbo_connection
-from apps.workspaces.utils import assert_valid
+from fyle_qbo_api.utils import assert_valid
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
