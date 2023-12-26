@@ -38,16 +38,6 @@ def schedule_auto_map_ccc_employees(workspace_id: int):
             schedule.delete()
 
 
-def schedule_tax_groups_creation(import_tax_codes, workspace_id):
-    if import_tax_codes:
-        schedule, _ = Schedule.objects.update_or_create(func='apps.mappings.tasks.auto_create_tax_codes_mappings', args='{}'.format(workspace_id), defaults={'schedule_type': Schedule.MINUTES, 'minutes': 24 * 60, 'next_run': datetime.now()})
-    else:
-        schedule: Schedule = Schedule.objects.filter(func='apps.mappings.tasks.auto_create_tax_codes_mappings', args='{}'.format(workspace_id)).first()
-
-        if schedule:
-            schedule.delete()
-
-
 def schedule_auto_map_employees(employee_mapping_preference: str, workspace_id: int):
     if employee_mapping_preference:
         start_datetime = datetime.now()
@@ -92,6 +82,22 @@ def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
             'is_auto_sync_enabled': get_auto_sync_permission(workspace_general_settings),
             'is_3d_mapping': False,
             'charts_of_accounts': workspace_general_settings.charts_of_accounts if 'accounts' in destination_sync_methods else None,
+        }
+
+    if workspace_general_settings.import_tax_codes:
+        task_settings['import_tax'] = {
+            'destination_field': 'TAX_CODE',
+            'destination_sync_methods': [SYNC_METHODS['TAX_CODE']],
+            'is_auto_sync_enabled': get_auto_sync_permission(workspace_general_settings),
+            'is_3d_mapping': False,
+        }
+
+    if workspace_general_settings.import_vendors_as_merchants:
+        task_settings['import_vendors_as_merchants'] = {
+            'destination_field': 'VENDOR',
+            'destination_sync_methods': [SYNC_METHODS['VENDOR']],
+            'is_auto_sync_enabled': get_auto_sync_permission(workspace_general_settings),
+            'is_3d_mapping': False,
         }
 
     if not workspace_general_settings.import_items:

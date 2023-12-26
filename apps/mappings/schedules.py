@@ -14,11 +14,12 @@ def schedule_or_delete_fyle_import_tasks(workspace_general_settings: WorkspaceGe
     """
     task_to_be_scheduled = None
     for mapping_setting in mapping_settings:
-        if mapping_setting['import_to_fyle'] and mapping_setting['source_field'] in ['PROJECT', 'COST_CENTER'] or mapping_setting['is_custom']:
+        if mapping_setting['import_to_fyle']:
             task_to_be_scheduled = True
             break
 
-    if task_to_be_scheduled or workspace_general_settings.import_categories or workspace_general_settings.import_items:
+    if task_to_be_scheduled or workspace_general_settings.import_categories or workspace_general_settings.import_items\
+        or workspace_general_settings.import_tax_codes or workspace_general_settings.import_vendors_as_merchants:
         Schedule.objects.update_or_create(
             func='apps.mappings.queues.construct_tasks_and_chain_import_fields_to_fyle',
             args='{}'.format(workspace_general_settings.workspace_id),
@@ -32,19 +33,11 @@ def schedule_or_delete_fyle_import_tasks(workspace_general_settings: WorkspaceGe
     else:
         import_fields_count = MappingSetting.objects.filter(
             import_to_fyle=True,
-            workspace_id=workspace_general_settings.workspace_id,
-            source_field__in=['PROJECT', 'COST_CENTER']
-        ).count()
-
-        custom_field_import_fields_count = MappingSetting.objects.filter(
-            import_to_fyle=True,
-            workspace_id=workspace_general_settings.workspace_id,
-            is_custom=True
+            workspace_id=workspace_general_settings.workspace_id
         ).count()
 
         # If the import fields count is 0, delete the schedule
-        if import_fields_count == 0 and custom_field_import_fields_count == 0\
-            and not workspace_general_settings.import_categories and not workspace_general_settings.import_items:
+        if import_fields_count == 0:
             Schedule.objects.filter(
                 func='apps.mappings.queues.construct_tasks_and_chain_import_fields_to_fyle',
                 args='{}'.format(workspace_general_settings.workspace_id)
