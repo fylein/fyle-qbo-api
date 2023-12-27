@@ -67,12 +67,12 @@ def refresh_quickbooks_dimensions(workspace_id: int):
 
     mapping_settings = MappingSetting.objects.filter(workspace_id=workspace_id, import_to_fyle=True)
     credentials = QBOCredential.objects.get(workspace_id=workspace_id)
-    workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+    workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
 
     chain = Chain()
 
     for mapping_setting in mapping_settings:
-        if mapping_setting.source_field in ['PROJECT', 'COST_CENTER'] or mapping_setting.is_custom:
+        if workspace_general_settings and mapping_setting.source_field in ['PROJECT', 'COST_CENTER'] or mapping_setting.is_custom:
             chain.append(
                 'fyle_integrations_imports.tasks.trigger_import_via_schedule',
                 workspace_id,
