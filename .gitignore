@@ -159,3 +159,4 @@ cache.db
 cache.db-journal
 fyle_integrations_platform_connector/
 qbosdk/
+fyle_rest_auth/
