@@ -8,6 +8,7 @@ from django.conf import settings
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping
 from qbosdk import QuickbooksOnlineSDK
 from qbosdk.exceptions import WrongParamsError
+
 from apps.fyle.models import ExpenseGroup
 from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.models import (
@@ -28,7 +29,7 @@ from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSet
 
 logger = logging.getLogger(__name__)
 
-SYNC_UPPER_LIMIT = {'customers': 17000}
+SYNC_UPPER_LIMIT = {'customers': 25000}
 
 
 def format_special_characters(value: str) -> str:
