@@ -1,6 +1,6 @@
 import logging
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.db import transaction
@@ -25,7 +25,14 @@ from apps.quickbooks_online.queue import (
     schedule_qbo_expense_creation,
 )
 from apps.quickbooks_online.utils import QBOConnector
-from apps.workspaces.models import FyleCredential, LastExportDetail, QBOCredential, Workspace, WorkspaceGeneralSettings
+from apps.workspaces.models import (
+    FyleCredential,
+    LastExportDetail,
+    QBOCredential,
+    Workspace,
+    WorkspaceGeneralSettings,
+    WorkspaceSchedule
+)
 from apps.workspaces.serializers import QBOCredentialSerializer
 from apps.workspaces.signals import post_delete_qbo_connection
 from fyle_qbo_api.utils import assert_valid
@@ -235,6 +242,7 @@ def post_to_integration_settings(workspace_id: int, active: bool):
 def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[]):
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
     last_export_detail = LastExportDetail.objects.get(workspace_id=workspace_id)
+    workspace_schedule = WorkspaceSchedule.objects.filter(workspace_id=workspace_id, interval_hours__gt=0, enabled=True).first()
     last_exported_at = datetime.now()
     is_expenses_exported = False
     export_mode = export_mode or 'MANUAL'
@@ -323,4 +331,8 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[]):
     if is_expenses_exported:
         last_export_detail.last_exported_at = last_exported_at
         last_export_detail.export_mode = export_mode
+
+        if workspace_schedule:
+            last_export_detail.next_export_at = last_exported_at + timedelta(hours=workspace_schedule.interval_hours)
+
         last_export_detail.save()
