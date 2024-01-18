@@ -45,7 +45,8 @@ class PreferencesView(generics.RetrieveAPIView):
     """
 
     def get(self, request, *args, **kwargs):
-        return get_preferences(kwargs['workspace_id'])
+        # return get_preferences(kwargs['workspace_id'])
+        return Response(data={}, status=status.HTTP_200_OK)
 
 
 class SyncQuickbooksDimensionView(generics.ListCreateAPIView):
