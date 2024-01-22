@@ -109,7 +109,10 @@ def connect_qbo_oauth(refresh_token, realm_id, workspace_id):
     workspace.qbo_realm_id = realm_id
 
     if workspace.onboarding_state == 'CONNECTION':
-        workspace.onboarding_state = 'MAP_EMPLOYEES'
+        if settings.BRAND_ID == 'fyle':
+            workspace.onboarding_state = 'MAP_EMPLOYEES'
+        elif settings.BRAND_ID == 'co':
+            workspace.onboarding_state = 'EXPORT_SETTINGS'
     workspace.save()
 
     # Return the QBO credentials as serialized data
