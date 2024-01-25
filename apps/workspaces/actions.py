@@ -113,6 +113,12 @@ def connect_qbo_oauth(refresh_token, realm_id, workspace_id):
             workspace.onboarding_state = 'MAP_EMPLOYEES'
         elif settings.BRAND_ID == 'co':
             workspace.onboarding_state = 'EXPORT_SETTINGS'
+            workspace_general_settings_instance = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace.id).first()
+            if not workspace_general_settings_instance:
+                WorkspaceGeneralSettings.objects.update_or_create(
+                    workspace_id=workspace_id, defaults={'employee_field_mapping': 'VENDOR', 'auto_map_employees': None}
+                )
+
     workspace.save()
 
     # Return the QBO credentials as serialized data
