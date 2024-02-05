@@ -1,29 +1,24 @@
 import logging
 from datetime import datetime
-from typing import List, Dict
+from typing import Dict, List
 
 from django.db import transaction
 from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
 from fyle_integrations_platform_connector import PlatformConnector
 
-from apps.fyle.models import Expense, ExpenseGroupSettings, ExpenseFilter, ExpenseGroup
-from apps.tasks.models import TaskLog
-from apps.workspaces.models import FyleCredential, Workspace
-from apps.workspaces.actions import export_to_qbo
-
-from .actions import (
-    mark_expenses_as_skipped,
-    create_generator_and_post_in_batches
-)
-from .helpers import (
-    handle_import_exception,
-    get_source_account_type,
-    get_fund_source,
+from apps.fyle.actions import create_generator_and_post_in_batches, mark_expenses_as_skipped
+from apps.fyle.helpers import (
+    construct_expense_filter_query,
     get_filter_credit_expenses,
-    construct_expense_filter_query
+    get_fund_source,
+    get_source_account_type,
+    handle_import_exception,
 )
-from .queue import async_post_accounting_export_summary
-
+from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings
+from apps.fyle.queue import async_post_accounting_export_summary
+from apps.tasks.models import TaskLog
+from apps.workspaces.actions import export_to_qbo
+from apps.workspaces.models import FyleCredential, Workspace
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -242,7 +237,8 @@ def import_and_export_expenses(report_id: str, org_id: str) -> None:
         expense_groups = ExpenseGroup.objects.filter(expenses__id__in=[expense_ids], workspace_id=workspace.id).distinct('id').values('id')
         expense_group_ids = [expense_group['id'] for expense_group in expense_groups]
 
-        export_to_qbo(workspace.id, None, expense_group_ids)
+        if len(expense_group_ids):
+            export_to_qbo(workspace.id, None, expense_group_ids)
 
     except Exception:
         handle_import_exception(task_log)
