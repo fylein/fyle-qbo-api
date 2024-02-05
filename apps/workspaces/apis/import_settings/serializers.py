@@ -1,5 +1,6 @@
 from django.db import transaction
 from fyle_accounting_mappings.models import MappingSetting
+from fyle_integrations_imports.models import ImportLog
 from rest_framework import serializers
 
 from apps.mappings.models import GeneralMapping
@@ -80,6 +81,15 @@ class ImportSettingsSerializer(serializers.ModelSerializer):
         workspace_general_settings = validated.pop('workspace_general_settings')
         general_mappings = validated.pop('general_mappings')
         mapping_settings = validated.pop('mapping_settings')
+
+        # Check if there is a diff in charts of accounts
+        # Update the last_successful_run_at to None for Category Import Log
+        if workspace_general_settings.get('charts_of_accounts') != instance.workspace_general_settings.charts_of_accounts:
+            category_import_log = ImportLog.objects.filter(workspace_id=instance.id, attribute_type='CATEGORY').first()
+
+            if category_import_log:
+                category_import_log.last_successful_run_at = None
+                category_import_log.save()
 
         workspace_general_settings_instance, _ = WorkspaceGeneralSettings.objects.update_or_create(
             workspace=instance,
