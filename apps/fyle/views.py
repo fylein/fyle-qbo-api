@@ -56,6 +56,7 @@ class ExpenseGroupSyncView(generics.CreateAPIView):
     Create expense groups
     """
 
+    @handle_view_exceptions()
     def post(self, request, *args, **kwargs):
         """
         Post expense groups creation
