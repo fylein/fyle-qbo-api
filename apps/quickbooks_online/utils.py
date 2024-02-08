@@ -619,7 +619,7 @@ class QBOConnector:
 
         line = self.__construct_qbo_expense_lineitems(qbo_expense_lineitems, general_mappings)
         qbo_expense_payload = self.purchase_object_payload(qbo_expense, line, account_ref=qbo_expense.expense_account_id, payment_type='Cash')
-        
+
         logger.info("| Payload for Expense creation | Content: {{WORKSPACE_ID: {} EXPENSE_GROUP_ID: {} EXPENSE_PAYLOAD: {}}}".format(self.workspace_id, qbo_expense.expense_group.id, qbo_expense_payload))
         return qbo_expense_payload
 
@@ -694,7 +694,7 @@ class QBOConnector:
 
         line = self.__construct_cheque_lineitems(cheque_lineitems, general_mappings)
         cheque_payload = self.purchase_object_payload(cheque, line, account_ref=cheque.bank_account_id, payment_type='Check')
-        
+
         logger.info("| Payload for Cheque creation | Content: {{WORKSPACE_ID: {} EXPENSE_GROUP_ID: {} CHEQUE_PAYLOAD: {}}}".format(self.workspace_id, cheque.expense_group.id, cheque_payload))
         return cheque_payload
 
