@@ -2,10 +2,11 @@ import json
 import logging
 import traceback
 
+from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
 from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 
-from apps.fyle.models import ExpenseGroup
 from apps.fyle.actions import update_failed_expenses
+from apps.fyle.models import ExpenseGroup
 from apps.quickbooks_online.actions import update_last_export_details
 from apps.tasks.models import Error, TaskLog
 from apps.workspaces.models import FyleCredential, QBOCredential
@@ -63,7 +64,7 @@ def handle_qbo_exceptions(bill_payment=False):
                 task_log = args[2]
             try:
                 return func(*args)
-            except (FyleCredential.DoesNotExist, InvalidTokenError):
+            except (FyleCredential.DoesNotExist, FyleInvalidTokenError):
                 logger.info('Fyle credentials not found %s', expense_group.workspace_id)
                 task_log.detail = {'message': 'Fyle credentials do not exist in workspace'}
                 task_log.status = 'FAILED'
@@ -84,7 +85,7 @@ def handle_qbo_exceptions(bill_payment=False):
                 if not bill_payment:
                     update_failed_expenses(expense_group.expenses.all(), True)
 
-            except WrongParamsError as exception:
+            except (WrongParamsError, InvalidTokenError) as exception:
                 handle_quickbooks_error(exception, expense_group, task_log, 'Bill')
 
                 if not bill_payment:
