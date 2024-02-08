@@ -28,6 +28,7 @@ from apps.quickbooks_online.models import (
 from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSettings
 
 logger = logging.getLogger(__name__)
+logger.level = logging.INFO
 
 SYNC_UPPER_LIMIT = {'customers': 25000}
 
@@ -534,6 +535,7 @@ class QBOConnector:
         if general_settings.import_tax_codes:
             bill_payload.update({'GlobalTaxCalculation': 'TaxInclusive'})
 
+        logger.info("| Payload for Bill creation | Content: {{WORKSPACE_ID: {} EXPENSE_GROUP_ID: {} BILL_PAYLOAD: {}}}".format(self.workspace_id, bill.expense_group.id, bill_payload))
         return bill_payload
 
     def post_bill(self, bill: Bill, bill_lineitems: List[BillLineitem]):
@@ -617,6 +619,8 @@ class QBOConnector:
 
         line = self.__construct_qbo_expense_lineitems(qbo_expense_lineitems, general_mappings)
         qbo_expense_payload = self.purchase_object_payload(qbo_expense, line, account_ref=qbo_expense.expense_account_id, payment_type='Cash')
+        
+        logger.info("| Payload for Expense creation | Content: {{WORKSPACE_ID: {} EXPENSE_GROUP_ID: {} EXPENSE_PAYLOAD: {}}}".format(self.workspace_id, qbo_expense.expense_group.id, qbo_expense_payload))
         return qbo_expense_payload
 
     def post_qbo_expense(self, qbo_expense: QBOExpense, qbo_expense_lineitems: List[QBOExpenseLineitem]):
@@ -690,6 +694,8 @@ class QBOConnector:
 
         line = self.__construct_cheque_lineitems(cheque_lineitems, general_mappings)
         cheque_payload = self.purchase_object_payload(cheque, line, account_ref=cheque.bank_account_id, payment_type='Check')
+        
+        logger.info("| Payload for Cheque creation | Content: {{WORKSPACE_ID: {} EXPENSE_GROUP_ID: {} CHEQUE_PAYLOAD: {}}}".format(self.workspace_id, cheque.expense_group.id, cheque_payload))
         return cheque_payload
 
     def post_cheque(self, cheque: Cheque, cheque_lineitems: List[ChequeLineitem]):
@@ -771,6 +777,7 @@ class QBOConnector:
 
         credit_card_purchase_payload = self.purchase_object_payload(credit_card_purchase, line, account_ref=credit_card_purchase.ccc_account_id, payment_type='CreditCard', doc_number=credit_card_purchase.credit_card_purchase_number, credit=credit)
 
+        logger.info("| Payload for Credit Card Purchase creation | Content: {{WORKSPACE_ID: {} EXPENSE_GROUP_ID: {} CREDIT_CARD_PURCHASE_PAYLOAD: {}}}".format(self.workspace_id, credit_card_purchase.expense_group.id, credit_card_purchase_payload))
         return credit_card_purchase_payload
 
     def post_credit_card_purchase(self, credit_card_purchase: CreditCardPurchase, credit_card_purchase_lineitems: List[CreditCardPurchaseLineitem]):
@@ -956,6 +963,7 @@ class QBOConnector:
             for tax_rate in tax_rate_refs:
                 journal_entry_payload['TxnTaxDetail']['TaxLine'].append({"Amount": 0, "DetailType": "TaxLineDetail", 'TaxLineDetail': {'TaxRateRef': tax_rate, "PercentBased": True, "NetAmountTaxable": 0}})
 
+        logger.info("| Payload for Journal Entry creation | Content: {{WORKSPACE_ID: {} EXPENSE_GROUP_ID: {} JOURNAL_ENTRY_PAYLOAD: {}}}".format(self.workspace_id, journal_entry.expense_group.id, journal_entry_payload))
         return journal_entry_payload
 
     def post_journal_entry(self, journal_entry: JournalEntry, journal_entry_lineitems: List[JournalEntryLineitem], single_credit_line: bool):
@@ -1052,6 +1060,7 @@ class QBOConnector:
             'Line': self.__construct_bill_payment_lineitems(bill_payment_lineitems),
         }
 
+        logger.info("| Payload for Bill Payment creation | Content: {{WORKSPACE_ID: {} EXPENSE_GROUP_ID: {} BILL_PAYMENT_PAYLOAD: {}}}".format(self.workspace_id, bill_payment.expense_group.id, bill_payment_payload))
         return bill_payment_payload
 
     def post_bill_payment(self, bill_payment: BillPayment, bill_payment_lineitems: List[BillPaymentLineitem]):
