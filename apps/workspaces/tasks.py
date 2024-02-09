@@ -188,6 +188,9 @@ def run_email_notification(workspace_id):
     except QBOCredential.DoesNotExist:
         logger.info('QBO Credentials not found for workspace_id %s', workspace_id)
 
+    except Exception as e:
+        logger.exception('Error in run_email_notification %s', e)
+
 
 def async_update_fyle_credentials(fyle_org_id: str, refresh_token: str):
     fyle_credentials = FyleCredential.objects.filter(workspace__fyle_org_id=fyle_org_id).first()

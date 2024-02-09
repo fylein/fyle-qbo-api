@@ -76,7 +76,4 @@ def send_email(recipient_email: List[str], subject: str, message: str, sender_em
         subject=subject,
         html_content=message
     )
-    try:
-        sg.send(mail)
-    except Exception as e:
-        logger.info("Error sending email: %s", e)
+    sg.send(mail)
