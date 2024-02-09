@@ -1,13 +1,22 @@
 import base64
 import json
+import logging
+from typing import List
 
 import requests
 from django.conf import settings
 from future.moves.urllib.parse import urlencode
 from fyle_accounting_mappings.models import MappingSetting
 from qbosdk import InternalServerError, NotFoundClientError, UnauthorizedClientError, WrongParamsError
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import (
+    Mail, From
+)
 
 from apps.workspaces.models import WorkspaceGeneralSettings
+
+logger = logging.getLogger(__name__)
+logger.level = logging.INFO
 
 
 def generate_qbo_refresh_token(authorization_code: str, redirect_uri: str) -> str:
@@ -45,3 +54,29 @@ def delete_cards_mapping_settings(workspace_general_settings: WorkspaceGeneralSe
         mapping_setting = MappingSetting.objects.filter(workspace_id=workspace_general_settings.workspace_id, source_field='CORPORATE_CARD', destination_field='CREDIT_CARD_ACCOUNT').first()
         if mapping_setting:
             mapping_setting.delete()
+
+
+def send_email(recipient_email: List[str], subject: str, message: str, sender_email: str):
+    """
+    Email to the user using sendgrid-sdk
+
+    :param recipient_email: (List[str])
+    :param subject: (str)
+    :param message: (str)
+    :param sender_email: (str)
+
+    :return: None
+    """
+    SENDGRID_API_KEY = settings.SENDGRID_API_KEY
+    sg = SendGridAPIClient(api_key=SENDGRID_API_KEY)
+    from_email = From(email=sender_email)
+    mail = Mail(
+        from_email=from_email,
+        to_emails=recipient_email,
+        subject=subject,
+        html_content=message
+    )
+    try:
+        sg.send(mail)
+    except Exception as e:
+        logger.info("Error sending email: %s", e)

@@ -3,7 +3,6 @@ from datetime import date, datetime
 from typing import List
 
 from django.conf import settings
-from django.core.mail import EmailMessage
 from django.db.models import Q
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
@@ -26,6 +25,7 @@ from apps.workspaces.queue import schedule_email_notification
 from apps.users.models import User
 
 from .actions import export_to_qbo
+from .utils import send_email
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -180,10 +180,7 @@ def run_email_notification(workspace_id):
                 }
                 message = render_to_string("mail_template.html", context)
 
-                mail = EmailMessage(subject="Export To QuickBooks Online Failed", body=message, from_email=settings.EMAIL, to=[admin_email])
-
-                mail.content_subtype = "html"
-                mail.send()
+                send_email(sender_email=settings.EMAIL, recipient_email=[admin_email], subject="Export To QuickBooks Online Failed", message=message)
 
         ws_schedule.error_count = len(task_logs)
         ws_schedule.save()
