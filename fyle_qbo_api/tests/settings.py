@@ -208,6 +208,10 @@ E2E_TESTS_REALM_ID = os.environ.get('E2E_TESTS_REALM_ID')
 INTEGRATIONS_SETTINGS_API = os.environ.get('INTEGRATIONS_SETTINGS_API')
 
 # Cache Settings
+SENDGRID_API_KEY = os.environ.get('SENDGRID_KEY')
+EMAIL = os.environ.get('SENDGRID_EMAIL')
+EMAIL_BACKEND = 'sendgrid_backend.SendgridBackend'
+
 CACHE_EXPIRY = 3600
 
 CORS_ORIGIN_ALLOW_ALL = True
