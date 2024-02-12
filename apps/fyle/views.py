@@ -6,8 +6,6 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import status
 
-from django.db.models import Q
-
 from apps.exceptions import handle_view_exceptions
 from apps.fyle.actions import (
     get_custom_fields,
@@ -161,7 +159,7 @@ class ExpenseFilterDeleteView(generics.DestroyAPIView):
     serializer_class = ExpenseFilterSerializer
 
 
-class ExpenseView(generics.ListAPIView):
+class ExpenseView(LookupFieldMixin, generics.ListAPIView):
     """
     Expense view
     """
@@ -170,6 +168,7 @@ class ExpenseView(generics.ListAPIView):
     serializer_class = ExpenseSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_class = ExpenseSearchFilter
+
 
 class CustomFieldView(generics.RetrieveAPIView):
     """
