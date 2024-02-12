@@ -1,11 +1,11 @@
-import logging
 import json
+import logging
 from datetime import datetime, timedelta
 
 from django.conf import settings
-from django.db import transaction
-from django.core.cache import cache
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
+from django.db import transaction
 from django_q.tasks import async_task
 from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute
 from fyle_integrations_platform_connector import PlatformConnector
@@ -16,7 +16,7 @@ from rest_framework.response import Response
 from rest_framework.views import status
 
 from apps.fyle.helpers import get_cluster_domain, post_request
-from apps.fyle.models import ExpenseGroupSettings, ExpenseGroup
+from apps.fyle.models import ExpenseGroup, ExpenseGroupSettings
 from apps.quickbooks_online.queue import (
     schedule_bills_creation,
     schedule_cheques_creation,
@@ -31,7 +31,7 @@ from apps.workspaces.models import (
     QBOCredential,
     Workspace,
     WorkspaceGeneralSettings,
-    WorkspaceSchedule
+    WorkspaceSchedule,
 )
 from apps.workspaces.serializers import QBOCredentialSerializer
 from apps.workspaces.signals import post_delete_qbo_connection
@@ -68,8 +68,8 @@ def update_or_create_workspace(user, access_token):
         cluster_domain = get_cluster_domain(auth_tokens.refresh_token)
 
         FyleCredential.objects.update_or_create(refresh_token=auth_tokens.refresh_token, workspace_id=workspace.id, cluster_domain=cluster_domain)
-        async_task('apps.workspaces.tasks.async_add_admins_to_workspace', workspace.id, user.user_id)
-        async_task('apps.workspaces.tasks.async_create_admin_subcriptions', workspace.id)
+        async_task('apps.workspaces.tasks.async_add_admins_to_workspace', workspace.id, user.user_id, q_options={'cluster': 'import'})
+        async_task('apps.workspaces.tasks.async_create_admin_subcriptions', workspace.id, q_options={'cluster': 'import'})
 
     return workspace
 

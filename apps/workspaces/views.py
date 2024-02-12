@@ -2,6 +2,7 @@ import logging
 
 from django.contrib.auth import get_user_model
 from django.db import connection
+from django_q.tasks import async_task
 from fyle_rest_auth.utils import AuthUtils
 from qbosdk import exceptions as qbo_exc
 from rest_framework import generics
@@ -9,12 +10,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import status
 
-from django_q.tasks import async_task
-
 from apps.exceptions import handle_view_exceptions
 from apps.workspaces.actions import (
     connect_qbo_oauth,
     delete_qbo_refresh_token,
+    export_to_qbo,
     get_workspace_admin,
     setup_e2e_tests,
     update_or_create_workspace,
@@ -27,7 +27,6 @@ from apps.workspaces.serializers import (
     WorkSpaceGeneralSettingsSerializer,
     WorkspaceSerializer,
 )
-from apps.workspaces.actions import export_to_qbo
 from apps.workspaces.utils import generate_qbo_refresh_token
 
 logger = logging.getLogger(__name__)
@@ -67,6 +66,7 @@ class WorkspaceView(generics.CreateAPIView, generics.RetrieveUpdateAPIView):
                 "apps.workspaces.tasks.async_update_workspace_name",
                 workspaces[0],
                 request.META.get("HTTP_AUTHORIZATION"),
+                q_options={'cluster': 'import'}
             )
 
         return Response(data=WorkspaceSerializer(workspaces, many=True).data, status=status.HTTP_200_OK)
