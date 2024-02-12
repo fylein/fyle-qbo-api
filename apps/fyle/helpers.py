@@ -7,9 +7,11 @@ import requests
 from django.conf import settings
 from django.db.models import Q
 
-from apps.fyle.models import ExpenseFilter, ExpenseGroupSettings, Expense
+from apps.fyle.models import ExpenseFilter, ExpenseGroup, ExpenseGroupSettings, Expense
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import WorkspaceGeneralSettings
+
+import django_filters
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -245,3 +247,55 @@ def get_batched_expenses(batched_payload: List[dict], workspace_id: int) -> List
     """
     expense_ids = [expense['id'] for expense in batched_payload]
     return Expense.objects.filter(expense_id__in=expense_ids, workspace_id=workspace_id)
+
+class AdvanceSearchFilter(django_filters.FilterSet):
+    def filter_queryset(self, queryset):
+        or_filtered_queryset = queryset.none()
+        or_filter_fields = getattr(self.Meta, 'or_fields', [])
+        or_field_present = False
+        
+        for field_name in self.Meta.fields:
+            value = self.data.get(field_name)
+            if value:
+                filter_instance = self.filters[field_name]
+                queryset = filter_instance.filter(queryset, value)
+
+        for field_name in or_filter_fields:
+            value = self.data.get(field_name)
+            if value:
+                or_field_present = True
+                filter_instance = self.filters[field_name]
+                field_filtered_queryset = filter_instance.filter(queryset, value)
+                or_filtered_queryset |= field_filtered_queryset
+        
+        if or_field_present:
+            queryset = queryset.distinct() & or_filtered_queryset.distinct()
+        
+        return queryset.distinct()
+
+class ExpenseGroupSearchFilter(AdvanceSearchFilter):
+    exported_at = django_filters.DateTimeFromToRangeFilter()
+    tasklog__status = django_filters.CharFilter()
+    expenses__expense_number = django_filters.CharFilter(field_name='expenses__expense_number')
+    expenses__employee_name = django_filters.CharFilter(field_name='expenses__employee_name')
+    expenses__employee_email = django_filters.CharFilter(field_name='expenses__employee_email')
+    expenses__claim_number = django_filters.CharFilter(field_name='expenses__claim_number')
+
+    class Meta:
+        model = ExpenseGroup
+        fields = ['exported_at', 'tasklog__status']
+        or_fields = ['expenses__expense_number', 'expenses__employee_name', 'expenses__employee_email', 'expenses__claim_number']
+
+class ExpenseSearchFilter(AdvanceSearchFilter):
+    org_id = django_filters.CharFilter()
+    is_skipped = django_filters.CharFilter()
+    updated_at = django_filters.DateTimeFromToRangeFilter()
+    expense_number = django_filters.CharFilter(field_name='expense_number')
+    employee_name = django_filters.CharFilter(field_name='employee_name')
+    employee_email = django_filters.CharFilter(field_name='employee_email')
+    claim_number = django_filters.CharFilter(field_name='claim_number')
+
+    class Meta:
+        model = Expense
+        fields = ['org_id', 'is_skipped', 'updated_at']
+        or_fields = ['expense_number', 'employee_name', 'employee_email', 'claim_number']
