@@ -37,7 +37,6 @@ def test_export_log_advanced_search(api_client, test_connection):
     assert response.status_code == 200
 
     response = json.loads(response.content)
-    print(response)
     assert response['count'] == 17
 
     response = api_client.get(url, {'expenses__expense_number': 'E/2021/04/T/277'})
@@ -45,6 +44,12 @@ def test_export_log_advanced_search(api_client, test_connection):
 
     response = json.loads(response.content)
     assert response['count'] == 1
+
+    response = api_client.get(url, {'expenses__expense_number': 'E/2021/04/T/'})
+    assert response.status_code == 200
+
+    response = json.loads(response.content)
+    assert response['count'] == 11
 
     response = api_client.get(url, {'expenses__claim_number': 'C/2021/04/R/38'})
     assert response.status_code == 200

@@ -4,6 +4,8 @@ import logging
 from typing import List, Union
 
 import requests
+
+import django_filters
 from django.conf import settings
 from django.db.models import Q
 
@@ -11,7 +13,6 @@ from apps.fyle.models import ExpenseFilter, ExpenseGroup, ExpenseGroupSettings, 
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import WorkspaceGeneralSettings
 
-import django_filters
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -272,19 +273,20 @@ class AdvanceSearchFilter(django_filters.FilterSet):
                 or_filtered_queryset |= field_filtered_queryset
 
         if or_field_present:
-            queryset = queryset.distinct() & or_filtered_queryset.distinct()
+            queryset = queryset & or_filtered_queryset
+            return queryset
 
-        return queryset.distinct()
+        return queryset
 
 
 class ExpenseGroupSearchFilter(AdvanceSearchFilter):
     exported_at__gte = django_filters.DateTimeFilter(lookup_expr='gte', field_name='exported_at')
     exported_at__lte = django_filters.DateTimeFilter(lookup_expr='lte', field_name='exported_at')
     tasklog__status = django_filters.CharFilter()
-    expenses__expense_number = django_filters.CharFilter(field_name='expenses__expense_number')
-    expenses__employee_name = django_filters.CharFilter(field_name='expenses__employee_name')
-    expenses__employee_email = django_filters.CharFilter(field_name='expenses__employee_email')
-    expenses__claim_number = django_filters.CharFilter(field_name='expenses__claim_number')
+    expenses__expense_number = django_filters.CharFilter(field_name='expenses__expense_number', lookup_expr='icontains')
+    expenses__employee_name = django_filters.CharFilter(field_name='expenses__employee_name', lookup_expr='icontains')
+    expenses__employee_email = django_filters.CharFilter(field_name='expenses__employee_email', lookup_expr='icontains')
+    expenses__claim_number = django_filters.CharFilter(field_name='expenses__claim_number', lookup_expr='icontains')
 
     class Meta:
         model = ExpenseGroup
@@ -292,14 +294,14 @@ class ExpenseGroupSearchFilter(AdvanceSearchFilter):
         or_fields = ['expenses__expense_number', 'expenses__employee_name', 'expenses__employee_email', 'expenses__claim_number']
 
 
-class ExpenseSearchFilter(AdvanceSearchFilter):
+class ExpenseSearchFilter(AdvanceSearchFilter): 
     org_id = django_filters.CharFilter()
     is_skipped = django_filters.BooleanFilter()
     updated_at = django_filters.DateTimeFromToRangeFilter()
-    expense_number = django_filters.CharFilter(field_name='expense_number')
-    employee_name = django_filters.CharFilter(field_name='employee_name')
-    employee_email = django_filters.CharFilter(field_name='employee_email')
-    claim_number = django_filters.CharFilter(field_name='claim_number')
+    expense_number = django_filters.CharFilter(field_name='expense_number', lookup_expr='icontains')
+    employee_name = django_filters.CharFilter(field_name='employee_name', lookup_expr='icontains')
+    employee_email = django_filters.CharFilter(field_name='employee_email', lookup_expr='icontains')
+    claim_number = django_filters.CharFilter(field_name='claim_number', lookup_expr='icontains')
 
     class Meta:
         model = Expense

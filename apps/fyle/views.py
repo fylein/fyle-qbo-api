@@ -35,7 +35,7 @@ class ExpenseGroupView(LookupFieldMixin, generics.ListCreateAPIView):
     List Fyle Expenses
     """
 
-    queryset = ExpenseGroup.objects.all().order_by("-exported_at")
+    queryset = ExpenseGroup.objects.all().order_by("-exported_at").distinct()
     serializer_class = ExpenseGroupSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_class = ExpenseGroupSearchFilter
@@ -164,7 +164,7 @@ class ExpenseView(LookupFieldMixin, generics.ListAPIView):
     Expense view
     """
 
-    queryset = Expense.objects.all().order_by("-updated_at")
+    queryset = Expense.objects.all().order_by("-updated_at").distinct()
     serializer_class = ExpenseSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_class = ExpenseSearchFilter
