@@ -135,6 +135,7 @@ LOGGING = {
         'django_q': {'handlers': ['debug_logs'], 'propagate': True},
         'gunicorn': {'handlers': ['request_logs'], 'level': 'INFO', 'propagate': False},
         'fyle_rest_auth': {'handlers': ['debug_logs'], 'propagate': True},
+        'fyle_integrations_imports': {'handlers': ['debug_logs'], 'propagate': True},
     },
 }
 
