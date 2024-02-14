@@ -9,6 +9,7 @@ from django.contrib.auth import get_user_model
 from django_q.tasks import async_task
 from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute
 from fyle_integrations_platform_connector import PlatformConnector
+from fyle.platform.exceptions import RetryException
 from fyle_rest_auth.helpers import get_fyle_admin
 from fyle_rest_auth.models import AuthToken
 from qbosdk import revoke_refresh_token
@@ -221,6 +222,9 @@ def setup_e2e_tests(workspace_id: int, connection):
 
             error_message = 'No healthy tokens found, please try again later.'
         return Response(status=status.HTTP_400_BAD_REQUEST, data={'message': error_message})
+
+    except RetryException:
+        logger.info('Fyle retry exception in workspace_id - %s', workspace_id)
 
     except Exception as error:
         error_message = 'No healthy tokens found, please try again later.'

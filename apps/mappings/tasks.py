@@ -3,6 +3,7 @@ from typing import List
 
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute
 from fyle_integrations_platform_connector import PlatformConnector
+from fyle.platform.exceptions import RetryException
 
 from apps.mappings.exceptions import handle_import_exceptions
 from apps.mappings.models import GeneralMapping
@@ -253,9 +254,13 @@ def async_auto_map_ccc_account(workspace_id: int):
         default_ccc_account_id = general_mappings.default_ccc_account_id
 
         if default_ccc_account_id:
-            fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-            platform = PlatformConnector(fyle_credentials)
+            try:
+                fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+                platform = PlatformConnector(fyle_credentials)
 
-            platform.employees.sync()
+                platform.employees.sync()
 
-            auto_map_ccc_employees(default_ccc_account_id, workspace_id)
+                auto_map_ccc_employees(default_ccc_account_id, workspace_id)
+
+            except RetryException:
+                logger.info('Fyle retry exception in workspace_id - %s', workspace_id)

@@ -3,7 +3,10 @@ from datetime import datetime
 from typing import Dict, List
 
 from django.db import transaction
-from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
+from fyle.platform.exceptions import (
+    InvalidTokenError as FyleInvalidTokenError,
+    RetryException as FyleRetryException
+)
 from fyle_integrations_platform_connector import PlatformConnector
 
 from apps.fyle.actions import create_generator_and_post_in_batches, mark_expenses_as_skipped
@@ -148,6 +151,12 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
         task_log.status = 'FAILED'
         task_log.save()
 
+    except FyleRetryException:
+        logger.info('Fyle retry exception %s', workspace_id)
+        task_log.detail = {'message': 'Fyle retry exception'}
+        task_log.status = 'FAILED'
+        task_log.save()
+
     except Exception:
         handle_import_exception(task_log)
 
@@ -158,6 +167,8 @@ def sync_dimensions(fyle_credentials):
         platform.import_fyle_dimensions(import_taxes=True)
     except FyleInvalidTokenError:
         logger.info('Invalid Token for fyle')
+    except FyleRetryException:
+        logger.info('Fyle retry exception')
 
 
 def post_accounting_export_summary(org_id: str, workspace_id: int, fund_source: str = None) -> None:
@@ -168,40 +179,44 @@ def post_accounting_export_summary(org_id: str, workspace_id: int, fund_source: 
     :param fund_source: fund source
     :return: None
     """
-    # Iterate through all expenses which are not synced and post accounting export summary to Fyle in batches
-    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-    platform = PlatformConnector(fyle_credentials)
-    filters = {
-        'org_id': org_id,
-        'accounting_export_summary__synced': False
-    }
+    try:
+        # Iterate through all expenses which are not synced and post accounting export summary to Fyle in batches
+        fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+        platform = PlatformConnector(fyle_credentials)
+        filters = {
+            'org_id': org_id,
+            'accounting_export_summary__synced': False
+        }
 
-    if fund_source:
-        filters['fund_source'] = fund_source
+        if fund_source:
+            filters['fund_source'] = fund_source
 
-    expenses_count = Expense.objects.filter(**filters).count()
+        expenses_count = Expense.objects.filter(**filters).count()
 
-    accounting_export_summary_batches = []
-    page_size = 200
-    for offset in range(0, expenses_count, page_size):
-        limit = offset + page_size
-        paginated_expenses = Expense.objects.filter(**filters).order_by('id')[offset:limit]
+        accounting_export_summary_batches = []
+        page_size = 200
+        for offset in range(0, expenses_count, page_size):
+            limit = offset + page_size
+            paginated_expenses = Expense.objects.filter(**filters).order_by('id')[offset:limit]
 
-        payload = []
+            payload = []
 
-        for expense in paginated_expenses:
-            accounting_export_summary = expense.accounting_export_summary
-            accounting_export_summary.pop('synced')
-            payload.append(expense.accounting_export_summary)
+            for expense in paginated_expenses:
+                accounting_export_summary = expense.accounting_export_summary
+                accounting_export_summary.pop('synced')
+                payload.append(expense.accounting_export_summary)
 
-        accounting_export_summary_batches.append(payload)
+            accounting_export_summary_batches.append(payload)
 
-    logger.info(
-        'Posting accounting export summary to Fyle workspace_id: %s, payload: %s',
-        workspace_id,
-        accounting_export_summary_batches
-    )
-    create_generator_and_post_in_batches(accounting_export_summary_batches, platform, workspace_id)
+        logger.info(
+            'Posting accounting export summary to Fyle workspace_id: %s, payload: %s',
+            workspace_id,
+            accounting_export_summary_batches
+        )
+        create_generator_and_post_in_batches(accounting_export_summary_batches, platform, workspace_id)
+
+    except FyleRetryException:
+        logger.info('Fyle retry exception')
 
 
 def import_and_export_expenses(report_id: str, org_id: str) -> None:
@@ -239,6 +254,9 @@ def import_and_export_expenses(report_id: str, org_id: str) -> None:
 
         if len(expense_group_ids):
             export_to_qbo(workspace.id, None, expense_group_ids)
+
+    except FyleRetryException:
+        logger.info('Fyle retry exception')
 
     except Exception:
         handle_import_exception(task_log)

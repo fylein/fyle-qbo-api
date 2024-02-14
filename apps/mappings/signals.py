@@ -10,7 +10,7 @@ from fyle_accounting_mappings.models import EmployeeMapping, Mapping, MappingSet
 from fyle_integrations_imports.models import ImportLog
 from apps.quickbooks_online.utils import QBOConnector
 from apps.workspaces.models import FyleCredential, QBOCredential, WorkspaceGeneralSettings
-from fyle.platform.exceptions import WrongParamsError
+from fyle.platform.exceptions import WrongParamsError, RetryException
 from fyle_integrations_platform_connector import PlatformConnector
 from fyle_integrations_imports.modules.expense_custom_fields import ExpenseCustomField
 from apps.tasks.models import Error
@@ -135,6 +135,9 @@ def run_pre_mapping_settings_triggers(sender, instance: MappingSetting, **kwargs
                     'message': error.response['message'],
                     'field_name': instance.source_field
                 })
+            
+        except RetryException:
+            logger.info('Fyle retry exception')
 
         # setting the import_log.last_successful_run_at to -30mins for the post_save_trigger
         import_log = ImportLog.objects.filter(workspace_id=workspace_id, attribute_type=instance.source_field).first()

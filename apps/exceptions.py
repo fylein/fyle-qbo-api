@@ -1,6 +1,9 @@
 import logging
 
-from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
+from fyle.platform.exceptions import (
+    InvalidTokenError as FyleInvalidTokenError,
+    RetryException as FyleRetryException
+)
 from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 from rest_framework.response import Response
 from rest_framework.views import status
@@ -51,6 +54,10 @@ def handle_view_exceptions():
             except QBOCredential.DoesNotExist:
                 logger.info('QBO credentials not found in workspace')
                 return Response(data={'message': 'QBO credentials not found in workspace'}, status=status.HTTP_400_BAD_REQUEST)
+
+            except FyleRetryException:
+                logger.info('Fyle retry exception')
+                return Response(data={'message': 'Fyle retry exception'}, status=status.HTTP_400_BAD_REQUEST)
 
             except Exception as exception:
                 logger.exception(exception)

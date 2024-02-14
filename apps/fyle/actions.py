@@ -54,39 +54,51 @@ def sync_fyle_dimensions(workspace_id: int):
         time_interval = datetime.now(timezone.utc) - workspace.source_synced_at
 
     if workspace.source_synced_at is None or time_interval.days > 0:
+        try:
+            fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+            platform = PlatformConnector(fyle_credentials)
+
+            platform.import_fyle_dimensions(import_taxes=True)
+
+            workspace.source_synced_at = datetime.now()
+            workspace.save(update_fields=['source_synced_at'])
+
+        except RetryException:
+            logger.info('RetryException occured in workspace_id: %s', workspace_id)
+
+
+def refresh_fyle_dimension(workspace_id: int):
+    try:
         fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
         platform = PlatformConnector(fyle_credentials)
 
         platform.import_fyle_dimensions(import_taxes=True)
 
+        workspace = Workspace.objects.get(id=workspace_id)
         workspace.source_synced_at = datetime.now()
         workspace.save(update_fields=['source_synced_at'])
 
-
-def refresh_fyle_dimension(workspace_id: int):
-    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-    platform = PlatformConnector(fyle_credentials)
-
-    platform.import_fyle_dimensions(import_taxes=True)
-
-    workspace = Workspace.objects.get(id=workspace_id)
-    workspace.source_synced_at = datetime.now()
-    workspace.save(update_fields=['source_synced_at'])
+    except RetryException:
+        logger.info('RetryException occured in workspace_id: %s', workspace_id)
 
 
 def get_custom_fields(workspace_id: int):
-    fyle_credentails = FyleCredential.objects.get(workspace_id=workspace_id)
+    try:
+        fyle_credentails = FyleCredential.objects.get(workspace_id=workspace_id)
 
-    platform = PlatformConnector(fyle_credentails)
+        platform = PlatformConnector(fyle_credentails)
 
-    custom_fields = platform.expense_custom_fields.list_all()
+        custom_fields = platform.expense_custom_fields.list_all()
 
-    response = []
-    response.extend(DEFAULT_FYLE_CONDITIONS)
-    for custom_field in custom_fields:
-        if custom_field['type'] in ('SELECT', 'NUMBER', 'TEXT'):
-            response.append({'field_name': custom_field['field_name'], 'type': custom_field['type'], 'is_custom': custom_field['is_custom']})
-    return response
+        response = []
+        response.extend(DEFAULT_FYLE_CONDITIONS)
+        for custom_field in custom_fields:
+            if custom_field['type'] in ('SELECT', 'NUMBER', 'TEXT'):
+                response.append({'field_name': custom_field['field_name'], 'type': custom_field['type'], 'is_custom': custom_field['is_custom']})
+        return response
+
+    except RetryException:
+        logger.info('RetryException occured in workspace_id: %s', workspace_id)
 
 
 def __bulk_update_expenses(expense_to_be_updated: List[Expense]) -> None:

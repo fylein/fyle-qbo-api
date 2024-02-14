@@ -2,6 +2,7 @@ from time import sleep
 from django.db.models import Q
 
 from fyle_integrations_platform_connector import PlatformConnector
+from fyle.platform.exceptions import RetryException
 
 from apps.workspaces.models import FyleCredential, Workspace
 from apps.users.models import User
@@ -29,5 +30,9 @@ for workspace in workspaces:
             for user in created_users:
                 workspace.user.add(user)
             print('Updated for workspace - ', workspace.name)
+    
+    except RetryException:
+        print('RetryException occured in workspace_id', workspace_id)
+
     except Exception as e:
         print(e, e.__dict__, '\n\n', workspace.name, workspace.fyle_org_id)

@@ -1,7 +1,12 @@
 import logging
 import traceback
 
-from fyle.platform.exceptions import InternalServerError, InvalidTokenError, WrongParamsError
+from fyle.platform.exceptions import (
+    InternalServerError,
+    InvalidTokenError,
+    WrongParamsError,
+    RetryException
+)
 from qbosdk.exceptions import InvalidTokenError as QBOInvalidTokenError
 from qbosdk.exceptions import WrongParamsError as QBOWrongParamsError
 
@@ -36,6 +41,9 @@ def handle_import_exceptions(task_name):
             except (QBOWrongParamsError, QBOInvalidTokenError) as exception:
                 error['message'] = 'QBO token expired'
                 error['response'] = exception.__dict__
+
+            except RetryException:
+                error['message'] = 'Fyle retry exception'
 
             except Exception:
                 response = traceback.format_exc()
@@ -87,6 +95,9 @@ def handle_import_exceptions_v2(func):
             error['alert'] = False
             error['response'] = exception.__dict__
             import_log.status = 'FAILED'
+
+        except RetryException:
+                error['message'] = 'Fyle retry exception'
 
         except Exception:
             response = traceback.format_exc()
