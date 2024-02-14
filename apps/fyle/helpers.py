@@ -294,7 +294,7 @@ class ExpenseGroupSearchFilter(AdvanceSearchFilter):
         or_fields = ['expenses__expense_number', 'expenses__employee_name', 'expenses__employee_email', 'expenses__claim_number']
 
 
-class ExpenseSearchFilter(AdvanceSearchFilter): 
+class ExpenseSearchFilter(AdvanceSearchFilter):
     org_id = django_filters.CharFilter()
     is_skipped = django_filters.BooleanFilter()
     updated_at = django_filters.DateTimeFromToRangeFilter()
