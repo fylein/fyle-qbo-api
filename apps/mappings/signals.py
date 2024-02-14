@@ -135,7 +135,7 @@ def run_pre_mapping_settings_triggers(sender, instance: MappingSetting, **kwargs
                     'message': error.response['message'],
                     'field_name': instance.source_field
                 })
-            
+
         except RetryException:
             logger.info('Fyle retry exception')
 

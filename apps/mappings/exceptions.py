@@ -97,7 +97,7 @@ def handle_import_exceptions_v2(func):
             import_log.status = 'FAILED'
 
         except RetryException:
-                error['message'] = 'Fyle retry exception'
+            error['message'] = 'Fyle retry exception'
 
         except Exception:
             response = traceback.format_exc()

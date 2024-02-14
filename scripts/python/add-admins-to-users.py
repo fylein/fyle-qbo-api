@@ -30,7 +30,7 @@ for workspace in workspaces:
             for user in created_users:
                 workspace.user.add(user)
             print('Updated for workspace - ', workspace.name)
-    
+
     except RetryException:
         print('RetryException occured in workspace_id', workspace_id)
 
