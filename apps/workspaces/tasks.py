@@ -174,7 +174,7 @@ def run_email_notification(workspace_id):
                     'qbo_company': qbo.company_name,
                     'export_time': export_time.strftime("%d %b %Y | %H:%M"),
                     'year': date.today().year,
-                    'app_url': "{0}/workspaces/main/dashboard".format(settings.FYLE_APP_URL),
+                    'app_url': "{0}/main/dashboard".format(settings.QBO_INTEGRATION_APP_URL),
                     'task_logs': mark_safe(expense_html),
                     'error_type': expense_data,
                 }
