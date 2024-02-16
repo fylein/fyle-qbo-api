@@ -29,6 +29,7 @@ class VendorView(LookupFieldMixin, generics.ListAPIView):
     filterset_fields = {'value': {'icontains'}, 'attribute_type': {'exact', 'in'}, 'active': {'exact'}}
     ordering_fields = ('value',)
 
+
 class QBOFieldView(LookupFieldMixin, generics.ListAPIView):
     """
     QBOField view
