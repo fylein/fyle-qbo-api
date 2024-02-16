@@ -112,6 +112,18 @@ def test_vendor_view(mocker, api_client, test_connection):
     assert len(response['results']) == 10
 
 
+def test_qbo_field_view(mocker, api_client, test_connection):
+    access_token = test_connection.access_token
+    url = '/api/workspaces/3/qbo/fields/'
+
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
+
+    response = api_client.get(url)
+    assert response.status_code == 200
+
+    response = json.loads(response.content)
+    assert len(response) == 1
+
 def test_employee_view(mocker, api_client, test_connection):
     mocker.patch('apps.quickbooks_online.utils.QBOConnector.sync_employees', return_value=None)
 

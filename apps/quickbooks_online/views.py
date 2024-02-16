@@ -31,7 +31,7 @@ class VendorView(LookupFieldMixin, generics.ListAPIView):
 
 class QBOFieldView(LookupFieldMixin, generics.ListAPIView):
     """
-    Vendor view
+    QBOField view
     """
     queryset = DestinationAttribute.objects.filter(
         ~Q(attribute_type='EMPLOYEE') & ~Q(attribute_type='VENDOR') &
