@@ -124,6 +124,7 @@ def test_qbo_field_view(mocker, api_client, test_connection):
     response = json.loads(response.content)
     assert len(response) == 1
 
+
 def test_employee_view(mocker, api_client, test_connection):
     mocker.patch('apps.quickbooks_online.utils.QBOConnector.sync_employees', return_value=None)
 
