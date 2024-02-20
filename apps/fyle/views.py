@@ -1,5 +1,4 @@
 import logging
-from apps.fyle.helpers import ExpenseGroupSearchFilter, ExpenseSearchFilter
 
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics
@@ -35,10 +34,10 @@ class ExpenseGroupView(LookupFieldMixin, generics.ListCreateAPIView):
     List Fyle Expenses
     """
 
-    queryset = ExpenseGroup.objects.all().order_by("-exported_at").distinct()
+    queryset = ExpenseGroup.objects.all().order_by("-exported_at")
     serializer_class = ExpenseGroupSerializer
     filter_backends = (DjangoFilterBackend,)
-    filterset_class = ExpenseGroupSearchFilter
+    filterset_fields = {"exported_at": {"gte", "lte"}, "tasklog__status": {"exact"}}
 
 
 class ExportableExpenseGroupsView(generics.RetrieveAPIView):
@@ -159,15 +158,16 @@ class ExpenseFilterDeleteView(generics.DestroyAPIView):
     serializer_class = ExpenseFilterSerializer
 
 
-class ExpenseView(LookupFieldMixin, generics.ListAPIView):
+class ExpenseView(generics.ListAPIView):
     """
     Expense view
     """
 
-    queryset = Expense.objects.all().order_by("-updated_at").distinct()
+    queryset = Expense.objects.all()
     serializer_class = ExpenseSerializer
     filter_backends = (DjangoFilterBackend,)
-    filterset_class = ExpenseSearchFilter
+    filterset_fields = {'org_id': {'exact'}, 'is_skipped': {'exact'}, 'updated_at': {'gte', 'lte'}}
+    ordering_fields = ('-updated_at',)
 
 
 class CustomFieldView(generics.RetrieveAPIView):
