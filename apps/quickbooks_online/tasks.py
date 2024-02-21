@@ -213,12 +213,12 @@ def create_bill(expense_group, task_log_id, last_export: bool):
 
         resolve_errors_for_exported_expense_group(expense_group)
 
+    if last_export:
+        update_last_export_details(expense_group.workspace_id)
+
     generate_export_url_and_update_expense(expense_group)
 
     load_attachments(qbo_connection, created_bill['Bill']['Id'], 'Bill', expense_group)
-
-    if last_export:
-        update_last_export_details(expense_group.workspace_id)
 
 
 def __validate_expense_group(expense_group: ExpenseGroup, general_settings: WorkspaceGeneralSettings):  # noqa: C901
@@ -378,12 +378,12 @@ def create_cheque(expense_group, task_log_id, last_export: bool):
 
         resolve_errors_for_exported_expense_group(expense_group)
 
+    if last_export:
+        update_last_export_details(expense_group.workspace_id)
+
     generate_export_url_and_update_expense(expense_group)
 
     load_attachments(qbo_connection, created_cheque['Purchase']['Id'], 'Purchase', expense_group)
-
-    if last_export:
-        update_last_export_details(expense_group.workspace_id)
 
 
 @handle_qbo_exceptions()
@@ -431,12 +431,12 @@ def create_qbo_expense(expense_group, task_log_id, last_export: bool):
 
         resolve_errors_for_exported_expense_group(expense_group)
 
+    if last_export:
+        update_last_export_details(expense_group.workspace_id)
+
     generate_export_url_and_update_expense(expense_group)
 
     load_attachments(qbo_connection, created_qbo_expense['Purchase']['Id'], 'Purchase', expense_group)
-
-    if last_export:
-        update_last_export_details(expense_group.workspace_id)
 
 
 @handle_qbo_exceptions()
@@ -483,12 +483,12 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id, last_e
 
         resolve_errors_for_exported_expense_group(expense_group)
 
+    if last_export:
+        update_last_export_details(expense_group.workspace_id)
+
     generate_export_url_and_update_expense(expense_group)
 
     load_attachments(qbo_connection, created_credit_card_purchase['Purchase']['Id'], 'Purchase', expense_group)
-
-    if last_export:
-        update_last_export_details(expense_group.workspace_id)
 
 
 @handle_qbo_exceptions()
@@ -533,12 +533,12 @@ def create_journal_entry(expense_group, task_log_id, last_export: bool):
 
         resolve_errors_for_exported_expense_group(expense_group)
 
+    if last_export:
+        update_last_export_details(expense_group.workspace_id)
+
     generate_export_url_and_update_expense(expense_group)
 
     load_attachments(qbo_connection, created_journal_entry['JournalEntry']['Id'], 'JournalEntry', expense_group)
-
-    if last_export:
-        update_last_export_details(expense_group.workspace_id)
 
 
 def check_expenses_reimbursement_status(expenses):
