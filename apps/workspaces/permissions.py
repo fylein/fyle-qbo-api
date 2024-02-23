@@ -12,6 +12,7 @@ User = get_user_model()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+
 class WorkspacePermissions(permissions.BasePermission):
     """
     Permission check for users <> workspaces
