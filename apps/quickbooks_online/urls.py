@@ -24,6 +24,7 @@ from apps.quickbooks_online.views import (
     SearchedDestinationAttributesView,
     SyncQuickbooksDimensionView,
     VendorView,
+    QBOFieldView
 )
 
 urlpatterns = [
@@ -35,4 +36,5 @@ urlpatterns = [
     path('destination_attributes/', DestinationAttributesView.as_view(), name='destination-attributes'),
     path('mapping_options/', SearchedDestinationAttributesView.as_view(), name='searching-destination-attributes'),
     path('qbo_attributes/', QBOAttributesView.as_view(), name='qbo-attributes'),
+    path('fields/', QBOFieldView.as_view())
 ]

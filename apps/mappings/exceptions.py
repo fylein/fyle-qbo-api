@@ -1,7 +1,12 @@
 import logging
 import traceback
 
-from fyle.platform.exceptions import InternalServerError, InvalidTokenError, WrongParamsError
+from fyle.platform.exceptions import (
+    InternalServerError,
+    InvalidTokenError,
+    WrongParamsError,
+    RetryException
+)
 from qbosdk.exceptions import InvalidTokenError as QBOInvalidTokenError
 from qbosdk.exceptions import WrongParamsError as QBOWrongParamsError
 
@@ -28,6 +33,9 @@ def handle_import_exceptions(task_name):
                 error['message'] = exception.message
                 error['response'] = exception.response
                 error['alert'] = True
+
+            except RetryException:
+                error['message'] = 'Retrying task'
 
             except InternalServerError as exception:
                 error['message'] = 'Internal server error while importing to Fyle'
