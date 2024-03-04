@@ -5,13 +5,13 @@ from django.db.models import Q
 from django_q.models import Schedule
 from django_q.tasks import Chain, async_task
 
-from apps.fyle.models import ExpenseGroup, Expense
+from apps.fyle.models import Expense, ExpenseGroup
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import FyleCredential, WorkspaceGeneralSettings
 
 
 def async_run_post_configration_triggers(workspace_general_settings: WorkspaceGeneralSettings):
-    async_task('apps.quickbooks_online.tasks.async_sync_accounts', int(workspace_general_settings.workspace_id))
+    async_task('apps.quickbooks_online.tasks.async_sync_accounts', int(workspace_general_settings.workspace_id), q_options={'cluster': 'import'})
 
 
 def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, fund_source: str):

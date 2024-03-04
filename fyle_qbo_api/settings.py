@@ -100,7 +100,8 @@ FYLE_REST_AUTH_SETTINGS = {'async_update_user': True}
 
 Q_CLUSTER = {
     'name': 'fyle_quickbooks_api',
-    'save_limit': 0,
+    # The number of tasks will be stored in django q tasks
+    "save_limit": 100000,
     'workers': 4,
     # How many tasks are kept in memory by a single cluster.
     # Helps balance the workload and the memory overhead of each individual cluster
@@ -110,7 +111,8 @@ Q_CLUSTER = {
     'ack_failures': True,
     'poll': 1,
     'retry': 14400,
-    'timeout': 3600,
+    # 15 mins
+    'timeout': 900,
     'catch_up': False,
     # The number of tasks a worker will process before recycling.
     # Useful to release memory resources on a regular basis.
@@ -118,6 +120,13 @@ Q_CLUSTER = {
     # The maximum resident set size in kilobytes before a worker will recycle and release resources.
     # Useful for limiting memory usage.
     'max_rss': 100000,  # 100mb
+    'ALT_CLUSTERS': {
+        'import': {
+            'retry': 14400,
+            # 15 mins
+            'timeout': 900,
+        },
+    }
 }
 
 SERVICE_NAME = os.environ.get('SERVICE_NAME')

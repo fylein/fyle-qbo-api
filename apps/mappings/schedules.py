@@ -1,8 +1,10 @@
 from datetime import datetime
 from typing import Dict, List
+
 from django_q.models import Schedule
-from apps.workspaces.models import WorkspaceGeneralSettings
 from fyle_accounting_mappings.models import MappingSetting
+
+from apps.workspaces.models import WorkspaceGeneralSettings
 
 
 def schedule_or_delete_fyle_import_tasks(workspace_general_settings: WorkspaceGeneralSettings, mapping_settings: List[Dict] = []):
@@ -22,6 +24,7 @@ def schedule_or_delete_fyle_import_tasks(workspace_general_settings: WorkspaceGe
         or workspace_general_settings.import_tax_codes or workspace_general_settings.import_vendors_as_merchants:
         Schedule.objects.update_or_create(
             func='apps.mappings.queues.construct_tasks_and_chain_import_fields_to_fyle',
+            cluster='import',
             args='{}'.format(workspace_general_settings.workspace_id),
             defaults={
                 'schedule_type': Schedule.MINUTES,

@@ -2,4 +2,4 @@ from django.apps import AppConfig
 
 
 class QuickbooksOnlineConfig(AppConfig):
-    name = 'quickbooks_online'
+    name = 'apps.quickbooks_online'

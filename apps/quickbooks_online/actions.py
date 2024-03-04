@@ -1,27 +1,22 @@
-from datetime import datetime, timezone
 import logging
+from datetime import datetime, timezone
 
 from django.conf import settings
 from django.db.models import Q
-
 from django_q.tasks import Chain
-
 from fyle_accounting_mappings.models import MappingSetting
 from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 from rest_framework.response import Response
 from rest_framework.views import status
 
-from apps.fyle.models import ExpenseGroup
 from apps.fyle.actions import update_complete_expenses
-from apps.quickbooks_online.utils import QBOConnector
-from apps.mappings.helpers import get_auto_sync_permission
-from apps.tasks.models import TaskLog
-from apps.workspaces.models import WorkspaceGeneralSettings
-from apps.workspaces.models import LastExportDetail, QBOCredential, Workspace
-
-from .helpers import generate_export_type_and_id
+from apps.fyle.models import ExpenseGroup
 from apps.mappings.constants import SYNC_METHODS
-
+from apps.mappings.helpers import get_auto_sync_permission
+from apps.quickbooks_online.helpers import generate_export_type_and_id
+from apps.quickbooks_online.utils import QBOConnector
+from apps.tasks.models import TaskLog
+from apps.workspaces.models import LastExportDetail, QBOCredential, Workspace, WorkspaceGeneralSettings
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -84,7 +79,8 @@ def refresh_quickbooks_dimensions(workspace_id: int):
                 get_auto_sync_permission(workspace_general_settings, mapping_setting),
                 False,
                 None,
-                mapping_setting.is_custom
+                mapping_setting.is_custom,
+                q_options={'cluster': 'import'}
             )
 
     if chain.length() > 0:
