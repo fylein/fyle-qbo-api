@@ -119,7 +119,7 @@ class QBOConnector:
         """
         Get items
         """
-        items = self.connection.items.get()
+        items = self.connection.items.get_all_generator()
         item_attributes = []
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
 
@@ -151,7 +151,7 @@ class QBOConnector:
         """
         Get accounts
         """
-        accounts = self.connection.accounts.get()
+        accounts = self.connection.accounts.get_all_generator()
         category_sync_version = 'v2'
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
         if general_settings:
@@ -237,7 +237,7 @@ class QBOConnector:
         """
         Get departments
         """
-        departments = self.connection.departments.get()
+        departments = self.connection.departments.get_all_generator()
 
         department_attributes = []
 
@@ -251,7 +251,7 @@ class QBOConnector:
         """
         Get Tax Codes
         """
-        tax_codes = self.connection.tax_codes.get()
+        tax_codes = self.connection.tax_codes.get_all_generator()
 
         tax_attributes = []
         for tax_code in tax_codes:
@@ -278,7 +278,7 @@ class QBOConnector:
         """
         Get vendors
         """
-        vendors = self.connection.vendors.get()
+        vendors = self.connection.vendors.get_all_generator()
 
         vendor_attributes = []
         destination_attributes = DestinationAttribute.objects.filter(workspace_id=self.workspace_id, attribute_type='VENDOR').values('destination_id', 'value')
@@ -346,7 +346,7 @@ class QBOConnector:
         """
         Get employees
         """
-        employees = self.connection.employees.get()
+        employees = self.connection.employees.get_all_generator()
 
         employee_attributes = []
 
@@ -362,7 +362,7 @@ class QBOConnector:
         """
         Get classes
         """
-        classes = self.connection.classes.get()
+        classes = self.connection.classes.get_all_generator()
 
         class_attributes = []
 
@@ -378,7 +378,7 @@ class QBOConnector:
         """
         customers_count = self.connection.customers.count()
         if customers_count < SYNC_UPPER_LIMIT['customers']:
-            customers = self.connection.customers.get()
+            customers = self.connection.customers.get_all_generator()
 
             customer_attributes = []
             destination_attributes = DestinationAttribute.objects.filter(workspace_id=self.workspace_id, attribute_type='CUSTOMER', display_name='customer').values('destination_id', 'value')
