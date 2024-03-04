@@ -100,7 +100,8 @@ FYLE_REST_AUTH_SETTINGS = {'async_update_user': True}
 
 Q_CLUSTER = {
     'name': 'fyle_quickbooks_api',
-    'save_limit': 0,
+    # The number of tasks will be stored in django q tasks
+    "save_limit": 100000,
     'workers': 4,
     # How many tasks are kept in memory by a single cluster.
     # Helps balance the workload and the memory overhead of each individual cluster
