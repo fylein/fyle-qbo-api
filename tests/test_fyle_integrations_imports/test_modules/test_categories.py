@@ -15,7 +15,9 @@ def test_sync_destination_attributes(mocker, db):
     workspace_id = 2
 
     # import categories
-    mocker.patch('qbosdk.apis.Accounts.get', return_value=categories_data['create_new_auto_create_categories_destination_attributes_accounts'])
+    mocker.patch('qbosdk.apis.Accounts.get_all_generator', return_value=categories_data['create_new_auto_create_categories_destination_attributes_accounts'])
+    mocker.patch('qbosdk.apis.Accounts.get_inactive', return_value=[])
+    mocker.patch('qbosdk.apis.Items.get_inactive', return_value=[])
 
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
@@ -32,7 +34,7 @@ def test_sync_destination_attributes(mocker, db):
     # import items
     category = Category(2, 'ACCOUNT', None,  qbo_connection, ['items'], True, False, ['Expense', 'Fixed Asset'])
     WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(import_categories=True, import_items=True)
-    mocker.patch('qbosdk.apis.Items.get', return_value=categories_data['create_new_auto_create_categories_destination_attributes_items'])
+    mocker.patch('qbosdk.apis.Items.get_all_generator', return_value=categories_data['create_new_auto_create_categories_destination_attributes_items'])
 
     destination_attributes_count = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT', display_name='Item').count()
     assert destination_attributes_count == 0
@@ -45,8 +47,8 @@ def test_sync_destination_attributes(mocker, db):
     # import items + import categories
     category = Category(2, 'ACCOUNT', None,  qbo_connection, ['items', 'accounts'], True, False, ['Expense', 'Fixed Asset'])
     WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(import_categories=True, import_items=True)
-    mocker.patch('qbosdk.apis.Accounts.get', return_value=categories_data['create_new_auto_create_categories_destination_attributes_accounts_sync'])
-    mocker.patch('qbosdk.apis.Items.get', return_value=categories_data['create_new_auto_create_categories_destination_attributes_items_sync'])
+    mocker.patch('qbosdk.apis.Accounts.get_all_generator', return_value=categories_data['create_new_auto_create_categories_destination_attributes_accounts_sync'])
+    mocker.patch('qbosdk.apis.Items.get_all_generator', return_value=categories_data['create_new_auto_create_categories_destination_attributes_items_sync'])
 
     destination_attributes_count = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT', display_name='Item').count()
     assert destination_attributes_count == 3
@@ -112,15 +114,32 @@ def test_auto_create_destination_attributes(mocker, db):
     DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT').delete()
     ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type='CATEGORY').delete()
 
+    mocker.patch(
+        'qbosdk.apis.Accounts.get_inactive',
+        return_value=[]
+    )
+    mocker.patch(
+        'qbosdk.apis.Items.get_inactive',
+        return_value=[]
+    )
+    mocker.patch(
+        'qbosdk.apis.Accounts.get_all_generator',
+        return_value=[]
+    )
+    mocker.patch(
+        'qbosdk.apis.Items.get_all_generator',
+        return_value=[]
+    )
+
     # create new case for categories import
     with mock.patch('fyle.platform.apis.v1beta.admin.Categories.list_all') as mock_call:
         mocker.patch(
             'fyle_integrations_platform_connector.apis.Categories.post_bulk',
             return_value=[]
         )
-        mocker.patch('qbosdk.apis.Items.get',return_value=[])
+        mocker.patch('qbosdk.apis.Items.get_all_generator',return_value=[])
         mocker.patch(
-            'qbosdk.apis.Accounts.get',
+            'qbosdk.apis.Accounts.get_all_generator',
             return_value=categories_data['create_new_auto_create_categories_destination_attributes_accounts']
         )
         mock_call.side_effect = [
@@ -161,9 +180,9 @@ def test_auto_create_destination_attributes(mocker, db):
             'fyle_integrations_platform_connector.apis.Categories.post_bulk',
             return_value=[]
         )
-        mocker.patch('qbosdk.apis.Items.get',return_value=[])
+        mocker.patch('qbosdk.apis.Items.get_all_generator',return_value=[])
         mocker.patch(
-            'qbosdk.apis.Accounts.get',
+            'qbosdk.apis.Accounts.get_inactive',
             return_value=categories_data['create_new_auto_create_categories_destination_attributes_accounts_disable_case']
         )
         mock_call.side_effect = [
@@ -208,9 +227,9 @@ def test_auto_create_destination_attributes(mocker, db):
             'fyle_integrations_platform_connector.apis.Categories.post_bulk',
             return_value=[]
         )
-        mocker.patch('qbosdk.apis.Items.get',return_value=[])
+        mocker.patch('qbosdk.apis.Items.get_all_generator',return_value=[])
         mocker.patch(
-            'qbosdk.apis.Accounts.get',
+            'qbosdk.apis.Accounts.get_inactive',
             return_value=categories_data['create_new_auto_create_categories_destination_attributes_accounts']
         )
         mock_call.side_effect = [
@@ -220,7 +239,7 @@ def test_auto_create_destination_attributes(mocker, db):
 
         pre_run_destination_attribute_count = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'ACCOUNT', active=False).count()
 
-        assert pre_run_destination_attribute_count == 1
+        assert pre_run_destination_attribute_count == 3
 
         pre_run_expense_attribute_count = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'CATEGORY', active=False).count()
 
@@ -230,7 +249,7 @@ def test_auto_create_destination_attributes(mocker, db):
 
         post_run_destination_attribute_count = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'ACCOUNT', active=False).count()
 
-        assert post_run_destination_attribute_count == pre_run_destination_attribute_count - 1
+        assert post_run_destination_attribute_count == pre_run_destination_attribute_count
 
         post_run_expense_attribute_count = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'CATEGORY', active=False).count()
 
@@ -245,11 +264,11 @@ def test_auto_create_destination_attributes(mocker, db):
             return_value=[]
         )
         mocker.patch(
-            'qbosdk.apis.Items.get',
+            'qbosdk.apis.Items.get_all_generator',
             return_value=categories_data['create_new_auto_create_categories_destination_attributes_items']
         )
         mocker.patch(
-            'qbosdk.apis.Accounts.get',
+            'qbosdk.apis.Accounts.get_all_generator',
             return_value=[]
         )
         mock_call.side_effect = [
@@ -291,11 +310,11 @@ def test_auto_create_destination_attributes(mocker, db):
             return_value=[]
         )
         mocker.patch(
-            'qbosdk.apis.Items.get',
+            'qbosdk.apis.Items.get_inactive',
             return_value=categories_data['create_new_auto_create_categories_destination_attributes_items_disabled_case']
         )
         mocker.patch(
-            'qbosdk.apis.Accounts.get',
+            'qbosdk.apis.Accounts.get_all_generator',
             return_value=[]
         )
         mock_call.side_effect = [
@@ -341,11 +360,11 @@ def test_auto_create_destination_attributes(mocker, db):
             return_value=[]
         )
         mocker.patch(
-            'qbosdk.apis.Items.get',
+            'qbosdk.apis.Items.get_inactive',
             return_value=categories_data['create_new_auto_create_categories_destination_attributes_items']
         )
         mocker.patch(
-            'qbosdk.apis.Accounts.get',
+            'qbosdk.apis.Accounts.get_all_generator',
             return_value=[]
         )
         mock_call.side_effect = [
@@ -355,7 +374,7 @@ def test_auto_create_destination_attributes(mocker, db):
 
         pre_run_destination_attribute_count = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'ACCOUNT', active=False, display_name='Item').count()
 
-        assert pre_run_destination_attribute_count == 1
+        assert pre_run_destination_attribute_count == 3
 
         pre_run_expense_attribute_count = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'CATEGORY', active=False).count()
 
@@ -365,7 +384,7 @@ def test_auto_create_destination_attributes(mocker, db):
 
         post_run_destination_attribute_count = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'ACCOUNT', active=False, display_name='Item').count()
 
-        assert post_run_destination_attribute_count == pre_run_destination_attribute_count - 1
+        assert post_run_destination_attribute_count == pre_run_destination_attribute_count
 
         post_run_expense_attribute_count = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'CATEGORY', active=False).count()
 
@@ -379,11 +398,11 @@ def test_auto_create_destination_attributes(mocker, db):
             return_value=[]
         )
         mocker.patch(
-            'qbosdk.apis.Items.get',
+            'qbosdk.apis.Items.get_inactive',
             return_value=categories_data['create_new_auto_create_categories_destination_attributes_items']
         )
         mocker.patch(
-            'qbosdk.apis.Accounts.get',
+            'qbosdk.apis.Accounts.get_all_generator',
             return_value=[]
         )
         mock_call.side_effect = [
@@ -393,7 +412,7 @@ def test_auto_create_destination_attributes(mocker, db):
 
         pre_run_destination_attribute_count = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'ACCOUNT', active=False, display_name='Item').count()
 
-        assert pre_run_destination_attribute_count == 0
+        assert pre_run_destination_attribute_count == 3
 
         pre_run_expense_attribute_count = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'CATEGORY', active=False).count()
 

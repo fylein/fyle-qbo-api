@@ -15,7 +15,7 @@ def test_sync_destination_attributes(mocker, db):
     workspace_id = 3
 
     mocker.patch(
-        'qbosdk.apis.Classes.get',
+        'qbosdk.apis.Classes.get_all_generator',
         return_value=cost_center_data['create_new_auto_create_cost_centers_destination_attributes']
     )
 
@@ -88,7 +88,7 @@ def test_auto_create_destination_attributes(mocker, db):
             return_value=[]
         )
         mocker.patch(
-            'qbosdk.apis.Classes.get',
+            'qbosdk.apis.Classes.get_all_generator',
             return_value=cost_center_data['create_new_auto_create_cost_centers_destination_attributes']
         )
         mock_call.side_effect = [
@@ -121,7 +121,7 @@ def test_auto_create_destination_attributes(mocker, db):
             return_value=[]
         )
         mocker.patch(
-            'qbosdk.apis.Classes.get',
+            'qbosdk.apis.Classes.get_all_generator',
             return_value=cost_center_data['create_new_auto_create_cost_centers_destination_attributes_subsequent_run']
         )
         mock_call.side_effect = [

@@ -15,7 +15,8 @@ def test_sync_destination_attributes(mocker, db):
     workspace_id = 3
 
     mocker.patch('qbosdk.apis.Customers.count', return_value=41)
-    mocker.patch('qbosdk.apis.Customers.get', return_value=projects_data['create_new_auto_create_projects_destination_attributes'])
+    mocker.patch('qbosdk.apis.Customers.get_all_generator', return_value=projects_data['create_new_auto_create_projects_destination_attributes'])
+    mocker.patch('qbosdk.apis.Customers.get_inactive', return_value=[])
 
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
@@ -79,6 +80,9 @@ def test_auto_create_destination_attributes(mocker, db):
     DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='CUSTOMER').delete()
     ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type='PROJECT').delete()
 
+    mocker.patch('qbosdk.apis.Customers.get_inactive', return_value=[])
+    mocker.patch('qbosdk.apis.Customers.get_all_generator', return_value=[])
+
     # create new case for projects import
     with mock.patch('fyle.platform.apis.v1beta.admin.Projects.list_all') as mock_call:
         mocker.patch(
@@ -90,7 +94,7 @@ def test_auto_create_destination_attributes(mocker, db):
             return_value=41
         )
         mocker.patch(
-            'qbosdk.apis.Customers.get',
+            'qbosdk.apis.Customers.get_all_generator',
             return_value=projects_data['create_new_auto_create_projects_destination_attributes']
         )
         mock_call.side_effect = [
@@ -127,7 +131,7 @@ def test_auto_create_destination_attributes(mocker, db):
             return_value=39
         )
         mocker.patch(
-            'qbosdk.apis.Customers.get',
+            'qbosdk.apis.Customers.get_inactive',
             return_value=projects_data['create_new_auto_create_projects_destination_attributes_disable_case']
         )
         mock_call.side_effect = [
@@ -178,7 +182,7 @@ def test_auto_create_destination_attributes(mocker, db):
         )
         # In case of QBO the not re-enable case of destination attribute is same as create new case, the disabled values when re-enabled will only be added
         mocker.patch(
-            'qbosdk.apis.Customers.get',
+            'qbosdk.apis.Customers.get_inactive',
             return_value=projects_data['create_new_auto_create_projects_destination_attributes']
         )
         mock_call.side_effect = [
@@ -188,7 +192,7 @@ def test_auto_create_destination_attributes(mocker, db):
 
         pre_run_destination_attribute_count = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'CUSTOMER', active=False).count()
 
-        assert pre_run_destination_attribute_count == 2
+        assert pre_run_destination_attribute_count == 40
 
         pre_run_expense_attribute_count = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'PROJECT', active=False).count()
 
@@ -198,7 +202,7 @@ def test_auto_create_destination_attributes(mocker, db):
 
         post_run_destination_attribute_count = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'CUSTOMER', active=False).count()
 
-        assert post_run_destination_attribute_count == pre_run_destination_attribute_count - 2
+        assert post_run_destination_attribute_count == pre_run_destination_attribute_count + 1
 
         post_run_expense_attribute_count = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'PROJECT', active=False).count()
 

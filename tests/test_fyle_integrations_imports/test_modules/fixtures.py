@@ -1821,7 +1821,38 @@ projects_data = {
             'CompanyName':'1047 S Ocean Blvd',
             'DisplayName':'1047 S Ocean Blvd',
             'PrintOnCheckName':'1047 S Ocean Blvd',
-            'Active':True
+            'Active':False
+        },
+        {
+            'Taxable':True,
+            'BillAddr':{
+                'Id':'111'
+            },
+            'ShipAddr':{
+                'Id':'111'
+            },
+            'Job':False,
+            'BillWithParent':False,
+            'Balance':0,
+            'BalanceWithJobs':0,
+            'CurrencyRef':{
+                'value':'USD',
+                'name':'United States Dollar'
+            },
+            'PreferredDeliveryMethod':'Print',
+            'domain':'QBO',
+            'sparse':False,
+            'Id':'235',
+            'SyncToken':'2',
+            'MetaData':{
+                'CreateTime':'2023-11-19T00:02:16-08:00',
+                'LastUpdatedTime':'2023-11-19T00:07:02-08:00'
+            },
+            'FullyQualifiedName':'David',
+            'CompanyName':'David',
+            'DisplayName':'David',
+            'PrintOnCheckName':'David',
+            'Active':False
         },
         {
             'Taxable':True,
@@ -1851,7 +1882,7 @@ projects_data = {
             'FullyQualifiedName':'12 - Project 1',
             'DisplayName':'12 - Project 1',
             'PrintOnCheckName':'12 - Project 1',
-            'Active':True
+            'Active':False
         },
         {
             'Taxable':True,
@@ -1896,7 +1927,7 @@ projects_data = {
             'CompanyName':"Amy's Bird Sanctuary",
             'DisplayName':"Amy's Bird Sanctuary",
             'PrintOnCheckName':"Amy's Bird Sanctuary",
-            'Active':True,
+            'Active':False,
             'PrimaryPhone':{
                 'FreeFormNumber':'(650) 555-3311'
             },
@@ -1930,7 +1961,7 @@ projects_data = {
             'FullyQualifiedName':"Amy's Bird Sanctuary:Test Project",
             'DisplayName':'Test Project',
             'PrintOnCheckName':'Test Project',
-            'Active':True
+            'Active':False
         },
         {
             'Taxable':True,
@@ -1960,7 +1991,7 @@ projects_data = {
             'FullyQualifiedName':'Ashu Staging',
             'DisplayName':'Ashu Staging',
             'PrintOnCheckName':'Ashu Staging',
-            'Active':True
+            'Active':False
         },
         {
             'Taxable':True,
@@ -1985,7 +2016,7 @@ projects_data = {
             'FullyQualifiedName':'Ashwinn',
             'DisplayName':'Ashwinn',
             'PrintOnCheckName':'Ashwinn',
-            'Active':True,
+            'Active':False,
             'DefaultTaxCodeRef':{
                 'value':'2'
             }
@@ -2024,7 +2055,7 @@ projects_data = {
             'CompanyName':"Bill's Windsurf Shop",
             'DisplayName':"Bill's Windsurf Shop",
             'PrintOnCheckName':"Bill's Windsurf Shop",
-            'Active':True,
+            'Active':False,
             'PrimaryPhone':{
                 'FreeFormNumber':'(415) 444-6538'
             },
@@ -2066,7 +2097,7 @@ projects_data = {
             'CompanyName':'Cool Cars',
             'DisplayName':'Cool Cars',
             'PrintOnCheckName':'Cool Cars',
-            'Active':True,
+            'Active':False,
             'PrimaryPhone':{
                 'FreeFormNumber':'(415) 555-9933'
             },
@@ -2103,7 +2134,7 @@ projects_data = {
             'CompanyName':'Cred Technologies',
             'DisplayName':'Cred Technologies',
             'PrintOnCheckName':'Cred Technologies',
-            'Active':True
+            'Active':False
         },
         {
             'Taxable':False,
@@ -2138,7 +2169,7 @@ projects_data = {
             'FullyQualifiedName':'Diego Rodriguez',
             'DisplayName':'Diego Rodriguez',
             'PrintOnCheckName':'Diego Rodriguez',
-            'Active':True,
+            'Active':False,
             'PrimaryPhone':{
                 'FreeFormNumber':'(650) 555-4477'
             },
@@ -2172,7 +2203,7 @@ projects_data = {
             'FullyQualifiedName':'Diego Rodriguez:Test Project',
             'DisplayName':'Test Project',
             'PrintOnCheckName':'Test Project',
-            'Active':True
+            'Active':False
         },
         {
             'Taxable':True,
@@ -2217,7 +2248,7 @@ projects_data = {
             'CompanyName':'Dukes Basketball Camp',
             'DisplayName':'Dukes Basketball Camp',
             'PrintOnCheckName':'Dukes Basketball Camp',
-            'Active':True,
+            'Active':False,
             'PrimaryPhone':{
                 'FreeFormNumber':'(520) 420-5638'
             },
@@ -2249,7 +2280,7 @@ projects_data = {
             'FullyQualifiedName':'Dylan Sollfrank',
             'DisplayName':'Dylan Sollfrank',
             'PrintOnCheckName':'Dylan Sollfrank',
-            'Active':True
+            'Active':False
         },
         {
             'Taxable':False,
@@ -2294,7 +2325,7 @@ projects_data = {
             'CompanyName':'Freeman Sporting Goods',
             'DisplayName':'Freeman Sporting Goods',
             'PrintOnCheckName':'Freeman Sporting Goods',
-            'Active':True,
+            'Active':False,
             'PrimaryPhone':{
                 'FreeFormNumber':'(650) 555-0987'
             },
@@ -2358,7 +2389,7 @@ projects_data = {
             'CompanyName':'Freeman Sporting Goods',
             'DisplayName':'0969 Ocean View Road',
             'PrintOnCheckName':'Freeman Sporting Goods',
-            'Active':True,
+            'Active':False,
             'PrimaryPhone':{
                 'FreeFormNumber':'(415) 555-9933'
             },
@@ -2421,7 +2452,7 @@ projects_data = {
             'CompanyName':'Freeman Sporting Goods',
             'DisplayName':'55 Twin Lane',
             'PrintOnCheckName':'Freeman Sporting Goods',
-            'Active':True,
+            'Active':False,
             'PrimaryPhone':{
                 'FreeFormNumber':'(650) 555-0987'
             },
@@ -2480,7 +2511,7 @@ projects_data = {
             'FullyQualifiedName':'Geeta Kalapatapu',
             'DisplayName':'Geeta Kalapatapu',
             'PrintOnCheckName':'Geeta Kalapatapu',
-            'Active':True,
+            'Active':False,
             'PrimaryPhone':{
                 'FreeFormNumber':'(650) 555-0022'
             },
@@ -2531,7 +2562,7 @@ projects_data = {
             'CompanyName':'Gevelber Photography',
             'DisplayName':'Gevelber Photography',
             'PrintOnCheckName':'Gevelber Photography',
-            'Active':True,
+            'Active':False,
             'PrimaryPhone':{
                 'FreeFormNumber':'(415) 222-4345'
             },
@@ -2585,7 +2616,7 @@ projects_data = {
             'CompanyName':"Jeff's Jalopies",
             'DisplayName':"Jeff's Jalopies",
             'PrintOnCheckName':"Jeff's Jalopies",
-            'Active':True,
+            'Active':False,
             'PrimaryPhone':{
                 'FreeFormNumber':'(650) 555-8989'
             },
@@ -2635,7 +2666,7 @@ projects_data = {
             'FullyQualifiedName':'John Melton',
             'DisplayName':'John Melton',
             'PrintOnCheckName':'John Melton',
-            'Active':True,
+            'Active':False,
             'PrimaryPhone':{
                 'FreeFormNumber':'(650) 555-5879'
             },
@@ -2687,7 +2718,7 @@ projects_data = {
             'FullyQualifiedName':'Kate Whelan',
             'DisplayName':'Kate Whelan',
             'PrintOnCheckName':'Kate Whelan',
-            'Active':True,
+            'Active':False,
             'PrimaryPhone':{
                 'FreeFormNumber':'(650) 554-8822'
             },
@@ -2724,7 +2755,7 @@ projects_data = {
             'CompanyName':'laysBlue',
             'DisplayName':'laysBlue',
             'PrintOnCheckName':'laysBlue',
-            'Active':True
+            'Active':False
         },
         {
             'Taxable':True,
@@ -2755,7 +2786,7 @@ projects_data = {
             'CompanyName':'laysRed',
             'DisplayName':'laysRed',
             'PrintOnCheckName':'laysRed',
-            'Active':True
+            'Active':False
         },
         {
             'Taxable':False,
@@ -2799,7 +2830,7 @@ projects_data = {
             'FullyQualifiedName':'Mark Cho',
             'DisplayName':'Mark Cho',
             'PrintOnCheckName':'Mark Cho',
-            'Active':True,
+            'Active':False,
             'PrimaryPhone':{
                 'FreeFormNumber':'(650) 554-1479'
             },
@@ -2835,7 +2866,7 @@ projects_data = {
             'FullyQualifiedName':'naruto uzumaki',
             'DisplayName':'naruto uzumaki',
             'PrintOnCheckName':'naruto uzumaki',
-            'Active':True
+            'Active':False
         },
         {
             'Taxable':True,
@@ -2865,7 +2896,7 @@ projects_data = {
             'FullyQualifiedName':'New Inactive boi',
             'DisplayName':'New Inactive boi',
             'PrintOnCheckName':'New Inactive boi',
-            'Active':True
+            'Active':False
         },
         {
             'Taxable':False,
@@ -2910,7 +2941,7 @@ projects_data = {
             'CompanyName':"Pye's Cakes",
             'DisplayName':"Pye's Cakes",
             'PrintOnCheckName':"Pye's Cakes",
-            'Active':True,
+            'Active':False,
             'PrimaryPhone':{
                 'FreeFormNumber':'(973) 555-4652'
             },
@@ -2967,7 +2998,7 @@ projects_data = {
             'CompanyName':'Rago Travel Agency',
             'DisplayName':'Rago Travel Agency',
             'PrintOnCheckName':'Rago Travel Agency',
-            'Active':True,
+            'Active':False,
             'PrimaryPhone':{
                 'FreeFormNumber':'(650) 555-1596'
             },
@@ -3018,7 +3049,7 @@ projects_data = {
             'CompanyName':'Red Rock Diner',
             'DisplayName':'Red Rock Diner',
             'PrintOnCheckName':'Red Rock Diner',
-            'Active':True,
+            'Active':False,
             'PrimaryPhone':{
                 'FreeFormNumber':'(650) 555-4973'
             },
@@ -3069,7 +3100,7 @@ projects_data = {
             'FullyQualifiedName':'Rondonuwu Fruit and Vegi',
             'DisplayName':'Rondonuwu Fruit and Vegi',
             'PrintOnCheckName':'Rondonuwu Fruit and Vegi',
-            'Active':True,
+            'Active':False,
             'PrimaryPhone':{
                 'FreeFormNumber':'(650) 555-2645'
             },
@@ -3119,7 +3150,7 @@ projects_data = {
             'FullyQualifiedName':'Shara Barnett',
             'DisplayName':'Shara Barnett',
             'PrintOnCheckName':'Shara Barnett',
-            'Active':True,
+            'Active':False,
             'PrimaryPhone':{
                 'FreeFormNumber':'(650) 555-4563'
             },
@@ -3174,7 +3205,7 @@ projects_data = {
             'CompanyName':'Barnett Design',
             'DisplayName':'Barnett Design',
             'PrintOnCheckName':'Barnett Design',
-            'Active':True,
+            'Active':False,
             'PrimaryPhone':{
                 'FreeFormNumber':'(650) 557-1289'
             },
@@ -3225,7 +3256,7 @@ projects_data = {
             'CompanyName':'Sonnenschein Family Store',
             'DisplayName':'Sonnenschein Family Store',
             'PrintOnCheckName':'Sonnenschein Family Store',
-            'Active':True,
+            'Active':False,
             'PrimaryPhone':{
                 'FreeFormNumber':'(650) 557-8463'
             },
@@ -3276,7 +3307,7 @@ projects_data = {
             'CompanyName':'Sushi by Katsuyuki',
             'DisplayName':'Sushi by Katsuyuki',
             'PrintOnCheckName':'Sushi by Katsuyuki',
-            'Active':True,
+            'Active':False,
             'PrimaryPhone':{
                 'FreeFormNumber':'(505) 570-0147'
             },
@@ -3326,7 +3357,7 @@ projects_data = {
             'FullyQualifiedName':'Travis Waldron',
             'DisplayName':'Travis Waldron',
             'PrintOnCheckName':'Travis Waldron',
-            'Active':True,
+            'Active':False,
             'PrimaryPhone':{
                 'FreeFormNumber':'(650) 557-9977'
             },
@@ -3377,7 +3408,7 @@ projects_data = {
             'CompanyName':'Video Games by Dan',
             'DisplayName':'Video Games by Dan',
             'PrintOnCheckName':'Video Games by Dan',
-            'Active':True,
+            'Active':False,
             'PrimaryPhone':{
                 'FreeFormNumber':'(650) 555-3456'
             },
@@ -3428,7 +3459,7 @@ projects_data = {
             'CompanyName':'Wedding Planning by Whitney',
             'DisplayName':'Wedding Planning by Whitney',
             'PrintOnCheckName':'Wedding Planning by Whitney',
-            'Active':True,
+            'Active':False,
             'PrimaryPhone':{
                 'FreeFormNumber':'(650) 557-2473'
             },
@@ -3482,7 +3513,7 @@ projects_data = {
             'CompanyName':'Weiskopf Consulting',
             'DisplayName':'Weiskopf Consulting',
             'PrintOnCheckName':'Weiskopf Consulting',
-            'Active':True,
+            'Active':False,
             'PrimaryPhone':{
                 'FreeFormNumber':'(650) 555-1423'
             },
@@ -3518,7 +3549,7 @@ projects_data = {
             'FullyQualifiedName':'wraith squad',
             'DisplayName':'wraith squad',
             'PrintOnCheckName':'wraith squad',
-            'Active':True
+            'Active':False
         }
     ],
     "create_new_auto_create_projects_expense_attributes_0": [
@@ -6222,7 +6253,7 @@ categories_data = {
             'Name':'Lolsob',
             'SubAccount':False,
             'FullyQualifiedName':'Lolsob',
-            'Active':True,
+            'Active':False,
             'Classification':'Expense',
             'AccountType':'Expense',
             'AccountSubType':'Entertainment',
@@ -6236,6 +6267,30 @@ categories_data = {
             'domain':'QBO',
             'sparse':False,
             'Id':'104',
+            'SyncToken':'0',
+            'MetaData':{
+                'CreateTime':'2021-02-28T19:29:03-08:00',
+                'LastUpdatedTime':'2021-02-28T19:29:03-08:00'
+            }
+        },
+        {
+            'Name':'Levi',
+            'SubAccount':False,
+            'FullyQualifiedName':'Levi',
+            'Active':False,
+            'Classification':'Expense',
+            'AccountType':'Expense',
+            'AccountSubType':'Entertainment',
+            'AcctNum':'3506',
+            'CurrentBalance':0,
+            'CurrentBalanceWithSubAccounts':0,
+            'CurrencyRef':{
+                'value':'USD',
+                'name':'United States Dollar'
+            },
+            'domain':'QBO',
+            'sparse':False,
+            'Id':'105',
             'SyncToken':'0',
             'MetaData':{
                 'CreateTime':'2021-02-28T19:29:03-08:00',
@@ -6387,7 +6442,7 @@ categories_data = {
         {
             "Name": "Lighting",
             "Description": "Garden Lighting",
-            "Active": True,
+            "Active": False,
             "FullyQualifiedName": "Lighting",
             "Taxable": True,
             "UnitPrice": 0,
@@ -6404,7 +6459,7 @@ categories_data = {
         {
             "Name": "Maintenance & Repair",
             "Description": "Maintenance & Repair",
-            "Active": True,
+            "Active": False,
             "FullyQualifiedName": "Maintenance & Repair",
             "Taxable": False,
             "UnitPrice": 0,
@@ -6417,6 +6472,23 @@ categories_data = {
             "Id": "9",
             "SyncToken": "0",
             "MetaData": {"CreateTime": "2019-12-16T10:45:18-08:00", "LastUpdatedTime": "2019-12-16T10:45:18-08:00"},
+        },
+        {
+            "Name": "Concrete",
+            "Description": "Concrete for fountain installation",
+            "Active": False,
+            "FullyQualifiedName": "Concrete",
+            "Taxable": True,
+            "UnitPrice": 0,
+            "Type": "Service",
+            "IncomeAccountRef": {"value": "48", "name": "Fountains and Garden Lighting"},
+            "PurchaseCost": 0,
+            "TrackQtyOnHand": False,
+            "domain": "QBO",
+            "sparse": False,
+            "Id": "3",
+            "SyncToken": "1",
+            "MetaData": {"CreateTime": "2019-12-16T10:36:03-08:00", "LastUpdatedTime": "2019-12-19T12:47:47-08:00"},
         }
     ],
     "create_new_auto_create_categories_expense_attributes_0": [

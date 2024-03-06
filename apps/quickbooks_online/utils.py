@@ -436,7 +436,8 @@ class QBOConnector:
                 display_name = customer['DisplayName'].replace(" (deleted)", "").rstrip()
                 customer_attributes.append({'attribute_type': 'CUSTOMER', 'display_name': 'customer', 'value': display_name, 'destination_id': customer['Id'], 'active': False})
 
-            DestinationAttribute.bulk_create_or_update_destination_attributes(customer_attributes, 'CUSTOMER', self.workspace_id, True)
+                DestinationAttribute.bulk_create_or_update_destination_attributes(customer_attributes, 'CUSTOMER', self.workspace_id, True)
+
         return []
 
     def sync_dimensions(self):

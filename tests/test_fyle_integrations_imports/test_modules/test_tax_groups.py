@@ -14,7 +14,7 @@ from tests.test_fyle_integrations_imports.test_modules.fixtures import tax_group
 def test_sync_destination_attributes(mocker, db):
     workspace_id = 5
     mocker.patch(
-        'qbosdk.apis.TaxCodes.get',
+        'qbosdk.apis.TaxCodes.get_all_generator',
         return_value=tax_groups_data['create_new_auto_create_tax_groups_destination_attributes']
     )
     mocker.patch(
@@ -102,7 +102,7 @@ def test_auto_create_destination_attributes(mocker, db):
             return_value=[]
         )
         mocker.patch(
-            'qbosdk.apis.TaxCodes.get',
+            'qbosdk.apis.TaxCodes.get_all_generator',
             return_value=tax_groups_data['create_new_auto_create_tax_groups_destination_attributes']
         )
         mocker.patch(
@@ -139,7 +139,7 @@ def test_auto_create_destination_attributes(mocker, db):
             return_value=[]
         )
         mocker.patch(
-            'qbosdk.apis.TaxCodes.get',
+            'qbosdk.apis.TaxCodes.get_all_generator',
             return_value=tax_groups_data['create_new_auto_create_tax_groups_destination_attributes_subsequent_case']
         )
         mocker.patch(

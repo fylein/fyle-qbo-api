@@ -119,6 +119,8 @@ def test_auto_create_destination_attributes(mocker, db):
     DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='CUSTOMER').delete()
     ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type='PROJECT').delete()
 
+    mocker.patch('qbosdk.apis.Customers.get_inactive', return_value=[])
+
     with mock.patch('fyle.platform.apis.v1beta.admin.Projects.list_all') as mock_call:
         mocker.patch(
             'fyle_integrations_platform_connector.apis.Projects.post_bulk',
@@ -129,7 +131,7 @@ def test_auto_create_destination_attributes(mocker, db):
             return_value=41
         )
         mocker.patch(
-            'qbosdk.apis.Customers.get',
+            'qbosdk.apis.Customers.get_all_generator',
             return_value=projects_data['create_new_auto_create_projects_destination_attributes']
         )
         mock_call.side_effect = [
@@ -193,7 +195,7 @@ def test_auto_create_destination_attributes(mocker, db):
             return_value=0
         )
         mocker.patch(
-            'qbosdk.apis.Customers.get',
+            'qbosdk.apis.Customers.get_all_generator',
             return_value=[]
         )
         mock_call.side_effect = [
@@ -221,9 +223,14 @@ def test_auto_create_destination_attributes(mocker, db):
             'fyle_integrations_platform_connector.apis.Categories.post_bulk',
             return_value=[]
         )
-        mocker.patch('qbosdk.apis.Items.get',return_value=[])
+        mocker.patch('qbosdk.apis.Items.get_all_generator',return_value=[])
+        mocker.patch('qbosdk.apis.Items.get_inactive',return_value=[])
         mocker.patch(
-            'qbosdk.apis.Accounts.get',
+            'qbosdk.apis.Accounts.get_all_generator',
+            return_value=[]
+        )
+        mocker.patch(
+            'qbosdk.apis.Accounts.get_inactive',
             return_value=[]
         )
         mock_call.side_effect = [
