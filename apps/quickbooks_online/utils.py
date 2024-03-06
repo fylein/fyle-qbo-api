@@ -26,6 +26,7 @@ from apps.quickbooks_online.models import (
     QBOExpenseLineitem,
 )
 from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSettings
+from fyle_integrations_imports.models import ImportLog
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -120,31 +121,38 @@ class QBOConnector:
         Get items
         """
         items = self.connection.items.get_all_generator()
-        item_attributes = []
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
-
-        # getting all the items stored in the DB
-        destination_attributes = DestinationAttribute.objects.filter(workspace_id=self.workspace_id, attribute_type='ACCOUNT', display_name='Item').values('destination_id', 'value')
-        disabled_fields_map = {}
-
-        # Assigning them to a map in destination_id as key and value as value
-        for destination_attribute in destination_attributes:
-            disabled_fields_map[destination_attribute['destination_id']] = {'value': destination_attribute['value']}
 
         # For getting all the items, any inactive item will not be returned
         for item in items:
+            item_attributes = []
             if item['Active']:
                 item_attributes.append({'attribute_type': 'ACCOUNT', 'display_name': 'Item', 'value': item['FullyQualifiedName'], 'destination_id': item['Id'], 'active': general_settings.import_items if general_settings else False})
-                # If item is active and present in the map, remove it from the map
-                if item['Id'] in disabled_fields_map:
-                    disabled_fields_map.pop(item['Id'])
+                DestinationAttribute.bulk_create_or_update_destination_attributes(item_attributes, 'ACCOUNT', self.workspace_id, True, 'Item')
 
-        # Since the item was present in the map, it means it is not active anymore
-        # So we need to set active to false and add it to the list
-        for destination_id in disabled_fields_map:
-            item_attributes.append({'attribute_type': 'ACCOUNT', 'display_name': 'Item', 'value': disabled_fields_map[destination_id]['value'], 'destination_id': destination_id, 'active': False})
+        # use the last_successful_run_at if not null else workspace.created_at to pass as a threshold for getting the inactive records
+        import_log = ImportLog.objects.filter(workspace_id=self.workspace_id, attribute_type='CATEGORY').first()
+        workspace_created_at = Workspace.objects.get(id=self.workspace_id).created_at
 
-        DestinationAttribute.bulk_create_or_update_destination_attributes(item_attributes, 'ACCOUNT', self.workspace_id, True, 'Item')
+        last_updated_time = None
+
+        if import_log is not None and import_log.last_successful_run_at is not None:
+            last_updated_time = import_log.last_successful_run_at
+        else:
+            last_updated_time = workspace_created_at
+
+        if last_updated_time is not None:
+            last_updated_time = last_updated_time.strftime("%Y-%m-%dT%H:%M:%S")
+
+        # get the inactive items generator
+        inactive_items = self.connection.items.get_inactive(last_updated_time)
+
+        for item in inactive_items:
+            item_attributes = []
+            value = item['FullyQualifiedName'].replace(" (deleted)", "").rstrip()
+            item_attributes.append({'attribute_type': 'ACCOUNT', 'display_name': 'Item', 'value': value, 'destination_id': item['Id'], 'active': False})
+            DestinationAttribute.bulk_create_or_update_destination_attributes(item_attributes, 'ACCOUNT', self.workspace_id, True, 'Item')
+
         return []
 
     def sync_accounts(self):
@@ -157,28 +165,15 @@ class QBOConnector:
         if general_settings:
             category_sync_version = general_settings.category_sync_version
 
-        account_attributes = {'account': [], 'credit_card_account': [], 'bank_account': [], 'accounts_payable': []}
-
-        filters = {'workspace_id': self.workspace_id, 'attribute_type': 'ACCOUNT'}
-        if general_settings:
-            filters['detail__account_type__in'] = general_settings.charts_of_accounts
-
-        destination_attributes = DestinationAttribute.objects.filter(**filters).values('destination_id', 'value', 'detail')
-
-        disabled_fields_map = {}
-
-        for destination_attribute in destination_attributes:
-            disabled_fields_map[destination_attribute['destination_id']] = {'value': destination_attribute['value'], 'detail': destination_attribute['detail']}
-
         for account in accounts:
+            account_attributes = {'account': [], 'credit_card_account': [], 'bank_account': [], 'accounts_payable': []}
+
             value = format_special_characters(account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])
 
             if general_settings and account['AccountType'] in CHARTS_OF_ACCOUNTS and value:
                 account_attributes['account'].append(
                     {'attribute_type': 'ACCOUNT', 'display_name': 'Account', 'value': value, 'destination_id': account['Id'], 'active': True, 'detail': {'fully_qualified_name': account['FullyQualifiedName'], 'account_type': account['AccountType']}}
                 )
-                if account['Id'] in disabled_fields_map:
-                    disabled_fields_map.pop(account['Id'])
 
             elif account['AccountType'] == 'Credit Card' and value:
                 account_attributes['credit_card_account'].append(
@@ -216,21 +211,44 @@ class QBOConnector:
                     }
                 )
 
-        for destination_id in disabled_fields_map:
+            for attribute_type, attribute in account_attributes.items():
+                if attribute:
+                    DestinationAttribute.bulk_create_or_update_destination_attributes(attribute, attribute_type.upper(), self.workspace_id, True, attribute_type.title().replace('_', ' '))
+
+        # use the last_successful_run_at if not null else workspace.created_at to pass as a threshold for getting the inactive records
+        import_log = ImportLog.objects.filter(workspace_id=self.workspace_id, attribute_type='CATEGORY').first()
+        workspace_created_at = Workspace.objects.get(id=self.workspace_id).created_at
+        last_updated_time = None
+
+        if import_log is not None and import_log.last_successful_run_at is not None:
+            last_updated_time = import_log.last_successful_run_at
+        else:
+            last_updated_time = workspace_created_at
+
+        if last_updated_time is not None:
+            last_updated_time = last_updated_time.strftime("%Y-%m-%dT%H:%M:%S")
+
+        # get the inactive accounts generator
+        inactive_accounts = self.connection.accounts.get_inactive(last_updated_time)
+
+        for account in inactive_accounts:
+            account_attributes = {'account': []}
+            value = account['Name'].replace(" (deleted)", "").rstrip() if category_sync_version == 'v1' else account['FullyQualifiedName'].replace(" (deleted)", "").rstrip()
+            full_qualified_name = account['FullyQualifiedName'].replace(" (deleted)", "").rstrip()
             account_attributes['account'].append(
                 {
                     'attribute_type': 'ACCOUNT',
                     'display_name': 'Account',
-                    'value': disabled_fields_map[destination_id]['value'],
-                    'destination_id': destination_id,
+                    'value': value,
+                    'destination_id': account['Id'],
                     'active': False,
-                    'detail': {'fully_qualified_name': disabled_fields_map[destination_id]['detail']['fully_qualified_name'], 'account_type': disabled_fields_map[destination_id]['detail']['account_type']},
+                    'detail': {'fully_qualified_name': full_qualified_name, 'account_type': account['AccountType']},
                 }
             )
 
-        for attribute_type, attribute in account_attributes.items():
-            if attribute:
-                DestinationAttribute.bulk_create_or_update_destination_attributes(attribute, attribute_type.upper(), self.workspace_id, True, attribute_type.title().replace('_', ' '))
+            for attribute_type, attribute in account_attributes.items():
+                if attribute:
+                    DestinationAttribute.bulk_create_or_update_destination_attributes(attribute, attribute_type.upper(), self.workspace_id, True, attribute_type.title().replace('_', ' '))
         return []
 
     def sync_departments(self):
@@ -239,12 +257,11 @@ class QBOConnector:
         """
         departments = self.connection.departments.get_all_generator()
 
-        department_attributes = []
-
         for department in departments:
+            department_attributes = []
             department_attributes.append({'attribute_type': 'DEPARTMENT', 'display_name': 'Department', 'value': department['FullyQualifiedName'], 'destination_id': department['Id'], 'active': department['Active']})
 
-        DestinationAttribute.bulk_create_or_update_destination_attributes(department_attributes, 'DEPARTMENT', self.workspace_id, True)
+            DestinationAttribute.bulk_create_or_update_destination_attributes(department_attributes, 'DEPARTMENT', self.workspace_id, True)
         return []
 
     def sync_tax_codes(self):
@@ -253,8 +270,8 @@ class QBOConnector:
         """
         tax_codes = self.connection.tax_codes.get_all_generator()
 
-        tax_attributes = []
         for tax_code in tax_codes:
+            tax_attributes = []
             if 'PurchaseTaxRateList' in tax_code.keys():
                 if tax_code['PurchaseTaxRateList']['TaxRateDetail']:
                     effective_tax_rate, tax_rates = self.get_effective_tax_rates(tax_code['PurchaseTaxRateList']['TaxRateDetail'])
@@ -270,7 +287,7 @@ class QBOConnector:
                             }
                         )
 
-        DestinationAttribute.bulk_create_or_update_destination_attributes(tax_attributes, 'TAX_CODE', self.workspace_id, True)
+            DestinationAttribute.bulk_create_or_update_destination_attributes(tax_attributes, 'TAX_CODE', self.workspace_id, True)
 
         return []
 
@@ -280,14 +297,9 @@ class QBOConnector:
         """
         vendors = self.connection.vendors.get_all_generator()
 
-        vendor_attributes = []
-        destination_attributes = DestinationAttribute.objects.filter(workspace_id=self.workspace_id, attribute_type='VENDOR').values('destination_id', 'value')
-        disabled_fields_map = {}
-
-        for destination_attribute in destination_attributes:
-            disabled_fields_map[destination_attribute['destination_id']] = {'value': destination_attribute['value']}
-
         for vendor in vendors:
+            vendor_attributes = []
+
             if vendor['Active']:
                 detail = {
                     'email': vendor['PrimaryEmailAddr']['Address'] if ('PrimaryEmailAddr' in vendor and vendor['PrimaryEmailAddr'] and 'Address' in vendor['PrimaryEmailAddr'] and vendor['PrimaryEmailAddr']['Address']) else None,
@@ -295,15 +307,31 @@ class QBOConnector:
                 }
 
                 vendor_attributes.append({'attribute_type': 'VENDOR', 'display_name': 'vendor', 'value': vendor['DisplayName'], 'destination_id': vendor['Id'], 'detail': detail, 'active': vendor['Active']})
+                DestinationAttribute.bulk_create_or_update_destination_attributes(vendor_attributes, 'VENDOR', self.workspace_id, True)
 
-                if vendor['Id'] in disabled_fields_map:
-                    disabled_fields_map.pop(vendor['Id'])
+        # use the last_successful_run_at if not null else workspace.created_at to pass as a threshold for getting the inactive records
+        import_log = ImportLog.objects.filter(workspace_id=self.workspace_id, attribute_type='VENDOR').first()
+        workspace_created_at = Workspace.objects.get(id=self.workspace_id).created_at
 
-        # For setting active to False
-        for destination_id in disabled_fields_map:
-            vendor_attributes.append({'attribute_type': 'VENDOR', 'display_name': 'vendor', 'value': disabled_fields_map[destination_id]['value'], 'destination_id': destination_id, 'active': False})
+        last_updated_time = None
 
-        DestinationAttribute.bulk_create_or_update_destination_attributes(vendor_attributes, 'VENDOR', self.workspace_id, True)
+        if import_log is not None and import_log.last_successful_run_at is not None:
+            last_updated_time = import_log.last_successful_run_at
+        else:
+            last_updated_time = workspace_created_at
+
+        if last_updated_time is not None:
+            last_updated_time = last_updated_time.strftime("%Y-%m-%dT%H:%M:%S")
+
+        # get the inactive vendors generator
+        inactive_vendors = self.connection.vendors.get_inactive(last_updated_time)
+
+        for vendor in inactive_vendors:
+            vendor_attributes = []
+            vendor_display_name = vendor['DisplayName'].replace(" (deleted)", "").rstrip()
+            vendor_attributes.append({'attribute_type': 'VENDOR', 'display_name': 'vendor', 'value': vendor_display_name, 'destination_id': vendor['Id'], 'active': False})
+
+            DestinationAttribute.bulk_create_or_update_destination_attributes(vendor_attributes, 'VENDOR', self.workspace_id, True)
 
         return []
 
@@ -348,14 +376,13 @@ class QBOConnector:
         """
         employees = self.connection.employees.get_all_generator()
 
-        employee_attributes = []
-
         for employee in employees:
+            employee_attributes = []
             detail = {'email': employee['PrimaryEmailAddr']['Address'] if ('PrimaryEmailAddr' in employee and employee['PrimaryEmailAddr'] and 'Address' in employee['PrimaryEmailAddr'] and employee['PrimaryEmailAddr']['Address']) else None}
 
             employee_attributes.append({'attribute_type': 'EMPLOYEE', 'display_name': 'employee', 'value': employee['DisplayName'], 'destination_id': employee['Id'], 'detail': detail, 'active': True})
 
-        DestinationAttribute.bulk_create_or_update_destination_attributes(employee_attributes, 'EMPLOYEE', self.workspace_id, True)
+            DestinationAttribute.bulk_create_or_update_destination_attributes(employee_attributes, 'EMPLOYEE', self.workspace_id, True)
         return []
 
     def sync_classes(self):
@@ -364,12 +391,11 @@ class QBOConnector:
         """
         classes = self.connection.classes.get_all_generator()
 
-        class_attributes = []
-
         for qbo_class in classes:
+            class_attributes = []
             class_attributes.append({'attribute_type': 'CLASS', 'display_name': 'class', 'value': qbo_class['FullyQualifiedName'], 'destination_id': qbo_class['Id'], 'active': qbo_class['Active']})
 
-        DestinationAttribute.bulk_create_or_update_destination_attributes(class_attributes, 'CLASS', self.workspace_id, True)
+            DestinationAttribute.bulk_create_or_update_destination_attributes(class_attributes, 'CLASS', self.workspace_id, True)
         return []
 
     def sync_customers(self):
@@ -380,23 +406,35 @@ class QBOConnector:
         if customers_count < SYNC_UPPER_LIMIT['customers']:
             customers = self.connection.customers.get_all_generator()
 
-            customer_attributes = []
-            destination_attributes = DestinationAttribute.objects.filter(workspace_id=self.workspace_id, attribute_type='CUSTOMER', display_name='customer').values('destination_id', 'value')
-            disabled_fields_map = {}
-
-            for destination_attribute in destination_attributes:
-                disabled_fields_map[destination_attribute['destination_id']] = {'value': destination_attribute['value']}
-
             for customer in customers:
+                customer_attributes = []
                 value = format_special_characters(customer['FullyQualifiedName'])
                 if customer['Active'] and value:
                     customer_attributes.append({'attribute_type': 'CUSTOMER', 'display_name': 'customer', 'value': value, 'destination_id': customer['Id'], 'active': True})
-                    if customer['Id'] in disabled_fields_map:
-                        disabled_fields_map.pop(customer['Id'])
 
-            # For setting active to False
-            for destination_id in disabled_fields_map:
-                customer_attributes.append({'attribute_type': 'CUSTOMER', 'display_name': 'customer', 'value': disabled_fields_map[destination_id]['value'], 'destination_id': destination_id, 'active': False})
+                    DestinationAttribute.bulk_create_or_update_destination_attributes(customer_attributes, 'CUSTOMER', self.workspace_id, True)
+
+            # use the last_successful_run_at if not null else workspace.created_at to pass as a threshold for getting the inactive records
+            import_log = ImportLog.objects.filter(workspace_id=self.workspace_id, attribute_type='VENDOR').first()
+            workspace_created_at = Workspace.objects.get(id=self.workspace_id).created_at
+
+            last_updated_time = None
+
+            if import_log is not None and import_log.last_successful_run_at is not None:
+                last_updated_time = import_log.last_successful_run_at
+            else:
+                last_updated_time = workspace_created_at
+
+            if last_updated_time is not None:
+                last_updated_time = last_updated_time.strftime("%Y-%m-%dT%H:%M:%S")
+
+            # get the inactive customers generator
+            inactive_customers = self.connection.customers.get_inactive(last_updated_time)
+
+            for customer in inactive_customers:
+                customer_attributes = []
+                display_name = customer['DisplayName'].replace(" (deleted)", "").rstrip()
+                customer_attributes.append({'attribute_type': 'CUSTOMER', 'display_name': 'customer', 'value': display_name, 'destination_id': customer['Id'], 'active': False})
 
             DestinationAttribute.bulk_create_or_update_destination_attributes(customer_attributes, 'CUSTOMER', self.workspace_id, True)
         return []
