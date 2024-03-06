@@ -69,7 +69,7 @@ def test_auto_create_destination_attributes(mocker, db):
         )
         mocker.patch(
             'qbosdk.apis.Classes.get_all_generator',
-            return_value=expense_custom_field_data['create_new_auto_create_expense_custom_fields_destination_attributes']
+            return_value=[expense_custom_field_data['create_new_auto_create_expense_custom_fields_destination_attributes']]
         )
         mock_call.side_effect = [
             expense_custom_field_data['create_new_auto_create_expense_custom_fields_expense_attributes_0'],
@@ -105,7 +105,7 @@ def test_auto_create_destination_attributes(mocker, db):
         )
         mocker.patch(
             'qbosdk.apis.Classes.get_all_generator',
-            return_value=expense_custom_field_data['create_new_auto_create_expense_custom_fields_destination_attributes_subsequent_run']
+            return_value=[expense_custom_field_data['create_new_auto_create_expense_custom_fields_destination_attributes_subsequent_run']]
         )
         mock_call.side_effect = [
             expense_custom_field_data['create_new_auto_create_expense_custom_fields_expense_attributes_1'],

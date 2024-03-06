@@ -20,7 +20,7 @@ def test_sync_destination_attributes(mocker, db):
     )
     mocker.patch(
         'qbosdk.apis.Vendors.get_all_generator',
-        return_value=merchants_data['create_new_auto_create_merchants_destination_attributes']
+        return_value=[merchants_data['create_new_auto_create_merchants_destination_attributes']]
     )
 
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
@@ -101,7 +101,7 @@ def test_auto_create_destination_attributes(mocker, db):
         )
         mocker.patch(
             'qbosdk.apis.Vendors.get_all_generator',
-            return_value=merchants_data['create_new_auto_create_merchants_destination_attributes']
+            return_value=[merchants_data['create_new_auto_create_merchants_destination_attributes']]
         )
         mock_call.side_effect = [
             merchants_data['create_new_auto_create_merchants_expense_attributes_0'],
@@ -135,7 +135,7 @@ def test_auto_create_destination_attributes(mocker, db):
         )
         mocker.patch(
             'qbosdk.apis.Vendors.get_all_generator',
-            return_value=merchants_data['create_new_auto_create_merchants_destination_attributes_subsequent_run']
+            return_value=[merchants_data['create_new_auto_create_merchants_destination_attributes_subsequent_run']]
         )
         mock_call.side_effect = [
             merchants_data['create_new_auto_create_merchants_expense_attributes_1'],

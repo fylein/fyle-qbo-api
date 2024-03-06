@@ -15,7 +15,7 @@ def test_sync_destination_attributes(mocker, db):
     workspace_id = 3
 
     mocker.patch('qbosdk.apis.Customers.count', return_value=41)
-    mocker.patch('qbosdk.apis.Customers.get_all_generator', return_value=projects_data['create_new_auto_create_projects_destination_attributes'])
+    mocker.patch('qbosdk.apis.Customers.get_all_generator', return_value=[projects_data['create_new_auto_create_projects_destination_attributes']])
     mocker.patch('qbosdk.apis.Customers.get_inactive', return_value=[])
 
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
@@ -95,7 +95,7 @@ def test_auto_create_destination_attributes(mocker, db):
         )
         mocker.patch(
             'qbosdk.apis.Customers.get_all_generator',
-            return_value=projects_data['create_new_auto_create_projects_destination_attributes']
+            return_value=[projects_data['create_new_auto_create_projects_destination_attributes']]
         )
         mock_call.side_effect = [
             projects_data['create_new_auto_create_projects_expense_attributes_0'],
@@ -132,7 +132,7 @@ def test_auto_create_destination_attributes(mocker, db):
         )
         mocker.patch(
             'qbosdk.apis.Customers.get_inactive',
-            return_value=projects_data['create_new_auto_create_projects_destination_attributes_disable_case']
+            return_value=[projects_data['create_new_auto_create_projects_destination_attributes_disable_case']]
         )
         mock_call.side_effect = [
             projects_data['create_new_auto_create_projects_expense_attributes_3'],
@@ -183,7 +183,7 @@ def test_auto_create_destination_attributes(mocker, db):
         # In case of QBO the not re-enable case of destination attribute is same as create new case, the disabled values when re-enabled will only be added
         mocker.patch(
             'qbosdk.apis.Customers.get_inactive',
-            return_value=projects_data['create_new_auto_create_projects_destination_attributes']
+            return_value=[projects_data['create_new_auto_create_projects_destination_attributes']]
         )
         mock_call.side_effect = [
             projects_data['create_new_auto_create_projects_expense_attributes_3'],

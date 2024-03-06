@@ -33,7 +33,7 @@ def test_trigger_import_via_schedule(mocker, db):
         )
         mocker.patch(
             'qbosdk.apis.Customers.get_all_generator',
-            return_value=projects_data['create_new_auto_create_projects_destination_attributes']
+            return_value=[projects_data['create_new_auto_create_projects_destination_attributes']]
         )
         mocker.patch(
             'qbosdk.apis.Customers.get_inactive',

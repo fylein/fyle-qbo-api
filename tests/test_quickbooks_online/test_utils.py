@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 @pytest.mark.django_db
 def test_sync_employees(mocker, db):
-    mocker.patch('qbosdk.apis.Employees.get_all_generator', return_value=data['employee_response'])
+    mocker.patch('qbosdk.apis.Employees.get_all_generator', return_value=[data['employee_response']])
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
 
@@ -42,7 +42,7 @@ def test_post_vendor(mocker, db):
 
 
 def test_sync_vendors(mocker, db):
-    mocker.patch('qbosdk.apis.Vendors.get_all_generator', return_value=data['vendor_response'])
+    mocker.patch('qbosdk.apis.Vendors.get_all_generator', return_value=[data['vendor_response']])
     mocker.patch('qbosdk.apis.Vendors.get_inactive', return_value=[])
     qbo_credentials = QBOCredential.get_active_qbo_credentials(4)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=4)
@@ -57,7 +57,7 @@ def test_sync_vendors(mocker, db):
 
 
 def test_sync_departments(mocker, db):
-    mocker.patch('qbosdk.apis.Departments.get_all_generator', return_value=data['department_response'])
+    mocker.patch('qbosdk.apis.Departments.get_all_generator', return_value=[data['department_response']])
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
 
@@ -73,7 +73,7 @@ def test_sync_departments(mocker, db):
 def test_sync_items(mocker, db):
     mock_inactive = mocker.patch('qbosdk.apis.Items.get_inactive', return_value=[])
     with mock.patch('qbosdk.apis.Items.get_all_generator') as mock_call:
-        mock_call.return_value = data['items_response']
+        mock_call.return_value = [data['items_response']]
 
         qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
         qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
@@ -91,7 +91,7 @@ def test_sync_items(mocker, db):
         new_item_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='ACCOUNT', display_name='Item', active=True).count()
         assert new_item_count == 4
 
-        mock_inactive.return_value = data['items_response_with_inactive_values']
+        mock_inactive.return_value = [data['items_response_with_inactive_values']]
 
         qbo_connection.sync_items()
 
@@ -313,7 +313,7 @@ def test_get_tax_inclusive_amount(db):
 
 
 def test_sync_tax_codes(mocker, db):
-    mocker.patch('qbosdk.apis.TaxCodes.get_all_generator', return_value=data['tax_code_response'])
+    mocker.patch('qbosdk.apis.TaxCodes.get_all_generator', return_value=[data['tax_code_response']])
     mocker.patch('qbosdk.apis.TaxRates.get_by_id', return_value=data['tax_rate_get_by_id'])
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
@@ -329,7 +329,7 @@ def test_sync_tax_codes(mocker, db):
 
 def tests_sync_accounts(mocker, db):
     mocker.patch('qbosdk.apis.Accounts.get_inactive', return_value=[])
-    mocker.patch('qbosdk.apis.Accounts.get_all_generator', return_value=data['account_response'])
+    mocker.patch('qbosdk.apis.Accounts.get_all_generator', return_value=[data['account_response']])
 
     qbo_credentials = QBOCredential.get_active_qbo_credentials(1)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=1)
@@ -374,7 +374,7 @@ def test_sync_dimensions(mocker, db):
 
 
 def test_sync_classes(mocker, db):
-    mocker.patch('qbosdk.apis.Classes.get_all_generator', return_value=data['class_response'])
+    mocker.patch('qbosdk.apis.Classes.get_all_generator', return_value=[data['class_response']])
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
 
@@ -390,7 +390,7 @@ def test_sync_classes(mocker, db):
 def test_sync_customers(mocker, db):
     mocker.patch('qbosdk.apis.Customers.get_inactive', return_value=[])
     mocker.patch('qbosdk.apis.Customers.count', return_value=5)
-    mocker.patch('qbosdk.apis.Customers.get_all_generator', return_value=data['class_response'])
+    mocker.patch('qbosdk.apis.Customers.get_all_generator', return_value=[data['class_response']])
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
 

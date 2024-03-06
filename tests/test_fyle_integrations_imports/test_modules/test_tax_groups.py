@@ -15,7 +15,7 @@ def test_sync_destination_attributes(mocker, db):
     workspace_id = 5
     mocker.patch(
         'qbosdk.apis.TaxCodes.get_all_generator',
-        return_value=tax_groups_data['create_new_auto_create_tax_groups_destination_attributes']
+        return_value=[tax_groups_data['create_new_auto_create_tax_groups_destination_attributes']]
     )
     mocker.patch(
         'qbosdk.apis.TaxRates.get_by_id',
@@ -103,7 +103,7 @@ def test_auto_create_destination_attributes(mocker, db):
         )
         mocker.patch(
             'qbosdk.apis.TaxCodes.get_all_generator',
-            return_value=tax_groups_data['create_new_auto_create_tax_groups_destination_attributes']
+            return_value=[tax_groups_data['create_new_auto_create_tax_groups_destination_attributes']]
         )
         mocker.patch(
             'qbosdk.apis.TaxRates.get_by_id',
@@ -140,7 +140,7 @@ def test_auto_create_destination_attributes(mocker, db):
         )
         mocker.patch(
             'qbosdk.apis.TaxCodes.get_all_generator',
-            return_value=tax_groups_data['create_new_auto_create_tax_groups_destination_attributes_subsequent_case']
+            return_value=[tax_groups_data['create_new_auto_create_tax_groups_destination_attributes_subsequent_case']]
         )
         mocker.patch(
             'qbosdk.apis.TaxRates.get_by_id',
