@@ -67,9 +67,9 @@ def get_last_synced_time(workspace_id: int, attribute_type: str):
     else:
         last_synced_time = Workspace.objects.get(id=workspace_id).created_at
 
-    last_synced_time = last_synced_time.strftime("%Y-%m-%dT%H:%M:%S")
+    last_synced_time_formatted = last_synced_time.strftime('%Y-%m-%dT%H:%M:%S-00:00')
 
-    return last_synced_time
+    return last_synced_time_formatted
 
 
 CHARTS_OF_ACCOUNTS = ['Expense', 'Other Expense', 'Fixed Asset', 'Cost of Goods Sold', 'Current Liability', 'Equity', 'Other Current Asset', 'Other Current Liability', 'Long Term Liability', 'Current Asset', 'Income', 'Other Income', 'Other Asset']
