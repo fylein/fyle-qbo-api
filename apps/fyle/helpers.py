@@ -297,7 +297,8 @@ class ExpenseGroupSearchFilter(AdvanceSearchFilter):
 class ExpenseSearchFilter(AdvanceSearchFilter):
     org_id = django_filters.CharFilter()
     is_skipped = django_filters.BooleanFilter()
-    updated_at = django_filters.DateTimeFromToRangeFilter()
+    updated_at__gte = django_filters.DateTimeFilter(lookup_expr='gte', field_name='updated_at')
+    updated_at__lte = django_filters.DateTimeFilter(lookup_expr='lte', field_name='updated_at')
     expense_number = django_filters.CharFilter(field_name='expense_number', lookup_expr='icontains')
     employee_name = django_filters.CharFilter(field_name='employee_name', lookup_expr='icontains')
     employee_email = django_filters.CharFilter(field_name='employee_email', lookup_expr='icontains')
@@ -305,5 +306,5 @@ class ExpenseSearchFilter(AdvanceSearchFilter):
 
     class Meta:
         model = Expense
-        fields = ['org_id', 'is_skipped', 'updated_at']
+        fields = ['org_id', 'is_skipped', 'updated_at__gte', 'updated_at__lte']
         or_fields = ['expense_number', 'employee_name', 'employee_email', 'claim_number']
