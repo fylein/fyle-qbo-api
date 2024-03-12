@@ -221,6 +221,7 @@ EMAIL = ''
 
 QBO_INTEGRATION_APP_URL = os.environ.get('QBO_INTEGRATION_APP_URL')
 QBO_APP_URL = os.environ.get('QBO_APP_URL')
+FYLE_QBO_URL = os.environ.get('FYLE_QBO_URL')
 
 # QBO Settings
 QBO_CLIENT_ID = os.environ.get('QBO_CLIENT_ID')
