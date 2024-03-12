@@ -83,6 +83,60 @@ def refresh_quickbooks_dimensions(workspace_id: int):
                 q_options={'cluster': 'import'}
             )
 
+    if workspace_general_settings.import_tax_codes:
+        chain.append(
+            'fyle_integrations_imports.tasks.trigger_import_via_schedule',
+            workspace_id,
+            'TAX_CODE',
+            'TAX_GROUP',
+            'apps.quickbooks_online.utils.QBOConnector',
+            credentials,
+            [SYNC_METHODS['TAX_CODE']],
+            False,
+            False,
+            None,
+            False,
+            q_options={'cluster': 'import'}
+        )
+
+    if workspace_general_settings.import_categories or workspace_general_settings.import_items:
+        destination_sync_methods = []
+        if workspace_general_settings.import_categories:
+            destination_sync_methods.append(SYNC_METHODS['ACCOUNT'])
+        if workspace_general_settings.import_items:
+            destination_sync_methods.append(SYNC_METHODS['ITEM'])
+
+        chain.append(
+            'fyle_integrations_imports.tasks.trigger_import_via_schedule',
+            workspace_id,
+            'ACCOUNT',
+            'CATEGORY',
+            'apps.quickbooks_online.utils.QBOConnector',
+            credentials,
+            destination_sync_methods,
+            get_auto_sync_permission(workspace_general_settings, None),
+            False,
+            workspace_general_settings.charts_of_accounts if 'accounts' in destination_sync_methods else None,
+            False,
+            q_options={'cluster': 'import'}
+        )
+
+    if workspace_general_settings.import_vendors_as_merchants:
+        chain.append(
+            'fyle_integrations_imports.tasks.trigger_import_via_schedule',
+            workspace_id,
+            'VENDOR',
+            'MERCHANT',
+            'apps.quickbooks_online.utils.QBOConnector',
+            credentials,
+            [SYNC_METHODS['VENDOR']],
+            False,
+            False,
+            None,
+            False,
+            q_options={'cluster': 'import'}
+        )
+
     if chain.length() > 0:
         chain.run()
 
