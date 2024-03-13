@@ -214,7 +214,7 @@ class QBOConnector:
                         }
                     )
 
-                elif value:
+                elif account['AccountType'] == 'Accounts Payable' and value:
                     account_attributes['accounts_payable'].append(
                         {
                             'attribute_type': 'ACCOUNTS_PAYABLE',
