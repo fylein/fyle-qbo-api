@@ -66,24 +66,24 @@ def refresh_quickbooks_dimensions(workspace_id: int):
 
     chain = Chain()
 
-    for mapping_setting in mapping_settings:
-        if workspace_general_settings and mapping_setting.source_field in ['PROJECT', 'COST_CENTER'] or mapping_setting.is_custom:
-            chain.append(
-                'fyle_integrations_imports.tasks.trigger_import_via_schedule',
-                workspace_id,
-                mapping_setting.destination_field,
-                mapping_setting.source_field,
-                'apps.quickbooks_online.utils.QBOConnector',
-                credentials,
-                [SYNC_METHODS[mapping_setting.destination_field]],
-                get_auto_sync_permission(workspace_general_settings, mapping_setting),
-                False,
-                None,
-                mapping_setting.is_custom,
-                q_options={'cluster': 'import'}
-            )
-
     if workspace_general_settings:
+        for mapping_setting in mapping_settings:
+            if mapping_setting.source_field in ['PROJECT', 'COST_CENTER'] or mapping_setting.is_custom:
+                chain.append(
+                    'fyle_integrations_imports.tasks.trigger_import_via_schedule',
+                    workspace_id,
+                    mapping_setting.destination_field,
+                    mapping_setting.source_field,
+                    'apps.quickbooks_online.utils.QBOConnector',
+                    credentials,
+                    [SYNC_METHODS[mapping_setting.destination_field]],
+                    get_auto_sync_permission(workspace_general_settings, mapping_setting),
+                    False,
+                    None,
+                    mapping_setting.is_custom,
+                    q_options={'cluster': 'import'}
+                )
+
         if workspace_general_settings.import_tax_codes:
             chain.append(
                 'fyle_integrations_imports.tasks.trigger_import_via_schedule',
