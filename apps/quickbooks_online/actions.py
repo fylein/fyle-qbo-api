@@ -83,7 +83,7 @@ def refresh_quickbooks_dimensions(workspace_id: int):
                 q_options={'cluster': 'import'}
             )
 
-    if workspace_general_settings.import_tax_codes:
+    if workspace_general_settings and workspace_general_settings.import_tax_codes:
         chain.append(
             'fyle_integrations_imports.tasks.trigger_import_via_schedule',
             workspace_id,
@@ -99,7 +99,7 @@ def refresh_quickbooks_dimensions(workspace_id: int):
             q_options={'cluster': 'import'}
         )
 
-    if workspace_general_settings.import_categories or workspace_general_settings.import_items:
+    if workspace_general_settings and (workspace_general_settings.import_categories or workspace_general_settings.import_items):
         destination_sync_methods = []
         if workspace_general_settings.import_categories:
             destination_sync_methods.append(SYNC_METHODS['ACCOUNT'])
@@ -121,7 +121,7 @@ def refresh_quickbooks_dimensions(workspace_id: int):
             q_options={'cluster': 'import'}
         )
 
-    if workspace_general_settings.import_vendors_as_merchants:
+    if workspace_general_settings and workspace_general_settings.import_vendors_as_merchants:
         chain.append(
             'fyle_integrations_imports.tasks.trigger_import_via_schedule',
             workspace_id,
