@@ -123,10 +123,14 @@ class QBOConnector:
     def get_effective_tax_rates(self, tax_rates):
         effective_tax_rate = 0
         tax_rate_refs = []
-        for tax_rate in tax_rates:
-            tax_rate_refs.append(tax_rate['TaxRateRef'])
-            tax_rate_id = tax_rate['TaxRateRef']['value']
-            effective_tax_rate += self.connection.tax_rates.get_by_id(tax_rate_id)['RateValue']
+        if 'TaxRateRef' in tax_rate:
+            for tax_rate in tax_rates:
+                tax_rate_refs.append(tax_rate['TaxRateRef'])
+                tax_rate_id = tax_rate['TaxRateRef']['value']
+                tax_rate_by_id = self.connection.tax_rates.get_by_id(tax_rate_id)
+
+                if 'RateValue' in tax_rate_by_id:
+                    effective_tax_rate += tax_rate_by_id['RateValue']
 
         return effective_tax_rate, tax_rate_refs
 
