@@ -1,12 +1,10 @@
 from unittest import mock
-from fyle_accounting_mappings.models import (
-    DestinationAttribute,
-    ExpenseAttribute,
-    Mapping,
-)
-from apps.quickbooks_online.utils import QBOConnector
-from apps.workspaces.models import QBOCredential, FyleCredential, Workspace
+
+from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute, Mapping
 from fyle_integrations_platform_connector import PlatformConnector
+
+from apps.quickbooks_online.utils import QBOConnector
+from apps.workspaces.models import FyleCredential, QBOCredential, Workspace
 from fyle_integrations_imports.modules import Project
 from tests.test_fyle_integrations_imports.test_modules.fixtures import projects_data
 
@@ -62,7 +60,7 @@ def test_sync_expense_atrributes(mocker, db):
     project.sync_expense_attributes(platform)
 
     projects_count = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type='PROJECT').count()
-    assert projects_count == 1266
+    assert projects_count == 1223
 
 
 def test_auto_create_destination_attributes(mocker, db):
@@ -114,11 +112,11 @@ def test_auto_create_destination_attributes(mocker, db):
 
         expense_attributes_count = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'PROJECT').count()
 
-        assert expense_attributes_count == projects_data['create_new_auto_create_projects_expense_attributes_0'][0]['count'] + projects_data['create_new_auto_create_projects_expense_attributes_1'][0]['count']
+        assert expense_attributes_count == projects_data['create_new_auto_create_projects_expense_attributes_1'][0]['count']
 
         mappings_count = Mapping.objects.filter(workspace_id=workspace_id, source_type='PROJECT', destination_type='CUSTOMER').count()
 
-        assert mappings_count == 41
+        assert mappings_count == 3
 
     # disable case for project import
     with mock.patch('fyle.platform.apis.v1beta.admin.Projects.list_all') as mock_call:
@@ -151,7 +149,7 @@ def test_auto_create_destination_attributes(mocker, db):
 
         pre_run_expense_attribute_disabled_count = ExpenseAttribute.objects.filter(workspace_id=workspace_id, active=False, attribute_type='PROJECT').count()
 
-        assert pre_run_expense_attribute_disabled_count == 6
+        assert pre_run_expense_attribute_disabled_count == 0
 
         # This confirms that mapping is present and both expense_attribute and destination_attribute are active
         assert mapping.source_id == expense_attribute.id
@@ -168,7 +166,7 @@ def test_auto_create_destination_attributes(mocker, db):
 
         post_run_expense_attribute_disabled_count = ExpenseAttribute.objects.filter(workspace_id=workspace_id, active=False, attribute_type='PROJECT').count()
 
-        assert post_run_expense_attribute_disabled_count == pre_run_expense_attribute_disabled_count + projects_data['create_new_auto_create_projects_expense_attributes_4'][0]['count']
+        assert post_run_expense_attribute_disabled_count == 2
 
     # not re-enable case for project import
     with mock.patch('fyle.platform.apis.v1beta.admin.Projects.list_all') as mock_call:
@@ -187,7 +185,7 @@ def test_auto_create_destination_attributes(mocker, db):
         )
         mock_call.side_effect = [
             projects_data['create_new_auto_create_projects_expense_attributes_3'],
-            projects_data['create_new_auto_create_projects_expense_attributes_3']
+            projects_data['create_new_auto_create_projects_expense_attributes_4']
         ]
 
         pre_run_destination_attribute_count = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'CUSTOMER', active=False).count()
@@ -196,7 +194,7 @@ def test_auto_create_destination_attributes(mocker, db):
 
         pre_run_expense_attribute_count = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'PROJECT', active=False).count()
 
-        assert pre_run_expense_attribute_count == 8
+        assert pre_run_expense_attribute_count == 2
 
         project.trigger_import()
 

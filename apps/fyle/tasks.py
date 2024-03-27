@@ -3,8 +3,8 @@ from datetime import datetime
 from typing import Dict, List
 
 from django.db import transaction
-from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
 from fyle.platform.exceptions import RetryException
+from fyle_accounting_mappings.models import ExpenseAttribute
 from fyle_integrations_platform_connector import PlatformConnector
 
 from apps.fyle.actions import create_generator_and_post_in_batches, mark_expenses_as_skipped
@@ -159,12 +159,27 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
         handle_import_exception(task_log)
 
 
-def sync_dimensions(fyle_credentials):
-    try:
-        platform = PlatformConnector(fyle_credentials)
-        platform.import_fyle_dimensions(import_taxes=True)
-    except FyleInvalidTokenError:
-        logger.info('Invalid Token for fyle')
+def sync_dimensions(fyle_credentials, is_export: bool = False):
+    platform = PlatformConnector(fyle_credentials)
+    platform.import_fyle_dimensions(is_export=is_export)
+    if is_export:
+        categories_count = platform.categories.get_count()
+
+        categories_expense_attribute_count = ExpenseAttribute.objects.filter(
+            attribute_type="CATEGORY", workspace_id=fyle_credentials.workspace_id, active=True
+        ).count()
+
+        if categories_count != categories_expense_attribute_count:
+            platform.categories.sync()
+
+        projects_count = platform.projects.get_count()
+
+        projects_expense_attribute_count = ExpenseAttribute.objects.filter(
+            attribute_type="PROJECT", workspace_id=fyle_credentials.workspace_id, active=True
+        ).count()
+
+        if projects_count != projects_expense_attribute_count:
+            platform.projects.sync()
 
 
 def post_accounting_export_summary(org_id: str, workspace_id: int, fund_source: str = None) -> None:
