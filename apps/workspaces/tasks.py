@@ -177,6 +177,7 @@ def run_email_notification(workspace_id):
                     'app_url': "{0}/main/dashboard".format(settings.QBO_INTEGRATION_APP_URL),
                     'task_logs': mark_safe(expense_html),
                     'error_type': expense_data,
+                    'integrations_app_url': settings.INTEGRATIONS_APP_URL
                 }
                 message = render_to_string("mail_template.html", context)
 
