@@ -116,7 +116,7 @@ Q_CLUSTER = {
     'catch_up': False,
     # The number of tasks a worker will process before recycling.
     # Useful to release memory resources on a regular basis.
-    'recycle': 50,
+    'recycle': os.environ.get('DJANGO_Q_RECYCLE', 50),
     # The maximum resident set size in kilobytes before a worker will recycle and release resources.
     # Useful for limiting memory usage.
     'max_rss': 100000,  # 100mb
