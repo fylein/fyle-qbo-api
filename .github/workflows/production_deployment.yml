@@ -36,10 +36,10 @@ jobs:
       - name: Update Image Tag
         run: |
           NEW_TAG="v$(git rev-parse --short HEAD)"
-          
+
           cd ${{ vars.PROD_DEPLOY_REPO }}/${{ vars.PROD_US1_DEPLOY_DIR }}/integrations
           kustomize edit set image docker.io/${{ secrets.DOCKERHUB_USERNAME }}/fyle_qbo-api=docker.io/${{ secrets.DOCKERHUB_USERNAME }}/fyle_qbo-api:$NEW_TAG
-          
+
           cd ../../${{ vars.PROD_IN1_DEPLOY_DIR }}/integrations
           kustomize edit set image docker.io/${{ secrets.DOCKERHUB_USERNAME }}/fyle_qbo-api=docker.io/${{ secrets.DOCKERHUB_USERNAME }}/fyle_qbo-api:$NEW_TAG
 
@@ -49,7 +49,7 @@ jobs:
           git config --global user.email "integrations@fylehq.com"
           git config --global user.name "GitHub Actions"
           git add .
-          git commit -m "Update image tag"
+          git commit -m "Update qbo-api image tag"
           git remote set-url origin https://x-access-token:${{ secrets.DEPLOY_GIT_ACCESS_TOKEN }}@github.com/${{ vars.PROD_DEPLOY_REPO }}
           git pull origin master
           git push origin master
