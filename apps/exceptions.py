@@ -1,6 +1,7 @@
 import logging
 
 from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
+from fyle.platform.exceptions import NoPrivilegeError
 from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 from rest_framework.response import Response
 from rest_framework.views import status
@@ -34,6 +35,10 @@ def handle_view_exceptions():
             except WrongParamsError as exception:
                 logger.info('QBO token expired workspace_id - %s %s', kwargs['workspace_id'], {'error': exception.response})
                 return Response(data={'message': 'QBO token expired workspace_id'}, status=status.HTTP_400_BAD_REQUEST)
+
+            except NoPrivilegeError as exception:
+                logger.info('Invalid Fyle Credentials / Admin is disabled  for workspace_id%s %s', kwargs['workspace_id'], {'error': exception.response})
+                return Response(data={'message': 'Invalid Fyle Credentials / Admin is disabled'}, status=status.HTTP_400_BAD_REQUEST)
 
             except InvalidTokenError as exception:
                 logger.info('QBO token expired workspace_id - %s %s', kwargs['workspace_id'], {'error': exception.response})
