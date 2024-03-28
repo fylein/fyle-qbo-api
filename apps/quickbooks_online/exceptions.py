@@ -2,8 +2,10 @@ import json
 import logging
 import traceback
 
+from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
 from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 
+from apps.fyle.actions import update_failed_expenses
 from apps.fyle.models import ExpenseGroup
 from apps.quickbooks_online.actions import update_last_export_details
 from apps.tasks.models import Error, TaskLog
@@ -62,11 +64,15 @@ def handle_qbo_exceptions(bill_payment=False):
                 task_log = args[2]
             try:
                 return func(*args)
-            except (FyleCredential.DoesNotExist, InvalidTokenError):
+            except (FyleCredential.DoesNotExist, FyleInvalidTokenError):
                 logger.info('Fyle credentials not found %s', expense_group.workspace_id)
                 task_log.detail = {'message': 'Fyle credentials do not exist in workspace'}
                 task_log.status = 'FAILED'
+
                 task_log.save()
+
+                if not bill_payment:
+                    update_failed_expenses(expense_group.expenses.all(), True)
 
             except QBOCredential.DoesNotExist:
                 logger.info('QBO Account not connected / token expired for workspace_id %s / expense group %s', expense_group.workspace_id, expense_group.id)
@@ -76,22 +82,36 @@ def handle_qbo_exceptions(bill_payment=False):
 
                 task_log.save()
 
-            except WrongParamsError as exception:
+                if not bill_payment:
+                    update_failed_expenses(expense_group.expenses.all(), True)
+
+            except (WrongParamsError, InvalidTokenError) as exception:
                 handle_quickbooks_error(exception, expense_group, task_log, 'Bill')
+
+                if not bill_payment:
+                    update_failed_expenses(expense_group.expenses.all(), False)
 
             except BulkError as exception:
                 logger.info(exception.response)
                 detail = exception.response
                 task_log.status = 'FAILED'
                 task_log.detail = detail
+
                 task_log.save()
+
+                if not bill_payment:
+                    update_failed_expenses(expense_group.expenses.all(), True)
 
             except Exception as error:
                 error = traceback.format_exc()
                 task_log.detail = {'error': error}
                 task_log.status = 'FATAL'
+
                 task_log.save()
                 logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
+
+                if not bill_payment:
+                    update_failed_expenses(expense_group.expenses.all(), True)
 
             if len(args) > 2 and args[2] == True and not bill_payment:
                 update_last_export_details(expense_group.workspace_id)

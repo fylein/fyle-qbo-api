@@ -4,9 +4,10 @@ from unittest import mock
 
 import pytest
 from fyle.platform.exceptions import NoPrivilegeError
-from fyle_accounting_mappings.models import DestinationAttribute
+from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping
 from qbosdk.exceptions import WrongParamsError
 
+from apps.fyle.models import ExpenseGroup
 from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.utils import QBOConnector, QBOCredential, WorkspaceGeneralSettings
 from tests.helper import dict_compare_keys
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 @pytest.mark.django_db
 def test_sync_employees(mocker, db):
-    mocker.patch('qbosdk.apis.Employees.get', return_value=data['employee_response'])
+    mocker.patch('qbosdk.apis.Employees.get_all_generator', return_value=[data['employee_response']])
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
 
@@ -42,7 +43,8 @@ def test_post_vendor(mocker, db):
 
 
 def test_sync_vendors(mocker, db):
-    mocker.patch('qbosdk.apis.Vendors.get', return_value=data['vendor_response'])
+    mocker.patch('qbosdk.apis.Vendors.get_all_generator', return_value=[data['vendor_response']])
+    mocker.patch('qbosdk.apis.Vendors.get_inactive', return_value=[])
     qbo_credentials = QBOCredential.get_active_qbo_credentials(4)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=4)
 
@@ -56,7 +58,7 @@ def test_sync_vendors(mocker, db):
 
 
 def test_sync_departments(mocker, db):
-    mocker.patch('qbosdk.apis.Departments.get', return_value=data['department_response'])
+    mocker.patch('qbosdk.apis.Departments.get_all_generator', return_value=[data['department_response']])
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
 
@@ -70,9 +72,9 @@ def test_sync_departments(mocker, db):
 
 
 def test_sync_items(mocker, db):
-
-    with mock.patch('qbosdk.apis.Items.get') as mock_call:
-        mock_call.return_value = data['items_response']
+    mock_inactive = mocker.patch('qbosdk.apis.Items.get_inactive', return_value=[])
+    with mock.patch('qbosdk.apis.Items.get_all_generator') as mock_call:
+        mock_call.return_value = [data['items_response']]
 
         qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
         qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
@@ -90,7 +92,7 @@ def test_sync_items(mocker, db):
         new_item_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='ACCOUNT', display_name='Item', active=True).count()
         assert new_item_count == 4
 
-        mock_call.return_value = data['items_response_with_inactive_values']
+        mock_inactive.return_value = [data['items_response_with_inactive_values']]
 
         qbo_connection.sync_items()
 
@@ -277,8 +279,9 @@ def test_construct_cheque_item_and_account_based(create_cheque_item_and_account_
     cheque, cheque_lineitems = create_cheque_item_and_account_based
     cheque_object = qbo_connection._QBOConnector__construct_cheque(cheque=cheque, cheque_lineitems=cheque_lineitems)
 
-    assert cheque_object['Line'][1]['DetailType'] == 'ItemBasedExpenseLineDetail'
-    assert cheque_object['Line'][0]['DetailType'] == 'AccountBasedExpenseLineDetail'
+    assert cheque_object['Line'][0]['DetailType'] == 'ItemBasedExpenseLineDetail'
+    assert cheque_object['Line'][1]['DetailType'] == 'AccountBasedExpenseLineDetail'
+
     assert dict_compare_keys(cheque_object, data['cheque_item_and_account_based_payload']) == [], 'construct cheque api return diffs in keys'
 
 
@@ -311,7 +314,7 @@ def test_get_tax_inclusive_amount(db):
 
 
 def test_sync_tax_codes(mocker, db):
-    mocker.patch('qbosdk.apis.TaxCodes.get', return_value=data['tax_code_response'])
+    mocker.patch('qbosdk.apis.TaxCodes.get_all_generator', return_value=[data['tax_code_response']])
     mocker.patch('qbosdk.apis.TaxRates.get_by_id', return_value=data['tax_rate_get_by_id'])
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
@@ -326,7 +329,8 @@ def test_sync_tax_codes(mocker, db):
 
 
 def tests_sync_accounts(mocker, db):
-    mocker.patch('qbosdk.apis.Accounts.get', return_value=data['account_response'])
+    mocker.patch('qbosdk.apis.Accounts.get_inactive', return_value=[])
+    mocker.patch('qbosdk.apis.Accounts.get_all_generator', return_value=[data['account_response']])
 
     qbo_credentials = QBOCredential.get_active_qbo_credentials(1)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=1)
@@ -341,13 +345,13 @@ def tests_sync_accounts(mocker, db):
 
 
 def test_sync_dimensions(mocker, db):
-    mocker.patch('qbosdk.apis.Accounts.get')
-    mocker.patch('qbosdk.apis.Employees.get')
-    mocker.patch('qbosdk.apis.Vendors.get')
+    mocker.patch('qbosdk.apis.Accounts.get_all_generator')
+    mocker.patch('qbosdk.apis.Employees.get_all_generator')
+    mocker.patch('qbosdk.apis.Vendors.get_all_generator')
     mocker.patch('qbosdk.apis.Customers.count')
-    mocker.patch('qbosdk.apis.Classes.get')
-    mocker.patch('qbosdk.apis.Departments.get')
-    mocker.patch('qbosdk.apis.TaxCodes.get')
+    mocker.patch('qbosdk.apis.Classes.get_all_generator')
+    mocker.patch('qbosdk.apis.Departments.get_all_generator')
+    mocker.patch('qbosdk.apis.TaxCodes.get_all_generator')
 
     employee_count = DestinationAttribute.objects.filter(attribute_type='EMPLOYEE', workspace_id=1).count()
     accounts_count = DestinationAttribute.objects.filter(attribute_type='ACCOUNT', workspace_id=1).count()
@@ -371,7 +375,7 @@ def test_sync_dimensions(mocker, db):
 
 
 def test_sync_classes(mocker, db):
-    mocker.patch('qbosdk.apis.Classes.get', return_value=data['class_response'])
+    mocker.patch('qbosdk.apis.Classes.get_all_generator', return_value=[data['class_response']])
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
 
@@ -385,8 +389,9 @@ def test_sync_classes(mocker, db):
 
 
 def test_sync_customers(mocker, db):
+    mocker.patch('qbosdk.apis.Customers.get_inactive', return_value=[])
     mocker.patch('qbosdk.apis.Customers.count', return_value=5)
-    mocker.patch('qbosdk.apis.Customers.get', return_value=data['class_response'])
+    mocker.patch('qbosdk.apis.Customers.get_all_generator', return_value=[data['class_response']])
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
 
@@ -567,3 +572,79 @@ def test_sync_dimensions_exception(db):
     with mock.patch('apps.quickbooks_online.utils.QBOConnector.sync_tax_codes') as mock_call:
         mock_call.side_effect = Exception()
         qbo_connection.sync_dimensions()
+
+
+def test_get_or_create_entity(mocker, db):
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+
+    mocker.patch('qbosdk.apis.Vendors.post', return_value=data['post_vendor_resp'])
+    mocker.patch('qbosdk.apis.Vendors.search_vendor_by_display_name', return_value=None)
+
+    # CCC expesnse with name Merchant
+    expense_group = ExpenseGroup.objects.filter(fund_source='CCC').first()
+    workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
+    workspace_general_settings.corporate_credit_card_expenses_object = 'JOURNAL ENTRY'
+    workspace_general_settings.name_in_journal_entry = 'MERCHANT'
+    workspace_general_settings.employee_field_mapping = 'VENDOR'
+    workspace_general_settings.save()
+    entity_ids = qbo_connection.get_or_create_entity(expense_group, workspace_general_settings)
+    expenses = expense_group.expenses.all()
+    for expense in expenses:
+        assert entity_ids[expense.id] == data['post_vendor_resp']['Vendor']['Id']
+
+    vendor_attributes = DestinationAttribute.objects.filter(attribute_type='VENDOR', workspace_id=3).last()
+    vendor_attributes.value = 'Allison Hill'
+    vendor_attributes.save()
+
+    entity_ids = qbo_connection.get_or_create_entity(expense_group, workspace_general_settings)
+
+    for expense in expenses:
+        assert entity_ids[expense.id] == vendor_attributes.destination_id
+
+    workspace_general_settings.auto_create_merchants_as_vendors = True
+    workspace_general_settings.save()
+
+    vendor_attributes.value = 'Joanna hill'
+    vendor_attributes.save()
+
+    entity_ids = qbo_connection.get_or_create_entity(expense_group, workspace_general_settings)
+
+    for expense in expenses:
+        assert entity_ids[expense.id] == data['post_vendor_resp']['Vendor']['Id']
+
+    # CCC expesnse with name Employee
+    workspace_general_settings.name_in_journal_entry = 'EMPLOYEE'
+    workspace_general_settings.save()
+
+    employee_attributes = EmployeeMapping.objects.filter(
+        source_employee__value=expense_group.description.get('employee_email'),
+        workspace_id=expense_group.workspace_id
+    ).first()
+
+    entity_ids = qbo_connection.get_or_create_entity(expense_group, workspace_general_settings)
+
+    for expense in expenses:
+        assert entity_ids[expense.id] == employee_attributes.destination_vendor.destination_id
+
+    workspace_general_settings.import_vendors_as_merchants = True
+    workspace_general_settings.employee_field_mapping = 'EMPLOYEE'
+    workspace_general_settings.save()
+
+    entity_ids = qbo_connection.get_or_create_entity(expense_group, workspace_general_settings)
+
+    for expense in expenses:
+        assert entity_ids[expense.id] == employee_attributes.destination_employee.destination_id
+
+    # Personal expense
+    expense_group = ExpenseGroup.objects.get(id=14)
+    expenses = expense_group.expenses.all()
+    employee_attributes = EmployeeMapping.objects.filter(
+        source_employee__value=expense_group.description.get('employee_email'),
+        workspace_id=expense_group.workspace_id
+    ).first()
+
+    entity_ids = qbo_connection.get_or_create_entity(expense_group, workspace_general_settings)
+
+    for expense in expenses:
+        assert entity_ids[expense.id] == employee_attributes.destination_employee.destination_id

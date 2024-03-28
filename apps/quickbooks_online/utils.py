@@ -5,10 +5,11 @@ from typing import Dict, List
 
 import unidecode
 from django.conf import settings
-from fyle_accounting_mappings.models import DestinationAttribute
+from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping
 from qbosdk import QuickbooksOnlineSDK
 from qbosdk.exceptions import WrongParamsError
 
+from apps.fyle.models import ExpenseGroup
 from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.models import (
     Bill,
@@ -25,10 +26,12 @@ from apps.quickbooks_online.models import (
     QBOExpenseLineitem,
 )
 from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSettings
+from fyle_integrations_imports.models import ImportLog
 
 logger = logging.getLogger(__name__)
+logger.level = logging.INFO
 
-SYNC_UPPER_LIMIT = {'customers': 17000}
+SYNC_UPPER_LIMIT = {'customers': 25000}
 
 
 def format_special_characters(value: str) -> str:
@@ -44,7 +47,32 @@ def format_special_characters(value: str) -> str:
     return formatted_string
 
 
-CHARTS_OF_ACCOUNTS = ['Expense', 'Other Expense', 'Fixed Asset', 'Cost of Goods Sold', 'Current Liability', 'Equity', 'Other Current Asset', 'Other Current Liability', 'Long Term Liability', 'Current Asset', 'Income', 'Other Income']
+def get_last_synced_time(workspace_id: int, attribute_type: str):
+    """
+    Get the last synced time for the given attribute type
+    :param workspace_id: workspace id
+    :param attribute_type: attribute type
+    :return: last synced time
+    """
+    import_log = ImportLog.objects.filter(
+        workspace_id=workspace_id,
+        attribute_type=attribute_type,
+        status='COMPLETE'
+    ).first()
+
+    last_synced_time = None
+
+    if import_log is not None and import_log.last_successful_run_at is not None:
+        last_synced_time = import_log.last_successful_run_at
+    else:
+        last_synced_time = Workspace.objects.get(id=workspace_id).created_at
+
+    last_synced_time_formatted = last_synced_time.strftime('%Y-%m-%dT%H:%M:%S-00:00')
+
+    return last_synced_time_formatted
+
+
+CHARTS_OF_ACCOUNTS = ['Expense', 'Other Expense', 'Fixed Asset', 'Cost of Goods Sold', 'Current Liability', 'Equity', 'Other Current Asset', 'Other Current Liability', 'Long Term Liability', 'Current Asset', 'Income', 'Other Income', 'Other Asset']
 
 
 class QBOConnector:
@@ -96,9 +124,13 @@ class QBOConnector:
         effective_tax_rate = 0
         tax_rate_refs = []
         for tax_rate in tax_rates:
-            tax_rate_refs.append(tax_rate['TaxRateRef'])
-            tax_rate_id = tax_rate['TaxRateRef']['value']
-            effective_tax_rate += self.connection.tax_rates.get_by_id(tax_rate_id)['RateValue']
+            if 'TaxRateRef' in tax_rate:
+                tax_rate_refs.append(tax_rate['TaxRateRef'])
+                tax_rate_id = tax_rate['TaxRateRef']['value']
+                tax_rate_by_id = self.connection.tax_rates.get_by_id(tax_rate_id)
+
+            if 'RateValue' in tax_rate_by_id:
+                effective_tax_rate += tax_rate_by_id['RateValue']
 
         return effective_tax_rate, tax_rate_refs
 
@@ -117,158 +149,158 @@ class QBOConnector:
         """
         Get items
         """
-        items = self.connection.items.get()
-        item_attributes = []
+        items_generator = self.connection.items.get_all_generator()
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
 
-        # getting all the items stored in the DB
-        destination_attributes = DestinationAttribute.objects.filter(workspace_id=self.workspace_id, attribute_type='ACCOUNT', display_name='Item').values('destination_id', 'value')
-        disabled_fields_map = {}
-
-        # Assigning them to a map in destination_id as key and value as value
-        for destination_attribute in destination_attributes:
-            disabled_fields_map[destination_attribute['destination_id']] = {'value': destination_attribute['value']}
-
         # For getting all the items, any inactive item will not be returned
-        for item in items:
-            if item['Active']:
-                item_attributes.append({'attribute_type': 'ACCOUNT', 'display_name': 'Item', 'value': item['FullyQualifiedName'], 'destination_id': item['Id'], 'active': general_settings.import_items if general_settings else False})
-                # If item is active and present in the map, remove it from the map
-                if item['Id'] in disabled_fields_map:
-                    disabled_fields_map.pop(item['Id'])
+        for items in items_generator:
+            item_attributes = []
+            for item in items:
+                if item['Active']:
+                    item_attributes.append({'attribute_type': 'ACCOUNT', 'display_name': 'Item', 'value': item['FullyQualifiedName'], 'destination_id': item['Id'], 'active': general_settings.import_items if general_settings else False})
+            DestinationAttribute.bulk_create_or_update_destination_attributes(item_attributes, 'ACCOUNT', self.workspace_id, True, 'Item')
 
-        # Since the item was present in the map, it means it is not active anymore
-        # So we need to set active to false and add it to the list
-        for destination_id in disabled_fields_map:
-            item_attributes.append({'attribute_type': 'ACCOUNT', 'display_name': 'Item', 'value': disabled_fields_map[destination_id]['value'], 'destination_id': destination_id, 'active': False})
+        last_synced_time = get_last_synced_time(self.workspace_id, 'CATEGORY')
 
-        DestinationAttribute.bulk_create_or_update_destination_attributes(item_attributes, 'ACCOUNT', self.workspace_id, True, 'Item')
+        # get the inactive items generator
+        inactive_items_generator = self.connection.items.get_inactive(last_synced_time)
+
+        for inactive_items in inactive_items_generator:
+            inactive_item_attributes = []
+            for inactive_item in inactive_items:
+                value = inactive_item['FullyQualifiedName'].replace(" (deleted)", "").rstrip()
+                inactive_item_attributes.append({'attribute_type': 'ACCOUNT', 'display_name': 'Item', 'value': value, 'destination_id': inactive_item['Id'], 'active': False})
+            DestinationAttribute.bulk_create_or_update_destination_attributes(inactive_item_attributes, 'ACCOUNT', self.workspace_id, True, 'Item')
+
         return []
 
     def sync_accounts(self):
         """
         Get accounts
         """
-        accounts = self.connection.accounts.get()
+        accounts_generator = self.connection.accounts.get_all_generator()
         category_sync_version = 'v2'
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
         if general_settings:
             category_sync_version = general_settings.category_sync_version
 
-        account_attributes = {'account': [], 'credit_card_account': [], 'bank_account': [], 'accounts_payable': []}
+        for accounts in accounts_generator:
+            account_attributes = {'account': [], 'credit_card_account': [], 'bank_account': [], 'accounts_payable': []}
+            for account in accounts:
+                value = format_special_characters(account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])
 
-        filters = {'workspace_id': self.workspace_id, 'attribute_type': 'ACCOUNT'}
-        if general_settings:
-            filters['detail__account_type__in'] = general_settings.charts_of_accounts
+                if general_settings and account['AccountType'] in CHARTS_OF_ACCOUNTS and value:
+                    account_attributes['account'].append(
+                        {'attribute_type': 'ACCOUNT', 'display_name': 'Account', 'value': value, 'destination_id': account['Id'], 'active': True, 'detail': {'fully_qualified_name': account['FullyQualifiedName'], 'account_type': account['AccountType']}}
+                    )
 
-        destination_attributes = DestinationAttribute.objects.filter(**filters).values('destination_id', 'value', 'detail')
+                elif account['AccountType'] == 'Credit Card' and value:
+                    account_attributes['credit_card_account'].append(
+                        {
+                            'attribute_type': 'CREDIT_CARD_ACCOUNT',
+                            'display_name': 'Credit Card Account',
+                            'value': value,
+                            'destination_id': account['Id'],
+                            'active': account['Active'],
+                            'detail': {'fully_qualified_name': account['FullyQualifiedName'], 'account_type': account['AccountType']},
+                        }
+                    )
 
-        disabled_fields_map = {}
+                elif account['AccountType'] == 'Bank' and value:
+                    account_attributes['bank_account'].append(
+                        {
+                            'attribute_type': 'BANK_ACCOUNT',
+                            'display_name': 'Bank Account',
+                            'value': value,
+                            'destination_id': account['Id'],
+                            'active': account['Active'],
+                            'detail': {'fully_qualified_name': account['FullyQualifiedName'], 'account_type': account['AccountType']},
+                        }
+                    )
 
-        for destination_attribute in destination_attributes:
-            disabled_fields_map[destination_attribute['destination_id']] = {'value': destination_attribute['value'], 'detail': destination_attribute['detail']}
+                elif account['AccountType'] == 'Accounts Payable' and value:
+                    account_attributes['accounts_payable'].append(
+                        {
+                            'attribute_type': 'ACCOUNTS_PAYABLE',
+                            'display_name': 'Accounts Payable',
+                            'value': value,
+                            'destination_id': account['Id'],
+                            'active': account['Active'],
+                            'detail': {'fully_qualified_name': account['FullyQualifiedName'], 'account_type': account['AccountType']},
+                        }
+                    )
 
-        for account in accounts:
-            value = format_special_characters(account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])
+            for attribute_type, attribute in account_attributes.items():
+                if attribute:
+                    DestinationAttribute.bulk_create_or_update_destination_attributes(attribute, attribute_type.upper(), self.workspace_id, True, attribute_type.title().replace('_', ' '))
 
-            if general_settings and account['AccountType'] in CHARTS_OF_ACCOUNTS and value:
-                account_attributes['account'].append(
-                    {'attribute_type': 'ACCOUNT', 'display_name': 'Account', 'value': value, 'destination_id': account['Id'], 'active': True, 'detail': {'fully_qualified_name': account['FullyQualifiedName'], 'account_type': account['AccountType']}}
-                )
-                if account['Id'] in disabled_fields_map:
-                    disabled_fields_map.pop(account['Id'])
+        last_synced_time = get_last_synced_time(self.workspace_id, 'CATEGORY')
 
-            elif account['AccountType'] == 'Credit Card' and value:
-                account_attributes['credit_card_account'].append(
+        # get the inactive accounts generator
+        inactive_accounts_generator = self.connection.accounts.get_inactive(last_synced_time)
+
+        for inactive_accounts in inactive_accounts_generator:
+            inactive_account_attributes = {'account': []}
+            for inactive_account in inactive_accounts:
+                value = inactive_account['Name'].replace(" (deleted)", "").rstrip() if category_sync_version == 'v1' else inactive_account['FullyQualifiedName'].replace(" (deleted)", "").rstrip()
+                full_qualified_name = inactive_account['FullyQualifiedName'].replace(" (deleted)", "").rstrip()
+                inactive_account_attributes['account'].append(
                     {
-                        'attribute_type': 'CREDIT_CARD_ACCOUNT',
-                        'display_name': 'Credit Card Account',
+                        'attribute_type': 'ACCOUNT',
+                        'display_name': 'Account',
                         'value': value,
-                        'destination_id': account['Id'],
-                        'active': account['Active'],
-                        'detail': {'fully_qualified_name': account['FullyQualifiedName'], 'account_type': account['AccountType']},
+                        'destination_id': inactive_account['Id'],
+                        'active': False,
+                        'detail': {'fully_qualified_name': full_qualified_name, 'account_type': inactive_account['AccountType']},
                     }
                 )
 
-            elif account['AccountType'] == 'Bank' and value:
-                account_attributes['bank_account'].append(
-                    {
-                        'attribute_type': 'BANK_ACCOUNT',
-                        'display_name': 'Bank Account',
-                        'value': value,
-                        'destination_id': account['Id'],
-                        'active': account['Active'],
-                        'detail': {'fully_qualified_name': account['FullyQualifiedName'], 'account_type': account['AccountType']},
-                    }
-                )
+            for attribute_type, attribute in inactive_account_attributes.items():
+                if attribute:
+                    DestinationAttribute.bulk_create_or_update_destination_attributes(attribute, attribute_type.upper(), self.workspace_id, True, attribute_type.title().replace('_', ' '))
 
-            elif value:
-                account_attributes['accounts_payable'].append(
-                    {
-                        'attribute_type': 'ACCOUNTS_PAYABLE',
-                        'display_name': 'Accounts Payable',
-                        'value': value,
-                        'destination_id': account['Id'],
-                        'active': account['Active'],
-                        'detail': {'fully_qualified_name': account['FullyQualifiedName'], 'account_type': account['AccountType']},
-                    }
-                )
-
-        for destination_id in disabled_fields_map:
-            account_attributes['account'].append(
-                {
-                    'attribute_type': 'ACCOUNT',
-                    'display_name': 'Account',
-                    'value': disabled_fields_map[destination_id]['value'],
-                    'destination_id': destination_id,
-                    'active': False,
-                    'detail': {'fully_qualified_name': disabled_fields_map[destination_id]['detail']['fully_qualified_name'], 'account_type': disabled_fields_map[destination_id]['detail']['account_type']},
-                }
-            )
-
-        for attribute_type, attribute in account_attributes.items():
-            if attribute:
-                DestinationAttribute.bulk_create_or_update_destination_attributes(attribute, attribute_type.upper(), self.workspace_id, True, attribute_type.title().replace('_', ' '))
         return []
 
     def sync_departments(self):
         """
         Get departments
         """
-        departments = self.connection.departments.get()
+        departments_generator = self.connection.departments.get_all_generator()
 
-        department_attributes = []
+        for departments in departments_generator:
+            department_attributes = []
+            for department in departments:
+                department_attributes.append({'attribute_type': 'DEPARTMENT', 'display_name': 'Department', 'value': department['FullyQualifiedName'], 'destination_id': department['Id'], 'active': department['Active']})
 
-        for department in departments:
-            department_attributes.append({'attribute_type': 'DEPARTMENT', 'display_name': 'Department', 'value': department['FullyQualifiedName'], 'destination_id': department['Id'], 'active': department['Active']})
+            DestinationAttribute.bulk_create_or_update_destination_attributes(department_attributes, 'DEPARTMENT', self.workspace_id, True)
 
-        DestinationAttribute.bulk_create_or_update_destination_attributes(department_attributes, 'DEPARTMENT', self.workspace_id, True)
         return []
 
     def sync_tax_codes(self):
         """
         Get Tax Codes
         """
-        tax_codes = self.connection.tax_codes.get()
+        tax_codes_generator = self.connection.tax_codes.get_all_generator()
 
-        tax_attributes = []
-        for tax_code in tax_codes:
-            if 'PurchaseTaxRateList' in tax_code.keys():
-                if tax_code['PurchaseTaxRateList']['TaxRateDetail']:
-                    effective_tax_rate, tax_rates = self.get_effective_tax_rates(tax_code['PurchaseTaxRateList']['TaxRateDetail'])
-                    if effective_tax_rate >= 0:
-                        tax_attributes.append(
-                            {
-                                'attribute_type': 'TAX_CODE',
-                                'display_name': 'Tax Code',
-                                'value': '{0} @{1}%'.format(tax_code['Name'], effective_tax_rate),
-                                'destination_id': tax_code['Id'],
-                                'active': True,
-                                'detail': {'tax_rate': effective_tax_rate, 'tax_refs': tax_rates},
-                            }
-                        )
+        for tax_codes in tax_codes_generator:
+            tax_attributes = []
+            for tax_code in tax_codes:
+                if 'PurchaseTaxRateList' in tax_code.keys():
+                    if tax_code['PurchaseTaxRateList']['TaxRateDetail']:
+                        effective_tax_rate, tax_rates = self.get_effective_tax_rates(tax_code['PurchaseTaxRateList']['TaxRateDetail'])
+                        if effective_tax_rate >= 0:
+                            tax_attributes.append(
+                                {
+                                    'attribute_type': 'TAX_CODE',
+                                    'display_name': 'Tax Code',
+                                    'value': '{0} @{1}%'.format(tax_code['Name'], effective_tax_rate),
+                                    'destination_id': tax_code['Id'],
+                                    'active': True,
+                                    'detail': {'tax_rate': effective_tax_rate, 'tax_refs': tax_rates},
+                                }
+                            )
 
-        DestinationAttribute.bulk_create_or_update_destination_attributes(tax_attributes, 'TAX_CODE', self.workspace_id, True)
+            DestinationAttribute.bulk_create_or_update_destination_attributes(tax_attributes, 'TAX_CODE', self.workspace_id, True)
 
         return []
 
@@ -276,32 +308,32 @@ class QBOConnector:
         """
         Get vendors
         """
-        vendors = self.connection.vendors.get()
+        vendors_generator = self.connection.vendors.get_all_generator()
 
-        vendor_attributes = []
-        destination_attributes = DestinationAttribute.objects.filter(workspace_id=self.workspace_id, attribute_type='VENDOR').values('destination_id', 'value')
-        disabled_fields_map = {}
+        for vendors in vendors_generator:
+            vendor_attributes = []
+            for vendor in vendors:
+                if vendor['Active']:
+                    detail = {
+                        'email': vendor['PrimaryEmailAddr']['Address'] if ('PrimaryEmailAddr' in vendor and vendor['PrimaryEmailAddr'] and 'Address' in vendor['PrimaryEmailAddr'] and vendor['PrimaryEmailAddr']['Address']) else None,
+                        'currency': vendor['CurrencyRef']['value'] if 'CurrencyRef' in vendor else None,
+                    }
+                    vendor_attributes.append({'attribute_type': 'VENDOR', 'display_name': 'vendor', 'value': vendor['DisplayName'], 'destination_id': vendor['Id'], 'detail': detail, 'active': vendor['Active']})
 
-        for destination_attribute in destination_attributes:
-            disabled_fields_map[destination_attribute['destination_id']] = {'value': destination_attribute['value']}
+            DestinationAttribute.bulk_create_or_update_destination_attributes(vendor_attributes, 'VENDOR', self.workspace_id, True)
 
-        for vendor in vendors:
-            if vendor['Active']:
-                detail = {
-                    'email': vendor['PrimaryEmailAddr']['Address'] if ('PrimaryEmailAddr' in vendor and vendor['PrimaryEmailAddr'] and 'Address' in vendor['PrimaryEmailAddr'] and vendor['PrimaryEmailAddr']['Address']) else None,
-                    'currency': vendor['CurrencyRef']['value'] if 'CurrencyRef' in vendor else None,
-                }
+        last_synced_time = get_last_synced_time(self.workspace_id, 'MERCHANT')
 
-                vendor_attributes.append({'attribute_type': 'VENDOR', 'display_name': 'vendor', 'value': vendor['DisplayName'], 'destination_id': vendor['Id'], 'detail': detail, 'active': vendor['Active']})
+        # get the inactive vendors generator
+        inactive_vendors_generator = self.connection.vendors.get_inactive(last_synced_time)
 
-                if vendor['Id'] in disabled_fields_map:
-                    disabled_fields_map.pop(vendor['Id'])
+        for inactive_vendors in inactive_vendors_generator:
+            inactive_vendor_attributes = []
+            for inactive_vendor in inactive_vendors:
+                vendor_display_name = inactive_vendor['DisplayName'].replace(" (deleted)", "").rstrip()
+                inactive_vendor_attributes.append({'attribute_type': 'VENDOR', 'display_name': 'vendor', 'value': vendor_display_name, 'destination_id': inactive_vendor['Id'], 'active': False})
 
-        # For setting active to False
-        for destination_id in disabled_fields_map:
-            vendor_attributes.append({'attribute_type': 'VENDOR', 'display_name': 'vendor', 'value': disabled_fields_map[destination_id]['value'], 'destination_id': destination_id, 'active': False})
-
-        DestinationAttribute.bulk_create_or_update_destination_attributes(vendor_attributes, 'VENDOR', self.workspace_id, True)
+            DestinationAttribute.bulk_create_or_update_destination_attributes(inactive_vendor_attributes, 'VENDOR', self.workspace_id, True)
 
         return []
 
@@ -344,30 +376,31 @@ class QBOConnector:
         """
         Get employees
         """
-        employees = self.connection.employees.get()
+        employees_generator = self.connection.employees.get_all_generator()
 
-        employee_attributes = []
+        for employees in employees_generator:
+            employee_attributes = []
+            for employee in employees:
+                detail = {'email': employee['PrimaryEmailAddr']['Address'] if ('PrimaryEmailAddr' in employee and employee['PrimaryEmailAddr'] and 'Address' in employee['PrimaryEmailAddr'] and employee['PrimaryEmailAddr']['Address']) else None}
+                employee_attributes.append({'attribute_type': 'EMPLOYEE', 'display_name': 'employee', 'value': employee['DisplayName'], 'destination_id': employee['Id'], 'detail': detail, 'active': True})
 
-        for employee in employees:
-            detail = {'email': employee['PrimaryEmailAddr']['Address'] if ('PrimaryEmailAddr' in employee and employee['PrimaryEmailAddr'] and 'Address' in employee['PrimaryEmailAddr'] and employee['PrimaryEmailAddr']['Address']) else None}
+            DestinationAttribute.bulk_create_or_update_destination_attributes(employee_attributes, 'EMPLOYEE', self.workspace_id, True)
 
-            employee_attributes.append({'attribute_type': 'EMPLOYEE', 'display_name': 'employee', 'value': employee['DisplayName'], 'destination_id': employee['Id'], 'detail': detail, 'active': True})
-
-        DestinationAttribute.bulk_create_or_update_destination_attributes(employee_attributes, 'EMPLOYEE', self.workspace_id, True)
         return []
 
     def sync_classes(self):
         """
         Get classes
         """
-        classes = self.connection.classes.get()
+        classes_generator = self.connection.classes.get_all_generator()
 
-        class_attributes = []
+        for classes in classes_generator:
+            class_attributes = []
+            for qbo_class in classes:
+                class_attributes.append({'attribute_type': 'CLASS', 'display_name': 'class', 'value': qbo_class['FullyQualifiedName'], 'destination_id': qbo_class['Id'], 'active': qbo_class['Active']})
 
-        for qbo_class in classes:
-            class_attributes.append({'attribute_type': 'CLASS', 'display_name': 'class', 'value': qbo_class['FullyQualifiedName'], 'destination_id': qbo_class['Id'], 'active': qbo_class['Active']})
+            DestinationAttribute.bulk_create_or_update_destination_attributes(class_attributes, 'CLASS', self.workspace_id, True)
 
-        DestinationAttribute.bulk_create_or_update_destination_attributes(class_attributes, 'CLASS', self.workspace_id, True)
         return []
 
     def sync_customers(self):
@@ -376,27 +409,30 @@ class QBOConnector:
         """
         customers_count = self.connection.customers.count()
         if customers_count < SYNC_UPPER_LIMIT['customers']:
-            customers = self.connection.customers.get()
+            customers_generator = self.connection.customers.get_all_generator()
 
-            customer_attributes = []
-            destination_attributes = DestinationAttribute.objects.filter(workspace_id=self.workspace_id, attribute_type='CUSTOMER', display_name='customer').values('destination_id', 'value')
-            disabled_fields_map = {}
+            for customers in customers_generator:
+                customer_attributes = []
+                for customer in customers:
+                    value = format_special_characters(customer['FullyQualifiedName'])
+                    if customer['Active'] and value:
+                        customer_attributes.append({'attribute_type': 'CUSTOMER', 'display_name': 'customer', 'value': value, 'destination_id': customer['Id'], 'active': True})
 
-            for destination_attribute in destination_attributes:
-                disabled_fields_map[destination_attribute['destination_id']] = {'value': destination_attribute['value']}
+                DestinationAttribute.bulk_create_or_update_destination_attributes(customer_attributes, 'CUSTOMER', self.workspace_id, True)
 
-            for customer in customers:
-                value = format_special_characters(customer['FullyQualifiedName'])
-                if customer['Active'] and value:
-                    customer_attributes.append({'attribute_type': 'CUSTOMER', 'display_name': 'customer', 'value': value, 'destination_id': customer['Id'], 'active': True})
-                    if customer['Id'] in disabled_fields_map:
-                        disabled_fields_map.pop(customer['Id'])
+            last_synced_time = get_last_synced_time(self.workspace_id, 'PROJECT')
 
-            # For setting active to False
-            for destination_id in disabled_fields_map:
-                customer_attributes.append({'attribute_type': 'CUSTOMER', 'display_name': 'customer', 'value': disabled_fields_map[destination_id]['value'], 'destination_id': destination_id, 'active': False})
+            # get the inactive customers generator
+            inactive_customers_generator = self.connection.customers.get_inactive(last_synced_time)
 
-            DestinationAttribute.bulk_create_or_update_destination_attributes(customer_attributes, 'CUSTOMER', self.workspace_id, True)
+            for inactive_customers in inactive_customers_generator:
+                inactive_customer_attributes = []
+                for inactive_customer in inactive_customers:
+                    display_name = inactive_customer['DisplayName'].replace(" (deleted)", "").rstrip()
+                    inactive_customer_attributes.append({'attribute_type': 'CUSTOMER', 'display_name': 'customer', 'value': display_name, 'destination_id': inactive_customer['Id'], 'active': False})
+
+                DestinationAttribute.bulk_create_or_update_destination_attributes(inactive_customer_attributes, 'CUSTOMER', self.workspace_id, True)
+
         return []
 
     def sync_dimensions(self):
@@ -533,6 +569,7 @@ class QBOConnector:
         if general_settings.import_tax_codes:
             bill_payload.update({'GlobalTaxCalculation': 'TaxInclusive'})
 
+        logger.info("| Payload for Bill creation | Content: {{WORKSPACE_ID: {} EXPENSE_GROUP_ID: {} BILL_PAYLOAD: {}}}".format(self.workspace_id, bill.expense_group.id, bill_payload))
         return bill_payload
 
     def post_bill(self, bill: Bill, bill_lineitems: List[BillLineitem]):
@@ -616,6 +653,8 @@ class QBOConnector:
 
         line = self.__construct_qbo_expense_lineitems(qbo_expense_lineitems, general_mappings)
         qbo_expense_payload = self.purchase_object_payload(qbo_expense, line, account_ref=qbo_expense.expense_account_id, payment_type='Cash')
+
+        logger.info("| Payload for Expense creation | Content: {{WORKSPACE_ID: {} EXPENSE_GROUP_ID: {} EXPENSE_PAYLOAD: {}}}".format(self.workspace_id, qbo_expense.expense_group.id, qbo_expense_payload))
         return qbo_expense_payload
 
     def post_qbo_expense(self, qbo_expense: QBOExpense, qbo_expense_lineitems: List[QBOExpenseLineitem]):
@@ -689,6 +728,8 @@ class QBOConnector:
 
         line = self.__construct_cheque_lineitems(cheque_lineitems, general_mappings)
         cheque_payload = self.purchase_object_payload(cheque, line, account_ref=cheque.bank_account_id, payment_type='Check')
+
+        logger.info("| Payload for Cheque creation | Content: {{WORKSPACE_ID: {} EXPENSE_GROUP_ID: {} CHEQUE_PAYLOAD: {}}}".format(self.workspace_id, cheque.expense_group.id, cheque_payload))
         return cheque_payload
 
     def post_cheque(self, cheque: Cheque, cheque_lineitems: List[ChequeLineitem]):
@@ -770,6 +811,7 @@ class QBOConnector:
 
         credit_card_purchase_payload = self.purchase_object_payload(credit_card_purchase, line, account_ref=credit_card_purchase.ccc_account_id, payment_type='CreditCard', doc_number=credit_card_purchase.credit_card_purchase_number, credit=credit)
 
+        logger.info("| Payload for Credit Card Purchase creation | Content: {{WORKSPACE_ID: {} EXPENSE_GROUP_ID: {} CREDIT_CARD_PURCHASE_PAYLOAD: {}}}".format(self.workspace_id, credit_card_purchase.expense_group.id, credit_card_purchase_payload))
         return credit_card_purchase_payload
 
     def post_credit_card_purchase(self, credit_card_purchase: CreditCardPurchase, credit_card_purchase_lineitems: List[CreditCardPurchaseLineitem]):
@@ -955,6 +997,7 @@ class QBOConnector:
             for tax_rate in tax_rate_refs:
                 journal_entry_payload['TxnTaxDetail']['TaxLine'].append({"Amount": 0, "DetailType": "TaxLineDetail", 'TaxLineDetail': {'TaxRateRef': tax_rate, "PercentBased": True, "NetAmountTaxable": 0}})
 
+        logger.info("| Payload for Journal Entry creation | Content: {{WORKSPACE_ID: {} EXPENSE_GROUP_ID: {} JOURNAL_ENTRY_PAYLOAD: {}}}".format(self.workspace_id, journal_entry.expense_group.id, journal_entry_payload))
         return journal_entry_payload
 
     def post_journal_entry(self, journal_entry: JournalEntry, journal_entry_lineitems: List[JournalEntryLineitem], single_credit_line: bool):
@@ -1012,7 +1055,7 @@ class QBOConnector:
             for attachment in attachments:
                 # Ignoring html attachments from chrome extension, QBO API will throw error if we upload a html file
                 if attachment['content_type'] != 'text/html':
-                    response = self.connection.attachments.post(ref_id=ref_id, ref_type=ref_type, content=attachment['download_url'], file_name=attachment['name'])
+                    response = self.connection.attachments.post(ref_id=ref_id, ref_type=ref_type, content=attachment['download_url'], file_name=attachment['name'].replace('jpeg', 'jpg'))
                     responses.append(response)
             return responses
         return []
@@ -1051,6 +1094,7 @@ class QBOConnector:
             'Line': self.__construct_bill_payment_lineitems(bill_payment_lineitems),
         }
 
+        logger.info("| Payload for Bill Payment creation | Content: {{WORKSPACE_ID: {} EXPENSE_GROUP_ID: {} BILL_PAYMENT_PAYLOAD: {}}}".format(self.workspace_id, bill_payment.expense_group.id, bill_payment_payload))
         return bill_payment_payload
 
     def post_bill_payment(self, bill_payment: BillPayment, bill_payment_lineitems: List[BillPaymentLineitem]):
@@ -1060,3 +1104,44 @@ class QBOConnector:
         bill_payment_payload = self.__construct_bill_payment(bill_payment, bill_payment_lineitems)
         created_bill_payment = self.connection.bill_payments.post(bill_payment_payload)
         return created_bill_payment
+
+    def __get_entity_id(self, general_settings: WorkspaceGeneralSettings, value: str, employee_field_mapping: str,
+    fund_source: str):
+        if fund_source == 'PERSONAL' or (fund_source == 'CCC' and general_settings.name_in_journal_entry == 'EMPLOYEE'):
+            entity = EmployeeMapping.objects.get(
+                source_employee__value=value,
+                workspace_id=general_settings.workspace_id
+            )
+            return entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' else entity.destination_vendor.destination_id
+        elif general_settings.name_in_journal_entry == 'MERCHANT' and general_settings.auto_create_merchants_as_vendors and value:
+            created_vendor = self.get_or_create_vendor(value, create=True)
+            return created_vendor.destination_id
+        else:
+            created_vendor = self.get_or_create_vendor('Credit Card Misc', create=True)
+            return created_vendor.destination_id
+
+    def get_or_create_entity(self, expense_group: ExpenseGroup, general_settings: WorkspaceGeneralSettings):
+        entity_map = {}
+        expenses = expense_group.expenses.all()
+        employee_field_mapping = general_settings.employee_field_mapping
+        for lineitem in expenses:
+            if expense_group.fund_source == 'PERSONAL':
+                entity_id = self.__get_entity_id(general_settings,
+                    expense_group.description.get('employee_email'),
+                    employee_field_mapping, expense_group.fund_source)
+            elif general_settings.name_in_journal_entry == 'MERCHANT':
+                vendor = DestinationAttribute.objects.filter(value__iexact=lineitem.vendor,
+                workspace_id=expense_group.workspace_id, attribute_type='VENDOR').first()
+                if vendor:
+                    entity_id = vendor.destination_id
+                else:
+                    entity_id = self.__get_entity_id(general_settings, lineitem.vendor,
+                        employee_field_mapping, expense_group.fund_source)
+            else:
+                entity_id = self.__get_entity_id(general_settings,
+                    expense_group.description.get('employee_email'),
+                    employee_field_mapping, expense_group.fund_source)
+
+            entity_map[lineitem.id] = entity_id
+
+        return entity_map

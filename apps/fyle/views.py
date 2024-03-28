@@ -1,4 +1,5 @@
 import logging
+from apps.fyle.helpers import ExpenseGroupSearchFilter, ExpenseSearchFilter
 
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics
@@ -14,6 +15,7 @@ from apps.fyle.actions import (
     sync_fyle_dimensions,
 )
 from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings
+from apps.fyle.queue import async_import_and_export_expenses
 from apps.fyle.serializers import (
     ExpenseFieldSerializer,
     ExpenseFilterSerializer,
@@ -33,10 +35,10 @@ class ExpenseGroupView(LookupFieldMixin, generics.ListCreateAPIView):
     List Fyle Expenses
     """
 
-    queryset = ExpenseGroup.objects.all().order_by("-exported_at")
+    queryset = ExpenseGroup.objects.all().order_by("-exported_at").distinct()
     serializer_class = ExpenseGroupSerializer
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = {"exported_at": {"gte", "lte"}, "tasklog__status": {"exact"}}
+    filterset_class = ExpenseGroupSearchFilter
 
 
 class ExportableExpenseGroupsView(generics.RetrieveAPIView):
@@ -55,6 +57,7 @@ class ExpenseGroupSyncView(generics.CreateAPIView):
     Create expense groups
     """
 
+    @handle_view_exceptions()
     def post(self, request, *args, **kwargs):
         """
         Post expense groups creation
@@ -91,6 +94,20 @@ class ExpenseFieldsView(generics.ListAPIView):
         expense_fields = get_expense_fields(workspace_id=self.kwargs['workspace_id'])
 
         return Response(expense_fields, status=status.HTTP_200_OK)
+
+
+class ExportView(generics.CreateAPIView):
+    """
+    Export View
+    """
+    authentication_classes = []
+    permission_classes = []
+
+    @handle_view_exceptions()
+    def post(self, request, *args, **kwargs):
+        async_import_and_export_expenses(request.data)
+
+        return Response(data={}, status=status.HTTP_200_OK)
 
 
 class SyncFyleDimensionView(generics.ListCreateAPIView):
@@ -142,16 +159,15 @@ class ExpenseFilterDeleteView(generics.DestroyAPIView):
     serializer_class = ExpenseFilterSerializer
 
 
-class ExpenseView(generics.ListAPIView):
+class ExpenseView(LookupFieldMixin, generics.ListAPIView):
     """
     Expense view
     """
 
-    queryset = Expense.objects.all()
+    queryset = Expense.objects.all().order_by("-updated_at").distinct()
     serializer_class = ExpenseSerializer
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = {'org_id': {'exact'}, 'is_skipped': {'exact'}, 'updated_at': {'gte', 'lte'}}
-    ordering_fields = ('-updated_at',)
+    filterset_class = ExpenseSearchFilter
 
 
 class CustomFieldView(generics.RetrieveAPIView):

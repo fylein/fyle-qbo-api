@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'fyle_rest_auth',
     'fyle_accounting_mappings',
+    'fyle_integrations_imports',
     'django_q',
     'django_filters',
     # User Created Apps
@@ -99,7 +100,8 @@ FYLE_REST_AUTH_SETTINGS = {'async_update_user': True}
 
 Q_CLUSTER = {
     'name': 'fyle_quickbooks_api',
-    'save_limit': 0,
+    # The number of tasks will be stored in django q tasks
+    "save_limit": 100000,
     'workers': 4,
     # How many tasks are kept in memory by a single cluster.
     # Helps balance the workload and the memory overhead of each individual cluster
@@ -109,14 +111,22 @@ Q_CLUSTER = {
     'ack_failures': True,
     'poll': 1,
     'retry': 14400,
-    'timeout': 3600,
+    # 15 mins
+    'timeout': 900,
     'catch_up': False,
     # The number of tasks a worker will process before recycling.
     # Useful to release memory resources on a regular basis.
-    'recycle': 50,
+    'recycle': os.environ.get('DJANGO_Q_RECYCLE', 50),
     # The maximum resident set size in kilobytes before a worker will recycle and release resources.
     # Useful for limiting memory usage.
     'max_rss': 100000,  # 100mb
+    'ALT_CLUSTERS': {
+        'import': {
+            'retry': 14400,
+            # 15 mins
+            'timeout': 900,
+        },
+    }
 }
 
 SERVICE_NAME = os.environ.get('SERVICE_NAME')
@@ -134,6 +144,7 @@ LOGGING = {
         'django_q': {'handlers': ['debug_logs'], 'propagate': True},
         'gunicorn': {'handlers': ['request_logs'], 'level': 'INFO', 'propagate': False},
         'fyle_rest_auth': {'handlers': ['debug_logs'], 'propagate': True},
+        'fyle_integrations_imports': {'handlers': ['debug_logs'], 'propagate': True},
     },
 }
 
@@ -180,14 +191,19 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+# Branding
+BRAND_ID = os.environ.get('BRAND_ID')
+
 # Fyle Settings
 API_URL = os.environ.get('API_URL')
 FYLE_TOKEN_URI = os.environ.get('FYLE_TOKEN_URI')
 FYLE_CLIENT_ID = os.environ.get('FYLE_CLIENT_ID')
 FYLE_CLIENT_SECRET = os.environ.get('FYLE_CLIENT_SECRET')
 FYLE_BASE_URL = os.environ.get('FYLE_BASE_URL')
-FYLE_APP_URL = os.environ.get('APP_URL')
 FYLE_EXPENSE_URL = os.environ.get('FYLE_APP_URL')
+
+QBO_INTEGRATION_APP_URL = os.environ.get('QBO_INTEGRATION_APP_URL')
+QBO_APP_URL = os.environ.get('QBO_APP_URL')
 
 
 # QBO Settings
@@ -199,6 +215,7 @@ QBO_ENVIRONMENT = os.environ.get('QBO_ENVIRONMENT')
 ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY')
 E2E_TESTS_CLIENT_SECRET = os.environ.get('E2E_TESTS_CLIENT_SECRET')
 E2E_TESTS_REALM_ID = os.environ.get('E2E_TESTS_REALM_ID')
+INTEGRATIONS_SETTINGS_API = os.environ.get('INTEGRATIONS_SETTINGS_API')
 
 # Cache Settings
 SENDGRID_SANDBOX_MODE_IN_DEBUG = False

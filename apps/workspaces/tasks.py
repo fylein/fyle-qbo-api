@@ -3,35 +3,52 @@ from datetime import date, datetime
 from typing import List
 
 from django.conf import settings
-from django.core.mail import EmailMessage
 from django.db.models import Q
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django_q.models import Schedule
 from fyle_accounting_mappings.models import ExpenseAttribute
+from fyle_integrations_platform_connector import PlatformConnector
 
-from apps.fyle.models import ExpenseGroup
+from fyle_rest_auth.helpers import get_fyle_admin
+
 from apps.fyle.tasks import async_create_expense_groups
-from apps.quickbooks_online.queue import (
-    schedule_bills_creation,
-    schedule_cheques_creation,
-    schedule_credit_card_purchase_creation,
-    schedule_journal_entry_creation,
-    schedule_qbo_expense_creation,
-)
 from apps.tasks.models import Error, TaskLog
 from apps.workspaces.models import (
     FyleCredential,
-    LastExportDetail,
     QBOCredential,
     Workspace,
     WorkspaceGeneralSettings,
     WorkspaceSchedule,
 )
 from apps.workspaces.queue import schedule_email_notification
+from apps.users.models import User
+
+from .actions import export_to_qbo
+from .utils import send_email
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
+
+
+def async_add_admins_to_workspace(workspace_id: int, current_user_id: str):
+    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+    platform = PlatformConnector(fyle_credentials)
+
+    users = []
+    admins = platform.employees.get_admins()
+
+    for admin in admins:
+        # Skip current user since it is already added
+        if current_user_id != admin['user_id']:
+            users.append(User(email=admin['email'], user_id=admin['user_id'], full_name=admin['full_name']))
+
+    if len(users):
+        created_users = User.objects.bulk_create(users, batch_size=50)
+        workspace = Workspace.objects.get(id=workspace_id)
+
+        for user in created_users:
+            workspace.user.add(user)
 
 
 def schedule_sync(workspace_id: int, schedule_enabled: bool, hours: int, email_added: List, emails_selected: List):
@@ -84,54 +101,6 @@ def run_sync_schedule(workspace_id):
 
     if task_log.status == 'COMPLETE':
         export_to_qbo(workspace_id, 'AUTO')
-
-
-def export_to_qbo(workspace_id, export_mode=None):
-    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
-    last_export_detail = LastExportDetail.objects.get(workspace_id=workspace_id)
-    last_exported_at = datetime.now()
-    is_expenses_exported = False
-
-    if general_settings.reimbursable_expenses_object:
-
-        expense_group_ids = ExpenseGroup.objects.filter(fund_source='PERSONAL', exported_at__isnull=True, workspace_id=workspace_id).values_list('id', flat=True)
-
-        if len(expense_group_ids):
-            is_expenses_exported = True
-
-        if general_settings.reimbursable_expenses_object == 'BILL':
-            schedule_bills_creation(workspace_id=workspace_id, expense_group_ids=expense_group_ids)
-
-        elif general_settings.reimbursable_expenses_object == 'EXPENSE':
-            schedule_qbo_expense_creation(workspace_id=workspace_id, expense_group_ids=expense_group_ids)
-
-        elif general_settings.reimbursable_expenses_object == 'CHECK':
-            schedule_cheques_creation(workspace_id=workspace_id, expense_group_ids=expense_group_ids)
-
-        elif general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY':
-            schedule_journal_entry_creation(workspace_id=workspace_id, expense_group_ids=expense_group_ids)
-
-    if general_settings.corporate_credit_card_expenses_object:
-        expense_group_ids = ExpenseGroup.objects.filter(fund_source='CCC', exported_at__isnull=True, workspace_id=workspace_id).values_list('id', flat=True)
-
-        if len(expense_group_ids):
-            is_expenses_exported = True
-
-        if general_settings.corporate_credit_card_expenses_object == 'JOURNAL ENTRY':
-            schedule_journal_entry_creation(workspace_id=workspace_id, expense_group_ids=expense_group_ids)
-
-        elif general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE':
-            schedule_credit_card_purchase_creation(workspace_id=workspace_id, expense_group_ids=expense_group_ids)
-
-        elif general_settings.corporate_credit_card_expenses_object == 'DEBIT CARD EXPENSE':
-            schedule_qbo_expense_creation(workspace_id=workspace_id, expense_group_ids=expense_group_ids)
-
-        elif general_settings.corporate_credit_card_expenses_object == 'BILL':
-            schedule_bills_creation(workspace_id=workspace_id, expense_group_ids=expense_group_ids)
-    if is_expenses_exported:
-        last_export_detail.last_exported_at = last_exported_at
-        last_export_detail.export_mode = export_mode or 'MANUAL'
-        last_export_detail.save()
 
 
 def run_email_notification(workspace_id):
@@ -205,16 +174,13 @@ def run_email_notification(workspace_id):
                     'qbo_company': qbo.company_name,
                     'export_time': export_time.strftime("%d %b %Y | %H:%M"),
                     'year': date.today().year,
-                    'app_url': "{0}/workspaces/main/dashboard".format(settings.FYLE_APP_URL),
+                    'app_url': "{0}/main/dashboard".format(settings.QBO_INTEGRATION_APP_URL),
                     'task_logs': mark_safe(expense_html),
                     'error_type': expense_data,
                 }
                 message = render_to_string("mail_template.html", context)
 
-                mail = EmailMessage(subject="Export To QuickBooks Online Failed", body=message, from_email=settings.EMAIL, to=[admin_email])
-
-                mail.content_subtype = "html"
-                mail.send()
+                send_email(sender_email=settings.EMAIL, recipient_email=[admin_email], subject="Export To QuickBooks Online Failed", message=message)
 
         ws_schedule.error_count = len(task_logs)
         ws_schedule.save()
@@ -222,9 +188,35 @@ def run_email_notification(workspace_id):
     except QBOCredential.DoesNotExist:
         logger.info('QBO Credentials not found for workspace_id %s', workspace_id)
 
+    except Exception as e:
+        logger.exception('Error in run_email_notification %s', e)
+
 
 def async_update_fyle_credentials(fyle_org_id: str, refresh_token: str):
     fyle_credentials = FyleCredential.objects.filter(workspace__fyle_org_id=fyle_org_id).first()
     if fyle_credentials:
         fyle_credentials.refresh_token = refresh_token
         fyle_credentials.save()
+
+
+def async_create_admin_subcriptions(workspace_id: int) -> None:
+    """
+    Create admin subscriptions
+    :param workspace_id: workspace id
+    :return: None
+    """
+    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+    platform = PlatformConnector(fyle_credentials)
+    payload = {
+        'is_enabled': True,
+        'webhook_url': '{}/workspaces/{}/fyle/exports/'.format(settings.API_URL, workspace_id)
+    }
+    platform.subscriptions.post(payload)
+
+
+def async_update_workspace_name(workspace: Workspace, access_token: str):
+    fyle_user = get_fyle_admin(access_token.split(' ')[1], None)
+    org_name = fyle_user['data']['org']['name']
+
+    workspace.name = org_name
+    workspace.save()

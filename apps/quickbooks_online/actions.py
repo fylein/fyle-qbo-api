@@ -1,5 +1,7 @@
+import logging
 from datetime import datetime, timezone
 
+from django.conf import settings
 from django.db.models import Q
 from django_q.tasks import Chain
 from fyle_accounting_mappings.models import MappingSetting
@@ -7,9 +9,17 @@ from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 from rest_framework.response import Response
 from rest_framework.views import status
 
+from apps.fyle.actions import update_complete_expenses
+from apps.fyle.models import ExpenseGroup
+from apps.mappings.constants import SYNC_METHODS
+from apps.mappings.helpers import get_auto_sync_permission
+from apps.quickbooks_online.helpers import generate_export_type_and_id
 from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import TaskLog
-from apps.workspaces.models import LastExportDetail, QBOCredential, Workspace
+from apps.workspaces.models import LastExportDetail, QBOCredential, Workspace, WorkspaceGeneralSettings
+
+logger = logging.getLogger(__name__)
+logger.level = logging.INFO
 
 
 def update_last_export_details(workspace_id):
@@ -51,15 +61,82 @@ def refresh_quickbooks_dimensions(workspace_id: int):
     quickbooks_connector = QBOConnector(quickbooks_credentials, workspace_id=workspace_id)
 
     mapping_settings = MappingSetting.objects.filter(workspace_id=workspace_id, import_to_fyle=True)
+    credentials = QBOCredential.objects.get(workspace_id=workspace_id)
+    workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
+
     chain = Chain()
 
-    for mapping_setting in mapping_settings:
-        if mapping_setting.source_field == 'PROJECT':
-            chain.append('apps.mappings.tasks.auto_import_and_map_fyle_fields', int(workspace_id))
-        elif mapping_setting.source_field == 'COST_CENTER':
-            chain.append('apps.mappings.tasks.auto_create_cost_center_mappings', int(workspace_id))
-        elif mapping_setting.is_custom:
-            chain.append('apps.mappings.tasks.async_auto_create_custom_field_mappings', int(workspace_id))
+    if workspace_general_settings:
+        for mapping_setting in mapping_settings:
+            if mapping_setting.source_field in ['PROJECT', 'COST_CENTER'] or mapping_setting.is_custom:
+                chain.append(
+                    'fyle_integrations_imports.tasks.trigger_import_via_schedule',
+                    workspace_id,
+                    mapping_setting.destination_field,
+                    mapping_setting.source_field,
+                    'apps.quickbooks_online.utils.QBOConnector',
+                    credentials,
+                    [SYNC_METHODS[mapping_setting.destination_field]],
+                    get_auto_sync_permission(workspace_general_settings, mapping_setting),
+                    False,
+                    None,
+                    mapping_setting.is_custom,
+                    q_options={'cluster': 'import'}
+                )
+
+        if workspace_general_settings.import_tax_codes:
+            chain.append(
+                'fyle_integrations_imports.tasks.trigger_import_via_schedule',
+                workspace_id,
+                'TAX_CODE',
+                'TAX_GROUP',
+                'apps.quickbooks_online.utils.QBOConnector',
+                credentials,
+                [SYNC_METHODS['TAX_CODE']],
+                False,
+                False,
+                None,
+                False,
+                q_options={'cluster': 'import'}
+            )
+
+        if workspace_general_settings.import_categories or workspace_general_settings.import_items:
+            destination_sync_methods = []
+            if workspace_general_settings.import_categories:
+                destination_sync_methods.append(SYNC_METHODS['ACCOUNT'])
+            if workspace_general_settings.import_items:
+                destination_sync_methods.append(SYNC_METHODS['ITEM'])
+
+            chain.append(
+                'fyle_integrations_imports.tasks.trigger_import_via_schedule',
+                workspace_id,
+                'ACCOUNT',
+                'CATEGORY',
+                'apps.quickbooks_online.utils.QBOConnector',
+                credentials,
+                destination_sync_methods,
+                get_auto_sync_permission(workspace_general_settings, None),
+                False,
+                workspace_general_settings.charts_of_accounts if 'accounts' in destination_sync_methods else None,
+                False,
+                q_options={'cluster': 'import'}
+            )
+
+        if workspace_general_settings.import_vendors_as_merchants:
+            chain.append(
+                'fyle_integrations_imports.tasks.trigger_import_via_schedule',
+                workspace_id,
+                'VENDOR',
+                'MERCHANT',
+                'apps.quickbooks_online.utils.QBOConnector',
+                credentials,
+                [SYNC_METHODS['VENDOR']],
+                False,
+                False,
+                None,
+                False,
+                q_options={'cluster': 'import'}
+            )
 
     if chain.length() > 0:
         chain.run()
@@ -83,3 +160,24 @@ def sync_quickbooks_dimensions(workspace_id: int):
 
         workspace.destination_synced_at = datetime.now()
         workspace.save(update_fields=['destination_synced_at'])
+
+
+def generate_export_url_and_update_expense(expense_group: ExpenseGroup) -> None:
+    """
+    Generate export url and update expense
+    :param expense_group: Expense Group
+    :return: None
+    """
+    try:
+        export_type, export_id = generate_export_type_and_id(expense_group)
+        url = '{qbo_app_url}/app/{export_type}?txnId={export_id}'.format(
+            qbo_app_url=settings.QBO_APP_URL,
+            export_type=export_type,
+            export_id=export_id
+        )
+    except Exception as error:
+        # Defaulting it to QBO app url, worst case scenario if we're not able to parse it properly
+        url = settings.QBO_APP_URL
+        logger.error('Error while generating export url %s', error)
+
+    update_complete_expenses(expense_group.expenses.all(), url)

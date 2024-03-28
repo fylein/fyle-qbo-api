@@ -25,7 +25,7 @@ class ReadWriteSerializerMethodField(serializers.SerializerMethodField):
 class WorkspaceGeneralSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkspaceGeneralSettings
-        fields = ['reimbursable_expenses_object', 'corporate_credit_card_expenses_object', 'is_simplify_report_closure_enabled']
+        fields = ['reimbursable_expenses_object', 'corporate_credit_card_expenses_object', 'is_simplify_report_closure_enabled', 'name_in_journal_entry']
         read_only_fields = ['is_simplify_report_closure_enabled']
 
 
@@ -96,14 +96,15 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
         expense_group_settings = validated.pop('expense_group_settings')
         general_mappings = validated.pop('general_mappings')
 
-        workspace_general_settings_instance = WorkspaceGeneralSettings.objects.get(workspace_id=instance.id)
+        workspace_general_settings_instance = WorkspaceGeneralSettings.objects.filter(workspace_id=instance.id).first()
 
         map_merchant_to_vendor = True
-
-        if workspace_general_settings_instance.map_merchant_to_vendor:
-            map_merchant_to_vendor = workspace_general_settings_instance.map_merchant_to_vendor
-
-        category_sync_version = workspace_general_settings_instance.category_sync_version if workspace_general_settings_instance.category_sync_version else 'v2'
+        category_sync_version = 'v2'
+        if workspace_general_settings_instance:
+            if workspace_general_settings_instance.map_merchant_to_vendor:
+                map_merchant_to_vendor = workspace_general_settings_instance.map_merchant_to_vendor
+            if workspace_general_settings_instance.category_sync_version:
+                category_sync_version = workspace_general_settings_instance.category_sync_version
 
         enable_cards_mapping = False
         if workspace_general_settings.get('corporate_credit_card_expenses_object') and (workspace_general_settings.get('corporate_credit_card_expenses_object') not in ('BILL', 'DEBIT CARD EXPENSE')):
@@ -117,6 +118,7 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
                 'map_merchant_to_vendor': map_merchant_to_vendor,
                 'category_sync_version': category_sync_version,
                 'map_fyle_cards_qbo_account': enable_cards_mapping,
+                'name_in_journal_entry': workspace_general_settings.get('name_in_journal_entry'),
             },
         )
 

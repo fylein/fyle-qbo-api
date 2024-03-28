@@ -1,10 +1,12 @@
+import json
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.db import transaction
+from django_q.tasks import async_task
 from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute
 from fyle_integrations_platform_connector import PlatformConnector
 from fyle_rest_auth.helpers import get_fyle_admin
@@ -13,13 +15,27 @@ from qbosdk import revoke_refresh_token
 from rest_framework.response import Response
 from rest_framework.views import status
 
-from apps.fyle.helpers import get_cluster_domain
-from apps.fyle.models import ExpenseGroupSettings
+from apps.fyle.helpers import get_cluster_domain, post_request
+from apps.fyle.models import ExpenseGroup, ExpenseGroupSettings
+from apps.quickbooks_online.queue import (
+    schedule_bills_creation,
+    schedule_cheques_creation,
+    schedule_credit_card_purchase_creation,
+    schedule_journal_entry_creation,
+    schedule_qbo_expense_creation,
+)
 from apps.quickbooks_online.utils import QBOConnector
-from apps.workspaces.models import FyleCredential, LastExportDetail, QBOCredential, Workspace
+from apps.workspaces.models import (
+    FyleCredential,
+    LastExportDetail,
+    QBOCredential,
+    Workspace,
+    WorkspaceGeneralSettings,
+    WorkspaceSchedule,
+)
 from apps.workspaces.serializers import QBOCredentialSerializer
 from apps.workspaces.signals import post_delete_qbo_connection
-from apps.workspaces.utils import assert_valid
+from fyle_qbo_api.utils import assert_valid
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -35,6 +51,8 @@ def update_or_create_workspace(user, access_token):
 
     if workspace:
         workspace.user.add(User.objects.get(user_id=user))
+        workspace.name = org_name
+        workspace.save()
         cache.delete(str(workspace.id))
     else:
         workspace = Workspace.objects.create(name=org_name, fyle_org_id=org_id, fyle_currency=org_currency, app_version='v2')
@@ -50,6 +68,9 @@ def update_or_create_workspace(user, access_token):
         cluster_domain = get_cluster_domain(auth_tokens.refresh_token)
 
         FyleCredential.objects.update_or_create(refresh_token=auth_tokens.refresh_token, workspace_id=workspace.id, cluster_domain=cluster_domain)
+        async_task('apps.workspaces.tasks.async_add_admins_to_workspace', workspace.id, user.user_id)
+        async_task('apps.workspaces.tasks.async_create_admin_subcriptions', workspace.id)
+
     return workspace
 
 
@@ -88,7 +109,16 @@ def connect_qbo_oauth(refresh_token, realm_id, workspace_id):
     workspace.qbo_realm_id = realm_id
 
     if workspace.onboarding_state == 'CONNECTION':
-        workspace.onboarding_state = 'MAP_EMPLOYEES'
+        if settings.BRAND_ID == 'fyle':
+            workspace.onboarding_state = 'MAP_EMPLOYEES'
+        elif settings.BRAND_ID == 'co':
+            workspace.onboarding_state = 'EXPORT_SETTINGS'
+            workspace_general_settings_instance = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace.id).first()
+            if not workspace_general_settings_instance:
+                WorkspaceGeneralSettings.objects.update_or_create(
+                    workspace_id=workspace_id, defaults={'employee_field_mapping': 'VENDOR', 'auto_map_employees': None}
+                )
+
     workspace.save()
 
     # Return the QBO credentials as serialized data
@@ -102,9 +132,10 @@ def get_workspace_admin(workspace_id: int):
     users = workspace.user.all()
     for user in users:
         admin = User.objects.get(user_id=user)
-        name = ExpenseAttribute.objects.get(value=admin.email, workspace_id=workspace_id, attribute_type='EMPLOYEE').detail['full_name']
+        employee = ExpenseAttribute.objects.filter(value=admin.email, workspace_id=workspace_id, attribute_type='EMPLOYEE').first()
+        if employee:
+            admin_email.append({'name': employee.detail['full_name'], 'email': admin.email})
 
-        admin_email.append({'name': name, 'email': admin.email})
     return admin_email
 
 
@@ -117,6 +148,8 @@ def delete_qbo_refresh_token(workspace_id: int):
     qbo_credentials.save()
 
     post_delete_qbo_connection(workspace_id)
+
+    post_to_integration_settings(workspace_id, False)
 
     try:
         revoke_refresh_token(refresh_token, settings.QBO_CLIENT_ID, settings.QBO_CLIENT_SECRET)
@@ -193,3 +226,122 @@ def setup_e2e_tests(workspace_id: int, connection):
         error_message = 'No healthy tokens found, please try again later.'
         logger.error(error)
         return Response(status=status.HTTP_400_BAD_REQUEST, data={'message': error_message})
+
+
+def post_to_integration_settings(workspace_id: int, active: bool):
+    """
+    Post to integration settings
+    """
+    refresh_token = FyleCredential.objects.get(workspace_id=workspace_id).refresh_token
+    url = '{}/integrations/'.format(settings.INTEGRATIONS_SETTINGS_API)
+    payload = {
+        'tpa_id': settings.FYLE_CLIENT_ID,
+        'tpa_name': 'Fyle Quickbooks Integration',
+        'type': 'ACCOUNTING',
+        'is_active': active,
+        'connected_at': datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+    }
+
+    try:
+        post_request(url, json.dumps(payload), refresh_token)
+    except Exception as error:
+        logger.error(error)
+
+
+def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[]):
+    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+    last_export_detail = LastExportDetail.objects.get(workspace_id=workspace_id)
+    workspace_schedule = WorkspaceSchedule.objects.filter(workspace_id=workspace_id, interval_hours__gt=0, enabled=True).first()
+    last_exported_at = datetime.now()
+    is_expenses_exported = False
+    export_mode = export_mode or 'MANUAL'
+    expense_group_filters = {
+        'exported_at__isnull': True,
+        'workspace_id': workspace_id
+    }
+    if expense_group_ids:
+        expense_group_filters['id__in'] = expense_group_ids
+
+    if general_settings.reimbursable_expenses_object:
+        expense_group_ids = ExpenseGroup.objects.filter(fund_source='PERSONAL', **expense_group_filters).values_list('id', flat=True)
+
+        if len(expense_group_ids):
+            is_expenses_exported = True
+
+        if general_settings.reimbursable_expenses_object == 'BILL':
+            schedule_bills_creation(
+                workspace_id=workspace_id,
+                expense_group_ids=expense_group_ids,
+                is_auto_export=export_mode == 'AUTO',
+                fund_source='PERSONAL'
+            )
+
+        elif general_settings.reimbursable_expenses_object == 'EXPENSE':
+            schedule_qbo_expense_creation(
+                workspace_id=workspace_id,
+                expense_group_ids=expense_group_ids,
+                is_auto_export=export_mode == 'AUTO',
+                fund_source='PERSONAL'
+            )
+
+        elif general_settings.reimbursable_expenses_object == 'CHECK':
+            schedule_cheques_creation(
+                workspace_id=workspace_id,
+                expense_group_ids=expense_group_ids,
+                is_auto_export=export_mode == 'AUTO',
+                fund_source='PERSONAL'
+            )
+
+        elif general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY':
+            schedule_journal_entry_creation(
+                workspace_id=workspace_id,
+                expense_group_ids=expense_group_ids,
+                is_auto_export=export_mode == 'AUTO',
+                fund_source='PERSONAL'
+            )
+
+    if general_settings.corporate_credit_card_expenses_object:
+        expense_group_ids = ExpenseGroup.objects.filter(fund_source='CCC', **expense_group_filters).values_list('id', flat=True)
+
+        if len(expense_group_ids):
+            is_expenses_exported = True
+
+        if general_settings.corporate_credit_card_expenses_object == 'JOURNAL ENTRY':
+            schedule_journal_entry_creation(
+                workspace_id=workspace_id,
+                expense_group_ids=expense_group_ids,
+                is_auto_export=export_mode == 'AUTO',
+                fund_source='CCC'
+            )
+
+        elif general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE':
+            schedule_credit_card_purchase_creation(
+                workspace_id=workspace_id,
+                expense_group_ids=expense_group_ids,
+                is_auto_export=export_mode == 'AUTO',
+                fund_source='CCC'
+            )
+
+        elif general_settings.corporate_credit_card_expenses_object == 'DEBIT CARD EXPENSE':
+            schedule_qbo_expense_creation(
+                workspace_id=workspace_id,
+                expense_group_ids=expense_group_ids,
+                is_auto_export=export_mode == 'AUTO',
+                fund_source='CCC'
+            )
+
+        elif general_settings.corporate_credit_card_expenses_object == 'BILL':
+            schedule_bills_creation(
+                workspace_id=workspace_id,
+                expense_group_ids=expense_group_ids,
+                is_auto_export=export_mode == 'AUTO',
+                fund_source='CCC'
+            )
+    if is_expenses_exported:
+        last_export_detail.last_exported_at = last_exported_at
+        last_export_detail.export_mode = export_mode
+
+        if workspace_schedule:
+            last_export_detail.next_export_at = last_exported_at + timedelta(hours=workspace_schedule.interval_hours)
+
+        last_export_detail.save()

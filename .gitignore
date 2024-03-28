@@ -40,6 +40,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+fyle_integrations_platform_connector/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -158,3 +159,4 @@ cache.db
 cache.db-journal
 fyle_integrations_platform_connector/
 qbosdk/
+fyle_rest_auth/

@@ -2,6 +2,7 @@ import logging
 
 from django.contrib.auth import get_user_model
 from django.db import connection
+from django_q.tasks import async_task
 from fyle_rest_auth.utils import AuthUtils
 from qbosdk import exceptions as qbo_exc
 from rest_framework import generics
@@ -13,6 +14,7 @@ from apps.exceptions import handle_view_exceptions
 from apps.workspaces.actions import (
     connect_qbo_oauth,
     delete_qbo_refresh_token,
+    export_to_qbo,
     get_workspace_admin,
     setup_e2e_tests,
     update_or_create_workspace,
@@ -25,7 +27,6 @@ from apps.workspaces.serializers import (
     WorkSpaceGeneralSettingsSerializer,
     WorkspaceSerializer,
 )
-from apps.workspaces.tasks import export_to_qbo
 from apps.workspaces.utils import generate_qbo_refresh_token
 
 logger = logging.getLogger(__name__)
@@ -58,9 +59,17 @@ class WorkspaceView(generics.CreateAPIView, generics.RetrieveUpdateAPIView):
         """
         user = User.objects.get(user_id=request.user)
         org_id = request.query_params.get('org_id')
-        workspace = Workspace.objects.filter(user__in=[user], fyle_org_id=org_id).all()
+        workspaces = Workspace.objects.filter(user__in=[user], fyle_org_id=org_id).all()
 
-        return Response(data=WorkspaceSerializer(workspace, many=True).data, status=status.HTTP_200_OK)
+        if workspaces:
+            async_task(
+                "apps.workspaces.tasks.async_update_workspace_name",
+                workspaces[0],
+                request.META.get("HTTP_AUTHORIZATION"),
+                q_options={'cluster': 'import'}
+            )
+
+        return Response(data=WorkspaceSerializer(workspaces, many=True).data, status=status.HTTP_200_OK)
 
     def patch(self, request, **kwargs):
         """
@@ -116,9 +125,9 @@ class ConnectQBOView(generics.CreateAPIView, generics.RetrieveUpdateAPIView):
         """
         Get QBO Credentials in Workspace
         """
-        qbo_credentials = QBOCredential.objects.get(workspace=kwargs['workspace_id'], is_expired=False)
+        qbo_credentials = QBOCredential.objects.get(workspace=kwargs['workspace_id'])
 
-        return Response(data=QBOCredentialSerializer(qbo_credentials).data, status=status.HTTP_200_OK if qbo_credentials.refresh_token else status.HTTP_400_BAD_REQUEST)
+        return Response(data=QBOCredentialSerializer(qbo_credentials).data, status=status.HTTP_200_OK if qbo_credentials.refresh_token and not qbo_credentials.is_expired else status.HTTP_400_BAD_REQUEST)
 
 
 class GeneralSettingsView(generics.RetrieveAPIView):

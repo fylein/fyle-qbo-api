@@ -7,6 +7,8 @@ from fyle.platform import Platform
 from fyle_rest_auth.models import AuthToken, User
 from rest_framework.test import APIClient
 
+from apps.fyle.models import ExpenseGroupSettings
+from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from apps.fyle.helpers import get_access_token
 from fyle_qbo_api.tests import settings
 from tests.test_workspaces.fixtures import data as fyle_data
@@ -44,6 +46,20 @@ def test_connection(db):
     auth_token = AuthToken(id=1, refresh_token=refresh_token, user=user)
     auth_token.save()
 
+    workspace = Workspace.objects.create(
+        name='Test Workspace 2',
+        fyle_org_id='fyle_org_id_dummy',
+        fyle_currency='USD',
+        app_version='v2',
+        onboarding_state='COMPLETE'
+    )
+    workspace.user.add(user)
+    WorkspaceGeneralSettings.objects.create(
+        workspace=workspace,
+        reimbursable_expenses_object='BILL'
+    )
+    ExpenseGroupSettings.objects.create(workspace=workspace)
+
     return fyle_connection
 
 
@@ -63,12 +79,3 @@ def default_session_fixture(request):
 
     patched_5 = mock.patch('fyle.platform.apis.v1beta.spender.MyProfile.get', return_value=fyle_data['admin_user'])
     patched_5.__enter__()
-
-    def unpatch():
-        patched_1.__exit__()
-        patched_2.__exit__()
-        patched_3.__exit__()
-        patched_4.__exit__()
-        patched_5.__exit__()
-
-    request.addfinalizer(unpatch)

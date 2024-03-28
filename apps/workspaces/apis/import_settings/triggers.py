@@ -4,14 +4,8 @@ from django.db.models import Q
 from fyle_accounting_mappings.models import MappingSetting
 
 from apps.fyle.models import ExpenseGroupSettings
-from apps.mappings.helpers import schedule_or_delete_fyle_import_tasks
-from apps.mappings.queue import (
-    async_disable_category_for_items_mapping,
-    schedule_cost_centers_creation,
-    schedule_fyle_attributes_creation,
-    schedule_tax_groups_creation,
-)
 from apps.workspaces.models import WorkspaceGeneralSettings
+from apps.mappings.schedules import schedule_or_delete_fyle_import_tasks as new_schedule_or_delete_fyle_import_tasks
 
 
 class ImportSettingsTrigger:
@@ -78,12 +72,7 @@ class ImportSettingsTrigger:
         """
         Post save action for workspace general settings
         """
-        schedule_tax_groups_creation(import_tax_codes=self.__workspace_general_settings.get('import_tax_codes'), workspace_id=self.__workspace_id)
-
-        schedule_or_delete_fyle_import_tasks(workspace_general_settings_instance)
-
-        if not workspace_general_settings_instance.import_items:
-            async_disable_category_for_items_mapping(self.__workspace_id)
+        new_schedule_or_delete_fyle_import_tasks(workspace_general_settings_instance)
 
     def __remove_old_department_source_field(self, current_mappings_settings: List[MappingSetting], new_mappings_settings: List[Dict]):
         """
@@ -102,19 +91,6 @@ class ImportSettingsTrigger:
         """
         mapping_settings = self.__mapping_settings
 
-        cost_center_mapping_available = False
-
-        for setting in mapping_settings:
-            if setting['source_field'] == 'COST_CENTER':
-                cost_center_mapping_available = True
-
-        if not cost_center_mapping_available:
-            schedule_cost_centers_creation(False, self.__workspace_id)
-
-        schedule_fyle_attributes_creation(self.__workspace_id)
-
-        # Removal of department grouping will be taken care from post_delete() signal
-
         # Update department mapping to some other Fyle field
         current_mapping_settings = MappingSetting.objects.filter(workspace_id=self.__workspace_id).all()
 
@@ -128,8 +104,8 @@ class ImportSettingsTrigger:
         for setting in self.__mapping_settings:
             destination_fields.append(setting['destination_field'])
 
-        MappingSetting.objects.filter(~Q(destination_field__in=destination_fields), destination_field__in=['CLASS', 'CUSTOMER', 'DEPARTMENT'], workspace_id=self.__workspace_id).delete()
+        MappingSetting.objects.filter(~Q(destination_field__in=destination_fields), destination_field__in=['CLASS', 'CUSTOMER', 'DEPARTMENT', 'TAX_CODE'], workspace_id=self.__workspace_id).delete()
 
         self.__update_expense_group_settings_for_departments()
 
-        schedule_or_delete_fyle_import_tasks(workspace_general_settings_instance)
+        new_schedule_or_delete_fyle_import_tasks(workspace_general_settings_instance, self.__mapping_settings)

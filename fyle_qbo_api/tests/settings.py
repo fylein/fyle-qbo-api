@@ -90,7 +90,33 @@ REST_FRAMEWORK = {
 
 WSGI_APPLICATION = 'fyle_qbo_api.wsgi.application'
 
-Q_CLUSTER = {'name': 'fyle_quickbooks_api', 'save_limit': 0, 'workers': os.environ.get('NO_WORKERS', 4), 'queue_limit': 30, 'cached': False, 'orm': 'default', 'ack_failures': True, 'poll': 1, 'retry': 14400, 'timeout': 3600, 'catch_up': False}
+Q_CLUSTER = {
+    'name': 'fyle_quickbooks_api',
+    'save_limit': 0,
+    'workers': 4,
+    # How many tasks are kept in memory by a single cluster.
+    # Helps balance the workload and the memory overhead of each individual cluster
+    'queue_limit': 10,
+    'cached': False,
+    'orm': 'default',
+    'ack_failures': True,
+    'poll': 1,
+    'retry': 14400,
+    'timeout': 3600,
+    'catch_up': False,
+    # The number of tasks a worker will process before recycling.
+    # Useful to release memory resources on a regular basis.
+    'recycle': 50,
+    # The maximum resident set size in kilobytes before a worker will recycle and release resources.
+    # Useful for limiting memory usage.
+    'max_rss': 100000,  # 100mb
+    'ALT_CLUSTERS': {
+        'import': {
+            'retry': 14400,
+            'timeout': 3600
+        },
+    }
+}
 
 SERVICE_NAME = os.environ.get('SERVICE_NAME')
 
@@ -178,6 +204,9 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+# Branding
+BRAND_ID = os.environ.get('BRAND_ID')
+
 # Fyle Settings
 API_URL = os.environ.get('API_URL')
 FYLE_TOKEN_URI = os.environ.get('FYLE_TOKEN_URI')
@@ -190,6 +219,9 @@ FYLE_EXPENSE_URL = os.environ.get('FYLE_APP_URL')
 FYLE_APP_URL = ''
 EMAIL = ''
 
+QBO_INTEGRATION_APP_URL = os.environ.get('QBO_INTEGRATION_APP_URL')
+QBO_APP_URL = os.environ.get('QBO_APP_URL')
+
 # QBO Settings
 QBO_CLIENT_ID = os.environ.get('QBO_CLIENT_ID')
 QBO_CLIENT_SECRET = os.environ.get('QBO_CLIENT_SECRET')
@@ -199,8 +231,13 @@ QBO_ENVIRONMENT = os.environ.get('QBO_ENVIRONMENT')
 ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY')
 E2E_TESTS_CLIENT_SECRET = os.environ.get('E2E_TESTS_CLIENT_SECRET')
 E2E_TESTS_REALM_ID = os.environ.get('E2E_TESTS_REALM_ID')
+INTEGRATIONS_SETTINGS_API = os.environ.get('INTEGRATIONS_SETTINGS_API')
 
 # Cache Settings
+SENDGRID_API_KEY = os.environ.get('SENDGRID_KEY')
+EMAIL = os.environ.get('SENDGRID_EMAIL')
+EMAIL_BACKEND = 'sendgrid_backend.SendgridBackend'
+
 CACHE_EXPIRY = 3600
 
 CORS_ORIGIN_ALLOW_ALL = True

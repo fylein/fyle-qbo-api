@@ -1,5 +1,5 @@
 # Pull python base image
-FROM python:3.7.4-slim
+FROM python:3.10-slim
 
 # set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -20,7 +20,7 @@ RUN if [ "$CI" = "ENABLED" ]; then \
 
 # Installing requirements
 COPY requirements.txt /tmp/requirements.txt
-RUN pip install --upgrade pip && pip install -r /tmp/requirements.txt && pip install flake8
+RUN pip install --upgrade pip && pip install -r /tmp/requirements.txt
 
 
 # Copy Project to the container

@@ -1,5 +1,6 @@
 import logging
 
+from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
 from fyle_accounting_mappings.models import DestinationAttribute
 from fyle_accounting_mappings.serializers import DestinationAttributeSerializer
@@ -10,6 +11,8 @@ from rest_framework.views import status
 from apps.exceptions import handle_view_exceptions
 from apps.quickbooks_online.actions import get_preferences, refresh_quickbooks_dimensions, sync_quickbooks_dimensions
 from fyle_qbo_api.utils import LookupFieldMixin
+
+from .serializers import QuickbooksFieldSerializer
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -25,6 +28,21 @@ class VendorView(LookupFieldMixin, generics.ListAPIView):
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = {'value': {'icontains'}, 'attribute_type': {'exact', 'in'}, 'active': {'exact'}}
     ordering_fields = ('value',)
+
+
+class QBOFieldView(LookupFieldMixin, generics.ListAPIView):
+    """
+    QBOField view
+    """
+    queryset = DestinationAttribute.objects.filter(
+        ~Q(attribute_type='EMPLOYEE') & ~Q(attribute_type='VENDOR') &
+        ~Q(attribute_type='ACCOUNTS_PAYABLE') & ~Q(attribute_type='ACCOUNT') &
+        ~Q(attribute_type='TAX_CODE') & ~Q(attribute_type='BANK_ACCOUNT') &
+        ~Q(attribute_type='CREDIT_CARD_ACCOUNT')
+    ).values('attribute_type', 'display_name').distinct()
+    serializer_class = QuickbooksFieldSerializer
+    filter_backends = (DjangoFilterBackend,)
+    pagination_class = None
 
 
 class EmployeeView(LookupFieldMixin, generics.ListAPIView):

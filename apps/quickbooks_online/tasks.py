@@ -1,14 +1,18 @@
 import json
+from typing import List
 import logging
 import traceback
 from datetime import datetime
 
 from django.db import transaction
+
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping
 from fyle_integrations_platform_connector import PlatformConnector
 from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 
 from apps.fyle.models import Expense, ExpenseGroup, Reimbursement
+from apps.fyle.actions import update_expenses_in_progress
+from apps.fyle.tasks import post_accounting_export_summary
 from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.actions import update_last_export_details
 from apps.quickbooks_online.exceptions import handle_qbo_exceptions
@@ -28,8 +32,10 @@ from apps.quickbooks_online.models import (
 )
 from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import Error, TaskLog
-from apps.workspaces.models import FyleCredential, QBOCredential, WorkspaceGeneralSettings
+from apps.workspaces.models import FyleCredential, QBOCredential, WorkspaceGeneralSettings, Workspace
 from fyle_qbo_api.exceptions import BulkError
+
+from .actions import generate_export_url_and_update_expense
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -207,10 +213,12 @@ def create_bill(expense_group, task_log_id, last_export: bool):
 
         resolve_errors_for_exported_expense_group(expense_group)
 
-    load_attachments(qbo_connection, created_bill['Bill']['Id'], 'Bill', expense_group)
-
     if last_export:
         update_last_export_details(expense_group.workspace_id)
+
+    generate_export_url_and_update_expense(expense_group)
+
+    load_attachments(qbo_connection, created_bill['Bill']['Id'], 'Bill', expense_group)
 
 
 def __validate_expense_group(expense_group: ExpenseGroup, general_settings: WorkspaceGeneralSettings):  # noqa: C901
@@ -270,11 +278,14 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
     if general_settings.import_tax_codes and not (general_mapping.default_tax_code_id or general_mapping.default_tax_code_name):
         bulk_errors.append({'row': None, 'expense_group_id': expense_group.id, 'value': 'Default Tax Code', 'type': 'General Mapping', 'message': 'Default Tax Code not found'})
 
-    if not (
-        expense_group.fund_source == 'CCC'
-        and ((general_settings.corporate_credit_card_expenses_object in ('CREDIT CARD PURCHASE', 'DEBIT CARD EXPENSE') and general_settings.map_merchant_to_vendor) or general_settings.corporate_credit_card_expenses_object == 'BILL')
-    ):
+    is_fund_source_ccc = expense_group.fund_source == 'CCC'
+    is_credit_or_debit_purchase = general_settings.corporate_credit_card_expenses_object in ('CREDIT CARD PURCHASE', 'DEBIT CARD EXPENSE')
+    is_mapped_to_vendor = general_settings.map_merchant_to_vendor
+    is_bill = general_settings.corporate_credit_card_expenses_object == 'BILL'
+    is_journal_entry = general_settings.corporate_credit_card_expenses_object == 'JOURNAL ENTRY'
+    is_name_in_je_merchant = general_settings.name_in_journal_entry == 'MERCHANT'
 
+    if not (is_fund_source_ccc and ((is_credit_or_debit_purchase and is_mapped_to_vendor) or is_bill or (is_journal_entry and is_name_in_je_merchant))):
         employee_attribute = ExpenseAttribute.objects.filter(value=expense_group.description.get('employee_email'), workspace_id=expense_group.workspace_id, attribute_type='EMPLOYEE').first()
 
         try:
@@ -367,10 +378,12 @@ def create_cheque(expense_group, task_log_id, last_export: bool):
 
         resolve_errors_for_exported_expense_group(expense_group)
 
-        load_attachments(qbo_connection, created_cheque['Purchase']['Id'], 'Purchase', expense_group)
-
     if last_export:
         update_last_export_details(expense_group.workspace_id)
+
+    generate_export_url_and_update_expense(expense_group)
+
+    load_attachments(qbo_connection, created_cheque['Purchase']['Id'], 'Purchase', expense_group)
 
 
 @handle_qbo_exceptions()
@@ -418,10 +431,12 @@ def create_qbo_expense(expense_group, task_log_id, last_export: bool):
 
         resolve_errors_for_exported_expense_group(expense_group)
 
-    load_attachments(qbo_connection, created_qbo_expense['Purchase']['Id'], 'Purchase', expense_group)
-
     if last_export:
         update_last_export_details(expense_group.workspace_id)
+
+    generate_export_url_and_update_expense(expense_group)
+
+    load_attachments(qbo_connection, created_qbo_expense['Purchase']['Id'], 'Purchase', expense_group)
 
 
 @handle_qbo_exceptions()
@@ -468,10 +483,12 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id, last_e
 
         resolve_errors_for_exported_expense_group(expense_group)
 
-        load_attachments(qbo_connection, created_credit_card_purchase['Purchase']['Id'], 'Purchase', expense_group)
-
     if last_export:
         update_last_export_details(expense_group.workspace_id)
+
+    generate_export_url_and_update_expense(expense_group)
+
+    load_attachments(qbo_connection, created_credit_card_purchase['Purchase']['Id'], 'Purchase', expense_group)
 
 
 @handle_qbo_exceptions()
@@ -495,9 +512,11 @@ def create_journal_entry(expense_group, task_log_id, last_export: bool):
     __validate_expense_group(expense_group, general_settings)
 
     with transaction.atomic():
+        entity_map = qbo_connection.get_or_create_entity(expense_group, general_settings)
+
         journal_entry_object = JournalEntry.create_journal_entry(expense_group)
 
-        journal_entry_lineitems_objects = JournalEntryLineitem.create_journal_entry_lineitems(expense_group, general_settings)
+        journal_entry_lineitems_objects = JournalEntryLineitem.create_journal_entry_lineitems(expense_group, general_settings, entity_map)
 
         created_journal_entry = qbo_connection.post_journal_entry(journal_entry_object, journal_entry_lineitems_objects, general_settings.je_single_credit_line)
 
@@ -514,10 +533,12 @@ def create_journal_entry(expense_group, task_log_id, last_export: bool):
 
         resolve_errors_for_exported_expense_group(expense_group)
 
-    load_attachments(qbo_connection, created_journal_entry['JournalEntry']['Id'], 'JournalEntry', expense_group)
-
     if last_export:
         update_last_export_details(expense_group.workspace_id)
+
+    generate_export_url_and_update_expense(expense_group)
+
+    load_attachments(qbo_connection, created_journal_entry['JournalEntry']['Id'], 'JournalEntry', expense_group)
 
 
 def check_expenses_reimbursement_status(expenses):
@@ -657,3 +678,16 @@ def async_sync_accounts(workspace_id):
         qbo_connection.sync_accounts()
     except (WrongParamsError, InvalidTokenError) as exception:
         logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
+
+
+def update_expense_and_post_summary(in_progress_expenses: List[Expense], workspace_id: int, fund_source: str) -> None:
+    """
+    Update expense and post accounting export summary
+    :param in_progress_expenses: List of expenses
+    :param workspace_id: Workspace ID
+    :param fund_source: Fund source
+    :return: None
+    """
+    fyle_org_id = Workspace.objects.get(pk=workspace_id).fyle_org_id
+    update_expenses_in_progress(in_progress_expenses)
+    post_accounting_export_summary(fyle_org_id, workspace_id, fund_source)

@@ -2,9 +2,31 @@ from fyle_accounting_mappings.models import ExpenseAttribute
 
 from apps.fyle.models import ExpenseGroupSettings
 from apps.tasks.models import TaskLog
-from apps.workspaces.models import WorkspaceGeneralSettings, WorkspaceSchedule
-from apps.workspaces.tasks import run_email_notification, run_sync_schedule, schedule_sync
+from apps.workspaces.models import Workspace, WorkspaceGeneralSettings, WorkspaceSchedule
+from apps.workspaces.tasks import (
+    async_update_workspace_name,
+    run_email_notification,
+    run_sync_schedule,
+    schedule_sync,
+    async_add_admins_to_workspace,
+    async_create_admin_subcriptions
+)
+from apps.users.models import User
+
 from tests.test_workspaces.fixtures import data
+from ..test_fyle.fixtures import data as fyle_data
+
+
+def test_async_add_admins_to_workspace(db, mocker):
+    old_users_count = User.objects.count()
+    mocker.patch(
+        'fyle.platform.apis.v1beta.admin.Employees.list_all',
+        return_value=fyle_data['get_all_employees']
+    )
+    async_add_admins_to_workspace(1, 'usqywo0f3nBY')
+    new_users_count = User.objects.count()
+
+    assert new_users_count > old_users_count
 
 
 def test_run_sync_schedule(mocker, db):
@@ -86,3 +108,23 @@ def test_email_notification(db):
     attribute.save()
 
     run_email_notification(workspace_id=workspace_id)
+
+
+def test_async_create_admin_subcriptions(db, mocker):
+    mocker.patch(
+        'fyle.platform.apis.v1beta.admin.Subscriptions.post',
+        return_value={}
+    )
+    async_create_admin_subcriptions(3)
+
+
+def test_async_update_workspace_name(db, mocker):
+    mocker.patch(
+        'apps.workspaces.tasks.get_fyle_admin',
+        return_value={'data': {'org': {'name': 'Test Org'}}}
+    )
+    workspace = Workspace.objects.get(id=1)
+    async_update_workspace_name(workspace, 'Bearer access_token')
+
+    workspace = Workspace.objects.get(id=1)
+    assert workspace.name == 'Test Org'
