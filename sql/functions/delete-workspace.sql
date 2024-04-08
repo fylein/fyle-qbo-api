@@ -232,6 +232,12 @@ BEGIN
   RAISE NOTICE 'Deleted % qbo_credentials', rcount;
 
   DELETE
+  from expense_attributes_deletion_cache ead
+  WHERE ead.workspace_id = _workspace_id;
+  GET DIAGNOSTICS rcount = ROW_COUNT;
+  RAISE NOTICE 'Deleted % expense_attributes_deletion_cache', rcount;
+
+  DELETE
   FROM expense_attributes ea
   WHERE ea.workspace_id = _workspace_id;
   GET DIAGNOSTICS rcount = ROW_COUNT;
