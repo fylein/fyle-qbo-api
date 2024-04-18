@@ -39,7 +39,7 @@ def test_post_vendor(mocker, db):
 
     vendor = qbo_connection.get_or_create_vendor(vendor_name='test Sharma', email='test@fyle.in', create=True)
 
-    assert vendor.value == 'samp_merchant'
+    assert vendor.value == 'test Sharma'
 
 
 def test_sync_vendors(mocker, db):
@@ -582,7 +582,7 @@ def test_get_or_create_entity(mocker, db):
     mocker.patch('qbosdk.apis.Vendors.search_vendor_by_display_name', return_value=None)
 
     # CCC expesnse with name Merchant
-    expense_group = ExpenseGroup.objects.filter(fund_source='CCC').first()
+    expense_group = ExpenseGroup.objects.filter(fund_source='CCC', workspace_id = 3).first()
     workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
     workspace_general_settings.corporate_credit_card_expenses_object = 'JOURNAL ENTRY'
     workspace_general_settings.name_in_journal_entry = 'MERCHANT'
