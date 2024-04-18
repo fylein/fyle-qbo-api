@@ -92,6 +92,8 @@ def test_create_journal_entry(mocker,db):
     entity_ids = qbo_connection.get_or_create_entity(expense_group, workspace_general_settings)
     journal_entry_lineitems = JournalEntryLineitem.create_journal_entry_lineitems(expense_group, workspace_general_settings, entity_ids)
 
+    DestinationAttribute.objects.filter(workspace_id=3, attribute_type='VENDOR', value='Credit Card Misc').delete()
+
     for journal_entry_lineitem in journal_entry_lineitems:
         assert journal_entry_lineitem.amount == 1188.0
         assert journal_entry_lineitem.description == 'user9@fyleforgotham.in - Office Party - 2020-05-13 - C/2021/04/R/42 -  - None/app/admin/#/enterprise/view_expense/txU2qpKmrUR9?org_id=or79Cob97KSh'

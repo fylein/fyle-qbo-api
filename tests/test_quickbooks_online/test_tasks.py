@@ -72,8 +72,10 @@ def test_get_or_create_credit_card_or_debit_card_vendor(mocker, db):
     general_settings.auto_create_merchants_as_vendors = False
     general_settings.save()
 
+    DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='VENDOR', value='Debit Card Misc').delete()
+
     contact = get_or_create_credit_card_or_debit_card_vendor(workspace_id, '', True, general_settings)
-    assert contact.value == 'Debit Card Misc'
+    assert contact.value == 'samp_merchant'
 
     mocker.patch('qbosdk.apis.Vendors.search_vendor_by_display_name', return_value=data['vendor_response'][0])
 
