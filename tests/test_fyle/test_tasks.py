@@ -129,4 +129,4 @@ def test_import_and_export_expenses(db, mocker):
     mock_call.side_effect = WorkspaceGeneralSettings.DoesNotExist('Error')
     import_and_export_expenses('rp1s1L3QtMpF', 'or79Cob97KSh')
 
-    mock_call.call_count = 1
+    assert mock_call.call_count == 0
