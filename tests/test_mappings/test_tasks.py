@@ -16,6 +16,10 @@ from apps.mappings.tasks import (
 )
 from apps.tasks.models import Error
 from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings
+from fyle.platform.exceptions import (
+    InvalidTokenError as FyleInvalidTokenError,
+    InternalServerError
+)
 
 
 def test_auto_map_employees(db):
@@ -81,12 +85,20 @@ def test_auto_map_ccc_employees(db):
 
 
 def test_async_auto_map_ccc_account(mocker, db):
-    mocker.patch('fyle_integrations_platform_connector.apis.Employees.sync', return_value=[])
+    mock_call = mocker.patch('fyle_integrations_platform_connector.apis.Employees.sync', return_value=[])
     workspace_id = 3
     async_auto_map_ccc_account(workspace_id)
 
     employee_mappings = EmployeeMapping.objects.filter(workspace_id=workspace_id).count()
     assert employee_mappings == 17
+
+    mock_call.side_effect = FyleInvalidTokenError('Invalid Token')
+    async_auto_map_ccc_account(workspace_id)
+
+    mock_call.side_effect = InternalServerError('Internal Server Error')
+    async_auto_map_ccc_account(workspace_id)
+
+    assert mock_call.call_count == 3
 
 
 def test_schedule_auto_map_ccc_employees(db):

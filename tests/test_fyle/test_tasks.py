@@ -14,14 +14,15 @@ from apps.fyle.tasks import (
 )
 from apps.fyle.actions import mark_expenses_as_skipped
 from apps.tasks.models import TaskLog
-from apps.workspaces.models import FyleCredential, Workspace
+from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
 from tests.helper import dict_compare_keys
 from tests.test_fyle.fixtures import data
+from fyle.platform.exceptions import InternalServerError, InvalidTokenError
 
 
 @pytest.mark.django_db()
 def test_create_expense_groups(mocker, db):
-    mocker.patch('fyle_integrations_platform_connector.apis.Expenses.get', return_value=data['expenses'])
+    mock_call = mocker.patch('fyle_integrations_platform_connector.apis.Expenses.get', return_value=data['expenses'])
 
     task_log, _ = TaskLog.objects.update_or_create(workspace_id=3, type='FETCHING_EXPENSES', defaults={'status': 'IN_PROGRESS'})
 
@@ -50,6 +51,14 @@ def test_create_expense_groups(mocker, db):
 
     task_log = TaskLog.objects.get(workspace_id=1)
     assert task_log.status == 'FATAL'
+
+    mock_call.side_effect = InternalServerError('Error')
+    create_expense_groups(1, ['PERSONAL', 'CCC'], task_log)
+
+    mock_call.side_effect = InvalidTokenError('Invalid Token')
+    create_expense_groups(1, ['PERSONAL', 'CCC'], task_log)
+
+    mock_call.call_count = 2
 
 
 @pytest.mark.django_db()
@@ -113,5 +122,11 @@ def test_post_accounting_export_summary(db, mocker):
     assert Expense.objects.filter(id=expense_id).first().accounting_export_summary['synced'] == True
 
 
-def test_import_and_export_expenses(db):
+def test_import_and_export_expenses(db, mocker):
     import_and_export_expenses('rp1s1L3QtMpF', 'or79Cob97KSh')
+
+    mock_call = mocker.patch('apps.fyle.helpers.get_fund_source')
+    mock_call.side_effect = WorkspaceGeneralSettings.DoesNotExist('Error')
+    import_and_export_expenses('rp1s1L3QtMpF', 'or79Cob97KSh')
+
+    mock_call.call_count = 1
