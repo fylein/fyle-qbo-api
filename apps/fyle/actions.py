@@ -84,7 +84,7 @@ def get_custom_fields(workspace_id: int):
     response = []
     response.extend(DEFAULT_FYLE_CONDITIONS)
     for custom_field in custom_fields:
-        if custom_field['type'] in ('SELECT', 'NUMBER', 'TEXT'):
+        if custom_field['type'] in ('SELECT', 'NUMBER', 'TEXT', 'BOOLEAN'):
             response.append({'field_name': custom_field['field_name'], 'type': custom_field['type'], 'is_custom': custom_field['is_custom']})
     return response
 
