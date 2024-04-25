@@ -74,7 +74,7 @@ def handle_qbo_exceptions(bill_payment=False):
                 if not bill_payment:
                     update_failed_expenses(expense_group.expenses.all(), True)
 
-            except QBOCredential.DoesNotExist:
+            except (QBOCredential.DoesNotExist, InvalidTokenError):
                 logger.info('QBO Account not connected / token expired for workspace_id %s / expense group %s', expense_group.workspace_id, expense_group.id)
                 detail = {'expense_group_id': expense_group.id, 'message': 'QBO Account not connected / token expired'}
                 task_log.status = 'FAILED'
@@ -85,7 +85,7 @@ def handle_qbo_exceptions(bill_payment=False):
                 if not bill_payment:
                     update_failed_expenses(expense_group.expenses.all(), True)
 
-            except (WrongParamsError, InvalidTokenError) as exception:
+            except WrongParamsError as exception:
                 handle_quickbooks_error(exception, expense_group, task_log, 'Bill')
 
                 if not bill_payment:
