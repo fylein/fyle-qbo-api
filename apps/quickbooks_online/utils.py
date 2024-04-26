@@ -1115,7 +1115,9 @@ class QBOConnector:
             return entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' else entity.destination_vendor.destination_id
         elif general_settings.name_in_journal_entry == 'MERCHANT' and general_settings.auto_create_merchants_as_vendors and value:
             created_vendor = self.get_or_create_vendor(value, create=True)
-            return created_vendor.destination_id
+            if created_vendor:
+                return created_vendor.destination_id
+            return None
         else:
             created_vendor = self.get_or_create_vendor('Credit Card Misc', create=True)
             return created_vendor.destination_id
