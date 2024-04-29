@@ -1,7 +1,7 @@
 from typing import Dict, List
 
 from django.db.models import Q
-from fyle_accounting_mappings.models import MappingSetting, ExpenseAttribute, Mapping
+from fyle_accounting_mappings.models import MappingSetting, ExpenseAttribute
 
 from apps.fyle.models import ExpenseGroupSettings
 from apps.workspaces.models import WorkspaceGeneralSettings
