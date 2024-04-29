@@ -10,18 +10,20 @@ from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings
 from apps.fyle.tasks import (
     create_expense_groups,
     post_accounting_export_summary,
-    import_and_export_expenses
+    import_and_export_expenses,
+    sync_dimensions
 )
 from apps.fyle.actions import mark_expenses_as_skipped
 from apps.tasks.models import TaskLog
-from apps.workspaces.models import FyleCredential, Workspace
+from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
 from tests.helper import dict_compare_keys
 from tests.test_fyle.fixtures import data
+from fyle.platform.exceptions import InternalServerError, InvalidTokenError
 
 
 @pytest.mark.django_db()
 def test_create_expense_groups(mocker, db):
-    mocker.patch('fyle_integrations_platform_connector.apis.Expenses.get', return_value=data['expenses'])
+    mock_call = mocker.patch('fyle_integrations_platform_connector.apis.Expenses.get', return_value=data['expenses'])
 
     task_log, _ = TaskLog.objects.update_or_create(workspace_id=3, type='FETCHING_EXPENSES', defaults={'status': 'IN_PROGRESS'})
 
@@ -50,6 +52,14 @@ def test_create_expense_groups(mocker, db):
 
     task_log = TaskLog.objects.get(workspace_id=1)
     assert task_log.status == 'FATAL'
+
+    mock_call.side_effect = InternalServerError('Error')
+    create_expense_groups(1, ['PERSONAL', 'CCC'], task_log)
+
+    mock_call.side_effect = InvalidTokenError('Invalid Token')
+    create_expense_groups(1, ['PERSONAL', 'CCC'], task_log)
+
+    mock_call.call_count = 2
 
 
 @pytest.mark.django_db()
@@ -113,5 +123,28 @@ def test_post_accounting_export_summary(db, mocker):
     assert Expense.objects.filter(id=expense_id).first().accounting_export_summary['synced'] == True
 
 
-def test_import_and_export_expenses(db):
+def test_import_and_export_expenses(db, mocker):
     import_and_export_expenses('rp1s1L3QtMpF', 'or79Cob97KSh')
+
+    mock_call = mocker.patch('apps.fyle.helpers.get_fund_source')
+    mock_call.side_effect = WorkspaceGeneralSettings.DoesNotExist('Error')
+    import_and_export_expenses('rp1s1L3QtMpF', 'or79Cob97KSh')
+
+    assert mock_call.call_count == 0
+
+
+def test_sync_dimension(db, mocker):
+    mock_platform_connector = mocker.patch('apps.fyle.tasks.PlatformConnector')
+
+    mock_platform_instance = mock_platform_connector.return_value
+    mocker.patch.object(mock_platform_instance.categories, 'sync', return_value=None)
+    mock_platform_instance.categories.get_count.return_value = 5
+    mock_platform_instance.projects.get_count.return_value = 10
+
+    fyle_creds = FyleCredential.objects.filter(workspace_id = 1).first()
+
+    sync_dimensions(fyle_credentials=fyle_creds, is_export=True)
+
+    mock_platform_instance.import_fyle_dimensions.assert_called_once_with(is_export=True)
+    mock_platform_instance.categories.sync.assert_called_once()
+    mock_platform_instance.projects.sync.assert_called_once()

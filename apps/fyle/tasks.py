@@ -3,7 +3,11 @@ from datetime import datetime
 from typing import Dict, List
 
 from django.db import transaction
-from fyle.platform.exceptions import RetryException
+from fyle.platform.exceptions import (
+    RetryException,
+    InternalServerError,
+    InvalidTokenError
+)
 from fyle_accounting_mappings.models import ExpenseAttribute
 from fyle_integrations_platform_connector import PlatformConnector
 
@@ -19,7 +23,7 @@ from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupS
 from apps.fyle.queue import async_post_accounting_export_summary
 from apps.tasks.models import TaskLog
 from apps.workspaces.actions import export_to_qbo
-from apps.workspaces.models import FyleCredential, Workspace
+from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -155,6 +159,22 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
         task_log.status = 'FATAL'
         task_log.save()
 
+    except InvalidTokenError:
+        logger.info('Invalid Token for Fyle')
+        task_log.detail = {
+            'message': 'Invalid Token for Fyle'
+        }
+        task_log.status = 'FAILED'
+        task_log.save()
+
+    except InternalServerError:
+        logger.info('Fyle Internal Server Error occured in workspace_id: %s', workspace_id)
+        task_log.detail = {
+            'message': 'Fyle Internal Server Error occured'
+        }
+        task_log.status = 'FAILED'
+        task_log.save()
+
     except Exception:
         handle_import_exception(task_log)
 
@@ -261,6 +281,12 @@ def import_and_export_expenses(report_id: str, org_id: str) -> None:
 
         if len(expense_group_ids):
             export_to_qbo(workspace.id, None, expense_group_ids)
+
+    except WorkspaceGeneralSettings.DoesNotExist:
+        logger.info('Workspace general settings not found %s', workspace.id)
+        task_log.detail = {'message': 'Workspace general settings do not exist in workspace'}
+        task_log.status = 'FAILED'
+        task_log.save()
 
     except Exception:
         handle_import_exception(task_log)
