@@ -111,7 +111,7 @@ class QBOConnector:
         if not vendor:
             if create:
                 # safe check to avoid duplicate vendor name exist error
-                if DestinationAttribute.objects.filter(attribute_type__in=['CUSTOMER', 'EMPLOYEE'], value=vendor_name, workspace_id=self.workspace_id).exists():
+                if DestinationAttribute.objects.filter(value=vendor_name, workspace_id=self.workspace_id).exists():
                     return
                 created_vendor = self.post_vendor(original_vendor_name, email)
                 return self.create_vendor_destionation_attribute(created_vendor)
