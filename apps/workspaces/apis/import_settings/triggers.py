@@ -1,7 +1,7 @@
 from typing import Dict, List
 
 from django.db.models import Q
-from fyle_accounting_mappings.models import MappingSetting
+from fyle_accounting_mappings.models import MappingSetting, ExpenseAttribute, Mapping
 
 from apps.fyle.models import ExpenseGroupSettings
 from apps.workspaces.models import WorkspaceGeneralSettings
@@ -25,13 +25,15 @@ class ImportSettingsTrigger:
         # Removing Department Source field from Reimbursable settings
         if workspace_general_settings.reimbursable_expenses_object:
             reimbursable_settings = expense_group_settings.reimbursable_expense_group_fields
-            reimbursable_settings.remove(source_field.lower())
+            if source_field.lower() in reimbursable_settings:
+                reimbursable_settings.remove(source_field.lower())
             expense_group_settings.reimbursable_expense_group_fields = list(set(reimbursable_settings))
 
         # Removing Department Source field from Non reimbursable settings
         if workspace_general_settings.corporate_credit_card_expenses_object:
             corporate_credit_card_settings = list(expense_group_settings.corporate_credit_card_expense_group_fields)
-            corporate_credit_card_settings.remove(source_field.lower())
+            if source_field.lower() in corporate_credit_card_settings:
+                corporate_credit_card_settings.remove(source_field.lower())
             expense_group_settings.corporate_credit_card_expense_group_fields = list(set(corporate_credit_card_settings))
 
         expense_group_settings.save()
@@ -85,6 +87,22 @@ class ImportSettingsTrigger:
         if old_department_setting and new_department_setting and old_department_setting.source_field != new_department_setting[0]['source_field']:
             self.remove_department_grouping(old_department_setting.source_field.lower())
 
+    def __unset_auto_mapped_flag(self, current_mapping_settings: List[MappingSetting], new_mappings_settings: List[Dict]):
+        """
+        Set the auto_mapped flag to false for the expense_attributes for the attributes
+        whose mapping is changed.
+        """
+        changed_source_fields = []
+
+        for new_setting in new_mappings_settings:
+            destination_field = new_setting['destination_field']
+            source_field = new_setting['source_field']
+            current_setting = current_mapping_settings.filter(destination_field=destination_field).first()
+            if current_setting and current_setting.source_field != source_field:
+                changed_source_fields.append(source_field)
+
+        ExpenseAttribute.objects.filter(workspace_id=self.__workspace_id, attribute_type__in=changed_source_fields).update(auto_mapped=False)
+
     def pre_save_mapping_settings(self):
         """
         Post save action for mapping settings
@@ -95,6 +113,7 @@ class ImportSettingsTrigger:
         current_mapping_settings = MappingSetting.objects.filter(workspace_id=self.__workspace_id).all()
 
         self.__remove_old_department_source_field(current_mappings_settings=current_mapping_settings, new_mappings_settings=mapping_settings)
+        self.__unset_auto_mapped_flag(current_mapping_settings=current_mapping_settings, new_mappings_settings=mapping_settings)
 
     def post_save_mapping_settings(self, workspace_general_settings_instance: WorkspaceGeneralSettings):
         """
