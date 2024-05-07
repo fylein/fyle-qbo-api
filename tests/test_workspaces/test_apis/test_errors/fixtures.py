@@ -20,6 +20,7 @@ data = {
             },
             "expense_group": "None",
             "type": "EMPLOYEE_MAPPING",
+            'repetition_count': 1,
             "is_resolved": True,
             "error_title": "user8@fyleforgotham.in",
             "error_detail": "Employee mapping is missing",
@@ -45,6 +46,7 @@ data = {
             },
             "expense_group": "None",
             "type": "EMPLOYEE_MAPPING",
+            'repetition_count': 1,
             "is_resolved": True,
             "error_title": "user9@fyleforgotham.in",
             "error_detail": "Employee mapping is missing",
@@ -54,6 +56,7 @@ data = {
         },
         {
             "id": 1,
+            'repetition_count': 1,
             "expense_attribute": {
                 "id": 5322,
                 "attribute_type": "EMPLOYEE",
@@ -124,6 +127,7 @@ data = {
             'type': 'EMPLOYEE_MAPPING',
             'is_resolved': False,
             'error_title': 'user8@fyleforgotham.in',
+            'repetition_count': 1,
             'error_detail': 'Employee mapping is missing',
             'created_at': '2022-05-23T13:01:08.705786Z',
             'updated_at': '2022-05-23T13:01:51.513084Z',

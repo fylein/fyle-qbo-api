@@ -44,7 +44,16 @@ def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: Ta
             errors.append(error)
 
             if export_type != 'Bill Payment':
-                Error.objects.update_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'error_title': error['type'], 'type': 'QBO_ERROR', 'error_detail': error['long_description'], 'is_resolved': False})
+                error, created = Error.objects.update_or_create(
+                    workspace_id=expense_group.workspace_id,
+                    expense_group=expense_group,
+                    defaults={
+                        'error_title': error['type'],
+                        'type': 'QBO_ERROR',
+                        'error_detail': error['long_description'],
+                        'is_resolved': False
+                    })
+                error.increase_repetition_count_by_one(created)
 
     task_log.status = 'FAILED'
     task_log.detail = None
