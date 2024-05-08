@@ -20,4 +20,4 @@ def test_errors(api_client, test_connection):
     assert response.status_code == 200
 
     response = json.loads(response.content)
-    assert response == data['error_response']
+    assert dict_compare_keys(response, data['error_response']) == [], 'workspaces api returns a diff in the keys'
