@@ -314,7 +314,12 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
 
         category_attribute = ExpenseAttribute.objects.filter(value=category, workspace_id=expense_group.workspace_id, attribute_type='CATEGORY').first()
 
+        workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=expense_group.workspace_id).first()
+
         account = Mapping.objects.filter(source_type='CATEGORY', destination_type='ACCOUNT', source=category_attribute, workspace_id=expense_group.workspace_id).first()
+
+        if not workspace_general_settings.import_items:
+            account = Mapping.objects.filter(destination__display_name__iexact='account', source_type='CATEGORY', destination_type='ACCOUNT', source=category_attribute, workspace_id=expense_group.workspace_id).first()
 
         if not account:
             bulk_errors.append({'row': row, 'expense_group_id': expense_group.id, 'value': category, 'type': 'Category Mapping', 'message': 'Category Mapping not found'})
