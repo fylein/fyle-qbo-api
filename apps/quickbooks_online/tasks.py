@@ -316,6 +316,9 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
 
         account = Mapping.objects.filter(source_type='CATEGORY', destination_type='ACCOUNT', source=category_attribute, workspace_id=expense_group.workspace_id).first()
 
+        if not general_settings.import_items:
+            account = Mapping.objects.filter(destination__display_name__iexact='account', source_type='CATEGORY', destination_type='ACCOUNT', source=category_attribute, workspace_id=expense_group.workspace_id).first()
+
         if not account:
             bulk_errors.append({'row': row, 'expense_group_id': expense_group.id, 'value': category, 'type': 'Category Mapping', 'message': 'Category Mapping not found'})
 
