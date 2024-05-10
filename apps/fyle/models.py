@@ -303,23 +303,19 @@ def filter_expense_groups(
     expense_groups,
     expenses: Expense,
     expense_group_fields,
-    configuration: WorkspaceGeneralSettings,
+    reimbursable_export_type=None,
+    ccc_export_type=None,
 ):
 
     filtered_expense_groups = []
 
     for expense_group in expense_groups:
-        expense_group_expenses_ids = expense_group["expense_ids"]
+        expense_group_expenses_ids = expense_group['expense_ids']
         filtered_expenses = [
             item for item in expenses if item.id in expense_group_expenses_ids
         ]
-        if (
-            configuration.reimbursable_expenses_object == "EXPENSE REPORT"
-            or configuration.reimbursable_expenses_object == "BILL"
-            and "expense_id" not in expense_group_fields
-        ) or (
-            configuration.corporate_credit_card_expenses_object == "BILL"
-            and "expense_id" not in expense_group_fields
+        if 'expense_id' not in expense_group_fields and (
+            reimbursable_export_type in ('EXPENSE', 'BILL') or ccc_export_type == 'BILL'
         ):
             total_amount = 0
             if "spent_at" in expense_group_fields:
@@ -345,7 +341,7 @@ def filter_expense_groups(
                     filtered_expenses = list(
                         filter(lambda expense: expense.amount > 0, filtered_expenses)
                     )
-        elif configuration.reimbursable_expenses_object != "JOURNAL ENTRY":
+        elif reimbursable_export_type != 'JOURNAL ENTRY':
             filtered_expenses = list(
                 filter(lambda expense: expense.amount > 0, filtered_expenses)
             )
@@ -353,7 +349,7 @@ def filter_expense_groups(
         filtered_expense_ids = [item.id for item in filtered_expenses]
 
         if len(filtered_expense_ids) != 0:
-            expense_group["expense_ids"] = filtered_expense_ids
+            expense_group['expense_ids'] = filtered_expense_ids
             filtered_expense_groups.append(expense_group)
 
     return filtered_expense_groups
@@ -409,7 +405,8 @@ class ExpenseGroup(models.Model):
             reimbursable_expense_groups,
             reimbursable_expenses,
             reimbursable_expense_group_fields,
-            general_settings,
+            general_settings.reimbursable_expenses_object,
+            general_settings.corporate_credit_card_expenses_object
         )
 
         expense_groups.extend(filtered_reimbursable_expense_groups)
@@ -435,7 +432,8 @@ class ExpenseGroup(models.Model):
                 filtered_corporate_credit_card_expense_groups,
                 corporate_credit_card_expenses,
                 corporate_credit_card_expense_group_field,
-                general_settings,
+                general_settings.reimbursable_expenses_object,
+                general_settings.corporate_credit_card_expenses_object
             )
 
         expense_groups.extend(filtered_corporate_credit_card_expense_groups)

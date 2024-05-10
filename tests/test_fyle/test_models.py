@@ -67,25 +67,59 @@ def test_create_reimbursement(db):
 
 
 def test_create_expense_groups_by_report_id_fund_source_spent_at(db):
-    expenses = data['expenses_spent_at']
+    expenses = data["expenses_spent_at"]
 
     expense_objects = Expense.create_expense_objects(expenses, 1)
 
     workspace = Workspace.objects.get(id=1)
 
     expense_group_setting = ExpenseGroupSettings.objects.get(workspace_id=1)
-    expense_group_setting.reimbursable_export_date_type = 'spent_at'
-    reimbursable_expense_group_fields = expense_group_setting.reimbursable_expense_group_fields
-    reimbursable_expense_group_fields.append('spent_at')
-    expense_group_setting.reimbursable_expense_group_fields = reimbursable_expense_group_fields
+    expense_group_setting.reimbursable_export_date_type = "spent_at"
+    reimbursable_expense_group_fields = (
+        expense_group_setting.reimbursable_expense_group_fields
+    )
+    reimbursable_expense_group_fields.append("spent_at")
+    expense_group_setting.reimbursable_expense_group_fields = (
+        reimbursable_expense_group_fields
+    )
     expense_group_setting.save()
 
     assert len(expense_objects) == 3
 
     ExpenseGroup.create_expense_groups_by_report_id_fund_source(expense_objects, 1)
 
-    expense_group = ExpenseGroup.objects.filter(workspace=workspace).order_by('-created_at').first()
+    expense_group = (
+        ExpenseGroup.objects.filter(workspace=workspace).order_by("-created_at").first()
+    )
 
+    assert expense_group.expenses.count() == 2
+
+
+def test_create_expense_groups_refund(db):
+    expenses = data['expense_refund_valid']
+    expense_objects = Expense.create_expense_objects(expenses, 1)
+
+    assert len(expense_objects) == 2
+    workspace = workspace = Workspace.objects.get(id=1)
+    configuration = WorkspaceGeneralSettings.objects.get(workspace=workspace)
+
+    configuration.corporate_credit_card_expenses_object = 'BILL'
+    configuration.save()
+
+    ExpenseGroup.create_expense_groups_by_report_id_fund_source(expense_objects, 1)
+
+    expense_group = (
+        ExpenseGroup.objects.filter(workspace=workspace).order_by('-created_at').first()
+    )
+    assert expense_group.expenses.count() == 2
+
+    expenses = data['expense_refund_invalid']
+    expense_objects = Expense.create_expense_objects(expenses, 1)
+    assert len(expense_objects) == 2
+    ExpenseGroup.create_expense_groups_by_report_id_fund_source(expense_objects, 1)
+    expense_group = (
+        ExpenseGroup.objects.filter(workspace=workspace).order_by('-created_at').first()
+    )
     assert expense_group.expenses.count() == 2
 
 
