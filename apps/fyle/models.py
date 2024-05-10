@@ -305,7 +305,7 @@ def filter_expense_groups(
     expense_group_fields,
     configuration: WorkspaceGeneralSettings,
 ):
-    
+
     filtered_expense_groups = []
 
     for expense_group in expense_groups:
@@ -343,22 +343,21 @@ def filter_expense_groups(
 
                 if total_amount < 0:
                     filtered_expenses = list(
-                        filter(
-                            lambda expense: expense.amount > 0, filtered_expenses
-                        )
+                        filter(lambda expense: expense.amount > 0, filtered_expenses)
                     )
         elif configuration.reimbursable_expenses_object != "JOURNAL ENTRY":
             filtered_expenses = list(
                 filter(lambda expense: expense.amount > 0, filtered_expenses)
             )
-        
+
         filtered_expense_ids = [item.id for item in filtered_expenses]
 
         if len(filtered_expense_ids) != 0:
-            expense_group['expense_ids'] = filtered_expense_ids
+            expense_group["expense_ids"] = filtered_expense_ids
             filtered_expense_groups.append(expense_group)
 
     return filtered_expense_groups
+
 
 class ExpenseGroup(models.Model):
     """
@@ -380,17 +379,27 @@ class ExpenseGroup(models.Model):
         db_table = 'expense_groups'
 
     @staticmethod
-    def create_expense_groups_by_report_id_fund_source(expense_objects: List[Expense], workspace_id):
+    def create_expense_groups_by_report_id_fund_source(
+        expense_objects: List[Expense], workspace_id
+    ):
         """
         Group expense by report_id and fund_source
         """
 
         expense_groups = []
-        expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
+        expense_group_settings = ExpenseGroupSettings.objects.get(
+            workspace_id=workspace_id
+        )
 
-        reimbursable_expense_group_fields = expense_group_settings.reimbursable_expense_group_fields
-        reimbursable_expenses = list(filter(lambda expense: expense.fund_source == 'PERSONAL', expense_objects))
-        general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+        reimbursable_expense_group_fields = (
+            expense_group_settings.reimbursable_expense_group_fields
+        )
+        reimbursable_expenses = list(
+            filter(lambda expense: expense.fund_source == "PERSONAL", expense_objects)
+        )
+        general_settings = WorkspaceGeneralSettings.objects.get(
+            workspace_id=workspace_id
+        )
 
         reimbursable_expense_groups = _group_expenses(
             reimbursable_expenses, reimbursable_expense_group_fields, workspace_id
@@ -403,7 +412,6 @@ class ExpenseGroup(models.Model):
             general_settings,
         )
 
-
         expense_groups.extend(filtered_reimbursable_expense_groups)
 
         corporate_credit_card_expense_group_field = (
@@ -412,23 +420,25 @@ class ExpenseGroup(models.Model):
         corporate_credit_card_expenses = list(
             filter(lambda expense: expense.fund_source == "CCC", expense_objects)
         )
-        
+
         filtered_corporate_credit_card_expense_groups = _group_expenses(
             corporate_credit_card_expenses,
             corporate_credit_card_expense_group_field,
             workspace_id,
         )
 
-
-        if general_settings.corporate_credit_card_expenses_object == 'BILL' and "expense_id" not in corporate_credit_card_expense_group_field:
+        if (
+            general_settings.corporate_credit_card_expenses_object == "BILL"
+            and "expense_id" not in corporate_credit_card_expense_group_field
+        ):
             filtered_corporate_credit_card_expense_groups = filter_expense_groups(
                 filtered_corporate_credit_card_expense_groups,
                 corporate_credit_card_expenses,
                 corporate_credit_card_expense_group_field,
                 general_settings,
             )
-     
-        expense_groups.extend(filtered_corporate_credit_card_expense_groups)  
+
+        expense_groups.extend(filtered_corporate_credit_card_expense_groups)
 
         expense_group_objects = []
 
