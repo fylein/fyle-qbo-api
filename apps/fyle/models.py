@@ -406,7 +406,7 @@ class ExpenseGroup(models.Model):
             reimbursable_expenses,
             reimbursable_expense_group_fields,
             general_settings.reimbursable_expenses_object,
-            general_settings.corporate_credit_card_expenses_object
+            None
         )
 
         expense_groups.extend(filtered_reimbursable_expense_groups)
@@ -432,7 +432,7 @@ class ExpenseGroup(models.Model):
                 filtered_corporate_credit_card_expense_groups,
                 corporate_credit_card_expenses,
                 corporate_credit_card_expense_group_field,
-                general_settings.reimbursable_expenses_object,
+                None,
                 general_settings.corporate_credit_card_expenses_object
             )
 
