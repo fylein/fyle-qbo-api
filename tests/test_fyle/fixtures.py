@@ -360,7 +360,7 @@ data = {
             "reimbursable": True,
             "billable": False,
             "state": "APPROVED",
-            "fund_source": "CCC",
+            "fund_source": "PERSONAL",
             "vendor": None,
             "cost_center": None,
             "corporate_card_id": None,
