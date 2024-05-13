@@ -94,6 +94,7 @@ def test_create_expense_groups_by_report_id_fund_source_spent_at(db):
 
     assert expense_group.expenses.count() == 2
 
+
 def test_create_expense_groups_refund_invalid(db):
 
     workspace = Workspace.objects.get(id=1)
@@ -131,12 +132,13 @@ def test_create_expense_groups_refund(db):
     )
     assert expense_group.expenses.count() == 2
 
+
 def creat_expense_groups_by_report_id_refund_spent_at(db):
     workspace = workspace = Workspace.objects.get(id=1)
     configuration = WorkspaceGeneralSettings.objects.get(workspace=workspace)
 
     configuration.corporate_credit_card_expenses_object = "BILL"
-    configuration.save()    
+    configuration.save()
 
     expenses = data["expense_refund_spend_at"]
 
