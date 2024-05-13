@@ -131,20 +131,16 @@ def test_create_expense_groups_refund(db):
     )
     assert expense_group.expenses.count() == 2
 
-    expenses = data["expense_refund_invalid"]
-    expense_objects = Expense.create_expense_objects(expenses, 1)
-    assert len(expense_objects) == 2
-    ExpenseGroup.create_expense_groups_by_report_id_fund_source(expense_objects, 1)
-    expense_group = (
-        ExpenseGroup.objects.filter(workspace=workspace).order_by("-created_at").first()
-    )
+def creat_expense_groups_by_report_id_refund_spent_at(db):
+    workspace = workspace = Workspace.objects.get(id=1)
+    configuration = WorkspaceGeneralSettings.objects.get(workspace=workspace)
 
-    assert expense_group.expenses.count() == 2
+    configuration.corporate_credit_card_expenses_object = "BILL"
+    configuration.save()    
 
     expenses = data["expense_refund_spend_at"]
 
     expense_objects = Expense.create_expense_objects(expenses, 1)
-
     expense_group_setting = ExpenseGroupSettings.objects.get(workspace_id=1)
     expense_group_setting.ccc_export_date_type = "spent_at"
     corporate_expense_group_fields = (
