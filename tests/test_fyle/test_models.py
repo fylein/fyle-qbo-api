@@ -272,14 +272,14 @@ def test_create_expense_group_report_id_debit_card_expense(db):
     )
     expense_group_setting.save()
     workspace = workspace = Workspace.objects.get(id=1)
-    expenses = data["expense_refund_single"]
+    expenses = data["expense_refund_single_ccc"]
     expense_objects = Expense.create_expense_objects([expenses], 1)
     assert len(expense_objects) == 1
     ExpenseGroup.create_expense_groups_by_report_id_fund_source(expense_objects, 1)
     expense_group = (
         ExpenseGroup.objects.filter(workspace=workspace).order_by("-created_at").first()
     )
-    assert expense_group is None
+    assert expense_group.expenses.count() == 1
 
 
 def test_create_expense_groups_by_report_id_fund_source(db):
