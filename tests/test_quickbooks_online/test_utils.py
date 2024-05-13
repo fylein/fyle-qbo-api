@@ -37,6 +37,8 @@ def test_post_vendor(mocker, db):
     qbo_credentials = QBOCredential.get_active_qbo_credentials(4)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=4)
 
+    DestinationAttribute.objects.filter(workspace_id=4, attribute_type='VENDOR', value='test Sharma').delete()
+
     vendor = qbo_connection.get_or_create_vendor(vendor_name='test Sharma', email='test@fyle.in', create=True)
 
     assert vendor.value == 'samp_merchant'
@@ -581,8 +583,10 @@ def test_get_or_create_entity(mocker, db):
     mocker.patch('qbosdk.apis.Vendors.post', return_value=data['post_vendor_resp'])
     mocker.patch('qbosdk.apis.Vendors.search_vendor_by_display_name', return_value=None)
 
+    DestinationAttribute.objects.filter(workspace_id=3, attribute_type='VENDOR', value='Credit Card Misc').delete()
+
     # CCC expesnse with name Merchant
-    expense_group = ExpenseGroup.objects.filter(fund_source='CCC').first()
+    expense_group = ExpenseGroup.objects.filter(fund_source='CCC', workspace_id = 3).first()
     workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
     workspace_general_settings.corporate_credit_card_expenses_object = 'JOURNAL ENTRY'
     workspace_general_settings.name_in_journal_entry = 'MERCHANT'

@@ -111,7 +111,7 @@ class QBOConnector:
         if not vendor:
             if create:
                 # safe check to avoid duplicate vendor name exist error
-                if DestinationAttribute.objects.filter(attribute_type__in=['CUSTOMER', 'EMPLOYEE'], value=vendor_name, workspace_id=self.workspace_id).exists():
+                if DestinationAttribute.objects.filter(value=vendor_name, workspace_id=self.workspace_id).exists():
                     return
                 created_vendor = self.post_vendor(original_vendor_name, email)
                 return self.create_vendor_destionation_attribute(created_vendor)
@@ -1105,6 +1105,10 @@ class QBOConnector:
         created_bill_payment = self.connection.bill_payments.post(bill_payment_payload)
         return created_bill_payment
 
+    def create_credit_card_misc_vendor(self):
+        created_vendor = self.get_or_create_vendor('Credit Card Misc', create=True)
+        return created_vendor.destination_id
+
     def __get_entity_id(self, general_settings: WorkspaceGeneralSettings, value: str, employee_field_mapping: str,
     fund_source: str):
         if fund_source == 'PERSONAL' or (fund_source == 'CCC' and general_settings.name_in_journal_entry == 'EMPLOYEE'):
@@ -1115,10 +1119,11 @@ class QBOConnector:
             return entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' else entity.destination_vendor.destination_id
         elif general_settings.name_in_journal_entry == 'MERCHANT' and general_settings.auto_create_merchants_as_vendors and value:
             created_vendor = self.get_or_create_vendor(value, create=True)
+            if not created_vendor:
+                return self.create_credit_card_misc_vendor()
             return created_vendor.destination_id
         else:
-            created_vendor = self.get_or_create_vendor('Credit Card Misc', create=True)
-            return created_vendor.destination_id
+            return self.create_credit_card_misc_vendor()
 
     def get_or_create_entity(self, expense_group: ExpenseGroup, general_settings: WorkspaceGeneralSettings):
         entity_map = {}
