@@ -205,12 +205,12 @@ def test_create_expense_group_report_id_check(db):
 
     expense_group_setting = ExpenseGroupSettings.objects.get(workspace_id=1)
 
-    corporate_expense_group_fields = (
-        expense_group_setting.corporate_credit_card_expense_group_fields
+    reimbursable_expense_group_fields = (
+        expense_group_setting.reimbursable_expense_group_fields
     )
-    corporate_expense_group_fields.append("expense_id")
-    expense_group_setting.corporate_credit_card_expense_group_fields = (
-        corporate_expense_group_fields
+    reimbursable_expense_group_fields.append("expense_id")
+    expense_group_setting.reimbursable_expense_group_fields = (
+        reimbursable_expense_group_fields
     )
     expense_group_setting.save()
     workspace = workspace = Workspace.objects.get(id=1)
