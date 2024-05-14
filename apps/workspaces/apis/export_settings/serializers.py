@@ -144,9 +144,9 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
         expense_group_settings['import_card_credits'] = False
 
         if (
-            workspace_general_settings.get('corporate_credit_card_expenses_object') == 'JOURNAL ENTRY'
+            workspace_general_settings.get('corporate_credit_card_expenses_object') in ('JOURNAL ENTRY', 'BILL')
             or (map_merchant_to_vendor and workspace_general_settings['corporate_credit_card_expenses_object'] == 'CREDIT CARD PURCHASE')
-            or (workspace_general_settings.get('reimbursable_expenses_object') in ('JOURNAL ENTRY', 'EXPENSE'))
+            or (workspace_general_settings.get('reimbursable_expenses_object') in ('JOURNAL ENTRY', 'EXPENSE', 'BILL'))
         ):
             expense_group_settings['import_card_credits'] = True
 
