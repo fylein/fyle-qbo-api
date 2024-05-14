@@ -310,7 +310,7 @@ def filter_expense_groups(
 
     filtered_expense_groups = []
 
-    if reimbursable_export_type == 'BILL' or ccc_export_type == 'BILL':
+    if (reimbursable_export_type and reimbursable_export_type == 'BILL') or (ccc_export_type and ccc_export_type == 'BILL'):
         expense_group_setting.import_card_credits = True
         expense_group_setting.save()
 
