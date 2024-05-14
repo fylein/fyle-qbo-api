@@ -133,6 +133,9 @@ def construct_expense_filter(expense_filter):
             # If the custom field is of type NUMBER, convert the values to integers
             if expense_filter.custom_field_type == 'NUMBER':
                 expense_filter.values = [int(value) for value in expense_filter.values]
+            # If the expense filter is a custom field and the operator is yes or no(checkbox)
+            if expense_filter.custom_field_type == 'BOOLEAN':
+                expense_filter.values[0] = True if expense_filter.values[0] == 'true' else False
             # Construct the filter for the custom property
             filter1 = {f'custom_properties__{expense_filter.condition}__{expense_filter.operator}': expense_filter.values[0] if len(expense_filter.values) == 1 and expense_filter.operator != 'in' else expense_filter.values}
             # Assign the constructed filter to the constructed expense filter
