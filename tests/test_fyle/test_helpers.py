@@ -129,7 +129,7 @@ def test_construct_expense_filter():
 
     assert constructed_expense_filter == response
 
-        #category_in
+    #category_in
     expense_filter = ExpenseFilter(
         condition = 'category',
         operator = 'in',
