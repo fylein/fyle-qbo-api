@@ -433,7 +433,7 @@ class ExpenseGroup(models.Model):
                 corporate_credit_card_expenses,
                 corporate_credit_card_expense_group_field,
                 None,
-                general_settings.corporate_credit_card_expenses_object,
+                general_settings.corporate_credit_card_expenses_object
             )
 
         expense_groups.extend(filtered_corporate_credit_card_expense_groups)
