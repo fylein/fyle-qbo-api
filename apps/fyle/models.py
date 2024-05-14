@@ -28,7 +28,7 @@ EXPENSE_FILTER_RANK = ((1, 1), (2, 2))
 
 EXPENSE_FILTER_JOIN_BY = (('AND', 'AND'), ('OR', 'OR'))
 
-EXPENSE_FILTER_CUSTOM_FIELD_TYPE = (('SELECT', 'SELECT'), ('NUMBER', 'NUMBER'), ('TEXT', 'TEXT'))
+EXPENSE_FILTER_CUSTOM_FIELD_TYPE = (('SELECT', 'SELECT'), ('NUMBER', 'NUMBER'), ('TEXT', 'TEXT'), ('BOOLEAN', 'BOOLEAN'))
 
 EXPENSE_FILTER_OPERATOR = (('isnull', 'isnull'), ('in', 'in'), ('iexact', 'iexact'), ('icontains', 'icontains'), ('lt', 'lt'), ('lte', 'lte'), ('not_in', 'not_in'))
 
