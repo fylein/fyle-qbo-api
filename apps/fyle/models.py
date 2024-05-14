@@ -397,6 +397,10 @@ class ExpenseGroup(models.Model):
             workspace_id=workspace_id
         )
 
+        if general_settings.reimbursable_expenses_object == 'BILL' or general_settings.corporate_credit_card_expenses_object == 'BILL':
+            expense_group_settings.import_card_credits = True
+            expense_group_settings.save()
+
         reimbursable_expense_groups = _group_expenses(
             reimbursable_expenses, reimbursable_expense_group_fields, workspace_id
         )
