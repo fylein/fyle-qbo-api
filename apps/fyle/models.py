@@ -303,11 +303,16 @@ def filter_expense_groups(
     expense_groups,
     expenses: Expense,
     expense_group_fields,
+    expense_group_setting: ExpenseGroupSettings,
     reimbursable_export_type=None,
     ccc_export_type=None,
 ):
 
     filtered_expense_groups = []
+
+    if reimbursable_export_type == 'BILL' or ccc_export_type == 'BILL':
+        expense_group_setting.import_card_credits = True
+        expense_group_setting.save()
 
     for expense_group in expense_groups:
         expense_group_expenses_ids = expense_group['expense_ids']
@@ -397,10 +402,6 @@ class ExpenseGroup(models.Model):
             workspace_id=workspace_id
         )
 
-        if general_settings.reimbursable_expenses_object == 'BILL' or general_settings.corporate_credit_card_expenses_object == 'BILL':
-            expense_group_settings.import_card_credits = True
-            expense_group_settings.save()
-
         reimbursable_expense_groups = _group_expenses(
             reimbursable_expenses, reimbursable_expense_group_fields, workspace_id
         )
@@ -409,6 +410,7 @@ class ExpenseGroup(models.Model):
             reimbursable_expense_groups,
             reimbursable_expenses,
             reimbursable_expense_group_fields,
+            expense_group_settings,
             general_settings.reimbursable_expenses_object,
             None
         )
@@ -436,8 +438,9 @@ class ExpenseGroup(models.Model):
                 filtered_corporate_credit_card_expense_groups,
                 corporate_credit_card_expenses,
                 corporate_credit_card_expense_group_field,
+                expense_group_settings,
                 None,
-                general_settings.corporate_credit_card_expenses_object
+                general_settings.corporate_credit_card_expenses_object,
             )
 
         expense_groups.extend(filtered_corporate_credit_card_expense_groups)
