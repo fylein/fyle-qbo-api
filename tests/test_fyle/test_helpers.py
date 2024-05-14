@@ -129,6 +129,34 @@ def test_construct_expense_filter():
 
     assert constructed_expense_filter == response
 
+        #category_in
+    expense_filter = ExpenseFilter(
+        condition = 'category',
+        operator = 'in',
+        values = ['anish'],
+        rank = 1
+    )
+    constructed_expense_filter = construct_expense_filter(expense_filter)
+
+    filter_1 = {'category__in':['anish']}
+    response = Q(**filter_1)
+
+    assert constructed_expense_filter == response
+
+    #category_not_in
+    expense_filter = ExpenseFilter(
+        condition = 'category',
+        operator = 'not_in',
+        values = ['anish', 'singh'],
+        rank = 1
+    )
+    constructed_expense_filter = construct_expense_filter(expense_filter)
+
+    filter_1 = {'category__in':['anish', 'singh']}
+    response = ~Q(**filter_1)
+
+    assert constructed_expense_filter == response
+
     # custom-properties-number-is-equal
     expense_filter = ExpenseFilter(condition='Gon Number', operator='in', values=[102, 108], rank=1, is_custom=True)
     constructed_expense_filter = construct_expense_filter(expense_filter)
