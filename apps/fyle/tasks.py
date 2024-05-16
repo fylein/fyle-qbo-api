@@ -218,7 +218,7 @@ def post_accounting_export_summary(org_id: str, workspace_id: int, fund_source: 
         filters['fund_source'] = fund_source
 
     if is_failed:
-        filters['accounting_export_summary__state'] = 'FAILED'
+        filters['accounting_export_summary__state'] = 'ERROR'
 
     expenses_count = Expense.objects.filter(**filters).count()
 
