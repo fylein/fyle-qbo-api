@@ -3,11 +3,7 @@ from datetime import datetime
 from typing import Dict, List
 
 from django.db import transaction
-from fyle.platform.exceptions import (
-    RetryException,
-    InternalServerError,
-    InvalidTokenError
-)
+from fyle.platform.exceptions import InternalServerError, InvalidTokenError, RetryException
 from fyle_accounting_mappings.models import ExpenseAttribute
 from fyle_integrations_platform_connector import PlatformConnector
 
@@ -202,7 +198,7 @@ def sync_dimensions(fyle_credentials, is_export: bool = False):
             platform.projects.sync()
 
 
-def post_accounting_export_summary(org_id: str, workspace_id: int, fund_source: str = None) -> None:
+def post_accounting_export_summary(org_id: str, workspace_id: int, fund_source: str = None, is_failed: bool = False) -> None:
     """
     Post accounting export summary to Fyle
     :param org_id: org id
@@ -220,6 +216,9 @@ def post_accounting_export_summary(org_id: str, workspace_id: int, fund_source: 
 
     if fund_source:
         filters['fund_source'] = fund_source
+
+    if is_failed:
+        filters['accounting_export_summary__state'] = 'FAILED'
 
     expenses_count = Expense.objects.filter(**filters).count()
 

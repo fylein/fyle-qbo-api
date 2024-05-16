@@ -7,7 +7,6 @@ from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 
 from apps.fyle.actions import update_failed_expenses
 from apps.fyle.models import ExpenseGroup
-from apps.fyle.tasks import post_accounting_export_summary
 from apps.quickbooks_online.actions import update_last_export_details
 from apps.tasks.models import Error, TaskLog
 from apps.workspaces.models import FyleCredential, QBOCredential
@@ -83,7 +82,6 @@ def handle_qbo_exceptions(bill_payment=False):
 
                 if not bill_payment:
                     update_failed_expenses(expense_group.expenses.all(), True)
-                    post_accounting_export_summary(expense_group.workspace.fyle_org_id, expense_group.workspace.id, expense_group.fund_source)
 
             except (QBOCredential.DoesNotExist, InvalidTokenError):
                 logger.info('QBO Account not connected / token expired for workspace_id %s / expense group %s', expense_group.workspace_id, expense_group.id)
@@ -95,14 +93,12 @@ def handle_qbo_exceptions(bill_payment=False):
 
                 if not bill_payment:
                     update_failed_expenses(expense_group.expenses.all(), True)
-                    post_accounting_export_summary(expense_group.workspace.fyle_org_id, expense_group.workspace.id, expense_group.fund_source)
 
             except WrongParamsError as exception:
                 handle_quickbooks_error(exception, expense_group, task_log, 'Bill')
 
                 if not bill_payment:
                     update_failed_expenses(expense_group.expenses.all(), False)
-                    post_accounting_export_summary(expense_group.workspace.fyle_org_id, expense_group.workspace.id, expense_group.fund_source)
 
             except BulkError as exception:
                 logger.info(exception.response)
@@ -114,7 +110,6 @@ def handle_qbo_exceptions(bill_payment=False):
 
                 if not bill_payment:
                     update_failed_expenses(expense_group.expenses.all(), True)
-                    post_accounting_export_summary(expense_group.workspace.fyle_org_id, expense_group.workspace.id, expense_group.fund_source)
 
             except Exception as error:
                 error = traceback.format_exc()
@@ -126,7 +121,6 @@ def handle_qbo_exceptions(bill_payment=False):
 
                 if not bill_payment:
                     update_failed_expenses(expense_group.expenses.all(), True)
-                    post_accounting_export_summary(expense_group.workspace.fyle_org_id, expense_group.workspace.id, expense_group.fund_source)
 
             if len(args) > 2 and args[2] == True and not bill_payment:
                 update_last_export_details(expense_group.workspace_id)
