@@ -1,20 +1,19 @@
 import json
-from typing import List
 import logging
 import traceback
 from datetime import datetime
+from typing import List
 
 from django.db import transaction
-
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping
 from fyle_integrations_platform_connector import PlatformConnector
 from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 
-from apps.fyle.models import Expense, ExpenseGroup, Reimbursement
 from apps.fyle.actions import update_expenses_in_progress
+from apps.fyle.models import Expense, ExpenseGroup, Reimbursement
 from apps.fyle.tasks import post_accounting_export_summary
 from apps.mappings.models import GeneralMapping
-from apps.quickbooks_online.actions import update_last_export_details
+from apps.quickbooks_online.actions import generate_export_url_and_update_expense, update_last_export_details
 from apps.quickbooks_online.exceptions import handle_qbo_exceptions
 from apps.quickbooks_online.models import (
     Bill,
@@ -32,10 +31,8 @@ from apps.quickbooks_online.models import (
 )
 from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import Error, TaskLog
-from apps.workspaces.models import FyleCredential, QBOCredential, WorkspaceGeneralSettings, Workspace
+from apps.workspaces.models import FyleCredential, QBOCredential, Workspace, WorkspaceGeneralSettings
 from fyle_qbo_api.exceptions import BulkError
-
-from .actions import generate_export_url_and_update_expense
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -178,6 +175,8 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
 @handle_qbo_exceptions()
 def create_bill(expense_group, task_log_id, last_export: bool):
     task_log = TaskLog.objects.get(id=task_log_id)
+    logger.info('Creating Bill for Expense Group %s, current state is %s', expense_group.id, task_log.status)
+
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
         task_log.status = 'IN_PROGRESS'
         task_log.save()
@@ -194,6 +193,7 @@ def create_bill(expense_group, task_log_id, last_export: bool):
         create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
 
     __validate_expense_group(expense_group, general_settings)
+    logger.info('Validated Expense Group %s successfully', expense_group.id)
 
     with transaction.atomic():
         bill_object = Bill.create_bill(expense_group)
@@ -201,6 +201,7 @@ def create_bill(expense_group, task_log_id, last_export: bool):
         bill_lineitems_objects = BillLineitem.create_bill_lineitems(expense_group, general_settings)
 
         created_bill = qbo_connection.post_bill(bill_object, bill_lineitems_objects)
+        logger.info('Created Bill with Expense Group %s successfully', expense_group.id)
 
         task_log.detail = created_bill
         task_log.bill = bill_object
@@ -218,6 +219,7 @@ def create_bill(expense_group, task_log_id, last_export: bool):
         update_last_export_details(expense_group.workspace_id)
 
     generate_export_url_and_update_expense(expense_group)
+    logger.info('Updated Expense Group %s successfully', expense_group.id)
 
     load_attachments(qbo_connection, created_bill['Bill']['Id'], 'Bill', expense_group)
 
@@ -348,6 +350,8 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
 @handle_qbo_exceptions()
 def create_cheque(expense_group, task_log_id, last_export: bool):
     task_log = TaskLog.objects.get(id=task_log_id)
+    logger.info('Creating Cheque for Expense Group %s, current state is %s', expense_group.id, task_log.status)
+
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
         task_log.status = 'IN_PROGRESS'
         task_log.save()
@@ -364,6 +368,7 @@ def create_cheque(expense_group, task_log_id, last_export: bool):
         create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
 
     __validate_expense_group(expense_group, general_settings)
+    logger.info('Validated Expense Group %s successfully', expense_group.id)
 
     with transaction.atomic():
         cheque_object = Cheque.create_cheque(expense_group)
@@ -371,6 +376,7 @@ def create_cheque(expense_group, task_log_id, last_export: bool):
         cheque_line_item_objects = ChequeLineitem.create_cheque_lineitems(expense_group, general_settings)
 
         created_cheque = qbo_connection.post_cheque(cheque_object, cheque_line_item_objects)
+        logger.info('Created Cheque with Expense Group %s successfully', expense_group.id)
 
         task_log.detail = created_cheque
         task_log.cheque = cheque_object
@@ -389,6 +395,7 @@ def create_cheque(expense_group, task_log_id, last_export: bool):
         update_last_export_details(expense_group.workspace_id)
 
     generate_export_url_and_update_expense(expense_group)
+    logger.info('Updated Expense Group %s successfully', expense_group.id)
 
     load_attachments(qbo_connection, created_cheque['Purchase']['Id'], 'Purchase', expense_group)
 
@@ -396,6 +403,8 @@ def create_cheque(expense_group, task_log_id, last_export: bool):
 @handle_qbo_exceptions()
 def create_qbo_expense(expense_group, task_log_id, last_export: bool):
     task_log = TaskLog.objects.get(id=task_log_id)
+    logger.info('Creating QBO Expense for Expense Group %s, current state is %s', expense_group.id, task_log.status)
+
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
         task_log.status = 'IN_PROGRESS'
         task_log.save()
@@ -417,6 +426,7 @@ def create_qbo_expense(expense_group, task_log_id, last_export: bool):
         get_or_create_credit_card_or_debit_card_vendor(expense_group.workspace_id, merchant, True, general_settings)
 
     __validate_expense_group(expense_group, general_settings)
+    logger.info('Validated Expense Group %s successfully', expense_group.id)
 
     with transaction.atomic():
         qbo_expense_object = QBOExpense.create_qbo_expense(expense_group)
@@ -424,6 +434,7 @@ def create_qbo_expense(expense_group, task_log_id, last_export: bool):
         qbo_expense_line_item_objects = QBOExpenseLineitem.create_qbo_expense_lineitems(expense_group, general_settings)
 
         created_qbo_expense = qbo_connection.post_qbo_expense(qbo_expense_object, qbo_expense_line_item_objects)
+        logger.info('Created QBO Expense with Expense Group %s successfully', expense_group.id)
 
         task_log.detail = created_qbo_expense
         task_log.qbo_expense = qbo_expense_object
@@ -442,6 +453,7 @@ def create_qbo_expense(expense_group, task_log_id, last_export: bool):
         update_last_export_details(expense_group.workspace_id)
 
     generate_export_url_and_update_expense(expense_group)
+    logger.info('Updated Expense Group %s successfully', expense_group.id)
 
     load_attachments(qbo_connection, created_qbo_expense['Purchase']['Id'], 'Purchase', expense_group)
 
@@ -449,6 +461,8 @@ def create_qbo_expense(expense_group, task_log_id, last_export: bool):
 @handle_qbo_exceptions()
 def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id, last_export: bool):
     task_log = TaskLog.objects.get(id=task_log_id)
+    logger.info('Creating Credit Card Purchase for Expense Group %s, current state is %s', expense_group.id, task_log.status)
+
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
         task_log.status = 'IN_PROGRESS'
         task_log.save()
@@ -469,6 +483,7 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id, last_e
         get_or_create_credit_card_or_debit_card_vendor(expense_group.workspace_id, merchant, False, general_settings)
 
     __validate_expense_group(expense_group, general_settings)
+    logger.info('Validated Expense Group %s successfully', expense_group.id)
 
     with transaction.atomic():
         credit_card_purchase_object = CreditCardPurchase.create_credit_card_purchase(expense_group, general_settings.map_merchant_to_vendor)
@@ -476,6 +491,7 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id, last_e
         credit_card_purchase_lineitems_objects = CreditCardPurchaseLineitem.create_credit_card_purchase_lineitems(expense_group, general_settings)
 
         created_credit_card_purchase = qbo_connection.post_credit_card_purchase(credit_card_purchase_object, credit_card_purchase_lineitems_objects)
+        logger.info('Created Credit Card Purchase with Expense Group %s successfully', expense_group.id)
 
         task_log.detail = created_credit_card_purchase
         task_log.credit_card_purchase = credit_card_purchase_object
@@ -494,6 +510,7 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id, last_e
         update_last_export_details(expense_group.workspace_id)
 
     generate_export_url_and_update_expense(expense_group)
+    logger.info('Updated Expense Group %s successfully', expense_group.id)
 
     load_attachments(qbo_connection, created_credit_card_purchase['Purchase']['Id'], 'Purchase', expense_group)
 
@@ -501,6 +518,8 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id, last_e
 @handle_qbo_exceptions()
 def create_journal_entry(expense_group, task_log_id, last_export: bool):
     task_log = TaskLog.objects.get(id=task_log_id)
+    logger.info('Creating Journal Entry for Expense Group %s, current state is %s', expense_group.id, task_log.status)
+
     if task_log.status not in ['IN_PROGRESS', 'COMPLETE']:
         task_log.status = 'IN_PROGRESS'
         task_log.save()
@@ -517,6 +536,7 @@ def create_journal_entry(expense_group, task_log_id, last_export: bool):
         create_or_update_employee_mapping(expense_group, qbo_connection, general_settings.auto_map_employees)
 
     __validate_expense_group(expense_group, general_settings)
+    logger.info('Validated Expense Group %s successfully', expense_group.id)
 
     with transaction.atomic():
         entity_map = qbo_connection.get_or_create_entity(expense_group, general_settings)
@@ -526,6 +546,7 @@ def create_journal_entry(expense_group, task_log_id, last_export: bool):
         journal_entry_lineitems_objects = JournalEntryLineitem.create_journal_entry_lineitems(expense_group, general_settings, entity_map)
 
         created_journal_entry = qbo_connection.post_journal_entry(journal_entry_object, journal_entry_lineitems_objects, general_settings.je_single_credit_line)
+        logger.info('Created Journal Entry with Expense Group %s successfully', expense_group.id)
 
         task_log.detail = created_journal_entry
         task_log.journal_entry = journal_entry_object
@@ -544,6 +565,7 @@ def create_journal_entry(expense_group, task_log_id, last_export: bool):
         update_last_export_details(expense_group.workspace_id)
 
     generate_export_url_and_update_expense(expense_group)
+    logger.info('Updated Expense Group %s successfully', expense_group.id)
 
     load_attachments(qbo_connection, created_journal_entry['JournalEntry']['Id'], 'JournalEntry', expense_group)
 

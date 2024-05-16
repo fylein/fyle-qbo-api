@@ -11,6 +11,7 @@ from rest_framework.views import status
 
 from apps.fyle.actions import update_complete_expenses
 from apps.fyle.models import ExpenseGroup
+from apps.fyle.tasks import post_accounting_export_summary
 from apps.mappings.constants import SYNC_METHODS
 from apps.mappings.helpers import get_auto_sync_permission
 from apps.quickbooks_online.helpers import generate_export_type_and_id
@@ -181,3 +182,4 @@ def generate_export_url_and_update_expense(expense_group: ExpenseGroup) -> None:
         logger.error('Error while generating export url %s', error)
 
     update_complete_expenses(expense_group.expenses.all(), url)
+    post_accounting_export_summary(expense_group.workspace.fyle_org_id, expense_group.workspace.id, expense_group.fund_source)
