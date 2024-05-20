@@ -461,7 +461,7 @@ class QBOExpense(models.Model):
         if workspace_general_settings.map_merchant_to_vendor and expense_group.fund_source == 'CCC':
             merchant = expense.vendor if expense.vendor else ''
 
-            entity = DestinationAttribute.objects.filter(value__iexact=merchant, attribute_type='VENDOR', workspace_id=expense_group.workspace_id, active=True).first()
+            entity = DestinationAttribute.objects.filter(value__iexact=merchant, attribute_type='VENDOR', workspace_id=expense_group.workspace_id, active=True).order_by('-updated_at').first()
 
             if not entity:
                 entity_id = DestinationAttribute.objects.filter(value='Debit Card Misc', workspace_id=expense_group.workspace_id).first().destination_id
@@ -596,7 +596,7 @@ class CreditCardPurchase(models.Model):
         if map_merchant_to_vendor:
             merchant = expense.vendor if expense.vendor else ''
 
-            entity = DestinationAttribute.objects.filter(value__iexact=merchant, attribute_type='VENDOR', workspace_id=expense_group.workspace_id, active=True).first()
+            entity = DestinationAttribute.objects.filter(value__iexact=merchant, attribute_type='VENDOR', workspace_id=expense_group.workspace_id, active=True).order_by('-updated_at').first()
 
             if not entity:
                 entity_id = DestinationAttribute.objects.filter(value='Credit Card Misc', workspace_id=expense_group.workspace_id).first().destination_id
