@@ -817,7 +817,7 @@ class QBOConnector:
         if general_settings.import_tax_codes:
             credit_card_purchase_payload.update({'TxnTaxDetail': {'TaxLine': []}})
 
-            for line_item in line:
+            for line_item in credit_card_purchase_lineitems:
                 tax_code_id = line_item.tax_code if (line_item.tax_code and line_item.tax_amount is not None) else general_mappings.default_tax_code_id
 
                 destination_attribute = DestinationAttribute.objects.filter(destination_id=tax_code_id, attribute_type='TAX_CODE', workspace_id=self.workspace_id).first()
