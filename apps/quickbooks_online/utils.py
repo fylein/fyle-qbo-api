@@ -494,7 +494,7 @@ class QBOConnector:
             'CurrencyRef': {'value': purchase_object.currency},
             'PrivateNote': purchase_object.private_note,
             'Credit': credit,
-            'Line': line
+            'Line': line,
         }
 
         if general_settings.import_tax_codes:
@@ -801,6 +801,9 @@ class QBOConnector:
         :return: constructed credit_card_purchase
         """
         general_mappings = GeneralMapping.objects.filter(workspace_id=self.workspace_id).first()
+        general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+
+        tax_rate_refs = []
 
         line = self.__construct_credit_card_purchase_lineitems(credit_card_purchase_lineitems, general_mappings)
         credit = False
@@ -810,6 +813,19 @@ class QBOConnector:
             line[0]['Amount'] = abs(line[0]['Amount'])
 
         credit_card_purchase_payload = self.purchase_object_payload(credit_card_purchase, line, account_ref=credit_card_purchase.ccc_account_id, payment_type='CreditCard', doc_number=credit_card_purchase.credit_card_purchase_number, credit=credit)
+
+        if general_settings.import_tax_codes:
+            credit_card_purchase_payload.update({'TxnTaxDetail': {'TaxLine': []}})
+
+            for line_item in line:
+                tax_code_id = line_item.tax_code if (line_item.tax_code and line_item.tax_amount is not None) else general_mappings.default_tax_code_id
+
+                destination_attribute = DestinationAttribute.objects.filter(destination_id=tax_code_id, attribute_type='TAX_CODE', workspace_id=self.workspace_id).first()
+                for tax_rate_ref in destination_attribute.detail['tax_refs']:
+                    tax_rate_refs.append(tax_rate_ref)
+
+            for tax_rate in tax_rate_refs:
+                credit_card_purchase_payload['TxnTaxDetail']['TaxLine'].append({"Amount": 0, "DetailType": "TaxLineDetail", 'TaxLineDetail': {'TaxRateRef': tax_rate, "PercentBased": True, "NetAmountTaxable": 0}})
 
         logger.info("| Payload for Credit Card Purchase creation | Content: {{WORKSPACE_ID: {} EXPENSE_GROUP_ID: {} CREDIT_CARD_PURCHASE_PAYLOAD: {}}}".format(self.workspace_id, credit_card_purchase.expense_group.id, credit_card_purchase_payload))
         return credit_card_purchase_payload
