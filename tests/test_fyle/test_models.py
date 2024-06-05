@@ -321,6 +321,17 @@ def test_create_expense_groups_by_report_id_fund_source(db):
     expense_groups = ExpenseGroup.objects.last()
     assert expense_groups.exported_at == None
 
+    # UT for Split Expenses
+    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+    general_settings.corporate_credit_card_expenses_object = 'CCP'
+    general_settings.save()
+
+    expenses = expense_groups.expenses.all()
+
+    ExpenseGroup.create_expense_groups_by_report_id_fund_source([expense_objects], workspace_id)
+
+    expense_groups = ExpenseGroup.objects.last()
+    assert expense_groups.exported_at == None
 
 def test_format_date():
     date_string = _format_date('2022-05-13T09:32:06.643941Z')
