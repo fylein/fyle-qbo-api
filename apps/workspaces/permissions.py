@@ -28,6 +28,7 @@ class WorkspacePermissions(permissions.BasePermission):
         logger.info(f'Permission was cached earlier: {not cache_users}')
         logger.info(f'Allowed users: {workspace_users}')
         logger.info(f'Payload: {payload}')
+        cache.delete(str(workspace_id))
         return False
 
     def has_permission(self, request, view):
