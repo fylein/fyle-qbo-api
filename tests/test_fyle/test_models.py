@@ -349,6 +349,9 @@ def test_amount_rounding():
     assert amount == 86.445
 
     amount = _round_to_currency_fraction(86.4445, 'USD')
+    assert amount == 86.44
+
+    amount = _round_to_currency_fraction(86.445, 'USD')
     assert amount == 86.45
 
     amount = _round_to_currency_fraction(86.444, 'USD')
