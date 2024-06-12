@@ -4,7 +4,7 @@ Fyle Models
 from collections import defaultdict
 from datetime import datetime
 from typing import Dict, List
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 from babel.numbers import get_currency_precision
 from dateutil import parser
@@ -53,7 +53,7 @@ def _format_date(date_string) -> datetime:
 
 def round_amount(amount, fraction):
     amount = Decimal(str(amount))
-    return float(amount.quantize(Decimal('1.' + '0' * fraction)))
+    return float(amount.quantize(Decimal('1.' + '0' * fraction), rounding=ROUND_HALF_UP))
 
 
 def _round_to_currency_fraction(amount: float, currency: str) -> float:
