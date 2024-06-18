@@ -4,6 +4,7 @@ Fyle Models
 from collections import defaultdict
 from datetime import datetime
 from typing import Dict, List
+from decimal import Decimal, ROUND_HALF_UP
 
 from babel.numbers import get_currency_precision
 from dateutil import parser
@@ -50,9 +51,14 @@ def _format_date(date_string) -> datetime:
     return date_string
 
 
+def round_amount(amount, fraction):
+    amount = Decimal(str(amount))
+    return float(amount.quantize(Decimal('1.' + '0' * fraction), rounding=ROUND_HALF_UP))
+
+
 def _round_to_currency_fraction(amount: float, currency: str) -> float:
     fraction = get_currency_precision(currency) or 2
-    rounded_amount = round(amount, fraction)
+    rounded_amount = round_amount(amount, fraction)
 
     return rounded_amount
 
@@ -138,7 +144,7 @@ class Expense(models.Model):
                     'currency': expense['currency'],
                     'foreign_amount': expense['foreign_amount'],
                     'foreign_currency': expense['foreign_currency'],
-                    'tax_amount': expense['tax_amount'],
+                    'tax_amount': _round_to_currency_fraction(expense['tax_amount'], expense['currency']) if expense['tax_amount'] else None,
                     'tax_group_id': expense['tax_group_id'],
                     'settlement_id': expense['settlement_id'],
                     'reimbursable': expense['reimbursable'],

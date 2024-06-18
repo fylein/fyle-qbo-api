@@ -13,6 +13,7 @@ from apps.fyle.models import (
     get_default_expense_group_fields,
     get_default_expense_state,
     parser,
+    _round_to_currency_fraction
 )
 from tests.test_fyle.fixtures import data
 
@@ -337,3 +338,32 @@ def test_format_date():
     date_string = _format_date('2022-05-13T09:32:06.643941Z')
 
     assert date_string == parser.parse('2022-05-13T09:32:06.643941Z')
+
+
+def test_amount_rounding():
+    amount = _round_to_currency_fraction(81.6455, 'USD')
+    assert amount == 81.65
+
+    amount = _round_to_currency_fraction(81.642, 'USD')
+    assert amount == 81.64
+
+    amount = _round_to_currency_fraction(81.6455, 'TND')
+    assert amount == 81.646
+
+    amount = _round_to_currency_fraction(81.64555, 'TND')
+    assert amount == 81.646
+
+    amount = _round_to_currency_fraction(81.64, 'JOD')
+    assert amount == 81.64
+
+    amount = _round_to_currency_fraction(86.4445, 'JOD')
+    assert amount == 86.445
+
+    amount = _round_to_currency_fraction(86.4445, 'USD')
+    assert amount == 86.44
+
+    amount = _round_to_currency_fraction(86.445, 'USD')
+    assert amount == 86.45
+
+    amount = _round_to_currency_fraction(86.444, 'USD')
+    assert amount == 86.44
