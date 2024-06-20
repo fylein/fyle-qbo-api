@@ -853,7 +853,7 @@ def test_schedule_reimbursements_sync(db):
 
 def test_process_reimbursements(db, mocker):
 
-    mocker.patch('fyle_integrations_platform_connector.apis.Reimbursements.bulk_post_reimbursements', return_value=[])
+    mocker.patch('fyle_integrations_platform_connector.apis.Reports.bulk_mark_as_paid', return_value=[])
     mocker.patch('fyle_integrations_platform_connector.apis.Reimbursements.sync', return_value=[])
     workspace_id = 3
 
