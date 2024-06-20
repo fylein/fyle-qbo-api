@@ -325,7 +325,7 @@ def test_create_expense_groups_by_report_id_fund_source(db):
 
 def test_create_expense_groups_by_report_id_fund_source_ccc(db):
     workspace_id = 4
-    payload = data['ccc_expenses']
+    payload = data['expenses']
     Expense.create_expense_objects(payload, workspace_id)
     expense_objects = Expense.objects.last()
 
