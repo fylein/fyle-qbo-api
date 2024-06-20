@@ -147,7 +147,6 @@ class Expense(models.Model):
                     'foreign_currency': expense['foreign_currency'],
                     'tax_amount': _round_to_currency_fraction(expense['tax_amount'], expense['currency']) if expense['tax_amount'] else None,
                     'tax_group_id': expense['tax_group_id'],
-                    'settlement_id': expense['settlement_id'],
                     'reimbursable': expense['reimbursable'],
                     'billable': expense['billable'],
                     'state': expense['state'],
