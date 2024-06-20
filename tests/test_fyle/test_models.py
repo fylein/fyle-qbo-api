@@ -332,7 +332,7 @@ def test_create_expense_groups_by_report_id_fund_source(db):
     ExpenseGroup.create_expense_groups_by_report_id_fund_source([expense_objects], workspace_id)
 
     expense_groups = ExpenseGroup.objects.last()
-    assert expense_groups.exported_at == None
+    assert expense_groups.exported_at is None
 
 def test_format_date():
     date_string = _format_date('2022-05-13T09:32:06.643941Z')
