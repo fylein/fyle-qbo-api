@@ -718,8 +718,7 @@ data = {
             'source_account_type': 'PERSONAL_CORPORATE_CREDIT_CARD_ACCOUNT',
             'verified_at': None,
             'custom_properties': {'Vehicle Type': '', 'Fyle Categories': ''},
-        },
-        
+        }
     ],
     'expense_groups_complete_response': {
         'count': 15,
