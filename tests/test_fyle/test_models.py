@@ -330,7 +330,6 @@ def test_create_expense_groups_by_report_id_fund_source_ccc(db):
     expense_objects = Expense.objects.last()
 
     expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
-    expense_group_settings.reimbursable_export_date_type = 'last_spent_at'
     expense_group_settings.ccc_export_date_type = 'last_spent_at'
     expense_group_settings.save()
 
