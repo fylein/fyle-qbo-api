@@ -656,7 +656,7 @@ data = {
             'project_id': 246855,
             'expense_number': 'E/2022/05/T/20',
             'org_id': 'or79Cob97KSh',
-            'claim_number': 'C/2022/05/R/6',
+            'claim_number': 'C/2022/05/R/9',
             'amount': 5,
             'tax_amount': 1.09,
             'tax_group_id': 'tggu76WXIdjY',
