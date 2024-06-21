@@ -283,14 +283,14 @@ def test_create_expense_group_report_id_debit_card_expense(db):
 
 def test_create_expense_groups_by_report_id_fund_source(db):
     workspace_id = 4
-    payload = data['expenses']
-    Expense.create_expense_objects(payload, workspace_id)
-    expense_objects = Expense.objects.last()
+    payload = data['ccc_expenses_split']
 
     expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
     expense_group_settings.reimbursable_export_date_type = 'last_spent_at'
     expense_group_settings.ccc_export_date_type = 'last_spent_at'
     expense_group_settings.save()
+    Expense.create_expense_objects(payload, workspace_id)
+    expense_objects = Expense.objects.last()
 
     field = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type='PROJECT').last()
     field.attribute_type = 'KILLUA'
@@ -325,7 +325,7 @@ def test_create_expense_groups_by_report_id_fund_source(db):
 
 def test_create_expense_groups_by_report_id_fund_source_ccc(db):
     workspace_id = 4
-    payload = data["ccc_expenses"]
+    payload = data['expenses']
     Expense.create_expense_objects(payload, workspace_id)
     expense_objects = Expense.objects.last()
 
