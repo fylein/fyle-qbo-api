@@ -12,7 +12,7 @@ from apps.fyle.tasks import (
     post_accounting_export_summary,
     import_and_export_expenses,
     sync_dimensions,
-    update_expenses
+    update_non_exported_expenses
 )
 from apps.fyle.actions import mark_expenses_as_skipped
 from apps.tasks.models import TaskLog
@@ -151,13 +151,13 @@ def test_sync_dimension(db, mocker):
     mock_platform_instance.projects.sync.assert_called_once()
 
 
-def test_update_expenses(db, create_temp_workspace, mocker):
+def test_update_non_exported_expenses(db, create_temp_workspace, mocker):
     expense = data['raw_expense']
     default_raw_expense = data['default_raw_expense']
     org_id = expense['org_id']
     payload = {
         "resource": "EXPENSE",
-        "action": 'UPDATED',
+        "action": 'UPDATED_AFTER_APPROVAL',
         "data": expense,
         "reason": 'expense update testing',
     }
@@ -177,7 +177,15 @@ def test_update_expenses(db, create_temp_workspace, mocker):
 
     assert expense_created.category == 'Old Category'
 
-    update_expenses(payload['data'])
+    update_non_exported_expenses(payload['data'])
 
     expense = Expense.objects.get(expense_id='txhJLOSKs1iN', org_id=org_id)
     assert expense.category == 'ABN Withholding'
+
+    expense.accounting_export_summary = {"synced": True, "state": "COMPLETE"}
+    expense.category = 'Old Category'
+    expense.save()
+
+    update_non_exported_expenses(payload['data'])
+    expense = Expense.objects.get(expense_id='txhJLOSKs1iN', org_id=org_id)
+    assert expense.category == 'Old Category'

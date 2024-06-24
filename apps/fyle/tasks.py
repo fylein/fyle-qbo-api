@@ -292,7 +292,7 @@ def import_and_export_expenses(report_id: str, org_id: str) -> None:
         handle_import_exception(task_log)
 
 
-def update_expenses(data: Dict) -> None:
+def update_non_exported_expenses(data: Dict) -> None:
     """
     To update expenses not in COMPLETE, IN_PROGRESS state
     """
@@ -300,7 +300,8 @@ def update_expenses(data: Dict) -> None:
     org_id = data['org_id']
     expense_id = data['id']
 
-    expense = Expense.objects.filter(org_id=org_id, expense_id=expense_id).first()
+    workspace_id = Workspace.objects.get(fyle_org_id = org_id)
+    expense = Expense.objects.filter(workspace_id=workspace_id, expense_id=expense_id).first()
 
     if expense:
         if 'state' in expense.accounting_export_summary:
@@ -308,10 +309,10 @@ def update_expenses(data: Dict) -> None:
         else:
             expense_state = 'NOT_EXPORTED'
 
-    if expense_state and expense_state not in ['COMPLETE', 'IN_PROGRESS']:
-        expense_obj = []
-        expense_obj.append(data)
-        expense_objects = FyleExpenses().construct_expense_object(expense_obj, expense.workspace_id)
-        Expense.create_expense_objects(
-            expense_objects, expense.workspace_id
-        )
+        if expense_state and expense_state not in ['COMPLETE', 'IN_PROGRESS']:
+            expense_obj = []
+            expense_obj.append(data)
+            expense_objects = FyleExpenses().construct_expense_object(expense_obj, expense.workspace_id)
+            Expense.create_expense_objects(
+                expense_objects, expense.workspace_id
+            )

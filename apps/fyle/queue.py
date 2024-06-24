@@ -23,5 +23,5 @@ def async_import_and_export_expenses(body: dict) -> None:
         org_id = body['data']['org_id']
         async_task('apps.fyle.tasks.import_and_export_expenses', report_id, org_id)
 
-    elif body.get('action') == 'UPDATED' and body.get('data') and body.get('resource') == 'EXPENSE':
-        async_task('apps.fyle.tasks.update_expenses', body['data'])
+    elif body.get('action') == 'UPDATED_AFTER_APPROVAL' and body.get('data') and body.get('resource') == 'EXPENSE':
+        async_task('apps.fyle.tasks.update_non_exported_expenses', body['data'])
