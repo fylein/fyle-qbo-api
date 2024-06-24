@@ -128,6 +128,7 @@ class QBOConnector:
                 tax_rate_refs.append(tax_rate['TaxRateRef'])
                 tax_rate_id = tax_rate['TaxRateRef']['value']
                 tax_rate_by_id = self.connection.tax_rates.get_by_id(tax_rate_id)
+                tax_rate['TaxRateRef']['taxRate'] = tax_rate_by_id['RateValue']
 
             if 'RateValue' in tax_rate_by_id:
                 effective_tax_rate += tax_rate_by_id['RateValue']
@@ -477,11 +478,80 @@ class QBOConnector:
         except Exception as exception:
             logger.info(exception)
 
-    def purchase_object_payload(self, purchase_object, line, payment_type, account_ref, doc_number: str = None, credit=None):
-        """
-        returns purchase object payload
-        """
+    def calculate_tax_amount(self, tax_rate_ref, total_tax_rate, line_tax_amount):
+        if total_tax_rate == 0:
+            return 0
+        return round((line_tax_amount * (tax_rate_ref['taxRate'] / total_tax_rate)), 2)
 
+    def create_tax_detail(self, line, tax_rate_ref, tax_amount):
+        return {
+            'Amount': tax_amount,
+            'DetailType': 'TaxLineDetail',
+            "TaxLineDetail": {
+                "TaxRateRef": {
+                    "value": tax_rate_ref['value']
+                },
+                "PercentBased": False,
+                "NetAmountTaxable": round(line['Amount'], 2),
+            }
+        }
+
+    def update_existing_tax_detail(self, tax_detail, line, tax_amount):
+        tax_detail['Amount'] = tax_detail['Amount'] + tax_amount
+        tax_detail['Amount'] = round(tax_detail['Amount'], 2)
+        tax_detail['TaxLineDetail']['NetAmountTaxable'] += line['Amount']
+        return tax_detail
+
+    def update_tax_details(self, tax_details, line, tax_rate_refs, total_tax_rate, line_tax_amount):
+        updated_tax_details = tax_details[:]
+
+        for tax_rate_ref in tax_rate_refs:
+            tax_amount = self.calculate_tax_amount(tax_rate_ref, total_tax_rate, line_tax_amount)
+            tax_amount = round(tax_amount, 2)
+            updated = False
+
+            for i, tax_detail in enumerate(updated_tax_details):
+                if tax_rate_ref['value'] == tax_detail['TaxLineDetail']['TaxRateRef']['value']:
+                    updated_tax_details[i] = self.update_existing_tax_detail(tax_detail, line, tax_amount)
+                    updated = True
+                    break
+
+            if not updated:
+                updated_tax_details.append(self.create_tax_detail(line, tax_rate_ref, tax_amount))
+
+        return updated_tax_details
+
+    def get_override_tax_details(self, lines, is_journal_entry_export: bool = False):
+        if is_journal_entry_export:
+            lines = [line for line in lines if line.get('JournalEntryLineDetail', {}).get('PostingType') == 'Debit']
+
+        tax_details = []
+        for line in lines:
+            if is_journal_entry_export:
+                line_details = line.get('JournalEntryLineDetail', {})
+            else:
+                line_details = line.get('AccountBasedExpenseLineDetail', {}) if 'AccountBasedExpenseLineDetail' in line else line.get('ItemBasedExpenseLineDetail', {})
+
+            tax_code_ref = line_details.get('TaxCodeRef')
+
+            if tax_code_ref:
+                tax_code = DestinationAttribute.objects.filter(
+                    destination_id=tax_code_ref.get('value'),
+                    attribute_type='TAX_CODE',
+                    workspace_id=self.workspace_id
+                ).first()
+
+                if not tax_code:
+                    continue
+
+                tax_rate_refs = tax_code.detail.get('tax_refs', [])
+                total_tax_rate = tax_code.detail.get('tax_rate', 0)
+                line_tax_amount = line_details.get('TaxAmount', 0)
+                tax_details = self.update_tax_details(tax_details, line, tax_rate_refs, total_tax_rate, line_tax_amount)
+
+        return tax_details
+
+    def purchase_object_payload(self, purchase_object, line, payment_type, account_ref, doc_number: str = None, credit=None):
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
 
         purchase_object_payload = {
@@ -498,7 +568,13 @@ class QBOConnector:
         }
 
         if general_settings.import_tax_codes:
-            purchase_object_payload.update({'GlobalTaxCalculation': 'TaxInclusive'})
+            if general_settings.is_tax_override_enabled:
+                tax_details = self.get_override_tax_details(line)
+                purchase_object_payload.update({'GlobalTaxCalculation': 'TaxExcluded', 'TxnTaxDetail': {"TaxLine": tax_details}})
+            else:
+                purchase_object_payload.update({'GlobalTaxCalculation': 'TaxInclusive'})
+
+        [line['ItemBasedExpenseLineDetail'].pop('TaxAmount') for line in purchase_object_payload['Line'] if 'ItemBasedExpenseLineDetail' in line]
 
         return purchase_object_payload
 
@@ -525,6 +601,7 @@ class QBOConnector:
 
             if line.detail_type == 'ItemBasedExpenseLineDetail':
                 lineitem['ItemBasedExpenseLineDetail'].update({'ItemRef': {'value': line.item_id}, 'Qty': 1})
+                lineitem['ItemBasedExpenseLineDetail'].update({'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)})
             else:
                 lineitem['AccountBasedExpenseLineDetail'].update(
                     {
@@ -549,6 +626,8 @@ class QBOConnector:
         qbo_home_currency = QBOCredential.objects.get(workspace_id=self.workspace_id).currency
         fyle_home_currency = bill.currency
 
+        lines = self.__construct_bill_lineitems(bill_lineitems, general_mappings)
+
         bill_payload = {
             'VendorRef': {'value': bill.vendor_id},
             'APAccountRef': {'value': bill.accounts_payable_id},
@@ -556,7 +635,7 @@ class QBOConnector:
             'TxnDate': bill.transaction_date,
             'CurrencyRef': {'value': bill.currency},
             'PrivateNote': bill.private_note,
-            'Line': self.__construct_bill_lineitems(bill_lineitems, general_mappings),
+            'Line': lines,
         }
 
         if general_settings.is_multi_currency_allowed and fyle_home_currency != qbo_home_currency and qbo_home_currency:
@@ -567,7 +646,13 @@ class QBOConnector:
             bill.save(update_fields=['exchange_rate'])
 
         if general_settings.import_tax_codes:
-            bill_payload.update({'GlobalTaxCalculation': 'TaxInclusive'})
+            if general_settings.is_tax_override_enabled:
+                tax_details = self.get_override_tax_details(lines)
+                bill_payload.update({'GlobalTaxCalculation': 'TaxExcluded', 'TxnTaxDetail': {"TaxLine": tax_details}})
+            else:
+                bill_payload.update({'GlobalTaxCalculation': 'TaxInclusive'})
+
+        [line['ItemBasedExpenseLineDetail'].pop('TaxAmount') for line in bill_payload['Line'] if 'ItemBasedExpenseLineDetail' in line]
 
         logger.info("| Payload for Bill creation | Content: {{WORKSPACE_ID: {} EXPENSE_GROUP_ID: {} BILL_PAYLOAD: {}}}".format(self.workspace_id, bill.expense_group.id, bill_payload))
         return bill_payload
@@ -631,6 +716,7 @@ class QBOConnector:
 
             if line.detail_type == 'ItemBasedExpenseLineDetail':
                 lineitem['ItemBasedExpenseLineDetail'].update({'ItemRef': {'value': line.item_id}, 'Qty': 1})
+                lineitem['ItemBasedExpenseLineDetail'].update({'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)})
             else:
                 lineitem['AccountBasedExpenseLineDetail'].update(
                     {
@@ -706,6 +792,7 @@ class QBOConnector:
 
             if line.detail_type == 'ItemBasedExpenseLineDetail':
                 lineitem['ItemBasedExpenseLineDetail'].update({'ItemRef': {'value': line.item_id}, 'Qty': 1})
+                lineitem['ItemBasedExpenseLineDetail'].update({'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)})
             else:
                 lineitem['AccountBasedExpenseLineDetail'].update(
                     {
@@ -782,6 +869,7 @@ class QBOConnector:
 
             if line.detail_type == 'ItemBasedExpenseLineDetail':
                 lineitem['ItemBasedExpenseLineDetail'].update({'ItemRef': {'value': line.item_id}, 'Qty': 1})
+                lineitem['ItemBasedExpenseLineDetail'].update({'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)})
             else:
                 lineitem['AccountBasedExpenseLineDetail'].update(
                     {
