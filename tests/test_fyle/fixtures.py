@@ -644,7 +644,7 @@ data = {
             'custom_properties': {'Vehicle Type': '', 'Fyle Categories': ''},
         },
     ],
-'ccc_expenses_split': [
+    'ccc_expenses_split': [
         {
             'id': '24008',
             'employee_email': 'admin1@fyleforbamboohr.com',
