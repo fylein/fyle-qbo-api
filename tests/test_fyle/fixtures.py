@@ -743,7 +743,7 @@ data = {
             'updated_at': '2024-06-18T19:12:17.020627+00:00'
         }
     ],
-    'ccc_expenses_split_no_bank_transaction_id': [
+    'ccc_expenses_split_same_bank_transaction_id': [
         {
             'id': '24008',
             'employee_email': 'admin1@fyleforbamboohr.com',
@@ -844,7 +844,7 @@ data = {
             'bank_transaction_id': 'anish'
         }
     ],
-    'ccc_expenses_split_no_bank_transaction_id': [
+    'ccc_expenses_split_diff_bank_transaction_id': [
         {
             'id': '24008',
             'employee_email': 'admin1@fyleforbamboohr.com',
