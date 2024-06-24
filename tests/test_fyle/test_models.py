@@ -322,6 +322,85 @@ def test_create_expense_groups_by_report_id_fund_source(db):
     expense_groups = ExpenseGroup.objects.last()
     assert expense_groups.exported_at == None
 
+# abcdefgh
+    expense_objects = Expense.create_expense_objects(expenses, 1)
+
+    workspace = Workspace.objects.get(id=1)
+
+    expense_group_setting = ExpenseGroupSettings.objects.get(workspace_id=1)
+    expense_group_setting.reimbursable_export_date_type = "spent_at"
+    reimbursable_expense_group_fields = (
+        expense_group_setting.reimbursable_expense_group_fields
+    )
+    reimbursable_expense_group_fields.append("spent_at")
+    expense_group_setting.reimbursable_expense_group_fields = (
+        reimbursable_expense_group_fields
+    )
+    expense_group_setting.save()
+
+    assert len(expense_objects) == 3
+
+    ExpenseGroup.create_expense_groups_by_report_id_fund_source(expense_objects, 1)
+
+    expense_group = (
+        ExpenseGroup.objects.filter(workspace=workspace).order_by("-created_at").first()
+    )
+
+    assert expense_group.expenses.count() == 2
+
+def test_split_expenses_no_bank_transaction_id(db):
+    # Grouping of expenses with no bank transaction id
+    expenses = data['ccc_expenses_split_no_bank_transaction_id']
+    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=1)
+    general_settings.reimbursable_expenses_object = 'CREDIT CARD PURCHASE'
+    general_settings.save()
+
+    expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=1)
+    expense_group_settings.ccc_export_date_type = 'last_spent_at'
+    expense_group_settings.save()
+
+    expense_objects = Expense.create_expense_objects(expenses, 1)
+    assert len(expense_objects) == 2
+
+    expense_groups = ExpenseGroup.create_expense_groups_by_report_id_fund_source([expense_objects], 1)
+    assert len(expense_groups) == 2
+
+
+def test_split_expenses_same_bank_transaction_id(db):
+    # Grouping of expenses with same bank transaction id
+    expenses = data['ccc_expenses_split_same_bank_transaction_id']
+    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=1)
+    general_settings.reimbursable_expenses_object = 'CREDIT CARD PURCHASE'
+    general_settings.save()
+
+    expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=1)
+    expense_group_settings.ccc_export_date_type = 'last_spent_at'
+    expense_group_settings.save()
+
+    expense_objects = Expense.create_expense_objects(expenses, 1)
+    assert len(expense_objects) == 2
+
+    expense_groups = ExpenseGroup.create_expense_groups_by_report_id_fund_source([expense_objects], 1)
+    assert len(expense_groups) == 2
+
+
+def test_split_expenses_diff_bank_transaction_id(db):
+    # Grouping of expenses with same bank transaction id
+    expenses = data['ccc_expenses_split_no_bank_transaction_id']
+    general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=1)
+    general_settings.reimbursable_expenses_object = 'CREDIT CARD PURCHASE'
+    general_settings.save()
+
+    expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=1)
+    expense_group_settings.ccc_export_date_type = 'last_spent_at'
+    expense_group_settings.save()
+
+    expense_objects = Expense.create_expense_objects(expenses, 1)
+    assert len(expense_objects) == 2
+
+    expense_groups = ExpenseGroup.create_expense_groups_by_report_id_fund_source([expense_objects], 1)
+    assert len(expense_groups) == 2
+
 
 def test_format_date():
     date_string = _format_date('2022-05-13T09:32:06.643941Z')
