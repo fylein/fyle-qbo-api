@@ -95,6 +95,7 @@ class Expense(models.Model):
     report_id = models.CharField(max_length=255, help_text='Report ID')
     report_title = models.TextField(null=True, blank=True, help_text='Report title')
     corporate_card_id = models.CharField(max_length=255, null=True, blank=True, help_text='Corporate Card ID')
+    bank_transaction_id = models.CharField(max_length=255, null=True, blank=True, help_text='Bank Transaction ID')
     file_ids = ArrayField(base_field=models.CharField(max_length=255), null=True, help_text='File IDs')
     spent_at = models.DateTimeField(null=True, help_text='Expense spent at')
     approved_at = models.DateTimeField(null=True, help_text='Expense approved at')
