@@ -105,7 +105,7 @@ class ExportView(generics.CreateAPIView):
 
     @handle_view_exceptions()
     def post(self, request, *args, **kwargs):
-        async_import_and_export_expenses(request.data)
+        async_import_and_export_expenses(request.data, kwargs['workspace_id'])
 
         return Response(data={}, status=status.HTTP_200_OK)
 

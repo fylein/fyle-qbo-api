@@ -299,9 +299,8 @@ def update_non_exported_expenses(data: Dict) -> None:
     expense_state = None
     org_id = data['org_id']
     expense_id = data['id']
-
-    workspace_id = Workspace.objects.get(fyle_org_id = org_id)
-    expense = Expense.objects.filter(workspace_id=workspace_id, expense_id=expense_id).first()
+    workspace = Workspace.objects.get(fyle_org_id = org_id)
+    expense = Expense.objects.filter(workspace_id=workspace.id, expense_id=expense_id).first()
 
     if expense:
         if 'state' in expense.accounting_export_summary:

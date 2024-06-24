@@ -5,6 +5,8 @@ from django.db.models import Q
 from django.urls import reverse
 
 import pytest
+from rest_framework.exceptions import ValidationError
+from rest_framework import status
 
 from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings
 from apps.fyle.tasks import (
@@ -151,7 +153,7 @@ def test_sync_dimension(db, mocker):
     mock_platform_instance.projects.sync.assert_called_once()
 
 
-def test_update_non_exported_expenses(db, create_temp_workspace, mocker):
+def test_update_non_exported_expenses(db, create_temp_workspace, mocker, api_client, test_connection):
     expense = data['raw_expense']
     default_raw_expense = data['default_raw_expense']
     org_id = expense['org_id']
@@ -189,3 +191,13 @@ def test_update_non_exported_expenses(db, create_temp_workspace, mocker):
     update_non_exported_expenses(payload['data'])
     expense = Expense.objects.get(expense_id='txhJLOSKs1iN', org_id=org_id)
     assert expense.category == 'Old Category'
+
+    try:
+        update_non_exported_expenses(payload['data'])
+    except ValidationError as e:
+        assert e.detail[0] == 'Workspace mismatch'
+
+    url = reverse('exports', kwargs={'workspace_id': 2})
+
+    response = api_client.post(url, data=payload, format='json')
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
