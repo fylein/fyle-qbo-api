@@ -338,13 +338,13 @@ def test_split_expenses_no_bank_transaction_id(db):
     expense_objects = Expense.create_expense_objects(expenses, 1)
     assert len(expense_objects) == 2
 
-    expense_groups = ExpenseGroup.create_expense_groups_by_report_id_fund_source([expense_objects], 1)
+    expense_groups = _group_expenses(expense_objects, ['expense_id', 'fund_source', 'employee_email', 'spent_at'], 4)
     assert len(expense_groups) == 2
 
     expense_group_settings.split_expense_grouping = 'MULTIPLE_LINE_ITEM'
     expense_group_settings.save()
 
-    expense_groups = ExpenseGroup.create_expense_groups_by_report_id_fund_source([expense_objects], 1)
+    expense_groups = _group_expenses(expense_objects, ['expense_id', 'fund_source', 'employee_email', 'spent_at'], 4)
     assert len(expense_groups) == 2
 
 
@@ -363,13 +363,13 @@ def test_split_expenses_same_bank_transaction_id(db):
     expense_objects = Expense.create_expense_objects(expenses, 1)
     assert len(expense_objects) == 2
 
-    expense_groups = ExpenseGroup.create_expense_groups_by_report_id_fund_source([expense_objects], 1)
+    expense_groups = _group_expenses(expense_objects, ['expense_id', 'fund_source', 'employee_email', 'spent_at'], 4)
     assert len(expense_groups) == 2
 
     expense_group_settings.split_expense_grouping = 'MULTIPLE_LINE_ITEM'
     expense_group_settings.save()
 
-    expense_groups = ExpenseGroup.create_expense_groups_by_report_id_fund_source([expense_objects], 1)
+    expense_groups = _group_expenses(expense_objects, ['expense_id', 'fund_source', 'employee_email', 'spent_at'], 4)
     # assert len(expense_groups) == 1
 
 
@@ -388,13 +388,13 @@ def test_split_expenses_diff_bank_transaction_id(db):
     expense_objects = Expense.create_expense_objects(expenses, 1)
     assert len(expense_objects) == 2
 
-    expense_groups = ExpenseGroup.create_expense_groups_by_report_id_fund_source([expense_objects], 1)
+    expense_groups = _group_expenses(expense_objects, ['expense_id', 'fund_source', 'employee_email', 'spent_at'], 4)
     assert len(expense_groups) == 2
 
     expense_group_settings.split_expense_grouping = 'MULTIPLE_LINE_ITEM'
     expense_group_settings.save()
 
-    expense_groups = ExpenseGroup.create_expense_groups_by_report_id_fund_source([expense_objects], 1)
+    expense_groups = _group_expenses(expense_objects, ['expense_id', 'fund_source', 'employee_email', 'spent_at'], 4)
     assert len(expense_groups) == 2
 
 
