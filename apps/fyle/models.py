@@ -4,7 +4,7 @@ Fyle Models
 from collections import defaultdict
 from datetime import datetime
 from typing import Dict, List
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 from babel.numbers import get_currency_precision
 from dateutil import parser
@@ -53,7 +53,7 @@ def _format_date(date_string) -> datetime:
 
 def round_amount(amount, fraction):
     amount = Decimal(str(amount))
-    return float(amount.quantize(Decimal('1.' + '0' * fraction)))
+    return float(amount.quantize(Decimal('1.' + '0' * fraction), rounding=ROUND_HALF_UP))
 
 
 def _round_to_currency_fraction(amount: float, currency: str) -> float:
@@ -109,6 +109,7 @@ class Expense(models.Model):
     previous_export_state = models.CharField(max_length=255, help_text='Previous export state', null=True)
     accounting_export_summary = JSONField(default=dict)
     paid_on_qbo = models.BooleanField(help_text='Expense Payment status on QBO', default=False)
+    paid_on_fyle = models.BooleanField(help_text='Expense Payment status on Fyle', default=False)
     payment_number = models.CharField(max_length=55, help_text='Expense payment number', null=True)
     is_skipped = models.BooleanField(null=True, default=False, help_text='Expense is skipped or not')
     workspace = models.ForeignKey(
@@ -146,7 +147,6 @@ class Expense(models.Model):
                     'foreign_currency': expense['foreign_currency'],
                     'tax_amount': _round_to_currency_fraction(expense['tax_amount'], expense['currency']) if expense['tax_amount'] else None,
                     'tax_group_id': expense['tax_group_id'],
-                    'settlement_id': expense['settlement_id'],
                     'reimbursable': expense['reimbursable'],
                     'billable': expense['billable'],
                     'state': expense['state'],

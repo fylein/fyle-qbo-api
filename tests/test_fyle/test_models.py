@@ -344,3 +344,15 @@ def test_amount_rounding():
 
     amount = _round_to_currency_fraction(81.64, 'JOD')
     assert amount == 81.64
+
+    amount = _round_to_currency_fraction(86.4445, 'JOD')
+    assert amount == 86.445
+
+    amount = _round_to_currency_fraction(86.4445, 'USD')
+    assert amount == 86.44
+
+    amount = _round_to_currency_fraction(86.445, 'USD')
+    assert amount == 86.45
+
+    amount = _round_to_currency_fraction(86.444, 'USD')
+    assert amount == 86.44
