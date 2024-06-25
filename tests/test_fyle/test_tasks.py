@@ -5,13 +5,16 @@ from django.db.models import Q
 from django.urls import reverse
 
 import pytest
+from rest_framework.exceptions import ValidationError
+from rest_framework import status
 
 from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings
 from apps.fyle.tasks import (
     create_expense_groups,
     post_accounting_export_summary,
     import_and_export_expenses,
-    sync_dimensions
+    sync_dimensions,
+    update_non_exported_expenses
 )
 from apps.fyle.actions import mark_expenses_as_skipped
 from apps.tasks.models import TaskLog
@@ -148,3 +151,56 @@ def test_sync_dimension(db, mocker):
     mock_platform_instance.import_fyle_dimensions.assert_called_once_with(is_export=True)
     mock_platform_instance.categories.sync.assert_called_once()
     mock_platform_instance.projects.sync.assert_called_once()
+
+
+def test_update_non_exported_expenses(db, create_temp_workspace, mocker, api_client, test_connection):
+    expense = data['raw_expense']
+    default_raw_expense = data['default_raw_expense']
+    org_id = expense['org_id']
+    payload = {
+        "resource": "EXPENSE",
+        "action": 'UPDATED_AFTER_APPROVAL',
+        "data": expense,
+        "reason": 'expense update testing',
+    }
+
+    expense_created, _ = Expense.objects.update_or_create(
+        org_id=org_id,
+        expense_id='txhJLOSKs1iN',
+        workspace_id=1,
+        defaults=default_raw_expense
+    )
+    expense_created.accounting_export_summary = {}
+    expense_created.save()
+
+    workspace = Workspace.objects.filter(id=1).first()
+    workspace.fyle_org_id = org_id
+    workspace.save()
+
+    assert expense_created.category == 'Old Category'
+
+    update_non_exported_expenses(payload['data'])
+
+    expense = Expense.objects.get(expense_id='txhJLOSKs1iN', org_id=org_id)
+    assert expense.category == 'ABN Withholding'
+
+    expense.accounting_export_summary = {"synced": True, "state": "COMPLETE"}
+    expense.category = 'Old Category'
+    expense.save()
+
+    update_non_exported_expenses(payload['data'])
+    expense = Expense.objects.get(expense_id='txhJLOSKs1iN', org_id=org_id)
+    assert expense.category == 'Old Category'
+
+    try:
+        update_non_exported_expenses(payload['data'])
+    except ValidationError as e:
+        assert e.detail[0] == 'Workspace mismatch'
+
+    url = reverse('exports', kwargs={'workspace_id': 1})
+    response = api_client.post(url, data=payload, format='json')
+    assert response.status_code == status.HTTP_200_OK
+
+    url = reverse('exports', kwargs={'workspace_id': 2})
+    response = api_client.post(url, data=payload, format='json')
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
