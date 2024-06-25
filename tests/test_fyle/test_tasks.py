@@ -197,7 +197,10 @@ def test_update_non_exported_expenses(db, create_temp_workspace, mocker, api_cli
     except ValidationError as e:
         assert e.detail[0] == 'Workspace mismatch'
 
-    url = reverse('exports', kwargs={'workspace_id': 2})
+    url = reverse('exports', kwargs={'workspace_id': 1})
+    response = api_client.post(url, data=payload, format='json')
+    assert response.status_code == status.HTTP_200_OK
 
+    url = reverse('exports', kwargs={'workspace_id': 2})
     response = api_client.post(url, data=payload, format='json')
     assert response.status_code == status.HTTP_400_BAD_REQUEST
