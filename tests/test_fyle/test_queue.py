@@ -38,4 +38,4 @@ def test_async_import_and_export_expenses(db):
         }
     }
 
-    async_import_and_export_expenses(body)
+    async_import_and_export_expenses(body, 3)
