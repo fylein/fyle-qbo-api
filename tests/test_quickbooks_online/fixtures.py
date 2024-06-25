@@ -157,7 +157,7 @@ data = {
                 'DetailType': 'ItemBasedExpenseLineDetail',
                 'Amount': 1.0,
                 'ItemBasedExpenseLineDetail': {'CustomerRef': {'value': None}, 'ClassRef': {'value': None}, 'TaxCodeRef': {'value': None}, 'BillableStatus': 'NotBillable', 'ItemRef': {'value': '3'}, 'Qty': 1},
-            },
+            }
         ],
     },
     "qbo_expense_payload": {
