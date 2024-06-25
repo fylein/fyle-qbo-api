@@ -3117,6 +3117,7 @@ data = {
         'reimbursable_export_date_type': 'current_date',
         'ccc_export_date_type': 'current_date',
         'import_card_credits': False,
+        'split_expense_grouping': 'SINGLE_LINE_ITEM',
         'created_at': '2022-01-27T15:19:21.542785Z',
         'updated_at': '2022-02-02T06:51:21.715325Z',
         'workspace': 8,
