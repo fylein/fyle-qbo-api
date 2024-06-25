@@ -41,7 +41,7 @@ def get_default_ccc_expense_state():
 
 
 def get_default_split_expense_grouping():
-    return 'SINGLE_LINE_ITEM'
+    return 'MULTIPLE_LINE_ITEM'
 
 
 def _format_date(date_string) -> datetime:
