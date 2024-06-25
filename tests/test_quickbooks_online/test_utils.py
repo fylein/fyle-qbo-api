@@ -16,6 +16,13 @@ from tests.test_quickbooks_online.fixtures import data
 logger = logging.getLogger(__name__)
 
 
+def sort_lines(expense):
+    """Helper function to sort the Line items by DetailType."""
+    if 'Line' in expense:
+        expense['Line'] = sorted(expense['Line'], key=lambda x: x['DetailType'])
+    return expense
+
+
 @pytest.mark.django_db
 def test_sync_employees(mocker, db):
     mocker.patch('qbosdk.apis.Employees.get_all_generator', return_value=[data['employee_response']])
@@ -192,10 +199,13 @@ def test_construct_bill_item_and_account_based(add_destination_attribute_tax_cod
     # for item-based and account-based line-items
     bill, bill_lineitems = create_bill_item_and_account_based
     bill_object = qbo_connection._QBOConnector__construct_bill(bill=bill, bill_lineitems=bill_lineitems)
-    bill_object['Line'][0]['DetailType'] == 'ItemBasedExpenseLineDetail'
-    bill_object['Line'][1]['DetailType'] == 'AccountBasedExpenseLineDetail'
+    assert bill_object['Line'][0]['DetailType'] == 'ItemBasedExpenseLineDetail'
+    assert bill_object['Line'][1]['DetailType'] == 'AccountBasedExpenseLineDetail'
 
-    assert dict_compare_keys(bill_object, data['bill_payload_item_and_account_based_payload']) == [], 'construct bill_payload entry api return diffs in keys'
+    sorted_bill_object = sort_lines(bill_object)
+    sorted_expected_payload = sort_lines(data['bill_payload_item_and_account_based_payload'])
+
+    assert dict_compare_keys(sorted_bill_object, sorted_expected_payload) == [], 'construct bill_payload entry api return diffs in keys'
 
     general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=3).first()
     general_mappings = GeneralMapping.objects.filter(workspace_id=3).first()
@@ -412,10 +422,13 @@ def test_construct_qbo_expense_item_and_account_based(add_destination_attribute_
     qbo_expense, qbo_expense_lineitems = create_qbo_expense_item_and_account_based
     qbo_expense_object = qbo_connection._QBOConnector__construct_qbo_expense(qbo_expense=qbo_expense, qbo_expense_lineitems=qbo_expense_lineitems)
 
-    qbo_expense_object['Line'][0]['DetailType'] == 'ItemBasedExpenseLineDetail'
-    qbo_expense_object['Line'][1]['DetailType'] == 'AccountBasedExpenseLineDetail'
+    assert qbo_expense_object['Line'][0]['DetailType'] == 'ItemBasedExpenseLineDetail'
+    assert qbo_expense_object['Line'][1]['DetailType'] == 'AccountBasedExpenseLineDetail'
 
-    assert dict_compare_keys(qbo_expense_object, data['qbo_expense_item_and_account_based_payload']) == [], 'construct expense api return diffs in keys'
+    qbo_expense_object_sorted = sort_lines(qbo_expense_object)
+    expected_payload_sorted = sort_lines(data['qbo_expense_item_and_account_based_payload'])
+
+    assert dict_compare_keys(qbo_expense_object_sorted, expected_payload_sorted) == [], 'construct expense api return diffs in keys'
 
     general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=3).first()
     general_mappings = GeneralMapping.objects.filter(workspace_id=3).first()
