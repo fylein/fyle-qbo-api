@@ -495,19 +495,6 @@ data = {
         "Credit": None,
         "Line": [
             {
-                "Description": "sravan.kumar@fyle.in - Food - 2024-06-24 - C/2023/04/R/6 -  - None/app/admin/#/enterprise/view_expense/txoF0nqv6cG78?org_id=or79Cob97KSh",
-                "DetailType": "AccountBasedExpenseLineDetail",
-                "Amount": 8.93,
-                "AccountBasedExpenseLineDetail": {
-                    "CustomerRef": {"value": None},
-                    "ClassRef": {"value": None},
-                    "TaxCodeRef": {"value": "17"},
-                    "BillableStatus": "NotBillable",
-                    "AccountRef": {"value": "13"},
-                    "TaxAmount": 1.07,
-                },
-            },
-            {
                 "Description": "sravan.kumar@fyle.in - Concrete - 2024-06-24 - C/2023/04/R/6 -  - None/app/admin/#/enterprise/view_expense/txT4kpMbHdLg87L?org_id=or79Cob97KSh",
                 "DetailType": "ItemBasedExpenseLineDetail",
                 "Amount": 0.89,
@@ -518,6 +505,19 @@ data = {
                     "BillableStatus": "NotBillable",
                     "ItemRef": {"value": "3"},
                     "Qty": 1,
+                },
+            },
+            {
+                "Description": "sravan.kumar@fyle.in - Food - 2024-06-24 - C/2023/04/R/6 -  - None/app/admin/#/enterprise/view_expense/txoF0nqv6cG78?org_id=or79Cob97KSh",
+                "DetailType": "AccountBasedExpenseLineDetail",
+                "Amount": 8.93,
+                "AccountBasedExpenseLineDetail": {
+                    "CustomerRef": {"value": None},
+                    "ClassRef": {"value": None},
+                    "TaxCodeRef": {"value": "17"},
+                    "BillableStatus": "NotBillable",
+                    "AccountRef": {"value": "13"},
+                    "TaxAmount": 1.07,
                 },
             },
         ],
