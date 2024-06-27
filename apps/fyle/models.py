@@ -432,28 +432,37 @@ class ExpenseGroup(models.Model):
             filter(lambda expense: expense.fund_source == "CCC", expense_objects)
         )
 
-        if (general_settings.corporate_credit_card_expenses_object=='CREDIT CARD PURCHASE' and expense_group_settings.split_expense_grouping == 'MULTIPLE_LINE_ITEM'):
-            ccc_expenses_without_bank_transaction = list(
-                filter(lambda corporate_credit_card_expenses: corporate_credit_card_expenses.bank_transaction_id == None, expense_objects)
-            )
+        if (
+            general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE' and
+            expense_group_settings.split_expense_grouping == 'MULTIPLE_LINE_ITEM'
+        ):
+            ccc_expenses_without_bank_transaction = [
+                expense for expense in expense_objects 
+                if expense.bank_transaction_id is None
+            ]
             filtered_corporate_credit_card_expense_groups = _group_expenses(
                 ccc_expenses_without_bank_transaction,
                 corporate_credit_card_expense_group_field,
                 workspace_id,
             )
 
-            ccc_expenses_with_bank_transaction = list(
-                filter(lambda corporate_credit_card_expenses: corporate_credit_card_expenses.bank_transaction_id, expense_objects)
-            )
-            corporate_credit_card_expense_group_field = [ccc_expense_group_field for ccc_expense_group_field in corporate_credit_card_expense_group_field if ccc_expense_group_field not in {'spent_at', 'posted_at', 'expense_id'}]
+            ccc_expenses_with_bank_transaction = [
+                expense for expense in expense_objects 
+                if expense.bank_transaction_id
+            ]
+            corporate_credit_card_expense_group_field = [
+                field for field in corporate_credit_card_expense_group_field 
+                if field not in {'spent_at', 'posted_at', 'expense_id'}
+            ]
             corporate_credit_card_expense_group_field.append('bank_transaction_id')
             filtered_corporate_credit_card_expense_groups.extend(
-                    _group_expenses(
+                _group_expenses(
                     ccc_expenses_with_bank_transaction,
                     corporate_credit_card_expense_group_field,
                     workspace_id,
                 )
             )
+
         else:
             filtered_corporate_credit_card_expense_groups = _group_expenses(
                 corporate_credit_card_expenses,
