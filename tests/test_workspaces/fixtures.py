@@ -71,6 +71,7 @@ data = {
         'is_simplify_report_closure_enabled': True,
         'name_in_journal_entry': 'MERCHANT',
         'is_multi_currency_allowed': True,
+        'is_tax_override_enabled': False,
         'workspace': 4,
     },
     'expenses': [
