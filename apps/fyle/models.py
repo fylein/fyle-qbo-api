@@ -437,7 +437,7 @@ class ExpenseGroup(models.Model):
             expense_group_settings.split_expense_grouping == 'MULTIPLE_LINE_ITEM'
         ):
             ccc_expenses_without_bank_transaction = [
-                expense for expense in expense_objects 
+                expense for expense in expense_objects
                 if expense.bank_transaction_id is None
             ]
             filtered_corporate_credit_card_expense_groups = _group_expenses(
@@ -447,11 +447,11 @@ class ExpenseGroup(models.Model):
             )
 
             ccc_expenses_with_bank_transaction = [
-                expense for expense in expense_objects 
+                expense for expense in expense_objects
                 if expense.bank_transaction_id
             ]
             corporate_credit_card_expense_group_field = [
-                field for field in corporate_credit_card_expense_group_field 
+                field for field in corporate_credit_card_expense_group_field
                 if field not in {'spent_at', 'posted_at', 'expense_id'}
             ]
             corporate_credit_card_expense_group_field.append('bank_transaction_id')
