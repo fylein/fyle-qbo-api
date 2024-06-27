@@ -447,11 +447,12 @@ class ExpenseGroup(models.Model):
             )
             corporate_credit_card_expense_group_field = [ccc_expense_group_field for ccc_expense_group_field in corporate_credit_card_expense_group_field if ccc_expense_group_field not in {'spent_at', 'posted_at', 'expense_id'}]
             corporate_credit_card_expense_group_field.append('bank_transaction_id')
-            filtered_corporate_credit_card_expense_groups = _group_expenses(
+            filtered_corporate_credit_card_expense_groups.extend(
+                _group_expenses(
                 ccc_expenses_with_bank_transaction,
                 corporate_credit_card_expense_group_field,
                 workspace_id,
-            )
+            ))
         else:
             filtered_corporate_credit_card_expense_groups = _group_expenses(
                 corporate_credit_card_expenses,
