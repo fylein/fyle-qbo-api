@@ -9,7 +9,6 @@ from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMappin
 from qbosdk import QuickbooksOnlineSDK
 from qbosdk.exceptions import WrongParamsError
 
-from apps.fyle.helpers import round_amount
 from apps.fyle.models import ExpenseGroup
 from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.models import (
@@ -27,6 +26,7 @@ from apps.quickbooks_online.models import (
     QBOExpenseLineitem,
 )
 from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSettings
+from apps.workspaces.utils import round_amount
 from fyle_integrations_imports.models import ImportLog
 
 logger = logging.getLogger(__name__)

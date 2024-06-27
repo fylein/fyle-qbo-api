@@ -1,7 +1,6 @@
 import json
 import logging
 import traceback
-from decimal import ROUND_HALF_UP, Decimal
 from typing import List, Union
 
 import django_filters
@@ -328,8 +327,3 @@ class ExpenseSearchFilter(AdvanceSearchFilter):
         model = Expense
         fields = ['org_id', 'is_skipped', 'updated_at__gte', 'updated_at__lte']
         or_fields = ['expense_number', 'employee_name', 'employee_email', 'claim_number']
-
-
-def round_amount(amount, fraction):
-    amount = Decimal(str(amount))
-    return float(amount.quantize(Decimal('1.' + '0' * fraction), rounding=ROUND_HALF_UP))

@@ -14,8 +14,8 @@ from django.db import models
 from django.db.models import Count, JSONField
 from fyle_accounting_mappings.models import ExpenseAttribute
 
-from apps.fyle.helpers import round_amount
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
+from apps.workspaces.utils import round_amount
 
 ALLOWED_FIELDS = ['employee_email', 'report_id', 'claim_number', 'settlement_id', 'fund_source', 'vendor', 'category', 'project', 'cost_center', 'verified_at', 'approved_at', 'spent_at', 'expense_id', 'posted_at']
 
