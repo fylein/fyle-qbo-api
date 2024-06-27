@@ -619,7 +619,7 @@ class CreditCardPurchase(models.Model):
                 'transaction_date': get_transaction_date(expense_group),
                 'private_note': private_note,
                 'currency': expense.currency,
-                'credit_card_purchase_number': expense_group.description['bank_transaction_id'] if expense_group_settings.split_expense_grouping=='MULTIPLE_LINE_ITEM' else expense.expense_number if map_merchant_to_vendor else '',
+                'credit_card_purchase_number': expense_group.description['bank_transaction_id'] if expense_group_settings.split_expense_grouping == 'MULTIPLE_LINE_ITEM' else expense.expense_number if map_merchant_to_vendor else '',
             },
         )
         return credit_card_purchase_object
