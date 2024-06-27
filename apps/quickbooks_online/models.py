@@ -8,7 +8,7 @@ from django.conf import settings
 from django.db import models
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping, MappingSetting
 
-from apps.fyle.models import Expense, ExpenseGroup
+from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings
 from apps.mappings.models import GeneralMapping
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 
@@ -586,6 +586,7 @@ class CreditCardPurchase(models.Model):
         expense = expense_group.expenses.first()
         general_mappings = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
         workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
+        expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=expense_group.workspace_id)
         employee_field_mapping = workspace_general_settings.employee_field_mapping
         entity_id = None
 
@@ -618,7 +619,7 @@ class CreditCardPurchase(models.Model):
                 'transaction_date': get_transaction_date(expense_group),
                 'private_note': private_note,
                 'currency': expense.currency,
-                'credit_card_purchase_number': expense.expense_number if map_merchant_to_vendor else '',
+                'credit_card_purchase_number': expense_group.description['bank_transaction_id'] if expense_group_settings.split_expense_grouping=='MULTIPLE_LINE_ITEM' else expense.expense_number if map_merchant_to_vendor else '',
             },
         )
         return credit_card_purchase_object
