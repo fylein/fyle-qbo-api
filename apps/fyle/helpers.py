@@ -1,19 +1,18 @@
 import json
-import traceback
 import logging
+import traceback
+from decimal import ROUND_HALF_UP, Decimal
 from typing import List, Union
 
-import requests
-
 import django_filters
+import requests
 from django.conf import settings
 from django.db.models import Q
 from rest_framework.exceptions import ValidationError
 
-from apps.fyle.models import ExpenseFilter, ExpenseGroup, ExpenseGroupSettings, Expense
+from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
-
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -329,3 +328,8 @@ class ExpenseSearchFilter(AdvanceSearchFilter):
         model = Expense
         fields = ['org_id', 'is_skipped', 'updated_at__gte', 'updated_at__lte']
         or_fields = ['expense_number', 'employee_name', 'employee_email', 'claim_number']
+
+
+def round_amount(amount, fraction):
+    amount = Decimal(str(amount))
+    return float(amount.quantize(Decimal('1.' + '0' * fraction), rounding=ROUND_HALF_UP))

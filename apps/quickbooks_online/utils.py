@@ -9,6 +9,7 @@ from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMappin
 from qbosdk import QuickbooksOnlineSDK
 from qbosdk.exceptions import WrongParamsError
 
+from apps.fyle.helpers import round_amount
 from apps.fyle.models import ExpenseGroup
 from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.models import (
@@ -125,10 +126,10 @@ class QBOConnector:
         tax_rate_refs = []
         for tax_rate in tax_rates:
             if 'TaxRateRef' in tax_rate:
-                tax_rate_refs.append(tax_rate['TaxRateRef'])
                 tax_rate_id = tax_rate['TaxRateRef']['value']
                 tax_rate_by_id = self.connection.tax_rates.get_by_id(tax_rate_id)
                 tax_rate['TaxRateRef']['taxRate'] = tax_rate_by_id['RateValue']
+                tax_rate_refs.append(tax_rate['TaxRateRef'])
 
             if 'RateValue' in tax_rate_by_id:
                 effective_tax_rate += tax_rate_by_id['RateValue']
@@ -141,8 +142,8 @@ class QBOConnector:
         tax_inclusive_amount = amount
         if tax_attribute:
             tax_rate = float((tax_attribute.detail['tax_rate']) / 100)
-            tax_amount = round((amount - (amount / (tax_rate + 1))), 2)
-            tax_inclusive_amount = round((amount - tax_amount), 2)
+            tax_amount = round_amount((amount - (amount / (tax_rate + 1))), 2)
+            tax_inclusive_amount = round_amount((amount - tax_amount), 2)
 
         return tax_inclusive_amount
 
@@ -479,11 +480,35 @@ class QBOConnector:
             logger.info(exception)
 
     def calculate_tax_amount(self, tax_rate_ref, total_tax_rate, line_tax_amount):
+        """
+        Calculate the tax amount for a given tax rate reference.
+
+        Args:
+            tax_rate_ref (dict): Reference to a specific tax rate, e.g., {'value': '1', 'taxRate': 10.0}
+            total_tax_rate (float): The total tax rate applicable, e.g., 15.0
+            line_tax_amount (float): The total tax amount for the line, e.g., 50.0
+
+        Returns:
+            float: Calculated tax amount, rounded to 2 decimal places.
+        """
+        # If total tax rate is zero, return zero to avoid division by zero error
         if total_tax_rate == 0:
             return 0
-        return round((line_tax_amount * (tax_rate_ref['taxRate'] / total_tax_rate)), 2)
+        # Calculate the tax amount for the specific tax rate
+        return round_amount((line_tax_amount * (tax_rate_ref['taxRate'] / total_tax_rate)), 2)
 
     def create_tax_detail(self, line, tax_rate_ref, tax_amount):
+        """
+        Create a new tax detail entry.
+
+        Args:
+            line (dict): Line item data, e.g., {'Amount': 100.0}
+            tax_rate_ref (dict): Reference to a specific tax rate, e.g., {'value': '1', 'taxRate': 10.0}
+            tax_amount (float): Calculated tax amount, e.g., 5.0
+
+        Returns:
+            dict: A dictionary representing the tax detail.
+        """
         return {
             'Amount': tax_amount,
             'DetailType': 'TaxLineDetail',
@@ -492,24 +517,52 @@ class QBOConnector:
                     "value": tax_rate_ref['value']
                 },
                 "PercentBased": False,
-                "NetAmountTaxable": round(line['Amount'], 2),
+                "NetAmountTaxable": round_amount(line['Amount'], 2),
             }
         }
 
     def update_existing_tax_detail(self, tax_detail, line, tax_amount):
+        """
+        Update an existing tax detail entry with additional tax amount.
+
+        Args:
+            tax_detail (dict): Existing tax detail entry.
+            line (dict): Line item data, e.g., {'Amount': 100.0}
+            tax_amount (float): Additional tax amount to add, e.g., 5.0
+
+        Returns:
+            dict: Updated tax detail entry.
+        """
+        # Add the new tax amount to the existing amount
         tax_detail['Amount'] = tax_detail['Amount'] + tax_amount
-        tax_detail['Amount'] = round(tax_detail['Amount'], 2)
+        # Round the updated amount to 2 decimal places
+        tax_detail['Amount'] = round_amount(tax_detail['Amount'], 2)
+        # Update the net amount taxable
         tax_detail['TaxLineDetail']['NetAmountTaxable'] += line['Amount']
         return tax_detail
 
     def update_tax_details(self, tax_details, line, tax_rate_refs, total_tax_rate, line_tax_amount):
+        """
+        Update the list of tax details with new tax amounts.
+
+        Args:
+            tax_details (list): List of existing tax detail entries.
+            line (dict): Line item data, e.g., {'Amount': 100.0}
+            tax_rate_refs (list): List of tax rate references, e.g., [{'value': '1', 'taxRate': 10.0}]
+            total_tax_rate (float): The total tax rate applicable, e.g., 15.0
+            line_tax_amount (float): The total tax amount for the line, e.g., 50.0
+
+        Returns:
+            list: Updated list of tax detail entries.
+        """
         updated_tax_details = tax_details[:]
 
         for tax_rate_ref in tax_rate_refs:
             tax_amount = self.calculate_tax_amount(tax_rate_ref, total_tax_rate, line_tax_amount)
-            tax_amount = round(tax_amount, 2)
+            tax_amount = round_amount(tax_amount, 2)
             updated = False
 
+            # Check if the tax detail already exists
             for i, tax_detail in enumerate(updated_tax_details):
                 if tax_rate_ref['value'] == tax_detail['TaxLineDetail']['TaxRateRef']['value']:
                     updated_tax_details[i] = self.update_existing_tax_detail(tax_detail, line, tax_amount)
@@ -517,11 +570,22 @@ class QBOConnector:
                     break
 
             if not updated:
+                # If the tax detail does not exist, create a new one
                 updated_tax_details.append(self.create_tax_detail(line, tax_rate_ref, tax_amount))
 
         return updated_tax_details
 
     def get_override_tax_details(self, lines, is_journal_entry_export: bool = False):
+        """
+        Get the overridden tax details for a list of lines.
+
+        Args:
+            lines (list): List of line items.
+            is_journal_entry_export (bool): Flag to filter lines for journal entry export. Default is False.
+
+        Returns:
+            list: List of tax detail entries.
+        """
         if is_journal_entry_export:
             lines = [line for line in lines if line.get('JournalEntryLineDetail', {}).get('PostingType') == 'Debit']
 
@@ -530,6 +594,7 @@ class QBOConnector:
             if is_journal_entry_export:
                 line_details = line.get('JournalEntryLineDetail', {})
             else:
+                # Get line details for account-based or item-based expense line
                 line_details = line.get('AccountBasedExpenseLineDetail', {}) if 'AccountBasedExpenseLineDetail' in line else line.get('ItemBasedExpenseLineDetail', {})
 
             tax_code_ref = line_details.get('TaxCodeRef')
@@ -601,12 +666,12 @@ class QBOConnector:
 
             if line.detail_type == 'ItemBasedExpenseLineDetail':
                 lineitem['ItemBasedExpenseLineDetail'].update({'ItemRef': {'value': line.item_id}, 'Qty': 1})
-                lineitem['ItemBasedExpenseLineDetail'].update({'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)})
+                lineitem['ItemBasedExpenseLineDetail'].update({'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else round_amount(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)})
             else:
                 lineitem['AccountBasedExpenseLineDetail'].update(
                     {
                         'AccountRef': {'value': line.account_id},
-                        'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2),
+                        'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else round_amount(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2),
                     }
                 )
 
@@ -716,12 +781,12 @@ class QBOConnector:
 
             if line.detail_type == 'ItemBasedExpenseLineDetail':
                 lineitem['ItemBasedExpenseLineDetail'].update({'ItemRef': {'value': line.item_id}, 'Qty': 1})
-                lineitem['ItemBasedExpenseLineDetail'].update({'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)})
+                lineitem['ItemBasedExpenseLineDetail'].update({'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else round_amount(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)})
             else:
                 lineitem['AccountBasedExpenseLineDetail'].update(
                     {
                         'AccountRef': {'value': line.account_id},
-                        'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2),
+                        'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else round_amount(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2),
                     }
                 )
 
@@ -792,12 +857,12 @@ class QBOConnector:
 
             if line.detail_type == 'ItemBasedExpenseLineDetail':
                 lineitem['ItemBasedExpenseLineDetail'].update({'ItemRef': {'value': line.item_id}, 'Qty': 1})
-                lineitem['ItemBasedExpenseLineDetail'].update({'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)})
+                lineitem['ItemBasedExpenseLineDetail'].update({'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else round_amount(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)})
             else:
                 lineitem['AccountBasedExpenseLineDetail'].update(
                     {
                         'AccountRef': {'value': line.account_id},
-                        'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2),
+                        'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else round_amount(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2),
                     }
                 )
 
@@ -869,12 +934,12 @@ class QBOConnector:
 
             if line.detail_type == 'ItemBasedExpenseLineDetail':
                 lineitem['ItemBasedExpenseLineDetail'].update({'ItemRef': {'value': line.item_id}, 'Qty': 1})
-                lineitem['ItemBasedExpenseLineDetail'].update({'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)})
+                lineitem['ItemBasedExpenseLineDetail'].update({'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else round_amount(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)})
             else:
                 lineitem['AccountBasedExpenseLineDetail'].update(
                     {
                         'AccountRef': {'value': line.account_id},
-                        'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2),
+                        'TaxAmount': line.tax_amount if (line.tax_code and line.tax_amount is not None) else round_amount(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2),
                     }
                 )
 
@@ -935,7 +1000,7 @@ class QBOConnector:
         if lineitem.tax_code and lineitem.tax_amount is not None:
             total_tax += lineitem.tax_amount
         else:
-            total_tax += round(lineitem.amount - self.get_tax_inclusive_amount(lineitem.amount, general_mappings.default_tax_code_id), 2)
+            total_tax += round_amount(lineitem.amount - self.get_tax_inclusive_amount(lineitem.amount, general_mappings.default_tax_code_id), 2)
         return total_tax
 
     def __group_journal_entry_credits(self, journal_entry_lineitems: List[JournalEntryLineitem], general_mappings: GeneralMapping) -> List[Dict]:
@@ -1035,16 +1100,16 @@ class QBOConnector:
             lineitem = {
                 'DetailType': 'JournalEntryLineDetail',
                 'Description': line.description,
-                'Amount': round(final_amount, 2),
+                'Amount': round_amount(final_amount, 2),
                 'JournalEntryLineDetail': {
                     'PostingType': posting_type,
                     'AccountRef': {'value': account_ref},
                     'DepartmentRef': {'value': line.department_id},
                     'ClassRef': {'value': line.class_id},
                     'Entity': {'EntityRef': {'value': line.entity_id}, 'Type': line.entity_type},
-                    'TaxInclusiveAmt': round(abs(line.amount), 2),
+                    'TaxInclusiveAmt': round_amount(abs(line.amount), 2),
                     'TaxCodeRef': {'value': line.tax_code if (line.tax_code and line.tax_amount is not None) else general_mappings.default_tax_code_id},
-                    'TaxAmount': abs(line.tax_amount if (line.tax_code and line.tax_amount is not None) else round(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)),
+                    'TaxAmount': abs(line.tax_amount if (line.tax_code and line.tax_amount is not None) else round_amount(line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id), 2)),
                     "TaxApplicableOn": "Purchase",
                 },
             }
