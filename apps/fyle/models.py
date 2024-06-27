@@ -462,7 +462,6 @@ class ExpenseGroup(models.Model):
                     workspace_id,
                 )
             )
-
         else:
             filtered_corporate_credit_card_expense_groups = _group_expenses(
                 corporate_credit_card_expenses,
