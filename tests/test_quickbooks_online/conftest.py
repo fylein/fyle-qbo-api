@@ -580,3 +580,19 @@ def create_task_logs(db):
     TaskLog.objects.update_or_create(workspace_id=3, type='FETCHING_EXPENSES', defaults={'status': 'READY'})
 
     TaskLog.objects.update_or_create(workspace_id=4, type='FETCHING_EXPENSES', defaults={'status': 'READY'})
+
+
+@pytest.fixture
+def add_destination_attribute_tax_code(db):
+    """
+    Add destination attribute tax code to database fixture
+    """
+    DestinationAttribute.objects.create(
+        attribute_type='TAX_CODE',
+        display_name='Tax Code',
+        value='GST/PST BC @12%',
+        destination_id='17',
+        workspace_id=3,
+        active=True,
+        detail={"tax_rate": 12, "tax_refs": [{"name": "GST (ITC)", "value": "28", "taxRate": 7}, {"name": "PST (BC) Purchase", "value": "37", "taxRate": 5}]}
+    )
