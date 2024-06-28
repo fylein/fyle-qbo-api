@@ -5,12 +5,13 @@ from datetime import datetime, timezone
 from typing import List
 
 from django.db import transaction
+from apps.fyle.helpers import get_filter_credit_expenses
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping
 from fyle_integrations_platform_connector import PlatformConnector
 from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 
 from apps.fyle.actions import update_expenses_in_progress
-from apps.fyle.models import Expense, ExpenseGroup, Reimbursement
+from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings
 from apps.fyle.tasks import post_accounting_export_summary
 from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.actions import generate_export_url_and_update_expense, update_last_export_details
@@ -570,16 +571,27 @@ def create_journal_entry(expense_group, task_log_id, last_export: bool):
     load_attachments(qbo_connection, created_journal_entry['JournalEntry']['Id'], 'JournalEntry', expense_group)
 
 
-def check_expenses_reimbursement_status(expenses):
-    all_expenses_paid = True
+def check_expenses_reimbursement_status(expenses, workspace_id, platform, filter_credit_expenses):
 
-    for expense in expenses:
-        reimbursement = Reimbursement.objects.filter(settlement_id=expense.settlement_id).first()
+    if expenses.first().paid_on_fyle:
+        return True
 
-        if reimbursement.state != 'COMPLETE':
-            all_expenses_paid = False
+    report_id = expenses.first().report_id
 
-    return all_expenses_paid
+    expenses = platform.expenses.get(
+        source_account_type=['PERSONAL_CASH_ACCOUNT'],
+        filter_credit_expenses=filter_credit_expenses,
+        report_id=report_id
+    )
+
+    is_paid = False
+    if expenses:
+        is_paid = expenses[0]['state'] == 'PAID'
+
+    if is_paid:
+        Expense.objects.filter(workspace_id=workspace_id, report_id=report_id, paid_on_fyle=False).update(paid_on_fyle=True)
+
+    return is_paid
 
 
 @handle_qbo_exceptions(bill_payment=True)
@@ -615,13 +627,14 @@ def create_bill_payment(workspace_id):
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
 
     platform = PlatformConnector(fyle_credentials)
-    platform.reimbursements.sync()
+    expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
+    filter_credit_expenses = get_filter_credit_expenses(expense_group_settings=expense_group_settings)
 
     bills = Bill.objects.filter(payment_synced=False, expense_group__workspace_id=workspace_id, expense_group__fund_source='PERSONAL').all()
 
     if bills:
         for bill in bills:
-            expense_group_reimbursement_status = check_expenses_reimbursement_status(bill.expense_group.expenses.all())
+            expense_group_reimbursement_status = check_expenses_reimbursement_status(bill.expense_group.expenses.all(), workspace_id=workspace_id, platform=platform, filter_credit_expenses=filter_credit_expenses)
             if expense_group_reimbursement_status:
                 task_log, _ = TaskLog.objects.update_or_create(workspace_id=workspace_id, task_id='PAYMENT_{}'.format(bill.expense_group.id), defaults={'status': 'IN_PROGRESS', 'type': 'CREATING_BILL_PAYMENT'})
                 process_bill_payments(bill, workspace_id, task_log)
@@ -702,7 +715,7 @@ def mark_paid_on_fyle(platform, payloads:dict, reports_to_be_marked, workspace_i
         Expense.objects.filter(report_id__in=list(reports_to_be_marked), workspace_id=workspace_id, paid_on_fyle=False).update(paid_on_fyle=True)
     except Exception as e:
         error = traceback.format_exc()
-        target_messages = ['Report is not in APPROVED or PAYMENT_PROCESSING State', 'Permission denied to perform this action']
+        target_messages = ['Report is not in APPROVED or PAYMENT_PROCESSING State', 'Permission denied to perform this action.']
         error_response = e.response
         to_remove = set()
 

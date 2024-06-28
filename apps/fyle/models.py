@@ -4,7 +4,6 @@ Fyle Models
 from collections import defaultdict
 from datetime import datetime
 from typing import Dict, List
-from decimal import Decimal, ROUND_HALF_UP
 
 from babel.numbers import get_currency_precision
 from dateutil import parser
@@ -16,6 +15,7 @@ from django.db.models import Count, JSONField
 from fyle_accounting_mappings.models import ExpenseAttribute
 
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
+from apps.workspaces.utils import round_amount
 
 ALLOWED_FIELDS = ['employee_email', 'report_id', 'claim_number', 'settlement_id', 'fund_source', 'vendor', 'category', 'project', 'cost_center', 'verified_at', 'approved_at', 'spent_at', 'expense_id', 'posted_at']
 
@@ -55,11 +55,6 @@ def _format_date(date_string) -> datetime:
     if date_string:
         date_string = parser.parse(date_string)
     return date_string
-
-
-def round_amount(amount, fraction):
-    amount = Decimal(str(amount))
-    return float(amount.quantize(Decimal('1.' + '0' * fraction), rounding=ROUND_HALF_UP))
 
 
 def _round_to_currency_fraction(amount: float, currency: str) -> float:
