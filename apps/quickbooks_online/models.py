@@ -172,6 +172,15 @@ def get_category_mapping_and_detail_type(workspace_general_settings: WorkspaceGe
     return qbo_account, 'AccountBasedExpenseLineDetail'
 
 
+def get_credit_card_purchase_number(expense_group, expense, expense_group_settings, map_merchant_to_vendor):
+    if expense_group_settings.split_expense_grouping == 'MULTIPLE_LINE_ITEM':
+        return expense_group.description['bank_transaction_id']
+    elif map_merchant_to_vendor:
+        return expense.expense_number
+    else:
+        return ''
+
+
 class Bill(models.Model):
     """
     QBO Bill
@@ -619,7 +628,12 @@ class CreditCardPurchase(models.Model):
                 'transaction_date': get_transaction_date(expense_group),
                 'private_note': private_note,
                 'currency': expense.currency,
-                'credit_card_purchase_number': expense_group.description['bank_transaction_id'] if expense_group_settings.split_expense_grouping == 'MULTIPLE_LINE_ITEM' else expense.expense_number if map_merchant_to_vendor else '',
+                'credit_card_purchase_number': get_credit_card_purchase_number(
+                    expense_group,
+                    expense,
+                    expense_group_settings,
+                    map_merchant_to_vendor
+                ),
             },
         )
         return credit_card_purchase_object
