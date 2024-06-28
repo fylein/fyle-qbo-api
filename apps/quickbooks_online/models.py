@@ -173,12 +173,10 @@ def get_category_mapping_and_detail_type(workspace_general_settings: WorkspaceGe
 
 
 def get_credit_card_purchase_number(expense_group, expense, expense_group_settings, map_merchant_to_vendor):
-    if expense_group_settings.split_expense_grouping == 'MULTIPLE_LINE_ITEM':
+    if expense_group_settings.split_expense_grouping == 'MULTIPLE_LINE_ITEM' and 'bank_transaction_id' in expense_group.description:
         return expense_group.description['bank_transaction_id']
-    elif map_merchant_to_vendor:
-        return expense.expense_number
     else:
-        return ''
+        return expense.expense_number
 
 
 class Bill(models.Model):
