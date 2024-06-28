@@ -665,6 +665,7 @@ def test_post_create_cheque_exceptions(create_task_logs, db):
 def test_create_bill_payment(mocker, db):
     mocker.patch('apps.quickbooks_online.tasks.load_attachments', return_value=[])
     mocker.patch('fyle_integrations_platform_connector.apis.Reimbursements.sync', return_value=None)
+    mocker.patch('fyle_integrations_platform_connector.apis.Expenses.get', return_value=[])
     mocker.patch('qbosdk.apis.Bills.post', return_value=data['post_bill'])
     mocker.patch('qbosdk.apis.BillPayments.post', return_value=data['post_bill'])
     mocker.patch('qbosdk.apis.Attachments.post', return_value=None)
@@ -704,6 +705,7 @@ def test_create_bill_payment(mocker, db):
 def test_post_bill_payment_exceptions(mocker, db):
     mocker.patch('apps.quickbooks_online.tasks.load_attachments', return_value=[])
     mocker.patch('fyle_integrations_platform_connector.apis.Reimbursements.sync', return_value=None)
+    mocker.patch('fyle_integrations_platform_connector.apis.Expenses.get', return_value=[])
     mocker.patch('qbosdk.apis.Bills.post', return_value=data['post_bill'])
     mocker.patch('qbosdk.apis.BillPayments.post', return_value=data['post_bill'])
     mocker.patch('qbosdk.apis.Attachments.post', return_value=None)
