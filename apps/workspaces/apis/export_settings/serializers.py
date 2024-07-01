@@ -36,10 +36,11 @@ class ExpenseGroupSettingsSerializer(serializers.ModelSerializer):
     ccc_export_date_type = serializers.CharField(allow_null=True, allow_blank=True, required=False)
     ccc_expense_state = serializers.CharField(allow_null=True, allow_blank=True, required=False)
     expense_state = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+    split_expense_grouping = serializers.CharField(allow_null=False, allow_blank=False, required=True)
 
     class Meta:
         model = ExpenseGroupSettings
-        fields = ['reimbursable_expense_group_fields', 'corporate_credit_card_expense_group_fields', 'expense_state', 'ccc_expense_state', 'reimbursable_export_date_type', 'ccc_export_date_type']
+        fields = ['reimbursable_expense_group_fields', 'corporate_credit_card_expense_group_fields', 'expense_state', 'ccc_expense_state', 'reimbursable_export_date_type', 'ccc_export_date_type', 'split_expense_grouping']
 
 
 class GeneralMappingsSerializer(serializers.ModelSerializer):
