@@ -128,7 +128,7 @@ class QBOConnector:
             if 'TaxRateRef' in tax_rate:
                 tax_rate_id = tax_rate['TaxRateRef']['value']
                 tax_rate_by_id = self.connection.tax_rates.get_by_id(tax_rate_id)
-                tax_rate['TaxRateRef']['taxRate'] = tax_rate_by_id['RateValue']
+                tax_rate['TaxRateRef']['taxRate'] = tax_rate_by_id['RateValue'] if 'RateValue' in tax_rate_by_id else 0
                 tax_rate_refs.append(tax_rate['TaxRateRef'])
 
             if 'RateValue' in tax_rate_by_id:
