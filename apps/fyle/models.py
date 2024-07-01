@@ -158,6 +158,7 @@ class Expense(models.Model):
                     'report_id': expense['report_id'],
                     'report_title': expense['report_title'],
                     'corporate_card_id': expense['corporate_card_id'],
+                    'bank_transaction_id': expense['bank_transaction_id'],
                     'file_ids': expense['file_ids'],
                     'spent_at': expense['spent_at'],
                     'approved_at': expense['approved_at'],
@@ -284,6 +285,7 @@ class ExpenseGroupSettings(models.Model):
                 'reimbursable_export_date_type': expense_group_settings['reimbursable_export_date_type'],
                 'ccc_export_date_type': expense_group_settings['ccc_export_date_type'],
                 'import_card_credits': import_card_credits,
+                'split_expense_grouping': expense_group_settings['split_expense_grouping']
             },
         )
 
@@ -433,18 +435,20 @@ class ExpenseGroup(models.Model):
         ):
             ccc_expenses_without_bank_transaction = [
                 expense for expense in expense_objects
-                if expense.bank_transaction_id is None
+                if expense.bank_transaction_id is None or expense.bank_transaction_id == ''
             ]
+
+            ccc_expenses_with_bank_transaction = [
+                expense for expense in expense_objects
+                if expense.bank_transaction_id is not None and expense.bank_transaction_id != ''
+            ]
+
             filtered_corporate_credit_card_expense_groups = _group_expenses(
                 ccc_expenses_without_bank_transaction,
                 corporate_credit_card_expense_group_field,
                 workspace_id,
             )
 
-            ccc_expenses_with_bank_transaction = [
-                expense for expense in expense_objects
-                if expense.bank_transaction_id
-            ]
             corporate_credit_card_expense_group_field = [
                 field for field in corporate_credit_card_expense_group_field
                 if field not in {'expense_number', 'expense_id'}
