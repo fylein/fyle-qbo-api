@@ -435,12 +435,12 @@ class ExpenseGroup(models.Model):
         ):
             ccc_expenses_without_bank_transaction = [
                 expense for expense in expense_objects
-                if expense.bank_transaction_id is None or expense.bank_transaction_id == ''
+                if not expense.bank_transaction_id
             ]
 
             ccc_expenses_with_bank_transaction = [
                 expense for expense in expense_objects
-                if expense.bank_transaction_id is not None and expense.bank_transaction_id != ''
+                if expense.bank_transaction_id
             ]
 
             filtered_corporate_credit_card_expense_groups = _group_expenses(
