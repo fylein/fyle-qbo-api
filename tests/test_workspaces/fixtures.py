@@ -101,6 +101,7 @@ data = {
             'vendor': 'Ashwin',
             'cost_center': 'Marketing',
             'corporate_card_id': None,
+            'bank_transaction_id': 'anish',
             'purpose': None,
             'report_id': 'rp2qRWE0XgGI',
             'file_ids': [],
