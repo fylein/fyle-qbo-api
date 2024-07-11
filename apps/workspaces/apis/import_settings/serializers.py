@@ -84,7 +84,8 @@ class ImportSettingsSerializer(serializers.ModelSerializer):
 
         # Check if there is a diff in charts of accounts
         # Update the last_successful_run_at to None for Category Import Log
-        if workspace_general_settings.get('charts_of_accounts') != instance.workspace_general_settings.charts_of_accounts:
+        if workspace_general_settings.get('charts_of_accounts') != instance.workspace_general_settings.charts_of_accounts \
+            or (workspace_general_settings.get('import_items') and not instance.workspace_general_settings.import_items):
             category_import_log = ImportLog.objects.filter(workspace_id=instance.id, attribute_type='CATEGORY').first()
 
             if category_import_log:
