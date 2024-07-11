@@ -6,6 +6,7 @@ from fyle_accounting_mappings.models import MappingSetting, ExpenseAttribute
 from apps.fyle.models import ExpenseGroupSettings
 from apps.workspaces.models import WorkspaceGeneralSettings
 from apps.mappings.schedules import schedule_or_delete_fyle_import_tasks as new_schedule_or_delete_fyle_import_tasks
+from fyle_integrations_imports.models import ImportLog
 
 
 class ImportSettingsTrigger:
@@ -74,6 +75,12 @@ class ImportSettingsTrigger:
         """
         Post save action for workspace general settings
         """
+        if workspace_general_settings_instance.import_items:
+            category_log = ImportLog.objects.filter(workspace_id=self.__workspace_id, attribute_type='CATEGORY').first()
+            if category_log:
+                category_log.last_successful_run_at = None
+                category_log.save()
+
         new_schedule_or_delete_fyle_import_tasks(workspace_general_settings_instance)
 
     def __remove_old_department_source_field(self, current_mappings_settings: List[MappingSetting], new_mappings_settings: List[Dict]):
