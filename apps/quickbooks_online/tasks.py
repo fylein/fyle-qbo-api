@@ -5,12 +5,13 @@ from datetime import datetime, timezone
 from typing import List
 
 from django.db import transaction
+from apps.fyle.helpers import get_filter_credit_expenses
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping
 from fyle_integrations_platform_connector import PlatformConnector
 from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 
 from apps.fyle.actions import update_expenses_in_progress
-from apps.fyle.models import Expense, ExpenseGroup, Reimbursement
+from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings
 from apps.fyle.tasks import post_accounting_export_summary
 from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.actions import generate_export_url_and_update_expense, update_last_export_details
@@ -570,16 +571,27 @@ def create_journal_entry(expense_group, task_log_id, last_export: bool):
     load_attachments(qbo_connection, created_journal_entry['JournalEntry']['Id'], 'JournalEntry', expense_group)
 
 
-def check_expenses_reimbursement_status(expenses):
-    all_expenses_paid = True
+def check_expenses_reimbursement_status(expenses, workspace_id, platform, filter_credit_expenses):
 
-    for expense in expenses:
-        reimbursement = Reimbursement.objects.filter(settlement_id=expense.settlement_id).first()
+    if expenses.first().paid_on_fyle:
+        return True
 
-        if reimbursement.state != 'COMPLETE':
-            all_expenses_paid = False
+    report_id = expenses.first().report_id
 
-    return all_expenses_paid
+    expenses = platform.expenses.get(
+        source_account_type=['PERSONAL_CASH_ACCOUNT'],
+        filter_credit_expenses=filter_credit_expenses,
+        report_id=report_id
+    )
+
+    is_paid = False
+    if expenses:
+        is_paid = expenses[0]['state'] == 'PAID'
+
+    if is_paid:
+        Expense.objects.filter(workspace_id=workspace_id, report_id=report_id, paid_on_fyle=False).update(paid_on_fyle=True)
+
+    return is_paid
 
 
 @handle_qbo_exceptions(bill_payment=True)
@@ -615,13 +627,14 @@ def create_bill_payment(workspace_id):
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
 
     platform = PlatformConnector(fyle_credentials)
-    platform.reimbursements.sync()
+    expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
+    filter_credit_expenses = get_filter_credit_expenses(expense_group_settings=expense_group_settings)
 
     bills = Bill.objects.filter(payment_synced=False, expense_group__workspace_id=workspace_id, expense_group__fund_source='PERSONAL').all()
 
     if bills:
         for bill in bills:
-            expense_group_reimbursement_status = check_expenses_reimbursement_status(bill.expense_group.expenses.all())
+            expense_group_reimbursement_status = check_expenses_reimbursement_status(bill.expense_group.expenses.all(), workspace_id=workspace_id, platform=platform, filter_credit_expenses=filter_credit_expenses)
             if expense_group_reimbursement_status:
                 task_log, _ = TaskLog.objects.update_or_create(workspace_id=workspace_id, task_id='PAYMENT_{}'.format(bill.expense_group.id), defaults={'status': 'IN_PROGRESS', 'type': 'CREATING_BILL_PAYMENT'})
                 process_bill_payments(bill, workspace_id, task_log)
@@ -673,7 +686,7 @@ def process_reimbursements(workspace_id):
 
     platform = PlatformConnector(fyle_credentials=fyle_credentials)
 
-    expenses_to_be_marked = []
+    reports_to_be_marked = set()
     payloads = []
 
     report_ids = Expense.objects.filter(fund_source='PERSONAL', paid_on_fyle=False, workspace_id=workspace_id).values_list('report_id').distinct()
@@ -688,20 +701,45 @@ def process_reimbursements(workspace_id):
 
         if all_expense_paid:
             payloads.append({'id': report_id, 'paid_notify_at': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%fZ')})
-            expenses_to_be_marked.extend(paid_expenses)
+            reports_to_be_marked.add(report_id)
 
     if payloads:
-        try:
-            platform.reports.bulk_mark_as_paid(payloads)
-            if expenses_to_be_marked:
-                expense_ids_to_mark = [expense.id for expense in expenses_to_be_marked]
-                Expense.objects.filter(id__in=expense_ids_to_mark).update(paid_on_fyle=True)
-        except Exception as error:
-            error = traceback.format_exc()
-            error = {
-                'error': error
-            }
-            logger.exception(error)
+        mark_paid_on_fyle(platform, payloads, reports_to_be_marked, workspace_id)
+
+
+def mark_paid_on_fyle(platform, payloads:dict, reports_to_be_marked, workspace_id, retry_num=10):
+    try:
+        logger.info('Marking reports paid on fyle for report ids - %s', reports_to_be_marked)
+        logger.info('Payloads- %s', payloads)
+        platform.reports.bulk_mark_as_paid(payloads)
+        Expense.objects.filter(report_id__in=list(reports_to_be_marked), workspace_id=workspace_id, paid_on_fyle=False).update(paid_on_fyle=True)
+    except Exception as e:
+        error = traceback.format_exc()
+        target_messages = ['Report is not in APPROVED or PAYMENT_PROCESSING State', 'Permission denied to perform this action.']
+        error_response = e.response
+        to_remove = set()
+
+        for item in error_response.get('data', []):
+            if item.get('message') in target_messages:
+                Expense.objects.filter(report_id=item['key'], workspace_id=workspace_id, paid_on_fyle=False).update(paid_on_fyle=True)
+                to_remove.add(item['key'])
+
+        for report_id in to_remove:
+            payloads = [payload for payload in payloads if payload['id'] != report_id]
+            reports_to_be_marked.remove(report_id)
+
+        if retry_num > 0 and payloads:
+            retry_num -= 1
+            logger.info('Retrying to mark reports paid on fyle, retry_num=%d', retry_num)
+            mark_paid_on_fyle(platform, payloads, reports_to_be_marked, workspace_id, retry_num)
+
+        else:
+            logger.info('Retry limit reached or no payloads left. Failed to process payloads - %s:', reports_to_be_marked)
+
+        error = {
+            'error': error
+        }
+        logger.exception(error)
 
 
 def async_sync_accounts(workspace_id):

@@ -1,6 +1,7 @@
 import base64
 import json
 import logging
+from decimal import ROUND_HALF_UP, Decimal
 from typing import List
 
 import requests
@@ -9,9 +10,7 @@ from future.moves.urllib.parse import urlencode
 from fyle_accounting_mappings.models import MappingSetting
 from qbosdk import InternalServerError, NotFoundClientError, UnauthorizedClientError, WrongParamsError
 from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import (
-    Mail, From
-)
+from sendgrid.helpers.mail import From, Mail
 
 from apps.workspaces.models import WorkspaceGeneralSettings
 
@@ -77,3 +76,8 @@ def send_email(recipient_email: List[str], subject: str, message: str, sender_em
         html_content=message
     )
     sg.send(mail)
+
+
+def round_amount(amount, fraction):
+    amount = Decimal(str(amount))
+    return float(amount.quantize(Decimal('1.' + '0' * fraction), rounding=ROUND_HALF_UP))

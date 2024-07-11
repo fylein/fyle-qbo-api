@@ -4,7 +4,6 @@ Fyle Models
 from collections import defaultdict
 from datetime import datetime
 from typing import Dict, List
-from decimal import Decimal, ROUND_HALF_UP
 
 from babel.numbers import get_currency_precision
 from dateutil import parser
@@ -16,6 +15,7 @@ from django.db.models import Count, JSONField
 from fyle_accounting_mappings.models import ExpenseAttribute
 
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
+from apps.workspaces.utils import round_amount
 
 ALLOWED_FIELDS = ['employee_email', 'report_id', 'claim_number', 'settlement_id', 'fund_source', 'vendor', 'category', 'project', 'cost_center', 'verified_at', 'approved_at', 'spent_at', 'expense_id', 'posted_at']
 
@@ -24,6 +24,8 @@ ALLOWED_FORM_INPUT = {'group_expenses_by': ['settlement_id', 'claim_number', 're
 SOURCE_ACCOUNT_MAP = {'PERSONAL_CASH_ACCOUNT': 'PERSONAL', 'PERSONAL_CORPORATE_CREDIT_CARD_ACCOUNT': 'CCC'}
 
 CCC_EXPENSE_STATE = (('APPROVED', 'APPROVED'), ('PAID', 'PAID'), ('PAYMENT_PROCESSING', 'PAYMENT_PROCESSING'))
+
+SPLIT_EXPENSE_GROUPING = (('SINGLE_LINE_ITEM', 'SINGLE_LINE_ITEM'), ('MULTIPLE_LINE_ITEM', 'MULTIPLE_LINE_ITEM'))
 
 EXPENSE_FILTER_RANK = ((1, 1), (2, 2))
 
@@ -38,6 +40,10 @@ def get_default_ccc_expense_state():
     return 'PAID'
 
 
+def get_default_split_expense_grouping():
+    return 'MULTIPLE_LINE_ITEM'
+
+
 def _format_date(date_string) -> datetime:
     """
     Format date.
@@ -49,11 +55,6 @@ def _format_date(date_string) -> datetime:
     if date_string:
         date_string = parser.parse(date_string)
     return date_string
-
-
-def round_amount(amount, fraction):
-    amount = Decimal(str(amount))
-    return float(amount.quantize(Decimal('1.' + '0' * fraction), rounding=ROUND_HALF_UP))
 
 
 def _round_to_currency_fraction(amount: float, currency: str) -> float:
@@ -95,6 +96,7 @@ class Expense(models.Model):
     report_id = models.CharField(max_length=255, help_text='Report ID')
     report_title = models.TextField(null=True, blank=True, help_text='Report title')
     corporate_card_id = models.CharField(max_length=255, null=True, blank=True, help_text='Corporate Card ID')
+    bank_transaction_id = models.CharField(max_length=255, null=True, blank=True, help_text='Bank Transaction ID')
     file_ids = ArrayField(base_field=models.CharField(max_length=255), null=True, help_text='File IDs')
     spent_at = models.DateTimeField(null=True, help_text='Expense spent at')
     approved_at = models.DateTimeField(null=True, help_text='Expense approved at')
@@ -156,6 +158,7 @@ class Expense(models.Model):
                     'report_id': expense['report_id'],
                     'report_title': expense['report_title'],
                     'corporate_card_id': expense['corporate_card_id'],
+                    'bank_transaction_id': expense['bank_transaction_id'],
                     'file_ids': expense['file_ids'],
                     'spent_at': expense['spent_at'],
                     'approved_at': expense['approved_at'],
@@ -199,6 +202,7 @@ class ExpenseGroupSettings(models.Model):
     reimbursable_export_date_type = models.CharField(max_length=100, default='current_date', help_text='Export Date')
     ccc_export_date_type = models.CharField(max_length=100, default='current_date', help_text='CCC Export Date')
     import_card_credits = models.BooleanField(help_text='Import Card Credits', default=False)
+    split_expense_grouping = models.CharField(max_length=100, default=get_default_split_expense_grouping, choices=SPLIT_EXPENSE_GROUPING, help_text='specify line items for split expenses grouping')
     workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='To which workspace this expense group setting belongs to', related_name='expense_group_settings')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
@@ -281,6 +285,7 @@ class ExpenseGroupSettings(models.Model):
                 'reimbursable_export_date_type': expense_group_settings['reimbursable_export_date_type'],
                 'ccc_export_date_type': expense_group_settings['ccc_export_date_type'],
                 'import_card_credits': import_card_credits,
+                'split_expense_grouping': expense_group_settings['split_expense_grouping']
             },
         )
 
@@ -424,11 +429,44 @@ class ExpenseGroup(models.Model):
             filter(lambda expense: expense.fund_source == "CCC", expense_objects)
         )
 
-        filtered_corporate_credit_card_expense_groups = _group_expenses(
-            corporate_credit_card_expenses,
-            corporate_credit_card_expense_group_field,
-            workspace_id,
-        )
+        if (
+            general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE' and
+            expense_group_settings.split_expense_grouping == 'MULTIPLE_LINE_ITEM'
+        ):
+            ccc_expenses_without_bank_transaction = [
+                expense for expense in expense_objects
+                if not expense.bank_transaction_id
+            ]
+
+            ccc_expenses_with_bank_transaction = [
+                expense for expense in expense_objects
+                if expense.bank_transaction_id
+            ]
+
+            filtered_corporate_credit_card_expense_groups = _group_expenses(
+                ccc_expenses_without_bank_transaction,
+                corporate_credit_card_expense_group_field,
+                workspace_id,
+            )
+
+            corporate_credit_card_expense_group_field = [
+                field for field in corporate_credit_card_expense_group_field
+                if field not in {'expense_number', 'expense_id'}
+            ]
+            corporate_credit_card_expense_group_field.append('bank_transaction_id')
+            filtered_corporate_credit_card_expense_groups.extend(
+                _group_expenses(
+                    ccc_expenses_with_bank_transaction,
+                    corporate_credit_card_expense_group_field,
+                    workspace_id,
+                )
+            )
+        else:
+            filtered_corporate_credit_card_expense_groups = _group_expenses(
+                corporate_credit_card_expenses,
+                corporate_credit_card_expense_group_field,
+                workspace_id,
+            )
 
         if (
             general_settings.corporate_credit_card_expenses_object == "BILL"

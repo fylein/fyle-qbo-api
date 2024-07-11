@@ -7,6 +7,7 @@ data = {
             'reimbursable_export_date_type': '',
             'corporate_credit_card_expense_group_fields': [],
             'ccc_export_date_type': '',
+            'split_expense_grouping': 'SINGLE_LINE_ITEM'
         },
         'workspace_general_settings': {'reimbursable_expenses_object': 'EXPENSE', 'corporate_credit_card_expenses_object': 'BILL','name_in_journal_entry': 'MERCHANT'},
         'general_mappings': {
@@ -26,6 +27,7 @@ data = {
             'reimbursable_export_date_type': '',
             'corporate_credit_card_expense_group_fields': [],
             'ccc_export_date_type': '',
+            'split_expense_grouping': 'SINGLE_LINE_ITEM'
         },
         'workspace_general_settings': {'reimbursable_expenses_object': 'JOURNAL ENTRY', 'corporate_credit_card_expenses_object': 'BILL', 'name_in_journal_entry': 'MERCHANT'},
         'general_mappings': {
@@ -46,6 +48,7 @@ data = {
             'ccc_expense_state': 'PAID',
             'reimbursable_export_date_type': 'current_date',
             'ccc_export_date_type': 'current_date',
+            'split_expense_grouping': 'SINGLE_LINE_ITEM'
         },
         'general_mappings': {
             'accounts_payable': {'name': 'Accumulated Depreciation', 'id': '3'},

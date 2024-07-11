@@ -26,7 +26,8 @@ data = {
                 "expense_state": "PAYMENT_PROCESSING",
                 "ccc_expense_state": None,
                 "reimbursable_export_date_type": "current_date",
-                "ccc_export_date_type": "current_date"
+                "ccc_export_date_type": "current_date",
+                "split_expense_grouping": "SINGLE_LINE_ITEM"
             },
             "general_mappings": {
                 "accounts_payable": {
@@ -162,7 +163,8 @@ data = {
                 "expense_state": "PAYMENT_PROCESSING",
                 "ccc_expense_state": None,
                 "reimbursable_export_date_type": "current_date",
-                "ccc_export_date_type": "current_date"
+                "ccc_export_date_type": "current_date",
+                "split_expense_grouping": "SINGLE_LINE_ITEM"
             },
             "general_mappings": {
                 "accounts_payable": {
