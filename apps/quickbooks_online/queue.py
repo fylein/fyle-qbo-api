@@ -7,7 +7,7 @@ from django_q.tasks import Chain, async_task
 
 from apps.fyle.models import Expense, ExpenseGroup
 from apps.tasks.models import TaskLog
-from apps.workspaces.models import FyleCredential, WorkspaceGeneralSettings
+from apps.workspaces.models import FyleCredential, WorkspaceGeneralSettings, QBOCredential
 
 
 def async_run_post_configration_triggers(workspace_general_settings: WorkspaceGeneralSettings):
@@ -23,7 +23,13 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_
     :param fund_source: Fund source
     :return: None
     """
-    if expense_group_ids:
+    active_qbo_credentials = QBOCredential.objects.filter(
+        workspace_id=workspace_id,
+        is_expired=False,
+        refresh_token__isnull=False
+    ).first()
+
+    if expense_group_ids and active_qbo_credentials:
         expense_groups = ExpenseGroup.objects.filter(Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']), workspace_id=workspace_id, id__in=expense_group_ids, bill__id__isnull=True, exported_at__isnull=True).all()
 
         chain_tasks = []
@@ -88,7 +94,13 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], i
     :param fund_source: Fund source
     :return: None
     """
-    if expense_group_ids:
+    active_qbo_credentials = QBOCredential.objects.filter(
+        workspace_id=workspace_id,
+        is_expired=False,
+        refresh_token__isnull=False
+    ).first()
+
+    if expense_group_ids and active_qbo_credentials:
         expense_groups = ExpenseGroup.objects.filter(Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']), workspace_id=workspace_id, id__in=expense_group_ids, cheque__id__isnull=True, exported_at__isnull=True).all()
 
         chain_tasks = []
@@ -128,7 +140,13 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
     :param workspace_id: workspace id
     :return: None
     """
-    if expense_group_ids:
+    active_qbo_credentials = QBOCredential.objects.filter(
+        workspace_id=workspace_id,
+        is_expired=False,
+        refresh_token__isnull=False
+    ).first()
+
+    if expense_group_ids and active_qbo_credentials:
         expense_groups = ExpenseGroup.objects.filter(
             Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']), workspace_id=workspace_id, id__in=expense_group_ids, journalentry__id__isnull=True, exported_at__isnull=True
         ).all()
@@ -171,7 +189,13 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
     :param fund_source: Fund source
     :return: None
     """
-    if expense_group_ids:
+    active_qbo_credentials = QBOCredential.objects.filter(
+        workspace_id=workspace_id,
+        is_expired=False,
+        refresh_token__isnull=False
+    ).first()
+
+    if expense_group_ids and active_qbo_credentials:
         expense_groups = ExpenseGroup.objects.filter(
             Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']), workspace_id=workspace_id, id__in=expense_group_ids, creditcardpurchase__id__isnull=True, exported_at__isnull=True
         ).all()
@@ -215,7 +239,13 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
     :param fund_source: Fund source
     :return: None
     """
-    if expense_group_ids:
+    active_qbo_credentials = QBOCredential.objects.filter(
+        workspace_id=workspace_id,
+        is_expired=False,
+        refresh_token__isnull=False
+    ).first()
+
+    if expense_group_ids and active_qbo_credentials:
         expense_groups = ExpenseGroup.objects.filter(Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']), workspace_id=workspace_id, id__in=expense_group_ids, qboexpense__id__isnull=True, exported_at__isnull=True).all()
 
         chain_tasks = []
