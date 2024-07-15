@@ -94,6 +94,7 @@ def handle_qbo_exceptions(bill_payment=False):
 
                 if qbo_credentials:
                     qbo_credentials.is_expired = True
+                    qbo_credentials.refresh_token = None
                     qbo_credentials.save()
 
                 task_log.save()
