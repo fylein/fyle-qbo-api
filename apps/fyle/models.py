@@ -137,6 +137,22 @@ class Expense(models.Model):
             if not skip_update:
                 expense_data_to_append = {
                     'claim_number': expense['claim_number'],
+<<<<<<< Updated upstream
+=======
+                    'amount': _round_to_currency_fraction(expense['amount'], expense['currency']),
+                    'currency': expense['currency'],
+                    'foreign_amount': expense['foreign_amount'],
+                    'foreign_currency': expense['foreign_currency'],
+                    'tax_amount': _round_to_currency_fraction(expense['tax_amount'], expense['currency']) if expense['tax_amount'] is not None else expense['tax_amount'],
+                    'tax_group_id': expense['tax_group_id'],
+                    'reimbursable': expense['reimbursable'],
+                    'billable': expense['billable'],
+                    'state': expense['state'],
+                    'vendor': expense['vendor'][:250] if expense['vendor'] else None,
+                    'cost_center': expense['cost_center'],
+                    'purpose': expense['purpose'],
+                    'report_id': expense['report_id'],
+>>>>>>> Stashed changes
                     'report_title': expense['report_title'],
                     'approved_at': expense['approved_at'],
                     'payment_number': expense['payment_number'],
