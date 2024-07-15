@@ -9952,8 +9952,9 @@ data = {
         "split_expense_grouping": 'SINGLE_LINE_ITEM'
     },
     'expenses_tax_amount':[
-       { 
+       {
             'id': 'txW7qE5DUF83',
+            'bank_transaction_id': 'asudbjasb',
             'employee_email': 'ashwin.t@fyle.in',
             'employee_name': 'Joanna',
             'report_title': 'title1',
@@ -10006,8 +10007,9 @@ data = {
             },
             'payment_number': 'P/2022/05/R/9',
         },
-        {   
+        {
             'id': 'txW7qE5DUF84',
+            'bank_transaction_id': 'asudbjasb',
             'employee_email': 'ashwin.t@fyle.in',
             'employee_name': 'Joanna',
             'report_title': 'title1',
@@ -10060,8 +10062,9 @@ data = {
             },
             'payment_number': 'P/2022/05/R/9',
         },
-        {   
+        {
             'id': 'txW7qE5DUF85',
+            'bank_transaction_id': 'asudbjasb',
             'employee_email': 'ashwin.t@fyle.in',
             'employee_name': 'Joanna',
             'report_title': 'title1',

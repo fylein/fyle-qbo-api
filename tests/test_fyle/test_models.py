@@ -436,7 +436,6 @@ def test_amount_rounding():
 def test_create_expense_object_tax_amount(db):
     workspace_id = 1
 
-
     payload = data['expenses_tax_amount']
     expenses = Expense.create_expense_objects(payload, workspace_id)
     for expense in expenses:
