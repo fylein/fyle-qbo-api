@@ -173,6 +173,7 @@ def test_create_bill_exceptions(db, create_task_logs):
         expense.save()
 
     expense_group.expenses.set(expenses)
+    qbo_credentials = QBOCredential.objects.filter(workspace_id=expense_group.workspace_id).first()
 
     with mock.patch('apps.quickbooks_online.models.Bill.create_bill') as mock_call:
         mock_call.side_effect = QBOCredential.DoesNotExist()
@@ -181,18 +182,24 @@ def test_create_bill_exceptions(db, create_task_logs):
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
 
+        qbo_credentials.is_expired = False
+        qbo_credentials.save()
         mock_call.side_effect = BulkError(msg='employess not found', response='mapping error')
         create_bill(expense_group, task_log.id, True)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
 
+        qbo_credentials.is_expired = False
+        qbo_credentials.save()
         mock_call.side_effect = Exception()
         create_bill(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FATAL'
 
+        qbo_credentials.is_expired = False
+        qbo_credentials.save()
         mock_call.side_effect = WrongParamsError(msg={'Message': 'Invalid parametrs'}, response=json.dumps({'Fault': {'Error': [{'code': 400, 'Message': 'Invalid parametrs', 'Detail': 'Invalid parametrs'}], 'type': 'Invalid_params'}}))
         create_bill(expense_group, task_log.id, False)
 
@@ -383,6 +390,7 @@ def test_post_qbo_expenses_exceptions(create_task_logs, db):
     qbo_expense_lineitem = QBOExpenseLineitem.objects.get(expense_id=7)
     qbo_expense_lineitem.expense_id = 24
     qbo_expense_lineitem.save()
+    qbo_credentials = QBOCredential.objects.filter(workspace_id=expense_group.workspace_id).first()
 
     with mock.patch('apps.quickbooks_online.models.QBOExpense.create_qbo_expense') as mock_call:
         mock_call.side_effect = QBOCredential.DoesNotExist()
@@ -391,18 +399,24 @@ def test_post_qbo_expenses_exceptions(create_task_logs, db):
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
 
+        qbo_credentials.is_expired = False
+        qbo_credentials.save()
         mock_call.side_effect = BulkError(msg='employess not found', response='mapping error')
         create_qbo_expense(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
 
+        qbo_credentials.is_expired = False
+        qbo_credentials.save()
         mock_call.side_effect = Exception()
         create_qbo_expense(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FATAL'
 
+        qbo_credentials.is_expired = False
+        qbo_credentials.save()
         mock_call.side_effect = WrongParamsError(msg={'Message': 'Invalid parametrs'}, response=json.dumps({'Fault': {'Error': [{'code': 400, 'Message': 'Invalid parametrs', 'Detail': 'Invalid parametrs'}], 'type': 'Invalid_params'}}))
         create_qbo_expense(expense_group, task_log.id, False)
 
@@ -464,6 +478,7 @@ def test_post_credit_card_exceptions(mocker, create_task_logs, db):
         expense.save()
 
     expense_group.expenses.set(expenses)
+    qbo_credentials = QBOCredential.objects.filter(workspace_id=expense_group.workspace_id).first()
 
     with mock.patch('apps.quickbooks_online.models.CreditCardPurchase.create_credit_card_purchase') as mock_call:
         mock_call.side_effect = QBOCredential.DoesNotExist()
@@ -472,18 +487,24 @@ def test_post_credit_card_exceptions(mocker, create_task_logs, db):
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
 
+        qbo_credentials.is_expired = False
+        qbo_credentials.save()
         mock_call.side_effect = BulkError(msg='employess not found', response='mapping error')
         create_credit_card_purchase(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
 
+        qbo_credentials.is_expired = False
+        qbo_credentials.save()
         mock_call.side_effect = Exception()
         create_credit_card_purchase(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FATAL'
 
+        qbo_credentials.is_expired = False
+        qbo_credentials.save()
         mock_call.side_effect = WrongParamsError(msg={'Message': 'Invalid parametrs'}, response=json.dumps({'Fault': {'Error': [{'code': 400, 'Message': 'Invalid parametrs', 'Detail': 'Invalid parametrs'}], 'type': 'Invalid_params'}}))
         create_credit_card_purchase(expense_group, task_log.id, False)
 
@@ -567,6 +588,8 @@ def test_post_create_journal_entry_exceptions(create_task_logs, db):
     expense_group.expenses.set(expenses)
     expense_group.save()
 
+    qbo_credentials = QBOCredential.objects.filter(workspace_id=expense_group.workspace_id).first()
+
     with mock.patch('apps.quickbooks_online.models.JournalEntry.create_journal_entry') as mock_call:
         mock_call.side_effect = QBOCredential.DoesNotExist()
         create_journal_entry(expense_group, task_log.id, False)
@@ -574,18 +597,24 @@ def test_post_create_journal_entry_exceptions(create_task_logs, db):
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
 
+        qbo_credentials.is_expired = False
+        qbo_credentials.save()
         mock_call.side_effect = BulkError(msg='employess not found', response='mapping error')
         create_journal_entry(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
 
+        qbo_credentials.is_expired = False
+        qbo_credentials.save()
         mock_call.side_effect = Exception()
         create_journal_entry(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FATAL'
 
+        qbo_credentials.is_expired = False
+        qbo_credentials.save()
         mock_call.side_effect = WrongParamsError(msg={'Message': 'Invalid parametrs'}, response=json.dumps({'Fault': {'Error': [{'code': 400, 'Message': 'Invalid parametrs', 'Detail': 'Invalid parametrs'}], 'type': 'Invalid_params'}}))
         create_journal_entry(expense_group, task_log.id, False)
 
@@ -636,6 +665,8 @@ def test_post_create_cheque_exceptions(create_task_logs, db):
     expense_group.expenses.set(expenses)
     expense_group.save()
 
+    qbo_credentials = QBOCredential.objects.filter(workspace_id=expense_group.workspace_id).first()
+
     with mock.patch('apps.quickbooks_online.models.Cheque.create_cheque') as mock_call:
         mock_call.side_effect = QBOCredential.DoesNotExist()
         create_cheque(expense_group, task_log.id, False)
@@ -643,18 +674,24 @@ def test_post_create_cheque_exceptions(create_task_logs, db):
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
 
+        qbo_credentials.is_expired = False
+        qbo_credentials.save()
         mock_call.side_effect = BulkError(msg='employess not found', response='mapping error')
         create_cheque(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
 
+        qbo_credentials.is_expired = False
+        qbo_credentials.save()
         mock_call.side_effect = Exception()
         create_cheque(expense_group, task_log.id, False)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FATAL'
 
+        qbo_credentials.is_expired = False
+        qbo_credentials.save()
         mock_call.side_effect = WrongParamsError(msg={'Message': 'Invalid parametrs'}, response=json.dumps({'Fault': {'Error': [{'code': 400, 'Message': 'Invalid parametrs', 'Detail': 'Invalid parametrs'}], 'type': 'Invalid_params'}}))
         create_cheque(expense_group, task_log.id, False)
 

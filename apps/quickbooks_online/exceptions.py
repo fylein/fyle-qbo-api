@@ -88,6 +88,14 @@ def handle_qbo_exceptions(bill_payment=False):
                 detail = {'expense_group_id': expense_group.id, 'message': 'QBO Account not connected / token expired'}
                 task_log.status = 'FAILED'
                 task_log.detail = detail
+                qbo_credentials = QBOCredential.objects.filter(
+                    workspace_id=expense_group.workspace_id
+                ).first()
+
+                if qbo_credentials:
+                    qbo_credentials.is_expired = True
+                    qbo_credentials.refresh_token = None
+                    qbo_credentials.save()
 
                 task_log.save()
 
