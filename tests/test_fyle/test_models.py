@@ -431,3 +431,17 @@ def test_amount_rounding():
 
     amount = _round_to_currency_fraction(86.444, 'USD')
     assert amount == 86.44
+
+
+def test_create_expense_object_tax_amount(db):
+    workspace_id = 1
+
+    payload = data['expenses_tax_amount']
+    expenses = Expense.create_expense_objects(payload, workspace_id)
+    for expense in expenses:
+        if expense.expense_id == payload[0]['id']:
+            assert expense.tax_amount == 0
+        elif expense.expense_id == payload[1]['id']:
+            assert expense.tax_amount == 10
+        elif expense.expense_id == payload[2]['id']:
+            assert expense.tax_amount is None

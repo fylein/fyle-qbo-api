@@ -156,7 +156,7 @@ class Expense(models.Model):
                 'currency': expense['currency'],
                 'foreign_amount': expense['foreign_amount'],
                 'foreign_currency': expense['foreign_currency'],
-                'tax_amount': _round_to_currency_fraction(expense['tax_amount'], expense['currency']) if expense['tax_amount'] else None,
+                'tax_amount': _round_to_currency_fraction(expense['tax_amount'], expense['currency']) if expense['tax_amount'] is not None else expense['tax_amount'],
                 'tax_group_id': expense['tax_group_id'],
                 'reimbursable': expense['reimbursable'],
                 'billable': expense['billable'],
