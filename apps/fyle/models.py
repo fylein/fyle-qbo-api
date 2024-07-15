@@ -139,7 +139,9 @@ class Expense(models.Model):
                     'claim_number': expense['claim_number'],
                     'report_title': expense['report_title'],
                     'approved_at': expense['approved_at'],
-                    'payment_number': expense['payment_number']
+                    'payment_number': expense['payment_number'],
+                    'expense_created_at': expense['expense_created_at'],
+                    'expense_updated_at': expense['expense_updated_at'],
                 }
 
             defaults = {
@@ -168,8 +170,6 @@ class Expense(models.Model):
                 'file_ids': expense['file_ids'],
                 'spent_at': expense['spent_at'],
                 'posted_at': expense['posted_at'],
-                'expense_created_at': expense['expense_created_at'],
-                'expense_updated_at': expense['expense_updated_at'],
                 'fund_source': SOURCE_ACCOUNT_MAP[expense['source_account_type']],
                 'verified_at': expense['verified_at'],
                 'custom_properties': expense['custom_properties'],
