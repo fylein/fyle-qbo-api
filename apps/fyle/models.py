@@ -137,8 +137,6 @@ class Expense(models.Model):
             if not skip_update:
                 expense_data_to_append = {
                     'claim_number': expense['claim_number'],
-<<<<<<< Updated upstream
-=======
                     'amount': _round_to_currency_fraction(expense['amount'], expense['currency']),
                     'currency': expense['currency'],
                     'foreign_amount': expense['foreign_amount'],
@@ -152,7 +150,6 @@ class Expense(models.Model):
                     'cost_center': expense['cost_center'],
                     'purpose': expense['purpose'],
                     'report_id': expense['report_id'],
->>>>>>> Stashed changes
                     'report_title': expense['report_title'],
                     'approved_at': expense['approved_at'],
                     'payment_number': expense['payment_number'],
