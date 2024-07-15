@@ -1,13 +1,16 @@
 import json
 from unittest import mock
+from datetime import datetime, timedelta
 
 from django.urls import reverse
 from qbosdk import exceptions as qbo_exc
 
-from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSettings
+from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSettings, LastExportDetail
 from fyle_qbo_api.tests import settings
 from tests.helper import dict_compare_keys
 from tests.test_workspaces.fixtures import data
+from apps.workspaces.actions import export_to_qbo
+from apps.fyle.models import ExpenseGroup
 
 
 def test_get_workspace(api_client, test_connection):
@@ -200,6 +203,24 @@ def test_export_to_qbo(mocker, api_client, test_connection):
 
     response = api_client.post(url)
     assert response.status_code == 200
+
+    ExpenseGroup.objects.filter(workspace_id=workspace_id).update(exported_at=None)
+    expense_group_ids = ExpenseGroup.objects.filter(workspace_id=workspace_id).values_list('id', flat=True)
+
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
+    assert qbo_credentials is not None
+    assert len(expense_group_ids) != 0
+    export_to_qbo(workspace_id, expense_group_ids=expense_group_ids)
+    last_export_detail = LastExportDetail.objects.get(workspace_id=workspace_id)
+    last_exported_at = last_export_detail.last_exported_at
+    assert last_exported_at.replace(tzinfo=None) > (datetime.now() - timedelta(minutes=1)).replace(tzinfo=None)
+
+    qbo_credentials.is_expired = True
+    qbo_credentials.save()
+
+    export_to_qbo(workspace_id, expense_group_ids=expense_group_ids)
+    last_export_detail = LastExportDetail.objects.get(workspace_id=workspace_id)
+    assert last_export_detail.last_exported_at == last_exported_at
 
 
 def test_last_export_detail_view(db, api_client, test_connection):
