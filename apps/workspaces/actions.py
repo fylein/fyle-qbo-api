@@ -248,6 +248,15 @@ def post_to_integration_settings(workspace_id: int, active: bool):
 
 
 def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[]):
+    active_qbo_credentials = QBOCredential.objects.filter(
+        workspace_id=workspace_id,
+        is_expired=False,
+        refresh_token__isnull=False
+    ).first()
+
+    if not active_qbo_credentials:
+        return
+
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
     last_export_detail = LastExportDetail.objects.get(workspace_id=workspace_id)
     workspace_schedule = WorkspaceSchedule.objects.filter(workspace_id=workspace_id, interval_hours__gt=0, enabled=True).first()

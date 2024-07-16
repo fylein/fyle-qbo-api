@@ -100,7 +100,7 @@ Q_CLUSTER = {
     'cached': False,
     'orm': 'default',
     'ack_failures': True,
-    'poll': 1,
+    'poll': 5,
     'retry': 14400,
     'timeout': 3600,
     'catch_up': False,

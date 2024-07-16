@@ -122,7 +122,7 @@ class Expense(models.Model):
         db_table = 'expenses'
 
     @staticmethod
-    def create_expense_objects(expenses: List[Dict], workspace_id: int):
+    def create_expense_objects(expenses: List[Dict], workspace_id: int, skip_update: bool = False):
         """
         Bulk create expense objects
         """
@@ -132,45 +132,56 @@ class Expense(models.Model):
             for custom_property_field in expense['custom_properties']:
                 if expense['custom_properties'][custom_property_field] == '':
                     expense['custom_properties'][custom_property_field] = None
-            expense_object, _ = Expense.objects.update_or_create(
-                expense_id=expense['id'],
-                defaults={
-                    'employee_email': expense['employee_email'],
-                    'employee_name': expense['employee_name'],
-                    'category': expense['category'],
-                    'sub_category': expense['sub_category'],
-                    'project': expense['project'],
-                    'expense_number': expense['expense_number'],
-                    'org_id': expense['org_id'],
+
+            expense_data_to_append = None
+            if not skip_update:
+                expense_data_to_append = {
                     'claim_number': expense['claim_number'],
-                    'amount': _round_to_currency_fraction(expense['amount'], expense['currency']),
-                    'currency': expense['currency'],
-                    'foreign_amount': expense['foreign_amount'],
-                    'foreign_currency': expense['foreign_currency'],
-                    'tax_amount': _round_to_currency_fraction(expense['tax_amount'], expense['currency']) if expense['tax_amount'] else None,
-                    'tax_group_id': expense['tax_group_id'],
-                    'reimbursable': expense['reimbursable'],
-                    'billable': expense['billable'],
-                    'state': expense['state'],
-                    'vendor': expense['vendor'][:250] if expense['vendor'] else None,
-                    'cost_center': expense['cost_center'],
-                    'purpose': expense['purpose'],
-                    'report_id': expense['report_id'],
                     'report_title': expense['report_title'],
-                    'corporate_card_id': expense['corporate_card_id'],
-                    'bank_transaction_id': expense['bank_transaction_id'],
-                    'file_ids': expense['file_ids'],
-                    'spent_at': expense['spent_at'],
                     'approved_at': expense['approved_at'],
-                    'posted_at': expense['posted_at'],
+                    'payment_number': expense['payment_number'],
                     'expense_created_at': expense['expense_created_at'],
                     'expense_updated_at': expense['expense_updated_at'],
-                    'fund_source': SOURCE_ACCOUNT_MAP[expense['source_account_type']],
-                    'verified_at': expense['verified_at'],
-                    'custom_properties': expense['custom_properties'],
-                    'payment_number': expense['payment_number'],
-                    'workspace_id': workspace_id
-                },
+                }
+
+            defaults = {
+                'employee_email': expense['employee_email'],
+                'employee_name': expense['employee_name'],
+                'category': expense['category'],
+                'sub_category': expense['sub_category'],
+                'project': expense['project'],
+                'expense_number': expense['expense_number'],
+                'org_id': expense['org_id'],
+                'amount': _round_to_currency_fraction(expense['amount'], expense['currency']),
+                'currency': expense['currency'],
+                'foreign_amount': expense['foreign_amount'],
+                'foreign_currency': expense['foreign_currency'],
+                'tax_amount': _round_to_currency_fraction(expense['tax_amount'], expense['currency']) if expense['tax_amount'] is not None else expense['tax_amount'],
+                'tax_group_id': expense['tax_group_id'],
+                'reimbursable': expense['reimbursable'],
+                'billable': expense['billable'],
+                'state': expense['state'],
+                'vendor': expense['vendor'][:250] if expense['vendor'] else None,
+                'cost_center': expense['cost_center'],
+                'purpose': expense['purpose'],
+                'report_id': expense['report_id'],
+                'corporate_card_id': expense['corporate_card_id'],
+                'bank_transaction_id': expense['bank_transaction_id'],
+                'file_ids': expense['file_ids'],
+                'spent_at': expense['spent_at'],
+                'posted_at': expense['posted_at'],
+                'fund_source': SOURCE_ACCOUNT_MAP[expense['source_account_type']],
+                'verified_at': expense['verified_at'],
+                'custom_properties': expense['custom_properties'],
+                'workspace_id': workspace_id
+            }
+
+            if expense_data_to_append:
+                defaults.update(expense_data_to_append)
+
+            expense_object, _ = Expense.objects.update_or_create(
+                expense_id=expense['id'],
+                defaults=defaults
             )
 
             if not ExpenseGroup.objects.filter(expenses__id=expense_object.id).first():
