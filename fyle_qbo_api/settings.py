@@ -11,10 +11,13 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 import os
 import sys
+from logging.config import dictConfig
 
 import dj_database_url
 
 from fyle_qbo_api.sentry import Sentry
+
+from .logging_middleware import WorkerIDFilter
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -98,6 +101,55 @@ WSGI_APPLICATION = 'fyle_qbo_api.wsgi.application'
 
 FYLE_REST_AUTH_SETTINGS = {'async_update_user': True}
 
+SERVICE_NAME = os.environ.get('SERVICE_NAME')
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'standard': {
+            'format': '{levelname} %s {asctime} {name} {worker_id} {message}' % SERVICE_NAME, 'style': '{'
+        },
+        'verbose': {
+            'format': '{levelname} %s {asctime} {module} {message} ' % SERVICE_NAME, 'style': '{'
+        },
+        'requests': {
+            'format': 'request {levelname} %s {asctime} {message}' % SERVICE_NAME, 'style': '{'
+        }
+    },
+    'filters': {
+        'worker_id': {
+            '()': WorkerIDFilter,
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'standard',
+            'filters': ['worker_id'],
+        },
+        'request_logs': {
+            'class': 'logging.StreamHandler',
+            'stream': sys.stdout,
+            'formatter': 'requests'
+        },
+        'debug_logs': {
+            'class': 'logging.StreamHandler',
+            'stream': sys.stdout,
+            'formatter': 'verbose'
+        }
+    },
+    'loggers': {
+        '': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+        'django.request': {'handlers': ['request_logs'], 'propagate': False},
+    },
+}
+
+dictConfig(LOGGING)
+
 Q_CLUSTER = {
     'name': 'fyle_quickbooks_api',
     # The number of tasks will be stored in django q tasks
@@ -128,26 +180,6 @@ Q_CLUSTER = {
         },
     }
 }
-
-SERVICE_NAME = os.environ.get('SERVICE_NAME')
-
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': True,
-    'formatters': {'verbose': {'format': '{levelname} %s {asctime} {module} {message} ' % SERVICE_NAME, 'style': '{'}, 'requests': {'format': 'request {levelname} %s {asctime} {message}' % SERVICE_NAME, 'style': '{'}},
-    'handlers': {'debug_logs': {'class': 'logging.StreamHandler', 'stream': sys.stdout, 'formatter': 'verbose'}, 'request_logs': {'class': 'logging.StreamHandler', 'stream': sys.stdout, 'formatter': 'requests'}},
-    'loggers': {
-        'django': {'handlers': ['request_logs'], 'propagate': True},
-        'django.request': {'handlers': ['request_logs'], 'propagate': False},
-        'fyle_qbo_api': {'handlers': ['debug_logs'], 'level': 'ERROR', 'propagate': False},
-        'apps': {'handlers': ['debug_logs'], 'level': 'ERROR', 'propagate': False},
-        'django_q': {'handlers': ['debug_logs'], 'propagate': True},
-        'gunicorn': {'handlers': ['request_logs'], 'level': 'INFO', 'propagate': False},
-        'fyle_rest_auth': {'handlers': ['debug_logs'], 'propagate': True},
-        'fyle_integrations_imports': {'handlers': ['debug_logs'], 'propagate': True},
-    },
-}
-
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
