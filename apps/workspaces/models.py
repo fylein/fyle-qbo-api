@@ -115,7 +115,7 @@ class WorkspaceGeneralSettings(models.Model):
     skip_cards_mapping = models.BooleanField(default=False, help_text='Skip cards mapping')
     import_vendors_as_merchants = models.BooleanField(default=False, help_text='Auto import vendors from qbo as merchants to Fyle')
     is_multi_currency_allowed = models.BooleanField(default=False, help_text='Multi Currency Allowed')
-    is_tax_override_enabled = models.BooleanField(default=False, help_text='Tax Override Enabled')
+    is_tax_override_enabled = models.BooleanField(default=True, help_text='Tax Override Enabled')
     name_in_journal_entry = models.CharField(
         max_length=100,
         help_text='Name in journal entry for ccc expense only',
