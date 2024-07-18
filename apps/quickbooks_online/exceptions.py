@@ -3,7 +3,7 @@ import logging
 import traceback
 
 from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
-from qbosdk.exceptions import InvalidTokenError, WrongParamsError
+from qbosdk.exceptions import InternalServerError, InvalidTokenError, WrongParamsError
 
 from apps.fyle.actions import update_failed_expenses
 from apps.fyle.models import ExpenseGroup
@@ -107,6 +107,16 @@ def handle_qbo_exceptions(bill_payment=False):
 
                 if not bill_payment:
                     update_failed_expenses(expense_group.expenses.all(), False)
+
+            except InternalServerError as error:
+                task_log.detail = {'error': error}
+                task_log.status = 'FAILED'
+
+                task_log.save()
+                logger.error('Internal Server Error for workspace_id: %s %s', task_log.workspace_id, task_log.detail)
+
+                if not bill_payment:
+                    update_failed_expenses(expense_group.expenses.all(), True)
 
             except BulkError as exception:
                 logger.info(exception.response)
