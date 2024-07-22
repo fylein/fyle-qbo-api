@@ -286,18 +286,22 @@ class ExpenseGroupSettings(models.Model):
         if 'import_card_credits' in expense_group_settings.keys():
             import_card_credits = expense_group_settings['import_card_credits']
 
+        defaults = {
+            'reimbursable_expense_group_fields': reimbursable_grouped_by,
+            'corporate_credit_card_expense_group_fields': corporate_credit_card_expenses_grouped_by,
+            'expense_state': expense_group_settings['expense_state'],
+            'ccc_expense_state': expense_group_settings['ccc_expense_state'],
+            'reimbursable_export_date_type': expense_group_settings['reimbursable_export_date_type'],
+            'ccc_export_date_type': expense_group_settings['ccc_export_date_type'],
+            'import_card_credits': import_card_credits
+        }
+
+        if expense_group_settings['split_expense_grouping']:
+            defaults.update({'split_expense_grouping': expense_group_settings['split_expense_grouping']})
+
         return ExpenseGroupSettings.objects.update_or_create(
             workspace_id=workspace_id,
-            defaults={
-                'reimbursable_expense_group_fields': reimbursable_grouped_by,
-                'corporate_credit_card_expense_group_fields': corporate_credit_card_expenses_grouped_by,
-                'expense_state': expense_group_settings['expense_state'],
-                'ccc_expense_state': expense_group_settings['ccc_expense_state'],
-                'reimbursable_export_date_type': expense_group_settings['reimbursable_export_date_type'],
-                'ccc_export_date_type': expense_group_settings['ccc_export_date_type'],
-                'import_card_credits': import_card_credits,
-                'split_expense_grouping': expense_group_settings['split_expense_grouping']
-            },
+            defaults=defaults
         )
 
 
@@ -441,8 +445,7 @@ class ExpenseGroup(models.Model):
         )
 
         if (
-            general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE' and
-            expense_group_settings.split_expense_grouping == 'MULTIPLE_LINE_ITEM'
+            general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE' and expense_group_settings.split_expense_grouping == 'MULTIPLE_LINE_ITEM'
         ):
             ccc_expenses_without_bank_transaction = [
                 expense for expense in expense_objects
