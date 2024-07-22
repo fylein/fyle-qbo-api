@@ -405,6 +405,7 @@ class ExpenseGroup(models.Model):
         """
 
         expense_groups = []
+        filtered_corporate_credit_card_expense_groups = []
         expense_group_settings = ExpenseGroupSettings.objects.get(
             workspace_id=workspace_id
         )
@@ -440,44 +441,45 @@ class ExpenseGroup(models.Model):
             filter(lambda expense: expense.fund_source == "CCC", expense_objects)
         )
 
-        if (
-            general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE' and
-            expense_group_settings.split_expense_grouping == 'MULTIPLE_LINE_ITEM'
-        ):
-            ccc_expenses_without_bank_transaction = [
-                expense for expense in expense_objects
-                if not expense.bank_transaction_id
-            ]
+        if corporate_credit_card_expenses:
+            if (
+                general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE' and
+                expense_group_settings.split_expense_grouping == 'MULTIPLE_LINE_ITEM'
+            ):
+                ccc_expenses_without_bank_transaction = [
+                    expense for expense in expense_objects
+                    if not expense.bank_transaction_id
+                ]
 
-            ccc_expenses_with_bank_transaction = [
-                expense for expense in expense_objects
-                if expense.bank_transaction_id
-            ]
+                ccc_expenses_with_bank_transaction = [
+                    expense for expense in expense_objects
+                    if expense.bank_transaction_id
+                ]
 
-            filtered_corporate_credit_card_expense_groups = _group_expenses(
-                ccc_expenses_without_bank_transaction,
-                corporate_credit_card_expense_group_field,
-                workspace_id,
-            )
-
-            corporate_credit_card_expense_group_field = [
-                field for field in corporate_credit_card_expense_group_field
-                if field not in {'expense_number', 'expense_id'}
-            ]
-            corporate_credit_card_expense_group_field.append('bank_transaction_id')
-            filtered_corporate_credit_card_expense_groups.extend(
-                _group_expenses(
-                    ccc_expenses_with_bank_transaction,
+                filtered_corporate_credit_card_expense_groups = _group_expenses(
+                    ccc_expenses_without_bank_transaction,
                     corporate_credit_card_expense_group_field,
                     workspace_id,
                 )
-            )
-        else:
-            filtered_corporate_credit_card_expense_groups = _group_expenses(
-                corporate_credit_card_expenses,
-                corporate_credit_card_expense_group_field,
-                workspace_id,
-            )
+
+                corporate_credit_card_expense_group_field = [
+                    field for field in corporate_credit_card_expense_group_field
+                    if field not in {'expense_number', 'expense_id'}
+                ]
+                corporate_credit_card_expense_group_field.append('bank_transaction_id')
+                filtered_corporate_credit_card_expense_groups.extend(
+                    _group_expenses(
+                        ccc_expenses_with_bank_transaction,
+                        corporate_credit_card_expense_group_field,
+                        workspace_id,
+                    )
+                )
+            else:
+                filtered_corporate_credit_card_expense_groups = _group_expenses(
+                    corporate_credit_card_expenses,
+                    corporate_credit_card_expense_group_field,
+                    workspace_id,
+                )
 
         if (
             general_settings.corporate_credit_card_expenses_object == "BILL"
