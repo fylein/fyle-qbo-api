@@ -8,6 +8,7 @@ from fyle_accounting_mappings.models import ExpenseAttribute
 from fyle_integrations_platform_connector import PlatformConnector
 from fyle_integrations_platform_connector.apis.expenses import Expenses as FyleExpenses
 
+from fyle_qbo_api.logging_middleware import get_logger
 from apps.fyle.actions import create_generator_and_post_in_batches, mark_expenses_as_skipped
 from apps.fyle.helpers import (
     construct_expense_filter_query,
@@ -207,6 +208,7 @@ def post_accounting_export_summary(org_id: str, workspace_id: int, fund_source: 
     :param fund_source: fund source
     :return: None
     """
+    worker_logger = get_logger()
     # Iterate through all expenses which are not synced and post accounting export summary to Fyle in batches
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
     platform = PlatformConnector(fyle_credentials)
@@ -238,7 +240,7 @@ def post_accounting_export_summary(org_id: str, workspace_id: int, fund_source: 
 
         accounting_export_summary_batches.append(payload)
 
-    logger.info(
+    worker_logger.info(
         'Posting accounting export summary to Fyle workspace_id: %s, payload: %s',
         workspace_id,
         accounting_export_summary_batches
