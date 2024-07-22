@@ -447,12 +447,12 @@ class ExpenseGroup(models.Model):
                 expense_group_settings.split_expense_grouping == 'MULTIPLE_LINE_ITEM'
             ):
                 ccc_expenses_without_bank_transaction = [
-                    expense for expense in expense_objects
+                    expense for expense in corporate_credit_card_expenses
                     if not expense.bank_transaction_id
                 ]
 
                 ccc_expenses_with_bank_transaction = [
-                    expense for expense in expense_objects
+                    expense for expense in corporate_credit_card_expenses
                     if expense.bank_transaction_id
                 ]
 
