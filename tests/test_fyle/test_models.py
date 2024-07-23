@@ -388,14 +388,14 @@ def test_split_expenses_diff_bank_transaction_id(db):
     expense_objects = Expense.create_expense_objects(expenses, 1)
     assert len(expense_objects) == 4
 
-    expense_groups = _group_expenses(expense_objects, ['expense_id', 'fund_source', 'employee_email', 'spent_at'], 4)
+    expense_groups = _group_expenses(expense_objects, ['expense_id', 'fund_source', 'employee_email', 'spent_at', 'bank_transaction_id'], 4)
     assert len(expense_groups) == 4
 
     expense_group_settings.split_expense_grouping = 'MULTIPLE_LINE_ITEM'
     expense_group_settings.save()
 
-    expense_groups = _group_expenses(expense_objects, ['expense_id', 'fund_source', 'employee_email', 'spent_at'], 4)
-    assert len(expense_groups) == 4
+    expense_groups = _group_expenses(expense_objects, ['fund_source', 'employee_email', 'spent_at', 'bank_transaction_id'], 4)
+    assert len(expense_groups) == 2
 
 
 def test_format_date():
