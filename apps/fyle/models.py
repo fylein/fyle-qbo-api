@@ -405,6 +405,7 @@ class ExpenseGroup(models.Model):
         """
 
         expense_groups = []
+        filtered_corporate_credit_card_expense_groups = []
         expense_group_settings = ExpenseGroupSettings.objects.get(
             workspace_id=workspace_id
         )
