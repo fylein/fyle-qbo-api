@@ -1144,7 +1144,8 @@ data = {
             'paid_on_qbo': False,
             'created_at': '2024-06-18T19:12:17.003409+00:00',
             'updated_at': '2024-06-18T19:12:17.003421+00:00',
-            'bank_transaction_id': 'Arkham'
+            'bank_transaction_id': 'Arkham',
+            'fund_source': 'CCC'
         },
         {
             'id': '24004',
@@ -1195,7 +1196,8 @@ data = {
             'paid_on_qbo': False,
             'created_at': '2024-06-18T19:12:17.020617+00:00',
             'updated_at': '2024-06-18T19:12:17.020627+00:00',
-            'bank_transaction_id': 'Arkham'
+            'bank_transaction_id': 'Arkham',
+            'fund_source': 'CCC'
         },
         {
             'id': '24008',
@@ -1243,7 +1245,8 @@ data = {
             'paid_on_qbo': False,
             'created_at': '2024-06-18T19:12:17.003409+00:00',
             'updated_at': '2024-06-18T19:12:17.003421+00:00',
-            'bank_transaction_id': 'Anish'
+            'bank_transaction_id': 'Anish',
+            'fund_source': 'CCC'
         },
         {
             'id': '24009',
@@ -1294,7 +1297,8 @@ data = {
             'paid_on_qbo': False,
             'created_at': '2024-06-18T19:12:17.020617+00:00',
             'updated_at': '2024-06-18T19:12:17.020627+00:00',
-            'bank_transaction_id': 'Anish'
+            'bank_transaction_id': 'Anish',
+            'fund_source': 'CCC'
         }
     ],
     'expense_groups_complete_response': {
