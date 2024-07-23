@@ -17,7 +17,7 @@ from fyle_accounting_mappings.models import ExpenseAttribute
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from apps.workspaces.utils import round_amount
 
-ALLOWED_FIELDS = ['employee_email', 'report_id', 'claim_number', 'settlement_id', 'fund_source', 'vendor', 'category', 'project', 'cost_center', 'verified_at', 'approved_at', 'spent_at', 'expense_id', 'posted_at']
+ALLOWED_FIELDS = ['employee_email', 'report_id', 'claim_number', 'settlement_id', 'fund_source', 'vendor', 'category', 'project', 'cost_center', 'verified_at', 'approved_at', 'spent_at', 'expense_id', 'posted_at', 'bank_transaction_id']
 
 ALLOWED_FORM_INPUT = {'group_expenses_by': ['settlement_id', 'claim_number', 'report_id', 'category', 'vendor', 'expense_id'], 'export_date_type': ['current_date', 'approved_at', 'spent_at', 'verified_at', 'last_spent_at', 'posted_at']}
 
