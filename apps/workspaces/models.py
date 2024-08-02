@@ -28,6 +28,10 @@ NAME_IN_JOURNAL_ENTRY = (
     ('EMPLOYEE', 'EMPLOYEE')
 )
 
+CODE_CHOICES = (
+    ('ACCOUNT', 'ACCOUNT'),
+)
+
 
 def get_default_onboarding_state():
     return 'CONNECTION'
@@ -120,6 +124,15 @@ class WorkspaceGeneralSettings(models.Model):
         max_length=100,
         help_text='Name in journal entry for ccc expense only',
         default='EMPLOYEE',choices=NAME_IN_JOURNAL_ENTRY)
+    import_code_fields = ArrayField(
+        base_field=models.CharField(
+            max_length=255,
+            choices=CODE_CHOICES
+        ),
+        help_text='Code Preference List',
+        blank=True,
+        default=list
+    )
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 

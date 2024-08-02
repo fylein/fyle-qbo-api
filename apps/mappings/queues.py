@@ -82,6 +82,7 @@ def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
             'is_auto_sync_enabled': get_auto_sync_permission(workspace_general_settings),
             'is_3d_mapping': False,
             'charts_of_accounts': workspace_general_settings.charts_of_accounts if 'accounts' in destination_sync_methods else None,
+            'prepend_code_to_name': True if 'ACCOUNT' in workspace_general_settings.import_code_fields else False
         }
 
     if workspace_general_settings.import_tax_codes:
