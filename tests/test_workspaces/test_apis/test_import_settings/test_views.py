@@ -1,8 +1,9 @@
 import json
 
-from apps.workspaces.models import Workspace
+from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from tests.helper import dict_compare_keys
 from tests.test_workspaces.test_apis.test_import_settings.fixtures import data
+from fyle_integrations_imports.models import ImportLog
 
 
 def test_import_settings(mocker, api_client, test_connection):
@@ -38,3 +39,46 @@ def test_import_settings(mocker, api_client, test_connection):
 
     response = api_client.put(url, data=data['invalid_mapping_settings'], format='json')
     assert response.status_code == 400
+
+    # Test with Import Fields put request with ACCOUNT
+    add_import_code_fields_payload = data['import_settings_with_account']
+    add_import_code_fields_payload['workspace_general_settings']['import_code_fields'] = []
+    response = api_client.put(
+        url,
+        data=add_import_code_fields_payload,
+        format='json'
+    )
+
+    assert response.status_code == 200
+    # Test with categories import without code and then adding code
+    import_log = ImportLog.objects.create(
+        workspace_id=3,
+        attribute_type='CATEGORY',
+        status='COMPLETE'
+    )
+
+    add_import_code_fields_payload['workspace_general_settings']['import_code_fields'] = ['ACCOUNT']
+    response = api_client.put(
+        url,
+        data=add_import_code_fields_payload,
+        format='json'
+    )
+    assert response.status_code == 400
+    response = json.loads(response.content)
+    assert response['non_field_errors'] == ["Cannot change the code fields once they are imported"]
+
+    # Test with categories import with code and then removing code
+    import_log.delete()
+    workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
+    workspace_general_settings.import_code_fields = ['ACCOUNT']
+    workspace_general_settings.save()
+
+    add_import_code_fields_payload['workspace_general_settings']['import_code_fields'] = []
+    response = api_client.put(
+        url,
+        data=add_import_code_fields_payload,
+        format='json'
+    )
+    assert response.status_code == 400
+    response = json.loads(response.content)
+    assert response['non_field_errors'] == ["Cannot change the code fields once they are imported"]
