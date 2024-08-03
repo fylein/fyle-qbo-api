@@ -176,6 +176,8 @@ def generate_export_url_and_update_expense(expense_group: ExpenseGroup) -> None:
             export_type=export_type,
             export_id=export_id
         )
+        expense_group.export_url = url
+        expense_group.save()
     except Exception as error:
         # Defaulting it to QBO app url, worst case scenario if we're not able to parse it properly
         url = settings.QBO_APP_URL
