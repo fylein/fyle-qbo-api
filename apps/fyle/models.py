@@ -389,6 +389,7 @@ class ExpenseGroup(models.Model):
     description = JSONField(max_length=255, help_text='Description', null=True)
     response_logs = JSONField(help_text='Reponse log of the export', null=True)
     employee_name = models.CharField(max_length=100, help_text='Expense Group Employee Name', null=True)
+    export_url = models.CharField(max_length=255, help_text='QBO URL for the exported expenses', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     exported_at = models.DateTimeField(help_text='Exported at', null=True)
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
@@ -443,8 +444,7 @@ class ExpenseGroup(models.Model):
 
         if corporate_credit_card_expenses:
             if (
-                general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE' and
-                expense_group_settings.split_expense_grouping == 'MULTIPLE_LINE_ITEM'
+                general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE' and expense_group_settings.split_expense_grouping == 'MULTIPLE_LINE_ITEM'
             ):
                 ccc_expenses_without_bank_transaction = [
                     expense for expense in corporate_credit_card_expenses
