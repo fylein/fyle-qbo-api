@@ -15,6 +15,7 @@ from qbosdk import revoke_refresh_token
 from rest_framework.response import Response
 from rest_framework.views import status
 
+from apps.fyle.actions import update_failed_expenses
 from apps.fyle.helpers import get_cluster_domain, post_request
 from apps.fyle.models import ExpenseGroup, ExpenseGroupSettings
 from apps.quickbooks_online.queue import (
@@ -247,7 +248,7 @@ def post_to_integration_settings(workspace_id: int, active: bool):
         logger.error(error)
 
 
-def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[]):
+def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direct_export:bool = False):
     active_qbo_credentials = QBOCredential.objects.filter(
         workspace_id=workspace_id,
         is_expired=False,
@@ -255,6 +256,10 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[]):
     ).first()
 
     if not active_qbo_credentials:
+        if is_direct_export:
+            for expense_group_id in expense_group_ids:
+                expense_group = ExpenseGroup.objects.get(id=expense_group_id)
+                update_failed_expenses(expense_group.expenses.all(), False)
         return
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
