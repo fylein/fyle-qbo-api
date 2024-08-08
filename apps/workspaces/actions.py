@@ -257,7 +257,7 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[]):
 
     if not active_qbo_credentials:
         for expense_group_id in expense_group_ids:
-            expense_group = ExpenseGroup.objects.filter(id=expense_group_id)
+            expense_group = ExpenseGroup.objects.get(id=expense_group_id)
             update_failed_expenses(expense_group.expenses.all(), False)
         return
 
