@@ -8,7 +8,6 @@ from fyle_accounting_mappings.models import ExpenseAttribute
 from fyle_integrations_platform_connector import PlatformConnector
 from fyle_integrations_platform_connector.apis.expenses import Expenses as FyleExpenses
 
-from fyle_qbo_api.logging_middleware import get_logger
 from apps.fyle.actions import create_generator_and_post_in_batches, mark_expenses_as_skipped
 from apps.fyle.helpers import (
     construct_expense_filter_query,
@@ -22,6 +21,7 @@ from apps.fyle.queue import async_post_accounting_export_summary
 from apps.tasks.models import TaskLog
 from apps.workspaces.actions import export_to_qbo
 from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
+from fyle_qbo_api.logging_middleware import get_logger
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -282,7 +282,7 @@ def import_and_export_expenses(report_id: str, org_id: str) -> None:
         expense_group_ids = [expense_group['id'] for expense_group in expense_groups]
 
         if len(expense_group_ids):
-            export_to_qbo(workspace.id, None, expense_group_ids)
+            export_to_qbo(workspace.id, None, expense_group_ids, True)
 
     except WorkspaceGeneralSettings.DoesNotExist:
         logger.info('Workspace general settings not found %s', workspace.id)
