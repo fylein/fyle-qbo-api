@@ -172,8 +172,8 @@ def get_category_mapping_and_detail_type(workspace_general_settings: WorkspaceGe
     return qbo_account, 'AccountBasedExpenseLineDetail'
 
 
-def get_credit_card_purchase_number(expense_group, expense, expense_group_settings, map_merchant_to_vendor):
-    if expense_group_settings.split_expense_grouping == 'MULTIPLE_LINE_ITEM' and 'bank_transaction_id' in expense_group.description:
+def get_credit_card_purchase_number(expense_group: ExpenseGroup, expense: Expense, expense_group_settings: ExpenseGroupSettings):
+    if expense_group.expenses.count() > 1 and expense_group_settings.split_expense_grouping == 'MULTIPLE_LINE_ITEM' and 'bank_transaction_id' in expense_group.description:
         return expense_group.description['bank_transaction_id']
     else:
         return expense.expense_number
@@ -629,8 +629,7 @@ class CreditCardPurchase(models.Model):
                 'credit_card_purchase_number': get_credit_card_purchase_number(
                     expense_group,
                     expense,
-                    expense_group_settings,
-                    map_merchant_to_vendor
+                    expense_group_settings
                 ),
             },
         )
