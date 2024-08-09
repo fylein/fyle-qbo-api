@@ -960,8 +960,9 @@ class QBOConnector:
 
         if line[0]['Amount'] < 0:
             credit = True
+            tax_amount = line[0][credit_card_purchase_lineitems[0].detail_type]['TaxAmount']
             line[0]['Amount'] = abs(line[0]['Amount'])
-            line[0][credit_card_purchase_lineitems[0].detail_type]['TaxAmount'] = abs(line[0][credit_card_purchase_lineitems[0].detail_type]['TaxAmount'])
+            line[0][credit_card_purchase_lineitems[0].detail_type]['TaxAmount'] = abs(tax_amount) if tax_amount else None
 
         credit_card_purchase_payload = self.purchase_object_payload(credit_card_purchase, line, account_ref=credit_card_purchase.ccc_account_id, payment_type='CreditCard', doc_number=credit_card_purchase.credit_card_purchase_number, credit=credit)
 
