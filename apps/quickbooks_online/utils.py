@@ -959,7 +959,7 @@ class QBOConnector:
         credit = False
 
         for i in range(0, len(line)):
-            if line[0]['Amount'] < 0:
+            if line[i]['Amount'] < 0:
                 credit = True
                 tax_amount = line[i][credit_card_purchase_lineitems[i].detail_type]['TaxAmount']
                 line[i]['Amount'] = abs(line[i]['Amount'])
