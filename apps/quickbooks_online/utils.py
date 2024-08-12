@@ -958,13 +958,14 @@ class QBOConnector:
         line = self.__construct_credit_card_purchase_lineitems(credit_card_purchase_lineitems, general_mappings)
         credit = False
 
-        if line[0]['Amount'] < 0:
-            credit = True
-            tax_amount = line[0][credit_card_purchase_lineitems[0].detail_type]['TaxAmount']
-            line[0]['Amount'] = abs(line[0]['Amount'])
-            line[0][credit_card_purchase_lineitems[0].detail_type]['TaxAmount'] = abs(tax_amount) if tax_amount else None
+        for i in range(0, len(line)):
+            if line[0]['Amount'] < 0:
+                credit = True
+                tax_amount = line[i][credit_card_purchase_lineitems[i].detail_type]['TaxAmount']
+                line[i]['Amount'] = abs(line[i]['Amount'])
+                line[i][credit_card_purchase_lineitems[i].detail_type]['TaxAmount'] = abs(tax_amount) if tax_amount else None
 
-        credit_card_purchase_payload = self.purchase_object_payload(credit_card_purchase, line, account_ref=credit_card_purchase.ccc_account_id, payment_type='CreditCard', doc_number=credit_card_purchase.credit_card_purchase_number, credit=credit)
+            credit_card_purchase_payload = self.purchase_object_payload(credit_card_purchase, line, account_ref=credit_card_purchase.ccc_account_id, payment_type='CreditCard', doc_number=credit_card_purchase.credit_card_purchase_number, credit=credit)
 
         logger.info("| Payload for Credit Card Purchase creation | Content: {{WORKSPACE_ID: {} EXPENSE_GROUP_ID: {} CREDIT_CARD_PURCHASE_PAYLOAD: {}}}".format(self.workspace_id, credit_card_purchase.expense_group.id, credit_card_purchase_payload))
         return credit_card_purchase_payload
