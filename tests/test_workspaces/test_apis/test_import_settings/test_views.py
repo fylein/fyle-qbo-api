@@ -1,5 +1,6 @@
 import json
 
+from django.urls import reverse
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from tests.helper import dict_compare_keys
 from tests.test_workspaces.test_apis.test_import_settings.fixtures import data
@@ -82,3 +83,33 @@ def test_import_settings(mocker, api_client, test_connection):
     assert response.status_code == 400
     response = json.loads(response.content)
     assert response['non_field_errors'] == ["Cannot change the code fields once they are imported"]
+
+
+def test_import_code_field_view(db, mocker, api_client, test_connection):
+    """
+    Test ImportCodeFieldView
+    """
+    workspace_id = 1
+    url = reverse('import-code-fields-config', kwargs={'workspace_id': workspace_id})
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
+
+    category_log, _ = ImportLog.objects.update_or_create(
+        attribute_type='CATEGORY',
+        workspace_id=workspace_id,
+        status='COMPLETE'
+    )
+
+    response = api_client.get(url)
+
+    assert response.status_code == 200
+    assert response.data == {
+        'ACCOUNT': False
+    }
+
+    category_log.delete()
+    response = api_client.get(url)
+
+    assert response.status_code == 200
+    assert response.data == {
+        'ACCOUNT': True
+    }
