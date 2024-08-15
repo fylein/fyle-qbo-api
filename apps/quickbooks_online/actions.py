@@ -178,10 +178,14 @@ def generate_export_url_and_update_expense(expense_group: ExpenseGroup) -> None:
             export_type=export_type,
             export_id=export_id
         )
+
     except Exception as error:
         # Defaulting it to QBO app url, worst case scenario if we're not able to parse it properly
         url = settings.QBO_APP_URL
         logger.error('Error while generating export url %s', error)
+
+    expense_group.export_url = url
+    expense_group.save()
 
     update_complete_expenses(expense_group.expenses.all(), url)
     post_accounting_export_summary(expense_group.workspace.fyle_org_id, expense_group.workspace.id, expense_group.fund_source)
