@@ -1,6 +1,9 @@
 import logging
+
+from fyle_integrations_platform_connector import PlatformConnector
 from apps.fyle.helpers import ExpenseGroupSearchFilter, ExpenseSearchFilter
 
+from apps.workspaces.models import FyleCredential, Workspace
 from django_filters.rest_framework import DjangoFilterBackend
 from django_q.tasks import async_task
 from rest_framework import generics
@@ -121,6 +124,11 @@ class SyncFyleDimensionView(generics.ListCreateAPIView):
         """
         Sync Data From Fyle
         """
+
+        # Check for a valid workspace and fyle creds and respond with 400 if not found
+        Workspace.objects.get(id=kwargs['workspace_id'])
+        FyleCredential.objects.get(workspace_id=kwargs['workspace_id'])
+
         async_task('apps.fyle.actions.sync_fyle_dimensions', kwargs['workspace_id'])
 
         return Response(status=status.HTTP_200_OK)
@@ -136,6 +144,11 @@ class RefreshFyleDimensionView(generics.ListCreateAPIView):
         """
         Sync data from Fyle
         """
+
+        # Check for a valid workspace and fyle creds and respond with 400 if not found
+        Workspace.objects.get(id=kwargs['workspace_id'])
+        FyleCredential.objects.get(workspace_id=kwargs['workspace_id'])
+
         async_task('apps.fyle.actions.refresh_fyle_dimension', kwargs['workspace_id'])
 
         return Response(status=status.HTTP_200_OK)
