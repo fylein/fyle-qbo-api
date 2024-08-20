@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework.views import status
 
 from apps.exceptions import handle_view_exceptions
-from apps.quickbooks_online.actions import get_preferences, refresh_quickbooks_dimensions, sync_quickbooks_dimensions
+from apps.quickbooks_online.actions import get_preferences
 from fyle_qbo_api.utils import LookupFieldMixin
 
 from .serializers import QuickbooksFieldSerializer

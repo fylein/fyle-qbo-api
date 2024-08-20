@@ -1,6 +1,5 @@
 import logging
 
-from fyle_integrations_platform_connector import PlatformConnector
 from apps.fyle.helpers import ExpenseGroupSearchFilter, ExpenseSearchFilter
 
 from apps.workspaces.models import FyleCredential, Workspace
@@ -15,8 +14,6 @@ from apps.fyle.actions import (
     get_custom_fields,
     get_expense_fields,
     get_expense_group_ids,
-    refresh_fyle_dimension,
-    sync_fyle_dimensions,
 )
 from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings
 from apps.fyle.queue import async_import_and_export_expenses
