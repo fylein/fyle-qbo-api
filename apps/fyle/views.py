@@ -2,6 +2,7 @@ import logging
 from apps.fyle.helpers import ExpenseGroupSearchFilter, ExpenseSearchFilter
 
 from django_filters.rest_framework import DjangoFilterBackend
+from django_q.tasks import async_task
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import status
@@ -120,7 +121,7 @@ class SyncFyleDimensionView(generics.ListCreateAPIView):
         """
         Sync Data From Fyle
         """
-        sync_fyle_dimensions(workspace_id=kwargs['workspace_id'])
+        async_task('apps.fyle.actions.sync_fyle_dimensions', kwargs['workspace_id'])
 
         return Response(status=status.HTTP_200_OK)
 
@@ -135,8 +136,7 @@ class RefreshFyleDimensionView(generics.ListCreateAPIView):
         """
         Sync data from Fyle
         """
-
-        refresh_fyle_dimension(workspace_id=kwargs['workspace_id'])
+        async_task('apps.fyle.actions.refresh_fyle_dimension', kwargs['workspace_id'])
 
         return Response(status=status.HTTP_200_OK)
 
