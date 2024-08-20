@@ -2,6 +2,7 @@ import logging
 
 from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
+from django_q.tasks import async_task
 from fyle_accounting_mappings.models import DestinationAttribute
 from fyle_accounting_mappings.serializers import DestinationAttributeSerializer
 from rest_framework import generics
@@ -73,7 +74,7 @@ class SyncQuickbooksDimensionView(generics.ListCreateAPIView):
 
     @handle_view_exceptions()
     def post(self, request, *args, **kwargs):
-        sync_quickbooks_dimensions(kwargs['workspace_id'])
+        async_task('apps.quickbooks_online.actions.sync_quickbooks_dimensions', kwargs['workspace_id'])
 
         return Response(status=status.HTTP_200_OK)
 
@@ -88,7 +89,7 @@ class RefreshQuickbooksDimensionView(generics.ListCreateAPIView):
         """
         Sync data from quickbooks
         """
-        refresh_quickbooks_dimensions(kwargs['workspace_id'])
+        async_task('apps.quickbooks_online.actions.refresh_quickbooks_dimensions', kwargs['workspace_id'])
 
         return Response(status=status.HTTP_200_OK)
 
