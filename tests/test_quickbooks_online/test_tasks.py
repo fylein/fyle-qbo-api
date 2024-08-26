@@ -1,10 +1,12 @@
 import json
 import logging
+from datetime import datetime
 import random
 from unittest import mock
 
 from django_q.models import Schedule
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping
+from apps.quickbooks_online.models import CreditCardPurchaseLineitem
 from qbosdk.exceptions import WrongParamsError
 
 from apps.fyle.models import Expense, ExpenseGroup, Reimbursement
@@ -1098,3 +1100,191 @@ def test_schedule_journal_entry_creation(db):
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'CREATING_JOURNAL_ENTRY'
+
+
+def test_skipping_bill_creation(db, mocker):
+    workspace_id = 4
+
+    expense_group = ExpenseGroup.objects.get(id=23)
+    expense_group.exported_at = None
+    expense_group.save()
+
+
+    error = Error.objects.filter(workspace_id=workspace_id, expense_group=expense_group).delete()
+
+    error = Error.objects.create(
+        workspace_id=workspace_id,
+        type='NETSUITE_ERROR',
+        error_title='NetSuite System Error',
+        error_detail='An error occured in a upsert request: Please enter value(s) for: Location',
+        expense_group=expense_group,
+        repetition_count=106
+    )
+
+    print(error.__dict__)
+
+    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+    task_log.type = 'FETCHING_EXPENSES'
+    task_log.status = 'READY'
+    task_log.save()
+
+    schedule_bills_creation(workspace_id, [23], True, 'PERSONAL', 1)
+
+    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+    assert task_log.type == 'FETCHING_EXPENSES'
+
+    Error.objects.filter(id=error.id).update(updated_at=datetime(2024, 8, 20))
+
+    schedule_bills_creation(workspace_id, [23], True, 'CCC', 1)
+
+    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+    assert task_log.type == 'CREATING_BILL'
+
+
+def test_skipping_journal_creation(db, mocker):
+    workspace_id = 4
+
+
+    expense_group = ExpenseGroup.objects.get(id=23)
+    expense_group.exported_at = None
+    expense_group.save()
+
+    error = Error.objects.filter(workspace_id=workspace_id, expense_group=expense_group).delete()
+
+    error = Error.objects.create(
+        workspace_id=workspace_id,
+        type='NETSUITE_ERROR',
+        error_title='NetSuite System Error',
+        error_detail='An error occured in a upsert request: Please enter value(s) for: Location',
+        expense_group=expense_group,
+        repetition_count=106
+    )
+
+    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+    task_log.type = 'FETCHING_EXPENSES'
+    task_log.status = 'READY'
+    task_log.save()
+
+    schedule_journal_entry_creation(workspace_id, [23], True, 'CCC', 1)
+
+    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+    assert task_log.type == 'FETCHING_EXPENSES'
+
+    Error.objects.filter(id=error.id).update(updated_at=datetime(2024, 8, 20))
+
+    schedule_journal_entry_creation(workspace_id, [23], True, 'PERSONAL', 1)
+
+    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+    assert task_log.type == 'CREATING_JOURNAL_ENTRY'
+
+
+def test_skipping_qbo_expense_creation(db, mocker):
+    workspace_id = 4
+
+    expense_group = ExpenseGroup.objects.get(id=23)
+    expense_group.exported_at = None
+    expense_group.save()
+
+    error = Error.objects.filter(workspace_id=workspace_id, expense_group=expense_group).delete()
+
+    error = Error.objects.create(
+        workspace_id=workspace_id,
+        type='NETSUITE_ERROR',
+        error_title='NetSuite System Error',
+        error_detail='An error occured in a upsert request: Please enter value(s) for: Location',
+        expense_group=expense_group,
+        repetition_count=106
+    )
+
+    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+    task_log.type = 'FETCHING_EXPENSES'
+    task_log.status = 'READY'
+    task_log.save()
+
+    schedule_qbo_expense_creation(workspace_id, [23], True, 'CCC', 1)
+
+    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+    assert task_log.type == 'FETCHING_EXPENSES'
+
+    Error.objects.filter(id=error.id).update(updated_at=datetime(2024, 8, 20))
+
+    schedule_qbo_expense_creation(workspace_id, [23], True, 'PERSONAL', 1)
+
+    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+    assert task_log.type == 'CREATING_EXPENSE'
+
+
+def test_skipping_credit_card_charge_creation(db, mocker):
+    workspace_id = 3
+
+    expense_group = ExpenseGroup.objects.get(id=17)
+    expense_group.exported_at = None
+    expense_group.save()
+    
+    credit = CreditCardPurchase.objects.get(expense_group_id=17)
+    CreditCardPurchaseLineitem.objects.filter(credit_card_purchase=credit).delete()
+    TaskLog.objects.filter(credit_card_purchase=credit).update(credit_card_purchase=None)
+
+    credit.delete()
+
+    error = Error.objects.create(
+        workspace_id=workspace_id,
+        type='NETSUITE_ERROR',
+        error_title='NetSuite System Error',
+        error_detail='An error occured in a upsert request: Please enter value(s) for: Location',
+        expense_group=expense_group,
+        repetition_count=106
+    )
+
+    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+    task_log.type = 'FETCHING_EXPENSES'
+    task_log.status = 'READY'
+    task_log.save()
+
+    schedule_credit_card_purchase_creation(workspace_id, [17], True, 'CCC', 1)
+
+    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+    assert task_log.type == 'FETCHING_EXPENSES'
+
+    Error.objects.filter(id=error.id).update(updated_at=datetime(2024, 8, 20))
+
+    schedule_credit_card_purchase_creation(workspace_id, [17], True, 'CCC', 1)
+
+    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+    assert task_log.type == 'CREATING_CREDIT_CARD_PURCHASE'
+
+
+def test_skipping_cheque_creation(db, mocker):
+    workspace_id = 4
+
+    expense_group = ExpenseGroup.objects.get(id=23)
+    expense_group.exported_at = None
+    expense_group.save()
+
+    error = Error.objects.filter(workspace_id=workspace_id, expense_group=expense_group).delete()
+
+    error = Error.objects.create(
+        workspace_id=workspace_id,
+        type='NETSUITE_ERROR',
+        error_title='NetSuite System Error',
+        error_detail='An error occured in a upsert request: Please enter value(s) for: Location',
+        expense_group_id=expense_group.id,
+        repetition_count=106
+    )
+
+    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+    task_log.type = 'FETCHING_EXPENSES'
+    task_log.status = 'READY'
+    task_log.save()
+
+    schedule_cheques_creation(workspace_id, [23], True, 'PERSONAL', 1)
+
+    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+    assert task_log.type == 'FETCHING_EXPENSES'
+
+    Error.objects.filter(id=error.id).update(updated_at=datetime(2024, 8, 20))
+
+    schedule_cheques_creation(workspace_id, [23], True, 'CCC', 1)
+
+    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+    assert task_log.type == 'CREATING_CHECK'

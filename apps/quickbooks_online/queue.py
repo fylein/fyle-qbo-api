@@ -48,7 +48,14 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_
         in_progress_expenses = []
 
         for index, expense_group in enumerate(expense_groups):
+            print(expense_group.id, workspace_id)
             error = errors.filter(workspace_id=workspace_id, expense_group=expense_group, is_resolved=False).first()
+            print(is_auto_export)
+            print(error.__dict__)
+            print(datetime.now().replace(tzinfo=timezone.utc))
+            print(error.updated_at)
+            print(datetime.now().replace(tzinfo=timezone.utc) - error.updated_at)
+            print(is_auto_export and interval_hours and error and error.repetition_count > 100 and datetime.now().replace(tzinfo=timezone.utc) - error.updated_at <= timedelta(hours=24))
             skip_export = validate_failing_export(is_auto_export, interval_hours, error)
             if skip_export:
                 logger.info('Skipping expense group %s as it has %s errors', expense_group.id, error.repetition_count)
@@ -262,7 +269,6 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
     """
     if expense_group_ids:
         expense_groups = ExpenseGroup.objects.filter(Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']), workspace_id=workspace_id, id__in=expense_group_ids, qboexpense__id__isnull=True, exported_at__isnull=True).all()
-
         errors = Error.objects.filter(workspace_id=workspace_id, is_resolved=False, expense_group_id__in=expense_group_ids).all()
 
         chain_tasks = []
