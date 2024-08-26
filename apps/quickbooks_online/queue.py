@@ -48,14 +48,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_
         in_progress_expenses = []
 
         for index, expense_group in enumerate(expense_groups):
-            print(expense_group.id, workspace_id)
             error = errors.filter(workspace_id=workspace_id, expense_group=expense_group, is_resolved=False).first()
-            print(is_auto_export)
-            print(error.__dict__)
-            print(datetime.now().replace(tzinfo=timezone.utc))
-            print(error.updated_at)
-            print(datetime.now().replace(tzinfo=timezone.utc) - error.updated_at)
-            print(is_auto_export and interval_hours and error and error.repetition_count > 100 and datetime.now().replace(tzinfo=timezone.utc) - error.updated_at <= timedelta(hours=24))
             skip_export = validate_failing_export(is_auto_export, interval_hours, error)
             if skip_export:
                 logger.info('Skipping expense group %s as it has %s errors', expense_group.id, error.repetition_count)
