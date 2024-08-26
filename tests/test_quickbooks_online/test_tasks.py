@@ -1121,8 +1121,6 @@ def test_skipping_bill_creation(db, mocker):
         repetition_count=106
     )
 
-    print(error.__dict__)
-
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     task_log.type = 'FETCHING_EXPENSES'
     task_log.status = 'READY'
