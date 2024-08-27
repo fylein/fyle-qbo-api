@@ -20,5 +20,5 @@ def prepend_code_to_name(prepend_code_in_name: bool, value: str, code: str = Non
     Format the attribute name based on the use_code_in_naming flag
     """
     if prepend_code_in_name and code:
-        return "{} {}".format(code, value)
+        return "{}: {}".format(code, value)
     return value

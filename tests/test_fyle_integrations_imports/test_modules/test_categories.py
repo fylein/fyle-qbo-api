@@ -529,7 +529,7 @@ def test_disable_categories(
         workspace_id=workspace_id,
         attribute_type='CATEGORY',
         display_name='Category',
-        value='old_category_code old_category',
+        value='old_category_code: old_category',
         source_id='source_id_123',
         active=True
     )
@@ -544,7 +544,7 @@ def test_disable_categories(
     }
 
     payload = [{
-        'name': 'old_category_code old_category',
+        'name': 'old_category_code: old_category',
         'code': 'destination_id',
         'is_enabled': False,
         'id': 'source_id_123'
@@ -578,7 +578,7 @@ def test_get_existing_fyle_attributes(
     paginated_destination_attribute_values = [attribute.value for attribute in paginated_destination_attributes_without_duplicates]
     existing_fyle_attributes_map = category.get_existing_fyle_attributes(paginated_destination_attribute_values)
 
-    assert existing_fyle_attributes_map == {'123 qbo': '10095'}
+    assert existing_fyle_attributes_map == {'123: qbo': '10095'}
 
 
 def test_construct_fyle_payload_with_code(
@@ -604,8 +604,6 @@ def test_construct_fyle_payload_with_code(
         existing_fyle_attributes_map
     )
 
-    print(fyle_payload)
-
     assert fyle_payload == []
 
     # create new case
@@ -627,7 +625,7 @@ def test_construct_fyle_payload_with_code(
             'is_enabled': True
         },
         {
-            'name': '123 QBO',
+            'name': '123: QBO',
             'code': '10085',
             'is_enabled': True
         }

@@ -120,7 +120,7 @@ def add_expense_destination_attributes_3():
         workspace_id=1,
         attribute_type='CATEGORY',
         display_name='Category',
-        value="123 QBO",
+        value="123: QBO",
         source_id='10095',
         detail='Merchant - Platform APIs, Id - 10085',
         active=True
