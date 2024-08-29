@@ -147,7 +147,7 @@ class ImportSettingsSerializer(serializers.ModelSerializer):
         if not data.get('general_mappings'):
             raise serializers.ValidationError('General mappings are required')
 
-        workspace_id = self.__dict__.get('_kwargs', {}).get('data', {}).get('workspace_id')
+        workspace_id = getattr(self.instance, 'id', None)
         if not workspace_id:
             workspace_id = self.context['request'].parser_context.get('kwargs').get('workspace_id')
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
