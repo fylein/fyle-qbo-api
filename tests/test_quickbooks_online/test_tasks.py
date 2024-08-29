@@ -1109,7 +1109,6 @@ def test_skipping_bill_creation(db, mocker):
     expense_group.exported_at = None
     expense_group.save()
 
-
     error = Error.objects.filter(workspace_id=workspace_id, expense_group=expense_group).delete()
 
     error = Error.objects.create(
@@ -1141,7 +1140,6 @@ def test_skipping_bill_creation(db, mocker):
 
 def test_skipping_journal_creation(db, mocker):
     workspace_id = 4
-
 
     expense_group = ExpenseGroup.objects.get(id=23)
     expense_group.exported_at = None
@@ -1218,7 +1216,7 @@ def test_skipping_credit_card_charge_creation(db, mocker):
     expense_group = ExpenseGroup.objects.get(id=17)
     expense_group.exported_at = None
     expense_group.save()
-    
+
     credit = CreditCardPurchase.objects.get(expense_group_id=17)
     CreditCardPurchaseLineitem.objects.filter(credit_card_purchase=credit).delete()
     TaskLog.objects.filter(credit_card_purchase=credit).update(credit_card_purchase=None)
