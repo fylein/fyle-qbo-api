@@ -180,15 +180,15 @@ def get_credit_card_purchase_number(expense_group: ExpenseGroup, expense: Expens
 
 
 def get_bill_number(expense_group: ExpenseGroup):
-    description = expense_group.description
+    expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=expense_group.workspace_id)
+
+    group_fields = expense_group_settings.reimbursable_expense_group_fields \
+        if expense_group.fund_source == 'PERSONAL' \
+        else expense_group_settings.corporate_credit_card_expense_group_fields
 
     bill_number_field = 'claim_number'
-    if 'expense_id' in description:
+    if 'expense_id' in group_fields:
         bill_number_field = 'expense_number'
-    elif 'report_id' in description:
-        bill_number_field = 'claim_number'
-    elif 'settlement_id' in description:
-        bill_number_field = 'payment_number'
 
     bill_number = expense_group.expenses.first().__getattribute__(bill_number_field)
     return bill_number
