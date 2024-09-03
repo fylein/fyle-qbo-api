@@ -630,6 +630,7 @@ def process_bill_payments(bill: Bill, workspace_id: int, task_log: TaskLog):
 
         task_log.save()
 
+
 def validate_for_skipping_payment(bill: Bill, workspace_id: int):
     task_log = TaskLog.objects.filter(task_id='PAYMENT_{}'.format(bill.expense_group.id), workspace_id=workspace_id, type='CREATING_BILL_PAYMENT').first()
     if task_log:
@@ -652,6 +653,7 @@ def validate_for_skipping_payment(bill: Bill, workspace_id: int):
                 return True
 
     return False
+
 
 def create_bill_payment(workspace_id):
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)

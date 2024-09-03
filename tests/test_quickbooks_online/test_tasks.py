@@ -1,7 +1,6 @@
 import json
 import logging
 from datetime import datetime, timedelta, timezone
-from dateutil.relativedelta import relativedelta
 import random
 from unittest import mock
 
@@ -1287,7 +1286,7 @@ def test_skipping_cheque_creation(db, mocker):
     assert task_log.type == 'CREATING_CHECK'
 
 
-def test_create_bill_payment(mocker, db):
+def test_skipping_bill_payment(mocker, db):
     mocker.patch('apps.quickbooks_online.tasks.load_attachments', return_value=[])
     mocker.patch('fyle_integrations_platform_connector.apis.Reimbursements.sync', return_value=None)
     mocker.patch('fyle_integrations_platform_connector.apis.Expenses.get', return_value=[])
@@ -1329,7 +1328,7 @@ def test_create_bill_payment(mocker, db):
 
     task_log = TaskLog.objects.get(workspace_id=workspace_id, type='CREATING_BILL_PAYMENT', task_id='PAYMENT_{}'.format(bill.expense_group.id))
     assert task_log.updated_at == updated_at
-    
+
     now = datetime.now().replace(tzinfo=timezone.utc)
     updated_at = now - timedelta(days=25)
     # Update created_at to more than 2 months ago (more than 60 days)
