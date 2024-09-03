@@ -4,6 +4,9 @@ import traceback
 from datetime import datetime, timezone
 from typing import List
 
+from dateutil.relativedelta import relativedelta
+from django.utils import timezone as django_timezone
+
 from django.db import transaction
 from fyle_qbo_api.logging_middleware import get_logger
 from apps.fyle.helpers import get_filter_credit_expenses
@@ -627,6 +630,28 @@ def process_bill_payments(bill: Bill, workspace_id: int, task_log: TaskLog):
 
         task_log.save()
 
+def validate_for_skipping_payment(bill: Bill, workspace_id: int):
+    task_log = TaskLog.objects.filter(task_id='PAYMENT_{}'.format(bill.expense_group.id), workspace_id=workspace_id, type='CREATING_BILL_PAYMENT').first()
+    if task_log:
+        now = django_timezone.now()
+
+        if now - relativedelta(months=2) > task_log.created_at:
+            bill.is_retired = True
+            bill.save()
+            return True
+
+        elif now - relativedelta(months=1) > task_log.created_at and now - relativedelta(months=2) < task_log.created_at:
+            # if updated_at is within 1 months will be skipped
+            if task_log.updated_at > now - relativedelta(months=1):
+                return True
+
+        # If created is within 1 month
+        elif now - relativedelta(months=1) < task_log.created_at:
+            # Skip if updated within the last week
+            if task_log.updated_at > now - relativedelta(weeks=1):
+                return True
+
+    return False
 
 def create_bill_payment(workspace_id):
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
@@ -641,6 +666,9 @@ def create_bill_payment(workspace_id):
         for bill in bills:
             expense_group_reimbursement_status = check_expenses_reimbursement_status(bill.expense_group.expenses.all(), workspace_id=workspace_id, platform=platform, filter_credit_expenses=filter_credit_expenses)
             if expense_group_reimbursement_status:
+                skip_payment = validate_for_skipping_payment(bill=bill, workspace_id=workspace_id)
+                if skip_payment:
+                    continue
                 task_log, _ = TaskLog.objects.update_or_create(workspace_id=workspace_id, task_id='PAYMENT_{}'.format(bill.expense_group.id), defaults={'status': 'IN_PROGRESS', 'type': 'CREATING_BILL_PAYMENT'})
                 process_bill_payments(bill, workspace_id, task_log)
 

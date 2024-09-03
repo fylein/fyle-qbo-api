@@ -194,6 +194,7 @@ class Bill(models.Model):
     private_note = models.TextField(help_text='Bill Description')
     payment_synced = models.BooleanField(help_text='Payment synced status', default=False)
     paid_on_qbo = models.BooleanField(help_text='Payment status in QBO', default=False)
+    is_retired = models.BooleanField(help_text='Is Payment sync retried', default=False)
     exchange_rate = models.FloatField(help_text='Exchange rate', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
