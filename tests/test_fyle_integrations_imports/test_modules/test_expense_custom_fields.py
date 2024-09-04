@@ -147,6 +147,4 @@ def test_construct_fyle_payload(db):
         platform,
     )
 
-    print(fyle_payload)
-
     assert fyle_payload == expense_custom_field_data['create_fyle_expense_custom_fields_payload_create_new_case']
