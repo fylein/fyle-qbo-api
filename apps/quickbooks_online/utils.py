@@ -731,6 +731,7 @@ class QBOConnector:
             'TxnDate': bill.transaction_date,
             'CurrencyRef': {'value': bill.currency},
             'PrivateNote': bill.private_note,
+            'DocNumber': bill.bill_number,
             'Line': lines,
         }
 
