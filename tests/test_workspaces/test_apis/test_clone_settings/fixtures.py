@@ -65,8 +65,7 @@ data = {
                     "Expense"
                 ],
                 "import_tax_codes": False,
-                "import_vendors_as_merchants": False,
-                "import_code_fields": []
+                "import_vendors_as_merchants": False
             },
             "general_mappings": {
                 "default_tax_code": {
@@ -203,8 +202,7 @@ data = {
                     "Expense"
                 ],
                 "import_tax_codes": False,
-                "import_vendors_as_merchants": False,
-                "import_code_fields": []
+                "import_vendors_as_merchants": False
             },
             "general_mappings": {
                 "default_tax_code": {

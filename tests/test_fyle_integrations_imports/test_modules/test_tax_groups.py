@@ -190,4 +190,6 @@ def test_construct_fyle_payload(db):
         existing_fyle_attributes_map,
     )
 
+    print(fyle_payload)
+
     assert fyle_payload == tax_groups_data['create_fyle_tax_groups_payload_create_new_case']

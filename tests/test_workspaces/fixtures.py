@@ -72,7 +72,6 @@ data = {
         'name_in_journal_entry': 'MERCHANT',
         'is_multi_currency_allowed': True,
         'is_tax_override_enabled': False,
-        'import_code_fields': [],
         'workspace': 4,
     },
     'expenses': [

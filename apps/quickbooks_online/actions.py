@@ -120,8 +120,6 @@ def refresh_quickbooks_dimensions(workspace_id: int):
                 False,
                 workspace_general_settings.charts_of_accounts if 'accounts' in destination_sync_methods else None,
                 False,
-                True,
-                True if 'ACCOUNT' in workspace_general_settings.import_code_fields else False,
                 q_options={'cluster': 'import'}
             )
 
