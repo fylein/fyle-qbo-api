@@ -504,7 +504,7 @@ def test_disable_categories(
     mock_platform = mocker.patch('fyle_integrations_imports.modules.categories.PlatformConnector')
     bulk_post_call = mocker.patch.object(mock_platform.return_value.categories, 'post_bulk')
 
-    disable_categories(workspace_id, categories_to_disable)
+    disable_categories(workspace_id, categories_to_disable, is_import_to_fyle_enabled=True)
 
     assert bulk_post_call.call_count == 1
 
@@ -517,7 +517,7 @@ def test_disable_categories(
         }
     }
 
-    disable_categories(workspace_id, categories_to_disable)
+    disable_categories(workspace_id, categories_to_disable, is_import_to_fyle_enabled=True)
     assert bulk_post_call.call_count == 1
 
     # Test disable category with code in naming
@@ -550,7 +550,7 @@ def test_disable_categories(
         'id': 'source_id_123'
     }]
 
-    bulk_payload = disable_categories(workspace_id, categories_to_disable)
+    bulk_payload = disable_categories(workspace_id, categories_to_disable, is_import_to_fyle_enabled=True)
     assert bulk_payload == payload
 
 
