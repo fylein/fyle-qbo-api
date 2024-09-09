@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'apps.fyle',
     'apps.quickbooks_online',
     'apps.tasks',
+    'apps.integration_helper'
 ]
 
 MIDDLEWARE = [
