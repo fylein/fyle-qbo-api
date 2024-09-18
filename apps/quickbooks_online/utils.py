@@ -186,8 +186,11 @@ class QBOConnector:
         accounts_generator = self.connection.accounts.get_all_generator()
         category_sync_version = 'v2'
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+        is_category_import_to_fyle_enabled = False
+
         if general_settings:
             category_sync_version = general_settings.category_sync_version
+            is_category_import_to_fyle_enabled = general_settings.import_categories
 
         for accounts in accounts_generator:
             account_attributes = {'account': [], 'credit_card_account': [], 'bank_account': [], 'accounts_payable': []}
@@ -254,7 +257,8 @@ class QBOConnector:
                         self.workspace_id,
                         True,
                         attribute_type.title().replace('_', ' '),
-                        attribute_disable_callback_path=ATTRIBUTE_CALLBACK_PATH.get(attribute_type.upper())
+                        attribute_disable_callback_path=ATTRIBUTE_CALLBACK_PATH.get(attribute_type.upper()),
+                        is_import_to_fyle_enabled=is_category_import_to_fyle_enabled
                     )
 
         last_synced_time = get_last_synced_time(self.workspace_id, 'CATEGORY')
