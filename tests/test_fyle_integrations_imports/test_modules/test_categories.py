@@ -7,8 +7,9 @@ from fyle_accounting_mappings.models import (
 from apps.quickbooks_online.utils import QBOConnector
 from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSettings, FyleCredential
 from fyle_integrations_platform_connector import PlatformConnector
-from fyle_integrations_imports.modules.categories import Category
+from fyle_integrations_imports.modules.categories import Category, disable_categories
 from tests.test_fyle_integrations_imports.test_modules.fixtures import categories_data
+from tests.helper import dict_compare_keys
 
 
 def test_sync_destination_attributes(mocker, db):
@@ -474,3 +475,160 @@ def test_construct_fyle_payload(db):
     )
 
     assert fyle_payload == categories_data['create_fyle_category_payload_create_disable_case']
+
+
+def test_disable_categories(
+    db,
+    mocker
+):
+    workspace_id = 1
+
+    categories_to_disable = {
+        'destination_id': {
+            'value': 'old_category',
+            'updated_value': 'new_category',
+            'code': 'old_category_code',
+            'updated_code': 'old_category_code'
+        }
+    }
+
+    ExpenseAttribute.objects.create(
+        workspace_id=workspace_id,
+        attribute_type='CATEGORY',
+        display_name='Category',
+        value='old_category',
+        source_id='source_id',
+        active=True
+    )
+
+    mock_platform = mocker.patch('fyle_integrations_imports.modules.categories.PlatformConnector')
+    bulk_post_call = mocker.patch.object(mock_platform.return_value.categories, 'post_bulk')
+
+    disable_categories(workspace_id, categories_to_disable, is_import_to_fyle_enabled=True)
+
+    assert bulk_post_call.call_count == 1
+
+    categories_to_disable = {
+        'destination_id': {
+            'value': 'old_category_2',
+            'updated_value': 'new_category',
+            'code': 'old_category_code',
+            'updated_code': 'new_category_code'
+        }
+    }
+
+    disable_categories(workspace_id, categories_to_disable, is_import_to_fyle_enabled=True)
+    assert bulk_post_call.call_count == 1
+
+    # Test disable category with code in naming
+    general_setting = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
+    general_setting.import_code_fields = ['ACCOUNT']
+    general_setting.save()
+
+    ExpenseAttribute.objects.create(
+        workspace_id=workspace_id,
+        attribute_type='CATEGORY',
+        display_name='Category',
+        value='old_category_code: old_category',
+        source_id='source_id_123',
+        active=True
+    )
+
+    categories_to_disable = {
+        'destination_id': {
+            'value': 'old_category',
+            'updated_value': 'new_category',
+            'code': 'old_category_code',
+            'updated_code': 'old_category_code'
+        }
+    }
+
+    payload = [{
+        'name': 'old_category_code: old_category',
+        'code': 'destination_id',
+        'is_enabled': False,
+        'id': 'source_id_123'
+    }]
+
+    bulk_payload = disable_categories(workspace_id, categories_to_disable, is_import_to_fyle_enabled=True)
+    assert bulk_payload == payload
+
+
+def test_get_existing_fyle_attributes(
+    db,
+    add_expense_destination_attributes_1,
+    add_expense_destination_attributes_3
+):
+    workspace_id = 1
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
+    category = Category(1, 'ACCOUNT', None,  qbo_connection, ['items'], True, False, ['Expense', 'Fixed Asset'])
+
+    paginated_destination_attributes = DestinationAttribute.objects.filter(workspace_id=1, attribute_type='ACCOUNT')
+    paginated_destination_attributes_without_duplicates = category.remove_duplicate_attributes(paginated_destination_attributes)
+    paginated_destination_attribute_values = [attribute.value for attribute in paginated_destination_attributes_without_duplicates]
+    existing_fyle_attributes_map = category.get_existing_fyle_attributes(paginated_destination_attribute_values)
+
+    assert existing_fyle_attributes_map == {'internet': '10091', 'meals': '10092'}
+
+    # with code prepending
+    category.prepend_code_to_name = True
+    paginated_destination_attributes = DestinationAttribute.objects.filter(workspace_id=1, attribute_type='ACCOUNT', code__isnull=False)
+    paginated_destination_attributes_without_duplicates = category.remove_duplicate_attributes(paginated_destination_attributes)
+    paginated_destination_attribute_values = [attribute.value for attribute in paginated_destination_attributes_without_duplicates]
+    existing_fyle_attributes_map = category.get_existing_fyle_attributes(paginated_destination_attribute_values)
+
+    assert existing_fyle_attributes_map == {'123: qbo': '10095'}
+
+
+def test_construct_fyle_payload_with_code(
+    db,
+    add_expense_destination_attributes_1,
+    add_expense_destination_attributes_3
+):
+    workspace_id = 1
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
+    category = Category(1, 'ACCOUNT', None,  qbo_connection, ['items'], True, False, ['Expense', 'Fixed Asset'])
+    category.prepend_code_to_name = True
+
+    destination_ids = ['10085', 'Internet', 'Meals']
+    paginated_destination_attributes = DestinationAttribute.objects.filter(workspace_id=1, attribute_type='ACCOUNT', destination_id__in=destination_ids)
+    paginated_destination_attributes_without_duplicates = category.remove_duplicate_attributes(paginated_destination_attributes)
+    paginated_destination_attribute_values = [attribute.value for attribute in paginated_destination_attributes_without_duplicates]
+    existing_fyle_attributes_map = category.get_existing_fyle_attributes(paginated_destination_attribute_values)
+
+    # already exists
+    fyle_payload = category.construct_fyle_payload(
+        paginated_destination_attributes,
+        existing_fyle_attributes_map
+    )
+
+    assert fyle_payload == []
+
+    # create new case
+    existing_fyle_attributes_map = {}
+    fyle_payload = category.construct_fyle_payload(
+        paginated_destination_attributes,
+        existing_fyle_attributes_map
+    )
+
+    data = [
+        {
+            'name': 'Internet',
+            'code': 'Internet',
+            'is_enabled': True
+        },
+        {
+            'name': 'Meals',
+            'code': 'Meals',
+            'is_enabled': True
+        },
+        {
+            'name': '123: QBO',
+            'code': '10085',
+            'is_enabled': True
+        }
+    ]
+
+    assert dict_compare_keys(fyle_payload, data) == [], 'Keys mismatch'

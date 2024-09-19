@@ -14,6 +14,7 @@ from apps.quickbooks_online.models import (
     CreditCardPurchaseLineitem,
     JournalEntry,
     JournalEntryLineitem,
+    get_bill_number,
     get_ccc_account_id,
     get_class_id_or_none,
     get_customer_id_or_none,
@@ -303,6 +304,54 @@ def test_get_ccc_account_id():
     for lineitem in expenses:
         ccc_account_id = get_ccc_account_id(workspace_general_settings, general_mapping, lineitem, description)
         assert ccc_account_id == '41'
+
+
+@pytest.mark.django_db(databases=['default'])
+def test_get_bill_number():
+    expense_group = ExpenseGroup.objects.get(id=3)
+    expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=expense_group.workspace_id)
+
+    # Reimbursable - group by report
+    expense_group.fund_source = 'PERSONAL'
+    expense_group.save()
+
+    if 'expense_id' in expense_group_settings.reimbursable_expense_group_fields:
+        expense_group_settings.reimbursable_expense_group_fields.remove('expense_id')
+        expense_group_settings.save()
+
+    bill_number = get_bill_number(expense_group)
+    assert bill_number.startswith('C/'), 'Bill numbers for bills grouped by report should be report numbers'
+
+    # Reimbursable - group by expense
+    expense_group.fund_source = 'PERSONAL'
+    expense_group.save()
+
+    expense_group_settings.reimbursable_expense_group_fields.append('expense_id')
+    expense_group_settings.save()
+
+    bill_number = get_bill_number(expense_group)
+    assert bill_number.startswith('E/'), 'Bill numbers for bills grouped by expense should be expense numbers'
+
+    # CCC - group by report
+    expense_group.fund_source = 'CCC'
+    expense_group.save()
+
+    if 'expense_id' in expense_group_settings.corporate_credit_card_expense_group_fields:
+        expense_group_settings.corporate_credit_card_expense_group_fields.remove('expense_id')
+        expense_group_settings.save()
+
+    bill_number = get_bill_number(expense_group)
+    assert bill_number.startswith('C/'), 'Bill numbers for bills grouped by report should be report numbers'
+
+    # CCC - group by expense
+    expense_group.fund_source = 'CCC'
+    expense_group.save()
+
+    expense_group_settings.corporate_credit_card_expense_group_fields.append('expense_id')
+    expense_group_settings.save()
+
+    bill_number = get_bill_number(expense_group)
+    assert bill_number.startswith('E/'), 'Bill numbers for bills grouped by expense should be expense numbers'
 
 
 def test_support_post_date_integrations(mocker, db):

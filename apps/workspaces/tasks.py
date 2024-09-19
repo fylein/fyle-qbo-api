@@ -221,3 +221,11 @@ def async_update_workspace_name(workspace: Workspace, access_token: str):
 
     workspace.name = org_name
     workspace.save()
+
+
+def get_import_configuration_model_path():
+    return 'apps.workspaces.models.WorkspaceGeneralSettings'
+
+
+def get_error_model_path():
+    return 'apps.tasks.models.Error'

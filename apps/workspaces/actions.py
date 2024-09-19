@@ -286,7 +286,8 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
                 is_auto_export=export_mode == 'AUTO',
-                fund_source='PERSONAL'
+                fund_source='PERSONAL',
+                interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0
             )
 
         elif general_settings.reimbursable_expenses_object == 'EXPENSE':
@@ -294,7 +295,8 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
                 is_auto_export=export_mode == 'AUTO',
-                fund_source='PERSONAL'
+                fund_source='PERSONAL',
+                interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0
             )
 
         elif general_settings.reimbursable_expenses_object == 'CHECK':
@@ -302,7 +304,8 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
                 is_auto_export=export_mode == 'AUTO',
-                fund_source='PERSONAL'
+                fund_source='PERSONAL',
+                interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0
             )
 
         elif general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY':
@@ -310,7 +313,8 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
                 is_auto_export=export_mode == 'AUTO',
-                fund_source='PERSONAL'
+                fund_source='PERSONAL',
+                interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0
             )
 
     if general_settings.corporate_credit_card_expenses_object:
@@ -324,7 +328,8 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
                 is_auto_export=export_mode == 'AUTO',
-                fund_source='CCC'
+                fund_source='CCC',
+                interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0
             )
 
         elif general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE':
@@ -332,7 +337,8 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
                 is_auto_export=export_mode == 'AUTO',
-                fund_source='CCC'
+                fund_source='CCC',
+                interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0
             )
 
         elif general_settings.corporate_credit_card_expenses_object == 'DEBIT CARD EXPENSE':
@@ -340,7 +346,8 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
                 is_auto_export=export_mode == 'AUTO',
-                fund_source='CCC'
+                fund_source='CCC',
+                interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0
             )
 
         elif general_settings.corporate_credit_card_expenses_object == 'BILL':
@@ -348,7 +355,8 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
                 is_auto_export=export_mode == 'AUTO',
-                fund_source='CCC'
+                fund_source='CCC',
+                interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0
             )
     if is_expenses_exported:
         last_export_detail.last_exported_at = last_exported_at

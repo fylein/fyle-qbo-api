@@ -8,6 +8,8 @@ from fyle.platform.exceptions import InternalServerError, RetryException, WrongP
 
 from apps.fyle.models import Expense, ExpenseGroup
 from apps.fyle.actions import (
+    refresh_fyle_dimension,
+    sync_fyle_dimensions,
     update_expenses_in_progress,
     mark_expenses_as_skipped,
     mark_accounting_export_summary_as_synced,
@@ -164,3 +166,28 @@ def test_handle_post_accounting_export_summary_exception(db):
         settings.QBO_INTEGRATION_APP_URL
     )
     assert expense.accounting_export_summary['id'] == expense_id
+
+
+def test_sync_fyle_dimensions(db):
+    workspace = Workspace.objects.get(id=3)
+
+    with mock.patch('fyle_integrations_platform_connector.fyle_integrations_platform_connector.PlatformConnector.import_fyle_dimensions') as mock_call:
+        mock_call.return_value = None
+
+        sync_fyle_dimensions(3)
+        assert workspace.source_synced_at is not None
+
+        # If dimensions were synced ≤ 1 day ago, they shouldn't be synced again
+        old_source_synced_at = workspace.source_synced_at
+        sync_fyle_dimensions(3)
+        assert workspace.source_synced_at == old_source_synced_at
+
+
+def test_refresh_fyle_dimension(db):
+    workspace = Workspace.objects.get(id=3)
+
+    with mock.patch('fyle_integrations_platform_connector.fyle_integrations_platform_connector.PlatformConnector.import_fyle_dimensions') as mock_call:
+        mock_call.return_value = None
+
+        refresh_fyle_dimension(3)
+        assert workspace.source_synced_at is not None
