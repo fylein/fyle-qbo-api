@@ -191,6 +191,10 @@ def get_bill_number(expense_group: ExpenseGroup):
         bill_number_field = 'expense_number'
 
     bill_number = expense_group.expenses.first().__getattribute__(bill_number_field)
+
+    count = Bill.objects.filter(bill_number=bill_number, expense_group__workspace_id=expense_group.workspace.id).count()
+    if count > 0:
+        bill_number = '{} - {}'.format(bill_number, count)
     return bill_number
 
 
