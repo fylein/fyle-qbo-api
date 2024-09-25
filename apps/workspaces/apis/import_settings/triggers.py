@@ -1,5 +1,6 @@
 from typing import Dict, List
 
+from django_q.tasks import async_task
 from django.db.models import Q
 from fyle_accounting_mappings.models import MappingSetting, ExpenseAttribute
 
@@ -70,10 +71,12 @@ class ImportSettingsTrigger:
 
             self.add_department_grouping(department_setting['source_field'])
 
-    def post_save_workspace_general_settings(self, workspace_general_settings_instance: WorkspaceGeneralSettings):
+    def post_save_workspace_general_settings(self, workspace_general_settings_instance: WorkspaceGeneralSettings, old_workspace_general_settings: WorkspaceGeneralSettings):
         """
         Post save action for workspace general settings
         """
+        if not workspace_general_settings_instance.import_items and old_workspace_general_settings.import_items:
+            async_task('fyle_integrations_imports.tasks.disable_items', workspace_id=self.__workspace_id, is_import_enabled=False)
         new_schedule_or_delete_fyle_import_tasks(workspace_general_settings_instance)
 
     def __remove_old_department_source_field(self, current_mappings_settings: List[MappingSetting], new_mappings_settings: List[Dict]):
