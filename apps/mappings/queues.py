@@ -101,8 +101,10 @@ def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
             'is_3d_mapping': False,
         }
 
-    if not workspace_general_settings.import_items:
-        task_settings['import_items'] = False
+    # if not workspace_general_settings.import_items:
+    #     task_settings['import_items'] = False
+
+    task_settings['import_items'] = workspace_general_settings.import_items
 
     # For now we are only adding PROJECTS support that is why we are hardcoding it
     if mapping_settings:
