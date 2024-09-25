@@ -21,7 +21,7 @@ from apps.tasks.models import TaskLog
 from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
 from tests.helper import dict_compare_keys
 from tests.test_fyle.fixtures import data
-from fyle.platform.exceptions import InternalServerError, InvalidTokenError
+from fyle.platform.exceptions import InternalServerError, InvalidTokenError, RetryException
 
 
 @pytest.mark.django_db()
@@ -39,6 +39,10 @@ def test_create_expense_groups(mocker, db):
     create_expense_groups(3, ['PERSONAL', 'CCC'], task_log)
 
     assert task_log.status == 'COMPLETE'
+
+    mock_platform = mocker.patch('apps.fyle.tasks.PlatformConnector')
+    mock_platform.side_effect = RetryException('Retry Exception')
+    create_expense_groups(1, ['PERSONAL', 'CCC'], task_log)
 
     fyle_credential = FyleCredential.objects.get(workspace_id=1)
     fyle_credential.delete()
