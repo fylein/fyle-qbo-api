@@ -1,17 +1,17 @@
 import json
 import logging
-from datetime import datetime
 import random
+from datetime import datetime
 from unittest import mock
 
 from django_q.models import Schedule
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping
-from apps.quickbooks_online.models import CreditCardPurchaseLineitem
 from qbosdk.exceptions import WrongParamsError
 
 from apps.fyle.models import Expense, ExpenseGroup, Reimbursement
 from apps.mappings.queues import schedule_bill_payment_creation
 from apps.quickbooks_online.exceptions import handle_quickbooks_error
+from apps.quickbooks_online.models import CreditCardPurchaseLineitem
 from apps.quickbooks_online.queue import (
     schedule_bills_creation,
     schedule_cheques_creation,
@@ -900,9 +900,11 @@ def test_process_reimbursements(db, mocker):
 
     reimbursements = data['reimbursements']
 
-    expenses = Expense.objects.filter(fund_source='PERSONAL')
+    expenses = Expense.objects.filter(fund_source='PERSONAL', org_id='or79Cob97KSh').all()
     for expense in expenses:
         expense.paid_on_qbo = True
+        expense.paid_on_fyle = False
+        expense.workspace_id = workspace_id
         expense.save()
 
     Reimbursement.create_or_update_reimbursement_objects(reimbursements=reimbursements, workspace_id=workspace_id)
