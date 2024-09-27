@@ -8,13 +8,12 @@ from dateutil.relativedelta import relativedelta
 from django.utils import timezone as django_timezone
 
 from django.db import transaction
-from fyle_qbo_api.logging_middleware import get_logger
-from apps.fyle.helpers import get_filter_credit_expenses
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping
 from fyle_integrations_platform_connector import PlatformConnector
 from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 
 from apps.fyle.actions import update_expenses_in_progress
+from apps.fyle.helpers import get_filter_credit_expenses
 from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings
 from apps.fyle.tasks import post_accounting_export_summary
 from apps.mappings.models import GeneralMapping
@@ -38,6 +37,7 @@ from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import Error, TaskLog
 from apps.workspaces.models import FyleCredential, QBOCredential, Workspace, WorkspaceGeneralSettings
 from fyle_qbo_api.exceptions import BulkError
+from fyle_qbo_api.logging_middleware import get_logger
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -223,7 +223,10 @@ def create_bill(expense_group, task_log_id, last_export: bool):
     if last_export:
         update_last_export_details(expense_group.workspace_id)
 
-    generate_export_url_and_update_expense(expense_group)
+    try:
+        generate_export_url_and_update_expense(expense_group)
+    except Exception as e:
+        logger.error('Error while updating expenses for expense_group_id: %s and posting accounting export summary %s', expense_group.id, e)
     logger.info('Updated Expense Group %s successfully', expense_group.id)
 
     load_attachments(qbo_connection, created_bill['Bill']['Id'], 'Bill', expense_group)
@@ -400,7 +403,10 @@ def create_cheque(expense_group, task_log_id, last_export: bool):
     if last_export:
         update_last_export_details(expense_group.workspace_id)
 
-    generate_export_url_and_update_expense(expense_group)
+    try:
+        generate_export_url_and_update_expense(expense_group)
+    except Exception as e:
+        logger.error('Error while updating expenses for expense_group_id: %s and posting accounting export summary %s', expense_group.id, e)
     worker_logger.info('Updated Expense Group %s successfully', expense_group.id)
 
     load_attachments(qbo_connection, created_cheque['Purchase']['Id'], 'Purchase', expense_group)
@@ -459,7 +465,10 @@ def create_qbo_expense(expense_group, task_log_id, last_export: bool):
     if last_export:
         update_last_export_details(expense_group.workspace_id)
 
-    generate_export_url_and_update_expense(expense_group)
+    try:
+        generate_export_url_and_update_expense(expense_group)
+    except Exception as e:
+        logger.error('Error while updating expenses for expense_group_id: %s and posting accounting export summary %s', expense_group.id, e)
     worker_logger.info('Updated Expense Group %s successfully', expense_group.id)
 
     load_attachments(qbo_connection, created_qbo_expense['Purchase']['Id'], 'Purchase', expense_group)
@@ -517,7 +526,10 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id, last_e
     if last_export:
         update_last_export_details(expense_group.workspace_id)
 
-    generate_export_url_and_update_expense(expense_group)
+    try:
+        generate_export_url_and_update_expense(expense_group)
+    except Exception as e:
+        logger.error('Error while updating expenses for expense_group_id: %s and posting accounting export summary %s', expense_group.id, e)
     worker_logger.info('Updated Expense Group %s successfully', expense_group.id)
 
     load_attachments(qbo_connection, created_credit_card_purchase['Purchase']['Id'], 'Purchase', expense_group)
@@ -573,7 +585,10 @@ def create_journal_entry(expense_group, task_log_id, last_export: bool):
     if last_export:
         update_last_export_details(expense_group.workspace_id)
 
-    generate_export_url_and_update_expense(expense_group)
+    try:
+        generate_export_url_and_update_expense(expense_group)
+    except Exception as e:
+        logger.error('Error while updating expenses for expense_group_id: %s and posting accounting export summary %s', expense_group.id, e)
     worker_logger.info('Updated Expense Group %s successfully', expense_group.id)
 
     load_attachments(qbo_connection, created_journal_entry['JournalEntry']['Id'], 'JournalEntry', expense_group)
