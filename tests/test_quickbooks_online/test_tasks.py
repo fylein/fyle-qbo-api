@@ -1,7 +1,7 @@
 import json
 import logging
 import random
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from unittest import mock
 
 from django_q.models import Schedule
@@ -1286,3 +1286,71 @@ def test_skipping_cheque_creation(db, mocker):
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'CREATING_CHECK'
+
+
+def test_skipping_bill_payment(mocker, db):
+    mocker.patch('apps.quickbooks_online.tasks.load_attachments', return_value=[])
+    mocker.patch('fyle_integrations_platform_connector.apis.Reimbursements.sync', return_value=None)
+    mocker.patch('fyle_integrations_platform_connector.apis.Expenses.get', return_value=[])
+    mocker.patch('qbosdk.apis.Bills.post', return_value=data['post_bill'])
+    mocker.patch('qbosdk.apis.BillPayments.post', return_value=data['post_bill'])
+    mocker.patch('qbosdk.apis.Attachments.post', return_value=None)
+    workspace_id = 3
+    task_log = TaskLog.objects.filter(workspace_id=workspace_id).first()
+    task_log.status = 'READY'
+    task_log.save()
+
+    expense_group = ExpenseGroup.objects.get(id=14)
+    expenses = expense_group.expenses.all()
+
+    expense_group.id = random.randint(100, 1500000)
+    expense_group.save()
+
+    for expense in expenses:
+        expense.expense_group_id = expense_group.id
+        expense.save()
+
+    expense_group.expenses.set(expenses)
+    expense_group.save()
+
+    create_bill(expense_group, task_log.id, False)
+
+    bill = Bill.objects.last()
+    task_log = TaskLog.objects.get(id=task_log.id)
+    task_log.expense_group = bill.expense_group
+    task_log.save()
+
+    reimbursements = data['reimbursements']
+
+    Reimbursement.create_or_update_reimbursement_objects(reimbursements=reimbursements, workspace_id=workspace_id)
+
+    task_log = TaskLog.objects.create(workspace_id=workspace_id, type='CREATING_BILL_PAYMENT', task_id='PAYMENT_{}'.format(bill.expense_group.id), status='FAILED')
+    updated_at = task_log.updated_at
+    create_bill_payment(workspace_id)
+
+    task_log = TaskLog.objects.get(workspace_id=workspace_id, type='CREATING_BILL_PAYMENT', task_id='PAYMENT_{}'.format(bill.expense_group.id))
+    assert task_log.updated_at == updated_at
+
+    now = datetime.now().replace(tzinfo=timezone.utc)
+    updated_at = now - timedelta(days=25)
+    # Update created_at to more than 2 months ago (more than 60 days)
+    TaskLog.objects.filter(task_id='PAYMENT_{}'.format(bill.expense_group.id)).update(
+        created_at=now - timedelta(days=61),  # More than 2 months ago
+        updated_at=updated_at  # Updated within the last 1 month
+    )
+
+    task_log = TaskLog.objects.get(task_id='PAYMENT_{}'.format(bill.expense_group.id))
+
+    create_bill_payment(workspace_id)
+    task_log.refresh_from_db()
+    assert task_log.updated_at == updated_at
+
+    updated_at = now - timedelta(days=25)
+    # Update created_at to between 1 and 2 months ago (between 30 and 60 days)
+    TaskLog.objects.filter(task_id='PAYMENT_{}'.format(bill.expense_group.id)).update(
+        created_at=now - timedelta(days=45),  # Between 1 and 2 months ago
+        updated_at=updated_at  # Updated within the last 1 month
+    )
+    create_bill_payment(workspace_id)
+    task_log.refresh_from_db()
+    assert task_log.updated_at == updated_at
