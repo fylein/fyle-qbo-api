@@ -1,8 +1,7 @@
 import json
 import logging
-from datetime import datetime, timedelta, timezone
 import random
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from unittest import mock
 
 from django_q.models import Schedule
