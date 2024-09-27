@@ -10,7 +10,7 @@ bash tests/sql_fixtures/reset_db_fixtures/reset_db.sh
 export DATABASE_URL=postgres://postgres:postgres@db:5432/test_qbo_db
 
 # # Running migrations on the fixture database
-python manage.py migrate
+# python manage.py migrate
 
 read -p "Add SQL script paths separated by spaces if any, else press enter to continue? " scripts
 
