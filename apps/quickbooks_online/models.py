@@ -179,6 +179,25 @@ def get_credit_card_purchase_number(expense_group: ExpenseGroup, expense: Expens
         return expense.expense_number
 
 
+def get_bill_number(expense_group: ExpenseGroup):
+    expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=expense_group.workspace_id)
+
+    group_fields = expense_group_settings.corporate_credit_card_expense_group_fields
+    if expense_group.fund_source == 'PERSONAL':
+        group_fields = expense_group_settings.reimbursable_expense_group_fields
+
+    bill_number_field = 'claim_number'
+    if 'expense_id' in group_fields:
+        bill_number_field = 'expense_number'
+
+    bill_number = expense_group.expenses.first().__getattribute__(bill_number_field)
+
+    count = Bill.objects.filter(bill_number__icontains=bill_number, expense_group__workspace_id=expense_group.workspace.id).count()
+    if count > 0:
+        bill_number = '{} - {}'.format(bill_number, count)
+    return bill_number
+
+
 class Bill(models.Model):
     """
     QBO Bill
@@ -198,6 +217,7 @@ class Bill(models.Model):
     exchange_rate = models.FloatField(help_text='Exchange rate', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
+    bill_number = models.CharField(max_length=255, help_text='Bill Number', null=True)
 
     class Meta:
         db_table = 'bills'
@@ -236,6 +256,7 @@ class Bill(models.Model):
                 'transaction_date': get_transaction_date(expense_group),
                 'private_note': private_note,
                 'currency': expense.currency,
+                'bill_number': get_bill_number(expense_group),
             },
         )
         return bill_object

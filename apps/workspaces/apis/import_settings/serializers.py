@@ -45,7 +45,7 @@ class MappingSettingSerializer(serializers.ModelSerializer):
 class WorkspaceGeneralSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkspaceGeneralSettings
-        fields = ['import_categories', 'import_items', 'charts_of_accounts', 'import_tax_codes', 'import_vendors_as_merchants']
+        fields = ['import_categories', 'import_items', 'charts_of_accounts', 'import_tax_codes', 'import_vendors_as_merchants', 'import_code_fields']
 
 
 class GeneralMappingsSerializer(serializers.ModelSerializer):
@@ -92,6 +92,8 @@ class ImportSettingsSerializer(serializers.ModelSerializer):
                 category_import_log.last_successful_run_at = None
                 category_import_log.save()
 
+        pre_save_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=instance.id).first()
+
         workspace_general_settings_instance, _ = WorkspaceGeneralSettings.objects.update_or_create(
             workspace=instance,
             defaults={
@@ -100,6 +102,7 @@ class ImportSettingsSerializer(serializers.ModelSerializer):
                 'charts_of_accounts': workspace_general_settings.get('charts_of_accounts'),
                 'import_tax_codes': workspace_general_settings.get('import_tax_codes'),
                 'import_vendors_as_merchants': workspace_general_settings.get('import_vendors_as_merchants'),
+                'import_code_fields': workspace_general_settings.get('import_code_fields'),
             },
         )
 
@@ -107,7 +110,7 @@ class ImportSettingsSerializer(serializers.ModelSerializer):
 
         trigger: ImportSettingsTrigger = ImportSettingsTrigger(workspace_general_settings=workspace_general_settings, mapping_settings=mapping_settings, workspace_id=instance.id)
 
-        trigger.post_save_workspace_general_settings(workspace_general_settings_instance)
+        trigger.post_save_workspace_general_settings(workspace_general_settings_instance, pre_save_general_settings)
         trigger.pre_save_mapping_settings()
 
         if workspace_general_settings['import_tax_codes']:
@@ -145,4 +148,29 @@ class ImportSettingsSerializer(serializers.ModelSerializer):
 
         if not data.get('general_mappings'):
             raise serializers.ValidationError('General mappings are required')
+
+        workspace_id = getattr(self.instance, 'id', None)
+        if not workspace_id:
+            workspace_id = self.context['request'].parser_context.get('kwargs').get('workspace_id')
+        general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
+        import_logs = ImportLog.objects.filter(workspace_id=workspace_id).values_list('attribute_type', flat=True)
+
+        is_errored = False
+        old_code_pref_list = set()
+
+        if general_settings:
+            old_code_pref_list = set(general_settings.import_code_fields)
+
+        new_code_pref_list = set(data.get('workspace_general_settings', {}).get('import_code_fields', []))
+        diff_code_pref_list = list(old_code_pref_list.symmetric_difference(new_code_pref_list))
+
+        if 'ACCOUNT' in diff_code_pref_list and 'CATEGORY' in import_logs:
+            is_errored = True
+
+        if not old_code_pref_list.issubset(new_code_pref_list):
+            is_errored = True
+
+        if is_errored:
+            raise serializers.ValidationError('Cannot change the code fields once they are imported')
+
         return data

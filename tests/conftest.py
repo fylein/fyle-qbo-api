@@ -12,6 +12,7 @@ from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from apps.fyle.helpers import get_access_token
 from fyle_qbo_api.tests import settings
 from tests.test_workspaces.fixtures import data as fyle_data
+from fyle_accounting_mappings.models import ExpenseAttribute, DestinationAttribute
 
 
 def pytest_configure():
@@ -79,3 +80,59 @@ def default_session_fixture(request):
 
     patched_5 = mock.patch('fyle.platform.apis.v1beta.spender.MyProfile.get', return_value=fyle_data['admin_user'])
     patched_5.__enter__()
+
+
+@pytest.fixture()
+@pytest.mark.django_db(databases=['default'])
+def add_expense_destination_attributes_1():
+    """
+    Pytest fixture to add expense & destination attributes to a workspace
+    """
+    values = ['Internet','Meals']
+    count = 0
+
+    for value in values:
+        count += 1
+        ExpenseAttribute.objects.create(
+            workspace_id=1,
+            attribute_type='CATEGORY',
+            display_name='Category',
+            value= value,
+            source_id='1009{0}'.format(count),
+            detail='Merchant - Platform APIs, Id - 1008',
+            active=True
+        )
+        DestinationAttribute.objects.create(
+            workspace_id=1,
+            attribute_type='ACCOUNT',
+            display_name='Account',
+            value= value,
+            destination_id=value,
+            detail='Merchant - Platform APIs, Id - 10081',
+            active=True
+        )
+
+
+@pytest.fixture()
+@pytest.mark.django_db(databases=['default'])
+def add_expense_destination_attributes_3():
+    ExpenseAttribute.objects.create(
+        workspace_id=1,
+        attribute_type='CATEGORY',
+        display_name='Category',
+        value="123: QBO",
+        source_id='10095',
+        detail='Merchant - Platform APIs, Id - 10085',
+        active=True
+    )
+
+    DestinationAttribute.objects.create(
+        workspace_id=1,
+        attribute_type='ACCOUNT',
+        display_name='Account',
+        value="QBO",
+        destination_id='10085',
+        detail='Merchant - Platform APIs, Id - 10085',
+        active=True,
+        code='123'
+    )

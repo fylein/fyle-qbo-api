@@ -14,8 +14,10 @@ data = {
                 "AccountBasedExpenseLineDetail": {"AccountRef": {"value": "57"},"CustomerRef": {"value": "None"},"ClassRef": {"value": "None"},"TaxCodeRef": {"value": "None"},"TaxAmount": 0.0,"BillableStatus": "NotBillable"},
             }
         ],
+        "DocNumber": "C/2022/01/R/8",
     },
     "bill_payload_with_tax_override": {
+        "DocNumber": "C/2022/01/R/8",
         'VendorRef': {'value': '84'},
         'APAccountRef': {'value': '33'},
         'DepartmentRef': {'value': None},
@@ -55,6 +57,7 @@ data = {
         }
     },
     "bill_payload_item_based_payload": {
+        "DocNumber": "C/2022/01/R/8",
         "VendorRef": {"value": "43"},
         "APAccountRef": {"value": "33"},
         "DepartmentRef": {"value": "None"},
@@ -71,6 +74,7 @@ data = {
         ],
     },
     "bill_payload_item_based_payload_with_tax_override":{
+        "DocNumber": "C/2022/01/R/8",
         "VendorRef": {"value": "84"},
         "APAccountRef": {"value": "33"},
         "DepartmentRef": {"value": None},
@@ -117,6 +121,7 @@ data = {
         },
     },
     "bill_payload_item_and_account_based_payload": {
+        "DocNumber": "C/2022/01/R/8",
         'VendorRef': {'value': '84'},
         'APAccountRef': {'value': '33'},
         'DepartmentRef': {'value': None},
@@ -139,6 +144,7 @@ data = {
         ],
     },
     "bill_payload_item_and_account_based_payload_with_tax_override": {
+        "DocNumber": "C/2022/01/R/8",
         "VendorRef": {"value": "84"},
         "APAccountRef": {"value": "33"},
         "DepartmentRef": {"value": None},

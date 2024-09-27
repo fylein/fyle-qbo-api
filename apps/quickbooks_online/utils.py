@@ -74,6 +74,9 @@ def get_last_synced_time(workspace_id: int, attribute_type: str):
 
 
 CHARTS_OF_ACCOUNTS = ['Expense', 'Other Expense', 'Fixed Asset', 'Cost of Goods Sold', 'Current Liability', 'Equity', 'Other Current Asset', 'Other Current Liability', 'Long Term Liability', 'Current Asset', 'Income', 'Other Income', 'Other Asset']
+ATTRIBUTE_CALLBACK_PATH = {
+    'ACCOUNT': 'fyle_integrations_imports.modules.categories.disable_categories'
+}
 
 
 class QBOConnector:
@@ -183,17 +186,31 @@ class QBOConnector:
         accounts_generator = self.connection.accounts.get_all_generator()
         category_sync_version = 'v2'
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+        is_category_import_to_fyle_enabled = False
+
         if general_settings:
             category_sync_version = general_settings.category_sync_version
+            is_category_import_to_fyle_enabled = general_settings.import_categories
 
         for accounts in accounts_generator:
             account_attributes = {'account': [], 'credit_card_account': [], 'bank_account': [], 'accounts_payable': []}
             for account in accounts:
                 value = format_special_characters(account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])
-
+                code = ' '.join(account['AcctNum'].split()) if 'AcctNum' in account and account['AcctNum'] else None
                 if general_settings and account['AccountType'] in CHARTS_OF_ACCOUNTS and value:
                     account_attributes['account'].append(
-                        {'attribute_type': 'ACCOUNT', 'display_name': 'Account', 'value': value, 'destination_id': account['Id'], 'active': True, 'detail': {'fully_qualified_name': account['FullyQualifiedName'], 'account_type': account['AccountType']}}
+                        {
+                            'attribute_type': 'ACCOUNT',
+                            'display_name': 'Account',
+                            'value': value,
+                            'destination_id': account['Id'],
+                            'active': True,
+                            'detail': {
+                                'fully_qualified_name': account['FullyQualifiedName'],
+                                'account_type': account['AccountType']
+                            },
+                            'code': code
+                        }
                     )
 
                 elif account['AccountType'] == 'Credit Card' and value:
@@ -234,7 +251,15 @@ class QBOConnector:
 
             for attribute_type, attribute in account_attributes.items():
                 if attribute:
-                    DestinationAttribute.bulk_create_or_update_destination_attributes(attribute, attribute_type.upper(), self.workspace_id, True, attribute_type.title().replace('_', ' '))
+                    DestinationAttribute.bulk_create_or_update_destination_attributes(
+                        attribute,
+                        attribute_type.upper(),
+                        self.workspace_id,
+                        True,
+                        attribute_type.title().replace('_', ' '),
+                        attribute_disable_callback_path=ATTRIBUTE_CALLBACK_PATH.get(attribute_type.upper()),
+                        is_import_to_fyle_enabled=is_category_import_to_fyle_enabled
+                    )
 
         last_synced_time = get_last_synced_time(self.workspace_id, 'CATEGORY')
 
@@ -246,6 +271,8 @@ class QBOConnector:
             for inactive_account in inactive_accounts:
                 value = inactive_account['Name'].replace(" (deleted)", "").rstrip() if category_sync_version == 'v1' else inactive_account['FullyQualifiedName'].replace(" (deleted)", "").rstrip()
                 full_qualified_name = inactive_account['FullyQualifiedName'].replace(" (deleted)", "").rstrip()
+                code = ' '.join(inactive_account['AcctNum'].split()) if 'AcctNum' in inactive_account and inactive_account['AcctNum'] else None
+
                 inactive_account_attributes['account'].append(
                     {
                         'attribute_type': 'ACCOUNT',
@@ -254,12 +281,20 @@ class QBOConnector:
                         'destination_id': inactive_account['Id'],
                         'active': False,
                         'detail': {'fully_qualified_name': full_qualified_name, 'account_type': inactive_account['AccountType']},
+                        'code': code
                     }
                 )
 
             for attribute_type, attribute in inactive_account_attributes.items():
                 if attribute:
-                    DestinationAttribute.bulk_create_or_update_destination_attributes(attribute, attribute_type.upper(), self.workspace_id, True, attribute_type.title().replace('_', ' '))
+                    DestinationAttribute.bulk_create_or_update_destination_attributes(
+                        attribute,
+                        attribute_type.upper(),
+                        self.workspace_id,
+                        True,
+                        attribute_type.title().replace('_', ' '),
+                        attribute_disable_callback_path=ATTRIBUTE_CALLBACK_PATH.get(attribute_type.upper())
+                    )
 
         return []
 
@@ -700,6 +735,7 @@ class QBOConnector:
             'TxnDate': bill.transaction_date,
             'CurrencyRef': {'value': bill.currency},
             'PrivateNote': bill.private_note,
+            'DocNumber': bill.bill_number,
             'Line': lines,
         }
 
