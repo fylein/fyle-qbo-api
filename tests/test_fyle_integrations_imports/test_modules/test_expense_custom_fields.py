@@ -68,6 +68,10 @@ def test_auto_create_destination_attributes(mocker, db):
             return_value=[]
         )
         mocker.patch(
+            'qbosdk.apis.Classes.count',
+            return_value=10
+        )
+        mocker.patch(
             'qbosdk.apis.Classes.get_all_generator',
             return_value=[expense_custom_field_data['create_new_auto_create_expense_custom_fields_destination_attributes']]
         )
@@ -102,6 +106,10 @@ def test_auto_create_destination_attributes(mocker, db):
         mocker.patch(
             'fyle_integrations_platform_connector.apis.ExpenseCustomFields.get_by_id',
             return_value=expense_custom_field_data['create_new_auto_create_expense_custom_fields_get_by_id']
+        )
+        mocker.patch(
+            'qbosdk.apis.Classes.count',
+            return_value=10
         )
         mocker.patch(
             'qbosdk.apis.Classes.get_all_generator',

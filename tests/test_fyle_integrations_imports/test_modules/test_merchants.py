@@ -15,6 +15,10 @@ def test_sync_destination_attributes(mocker, db):
     workspace_id = 5
 
     mocker.patch(
+        'qbosdk.apis.Vendors.count',
+        return_value=10
+    )
+    mocker.patch(
         'qbosdk.apis.Vendors.get_inactive',
         return_value=[]
     )
@@ -100,6 +104,10 @@ def test_auto_create_destination_attributes(mocker, db):
             return_value=[]
         )
         mocker.patch(
+            'qbosdk.apis.Vendors.count',
+            return_value=10
+        )
+        mocker.patch(
             'qbosdk.apis.Vendors.get_all_generator',
             return_value=[merchants_data['create_new_auto_create_merchants_destination_attributes']]
         )
@@ -132,6 +140,10 @@ def test_auto_create_destination_attributes(mocker, db):
         mocker.patch(
             'fyle_integrations_platform_connector.apis.Merchants.post',
             return_value=[]
+        )
+        mocker.patch(
+            'qbosdk.apis.Vendors.count',
+            return_value=10
         )
         mocker.patch(
             'qbosdk.apis.Vendors.get_all_generator',
