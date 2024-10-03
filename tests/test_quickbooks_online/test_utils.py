@@ -5,7 +5,7 @@ from datetime import datetime
 
 import pytest
 from fyle.platform.exceptions import NoPrivilegeError
-from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping
+from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, Mapping, CategoryMapping
 from qbosdk.exceptions import WrongParamsError
 
 from apps.fyle.models import ExpenseGroup
@@ -1043,26 +1043,88 @@ def test_get_override_tax_details(db, mocker):
 
 
 def test_skip_sync_attributes(mocker, db):
-    mocker.patch('qbosdk.apis.Customers.count', return_value=30500)
-    mocker.patch('qbosdk.apis.Classes.count', return_value=6000)
+    mocker.patch(
+        'qbosdk.apis.Projects.count',
+        return_value=25001
+    )
+    mocker.patch(
+        'qbosdk.apis.Classes.count',
+        return_value=5001
+    )
+    mocker.patch(
+        'qbosdk.apis.Accounts.count',
+        return_value=3001
+    )
+    mocker.patch(
+        'qbosdk.apis.Items.count',
+        return_value=3001
+    )
+    mocker.patch(
+        'qbosdk.apis.Departments.count',
+        return_value=2001
+    )
+    mocker.patch(
+        'qbosdk.apis.Customers.count',
+        return_value=30001
+    )
+    mocker.patch(
+        'qbosdk.apis.Vendors.count',
+        return_value=20001
+    )
+
+    mocker.patch(
+        'qbosdk.apis.TaxCode.count',
+        return_value=201
+    )
+
 
     today = datetime.today()
-    Workspace.objects.filter(id=3).update(created_at=today)
-    qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
-    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+    Workspace.objects.filter(id=1).update(created_at=today)
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(1)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=1)
 
-    customer_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='CUSTOMER').count()
-    assert customer_count == 29
+    Mapping.objects.filter(workspace_id=1).delete()
+    CategoryMapping.objects.filter(workspace_id=1).delete()
 
-    qbo_connection.sync_customers()
+    DestinationAttribute.objects.filter(workspace_id=1, attribute_type='PROJECT').delete()
 
-    new_customer_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='CUSTOMER').count()
-    assert new_customer_count == 29
+    qbo_connection.sync_projects()
 
-    class_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='CLASS').count()
-    assert class_count == 0
+    new_project_count = DestinationAttribute.objects.filter(workspace_id=1, attribute_type='PROJECT').count()
+    assert new_project_count == 0
+
+    DestinationAttribute.objects.filter(workspace_id=1, attribute_type='CLASS').delete()
 
     qbo_connection.sync_classes()
 
-    new_class_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='CLASS').count()
-    assert new_class_count == 0
+    classifications = DestinationAttribute.objects.filter(attribute_type='CLASS', workspace_id=1).count()
+    assert classifications == 0
+
+    DestinationAttribute.objects.filter(workspace_id=1, attribute_type='ACCOUNT').delete()
+
+    qbo_connection.sync_accounts()
+
+    new_project_count = DestinationAttribute.objects.filter(workspace_id=1, attribute_type='ACCOUNT').count()
+    assert new_project_count == 0
+
+    DestinationAttribute.objects.filter(workspace_id=1, attribute_type='DEPARTMENT').delete()
+
+    qbo_connection.sync_departments()
+
+    new_project_count = DestinationAttribute.objects.filter(workspace_id=1, attribute_type='DEPARTMENT').count()
+    assert new_project_count == 0
+
+    DestinationAttribute.objects.filter(workspace_id=1, attribute_type='CUSTOMER').delete()
+
+    qbo_connection.sync_customers()
+
+    new_project_count = DestinationAttribute.objects.filter(workspace_id=1, attribute_type='CUSTOMER').count()
+    assert new_project_count == 0
+
+    DestinationAttribute.objects.filter(workspace_id=1, attribute_type='TAX_CODE').delete()
+
+    qbo_connection.sync_tax_codes()
+
+    new_project_count = DestinationAttribute.objects.filter(workspace_id=1, attribute_type='TAX_CODE').count()
+    assert new_project_count == 0
+
