@@ -15,6 +15,10 @@ def test_sync_destination_attributes(mocker, db):
     workspace_id = 3
 
     mocker.patch(
+        'qbosdk.apis.Classes.count',
+        return_value=10
+    )
+    mocker.patch(
         'qbosdk.apis.Classes.get_all_generator',
         return_value=[cost_center_data['create_new_auto_create_cost_centers_destination_attributes']]
     )
@@ -88,6 +92,10 @@ def test_auto_create_destination_attributes(mocker, db):
             return_value=[]
         )
         mocker.patch(
+            'qbosdk.apis.Classes.count',
+            return_value=10
+        )
+        mocker.patch(
             'qbosdk.apis.Classes.get_all_generator',
             return_value=[cost_center_data['create_new_auto_create_cost_centers_destination_attributes']]
         )
@@ -119,6 +127,10 @@ def test_auto_create_destination_attributes(mocker, db):
         mocker.patch(
             'fyle_integrations_platform_connector.apis.CostCenters.post_bulk',
             return_value=[]
+        )
+        mocker.patch(
+            'qbosdk.apis.Classes.count',
+            return_value=10
         )
         mocker.patch(
             'qbosdk.apis.Classes.get_all_generator',
