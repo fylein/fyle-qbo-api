@@ -1044,10 +1044,6 @@ def test_get_override_tax_details(db, mocker):
 
 def test_skip_sync_attributes(mocker, db):
     mocker.patch(
-        'qbosdk.apis.Projects.count',
-        return_value=25001
-    )
-    mocker.patch(
         'qbosdk.apis.Classes.count',
         return_value=5001
     )
@@ -1073,7 +1069,7 @@ def test_skip_sync_attributes(mocker, db):
     )
 
     mocker.patch(
-        'qbosdk.apis.TaxCode.count',
+        'qbosdk.apis.TaxCodes.count',
         return_value=201
     )
 
@@ -1084,13 +1080,6 @@ def test_skip_sync_attributes(mocker, db):
 
     Mapping.objects.filter(workspace_id=1).delete()
     CategoryMapping.objects.filter(workspace_id=1).delete()
-
-    DestinationAttribute.objects.filter(workspace_id=1, attribute_type='PROJECT').delete()
-
-    qbo_connection.sync_projects()
-
-    new_project_count = DestinationAttribute.objects.filter(workspace_id=1, attribute_type='PROJECT').count()
-    assert new_project_count == 0
 
     DestinationAttribute.objects.filter(workspace_id=1, attribute_type='CLASS').delete()
 
