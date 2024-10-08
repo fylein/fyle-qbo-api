@@ -1077,7 +1077,6 @@ def test_skip_sync_attributes(mocker, db):
         return_value=201
     )
 
-
     today = datetime.today()
     Workspace.objects.filter(id=1).update(created_at=today)
     qbo_credentials = QBOCredential.get_active_qbo_credentials(1)
@@ -1127,4 +1126,3 @@ def test_skip_sync_attributes(mocker, db):
 
     new_project_count = DestinationAttribute.objects.filter(workspace_id=1, attribute_type='TAX_CODE').count()
     assert new_project_count == 0
-
