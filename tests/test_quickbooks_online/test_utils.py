@@ -1,15 +1,16 @@
 import json
 import logging
 from unittest import mock
+from datetime import datetime
 
 import pytest
 from fyle.platform.exceptions import NoPrivilegeError
-from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping
+from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, Mapping, CategoryMapping
 from qbosdk.exceptions import WrongParamsError
 
 from apps.fyle.models import ExpenseGroup
 from apps.mappings.models import GeneralMapping
-from apps.quickbooks_online.utils import QBOConnector, QBOCredential, WorkspaceGeneralSettings
+from apps.quickbooks_online.utils import QBOConnector, QBOCredential, WorkspaceGeneralSettings, Workspace
 from tests.helper import dict_compare_keys
 from tests.test_quickbooks_online.fixtures import data
 
@@ -52,6 +53,7 @@ def test_post_vendor(mocker, db):
 
 
 def test_sync_vendors(mocker, db):
+    mocker.patch('qbosdk.apis.Vendors.count', return_value=10)
     mocker.patch('qbosdk.apis.Vendors.get_all_generator', return_value=[data['vendor_response']])
     mocker.patch('qbosdk.apis.Vendors.get_inactive', return_value=[])
     qbo_credentials = QBOCredential.get_active_qbo_credentials(4)
@@ -67,6 +69,7 @@ def test_sync_vendors(mocker, db):
 
 
 def test_sync_departments(mocker, db):
+    mocker.patch('qbosdk.apis.Departments.count', return_value=10)
     mocker.patch('qbosdk.apis.Departments.get_all_generator', return_value=[data['department_response']])
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
@@ -81,6 +84,7 @@ def test_sync_departments(mocker, db):
 
 
 def test_sync_items(mocker, db):
+    mocker.patch('qbosdk.apis.Items.count', return_value=0)
     mock_inactive = mocker.patch('qbosdk.apis.Items.get_inactive', return_value=[])
     with mock.patch('qbosdk.apis.Items.get_all_generator') as mock_call:
         mock_call.return_value = [data['items_response']]
@@ -585,6 +589,7 @@ def test_get_tax_inclusive_amount(db):
 
 
 def test_sync_tax_codes(mocker, db):
+    mocker.patch('qbosdk.apis.TaxCodes.count', return_value=10)
     mocker.patch('qbosdk.apis.TaxCodes.get_all_generator', return_value=[data['tax_code_response']])
     mocker.patch('qbosdk.apis.TaxRates.get_by_id', return_value=data['tax_rate_get_by_id'])
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
@@ -600,6 +605,7 @@ def test_sync_tax_codes(mocker, db):
 
 
 def tests_sync_accounts(mocker, db):
+    mocker.patch('qbosdk.apis.Accounts.count', return_value=10)
     mocker.patch('qbosdk.apis.Accounts.get_inactive', return_value=[])
     mocker.patch('qbosdk.apis.Accounts.get_all_generator', return_value=[data['account_response']])
 
@@ -646,6 +652,7 @@ def test_sync_dimensions(mocker, db):
 
 
 def test_sync_classes(mocker, db):
+    mocker.patch('qbosdk.apis.Classes.count', return_value=10)
     mocker.patch('qbosdk.apis.Classes.get_all_generator', return_value=[data['class_response']])
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
@@ -1033,3 +1040,78 @@ def test_get_override_tax_details(db, mocker):
 
     # Assertions
     assert tax_details == [{'Amount': 10, 'DetailType': 'TaxLineDetail', 'TaxLineDetail': {'TaxRateRef': {'value': 'TAX_RATE_REF'}, 'PercentBased': False, 'NetAmountTaxable': 100}}]
+
+
+def test_skip_sync_attributes(mocker, db):
+    mocker.patch(
+        'qbosdk.apis.Classes.count',
+        return_value=5001
+    )
+    mocker.patch(
+        'qbosdk.apis.Accounts.count',
+        return_value=3001
+    )
+    mocker.patch(
+        'qbosdk.apis.Items.count',
+        return_value=3001
+    )
+    mocker.patch(
+        'qbosdk.apis.Departments.count',
+        return_value=2001
+    )
+    mocker.patch(
+        'qbosdk.apis.Customers.count',
+        return_value=30001
+    )
+    mocker.patch(
+        'qbosdk.apis.Vendors.count',
+        return_value=20001
+    )
+
+    mocker.patch(
+        'qbosdk.apis.TaxCodes.count',
+        return_value=201
+    )
+
+    today = datetime.today()
+    Workspace.objects.filter(id=1).update(created_at=today)
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(1)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=1)
+
+    Mapping.objects.filter(workspace_id=1).delete()
+    CategoryMapping.objects.filter(workspace_id=1).delete()
+
+    DestinationAttribute.objects.filter(workspace_id=1, attribute_type='CLASS').delete()
+
+    qbo_connection.sync_classes()
+
+    classifications = DestinationAttribute.objects.filter(attribute_type='CLASS', workspace_id=1).count()
+    assert classifications == 0
+
+    DestinationAttribute.objects.filter(workspace_id=1, attribute_type='ACCOUNT').delete()
+
+    qbo_connection.sync_accounts()
+
+    new_project_count = DestinationAttribute.objects.filter(workspace_id=1, attribute_type='ACCOUNT').count()
+    assert new_project_count == 0
+
+    DestinationAttribute.objects.filter(workspace_id=1, attribute_type='DEPARTMENT').delete()
+
+    qbo_connection.sync_departments()
+
+    new_project_count = DestinationAttribute.objects.filter(workspace_id=1, attribute_type='DEPARTMENT').count()
+    assert new_project_count == 0
+
+    DestinationAttribute.objects.filter(workspace_id=1, attribute_type='CUSTOMER').delete()
+
+    qbo_connection.sync_customers()
+
+    new_project_count = DestinationAttribute.objects.filter(workspace_id=1, attribute_type='CUSTOMER').count()
+    assert new_project_count == 0
+
+    DestinationAttribute.objects.filter(workspace_id=1, attribute_type='TAX_CODE').delete()
+
+    qbo_connection.sync_tax_codes()
+
+    new_project_count = DestinationAttribute.objects.filter(workspace_id=1, attribute_type='TAX_CODE').count()
+    assert new_project_count == 0

@@ -223,8 +223,13 @@ def test_auto_create_destination_attributes(mocker, db):
             'fyle_integrations_platform_connector.apis.Categories.post_bulk',
             return_value=[]
         )
+        mocker.patch('qbosdk.apis.Items.count',return_value=0)
         mocker.patch('qbosdk.apis.Items.get_all_generator',return_value=[])
         mocker.patch('qbosdk.apis.Items.get_inactive',return_value=[])
+        mocker.patch(
+            'qbosdk.apis.Accounts.count',
+            return_value=0
+        )
         mocker.patch(
             'qbosdk.apis.Accounts.get_all_generator',
             return_value=[]

@@ -1,6 +1,7 @@
 import json
 import logging
 from datetime import datetime, timedelta
+from django.utils import timezone
 from typing import Dict, List
 
 import unidecode
@@ -32,7 +33,15 @@ from fyle_integrations_imports.models import ImportLog
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
 
-SYNC_UPPER_LIMIT = {'customers': 25000}
+SYNC_UPPER_LIMIT = {
+    'customers': 30000,
+    'classes': 5000,
+    'accounts': 3000,
+    'departments': 2000,
+    'vendors': 20000,
+    'tax_codes': 200,
+    'items': 3000
+}
 
 
 def format_special_characters(value: str) -> str:
@@ -150,10 +159,31 @@ class QBOConnector:
 
         return tax_inclusive_amount
 
+    def is_sync_allowed(self, attribute_type: str, attribute_count: int):
+        """
+        Checks if the sync is allowed
+
+        Returns:
+            bool: True
+        """
+        if attribute_count > SYNC_UPPER_LIMIT[attribute_type]:
+            workspace_created_at = Workspace.objects.get(id=self.workspace_id).created_at
+            if workspace_created_at > timezone.make_aware(datetime(2024, 10, 1), timezone.get_current_timezone()):
+                return False
+            else:
+                return True
+
+        return True
+
     def sync_items(self):
         """
         Get items
         """
+        attribute_count = self.connection.items.count()
+        if not self.is_sync_allowed(attribute_type = 'items', attribute_count = attribute_count):
+            logger.info('Skipping sync of items for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
+            return
+
         items_generator = self.connection.items.get_all_generator()
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
 
@@ -183,6 +213,11 @@ class QBOConnector:
         """
         Get accounts
         """
+        attribute_count = self.connection.accounts.count()
+        if not self.is_sync_allowed(attribute_type = 'accounts', attribute_count=attribute_count):
+            logger.info('Skipping sync of accounts for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
+            return
+
         accounts_generator = self.connection.accounts.get_all_generator()
         category_sync_version = 'v2'
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
@@ -302,6 +337,11 @@ class QBOConnector:
         """
         Get departments
         """
+        attribute_count = self.connection.departments.count()
+        if not self.is_sync_allowed(attribute_type = 'departments', attribute_count = attribute_count):
+            logger.info('Skipping sync of department for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
+            return
+
         departments_generator = self.connection.departments.get_all_generator()
 
         for departments in departments_generator:
@@ -317,6 +357,11 @@ class QBOConnector:
         """
         Get Tax Codes
         """
+        attribute_count = self.connection.tax_codes.count()
+        if not self.is_sync_allowed(attribute_type = 'tax_codes', attribute_count = attribute_count):
+            logger.info('Skipping sync of tax_codes for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
+            return
+
         tax_codes_generator = self.connection.tax_codes.get_all_generator()
 
         for tax_codes in tax_codes_generator:
@@ -345,6 +390,11 @@ class QBOConnector:
         """
         Get vendors
         """
+        attribute_count = self.connection.vendors.count()
+        if not self.is_sync_allowed(attribute_type = 'vendors', attribute_count = attribute_count):
+            logger.info('Skipping sync of vendors for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
+            return
+
         vendors_generator = self.connection.vendors.get_all_generator()
 
         for vendors in vendors_generator:
@@ -429,6 +479,11 @@ class QBOConnector:
         """
         Get classes
         """
+        attribute_count = self.connection.classes.count()
+        if not self.is_sync_allowed(attribute_type = 'classes', attribute_count = attribute_count):
+            logger.info('Skipping sync of classes for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
+            return
+
         classes_generator = self.connection.classes.get_all_generator()
 
         for classes in classes_generator:
@@ -444,31 +499,34 @@ class QBOConnector:
         """
         Get customers
         """
-        customers_count = self.connection.customers.count()
-        if customers_count < SYNC_UPPER_LIMIT['customers']:
-            customers_generator = self.connection.customers.get_all_generator()
+        attribute_count = self.connection.customers.count()
+        if not self.is_sync_allowed(attribute_type = 'customers', attribute_count = attribute_count):
+            logger.info('Skipping sync of customers for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
+            return
 
-            for customers in customers_generator:
-                customer_attributes = []
-                for customer in customers:
-                    value = format_special_characters(customer['FullyQualifiedName'])
-                    if customer['Active'] and value:
-                        customer_attributes.append({'attribute_type': 'CUSTOMER', 'display_name': 'customer', 'value': value, 'destination_id': customer['Id'], 'active': True})
+        customers_generator = self.connection.customers.get_all_generator()
 
-                DestinationAttribute.bulk_create_or_update_destination_attributes(customer_attributes, 'CUSTOMER', self.workspace_id, True)
+        for customers in customers_generator:
+            customer_attributes = []
+            for customer in customers:
+                value = format_special_characters(customer['FullyQualifiedName'])
+                if customer['Active'] and value:
+                    customer_attributes.append({'attribute_type': 'CUSTOMER', 'display_name': 'customer', 'value': value, 'destination_id': customer['Id'], 'active': True})
 
-            last_synced_time = get_last_synced_time(self.workspace_id, 'PROJECT')
+            DestinationAttribute.bulk_create_or_update_destination_attributes(customer_attributes, 'CUSTOMER', self.workspace_id, True)
 
-            # get the inactive customers generator
-            inactive_customers_generator = self.connection.customers.get_inactive(last_synced_time)
+        last_synced_time = get_last_synced_time(self.workspace_id, 'PROJECT')
 
-            for inactive_customers in inactive_customers_generator:
-                inactive_customer_attributes = []
-                for inactive_customer in inactive_customers:
-                    display_name = inactive_customer['DisplayName'].replace(" (deleted)", "").rstrip()
-                    inactive_customer_attributes.append({'attribute_type': 'CUSTOMER', 'display_name': 'customer', 'value': display_name, 'destination_id': inactive_customer['Id'], 'active': False})
+        # get the inactive customers generator
+        inactive_customers_generator = self.connection.customers.get_inactive(last_synced_time)
 
-                DestinationAttribute.bulk_create_or_update_destination_attributes(inactive_customer_attributes, 'CUSTOMER', self.workspace_id, True)
+        for inactive_customers in inactive_customers_generator:
+            inactive_customer_attributes = []
+            for inactive_customer in inactive_customers:
+                display_name = inactive_customer['DisplayName'].replace(" (deleted)", "").rstrip()
+                inactive_customer_attributes.append({'attribute_type': 'CUSTOMER', 'display_name': 'customer', 'value': display_name, 'destination_id': inactive_customer['Id'], 'active': False})
+
+            DestinationAttribute.bulk_create_or_update_destination_attributes(inactive_customer_attributes, 'CUSTOMER', self.workspace_id, True)
 
         return []
 

@@ -16,6 +16,7 @@ def test_sync_destination_attributes(mocker, db):
     workspace_id = 2
 
     # import categories
+    mocker.patch('qbosdk.apis.Accounts.count', return_value=10)
     mocker.patch('qbosdk.apis.Accounts.get_all_generator', return_value=[categories_data['create_new_auto_create_categories_destination_attributes_accounts']])
     mocker.patch('qbosdk.apis.Accounts.get_inactive', return_value=[])
     mocker.patch('qbosdk.apis.Items.get_inactive', return_value=[])
@@ -35,6 +36,7 @@ def test_sync_destination_attributes(mocker, db):
     # import items
     category = Category(2, 'ACCOUNT', None,  qbo_connection, ['items'], True, False, ['Expense', 'Fixed Asset'])
     WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(import_categories=True, import_items=True)
+    mocker.patch('qbosdk.apis.Items.count', return_value=10)
     mocker.patch('qbosdk.apis.Items.get_all_generator', return_value=[categories_data['create_new_auto_create_categories_destination_attributes_items']])
 
     destination_attributes_count = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT', display_name='Item').count()
@@ -48,6 +50,7 @@ def test_sync_destination_attributes(mocker, db):
     # import items + import categories
     category = Category(2, 'ACCOUNT', None,  qbo_connection, ['items', 'accounts'], True, False, ['Expense', 'Fixed Asset'])
     WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(import_categories=True, import_items=True)
+    mocker.patch('qbosdk.apis.Accounts.count', return_value=10)
     mocker.patch('qbosdk.apis.Accounts.get_all_generator', return_value=[categories_data['create_new_auto_create_categories_destination_attributes_accounts_sync']])
     mocker.patch('qbosdk.apis.Items.get_all_generator', return_value=[categories_data['create_new_auto_create_categories_destination_attributes_items_sync']])
 
@@ -116,6 +119,14 @@ def test_auto_create_destination_attributes(mocker, db):
     ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type='CATEGORY').delete()
 
     mocker.patch(
+        'qbosdk.apis.Accounts.count',
+        return_value=0
+    )
+    mocker.patch(
+        'qbosdk.apis.Items.count',
+        return_value=0
+    )
+    mocker.patch(
         'qbosdk.apis.Accounts.get_inactive',
         return_value=[]
     )
@@ -138,7 +149,12 @@ def test_auto_create_destination_attributes(mocker, db):
             'fyle_integrations_platform_connector.apis.Categories.post_bulk',
             return_value=[]
         )
+        mocker.patch('qbosdk.apis.Items.count',return_value=0)
         mocker.patch('qbosdk.apis.Items.get_all_generator',return_value=[])
+        mocker.patch(
+            'qbosdk.apis.Accounts.count',
+            return_value=10
+        )
         mocker.patch(
             'qbosdk.apis.Accounts.get_all_generator',
             return_value=[categories_data['create_new_auto_create_categories_destination_attributes_accounts']]
@@ -181,7 +197,12 @@ def test_auto_create_destination_attributes(mocker, db):
             'fyle_integrations_platform_connector.apis.Categories.post_bulk',
             return_value=[]
         )
+        mocker.patch('qbosdk.apis.Items.count',return_value=0)
         mocker.patch('qbosdk.apis.Items.get_all_generator',return_value=[])
+        mocker.patch(
+            'qbosdk.apis.Accounts.count',
+            return_value=10
+        )
         mocker.patch(
             'qbosdk.apis.Accounts.get_inactive',
             return_value=[categories_data['create_new_auto_create_categories_destination_attributes_accounts_disable_case']]
@@ -228,7 +249,12 @@ def test_auto_create_destination_attributes(mocker, db):
             'fyle_integrations_platform_connector.apis.Categories.post_bulk',
             return_value=[]
         )
+        mocker.patch('qbosdk.apis.Items.count',return_value=0)
         mocker.patch('qbosdk.apis.Items.get_all_generator',return_value=[])
+        mocker.patch(
+            'qbosdk.apis.Accounts.count',
+            return_value=10
+        )
         mocker.patch(
             'qbosdk.apis.Accounts.get_inactive',
             return_value=[categories_data['create_new_auto_create_categories_destination_attributes_accounts']]
@@ -311,8 +337,16 @@ def test_auto_create_destination_attributes(mocker, db):
             return_value=[]
         )
         mocker.patch(
+            'qbosdk.apis.Items.count',
+            return_value=10
+        )
+        mocker.patch(
             'qbosdk.apis.Items.get_inactive',
             return_value=[categories_data['create_new_auto_create_categories_destination_attributes_items_disabled_case']]
+        )
+        mocker.patch(
+            'qbosdk.apis.Accounts.count',
+            return_value=0
         )
         mocker.patch(
             'qbosdk.apis.Accounts.get_all_generator',
@@ -361,8 +395,16 @@ def test_auto_create_destination_attributes(mocker, db):
             return_value=[]
         )
         mocker.patch(
+            'qbosdk.apis.Items.count',
+            return_value=10
+        )
+        mocker.patch(
             'qbosdk.apis.Items.get_inactive',
             return_value=[categories_data['create_new_auto_create_categories_destination_attributes_items']]
+        )
+        mocker.patch(
+            'qbosdk.apis.Accounts.count',
+            return_value=0
         )
         mocker.patch(
             'qbosdk.apis.Accounts.get_all_generator',
@@ -399,8 +441,16 @@ def test_auto_create_destination_attributes(mocker, db):
             return_value=[]
         )
         mocker.patch(
+            'qbosdk.apis.Items.count',
+            return_value=10
+        )
+        mocker.patch(
             'qbosdk.apis.Items.get_inactive',
             return_value=[categories_data['create_new_auto_create_categories_destination_attributes_items']]
+        )
+        mocker.patch(
+            'qbosdk.apis.Accounts.count',
+            return_value=0
         )
         mocker.patch(
             'qbosdk.apis.Accounts.get_all_generator',

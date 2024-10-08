@@ -13,6 +13,11 @@ from tests.test_fyle_integrations_imports.test_modules.fixtures import tax_group
 
 def test_sync_destination_attributes(mocker, db):
     workspace_id = 5
+
+    mocker.patch(
+        'qbosdk.apis.TaxCodes.count',
+        return_value=10
+    )
     mocker.patch(
         'qbosdk.apis.TaxCodes.get_all_generator',
         return_value=[tax_groups_data['create_new_auto_create_tax_groups_destination_attributes']]
@@ -102,6 +107,10 @@ def test_auto_create_destination_attributes(mocker, db):
             return_value=[]
         )
         mocker.patch(
+            'qbosdk.apis.TaxCodes.count',
+            return_value=10
+        )
+        mocker.patch(
             'qbosdk.apis.TaxCodes.get_all_generator',
             return_value=[tax_groups_data['create_new_auto_create_tax_groups_destination_attributes']]
         )
@@ -137,6 +146,10 @@ def test_auto_create_destination_attributes(mocker, db):
         mocker.patch(
             'fyle_integrations_platform_connector.apis.TaxGroups.post_bulk',
             return_value=[]
+        )
+        mocker.patch(
+            'qbosdk.apis.TaxCodes.count',
+            return_value=10
         )
         mocker.patch(
             'qbosdk.apis.TaxCodes.get_all_generator',
