@@ -60,14 +60,17 @@ class WorkspaceView(generics.CreateAPIView, generics.RetrieveUpdateAPIView):
         user = User.objects.get(user_id=request.user)
         org_id = request.query_params.get('org_id')
         workspaces = Workspace.objects.filter(user__in=[user], fyle_org_id=org_id).all()
-
+        logger.info('User id %s', request.user)
         if workspaces:
+            logger.info('Workspace detail %s', workspaces[0].__dict__)
             async_task(
                 "apps.workspaces.tasks.async_update_workspace_name",
                 workspaces[0],
                 request.META.get("HTTP_AUTHORIZATION"),
                 q_options={'cluster': 'import'}
             )
+        else:
+            logger.info('No workspace found for user %s with org_id %s', request.user, org_id)
 
         return Response(data=WorkspaceSerializer(workspaces, many=True).data, status=status.HTTP_200_OK)
 
