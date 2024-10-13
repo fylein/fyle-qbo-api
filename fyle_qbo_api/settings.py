@@ -145,6 +145,11 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'INFO',
         },
+        'qbosdk.apis.api_base': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True
+        },
         'django.request': {'handlers': ['request_logs'], 'propagate': False},
     },
 }
