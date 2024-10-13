@@ -62,7 +62,7 @@ class WorkspaceView(generics.CreateAPIView, generics.RetrieveUpdateAPIView):
         workspaces = Workspace.objects.filter(user__in=[user], fyle_org_id=org_id).all()
         logger.info('User id %s', request.user)
         if workspaces:
-            logger.info('Workspace detail %s', workspaces[0].__dict__)
+            logger.info('Workspace detail %s', workspaces)
             async_task(
                 "apps.workspaces.tasks.async_update_workspace_name",
                 workspaces[0],
