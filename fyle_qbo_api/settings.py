@@ -62,6 +62,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'request_logging.middleware.LoggingMiddleware',
     'fyle_qbo_api.logging_middleware.ErrorHandlerMiddleware',
+    'fyle_qbo_api.logging_middleware.LogPostRequestMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'corsheaders.middleware.CorsPostCsrfMiddleware',
