@@ -9,7 +9,7 @@ from django.conf import settings
 from django.http import HttpResponse
 
 logger = logging.getLogger(__name__)
-logger.level = logging.WARNING
+logger.level = logging.INFO
 
 
 def generate_worker_id():
