@@ -35,6 +35,8 @@ class WorkspacePermissions(permissions.BasePermission):
         workspace_id = str(view.kwargs.get('workspace_id'))
         user = request.user
         workspace_users = cache.get(workspace_id)
+        logger.info(f'User: {user}')
+        logger.info(f'Workspace users: {workspace_users}')
 
         if workspace_users:
             return self.validate_and_cache(workspace_users, user, workspace_id, request.data)
