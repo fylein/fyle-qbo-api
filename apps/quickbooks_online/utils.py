@@ -242,7 +242,8 @@ class QBOConnector:
                             'active': True,
                             'detail': {
                                 'fully_qualified_name': account['FullyQualifiedName'],
-                                'account_type': account['AccountType']
+                                'account_type': account['AccountType'],
+                                'detail_type': account['AccountSubType'] if 'AccountSubType' in account else None
                             },
                             'code': code
                         }
