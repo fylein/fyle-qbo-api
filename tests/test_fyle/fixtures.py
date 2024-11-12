@@ -197,7 +197,8 @@ data = {
                 'verifier_user_id': 'usbzW0rVpuWC'
             }
         ],
-        'verifier_comments': []
+        'verifier_comments': [],
+        'is_posted_at_null': False
     },
     "default_raw_expense": {
         'employee_email': 'admin1@fyleforimporrttest.in',
@@ -619,6 +620,7 @@ data = {
             "spent_at": "2021-12-22T17:00:00",
             "approved_at": "2021-12-22T07:30:26.289842+00:00",
             "posted_at": None,
+            "is_posted_at_null": True,
             "expense_created_at": "2021-12-23T07:14:13.990650+00:00",
             "expense_updated_at": "2021-12-27T05:26:43.954470+00:00",
             "source_account_type": "PERSONAL_CASH_ACCOUNT",
@@ -10120,6 +10122,7 @@ data = {
                 'Klass': '',
             },
             'payment_number': 'P/2022/05/R/9',
+            'is_posted_at_null': True,
         }
     ],
     'expenses': [
