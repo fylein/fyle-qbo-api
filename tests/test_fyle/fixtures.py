@@ -284,6 +284,7 @@ data = {
                 'Vehicle Type': '',
                 'Fyle Categories': '',
             },
+            'is_posted_at_null': False
         },
         {
             'id': '1235',

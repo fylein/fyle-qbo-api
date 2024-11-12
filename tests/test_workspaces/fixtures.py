@@ -130,6 +130,7 @@ data = {
                 'Klass': '',
             },
             'payment_number': 'P/2022/05/R/14',
+            'is_posted_at_null': False
         }
     ],
     'company_info': {
