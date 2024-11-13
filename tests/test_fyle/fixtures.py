@@ -240,7 +240,8 @@ data = {
         'tax_amount': None,
         'tax_group_id': None,
         'previous_export_state': None,
-        'accounting_export_summary': []
+        'accounting_export_summary': [],
+        'is_posted_at_null': True
     },
     "expenses_spent_at":[
         {
@@ -327,6 +328,7 @@ data = {
                 'Vehicle Type': '',
                 'Fyle Categories': '',
             },
+            'is_posted_at_null': True
         },
         {
             'id': '1236',
@@ -369,6 +371,7 @@ data = {
                 'Vehicle Type': '',
                 'Fyle Categories': '',
             },
+            'is_posted_at_null': True
         },
     ],
 
@@ -1097,7 +1100,8 @@ data = {
             'paid_on_qbo': False,
             'created_at': '2024-06-18T19:12:17.020617+00:00',
             'updated_at': '2024-06-18T19:12:17.020627+00:00',
-            'bank_transaction_id': 'anish'
+            'bank_transaction_id': 'anish',
+            'is_posted_at_null': False
         }
     ],
     'ccc_expenses_split_diff_bank_transaction_id': [
@@ -1148,7 +1152,8 @@ data = {
             'created_at': '2024-06-18T19:12:17.003409+00:00',
             'updated_at': '2024-06-18T19:12:17.003421+00:00',
             'bank_transaction_id': 'Arkham',
-            'fund_source': 'CCC'
+            'fund_source': 'CCC',
+            'is_posted_at_null': False
         },
         {
             'id': '24004',
@@ -1553,6 +1558,7 @@ data = {
                         'custom_properties': {},
                         'paid_on_qbo': False,
                         'payment_number': 'P/2022/05/R/4',
+                        'is_posted_at_null': False
                     }
                 ],
                 'fund_source': 'PERSONAL',
@@ -1646,6 +1652,7 @@ data = {
                         'custom_properties': {},
                         'paid_on_qbo': False,
                         'payment_number': 'P/2022/05/R/5',
+                        'is_posted_at_null': False
                     }
                 ],
                 'fund_source': 'PERSONAL',
@@ -2068,6 +2075,7 @@ data = {
                 'exported_at': '2022-05-23T13:03:37.501808Z',
                 'updated_at': '2022-05-23T13:03:37.502024Z',
                 'workspace': 3,
+                'is_posted_at_null': False
             },
             {
                 'id': 10,
@@ -2348,6 +2356,7 @@ data = {
                 'exported_at': '2022-05-23T13:03:15.136482Z',
                 'updated_at': '2022-05-23T13:03:15.136864Z',
                 'workspace': 3,
+                'is_posted_at_null': False
             },
             {
                 'id': 9,
@@ -2738,6 +2747,7 @@ data = {
                 'exported_at': '2022-05-23T13:02:52.066735Z',
                 'updated_at': '2022-05-23T13:02:52.067152Z',
                 'workspace': 3,
+                'is_posted_at_null': False
             },
             {
                 'id': 18,
