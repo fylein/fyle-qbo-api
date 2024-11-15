@@ -1,5 +1,5 @@
 import logging
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import List
 
 from django.conf import settings
@@ -65,7 +65,15 @@ def schedule_sync(workspace_id: int, schedule_enabled: bool, hours: int, email_a
         if email_added:
             ws_schedule.additional_email_options.append(email_added)
 
-        schedule, _ = Schedule.objects.update_or_create(func='apps.workspaces.tasks.run_sync_schedule', args='{}'.format(workspace_id), defaults={'schedule_type': Schedule.MINUTES, 'minutes': hours * 60, 'next_run': datetime.now()})
+        schedule, _ = Schedule.objects.update_or_create(
+            func='apps.workspaces.tasks.run_sync_schedule',
+            args='{}'.format(workspace_id),
+            defaults={
+                'schedule_type': Schedule.MINUTES,
+                'minutes': hours * 60,
+                'next_run': datetime.now() + timedelta(hours=hours),
+            }
+        )
 
         ws_schedule.schedule = schedule
 
