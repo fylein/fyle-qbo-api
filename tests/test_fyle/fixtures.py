@@ -197,8 +197,7 @@ data = {
                 'verifier_user_id': 'usbzW0rVpuWC'
             }
         ],
-        'verifier_comments': [],
-        'is_posted_at_null': False
+        'verifier_comments': []
     },
     "default_raw_expense": {
         'employee_email': 'admin1@fyleforimporrttest.in',
@@ -224,7 +223,7 @@ data = {
         'file_ids': [],
         'spent_at': '2024-05-10 17:00:00',
         'approved_at': '2024-05-10 07:53:25',
-        'posted_at': None,
+        'posted_at': '2024-05-10 07:53:25',
         'is_skipped': False,
         'expense_created_at': '2024-05-10 07:52:10',
         'expense_updated_at': '2024-05-13 05:53:25',
@@ -241,7 +240,7 @@ data = {
         'tax_group_id': None,
         'previous_export_state': None,
         'accounting_export_summary': [],
-        'is_posted_at_null': True
+        'is_posted_at_null': False
     },
     "expenses_spent_at":[
         {
@@ -501,7 +500,8 @@ data = {
             "custom_properties": {
                 "Vehicle Type": "",
                 "Fyle Categories": ""
-            }
+            },
+            "is_posted_at_null": False
         },
         {
             "id": "1265",
@@ -544,8 +544,9 @@ data = {
             "custom_properties": {
                 "Vehicle Type": "",
                 "Fyle Categories": ""
-            }
-        }
+            },
+            "is_posted_at_null": False
+        },
     ],
     'expense_refund_single_ccc':{
             "id": "1265",
@@ -588,7 +589,8 @@ data = {
             "custom_properties": {
                 "Vehicle Type": "",
                 "Fyle Categories": ""
-            }
+            },
+            "is_posted_at_null": False
         },
         'expense_refund_single':{
             "id": "1265",
@@ -632,7 +634,8 @@ data = {
             "custom_properties": {
                 "Vehicle Type": "",
                 "Fyle Categories": ""
-            }
+            },
+            "is_posted_at_null": False
         },
     "expense_refund_invalid": [
         {
@@ -676,7 +679,8 @@ data = {
             "custom_properties": {
                 "Vehicle Type": "",
                 "Fyle Categories": ""
-            }
+            },
+            "is_posted_at_null": False
         },
         {
             "id": "1111",
@@ -719,7 +723,8 @@ data = {
             "custom_properties": {
                 "Vehicle Type": "",
                 "Fyle Categories": ""
-            }
+            },
+            "is_posted_at_null": False
         }
     ],
     "skipped_expenses": {
@@ -948,7 +953,8 @@ data = {
             'paid_on_fyle': False,
             'paid_on_qbo': False,
             'created_at': '2024-06-18T19:12:17.003409+00:00',
-            'updated_at': '2024-06-18T19:12:17.003421+00:00'
+            'updated_at': '2024-06-18T19:12:17.003421+00:00',
+            'is_posted_at_null': False
         },
         {
             'id': '24009',
@@ -999,7 +1005,8 @@ data = {
             'paid_on_fyle': False,
             'paid_on_qbo': False,
             'created_at': '2024-06-18T19:12:17.020617+00:00',
-            'updated_at': '2024-06-18T19:12:17.020627+00:00'
+            'updated_at': '2024-06-18T19:12:17.020627+00:00',
+            'is_posted_at_null': False
         }
     ],
     'ccc_expenses_split_same_bank_transaction_id': [
@@ -1049,7 +1056,8 @@ data = {
             'paid_on_qbo': False,
             'created_at': '2024-06-18T19:12:17.003409+00:00',
             'updated_at': '2024-06-18T19:12:17.003421+00:00',
-            'bank_transaction_id': 'anish'
+            'bank_transaction_id': 'anish',
+            'is_posted_at_null': False
         },
         {
             'id': '24009',
@@ -1205,7 +1213,8 @@ data = {
             'created_at': '2024-06-18T19:12:17.003409+00:00',
             'updated_at': '2024-06-18T19:12:17.003421+00:00',
             'bank_transaction_id': 'Arkham',
-            'fund_source': 'CCC'
+            'fund_source': 'CCC',
+            'is_posted_at_null': False
         },
         {
             'id': '24008',
@@ -1254,7 +1263,8 @@ data = {
             'created_at': '2024-06-18T19:12:17.003409+00:00',
             'updated_at': '2024-06-18T19:12:17.003421+00:00',
             'bank_transaction_id': 'Anish',
-            'fund_source': 'CCC'
+            'fund_source': 'CCC',
+            'is_posted_at_null': False
         },
         {
             'id': '24009',
@@ -1306,7 +1316,8 @@ data = {
             'created_at': '2024-06-18T19:12:17.003409+00:00',
             'updated_at': '2024-06-18T19:12:17.003421+00:00',
             'bank_transaction_id': 'Anish',
-            'fund_source': 'CCC'
+            'fund_source': 'CCC',
+            'is_posted_at_null': False
         }
     ],
     'expense_groups_complete_response': {
@@ -10023,6 +10034,7 @@ data = {
                 'Klass': '',
             },
             'payment_number': 'P/2022/05/R/9',
+            'is_posted_at_null': False
         },
         {
             'id': 'txW7qE5DUF84',
@@ -10078,6 +10090,7 @@ data = {
                 'Klass': '',
             },
             'payment_number': 'P/2022/05/R/9',
+            'is_posted_at_null': False
         },
         {
             'id': 'txW7qE5DUF85',
@@ -10192,6 +10205,7 @@ data = {
                 'Klass': '',
             },
             'payment_number': 'P/2022/05/R/9',
+            'is_posted_at_null': False
         }
     ],
     'reimbursements': [
