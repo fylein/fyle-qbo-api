@@ -634,8 +634,7 @@ data = {
             "custom_properties": {
                 "Vehicle Type": "",
                 "Fyle Categories": ""
-            },
-            "is_posted_at_null": False
+            }
         },
     "expense_refund_invalid": [
         {
