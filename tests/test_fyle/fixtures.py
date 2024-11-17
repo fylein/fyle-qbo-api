@@ -6,6 +6,8 @@ data = {
             'tpa_id': 'tpayfjPPHTDgv',
             'url': 'https://staging1.fyle.tech/app/settings/#/integrations/native_apps?integrationIframeTarget=integrations/intacct/main/dashboard'
         },
+        'posted_at': '2024-05-10T07:53:25',
+        'is_posted_at_null': False,
         'activity_details': None,
         'added_to_report_at': None,
         'admin_amount': None,
