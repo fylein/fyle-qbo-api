@@ -6,6 +6,8 @@ data = {
             'tpa_id': 'tpayfjPPHTDgv',
             'url': 'https://staging1.fyle.tech/app/settings/#/integrations/native_apps?integrationIframeTarget=integrations/intacct/main/dashboard'
         },
+        'posted_at': '2024-05-10T07:53:25',
+        'is_posted_at_null': False,
         'activity_details': None,
         'added_to_report_at': None,
         'admin_amount': None,
@@ -223,7 +225,7 @@ data = {
         'file_ids': [],
         'spent_at': '2024-05-10 17:00:00',
         'approved_at': '2024-05-10 07:53:25',
-        'posted_at': None,
+        'posted_at': '2024-05-10 07:53:25',
         'is_skipped': False,
         'expense_created_at': '2024-05-10 07:52:10',
         'expense_updated_at': '2024-05-13 05:53:25',
@@ -239,7 +241,8 @@ data = {
         'tax_amount': None,
         'tax_group_id': None,
         'previous_export_state': None,
-        'accounting_export_summary': []
+        'accounting_export_summary': [],
+        'is_posted_at_null': False
     },
     "expenses_spent_at":[
         {
@@ -283,6 +286,7 @@ data = {
                 'Vehicle Type': '',
                 'Fyle Categories': '',
             },
+            'is_posted_at_null': False
         },
         {
             'id': '1235',
@@ -325,6 +329,7 @@ data = {
                 'Vehicle Type': '',
                 'Fyle Categories': '',
             },
+            'is_posted_at_null': True
         },
         {
             'id': '1236',
@@ -367,6 +372,7 @@ data = {
                 'Vehicle Type': '',
                 'Fyle Categories': '',
             },
+            'is_posted_at_null': True
         },
     ],
 
@@ -496,7 +502,8 @@ data = {
             "custom_properties": {
                 "Vehicle Type": "",
                 "Fyle Categories": ""
-            }
+            },
+            "is_posted_at_null": False
         },
         {
             "id": "1265",
@@ -539,8 +546,9 @@ data = {
             "custom_properties": {
                 "Vehicle Type": "",
                 "Fyle Categories": ""
-            }
-        }
+            },
+            "is_posted_at_null": False
+        },
     ],
     'expense_refund_single_ccc':{
             "id": "1265",
@@ -583,7 +591,8 @@ data = {
             "custom_properties": {
                 "Vehicle Type": "",
                 "Fyle Categories": ""
-            }
+            },
+            "is_posted_at_null": False
         },
         'expense_refund_single':{
             "id": "1265",
@@ -619,6 +628,7 @@ data = {
             "spent_at": "2021-12-22T17:00:00",
             "approved_at": "2021-12-22T07:30:26.289842+00:00",
             "posted_at": None,
+            "is_posted_at_null": True,
             "expense_created_at": "2021-12-23T07:14:13.990650+00:00",
             "expense_updated_at": "2021-12-27T05:26:43.954470+00:00",
             "source_account_type": "PERSONAL_CASH_ACCOUNT",
@@ -670,7 +680,8 @@ data = {
             "custom_properties": {
                 "Vehicle Type": "",
                 "Fyle Categories": ""
-            }
+            },
+            "is_posted_at_null": False
         },
         {
             "id": "1111",
@@ -713,7 +724,8 @@ data = {
             "custom_properties": {
                 "Vehicle Type": "",
                 "Fyle Categories": ""
-            }
+            },
+            "is_posted_at_null": False
         }
     ],
     "skipped_expenses": {
@@ -942,7 +954,8 @@ data = {
             'paid_on_fyle': False,
             'paid_on_qbo': False,
             'created_at': '2024-06-18T19:12:17.003409+00:00',
-            'updated_at': '2024-06-18T19:12:17.003421+00:00'
+            'updated_at': '2024-06-18T19:12:17.003421+00:00',
+            'is_posted_at_null': False
         },
         {
             'id': '24009',
@@ -993,7 +1006,8 @@ data = {
             'paid_on_fyle': False,
             'paid_on_qbo': False,
             'created_at': '2024-06-18T19:12:17.020617+00:00',
-            'updated_at': '2024-06-18T19:12:17.020627+00:00'
+            'updated_at': '2024-06-18T19:12:17.020627+00:00',
+            'is_posted_at_null': False
         }
     ],
     'ccc_expenses_split_same_bank_transaction_id': [
@@ -1043,7 +1057,8 @@ data = {
             'paid_on_qbo': False,
             'created_at': '2024-06-18T19:12:17.003409+00:00',
             'updated_at': '2024-06-18T19:12:17.003421+00:00',
-            'bank_transaction_id': 'anish'
+            'bank_transaction_id': 'anish',
+            'is_posted_at_null': False
         },
         {
             'id': '24009',
@@ -1094,7 +1109,8 @@ data = {
             'paid_on_qbo': False,
             'created_at': '2024-06-18T19:12:17.020617+00:00',
             'updated_at': '2024-06-18T19:12:17.020627+00:00',
-            'bank_transaction_id': 'anish'
+            'bank_transaction_id': 'anish',
+            'is_posted_at_null': False
         }
     ],
     'ccc_expenses_split_diff_bank_transaction_id': [
@@ -1145,7 +1161,8 @@ data = {
             'created_at': '2024-06-18T19:12:17.003409+00:00',
             'updated_at': '2024-06-18T19:12:17.003421+00:00',
             'bank_transaction_id': 'Arkham',
-            'fund_source': 'CCC'
+            'fund_source': 'CCC',
+            'is_posted_at_null': False
         },
         {
             'id': '24004',
@@ -1197,7 +1214,8 @@ data = {
             'created_at': '2024-06-18T19:12:17.003409+00:00',
             'updated_at': '2024-06-18T19:12:17.003421+00:00',
             'bank_transaction_id': 'Arkham',
-            'fund_source': 'CCC'
+            'fund_source': 'CCC',
+            'is_posted_at_null': False
         },
         {
             'id': '24008',
@@ -1246,7 +1264,8 @@ data = {
             'created_at': '2024-06-18T19:12:17.003409+00:00',
             'updated_at': '2024-06-18T19:12:17.003421+00:00',
             'bank_transaction_id': 'Anish',
-            'fund_source': 'CCC'
+            'fund_source': 'CCC',
+            'is_posted_at_null': False
         },
         {
             'id': '24009',
@@ -1298,7 +1317,8 @@ data = {
             'created_at': '2024-06-18T19:12:17.003409+00:00',
             'updated_at': '2024-06-18T19:12:17.003421+00:00',
             'bank_transaction_id': 'Anish',
-            'fund_source': 'CCC'
+            'fund_source': 'CCC',
+            'is_posted_at_null': False
         }
     ],
     'expense_groups_complete_response': {
@@ -1550,6 +1570,7 @@ data = {
                         'custom_properties': {},
                         'paid_on_qbo': False,
                         'payment_number': 'P/2022/05/R/4',
+                        'is_posted_at_null': False
                     }
                 ],
                 'fund_source': 'PERSONAL',
@@ -1643,6 +1664,7 @@ data = {
                         'custom_properties': {},
                         'paid_on_qbo': False,
                         'payment_number': 'P/2022/05/R/5',
+                        'is_posted_at_null': False
                     }
                 ],
                 'fund_source': 'PERSONAL',
@@ -2065,6 +2087,7 @@ data = {
                 'exported_at': '2022-05-23T13:03:37.501808Z',
                 'updated_at': '2022-05-23T13:03:37.502024Z',
                 'workspace': 3,
+                'is_posted_at_null': False
             },
             {
                 'id': 10,
@@ -2345,6 +2368,7 @@ data = {
                 'exported_at': '2022-05-23T13:03:15.136482Z',
                 'updated_at': '2022-05-23T13:03:15.136864Z',
                 'workspace': 3,
+                'is_posted_at_null': False
             },
             {
                 'id': 9,
@@ -2735,6 +2759,7 @@ data = {
                 'exported_at': '2022-05-23T13:02:52.066735Z',
                 'updated_at': '2022-05-23T13:02:52.067152Z',
                 'workspace': 3,
+                'is_posted_at_null': False
             },
             {
                 'id': 18,
@@ -10010,6 +10035,7 @@ data = {
                 'Klass': '',
             },
             'payment_number': 'P/2022/05/R/9',
+            'is_posted_at_null': False
         },
         {
             'id': 'txW7qE5DUF84',
@@ -10065,6 +10091,7 @@ data = {
                 'Klass': '',
             },
             'payment_number': 'P/2022/05/R/9',
+            'is_posted_at_null': False
         },
         {
             'id': 'txW7qE5DUF85',
@@ -10120,6 +10147,7 @@ data = {
                 'Klass': '',
             },
             'payment_number': 'P/2022/05/R/9',
+            'is_posted_at_null': True,
         }
     ],
     'expenses': [
@@ -10178,6 +10206,7 @@ data = {
                 'Klass': '',
             },
             'payment_number': 'P/2022/05/R/9',
+            'is_posted_at_null': False
         }
     ],
     'reimbursements': [
