@@ -72,8 +72,7 @@ def schedule_sync(workspace_id: int, schedule_enabled: bool, hours: int, email_a
                 'schedule_type': Schedule.MINUTES,
                 'minutes': hours * 60,
                 'next_run': datetime.now() + timedelta(hours=hours),
-            }
-        )
+            })
 
         ws_schedule.schedule = schedule
 
