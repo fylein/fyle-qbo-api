@@ -1,12 +1,11 @@
 import json
 import logging
 from datetime import datetime, timedelta
-from django.utils import timezone
 from typing import Dict, List
 
 import unidecode
 from django.conf import settings
-from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping
+from django.utils import timezone
 from qbosdk import QuickbooksOnlineSDK
 from qbosdk.exceptions import WrongParamsError
 
@@ -28,6 +27,7 @@ from apps.quickbooks_online.models import (
 )
 from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSettings
 from apps.workspaces.utils import round_amount
+from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping
 from fyle_integrations_imports.models import ImportLog
 
 logger = logging.getLogger(__name__)
@@ -1246,7 +1246,17 @@ class QBOConnector:
                     tax_rate_refs.append(tax_rate_ref)
 
             for tax_rate in tax_rate_refs:
-                journal_entry_payload['TxnTaxDetail']['TaxLine'].append({"Amount": 0, "DetailType": "TaxLineDetail", 'TaxLineDetail': {'TaxRateRef': tax_rate, "PercentBased": True, "NetAmountTaxable": 0}})
+                journal_entry_payload['TxnTaxDetail']['TaxLine'].append({
+                    "Amount": 0,
+                    "DetailType": "TaxLineDetail",
+                    "TaxLineDetail": {
+                        "TaxRateRef": {
+                            "value": tax_rate['value']
+                        },
+                        "PercentBased": True,
+                        "NetAmountTaxable": 0
+                    }
+                })
 
         logger.info("| Payload for Journal Entry creation | Content: {{WORKSPACE_ID: {} EXPENSE_GROUP_ID: {} JOURNAL_ENTRY_PAYLOAD: {}}}".format(self.workspace_id, journal_entry.expense_group.id, journal_entry_payload))
         return journal_entry_payload
