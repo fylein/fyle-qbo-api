@@ -710,45 +710,45 @@ class QBOConnector:
 
         return tax_details
 
-def purchase_object_payload(self, purchase_object, line, payment_type, account_ref, doc_number: str = None, credit=None):
-    general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
-    qbo_credentials = QBOCredential.objects.get(workspace_id=self.workspace_id)
+    def purchase_object_payload(self, purchase_object, line, payment_type, account_ref, doc_number: str = None, credit=None):
+        general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+        qbo_credentials = QBOCredential.objects.get(workspace_id=self.workspace_id)
 
-    purchase_object_payload = {
-        'DocNumber': doc_number if doc_number else None,
-        'PaymentType': payment_type,
-        'AccountRef': {'value': account_ref},
-        'EntityRef': {'value': purchase_object.entity_id},
-        'DepartmentRef': {'value': purchase_object.department_id},
-        'TxnDate': purchase_object.transaction_date,
-        'CurrencyRef': {'value': purchase_object.currency},
-        'PrivateNote': purchase_object.private_note,
-        'Credit': credit,
-        'Line': line,
-    }
+        purchase_object_payload = {
+            'DocNumber': doc_number if doc_number else None,
+            'PaymentType': payment_type,
+            'AccountRef': {'value': account_ref},
+            'EntityRef': {'value': purchase_object.entity_id},
+            'DepartmentRef': {'value': purchase_object.department_id},
+            'TxnDate': purchase_object.transaction_date,
+            'CurrencyRef': {'value': purchase_object.currency},
+            'PrivateNote': purchase_object.private_note,
+            'Credit': credit,
+            'Line': line,
+        }
 
-    # Add exchange rate for foreign currency transactions
-    if general_settings.is_multi_currency_allowed and purchase_object.currency != qbo_credentials.currency and qbo_credentials.currency:
-        exchange_rate = self.connection.exchange_rates.get_by_source(source_currency_code=purchase_object.currency)
-        purchase_object_payload['ExchangeRate'] = exchange_rate['Rate'] if "Rate" in exchange_rate else 1
+        # Add exchange rate for foreign currency transactions
+        if general_settings.is_multi_currency_allowed and purchase_object.currency != qbo_credentials.currency and qbo_credentials.currency:
+            exchange_rate = self.connection.exchange_rates.get_by_source(source_currency_code=purchase_object.currency)
+            purchase_object_payload['ExchangeRate'] = exchange_rate['Rate'] if "Rate" in exchange_rate else 1
 
-        if isinstance(purchase_object, CreditCardPurchase):
-            purchase_object.exchange_rate = purchase_object_payload['ExchangeRate']
-            purchase_object.save(update_fields=['exchange_rate'])
+            if isinstance(purchase_object, CreditCardPurchase):
+                purchase_object.exchange_rate = purchase_object_payload['ExchangeRate']
+                purchase_object.save(update_fields=['exchange_rate'])
 
-    if general_settings.import_tax_codes:
-        if general_settings.is_tax_override_enabled:
-            tax_details = self.get_override_tax_details(line)
-            purchase_object_payload.update({
-                'GlobalTaxCalculation': 'TaxExcluded',
-                'TxnTaxDetail': {"TaxLine": tax_details}
-            })
-        else:
-            purchase_object_payload.update({'GlobalTaxCalculation': 'TaxInclusive'})
+        if general_settings.import_tax_codes:
+            if general_settings.is_tax_override_enabled:
+                tax_details = self.get_override_tax_details(line)
+                purchase_object_payload.update({
+                    'GlobalTaxCalculation': 'TaxExcluded',
+                    'TxnTaxDetail': {"TaxLine": tax_details}
+                })
+            else:
+                purchase_object_payload.update({'GlobalTaxCalculation': 'TaxInclusive'})
 
-    [line['ItemBasedExpenseLineDetail'].pop('TaxAmount') for line in purchase_object_payload['Line'] if 'ItemBasedExpenseLineDetail' in line]
+        [line['ItemBasedExpenseLineDetail'].pop('TaxAmount') for line in purchase_object_payload['Line'] if 'ItemBasedExpenseLineDetail' in line]
 
-    return purchase_object_payload
+        return purchase_object_payload
 
     def __construct_bill_lineitems(self, bill_lineitems: List[BillLineitem], general_mappings: GeneralMapping) -> List[Dict]:
         """
