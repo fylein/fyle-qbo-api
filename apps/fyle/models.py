@@ -111,6 +111,7 @@ class Expense(models.Model):
     custom_properties = JSONField(null=True)
     previous_export_state = models.CharField(max_length=255, help_text='Previous export state', null=True)
     accounting_export_summary = JSONField(default=dict)
+    masked_corporate_card_number = models.CharField(max_length=255, help_text='Masked Corporate Card Number', null=True)
     paid_on_qbo = models.BooleanField(help_text='Expense Payment status on QBO', default=False)
     paid_on_fyle = models.BooleanField(help_text='Expense Payment status on Fyle', default=False)
     payment_number = models.CharField(max_length=55, help_text='Expense payment number', null=True)
@@ -167,6 +168,7 @@ class Expense(models.Model):
                 'purpose': expense['purpose'],
                 'report_id': expense['report_id'],
                 'corporate_card_id': expense['corporate_card_id'],
+                'masked_corporate_card_number': expense['masked_corporate_card_number'],
                 'bank_transaction_id': expense['bank_transaction_id'],
                 'file_ids': expense['file_ids'],
                 'spent_at': expense['spent_at'],

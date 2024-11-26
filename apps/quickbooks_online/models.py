@@ -34,6 +34,8 @@ def get_expense_purpose(workspace_id, lineitem, category, workspace_general_sett
 
     details = {
         'employee_email': lineitem.employee_email,
+        'employee_name': lineitem.employee_name,
+        'card_number': '{0}'.format(lineitem.masked_corporate_card_number) if lineitem.masked_corporate_card_number else '',
         'merchant': '{0}'.format(lineitem.vendor) if lineitem.vendor else '',
         'category': '{0}'.format(category) if lineitem.category else '',
         'purpose': '{0}'.format(lineitem.purpose) if lineitem.purpose else '',

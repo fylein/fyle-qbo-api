@@ -130,7 +130,8 @@ data = {
                 'Klass': '',
             },
             'payment_number': 'P/2022/05/R/14',
-            'is_posted_at_null': False
+            'is_posted_at_null': False,
+            'masked_corporate_card_number': '**** 4567',
         }
     ],
     'company_info': {
