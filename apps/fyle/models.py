@@ -168,6 +168,7 @@ class Expense(models.Model):
                 'purpose': expense['purpose'],
                 'report_id': expense['report_id'],
                 'corporate_card_id': expense['corporate_card_id'],
+                'masked_corporate_card_number': expense['masked_corporate_card_number'],
                 'bank_transaction_id': expense['bank_transaction_id'],
                 'file_ids': expense['file_ids'],
                 'spent_at': expense['spent_at'],
