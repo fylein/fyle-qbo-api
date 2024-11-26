@@ -509,7 +509,7 @@ data = {
                 "Fyle Categories": ""
             },
             'is_posted_at_null': False,
-                'masked_corporate_card_number': '**** 4567',
+            'masked_corporate_card_number': '**** 4567',
         },
         {
             "id": "1265",
@@ -554,7 +554,7 @@ data = {
                 "Fyle Categories": ""
             },
             'is_posted_at_null': False,
-                'masked_corporate_card_number': '**** 4567',
+            'masked_corporate_card_number': '**** 4567',
         },
     ],
     'expense_refund_single_ccc':{
@@ -600,7 +600,7 @@ data = {
                 "Fyle Categories": ""
             },
             'is_posted_at_null': False,
-                'masked_corporate_card_number': '**** 4567',
+            'masked_corporate_card_number': '**** 4567',
         },
         'expense_refund_single':{
             "id": "1265",
@@ -691,7 +691,7 @@ data = {
                 "Fyle Categories": ""
             },
             'is_posted_at_null': False,
-                'masked_corporate_card_number': '**** 4567',
+            'masked_corporate_card_number': '**** 4567',
         },
         {
             "id": "1111",
@@ -736,7 +736,7 @@ data = {
                 "Fyle Categories": ""
             },
             'is_posted_at_null': False,
-                'masked_corporate_card_number': '**** 4567',
+            'masked_corporate_card_number': '**** 4567',
         }
     ],
     "skipped_expenses": {
@@ -967,7 +967,7 @@ data = {
             'created_at': '2024-06-18T19:12:17.003409+00:00',
             'updated_at': '2024-06-18T19:12:17.003421+00:00',
             'is_posted_at_null': False,
-        'masked_corporate_card_number': '**** 4567',
+            'masked_corporate_card_number': '**** 4567',
         },
         {
             'id': '24009',
@@ -1020,7 +1020,7 @@ data = {
             'created_at': '2024-06-18T19:12:17.020617+00:00',
             'updated_at': '2024-06-18T19:12:17.020627+00:00',
             'is_posted_at_null': False,
-        'masked_corporate_card_number': '**** 4567',
+            'masked_corporate_card_number': '**** 4567',
         }
     ],
     'ccc_expenses_split_same_bank_transaction_id': [
@@ -1072,7 +1072,7 @@ data = {
             'updated_at': '2024-06-18T19:12:17.003421+00:00',
             'bank_transaction_id': 'anish',
             'is_posted_at_null': False,
-        'masked_corporate_card_number': '**** 4567',
+            'masked_corporate_card_number': '**** 4567',
         },
         {
             'id': '24009',
@@ -1125,7 +1125,7 @@ data = {
             'updated_at': '2024-06-18T19:12:17.020627+00:00',
             'bank_transaction_id': 'anish',
             'is_posted_at_null': False,
-        'masked_corporate_card_number': '**** 4567',
+            'masked_corporate_card_number': '**** 4567',
         }
     ],
     'ccc_expenses_split_diff_bank_transaction_id': [
@@ -1178,7 +1178,7 @@ data = {
             'bank_transaction_id': 'Arkham',
             'fund_source': 'CCC',
             'is_posted_at_null': False,
-        'masked_corporate_card_number': '**** 4567',
+            'masked_corporate_card_number': '**** 4567',
         },
         {
             'id': '24004',
@@ -1232,7 +1232,7 @@ data = {
             'bank_transaction_id': 'Arkham',
             'fund_source': 'CCC',
             'is_posted_at_null': False,
-        'masked_corporate_card_number': '**** 4567',
+            'masked_corporate_card_number': '**** 4567',
         },
         {
             'id': '24008',
@@ -1283,7 +1283,7 @@ data = {
             'bank_transaction_id': 'Anish',
             'fund_source': 'CCC',
             'is_posted_at_null': False,
-        'masked_corporate_card_number': '**** 4567',
+            'masked_corporate_card_number': '**** 4567',
         },
         {
             'id': '24009',
@@ -1337,7 +1337,7 @@ data = {
             'bank_transaction_id': 'Anish',
             'fund_source': 'CCC',
             'is_posted_at_null': False,
-        'masked_corporate_card_number': '**** 4567',
+            'masked_corporate_card_number': '**** 4567',
         }
     ],
     'expense_groups_complete_response': {
@@ -1590,7 +1590,7 @@ data = {
                         'paid_on_qbo': False,
                         'payment_number': 'P/2022/05/R/4',
                         'is_posted_at_null': False,
-        'masked_corporate_card_number': '**** 4567',
+                        'masked_corporate_card_number': '**** 4567',
                     }
                 ],
                 'fund_source': 'PERSONAL',
@@ -1685,7 +1685,7 @@ data = {
                         'paid_on_qbo': False,
                         'payment_number': 'P/2022/05/R/5',
                         'is_posted_at_null': False,
-        'masked_corporate_card_number': '**** 4567',
+                        'masked_corporate_card_number': '**** 4567',
                     }
                 ],
                 'fund_source': 'PERSONAL',
@@ -2109,7 +2109,7 @@ data = {
                 'updated_at': '2022-05-23T13:03:37.502024Z',
                 'workspace': 3,
                 'is_posted_at_null': False,
-        'masked_corporate_card_number': '**** 4567',
+                'masked_corporate_card_number': '**** 4567',
             },
             {
                 'id': 10,
@@ -2391,7 +2391,7 @@ data = {
                 'updated_at': '2022-05-23T13:03:15.136864Z',
                 'workspace': 3,
                 'is_posted_at_null': False,
-        'masked_corporate_card_number': '**** 4567',
+                'masked_corporate_card_number': '**** 4567',
             },
             {
                 'id': 9,
@@ -2783,7 +2783,7 @@ data = {
                 'updated_at': '2022-05-23T13:02:52.067152Z',
                 'workspace': 3,
                 'is_posted_at_null': False,
-        'masked_corporate_card_number': '**** 4567',
+                'masked_corporate_card_number': '**** 4567',
             },
             {
                 'id': 18,
@@ -10060,7 +10060,7 @@ data = {
             },
             'payment_number': 'P/2022/05/R/9',
             'is_posted_at_null': False,
-        'masked_corporate_card_number': '**** 4567',
+            'masked_corporate_card_number': '**** 4567',
         },
         {
             'id': 'txW7qE5DUF84',
@@ -10117,7 +10117,7 @@ data = {
             },
             'payment_number': 'P/2022/05/R/9',
             'is_posted_at_null': False,
-        'masked_corporate_card_number': '**** 4567',
+            'masked_corporate_card_number': '**** 4567',
         },
         {
             'id': 'txW7qE5DUF85',
@@ -10234,7 +10234,7 @@ data = {
             },
             'payment_number': 'P/2022/05/R/9',
             'is_posted_at_null': False,
-        'masked_corporate_card_number': '**** 4567',
+            'masked_corporate_card_number': '**** 4567',
         }
     ],
     'reimbursements': [
