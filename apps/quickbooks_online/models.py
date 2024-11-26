@@ -599,6 +599,7 @@ class CreditCardPurchase(models.Model):
     currency = models.CharField(max_length=255, help_text='CreditCardPurchase Currency')
     private_note = models.TextField(help_text='CreditCardPurchase Description')
     credit_card_purchase_number = models.CharField(max_length=255)
+    exchange_rate = models.FloatField(help_text='Exchange rate', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
