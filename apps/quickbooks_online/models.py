@@ -6,11 +6,11 @@ from typing import Dict, List
 
 from django.conf import settings
 from django.db import models
-from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping, MappingSetting
 
 from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings
 from apps.mappings.models import GeneralMapping
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
+from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping, MappingSetting
 
 
 def get_transaction_date(expense_group: ExpenseGroup) -> str:
@@ -738,6 +738,7 @@ class JournalEntry(models.Model):
     transaction_date = models.DateField(help_text='JournalEntry transaction date')
     currency = models.CharField(max_length=255, help_text='JournalEntry Currency')
     private_note = models.TextField(help_text='JournalEntry Description')
+    exchange_rate = models.FloatField(help_text='Exchange rate', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
