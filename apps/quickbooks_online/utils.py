@@ -1237,6 +1237,8 @@ class QBOConnector:
         """
         general_mappings = GeneralMapping.objects.filter(workspace_id=self.workspace_id).first()
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+        qbo_home_currency = QBOCredential.objects.get(workspace_id=self.workspace_id).currency
+        fyle_home_currency = journal_entry.currency
 
         tax_rate_refs = []
 
@@ -1247,6 +1249,13 @@ class QBOConnector:
         lines.extend(debit_line)
 
         journal_entry_payload = {'TxnDate': journal_entry.transaction_date, 'PrivateNote': journal_entry.private_note, 'Line': lines, 'CurrencyRef': {"value": journal_entry.currency}, 'TxnTaxDetail': {'TaxLine': []}}
+
+        if general_settings.is_multi_currency_allowed and fyle_home_currency != qbo_home_currency and qbo_home_currency:
+            exchange_rate = self.connection.exchange_rates.get_by_source(source_currency_code=fyle_home_currency)
+            journal_entry_payload['ExchangeRate'] = exchange_rate['Rate'] if "Rate" in exchange_rate else 1
+
+            journal_entry.exchange_rate = journal_entry_payload['ExchangeRate']
+            journal_entry.save(update_fields=['exchange_rate'])
 
         if general_settings.import_tax_codes:
             journal_entry_payload.update({'GlobalTaxCalculation': 'TaxInclusive'})
@@ -1424,3 +1433,32 @@ class QBOConnector:
             entity_map[lineitem.id] = entity_id
 
         return entity_map
+
+    def get_exported_entry(self, resource_type: str, export_id: str):
+        """
+        Retrieve a specific resource by internal ID.
+
+        Args:
+            resource_type (str): The type of resource to fetch.
+            export_id (str): The internal ID of the resource.
+        """
+        module = getattr(self.connection, resource_type)
+        response = getattr(module, 'get_by_id')(export_id)
+        return json.loads(json.dumps(response, default=str))
+
+    def get_accounting_fields(self, resource_type: str):
+        """
+        Retrieve accounting fields for a specific resource type and internal ID.
+
+        Args:
+            resource_type (str): The type of resource to fetch.
+
+        Returns:
+            list or dict: Parsed JSON representation of the resource data.
+        """
+        module = getattr(self.connection, resource_type)
+        generator = getattr(module, 'get_all_generator')()
+
+        response = [row for responses in generator for row in responses]
+
+        return json.loads(json.dumps(response, default=str))

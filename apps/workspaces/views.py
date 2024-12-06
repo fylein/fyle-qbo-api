@@ -20,7 +20,7 @@ from apps.workspaces.actions import (
     update_or_create_workspace,
 )
 from apps.workspaces.models import LastExportDetail, QBOCredential, Workspace, WorkspaceGeneralSettings
-from apps.workspaces.permissions import IsAuthenticatedForTest
+from apps.workspaces.permissions import IsAuthenticatedForInternalAPI
 from apps.workspaces.serializers import (
     LastExportDetailSerializer,
     QBOCredentialSerializer,
@@ -183,7 +183,7 @@ class SetupE2ETestView(generics.CreateAPIView):
     """
 
     authentication_classes = []
-    permission_classes = [IsAuthenticatedForTest]
+    permission_classes = [IsAuthenticatedForInternalAPI]
 
     def post(self, request, **kwargs):
         """
