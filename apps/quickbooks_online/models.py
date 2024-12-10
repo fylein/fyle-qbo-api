@@ -651,7 +651,6 @@ class CreditCardPurchase(models.Model):
                 'transaction_date': get_transaction_date(expense_group),
                 'private_note': private_note,
                 'currency': expense.currency,
-                'exchange_rate': expense.exchange_rate,
                 'credit_card_purchase_number': get_credit_card_purchase_number(
                     expense_group,
                     expense,
