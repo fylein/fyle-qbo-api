@@ -3,10 +3,10 @@ import re
 from fyle_accounting_mappings.models import DestinationAttribute
 
 field_map = {
-    'Accounts': {'type': 'ACCOUNT', 'article_link': ''},
-    'Klasses': {'type': 'CLASS', 'article_link': ''},
-    'Names': {'type': 'VENDOR', 'article_link': ''},
-    'Depts': {'type': 'DEPARTMENT', 'article_link': ''}
+    'Accounts': {'type': 'ACCOUNT', 'article_link': None},
+    'Klasses': {'type': 'CLASS', 'article_link': None},
+    'Names': {'type': 'VENDOR', 'article_link': None},
+    'Depts': {'type': 'DEPARTMENT', 'article_link': None}
 }
 
 
