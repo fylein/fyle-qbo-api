@@ -712,6 +712,7 @@ class QBOConnector:
 
     def purchase_object_payload(self, purchase_object, line, payment_type, account_ref, doc_number: str = None, credit=None):
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+        qbo_credentials = QBOCredential.objects.get(workspace_id=self.workspace_id)
 
         purchase_object_payload = {
             'DocNumber': doc_number if doc_number else None,
@@ -726,10 +727,22 @@ class QBOConnector:
             'Line': line,
         }
 
+        # Add exchange rate for foreign currency transactions
+        if general_settings.is_multi_currency_allowed and purchase_object.currency != qbo_credentials.currency and qbo_credentials.currency:
+            exchange_rate = self.connection.exchange_rates.get_by_source(source_currency_code=purchase_object.currency)
+            purchase_object_payload['ExchangeRate'] = exchange_rate['Rate'] if "Rate" in exchange_rate else 1
+
+            if isinstance(purchase_object, CreditCardPurchase):
+                purchase_object.exchange_rate = purchase_object_payload['ExchangeRate']
+                purchase_object.save(update_fields=['exchange_rate'])
+
         if general_settings.import_tax_codes:
             if general_settings.is_tax_override_enabled:
                 tax_details = self.get_override_tax_details(line)
-                purchase_object_payload.update({'GlobalTaxCalculation': 'TaxExcluded', 'TxnTaxDetail': {"TaxLine": tax_details}})
+                purchase_object_payload.update({
+                    'GlobalTaxCalculation': 'TaxExcluded',
+                    'TxnTaxDetail': {"TaxLine": tax_details}
+                })
             else:
                 purchase_object_payload.update({'GlobalTaxCalculation': 'TaxInclusive'})
 
@@ -1420,3 +1433,32 @@ class QBOConnector:
             entity_map[lineitem.id] = entity_id
 
         return entity_map
+
+    def get_exported_entry(self, resource_type: str, export_id: str):
+        """
+        Retrieve a specific resource by internal ID.
+
+        Args:
+            resource_type (str): The type of resource to fetch.
+            export_id (str): The internal ID of the resource.
+        """
+        module = getattr(self.connection, resource_type)
+        response = getattr(module, 'get_by_id')(export_id)
+        return json.loads(json.dumps(response, default=str))
+
+    def get_accounting_fields(self, resource_type: str):
+        """
+        Retrieve accounting fields for a specific resource type and internal ID.
+
+        Args:
+            resource_type (str): The type of resource to fetch.
+
+        Returns:
+            list or dict: Parsed JSON representation of the resource data.
+        """
+        module = getattr(self.connection, resource_type)
+        generator = getattr(module, 'get_all_generator')()
+
+        response = [row for responses in generator for row in responses]
+
+        return json.loads(json.dumps(response, default=str))
