@@ -8,6 +8,7 @@ from qbosdk.exceptions import InternalServerError, InvalidTokenError, WrongParam
 from apps.fyle.actions import update_failed_expenses
 from apps.fyle.models import ExpenseGroup
 from apps.quickbooks_online.actions import update_last_export_details
+from apps.quickbooks_online.errors.helpers import error_matcher, get_entity_values, replace_destination_id_with_values
 from apps.tasks.models import Error, TaskLog
 from apps.workspaces.models import FyleCredential, QBOCredential
 from fyle_qbo_api.exceptions import BulkError
@@ -35,6 +36,9 @@ def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: Ta
         errors = []
 
         for error in quickbooks_errors:
+            article_link = None
+            attribute_type = None
+            is_parsed = False
             error = {
                 'expense_group_id': expense_group.id,
                 'type': '{0} / {1}'.format(response['Fault']['type'], error['code']),
@@ -44,6 +48,16 @@ def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: Ta
             errors.append(error)
 
             if export_type != 'Bill Payment':
+                error_msg = error['long_description']
+                error_dict = error_matcher(error_msg)
+                if error_dict:
+                    error_entity_values = get_entity_values(error_dict, expense_group.workspace_id)
+                    if error_entity_values:
+                        error_msg = replace_destination_id_with_values(error_msg, error_entity_values)
+                        is_parsed = True
+                        article_link = error_dict['article_link']
+                        attribute_type = error_dict['attribute_type']
+
                 error, created = Error.objects.update_or_create(
                     workspace_id=expense_group.workspace_id,
                     expense_group=expense_group,
@@ -51,7 +65,10 @@ def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: Ta
                         'error_title': error['type'],
                         'type': 'QBO_ERROR',
                         'error_detail': error['long_description'],
-                        'is_resolved': False
+                        'is_resolved': False,
+                        'is_parsed': is_parsed,
+                        'attribute_type': attribute_type,
+                        'article_link': article_link
                     })
                 error.increase_repetition_count_by_one(created)
 
