@@ -1,10 +1,10 @@
 from django.db import models
 from django.db.models import JSONField
-from fyle_accounting_mappings.models import ExpenseAttribute
 
 from apps.fyle.models import ExpenseGroup
 from apps.quickbooks_online.models import Bill, BillPayment, Cheque, CreditCardPurchase, JournalEntry, QBOExpense
 from apps.workspaces.models import Workspace
+from fyle_accounting_mappings.models import ExpenseAttribute
 
 
 def get_default():
@@ -54,6 +54,9 @@ class Error(models.Model):
     is_resolved = models.BooleanField(default=False, help_text='Is resolved')
     error_title = models.CharField(max_length=255, help_text='Error title')
     error_detail = models.TextField(help_text='Error detail')
+    is_parsed = models.BooleanField(default=False, help_text='Is parsed')
+    attribute_type = models.CharField(max_length=255, null=True, blank=True, help_text='Error Attribute type')
+    article_link = models.TextField(null=True, blank=True, help_text='Article link')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')
 
