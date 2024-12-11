@@ -64,7 +64,7 @@ def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: Ta
                     defaults={
                         'error_title': error['type'],
                         'type': 'QBO_ERROR',
-                        'error_detail': error['long_description'],
+                        'error_detail': error_msg,
                         'is_resolved': False,
                         'is_parsed': is_parsed,
                         'attribute_type': attribute_type,
