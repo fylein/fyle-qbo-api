@@ -240,6 +240,12 @@ BEGIN
   GET DIAGNOSTICS rcount = ROW_COUNT;
   RAISE NOTICE 'Deleted % django_q_schedule', rcount;
 
+  DELETE
+  FROM expense_attributes_deletion_cache 
+  WHERE workspace_id = _workspace_id;
+  GET DIAGNOSTICS rcount = ROW_COUNT;
+  RAISE NOTICE 'Deleted % expense_attributes_deletion_cache', rcount;
+
 --   DELETE
 --   FROM auth_tokens aut
 --   WHERE aut.user_id IN (
