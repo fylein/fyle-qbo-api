@@ -1062,6 +1062,8 @@ class QBOConnector:
         :return: constructed credit_card_purchase
         """
         general_mappings = GeneralMapping.objects.filter(workspace_id=self.workspace_id).first()
+        qbo_home_currency = QBOCredential.objects.get(workspace_id=self.workspace_id).currency
+        fyle_home_currency = credit_card_purchase.currency
 
         line = self.__construct_credit_card_purchase_lineitems(credit_card_purchase_lineitems, general_mappings)
         credit = False
