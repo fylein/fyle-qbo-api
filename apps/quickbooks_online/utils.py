@@ -732,9 +732,8 @@ class QBOConnector:
             exchange_rate = self.connection.exchange_rates.get_by_source(source_currency_code=purchase_object.currency)
             purchase_object_payload['ExchangeRate'] = exchange_rate['Rate'] if "Rate" in exchange_rate else 1
 
-            if isinstance(purchase_object, CreditCardPurchase):
-                purchase_object.exchange_rate = purchase_object_payload['ExchangeRate']
-                purchase_object.save(update_fields=['exchange_rate'])
+            purchase_object.exchange_rate = purchase_object_payload['ExchangeRate']
+            purchase_object.save(update_fields=['exchange_rate'])
 
         if general_settings.import_tax_codes:
             if general_settings.is_tax_override_enabled:
