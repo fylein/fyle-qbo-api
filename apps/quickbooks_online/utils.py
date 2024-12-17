@@ -712,7 +712,6 @@ class QBOConnector:
 
     def purchase_object_payload(self, purchase_object, line, payment_type, account_ref, doc_number: str = None, credit=None):
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
-        qbo_credentials = QBOCredential.objects.get(workspace_id=self.workspace_id)
 
         purchase_object_payload = {
             'DocNumber': doc_number if doc_number else None,
