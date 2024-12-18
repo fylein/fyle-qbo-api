@@ -9,7 +9,6 @@ from apps.workspaces.apis.export_settings.serializers import (
 
 from apps.workspaces.apis.import_settings.serializers import ImportSettingsSerializer
 from apps.workspaces.apis.advanced_configurations.serializers import AdvancedConfigurationsSerializer
-from apps.workspaces.apis.map_employees.serializers import MapEmployeesSerializer
 
 
 class CloneSettingsSerializer(serializers.ModelSerializer):
@@ -42,9 +41,6 @@ class CloneSettingsSerializer(serializers.ModelSerializer):
     def get_advanced_configurations(self, instance):
         return AdvancedConfigurationsSerializer(instance).data
 
-    def get_employee_mappings(self, instance):
-        return MapEmployeesSerializer(instance).data
-
     def update(self, instance, validated):
         export_settings = validated.pop('export_settings')
         import_settings = validated.pop('import_settings')
@@ -63,16 +59,11 @@ class CloneSettingsSerializer(serializers.ModelSerializer):
             instance, data=advanced_configurations, partial=True
         )
 
-        employee_mapping_serializer = MapEmployeesSerializer(
-            instance, data=employee_mapping, partial=True
-        )
-
-        if export_settings_serializer.is_valid(raise_exception=True) and employee_mapping_serializer.is_valid(raise_exception=True) \
-            and import_settings_serializer.is_valid(raise_exception=True) and  \
+        if export_settings_serializer.is_valid(raise_exception=True) and \
+            import_settings_serializer.is_valid(raise_exception=True) and  \
             advanced_configurations_serializer.is_valid(raise_exception=True):
 
             with transaction.atomic():
-                employee_mapping_serializer.save()
                 export_settings_serializer.save()
                 import_settings_serializer.save()
                 advanced_configurations_serializer.save()
