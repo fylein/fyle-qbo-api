@@ -15,7 +15,6 @@ class CloneSettingsSerializer(serializers.ModelSerializer):
     export_settings = ReadWriteSerializerMethodField()
     import_settings = ReadWriteSerializerMethodField()
     advanced_configurations = ReadWriteSerializerMethodField()
-    employee_mappings = ReadWriteSerializerMethodField()
     workspace_id = serializers.SerializerMethodField()
 
     class Meta:
@@ -24,8 +23,7 @@ class CloneSettingsSerializer(serializers.ModelSerializer):
             'workspace_id',
             'export_settings',
             'import_settings',
-            'advanced_configurations',
-            'employee_mappings'
+            'advanced_configurations'
         ]
         read_only_fields = ['workspace_id']
 
@@ -45,7 +43,6 @@ class CloneSettingsSerializer(serializers.ModelSerializer):
         export_settings = validated.pop('export_settings')
         import_settings = validated.pop('import_settings')
         advanced_configurations = validated.pop('advanced_configurations')
-        employee_mapping = validated.pop('employee_mappings')
 
         export_settings_serializer = ExportSettingsSerializer(
             instance, data=export_settings, partial=True
@@ -79,7 +76,4 @@ class CloneSettingsSerializer(serializers.ModelSerializer):
 
         if not data.get('advanced_configurations'):
             raise serializers.ValidationError('Advanced Settings are required')
-
-        if not data.get('employee_mappings'):
-            raise serializers.ValidationError('Employee Mappings are required')
         return data
