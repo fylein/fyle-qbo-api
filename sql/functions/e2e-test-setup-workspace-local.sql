@@ -271,7 +271,7 @@ BEGIN
 --   RAISE NOTICE 'Deleted % workspaces', rcount;
 
     UPDATE workspaces
-    SET onboarding_state = 'MAP_EMPLOYEES', last_synced_at = null
+    SET onboarding_state = 'EXPORT_SETTINGS', last_synced_at = null
     WHERE id = _workspace_id;
 
     UPDATE last_export_details
