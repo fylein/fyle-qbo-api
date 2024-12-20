@@ -8,7 +8,7 @@ from tests.test_workspaces.test_apis.test_map_employee.fixtures import data
 def test_map_employees(api_client, test_connection):
 
     workspace = Workspace.objects.get(id=3)
-    workspace.onboarding_state = 'MAP_EMPLOYEES'
+    workspace.onboarding_state = 'EXPORT_SETTINGS'
     workspace.save()
 
     workspace_general_settings_instance = WorkspaceGeneralSettings.objects.filter(workspace_id=3).first()

@@ -29,7 +29,7 @@ def post_delete_qbo_connection(workspace_id):
     :return: None
     """
     workspace = Workspace.objects.get(id=workspace_id)
-    if workspace.onboarding_state in ('CONNECTION', 'MAP_EMPLOYEES', 'EXPORT_SETTINGS'):
+    if workspace.onboarding_state in ('CONNECTION', 'EXPORT_SETTINGS'):
         EmployeeMapping.objects.filter(workspace_id=workspace_id).delete()
         DestinationAttribute.objects.filter(workspace_id=workspace_id).delete()
         workspace.onboarding_state = 'CONNECTION'
