@@ -110,11 +110,12 @@ def connect_qbo_oauth(refresh_token, realm_id, workspace_id):
 
     if workspace.onboarding_state == 'CONNECTION':
         workspace.onboarding_state = 'EXPORT_SETTINGS'
-        workspace_general_settings_instance = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace.id).first()
-        if not workspace_general_settings_instance:
-            WorkspaceGeneralSettings.objects.update_or_create(
-                workspace_id=workspace_id, defaults={'employee_field_mapping': 'VENDOR', 'auto_map_employees': None}
-            )
+        if settings.BRAND_ID == 'co':
+            workspace_general_settings_instance = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace.id).first()
+            if not workspace_general_settings_instance:
+                WorkspaceGeneralSettings.objects.update_or_create(
+                    workspace_id=workspace_id, defaults={'employee_field_mapping': 'VENDOR', 'auto_map_employees': None}
+                )
 
     workspace.save()
 
@@ -205,7 +206,7 @@ def setup_e2e_tests(workspace_id: int, connection):
                         platform.import_fyle_dimensions(import_taxes=True)
 
                         # Reset workspace details
-                        workspace.onboarding_state = 'EXPORT_SETTINGS'
+                        workspace.onboarding_state = 'MAP_EMPLOYEES'
                         workspace.source_synced_at = datetime.now()
                         workspace.destination_synced_at = datetime.now()
                         workspace.qbo_realm_id = healthy_token.realm_id
