@@ -206,7 +206,7 @@ def setup_e2e_tests(workspace_id: int, connection):
                         platform.import_fyle_dimensions(import_taxes=True)
 
                         # Reset workspace details
-                        workspace.onboarding_state = 'MAP_EMPLOYEES'
+                        workspace.onboarding_state = 'EXPORT_SETTINGS'
                         workspace.source_synced_at = datetime.now()
                         workspace.destination_synced_at = datetime.now()
                         workspace.qbo_realm_id = healthy_token.realm_id
