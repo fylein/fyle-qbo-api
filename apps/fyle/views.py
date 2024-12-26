@@ -83,7 +83,7 @@ class ExpenseGroupSettingsView(generics.ListCreateAPIView):
         return Response(data=self.serializer_class(expense_group_settings).data, status=status.HTTP_200_OK)
 
     def post(self, request, *args, **kwargs):
-        expense_group_settings, _ = ExpenseGroupSettings.update_expense_group_settings(request.data, self.kwargs['workspace_id'])
+        expense_group_settings, _ = ExpenseGroupSettings.update_expense_group_settings(request.data, self.kwargs['workspace_id'], request.user)
         return Response(data=self.serializer_class(expense_group_settings).data, status=status.HTTP_200_OK)
 
 

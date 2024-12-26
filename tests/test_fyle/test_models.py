@@ -38,8 +38,9 @@ def test_create_expense_objects(db):
 
 def test_expense_group_settings(create_temp_workspace, db):
     payload = data['expense_group_settings_payload']
+    user = Workspace.objects.get(id=1).user
 
-    ExpenseGroupSettings.update_expense_group_settings(payload, 98)
+    ExpenseGroupSettings.update_expense_group_settings(payload, 98, user)
 
     settings = ExpenseGroupSettings.objects.last()
 
