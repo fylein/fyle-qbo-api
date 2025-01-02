@@ -8,13 +8,14 @@ import pytest
 from rest_framework.exceptions import ValidationError
 from rest_framework import status
 
-from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings
+from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings, ExpenseFilter
 from apps.fyle.tasks import (
     create_expense_groups,
     post_accounting_export_summary,
     import_and_export_expenses,
     sync_dimensions,
-    update_non_exported_expenses
+    update_non_exported_expenses,
+    skip_expenses_pre_export
 )
 from apps.fyle.actions import mark_expenses_as_skipped
 from apps.tasks.models import TaskLog
@@ -208,3 +209,31 @@ def test_update_non_exported_expenses(db, create_temp_workspace, mocker, api_cli
     url = reverse('exports', kwargs={'workspace_id': 2})
     response = api_client.post(url, data=payload, format='json')
     assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+def test_skip_expenses_pre_export(db):
+    ExpenseFilter.objects.create(
+        workspace_id=1,
+        condition='employee_email',
+        operator='in',
+        values=['jhonsnow@fyle.in', 'naruto.u@fyle.in'],
+        rank=1,
+        join_by='OR',
+    )
+    ExpenseFilter.objects.create(
+        workspace_id=1,
+        condition='claim_number',
+        operator='in',
+        values=['ajdnwjnadw', 'ajdnwjnlol'],
+        rank=2,
+    )
+
+    expenses = list(data["expenses_spent_at"])
+    for expense in expenses:
+        expense['org_id'] = 'orHVw3ikkCxJ'
+
+    expense_objects = Expense.create_expense_objects(expenses, 1)
+    ExpenseGroup.create_expense_groups_by_report_id_fund_source(expense_objects, 1)
+
+    expense_group_ids = ExpenseGroup.objects.filter(workspace_id=1).values_list('id', flat=True)
+    skip_expenses_pre_export(1, expense_group_ids)
