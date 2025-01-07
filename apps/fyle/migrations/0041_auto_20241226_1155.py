@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('fyle', '0040_expense_masked_corporate_card_number'),
+        ('tasks', '0012_auto_20241127_0730'),
     ]
 
     operations = [
