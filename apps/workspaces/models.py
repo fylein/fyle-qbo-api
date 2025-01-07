@@ -7,6 +7,8 @@ from django.db import models
 from django.db.models import JSONField
 from django_q.models import Schedule
 
+from fyle_accounting_mappings.mixins import AutoAddCreateUpdateInfoMixin
+
 User = get_user_model()
 
 
@@ -90,7 +92,7 @@ def get_default_memo_fields():
     return ['employee_email', 'category', 'spent_on', 'report_number', 'purpose', 'expense_link']
 
 
-class WorkspaceGeneralSettings(models.Model):
+class WorkspaceGeneralSettings(AutoAddCreateUpdateInfoMixin, models.Model):
     """
     Workspace General Settings
     """
