@@ -308,6 +308,7 @@ class ExpenseGroupSettings(AutoAddCreateUpdateInfoMixin, models.Model):
 
 
 def _group_expenses(expenses, group_fields, workspace_id):
+    group_fields = list(group_fields)
     expense_ids = list(map(lambda expense: expense.id, expenses))
     expenses = Expense.objects.filter(id__in=expense_ids).all()
 
