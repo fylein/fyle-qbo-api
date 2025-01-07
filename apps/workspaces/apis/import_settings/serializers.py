@@ -78,6 +78,9 @@ class ImportSettingsSerializer(serializers.ModelSerializer):
         return instance.id
 
     def update(self, instance, validated):
+        request = self.context.get('request')
+        user = request.user if request and hasattr(request, 'user') else None
+
         workspace_general_settings = validated.pop('workspace_general_settings')
         general_mappings = validated.pop('general_mappings')
         mapping_settings = validated.pop('mapping_settings')
@@ -104,9 +107,10 @@ class ImportSettingsSerializer(serializers.ModelSerializer):
                 'import_vendors_as_merchants': workspace_general_settings.get('import_vendors_as_merchants'),
                 'import_code_fields': workspace_general_settings.get('import_code_fields'),
             },
+            user=user
         )
 
-        GeneralMapping.objects.update_or_create(workspace=instance, defaults={'default_tax_code_name': general_mappings.get('default_tax_code').get('name'), 'default_tax_code_id': general_mappings.get('default_tax_code').get('id')})
+        GeneralMapping.objects.update_or_create(workspace=instance, defaults={'default_tax_code_name': general_mappings.get('default_tax_code').get('name'), 'default_tax_code_id': general_mappings.get('default_tax_code').get('id')}, user=user)
 
         trigger: ImportSettingsTrigger = ImportSettingsTrigger(workspace_general_settings=workspace_general_settings, mapping_settings=mapping_settings, workspace_id=instance.id)
 
@@ -129,6 +133,7 @@ class ImportSettingsSerializer(serializers.ModelSerializer):
                         'is_custom': setting['is_custom'] if 'is_custom' in setting else False,
                         'source_placeholder': setting['source_placeholder'] if 'source_placeholder' in setting else None,
                     },
+                    user=user
                 )
 
         trigger.post_save_mapping_settings(workspace_general_settings_instance)

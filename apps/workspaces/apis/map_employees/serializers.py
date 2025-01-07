@@ -23,6 +23,9 @@ class MapEmployeesSerializer(serializers.ModelSerializer):
         return instance.id
 
     def update(self, instance, validated_data):
+        request = self.context.get('request')
+        user = request.user if request and hasattr(request, 'user') else None
+
         workspace_id = instance.id
         workspace_general_settings = validated_data.pop('workspace_general_settings')
 
@@ -33,7 +36,8 @@ class MapEmployeesSerializer(serializers.ModelSerializer):
             defaults={
                 'employee_field_mapping': workspace_general_settings['employee_field_mapping'],
                 'auto_map_employees': workspace_general_settings['auto_map_employees']
-            }
+            },
+            user=user
         )
 
         MapEmployeesTriggers.run_workspace_general_settings_triggers(workspace_general_settings_instance)

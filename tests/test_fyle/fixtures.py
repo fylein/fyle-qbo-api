@@ -3160,6 +3160,8 @@ data = {
         'created_at': '2022-01-27T15:19:21.542785Z',
         'updated_at': '2022-02-02T06:51:21.715325Z',
         'workspace': 8,
+        'created_by': 'asbdsuai@basjd.com',
+        'updated_by': 'asbdhjas@gnjksnd.com'
     },
     'expense_group_id_response': {
         'id': 4,
