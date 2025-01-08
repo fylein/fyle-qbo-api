@@ -1,28 +1,27 @@
 import json
 from unittest import mock
 
+import pytest
 from django.db.models import Q
 from django.urls import reverse
-
-import pytest
-from rest_framework.exceptions import ValidationError
+from fyle.platform.exceptions import InternalServerError, InvalidTokenError, RetryException
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 
+from apps.fyle.actions import mark_expenses_as_skipped
 from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings, ExpenseFilter
 from apps.fyle.tasks import (
     create_expense_groups,
-    post_accounting_export_summary,
     import_and_export_expenses,
+    post_accounting_export_summary,
     sync_dimensions,
     update_non_exported_expenses,
-    skip_expenses_pre_export
+    skip_expenses_pre_export,
 )
-from apps.fyle.actions import mark_expenses_as_skipped
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
 from tests.helper import dict_compare_keys
 from tests.test_fyle.fixtures import data
-from fyle.platform.exceptions import InternalServerError, InvalidTokenError, RetryException
 
 
 @pytest.mark.django_db()
@@ -126,7 +125,7 @@ def test_post_accounting_export_summary(db, mocker):
         'fyle_integrations_platform_connector.apis.Expenses.post_bulk_accounting_export_summary',
         return_value=[]
     )
-    post_accounting_export_summary('or79Cob97KSh', 3)
+    post_accounting_export_summary('or79Cob97KSh', 3, [expense_id])
 
     assert Expense.objects.filter(id=expense_id).first().accounting_export_summary['synced'] == True
 
