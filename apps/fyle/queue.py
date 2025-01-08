@@ -1,12 +1,14 @@
 import logging
+
 from django_q.tasks import async_task
+
 from apps.fyle.helpers import assert_valid_request
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
 
 
-def async_post_accounting_export_summary(org_id: str, workspace_id: int) -> None:
+def async_post_accounting_export_summary(org_id: str, workspace_id: int, expense_ids) -> None:
     """
     Async'ly post accounting export summary to Fyle
     :param org_id: org id
@@ -14,7 +16,7 @@ def async_post_accounting_export_summary(org_id: str, workspace_id: int) -> None
     :return: None
     """
     # This function calls post_accounting_export_summary asynchrously
-    async_task('apps.fyle.tasks.post_accounting_export_summary', org_id, workspace_id)
+    async_task('apps.fyle.tasks.post_accounting_export_summary', org_id, workspace_id, expense_ids)
 
 
 def async_import_and_export_expenses(body: dict, workspace_id: int) -> None:

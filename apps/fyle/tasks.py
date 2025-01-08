@@ -59,8 +59,8 @@ def group_expenses_and_save(expenses: List[Dict], task_log: TaskLog, workspace: 
         expenses_object_ids = [expense_object.id for expense_object in expense_objects]
         final_query = construct_expense_filter_query(expense_filters)
 
-        skipped_expenses = mark_expenses_as_skipped(final_query, expenses_object_ids, workspace)
-        post_accounting_export_summary(workspace.fyle_org_id, workspace.id, skipped_expenses)
+        skipped_expense_ids = mark_expenses_as_skipped(final_query, expenses_object_ids, workspace)
+        post_accounting_export_summary(workspace.fyle_org_id, workspace.id, skipped_expense_ids)
 
         filtered_expenses = Expense.objects.filter(
             is_skipped=False,
