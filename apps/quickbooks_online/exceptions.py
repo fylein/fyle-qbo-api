@@ -7,6 +7,7 @@ from qbosdk.exceptions import InternalServerError, InvalidTokenError, WrongParam
 
 from apps.fyle.actions import update_failed_expenses
 from apps.fyle.models import ExpenseGroup
+from apps.fyle.tasks import post_accounting_export_summary
 from apps.quickbooks_online.actions import update_last_export_details
 from apps.quickbooks_online.errors.helpers import error_matcher, get_entity_values, replace_destination_id_with_values
 from apps.tasks.models import Error, TaskLog
@@ -157,6 +158,7 @@ def handle_qbo_exceptions(bill_payment=False):
                 if not bill_payment:
                     update_failed_expenses(expense_group.expenses.all(), True)
 
+            post_accounting_export_summary(expense_group.workspace.fyle_org_id, expense_group.workspace_id, [expense.id for expense in expense_group.expenses.all()], expense_group.fund_source, True)
             if len(args) > 2 and args[2] == True and not bill_payment:
                 update_last_export_details(expense_group.workspace_id)
 
