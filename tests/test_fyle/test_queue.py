@@ -1,12 +1,12 @@
 from apps.fyle.models import Expense
-from apps.fyle.queue import async_post_accounting_export_summary, async_import_and_export_expenses
+from apps.fyle.queue import async_import_and_export_expenses, async_post_accounting_export_summary
 from apps.quickbooks_online.queue import __create_chain_and_run
 from apps.workspaces.models import FyleCredential
 
 
 # This test is just for cov :D
 def test_async_post_accounting_export_summary(db):
-    async_post_accounting_export_summary(1, 1)
+    async_post_accounting_export_summary(1, 1, [1], True)
     assert True
 
 
