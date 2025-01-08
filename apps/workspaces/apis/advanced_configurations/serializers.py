@@ -66,6 +66,9 @@ class AdvancedConfigurationsSerializer(serializers.ModelSerializer):
         return instance.id
 
     def update(self, instance, validated):
+        request = self.context.get('request')
+        user = request.user if request and hasattr(request, 'user') else None
+
         workspace_general_settings = validated.pop('workspace_general_settings')
         general_mappings = validated.pop('general_mappings')
         workspace_schedules = validated.pop('workspace_schedules')
@@ -81,9 +84,10 @@ class AdvancedConfigurationsSerializer(serializers.ModelSerializer):
                 'change_accounting_period': workspace_general_settings.get('change_accounting_period'),
                 'memo_structure': workspace_general_settings.get('memo_structure'),
             },
+            user=user
         )
 
-        GeneralMapping.objects.update_or_create(workspace=instance, defaults={'bill_payment_account_name': general_mappings.get('bill_payment_account').get('name'), 'bill_payment_account_id': general_mappings.get('bill_payment_account').get('id')})
+        GeneralMapping.objects.update_or_create(workspace=instance, defaults={'bill_payment_account_name': general_mappings.get('bill_payment_account').get('name'), 'bill_payment_account_id': general_mappings.get('bill_payment_account').get('id')}, user=user)
 
         schedule_sync(
             workspace_id=instance.id,
