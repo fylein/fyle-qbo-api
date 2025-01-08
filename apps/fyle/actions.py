@@ -1,21 +1,18 @@
+import logging
 from datetime import datetime, timezone
 from typing import List
-import logging
 
 from django.conf import settings
 from django.db.models import Q
-
-from fyle_integrations_platform_connector import PlatformConnector
-from fyle.platform.internals.decorators import retry
 from fyle.platform.exceptions import InternalServerError, RetryException
+from fyle.platform.internals.decorators import retry
 from fyle_accounting_mappings.models import ExpenseAttribute
+from fyle_integrations_platform_connector import PlatformConnector
 
 from apps.fyle.constants import DEFAULT_FYLE_CONDITIONS
-from apps.fyle.models import ExpenseGroup, Expense
+from apps.fyle.helpers import get_batched_expenses, get_updated_accounting_export_summary
+from apps.fyle.models import Expense, ExpenseGroup
 from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
-
-from .helpers import get_updated_accounting_export_summary, get_batched_expenses
-
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -157,6 +154,7 @@ def mark_expenses_as_skipped(final_query: Q, expenses_object_ids: List, workspac
         )
 
     __bulk_update_expenses(expense_to_be_updated)
+    return [expense.id for expense in expenses_to_be_skipped]
 
 
 def mark_accounting_export_summary_as_synced(expenses: List[Expense]) -> None:

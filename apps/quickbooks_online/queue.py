@@ -7,9 +7,8 @@ from django_q.models import Schedule
 from django_q.tasks import Chain, async_task
 
 from apps.fyle.models import Expense, ExpenseGroup
-from apps.tasks.models import TaskLog, Error
+from apps.tasks.models import Error, TaskLog
 from apps.workspaces.models import FyleCredential, WorkspaceGeneralSettings
-
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -98,7 +97,6 @@ def __create_chain_and_run(fyle_credentials: FyleCredential, in_progress_expense
     for task in chain_tasks:
         chain.append(task['target'], task['expense_group'], task['task_log_id'], task['last_export'])
 
-    chain.append('apps.fyle.tasks.post_accounting_export_summary', fyle_credentials.workspace.fyle_org_id, workspace_id, fund_source, True)
     chain.run()
 
 

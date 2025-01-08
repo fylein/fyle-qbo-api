@@ -188,4 +188,4 @@ def generate_export_url_and_update_expense(expense_group: ExpenseGroup) -> None:
     expense_group.save()
 
     update_complete_expenses(expense_group.expenses.all(), url)
-    post_accounting_export_summary(expense_group.workspace.fyle_org_id, expense_group.workspace.id, expense_group.fund_source)
+    post_accounting_export_summary(expense_group.workspace.fyle_org_id, expense_group.workspace.id, [expense.id for expense in expense_group.expenses.all()], expense_group.fund_source)
