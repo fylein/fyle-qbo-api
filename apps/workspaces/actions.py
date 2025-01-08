@@ -264,7 +264,7 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
                 expense_group = ExpenseGroup.objects.get(id=expense_group_id)
                 update_failed_expenses(expense_group.expenses.all(), False)
                 failed_expense_ids.extend(expense_group.expenses.values_list('id', flat=True))
-            async_post_accounting_export_summary(expense_group.workspace.fyle_org_id, workspace_id, failed_expense_ids)
+            async_post_accounting_export_summary(expense_group.workspace.fyle_org_id, workspace_id, failed_expense_ids, True)
         return
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
