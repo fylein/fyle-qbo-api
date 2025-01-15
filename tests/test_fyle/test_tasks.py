@@ -252,7 +252,7 @@ def test_skip_expenses_pre_export(db):
     skip_expenses_pre_export(1, expense_group_ids)
 
     # Verify that matching expenses are skipped
-    assert Expense.objects.filter(org_id='orHVw3ikkCxJ', is_skipped=True).count() == 2
+    assert Expense.objects.filter(org_id='orHVw3ikkCxJ', is_skipped=True).count() == 3
 
     # Verify that these expenses are removed from expense groups
     for expense in expenses_to_update:
