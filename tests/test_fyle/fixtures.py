@@ -290,6 +290,7 @@ data = {
             },
             'is_posted_at_null': False,
             'masked_corporate_card_number': '**** 4567',
+            'is_skipped': False,
         },
         {
             'id': '1235',
@@ -334,6 +335,7 @@ data = {
             },
             'is_posted_at_null': True,
             'masked_corporate_card_number': '**** 4567',
+            'is_skipped': False,
         },
         {
             'id': '1236',
@@ -378,6 +380,7 @@ data = {
             },
             'is_posted_at_null': True,
             'masked_corporate_card_number': '**** 4567',
+            'is_skipped': False,
         },
     ],
 

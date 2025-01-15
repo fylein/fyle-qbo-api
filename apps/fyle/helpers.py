@@ -95,32 +95,38 @@ def get_cluster_domain(refresh_token: str) -> str:
 
 
 def construct_expense_filter_query(expense_filters: List[ExpenseFilter]):
+    """
+    Construct expense filter query from expense filters
+    :param expense_filters: List of expense filters
+    :return: Final filter query
+    """
     final_filter = None
-    join_by = None
+    previous_join_by = None
+
     for expense_filter in expense_filters:
         constructed_expense_filter = construct_expense_filter(expense_filter)
 
         # If this is the first filter, set it as the final filter
         if expense_filter.rank == 1:
             final_filter = constructed_expense_filter
-
-        # If join by is AND, OR
+        # If not the first filter, join with previous filter based on previous join_by
         elif expense_filter.rank != 1:
-            if join_by == 'AND':
+            if previous_join_by == 'AND':
                 final_filter = final_filter & (constructed_expense_filter)
-            else:
+            else:  # OR
                 final_filter = final_filter | (constructed_expense_filter)
 
-        # Set the join type for the additonal filter
-        join_by = expense_filter.join_by
+        # Store the current filter's join_by for next iteration
+        previous_join_by = expense_filter.join_by
 
     return final_filter
 
-
 def construct_expense_filter(expense_filter):
-    constructed_expense_filter = {}
-
-    # If the expense filter is a custom field and the operator is not isnull
+    """
+    Construct expense filter from expense filter object
+    :param expense_filter: Expense filter object
+    :return: Constructed expense filter
+    """
     if expense_filter.is_custom and expense_filter.operator != 'isnull':
         # If the custom field is of type SELECT and the operator is not_in
         if expense_filter.custom_field_type == 'SELECT' and expense_filter.operator == 'not_in':
@@ -164,10 +170,16 @@ def construct_expense_filter(expense_filter):
         constructed_expense_filter = ~Q(**filter1)
     # For all non-custom fields
     else:
-        # Construct the filter for the non-custom field
-        filter1 = {f'{expense_filter.condition}__{expense_filter.operator}': expense_filter.values[0] if len(expense_filter.values) == 1 and expense_filter.operator != 'in' else expense_filter.values}
-        # Assign the constructed filter to the constructed expense filter
-        constructed_expense_filter = Q(**filter1)
+        # Handle non-custom fields (like employee_email, claim_number etc.)
+        if expense_filter.operator == 'in':
+            filter_condition = {
+                f'{expense_filter.condition}__{expense_filter.operator}': expense_filter.values
+            }
+        else:
+            filter_condition = {
+                f'{expense_filter.condition}__{expense_filter.operator}': expense_filter.values[0]
+            }
+        return Q(**filter_condition)
 
     # Return the constructed expense filter
     return constructed_expense_filter

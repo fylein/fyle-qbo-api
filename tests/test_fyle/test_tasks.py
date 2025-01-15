@@ -209,3 +209,51 @@ def test_update_non_exported_expenses(db, create_temp_workspace, mocker, api_cli
     response = api_client.post(url, data=payload, format='json')
     assert response.status_code == status.HTTP_400_BAD_REQUEST
 
+
+def test_skip_expenses_pre_export(db):
+    # Create expense filters
+    ExpenseFilter.objects.create(
+        workspace_id=1,
+        condition='employee_email',
+        operator='in',
+        values=['jhonsnow@fyle.in', 'naruto.u@fyle.in'],
+        rank=1,
+        join_by='OR',
+    )
+    ExpenseFilter.objects.create(
+        workspace_id=1,
+        condition='claim_number',
+        operator='in',
+        values=['ajdnwjnadw', 'ajdnwjnlol'],
+        rank=2,
+    )
+
+    # First create some expenses and expense groups
+    expenses = list(data["expenses_spent_at"])
+    for expense in expenses:
+        expense['org_id'] = 'orHVw3ikkCxJ'
+        expense['employee_email'] = 'regular.user@fyle.in'  # Set a non-matching email
+
+    expense_objects = Expense.create_expense_objects(expenses, 1)
+    ExpenseGroup.create_expense_groups_by_report_id_fund_source(expense_objects, 1)
+
+    # Verify initial state - no expenses should be skipped
+    assert Expense.objects.filter(org_id='orHVw3ikkCxJ', is_skipped=True).count() == 0
+    assert Expense.objects.filter(org_id='orHVw3ikkCxJ', is_skipped=False).count() == 3
+
+    # Now update some expenses to match filter criteria
+    expenses_to_update = Expense.objects.filter(org_id='orHVw3ikkCxJ')[:3]
+    for expense in expenses_to_update:
+        expense.employee_email = 'jhonsnow@fyle.in'
+        expense.save()
+
+    # Run skip_expenses_pre_export
+    expense_group_ids = ExpenseGroup.objects.filter(workspace_id=1).values_list('id', flat=True)
+    skip_expenses_pre_export(1, expense_group_ids)
+
+    # Verify that matching expenses are skipped
+    assert Expense.objects.filter(org_id='orHVw3ikkCxJ', is_skipped=True).count() == 2
+    
+    # Verify that these expenses are removed from expense groups
+    for expense in expenses_to_update:
+        assert not ExpenseGroup.objects.filter(expenses__id=expense.id).exists()
