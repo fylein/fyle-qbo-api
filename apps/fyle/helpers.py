@@ -121,6 +121,7 @@ def construct_expense_filter_query(expense_filters: List[ExpenseFilter]):
 
     return final_filter
 
+
 def construct_expense_filter(expense_filter):
     """
     Construct expense filter from expense filter object
@@ -170,16 +171,10 @@ def construct_expense_filter(expense_filter):
         constructed_expense_filter = ~Q(**filter1)
     # For all non-custom fields
     else:
-        # Handle non-custom fields (like employee_email, claim_number etc.)
-        if expense_filter.operator == 'in':
-            filter_condition = {
-                f'{expense_filter.condition}__{expense_filter.operator}': expense_filter.values
-            }
-        else:
-            filter_condition = {
-                f'{expense_filter.condition}__{expense_filter.operator}': expense_filter.values[0]
-            }
-        return Q(**filter_condition)
+        # Construct the filter for the non-custom field
+        filter1 = {f'{expense_filter.condition}__{expense_filter.operator}': expense_filter.values[0] if len(expense_filter.values) == 1 and expense_filter.operator != 'in' else expense_filter.values}
+        # Assign the constructed filter to the constructed expense filter
+        constructed_expense_filter = Q(**filter1)
 
     # Return the constructed expense filter
     return constructed_expense_filter

@@ -318,6 +318,7 @@ def update_non_exported_expenses(data: Dict) -> None:
                 expense_objects, expense.workspace_id, skip_update=True
             )
 
+
 def skip_expenses_pre_export(workspace_id: int, expense_group_ids: List[int]) -> None:
     """
     Skip expenses before export
@@ -347,7 +348,7 @@ def skip_expenses_pre_export(workspace_id: int, expense_group_ids: List[int]) ->
 
                 for expense_group in expense_groups:
                     task_log = TaskLog.objects.filter(
-                        workspace_id=workspace_id, 
+                        workspace_id=workspace_id,
                         expense_group_id=expense_group.id
                     ).first()
                     if task_log:
@@ -355,7 +356,7 @@ def skip_expenses_pre_export(workspace_id: int, expense_group_ids: List[int]) ->
                         task_log.delete()
 
                     error = Error.objects.filter(
-                        workspace_id=workspace_id, 
+                        workspace_id=workspace_id,
                         expense_group_id=expense_group.id
                     ).first()
                     if error:
