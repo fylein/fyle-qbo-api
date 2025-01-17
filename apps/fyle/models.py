@@ -9,11 +9,10 @@ from babel.numbers import get_currency_precision
 from dateutil import parser
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.fields import ArrayField
-from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.db import models
 from django.db.models import Count, JSONField
-from fyle_accounting_mappings.models import ExpenseAttribute
 from fyle_accounting_mappings.mixins import AutoAddCreateUpdateInfoMixin
+from fyle_accounting_mappings.models import ExpenseAttribute
 
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from apps.workspaces.utils import round_amount
@@ -320,7 +319,7 @@ def _group_expenses(expenses, group_fields, workspace_id):
             group_fields[group_fields.index(field)] = ''
             field = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type=field.upper()).first()
             if field:
-                custom_fields[field.attribute_type.lower()] = KeyTextTransform(field.display_name, 'custom_properties')
+                custom_fields[field.attribute_type.lower()] = f'custom_properties__{field.display_name}'
 
     # Removing all occurences of '' from group_fields
     group_fields = list(filter(lambda field: field != '', group_fields))
