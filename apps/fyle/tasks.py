@@ -341,10 +341,26 @@ def skip_expenses_pre_export(workspace_id: int, expense_group_ids: List[int]) ->
         if matching_expenses:
             skipped_expenses = mark_expenses_as_skipped(filtered_expense_query, list(matching_expenses), workspace)
             if skipped_expenses:
+                for expense in skipped_expenses:
+                    expense.accounting_export_summary = {
+                        'synced': False,
+                        'state': 'SKIPPED',
+                        'error_type': 'EXPENSE_FILTER',
+                        'error_message': 'Expense filtered out based on configured filters',
+                        'last_exported_at': datetime.now().isoformat()
+                    }
+                    expense.save()
+
+                # Post the updated accounting export summary to Fyle
+                skipped_expense_ids = [expense.id for expense in skipped_expenses]
+                post_accounting_export_summary(workspace.fyle_org_id, workspace_id, skipped_expense_ids)
                 skipped_expense_ids = [expense.id for expense in skipped_expenses]
 
                 # Find and clean up expense groups containing skipped expenses
-                expense_groups = ExpenseGroup.objects.filter(expenses__id__in=skipped_expense_ids)
+                expense_groups = ExpenseGroup.objects.filter(
+                    Q(expenses__id__in=skipped_expense_ids) | 
+                    Q(id__in=expense_group_ids, expenses__accounting_export_summary__state='ERROR')
+                )
 
                 for expense_group in expense_groups:
                     task_log = TaskLog.objects.filter(
