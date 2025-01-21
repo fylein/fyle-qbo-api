@@ -74,6 +74,8 @@ data = {
         'is_tax_override_enabled': False,
         'import_code_fields': [],
         'workspace': 4,
+        'created_by': 'asbauirb@gpasd.com',
+        'updated_by': 'asdasb@asjd.com'
     },
     'expenses': [
         {

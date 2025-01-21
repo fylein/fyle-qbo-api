@@ -5,9 +5,8 @@ from datetime import datetime, timezone
 from typing import List
 
 from dateutil.relativedelta import relativedelta
-from django.utils import timezone as django_timezone
-
 from django.db import transaction
+from django.utils import timezone as django_timezone
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping
 from fyle_integrations_platform_connector import PlatformConnector
 from qbosdk.exceptions import InvalidTokenError, WrongParamsError
@@ -812,4 +811,4 @@ def update_expense_and_post_summary(in_progress_expenses: List[Expense], workspa
     """
     fyle_org_id = Workspace.objects.get(pk=workspace_id).fyle_org_id
     update_expenses_in_progress(in_progress_expenses)
-    post_accounting_export_summary(fyle_org_id, workspace_id, fund_source)
+    post_accounting_export_summary(fyle_org_id, workspace_id, [expense.id for expense in in_progress_expenses], fund_source)

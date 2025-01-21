@@ -93,6 +93,9 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
         return instance.id
 
     def update(self, instance, validated):
+        request = self.context.get('request')
+        user = request.user if request and hasattr(request, 'user') else None
+
         workspace_general_settings = validated.pop('workspace_general_settings')
         expense_group_settings = validated.pop('expense_group_settings')
         general_mappings = validated.pop('general_mappings')
@@ -121,6 +124,7 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
                 'map_fyle_cards_qbo_account': enable_cards_mapping,
                 'name_in_journal_entry': workspace_general_settings.get('name_in_journal_entry'),
             },
+            user=user
         )
 
         export_trigger = ExportSettingsTrigger(workspace_general_settings, instance.id)
@@ -128,7 +132,7 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
         export_trigger.post_save_workspace_general_settings()
 
         if enable_cards_mapping:
-            MappingSetting.objects.update_or_create(destination_field='CREDIT_CARD_ACCOUNT', workspace_id=instance.id, defaults={'source_field': 'CORPORATE_CARD', 'import_to_fyle': False, 'is_custom': False})
+            MappingSetting.objects.update_or_create(destination_field='CREDIT_CARD_ACCOUNT', workspace_id=instance.id, defaults={'source_field': 'CORPORATE_CARD', 'import_to_fyle': False, 'is_custom': False}, user=user)
 
         if not expense_group_settings['reimbursable_expense_group_fields']:
             expense_group_settings['reimbursable_expense_group_fields'] = ['employee_email', 'report_id', 'fund_source']
@@ -151,7 +155,7 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
         ):
             expense_group_settings['import_card_credits'] = True
 
-        ExpenseGroupSettings.update_expense_group_settings(expense_group_settings, instance.id)
+        ExpenseGroupSettings.update_expense_group_settings(expense_group_settings, instance.id, user)
 
         GeneralMapping.objects.update_or_create(
             workspace=instance,
@@ -169,6 +173,7 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
                 'default_ccc_vendor_name': general_mappings.get('default_ccc_vendor').get('name'),
                 'default_ccc_vendor_id': general_mappings.get('default_ccc_vendor').get('id'),
             },
+            user=user
         )
 
         if instance.onboarding_state == 'EXPORT_SETTINGS':
