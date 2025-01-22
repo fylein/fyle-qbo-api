@@ -388,7 +388,7 @@ def skip_expenses_pre_export(workspace_id: int, expense_group_ids: List[int]) ->
                         last_export_detail.save()
 
                         logger.info(
-                            'Updated last export details for workspace %s: removed %s expense groups', 
+                            'Updated last export details for workspace %s: removed %s expense groups',
                             workspace_id,
                             deleted_groups_count
                         )
