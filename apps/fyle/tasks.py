@@ -375,10 +375,10 @@ def skip_expenses_pre_export(workspace_id: int, expense_group_ids: List[int]) ->
                     deleted_groups_count = ExpenseGroup.objects.filter(
                         expenses__id__in=skipped_expense_ids
                     ).distinct().count()
-                    
+
                     if deleted_groups_count > 0:
                         last_export_detail.total_expense_groups_count = max(
-                            0, 
+                            0,
                             last_export_detail.total_expense_groups_count - deleted_groups_count
                         )
                         last_export_detail.successful_expense_groups_count = max(
@@ -386,9 +386,9 @@ def skip_expenses_pre_export(workspace_id: int, expense_group_ids: List[int]) ->
                             (last_export_detail.successful_expense_groups_count or 0) - deleted_groups_count
                         )
                         last_export_detail.save()
-                        
+
                         logger.info(
                             'Updated last export details for workspace %s: removed %s expense groups', 
-                            workspace_id, 
+                            workspace_id,
                             deleted_groups_count
                         )
