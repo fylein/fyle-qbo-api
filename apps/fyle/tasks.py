@@ -327,7 +327,6 @@ def skip_expenses_pre_export(workspace_id: int, expense_group_ids: List[int]) ->
     :return: None
     """
     expense_filters = ExpenseFilter.objects.filter(workspace_id=workspace_id).order_by('rank')
-    logger.info('Expense filters %s', expense_filters)
     if expense_filters:
         workspace = Workspace.objects.get(pk=workspace_id)
         filtered_expense_query = construct_expense_filter_query(expense_filters)
