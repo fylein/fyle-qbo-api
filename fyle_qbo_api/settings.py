@@ -15,9 +15,8 @@ from logging.config import dictConfig
 
 import dj_database_url
 
+from fyle_qbo_api.logging_middleware import WorkerIDFilter
 from fyle_qbo_api.sentry import Sentry
-
-from .logging_middleware import WorkerIDFilter
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -66,7 +65,6 @@ MIDDLEWARE = [
     'fyle_qbo_api.logging_middleware.LogPostRequestMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'corsheaders.middleware.CorsPostCsrfMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
