@@ -57,5 +57,12 @@ sql_files = [
 
 
 class Migration(migrations.Migration):
-    dependencies = []  # This is the first migration
+    dependencies = [
+        ('fyle', '0041_auto_20241226_1155'),
+        ('mappings', '0011_auto_20241226_1155'),
+        ('quickbooks_online', '0018_creditcardpurchase_exchange_rate'),
+        ('tasks', '0013_alter_tasklog_expense_group'),
+        ('users', '0002_auto_20201228_0715'),
+        ('workspaces', '0050_auto_20241226_1155')
+    ]  # This is the first migration
     operations = safe_run_sql(sql_files)
