@@ -222,6 +222,25 @@ def get_fund_source(workspace_id: int) -> List[str]:
     return fund_source
 
 
+def get_expense_import_states(expense_group_settings: ExpenseGroupSettings) -> List[str]:
+    """
+    Get expense import state
+    :param expense_group_settings: expense group settings
+    :return: expense import state
+    """
+    expense_import_state = set()
+
+    if expense_group_settings.ccc_expense_state == 'APPROVED':
+        expense_import_state = set('APPROVED', 'PAYMENT_PROCESSING', 'PAID')
+    if expense_group_settings.expense_state == 'PAYMENT_PROCESSING':
+        expense_import_state.add('PAYMENT_PROCESSING')
+        expense_import_state.add('PAID')
+    if expense_group_settings.expense_state == 'PAID' or expense_group_settings.ccc_expense_state == 'PAID':
+        expense_import_state.add('PAID')
+
+    return list(expense_import_state)
+
+
 def get_filter_credit_expenses(expense_group_settings: ExpenseGroupSettings) -> bool:
     """
     Get filter credit expenses

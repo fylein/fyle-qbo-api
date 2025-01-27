@@ -15,12 +15,16 @@ from apps.fyle.helpers import (
     get_fund_source,
     get_source_account_type,
     handle_import_exception,
+    get_expense_import_states
 )
 from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings
 from apps.tasks.models import TaskLog
 from apps.workspaces.actions import export_to_qbo
-from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
+from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings, WorkspaceSchedule
 from fyle_qbo_api.logging_middleware import get_logger
+
+from .constants import REIMBURSABLE_IMPORT_STATE, CCC_IMPORT_STATE
+
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -248,7 +252,7 @@ def post_accounting_export_summary(org_id: str, workspace_id: int, expense_ids, 
     create_generator_and_post_in_batches(accounting_export_summary_batches, platform, workspace_id)
 
 
-def import_and_export_expenses(report_id: str, org_id: str) -> None:
+def import_and_export_expenses(report_id: str, org_id: str, is_state_change_event: bool, report_state: str = None) -> None:
     """
     Import and export expenses
     :param report_id: report id
@@ -256,23 +260,39 @@ def import_and_export_expenses(report_id: str, org_id: str) -> None:
     :return: None
     """
     workspace = Workspace.objects.get(fyle_org_id=org_id)
-    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace.id)
     expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace.id)
 
+    import_states = get_expense_import_states(expense_group_settings)
+
+    # Don't call API if report state is not in import states, for example customer configured to import only PAID reports but webhook is triggered for APPROVED report
+    if report_state not in import_states:
+        return
+
+    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace.id)
     try:
         with transaction.atomic():
-            task_log, _ = TaskLog.objects.update_or_create(workspace_id=workspace.id, type='FETCHING_EXPENSES', defaults={'status': 'IN_PROGRESS'})
-
             fund_source = get_fund_source(workspace.id)
             source_account_type = get_source_account_type(fund_source)
             filter_credit_expenses = get_filter_credit_expenses(expense_group_settings)
 
+            task_log, _ = TaskLog.objects.update_or_create(workspace_id=workspace.id, type='FETCHING_EXPENSES', defaults={'status': 'IN_PROGRESS'})
             platform = PlatformConnector(fyle_credentials)
             expenses = platform.expenses.get(
                 source_account_type,
                 filter_credit_expenses=filter_credit_expenses,
-                report_id=report_id
+                report_id=report_id,
+                import_states=import_states
             )
+
+            if is_state_change_event:
+                allowed_reimbursable_import_state = REIMBURSABLE_IMPORT_STATE.get(expense_group_settings.expense_state)
+                reimbursable_expenses = list(filter(lambda expense: expense['fund_source'] == 'PERSONAL' and expense['state'] in allowed_reimbursable_import_state, expenses))
+
+                allowed_ccc_import_state = CCC_IMPORT_STATE.get(expense_group_settings.ccc_expense_state)
+                ccc_expenses = list(filter(lambda expense: expense['fund_source'] == 'CCC' and expense['state'] in allowed_ccc_import_state, expenses))
+
+                expenses = reimbursable_expenses + ccc_expenses
+
 
             group_expenses_and_save(expenses, task_log, workspace)
 
@@ -282,6 +302,11 @@ def import_and_export_expenses(report_id: str, org_id: str) -> None:
         expense_group_ids = [expense_group['id'] for expense_group in expense_groups]
 
         if len(expense_group_ids):
+            if is_state_change_event:
+                workspace_schedule = WorkspaceSchedule.objects.filter(workspace_id=workspace.id, enabled=True, interval_hours=1).first()
+                if not workspace_schedule:
+                    return
+
             export_to_qbo(workspace.id, None, expense_group_ids, True)
 
     except WorkspaceGeneralSettings.DoesNotExist:
