@@ -319,7 +319,7 @@ def update_non_exported_expenses(data: Dict) -> None:
             )
 
 
-def skip_expenses_pre_export(workspace_id: int, expense_group_ids: List[int]) -> None:
+def skip_expenses_pre_export(workspace_id: int, instance: ExpenseFilter) -> None:
     """
     Skip expenses before export
     :param workspace_id: Workspace id
@@ -331,7 +331,6 @@ def skip_expenses_pre_export(workspace_id: int, expense_group_ids: List[int]) ->
         workspace = Workspace.objects.get(pk=workspace_id)
         filtered_expense_query = construct_expense_filter_query(expense_filters)
 
-        # Get all expenses in the workspace that match filter conditions
         matching_expenses = Expense.objects.filter(
             filtered_expense_query,
             workspace_id=workspace_id,
@@ -340,10 +339,7 @@ def skip_expenses_pre_export(workspace_id: int, expense_group_ids: List[int]) ->
         if matching_expenses:
             skipped_expenses = mark_expenses_as_skipped(filtered_expense_query, list(matching_expenses), workspace)
             if skipped_expenses:
-                skipped_expense_ids = [expense.id for expense in skipped_expenses]
-                
-                # Find and clean up expense groups containing skipped expenses
-                expense_groups = ExpenseGroup.objects.filter(expenses__id__in=skipped_expense_ids)
+                expense_groups = ExpenseGroup.objects.filter(expenses__exported_at__isnull=False)
                 deleted_failed_expense_groups_count = 0
                 for expense_group in expense_groups:
                     task_log = TaskLog.objects.filter(
@@ -356,7 +352,6 @@ def skip_expenses_pre_export(workspace_id: int, expense_group_ids: List[int]) ->
                         logger.info('Deleting task log for expense group %s before export', expense_group.id)
                         task_log.delete()
 
-                                    # Update last export details to reflect skipped expenses
                     last_export_detail = LastExportDetail.objects.filter(workspace_id=workspace_id, failed_count__gt=0).first()
                     if last_export_detail and last_export_detail.failed_count == deleted_failed_expense_groups_count:
                         last_export_detail.failed_count = 0
@@ -370,7 +365,6 @@ def skip_expenses_pre_export(workspace_id: int, expense_group_ids: List[int]) ->
                         logger.info('Deleting error for expense group %s before export', expense_group.id)
                         error.delete()
 
-                    # Remove skipped expenses from the group
                     expense_group.expenses.remove(*skipped_expenses)
                     if not expense_group.expenses.exists():
                         logger.info('Deleting empty expense group %s before export', expense_group.id)
