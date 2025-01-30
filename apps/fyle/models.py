@@ -9,11 +9,11 @@ from babel.numbers import get_currency_precision
 from dateutil import parser
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.fields import ArrayField
-from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.db import models
 from django.db.models import Count, JSONField
-from fyle_accounting_mappings.models import ExpenseAttribute
+from django.db.models.fields.json import KeyTextTransform
 from fyle_accounting_mappings.mixins import AutoAddCreateUpdateInfoMixin
+from fyle_accounting_mappings.models import ExpenseAttribute
 
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from apps.workspaces.utils import round_amount
