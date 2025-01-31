@@ -231,12 +231,6 @@ def test_skip_expenses_pre_export(db):
         expense['org_id'] = 'orHVw3ikkCxJ'
         expense['employee_email'] = 'regular.user@fyle.in'  # Set a non-matching email
 
-    expense_objects = Expense.create_expense_objects(expenses, 1)
-    expense_groups = ExpenseGroup.create_expense_groups_by_report_id_fund_source(expense_objects, 1)
-
-    # Create task log and error for one expense group
-    expense_group = expense_groups[0]
-
     # Create LastExportDetail with failed count
     LastExportDetail.objects.create(
         workspace_id=1,
