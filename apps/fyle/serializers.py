@@ -80,6 +80,21 @@ class ExpenseFilterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         workspace_id = self.context['request'].parser_context.get('kwargs').get('workspace_id')
 
-        expense_filter, _ = ExpenseFilter.objects.update_or_create(workspace_id=workspace_id, rank=validated_data['rank'], defaults=validated_data)
+        # Check if record exists first
+        existing_filter = ExpenseFilter.objects.filter(
+            workspace_id=workspace_id,
+            rank=validated_data['rank']
+        ).first()
 
-        return expense_filter
+        if existing_filter:
+            # Update existing record
+            for key, value in validated_data.items():
+                setattr(existing_filter, key, value)
+            existing_filter.save()
+            return existing_filter
+
+        # Create new record
+        return ExpenseFilter.objects.create(
+            workspace_id=workspace_id,
+            **validated_data
+        )

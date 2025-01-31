@@ -19,7 +19,7 @@ from apps.fyle.helpers import (
 from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings
 from apps.tasks.models import TaskLog, Error
 from apps.workspaces.actions import export_to_qbo
-from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
+from apps.workspaces.models import FyleCredential, LastExportDetail, Workspace, WorkspaceGeneralSettings
 from fyle_qbo_api.logging_middleware import get_logger
 
 logger = logging.getLogger(__name__)
@@ -319,7 +319,7 @@ def update_non_exported_expenses(data: Dict) -> None:
             )
 
 
-def skip_expenses_pre_export(workspace_id: int, expense_group_ids: List[int]) -> None:
+def skip_expenses_pre_export(workspace_id: int, instance: ExpenseFilter) -> None:
     """
     Skip expenses before export
     :param workspace_id: Workspace id
@@ -329,28 +329,43 @@ def skip_expenses_pre_export(workspace_id: int, expense_group_ids: List[int]) ->
     expense_filters = ExpenseFilter.objects.filter(workspace_id=workspace_id).order_by('rank')
     if expense_filters:
         workspace = Workspace.objects.get(pk=workspace_id)
-        expense_ids_queued = Expense.objects.filter(expensegroup__id__in=expense_group_ids).values_list('id', flat=True)
         filtered_expense_query = construct_expense_filter_query(expense_filters)
-        skipped_expenses = mark_expenses_as_skipped(filtered_expense_query, expense_ids_queued, workspace)
 
-        if skipped_expenses:
-            skipped_expense_ids = [expense.id for expense in skipped_expenses]
-            logger.info('Skipping expenses before export %s', skipped_expense_ids)
+        matching_expenses = Expense.objects.filter(
+            filtered_expense_query,
+            workspace_id=workspace_id,
+            is_skipped=False
+        ).values_list('id', flat=True)
+        if matching_expenses:
+            skipped_expenses = mark_expenses_as_skipped(filtered_expense_query, list(matching_expenses), workspace)
+            if skipped_expenses:
+                expense_groups = ExpenseGroup.objects.filter(expenses__exported_at__isnull=False)
+                deleted_failed_expense_groups_count = 0
+                for expense_group in expense_groups:
+                    task_log = TaskLog.objects.filter(
+                        workspace_id=workspace_id,
+                        expense_group_id=expense_group.id
+                    ).first()
+                    if task_log:
+                        if task_log.status != 'COMPLETE':
+                            deleted_failed_expense_groups_count += 1
+                        logger.info('Deleting task log for expense group %s before export', expense_group.id)
+                        task_log.delete()
 
-            expense_groups = ExpenseGroup.objects.filter(expenses__id__in=skipped_expense_ids)
+                    last_export_detail = LastExportDetail.objects.filter(workspace_id=workspace_id, failed_count__gt=0).first()
+                    if last_export_detail and last_export_detail.failed_count == deleted_failed_expense_groups_count:
+                        last_export_detail.failed_count = 0
+                        last_export_detail.save()
 
-            for expense_group in expense_groups:
-                task_log = TaskLog.objects.filter(workspace_id=workspace_id, expense_group_id=expense_group.id).first()
-                if task_log:
-                    logger.info('Deleting task log for expense group %s before export', expense_group.id)
-                    task_log.delete()
+                    error = Error.objects.filter(
+                        workspace_id=workspace_id,
+                        expense_group_id=expense_group.id
+                    ).first()
+                    if error:
+                        logger.info('Deleting error for expense group %s before export', expense_group.id)
+                        error.delete()
 
-                error = Error.objects.filter(workspace_id=workspace_id, expense_group_id=expense_group.id).first()
-                if error:
-                    logger.info('Deleting error for expense group %s before export', expense_group.id)
-                    error.delete()
-
-                expense_group.expenses.remove(*skipped_expenses)
-                if not expense_group.expenses.exists():
-                    logger.info('Deleting empty expense group %s before export', expense_group.id)
-                    expense_group.delete()
+                    expense_group.expenses.remove(*skipped_expenses)
+                    if not expense_group.expenses.exists():
+                        logger.info('Deleting empty expense group %s before export', expense_group.id)
+                        expense_group.delete()
