@@ -19,4 +19,4 @@ def run_post_save_expense_filters(sender, instance: ExpenseFilter, **kwargs):
     try:
         skip_expenses_pre_export(instance.workspace_id, instance)
     except Exception as e:
-        raise ValidationError(e)
+        raise ValidationError(f'Failed to process expense filter: {str(e)}') from e
