@@ -121,7 +121,7 @@ def update_expenses_in_progress(in_progress_expenses: List[Expense]) -> None:
     __bulk_update_expenses(expense_to_be_updated)
 
 
-def mark_expenses_as_skipped(final_query: Q, expenses_object_ids: List, workspace: Workspace) -> None:
+def mark_expenses_as_skipped(final_query: Q, expenses_object_ids: List, workspace: Workspace) -> List[Expense]:
     """
     Mark expenses as skipped in bulk
     :param final_query: final query
@@ -134,7 +134,6 @@ def mark_expenses_as_skipped(final_query: Q, expenses_object_ids: List, workspac
     expenses_to_be_skipped = Expense.objects.filter(
         final_query,
         id__in=expenses_object_ids,
-        expensegroup__isnull=True,
         org_id=workspace.fyle_org_id
     )
 
@@ -155,6 +154,8 @@ def mark_expenses_as_skipped(final_query: Q, expenses_object_ids: List, workspac
 
     __bulk_update_expenses(expense_to_be_updated)
     return [expense.id for expense in expenses_to_be_skipped]
+
+    return expenses_to_be_skipped
 
 
 def mark_accounting_export_summary_as_synced(expenses: List[Expense]) -> None:
