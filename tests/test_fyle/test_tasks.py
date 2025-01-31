@@ -242,6 +242,7 @@ def test_skip_expenses_pre_export(db):
         type='CREATING_BILL',
         status='IN_PROGRESS'
     )
+    assert TaskLog.objects.filter(workspace_id=1).exists()
 
     error = Error.objects.create(
         workspace_id=1,
@@ -249,6 +250,7 @@ def test_skip_expenses_pre_export(db):
         type='MAPPING',
         error_title='Test error'
     )
+    assert Error.objects.filter(workspace_id=1).exists()
 
     # Create LastExportDetail with failed count
     LastExportDetail.objects.create(
