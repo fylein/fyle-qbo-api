@@ -1,6 +1,7 @@
 import json
 from unittest import mock
 
+from django.db import Error
 import pytest
 from django.db.models import Q
 from django.urls import reverse
@@ -19,7 +20,7 @@ from apps.fyle.tasks import (
     skip_expenses_pre_export,
 )
 from apps.tasks.models import TaskLog
-from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
+from apps.workspaces.models import FyleCredential, LastExportDetail, Workspace, WorkspaceGeneralSettings
 from tests.helper import dict_compare_keys
 from tests.test_fyle.fixtures import data
 
@@ -210,22 +211,18 @@ def test_update_non_exported_expenses(db, create_temp_workspace, mocker, api_cli
     assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
+@pytest.mark.django_db()
 def test_skip_expenses_pre_export(db):
+    """
+    Test skip_expenses_pre_export functionality
+    """
     # Create expense filters
     ExpenseFilter.objects.create(
         workspace_id=1,
         condition='employee_email',
         operator='in',
-        values=['jhonsnow@fyle.in', 'naruto.u@fyle.in'],
-        rank=1,
-        join_by='OR',
-    )
-    ExpenseFilter.objects.create(
-        workspace_id=1,
-        condition='claim_number',
-        operator='in',
-        values=['ajdnwjnadw', 'ajdnwjnlol'],
-        rank=2,
+        values=['jhonsnow@fyle.in'],
+        rank=1
     )
 
     # First create some expenses and expense groups
@@ -235,25 +232,57 @@ def test_skip_expenses_pre_export(db):
         expense['employee_email'] = 'regular.user@fyle.in'  # Set a non-matching email
 
     expense_objects = Expense.create_expense_objects(expenses, 1)
-    ExpenseGroup.create_expense_groups_by_report_id_fund_source(expense_objects, 1)
+    expense_groups = ExpenseGroup.create_expense_groups_by_report_id_fund_source(expense_objects, 1)
 
-    # Verify initial state - no expenses should be skipped
+    # Create task log and error for one expense group
+    expense_group = expense_groups[0]
+    task_log = TaskLog.objects.create(
+        workspace_id=1,
+        expense_group=expense_group,
+        type='CREATING_BILL',
+        status='IN_PROGRESS'
+    )
+
+    error = Error.objects.create(
+        workspace_id=1,
+        expense_group=expense_group,
+        type='MAPPING',
+        error_title='Test error'
+    )
+
+    # Create LastExportDetail with failed count
+    LastExportDetail.objects.create(
+        workspace_id=1,
+        failed_count=1
+    )
+
+    # Verify initial state
     assert Expense.objects.filter(org_id='orHVw3ikkCxJ', is_skipped=True).count() == 0
     assert Expense.objects.filter(org_id='orHVw3ikkCxJ', is_skipped=False).count() == 3
+    assert TaskLog.objects.filter(workspace_id=1).count() == 1
+    assert Error.objects.filter(workspace_id=1).count() == 1
 
     # Now update some expenses to match filter criteria
-    expenses_to_update = Expense.objects.filter(org_id='orHVw3ikkCxJ')[:3]
+    expenses_to_update = Expense.objects.filter(org_id='orHVw3ikkCxJ')[:2]
     for expense in expenses_to_update:
         expense.employee_email = 'jhonsnow@fyle.in'
         expense.save()
 
     # Run skip_expenses_pre_export
-    expense_group_ids = ExpenseGroup.objects.filter(workspace_id=1).values_list('id', flat=True)
-    skip_expenses_pre_export(1, expense_group_ids)
+    skip_expenses_pre_export(1, None)
 
     # Verify that matching expenses are skipped
-    assert Expense.objects.filter(org_id='orHVw3ikkCxJ', is_skipped=True).count() == 3
+    assert Expense.objects.filter(org_id='orHVw3ikkCxJ', is_skipped=True).count() == 2
+    assert Expense.objects.filter(org_id='orHVw3ikkCxJ', is_skipped=False).count() == 1
 
-    # Verify that these expenses are removed from expense groups
+    # Verify cleanup of related objects
+    assert TaskLog.objects.filter(workspace_id=1).count() == 0
+    assert Error.objects.filter(workspace_id=1).count() == 0
+
+    # Verify LastExportDetail failed count is reset
+    last_export_detail = LastExportDetail.objects.get(workspace_id=1)
+    assert last_export_detail.failed_count == 0
+
+    # Verify expense groups are properly updated/deleted
     for expense in expenses_to_update:
         assert not ExpenseGroup.objects.filter(expenses__id=expense.id).exists()

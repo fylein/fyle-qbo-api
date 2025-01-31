@@ -6,6 +6,7 @@ from django.dispatch import receiver
 from pydantic import ValidationError
 
 from apps.fyle.models import ExpenseFilter
+from apps.fyle.tasks import skip_expenses_pre_export
 
 
 @receiver(post_save, sender=ExpenseFilter)
@@ -16,6 +17,6 @@ def run_post_save_expense_filters(sender, instance: ExpenseFilter, **kwargs):
     :return: None
     """
     try:
-        run_post_save_expense_filters(instance)
+        skip_expenses_pre_export(instance.workspace_id, instance)
     except Exception as e:
         raise ValidationError(e)
