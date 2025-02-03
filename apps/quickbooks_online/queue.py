@@ -6,7 +6,7 @@ from django.db.models import Q
 from django_q.models import Schedule
 from django_q.tasks import Chain, async_task
 
-from apps.fyle.models import Expense, ExpenseGroup
+from apps.fyle.models import ExpenseGroup
 from apps.tasks.models import Error, TaskLog
 from apps.workspaces.models import FyleCredential, WorkspaceGeneralSettings
 
@@ -44,7 +44,6 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_
         errors = Error.objects.filter(workspace_id=workspace_id, is_resolved=False, expense_group_id__in=expense_group_ids).all()
 
         chain_tasks = []
-        in_progress_expenses = []
 
         for index, expense_group in enumerate(expense_groups):
             error = errors.filter(workspace_id=workspace_id, expense_group=expense_group, is_resolved=False).first()
@@ -66,20 +65,16 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_
                 'target': 'apps.quickbooks_online.tasks.create_bill',
                 'expense_group': expense_group,
                 'task_log_id': task_log.id,
-                'last_export': last_export
+                'last_export': last_export,
+                'is_auto_export': is_auto_export
             })
-
-            # Don't include expenses with previous export state as ERROR and it's an auto import/export run
-            if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
-                in_progress_expenses.extend(expense_group.expenses.all())
 
         if len(chain_tasks) > 0:
             fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-            __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks, fund_source)
+            __create_chain_and_run(fyle_credentials, chain_tasks)
 
 
-def __create_chain_and_run(fyle_credentials: FyleCredential, in_progress_expenses: List[Expense],
-        workspace_id: int, chain_tasks: List[dict], fund_source: str) -> None:
+def __create_chain_and_run(fyle_credentials: FyleCredential, chain_tasks: List[dict]) -> None:
     """
     Create chain and run
     :param fyle_credentials: Fyle credentials
@@ -91,11 +86,10 @@ def __create_chain_and_run(fyle_credentials: FyleCredential, in_progress_expense
     """
     chain = Chain()
 
-    chain.append('apps.quickbooks_online.tasks.update_expense_and_post_summary', in_progress_expenses, workspace_id, fund_source)
     chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials, True)
 
     for task in chain_tasks:
-        chain.append(task['target'], task['expense_group'], task['task_log_id'], task['last_export'])
+        chain.append(task['target'], task['expense_group'], task['task_log_id'], task['last_export'], task['is_auto_export'])
 
     chain.run()
 
@@ -115,7 +109,6 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], i
         errors = Error.objects.filter(workspace_id=workspace_id, is_resolved=False, expense_group_id__in=expense_group_ids).all()
 
         chain_tasks = []
-        in_progress_expenses = []
 
         for index, expense_group in enumerate(expense_groups):
             error = errors.filter(workspace_id=workspace_id, expense_group=expense_group, is_resolved=False).first()
@@ -137,16 +130,13 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], i
                 'target': 'apps.quickbooks_online.tasks.create_cheque',
                 'expense_group': expense_group,
                 'task_log_id': task_log.id,
-                'last_export': last_export
+                'last_export': last_export,
+                'is_auto_export': is_auto_export
             })
-
-            # Don't include expenses with previous export state as ERROR and it's an auto import/export run
-            if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
-                in_progress_expenses.extend(expense_group.expenses.all())
 
         if len(chain_tasks) > 0:
             fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-            __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks, fund_source)
+            __create_chain_and_run(fyle_credentials, chain_tasks)
 
 
 def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, fund_source: str, interval_hours: int):
@@ -164,7 +154,6 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
         errors = Error.objects.filter(workspace_id=workspace_id, is_resolved=False, expense_group_id__in=expense_group_ids).all()
 
         chain_tasks = []
-        in_progress_expenses = []
 
         for index, expense_group in enumerate(expense_groups):
             error = errors.filter(workspace_id=workspace_id, expense_group=expense_group, is_resolved=False).first()
@@ -186,15 +175,13 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
                 'target': 'apps.quickbooks_online.tasks.create_journal_entry',
                 'expense_group': expense_group,
                 'task_log_id': task_log.id,
-                'last_export': last_export
+                'last_export': last_export,
+                'is_auto_export': is_auto_export
             })
-            # Don't include expenses with previous export state as ERROR and it's an auto import/export run
-            if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
-                in_progress_expenses.extend(expense_group.expenses.all())
 
         if len(chain_tasks) > 0:
             fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-            __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks, fund_source)
+            __create_chain_and_run(fyle_credentials, chain_tasks)
 
 
 def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, fund_source: str, interval_hours: int):
@@ -214,7 +201,6 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
         errors = Error.objects.filter(workspace_id=workspace_id, is_resolved=False, expense_group_id__in=expense_group_ids).all()
 
         chain_tasks = []
-        in_progress_expenses = []
 
         for index, expense_group in enumerate(expense_groups):
             error = errors.filter(workspace_id=workspace_id, expense_group=expense_group, is_resolved=False).first()
@@ -237,16 +223,13 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
                 'target': 'apps.quickbooks_online.tasks.create_credit_card_purchase',
                 'expense_group': expense_group,
                 'task_log_id': task_log.id,
-                'last_export': last_export
+                'last_export': last_export,
+                'is_auto_export': is_auto_export
             })
-
-            # Don't include expenses with previous export state as ERROR and it's an auto import/export run
-            if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
-                in_progress_expenses.extend(expense_group.expenses.all())
 
         if len(chain_tasks) > 0:
             fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-            __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks, fund_source)
+            __create_chain_and_run(fyle_credentials, chain_tasks)
 
 
 def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, fund_source: str, interval_hours: int):
@@ -263,7 +246,6 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
         errors = Error.objects.filter(workspace_id=workspace_id, is_resolved=False, expense_group_id__in=expense_group_ids).all()
 
         chain_tasks = []
-        in_progress_expenses = []
 
         for index, expense_group in enumerate(expense_groups):
             error = errors.filter(workspace_id=workspace_id, expense_group=expense_group, is_resolved=False).first()
@@ -288,16 +270,13 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
                 'target': 'apps.quickbooks_online.tasks.create_qbo_expense',
                 'expense_group': expense_group,
                 'task_log_id': task_log.id,
-                'last_export': last_export
+                'last_export': last_export,
+                'is_auto_export': is_auto_export
             })
-
-            # Don't include expenses with previous export state as ERROR and it's an auto import/export run
-            if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
-                in_progress_expenses.extend(expense_group.expenses.all())
 
         if len(chain_tasks) > 0:
             fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-            __create_chain_and_run(fyle_credentials, in_progress_expenses, workspace_id, chain_tasks, fund_source)
+            __create_chain_and_run(fyle_credentials, chain_tasks)
 
 
 def schedule_qbo_objects_status_sync(sync_qbo_to_fyle_payments, workspace_id):

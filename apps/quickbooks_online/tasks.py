@@ -177,7 +177,7 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
 
 
 @handle_qbo_exceptions()
-def create_bill(expense_group, task_log_id, last_export: bool):
+def create_bill(expense_group, task_log_id, last_export: bool, is_auto_export: bool):
     task_log = TaskLog.objects.get(id=task_log_id)
     logger.info('Creating Bill for Expense Group %s, current state is %s', expense_group.id, task_log.status)
 
@@ -186,6 +186,10 @@ def create_bill(expense_group, task_log_id, last_export: bool):
         task_log.save()
     else:
         return
+
+    # Don't include expenses with previous export state as ERROR and it's an auto import/export run
+    if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
+        update_expense_and_post_summary([expense_group.expenses.all()], expense_group.workspace_id, expense_group.fund_source)
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
@@ -355,7 +359,7 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
 
 
 @handle_qbo_exceptions()
-def create_cheque(expense_group, task_log_id, last_export: bool):
+def create_cheque(expense_group, task_log_id, last_export: bool, is_auto_export: bool):
     worker_logger = get_logger()
     task_log = TaskLog.objects.get(id=task_log_id)
     worker_logger.info('Creating Cheque for Expense Group %s, current state is %s', expense_group.id, task_log.status)
@@ -365,6 +369,10 @@ def create_cheque(expense_group, task_log_id, last_export: bool):
         task_log.save()
     else:
         return
+
+    # Don't include expenses with previous export state as ERROR and it's an auto import/export run
+    if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
+        update_expense_and_post_summary([expense_group.expenses.all()], expense_group.workspace_id, expense_group.fund_source)
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
@@ -412,7 +420,7 @@ def create_cheque(expense_group, task_log_id, last_export: bool):
 
 
 @handle_qbo_exceptions()
-def create_qbo_expense(expense_group, task_log_id, last_export: bool):
+def create_qbo_expense(expense_group, task_log_id, last_export: bool, is_auto_export: bool):
     worker_logger = get_logger()
     task_log = TaskLog.objects.get(id=task_log_id)
     worker_logger.info('Creating QBO Expense for Expense Group %s, current state is %s', expense_group.id, task_log.status)
@@ -422,6 +430,10 @@ def create_qbo_expense(expense_group, task_log_id, last_export: bool):
         task_log.save()
     else:
         return
+
+    # Don't include expenses with previous export state as ERROR and it's an auto import/export run
+    if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
+        update_expense_and_post_summary([expense_group.expenses.all()], expense_group.workspace_id, expense_group.fund_source)
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
@@ -474,7 +486,7 @@ def create_qbo_expense(expense_group, task_log_id, last_export: bool):
 
 
 @handle_qbo_exceptions()
-def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id, last_export: bool):
+def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id, last_export: bool, is_auto_export: bool):
     worker_logger = get_logger()
     task_log = TaskLog.objects.get(id=task_log_id)
     worker_logger.info('Creating Credit Card Purchase for Expense Group %s, current state is %s', expense_group.id, task_log.status)
@@ -484,6 +496,10 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id, last_e
         task_log.save()
     else:
         return
+
+    # Don't include expenses with previous export state as ERROR and it's an auto import/export run
+    if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
+        update_expense_and_post_summary([expense_group.expenses.all()], expense_group.workspace_id, expense_group.fund_source)
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
@@ -535,7 +551,7 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id, last_e
 
 
 @handle_qbo_exceptions()
-def create_journal_entry(expense_group, task_log_id, last_export: bool):
+def create_journal_entry(expense_group, task_log_id, last_export: bool, is_auto_export: bool):
     worker_logger = get_logger()
     task_log = TaskLog.objects.get(id=task_log_id)
     worker_logger.info('Creating Journal Entry for Expense Group %s, current state is %s', expense_group.id, task_log.status)
@@ -545,6 +561,10 @@ def create_journal_entry(expense_group, task_log_id, last_export: bool):
         task_log.save()
     else:
         return
+
+    # Don't include expenses with previous export state as ERROR and it's an auto import/export run
+    if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
+        update_expense_and_post_summary([expense_group.expenses.all()], expense_group.workspace_id, expense_group.fund_source)
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
