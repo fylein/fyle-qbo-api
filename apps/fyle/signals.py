@@ -3,7 +3,7 @@ Fyle Signals
 """
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from pydantic import ValidationError
+from rest_framework.exceptions import ValidationError
 
 from apps.fyle.models import ExpenseFilter
 from apps.fyle.tasks import skip_expenses_pre_export
