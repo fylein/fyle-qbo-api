@@ -7,7 +7,6 @@ from django.urls import reverse
 from fyle.platform.exceptions import InternalServerError, InvalidTokenError, RetryException
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
-from apps.tasks.models import Error
 from apps.fyle.actions import mark_expenses_as_skipped
 from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings
 from apps.fyle.tasks import (
