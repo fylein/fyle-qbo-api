@@ -319,7 +319,7 @@ def update_non_exported_expenses(data: Dict) -> None:
             )
 
 
-def skip_expenses(workspace_id: int, expense_filter: ExpenseFilter = None) -> None:
+def re_run_skip_export_rule(workspace_id: int, expense_filter: ExpenseFilter = None) -> None:
     """
     Skip expenses before export
     :param workspace_id: Workspace id
@@ -329,16 +329,15 @@ def skip_expenses(workspace_id: int, expense_filter: ExpenseFilter = None) -> No
     expense_filters = ExpenseFilter.objects.filter(workspace_id=workspace_id).order_by('rank')
     if expense_filters:
         filtered_expense_query = construct_expense_filter_query(expense_filters)
-        workspace = Workspace.objects.get(id=workspace_id)
         
         # Get all expenses matching the filter query
-        expenses = Expense.objects.filter(filtered_expense_query, workspace_id=workspace_id)
+        expenses = Expense.objects.filter(filtered_expense_query, workspace_id=workspace_id, is_skipped=False)
         expense_ids = list(expenses.values_list('id', flat=True))
 
         skipped_expenses = mark_expenses_as_skipped(
             filtered_expense_query,
             expense_ids,
-            workspace
+            expense_filter.workspace
         )
 
         if skipped_expenses:
@@ -355,7 +354,7 @@ def skip_expenses(workspace_id: int, expense_filter: ExpenseFilter = None) -> No
                     logger.info('Deleting task log for expense group %s before export', expense_group.id)
                     task_log.delete()
 
-                last_export_detail = LastExportDetail.objects.filter(workspace_id=workspace_id).first()
+                last_export_detail = LastExportDetail.objects.filter(workspace_id=workspace_id, failed_expense_groups_count__gt=0).first()
                 if last_export_detail and deleted_failed_expense_groups_count > 0:
                     last_export_detail.failed_expense_groups_count = max(
                         0,
