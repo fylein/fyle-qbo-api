@@ -329,11 +329,16 @@ def skip_expenses(workspace_id: int, expense_filter: ExpenseFilter = None) -> No
     expense_filters = ExpenseFilter.objects.filter(workspace_id=workspace_id).order_by('rank')
     if expense_filters:
         filtered_expense_query = construct_expense_filter_query(expense_filters)
+        workspace = Workspace.objects.get(id=workspace_id)
         
+        # Get all expenses matching the filter query
+        expenses = Expense.objects.filter(filtered_expense_query, workspace_id=workspace_id)
+        expense_ids = list(expenses.values_list('id', flat=True))
+
         skipped_expenses = mark_expenses_as_skipped(
-            final_query=filtered_expense_query,
-            workspace=None,
-            expense_filter=expense_filter
+            filtered_expense_query,
+            expense_ids,
+            workspace
         )
 
         if skipped_expenses:
@@ -353,7 +358,7 @@ def skip_expenses(workspace_id: int, expense_filter: ExpenseFilter = None) -> No
                 last_export_detail = LastExportDetail.objects.filter(workspace_id=workspace_id).first()
                 if last_export_detail and deleted_failed_expense_groups_count > 0:
                     last_export_detail.failed_expense_groups_count = max(
-                        0, 
+                        0,
                         last_export_detail.failed_expense_groups_count - deleted_failed_expense_groups_count
                     )
                     last_export_detail.total_expense_groups_count = max(
