@@ -3,9 +3,8 @@ Fyle Signals
 """
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from rest_framework.exceptions import ValidationError
 import logging
-from apps.fyle.models import ExpenseFilter, Workspace
+from apps.fyle.models import ExpenseFilter
 from apps.fyle.tasks import re_run_skip_export_rule
 
 logger = logging.getLogger(__name__)
