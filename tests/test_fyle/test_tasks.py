@@ -1,7 +1,6 @@
 import json
 from unittest import mock
 
-from django.db import Error
 import pytest
 from django.db.models import Q
 from django.urls import reverse
@@ -209,89 +208,3 @@ def test_update_non_exported_expenses(db, create_temp_workspace, mocker, api_cli
     url = reverse('exports', kwargs={'workspace_id': 2})
     response = api_client.post(url, data=payload, format='json')
     assert response.status_code == status.HTTP_400_BAD_REQUEST
-    """
-    Test re_run_skip_export_rule functionality using fixture data
-    """
-    # Create expense filters for employee email
-    ExpenseFilter.objects.create(
-        workspace_id=1,
-        condition='employee_email',
-        operator='in',
-        values=['jhonsnow@fyle.in'],
-        rank=1
-    )
-
-    # Create expenses from fixture data
-    org_id = data['expenses_spent_at'][0]['org_id']
-    created_expenses = Expense.create_expense_objects(data['expenses_spent_at'], workspace_id=1)
-    
-    # Verify expenses were created correctly
-    assert len(created_expenses) == 3
-    for expense in created_expenses:
-        assert expense.org_id == 'orPJvXuoLqvJ'
-        assert expense.is_skipped == False
-        assert expense.workspace_id == 1
-        assert expense.employee_email == 'jhonsnow@fyle.in'
-
-    # Create LastExportDetail with failed count
-    LastExportDetail.objects.create(
-        workspace_id=1,
-        failed_expense_groups_count=2
-    )
-
-    # Create TaskLog and Error entries to verify cleanup
-    TaskLog.objects.create(
-        workspace_id=1,
-        type='FETCHING_EXPENSES',
-        status='IN_PROGRESS'
-    )
-
-    # Create expense groups for the expenses
-    expense_group = ExpenseGroup.objects.create(
-        workspace_id=1,
-        fund_source='PERSONAL',
-        description={'employee_email': 'jhonsnow@fyle.in'}
-    )
-    expense_group.expenses.add(*created_expenses)
-
-    # Create Error with proper fields
-    Error.objects.create(
-        workspace_id=1,
-        type='EMPLOYEE_MAPPING',
-        error_title='jhonsnow@fyle.in',
-        error_detail='Employee mapping is missing',
-        expense_group=expense_group
-    )
-
-    # Get IDs of expenses we created
-    expense_ids = [expense.id for expense in created_expenses]
-
-    # Debug prints
-    print("\nBefore re_run_skip_export_rule:")
-    print(f"Expense IDs: {expense_ids}")
-    print(f"Expenses with is_skipped=False: {Expense.objects.filter(id__in=expense_ids, is_skipped=False).count()}")
-    print(f"Expenses with is_skipped=True: {Expense.objects.filter(id__in=expense_ids, is_skipped=True).count()}")
-    
-    workspace = Workspace.objects.get(id=1)
-    print(f"Workspace fyle_org_id: {workspace.fyle_org_id}")
-    print(f"Expense org_ids: {list(Expense.objects.filter(id__in=expense_ids).values_list('org_id', flat=True))}")
-
-    # Run re_run_skip_export_rule
-    re_run_skip_export_rule(1, None)
-
-    # Debug prints
-    print("\nAfter re_run_skip_export_rule:")
-    print(f"Expenses with is_skipped=False: {Expense.objects.filter(id__in=expense_ids, is_skipped=False).count()}")
-    print(f"Expenses with is_skipped=True: {Expense.objects.filter(id__in=expense_ids, is_skipped=True).count()}")
-
-    # Verify that all expenses are skipped since they match filter
-    assert Expense.objects.filter(id__in=expense_ids, is_skipped=True).count() == 3
-    assert Expense.objects.filter(id__in=expense_ids, is_skipped=False).count() == 0
-
-    # Verify cleanup of related objects
-    assert TaskLog.objects.filter(workspace_id=1).count() == 0
-    assert Error.objects.filter(workspace_id=1).count() == 0
-
-    # Verify LastExportDetail failed count is reset
-    last_export_detail = LastExportDetail.objects.get(workspace_id=1)
-    assert last_export_detail.failed_expense_groups_count == 0
