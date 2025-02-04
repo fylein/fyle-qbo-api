@@ -15,7 +15,12 @@ class Migration(migrations.Migration):
                         WHERE func = 'apps.internal.actions.re_export_stuck_exports'
                         AND args IS NULL
                     );
+            """,
+            reverse_sql="""
+                DELETE FROM django_q_schedule
+                WHERE func = 'apps.internal.actions.re_export_stuck_exports'
+                AND args IS NULL;
             """
-        ),
+        )
     ]
     
