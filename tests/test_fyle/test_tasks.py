@@ -69,8 +69,10 @@ def test_create_expense_groups(mocker, db):
 
 @pytest.mark.django_db()
 def test_create_expense_group_skipped_flow(mocker, api_client, test_connection):
+    # Mock the re_run_skip_export_rule function
+    mocker.patch('apps.fyle.signals.re_run_skip_export_rule', return_value=None)
+    
     access_token = test_connection.access_token
-    # adding the expense-filter
     url = reverse('expense-filters', kwargs={'workspace_id': 1})
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
