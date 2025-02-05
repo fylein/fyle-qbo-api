@@ -26,7 +26,6 @@ def test_patch_integration_settings(mocker):
     mocked_patch = MagicMock()
     mocker.patch('apps.fyle.helpers.requests.patch', side_effect=mocked_patch)
 
-
     # Test patch request with only errors
     errors = 7
     patch_integration_settings(workspace_id, errors)
@@ -38,7 +37,6 @@ def test_patch_integration_settings(mocker):
 
     assert actual_payload == expected_payload
 
-
     # Test patch request with only is_token_expired
     is_token_expired = True
     patch_integration_settings(workspace_id, is_token_expired=is_token_expired)
@@ -49,7 +47,6 @@ def test_patch_integration_settings(mocker):
     actual_payload = json.loads(kwargs['data'])
 
     assert actual_payload == expected_payload
-
 
     # Test patch request with errors_count and is_token_expired
     is_token_expired = True
