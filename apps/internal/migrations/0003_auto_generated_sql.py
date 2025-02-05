@@ -8,18 +8,18 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunSQL(
             sql="""
-                INSERT INTO django_q_schedule (func, args, schedule_type, minutes, next_run)
-                    SELECT 'apps.internal.actions.re_export_stuck_exports', NULL, 1, 180, NOW()
+                INSERT INTO django_q_schedule (func, args, schedule_type, minutes, next_run, cluster)
+                    SELECT 'apps.internal.actions.re_export_stuck_exports', NULL, 1, 180, NOW() + INTERVAL '1 minute', 'import'
                     WHERE NOT EXISTS (
                         SELECT 1
                         FROM django_q_schedule
-                        WHERE func = 'apps.internal.actions.re_export_stuck_exports'
+                        WHERE func = 'apps.internal.tasks.re_export_stuck_exports'
                         AND args IS NULL
                     );
             """,
             reverse_sql="""
                 DELETE FROM django_q_schedule
-                WHERE func = 'apps.internal.actions.re_export_stuck_exports'
+                WHERE func = 'apps.internal.tasks.re_export_stuck_exports'
                 AND args IS NULL;
             """
         )
