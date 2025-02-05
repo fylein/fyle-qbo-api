@@ -1,7 +1,7 @@
 from typing import Dict
 
 from apps.quickbooks_online.utils import QBOConnector
-from apps.workspaces.models import Workspace, QBOCredential
+from apps.workspaces.models import QBOCredential, Workspace
 
 
 def get_qbo_connection(query_params: Dict):
