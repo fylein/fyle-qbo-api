@@ -18,12 +18,11 @@ def test_create_chain_and_run(db):
             'target': 'apps.quickbooks_online.tasks.create_cheque',
             'expense_group': 1,
             'task_log_id': 1,
-            'last_export': True,
-            'is_auto_export': True
+            'last_export': True
         }
     ]
 
-    __create_chain_and_run(fyle_credentials, chain_tasks)
+    __create_chain_and_run(fyle_credentials, chain_tasks, True)
     assert True
 
 

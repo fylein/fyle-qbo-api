@@ -65,16 +65,15 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_
                 'target': 'apps.quickbooks_online.tasks.create_bill',
                 'expense_group': expense_group,
                 'task_log_id': task_log.id,
-                'last_export': last_export,
-                'is_auto_export': is_auto_export
+                'last_export': last_export
             })
 
         if len(chain_tasks) > 0:
             fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-            __create_chain_and_run(fyle_credentials, chain_tasks)
+            __create_chain_and_run(fyle_credentials, chain_tasks, is_auto_export)
 
 
-def __create_chain_and_run(fyle_credentials: FyleCredential, chain_tasks: List[dict]) -> None:
+def __create_chain_and_run(fyle_credentials: FyleCredential, chain_tasks: List[dict], is_auto_export: bool) -> None:
     """
     Create chain and run
     :param fyle_credentials: Fyle credentials
@@ -89,7 +88,7 @@ def __create_chain_and_run(fyle_credentials: FyleCredential, chain_tasks: List[d
     chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials, True)
 
     for task in chain_tasks:
-        chain.append(task['target'], task['expense_group'], task['task_log_id'], task['last_export'], task['is_auto_export'])
+        chain.append(task['target'], task['expense_group'], task['task_log_id'], task['last_export'], is_auto_export)
 
     chain.run()
 
@@ -130,13 +129,12 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], i
                 'target': 'apps.quickbooks_online.tasks.create_cheque',
                 'expense_group': expense_group,
                 'task_log_id': task_log.id,
-                'last_export': last_export,
-                'is_auto_export': is_auto_export
+                'last_export': last_export
             })
 
         if len(chain_tasks) > 0:
             fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-            __create_chain_and_run(fyle_credentials, chain_tasks)
+            __create_chain_and_run(fyle_credentials, chain_tasks, is_auto_export)
 
 
 def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, fund_source: str, interval_hours: int):
@@ -175,13 +173,12 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
                 'target': 'apps.quickbooks_online.tasks.create_journal_entry',
                 'expense_group': expense_group,
                 'task_log_id': task_log.id,
-                'last_export': last_export,
-                'is_auto_export': is_auto_export
+                'last_export': last_export
             })
 
         if len(chain_tasks) > 0:
             fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-            __create_chain_and_run(fyle_credentials, chain_tasks)
+            __create_chain_and_run(fyle_credentials, chain_tasks, is_auto_export)
 
 
 def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, fund_source: str, interval_hours: int):
@@ -223,13 +220,12 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
                 'target': 'apps.quickbooks_online.tasks.create_credit_card_purchase',
                 'expense_group': expense_group,
                 'task_log_id': task_log.id,
-                'last_export': last_export,
-                'is_auto_export': is_auto_export
+                'last_export': last_export
             })
 
         if len(chain_tasks) > 0:
             fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-            __create_chain_and_run(fyle_credentials, chain_tasks)
+            __create_chain_and_run(fyle_credentials, chain_tasks, is_auto_export)
 
 
 def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, fund_source: str, interval_hours: int):
@@ -270,13 +266,12 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
                 'target': 'apps.quickbooks_online.tasks.create_qbo_expense',
                 'expense_group': expense_group,
                 'task_log_id': task_log.id,
-                'last_export': last_export,
-                'is_auto_export': is_auto_export
+                'last_export': last_export
             })
 
         if len(chain_tasks) > 0:
             fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-            __create_chain_and_run(fyle_credentials, chain_tasks)
+            __create_chain_and_run(fyle_credentials, chain_tasks, is_auto_export)
 
 
 def schedule_qbo_objects_status_sync(sync_qbo_to_fyle_payments, workspace_id):
