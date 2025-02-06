@@ -806,9 +806,12 @@ def test_schedule_bill_payment_creation(db):
     assert schedule == 0
 
 
-def test_handle_quickbooks_errors(db):
+def test_handle_quickbooks_errors(mocker, db):
     expense_group = ExpenseGroup.objects.get(id=8)
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+
+    mocked_patch = mock.MagicMock()
+    mocker.patch('apps.quickbooks_online.exceptions.patch_integration_settings', side_effect=mocked_patch)
 
     handle_quickbooks_error(exception=WrongParamsError(msg='Some Parameters are wrong', response=json.dumps({'error': 'invalid_grant'})), expense_group=expense_group, task_log=task_log, export_type='Bill')
 
@@ -817,6 +820,11 @@ def test_handle_quickbooks_errors(db):
     assert qbo_credentials.refresh_token == None
     assert qbo_credentials.is_expired == True
     assert task_log.quickbooks_errors['error'] == 'invalid_grant'
+
+    args, kwargs = mocked_patch.call_args
+
+    assert args[0] == expense_group.workspace_id
+    assert kwargs['is_token_expired'] == True
 
     handle_quickbooks_error(exception=WrongParamsError(msg='Some Parameters are wrong', response=json.dumps({'blewblew': 'invalid_grant'})), expense_group=expense_group, task_log=task_log, export_type='Bill')
 
