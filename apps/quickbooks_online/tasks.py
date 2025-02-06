@@ -187,9 +187,11 @@ def create_bill(expense_group, task_log_id, last_export: bool, is_auto_export: b
     else:
         return
 
+    in_progress_expenses = []
     # Don't include expenses with previous export state as ERROR and it's an auto import/export run
     if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
-        update_expense_and_post_summary([expense_group.expenses.all()], expense_group.workspace_id, expense_group.fund_source)
+        in_progress_expenses.append(expense_group.expenses.all())
+        update_expense_and_post_summary(in_progress_expenses, expense_group.workspace_id, expense_group.fund_source)
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
@@ -370,9 +372,11 @@ def create_cheque(expense_group, task_log_id, last_export: bool, is_auto_export:
     else:
         return
 
+    in_progress_expenses = []
     # Don't include expenses with previous export state as ERROR and it's an auto import/export run
     if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
-        update_expense_and_post_summary([expense_group.expenses.all()], expense_group.workspace_id, expense_group.fund_source)
+        in_progress_expenses.append(expense_group.expenses.all())
+        update_expense_and_post_summary(in_progress_expenses, expense_group.workspace_id, expense_group.fund_source)
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
@@ -431,9 +435,11 @@ def create_qbo_expense(expense_group, task_log_id, last_export: bool, is_auto_ex
     else:
         return
 
+    in_progress_expenses = []
     # Don't include expenses with previous export state as ERROR and it's an auto import/export run
     if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
-        update_expense_and_post_summary([expense_group.expenses.all()], expense_group.workspace_id, expense_group.fund_source)
+        in_progress_expenses.append(expense_group.expenses.all())
+        update_expense_and_post_summary(in_progress_expenses, expense_group.workspace_id, expense_group.fund_source)
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
@@ -497,9 +503,11 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id, last_e
     else:
         return
 
+    in_progress_expenses = []
     # Don't include expenses with previous export state as ERROR and it's an auto import/export run
     if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
-        update_expense_and_post_summary([expense_group.expenses.all()], expense_group.workspace_id, expense_group.fund_source)
+        in_progress_expenses.append(expense_group.expenses.all())
+        update_expense_and_post_summary(in_progress_expenses, expense_group.workspace_id, expense_group.fund_source)
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
@@ -562,9 +570,11 @@ def create_journal_entry(expense_group, task_log_id, last_export: bool, is_auto_
     else:
         return
 
+    in_progress_expenses = []
     # Don't include expenses with previous export state as ERROR and it's an auto import/export run
     if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
-        update_expense_and_post_summary([expense_group.expenses.all()], expense_group.workspace_id, expense_group.fund_source)
+        in_progress_expenses.append(expense_group.expenses.all())
+        update_expense_and_post_summary(in_progress_expenses, expense_group.workspace_id, expense_group.fund_source)
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
