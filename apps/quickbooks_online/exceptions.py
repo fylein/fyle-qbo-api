@@ -3,6 +3,7 @@ import logging
 import traceback
 
 from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
+from apps.workspaces.actions import patch_integration_settings
 from qbosdk.exceptions import InternalServerError, InvalidTokenError, WrongParamsError
 
 from apps.fyle.actions import update_failed_expenses
@@ -29,6 +30,8 @@ def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: Ta
                 qbo_credentials.is_expired = True
                 qbo_credentials.refresh_token = None
                 qbo_credentials.save()
+                patch_integration_settings(expense_group.workspace_id, is_token_expired=True)
+
         errors = response
     else:
         quickbooks_errors = response['Fault']['Error']
@@ -114,6 +117,8 @@ def handle_qbo_exceptions(bill_payment=False):
                     qbo_credentials.is_expired = True
                     qbo_credentials.refresh_token = None
                     qbo_credentials.save()
+
+                    patch_integration_settings(expense_group.workspace_id, is_token_expired=True)
 
                 task_log.save()
 
