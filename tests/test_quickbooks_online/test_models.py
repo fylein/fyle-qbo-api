@@ -405,7 +405,13 @@ def test_support_post_date_integrations(mocker, db):
     general_settings.auto_create_destination_entity = True
     general_settings.save()
 
-    create_bill(expense_groups[0], task_log.id, False)
+    expenses = expense_groups[0].expenses.all()
+    for expense in expenses:
+        expense.expense_group_id = expense_groups[0].id
+        expense.previous_export_state = 'ERROR'
+        expense.save()
+
+    create_bill(expense_groups[0], task_log.id, False, True)
 
     task_log = TaskLog.objects.get(pk=task_log.id)
     bill = Bill.objects.get(expense_group_id=expense_groups[0].id)
