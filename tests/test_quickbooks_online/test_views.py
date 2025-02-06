@@ -73,7 +73,6 @@ def test_get_company_preference_exceptions(api_client, test_connection, mocker, 
     mocked_patch = mock.MagicMock()
     mocker.patch('apps.quickbooks_online.actions.patch_integration_settings', side_effect=mocked_patch)
 
-
     with mock.patch('apps.quickbooks_online.utils.QBOConnector.get_company_info') as mock_call:
         mock_call.side_effect = WrongParamsError(msg='wrong params', response='invalid_params')
         response = api_client.get(url)

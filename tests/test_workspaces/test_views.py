@@ -119,7 +119,7 @@ def test_post_connect_qbo_view(mocker, api_client, test_connection):
     response = api_client.post(url, data={'code': code, 'realm_id': '123146326950399'})
 
     assert response.status_code == 200
-    
+
     args, kwargs = mocked_patch.call_args
     assert args[0] == workspace_id
     assert kwargs['is_token_expired'] == False

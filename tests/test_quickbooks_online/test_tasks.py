@@ -810,7 +810,6 @@ def test_handle_quickbooks_errors(mocker, db):
     expense_group = ExpenseGroup.objects.get(id=8)
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
 
-
     mocked_patch = mock.MagicMock()
     mocker.patch('apps.quickbooks_online.exceptions.patch_integration_settings', side_effect=mocked_patch)
 
