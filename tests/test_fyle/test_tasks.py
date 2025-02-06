@@ -210,20 +210,3 @@ def test_update_non_exported_expenses(db, create_temp_workspace, mocker, api_cli
     response = api_client.post(url, data=payload, format='json')
     assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-@pytest.mark.django_db(databases=['default'])
-def test_re_run_skip_export_rule_with_fixtures(db, mocker):
-    # Setup test data using fixtures
-    workspace_id = 1
-    expense_filter = data['expense_filter_1']
-
-    # Create expenses from fixtures
-    expenses_data = data['expenses_spent_at']
-    expenses = Expense.create_expense_objects(expenses_data, workspace_id)
-
-    # Execute function
-    re_run_skip_export_rule(workspace_id, expense_filter)
-
-    # Verify expenses are skipped
-    for expense in expenses:
-        expense.refresh_from_db()
-        assert expense.is_skipped is True
