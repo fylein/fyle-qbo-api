@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 
 from django.conf import settings
 from django.db.models import Q
+from apps.workspaces.actions import patch_integration_settings
 from django_q.tasks import Chain
 from fyle_accounting_mappings.models import MappingSetting
 from qbosdk.exceptions import InvalidTokenError, WrongParamsError
@@ -35,6 +36,8 @@ def update_last_export_details(workspace_id):
     last_export_detail.total_expense_groups_count = failed_exports + successful_exports
     last_export_detail.save()
 
+    patch_integration_settings(workspace_id, errors=failed_exports)
+
     return last_export_detail
 
 
@@ -54,6 +57,9 @@ def get_preferences(workspace_id: int):
             qbo_credentials.refresh_token = None
             qbo_credentials.is_expired = True
             qbo_credentials.save()
+
+            patch_integration_settings(workspace_id, is_token_expired=True)
+
         return Response(data={'message': 'Invalid token or Quickbooks Online connection expired'}, status=status.HTTP_400_BAD_REQUEST)
 
 
