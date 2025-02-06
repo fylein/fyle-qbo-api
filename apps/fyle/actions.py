@@ -127,16 +127,15 @@ def mark_expenses_as_skipped(final_query: Q, expenses_object_ids: List, workspac
     :param final_query: final query
     :param expenses_object_ids: expenses object ids
     :param workspace: workspace object
-    :return: None
+    :return: List of skipped expense objects
     """
-    # We'll iterate through the list of expenses to be skipped, construct accounting export summary and update expenses
-    expense_to_be_updated = []
     expenses_to_be_skipped = Expense.objects.filter(
         final_query,
         id__in=expenses_object_ids,
-        org_id=workspace.fyle_org_id
+        org_id=workspace.fyle_org_id,
+        is_skipped=False  # Only mark expenses that aren't already skipped
     )
-
+    expense_to_be_updated = []
     for expense in expenses_to_be_skipped:
         expense_to_be_updated.append(
             Expense(
@@ -152,9 +151,10 @@ def mark_expenses_as_skipped(final_query: Q, expenses_object_ids: List, workspac
             )
         )
 
-    __bulk_update_expenses(expense_to_be_updated)
-    return [expense.id for expense in expenses_to_be_skipped]
+    if expense_to_be_updated:
+        __bulk_update_expenses(expense_to_be_updated)
 
+    # Return the updated expense objects
     return expenses_to_be_skipped
 
 

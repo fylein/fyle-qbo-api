@@ -7,16 +7,14 @@ from django.urls import reverse
 from fyle.platform.exceptions import InternalServerError, InvalidTokenError, RetryException
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
-
 from apps.fyle.actions import mark_expenses_as_skipped
-from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings, ExpenseFilter
+from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings
 from apps.fyle.tasks import (
     create_expense_groups,
     import_and_export_expenses,
     post_accounting_export_summary,
     sync_dimensions,
     update_non_exported_expenses,
-    skip_expenses_pre_export,
 )
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
@@ -71,8 +69,10 @@ def test_create_expense_groups(mocker, db):
 
 @pytest.mark.django_db()
 def test_create_expense_group_skipped_flow(mocker, api_client, test_connection):
+    # Mock the re_run_skip_export_rule function
+    mocker.patch('apps.fyle.signals.re_run_skip_export_rule', return_value=None)
+
     access_token = test_connection.access_token
-    # adding the expense-filter
     url = reverse('expense-filters', kwargs={'workspace_id': 1})
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
@@ -208,4 +208,3 @@ def test_update_non_exported_expenses(db, create_temp_workspace, mocker, api_cli
     url = reverse('exports', kwargs={'workspace_id': 2})
     response = api_client.post(url, data=payload, format='json')
     assert response.status_code == status.HTTP_400_BAD_REQUEST
-

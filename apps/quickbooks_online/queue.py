@@ -6,7 +6,7 @@ from django.db.models import Q
 from django_q.models import Schedule
 from django_q.tasks import Chain, async_task
 
-from apps.fyle.models import Expense, ExpenseGroup, ExpenseFilter
+from apps.fyle.models import ExpenseGroup
 from apps.tasks.models import Error, TaskLog
 from apps.workspaces.models import FyleCredential, WorkspaceGeneralSettings
 
@@ -85,12 +85,6 @@ def __create_chain_and_run(fyle_credentials: FyleCredential, chain_tasks: List[d
     """
     chain = Chain()
 
-    expense_filters = ExpenseFilter.objects.filter(workspace_id=workspace_id)
-    if expense_filters.count():
-        expense_group_ids = [task['expense_group'].id for task in chain_tasks]
-        chain.append('apps.fyle.tasks.skip_expenses_pre_export', workspace_id, expense_group_ids)
-
-    chain.append('apps.quickbooks_online.tasks.update_expense_and_post_summary', in_progress_expenses, workspace_id, fund_source)
     chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials, True)
 
     for task in chain_tasks:
