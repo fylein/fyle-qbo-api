@@ -122,6 +122,8 @@ def connect_qbo_oauth(refresh_token, realm_id, workspace_id):
     if workspace.onboarding_state == 'COMPLETE':
         post_to_integration_settings(workspace_id, True)
 
+    patch_integration_settings(workspace_id, is_token_expired=False)
+
     # Return the QBO credentials as serialized data
     return Response(data=QBOCredentialSerializer(qbo_credentials).data, status=status.HTTP_200_OK)
 
