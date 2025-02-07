@@ -331,7 +331,7 @@ def re_run_skip_export_rule(workspace_id: int) -> None:
     if expense_filters:
         filtered_expense_query = construct_expense_filter_query(expense_filters)
         # Get all expenses matching the filter query
-        expenses = Expense.objects.filter(filtered_expense_query, workspace_id=workspace_id, is_skipped=False)
+        expenses = Expense.objects.filter(filtered_expense_query, workspace_id=workspace_id, exported=False, is_skipped=False)
         expense_ids = list(expenses.values_list('id', flat=True))
         skipped_expenses = mark_expenses_as_skipped(
             filtered_expense_query,
