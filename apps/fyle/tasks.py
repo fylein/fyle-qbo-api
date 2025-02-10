@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Dict, List
 
 from django.db import transaction
+from django.db.models import Q
 from fyle.platform.exceptions import InternalServerError, InvalidTokenError, RetryException
 from fyle_accounting_mappings.models import ExpenseAttribute
 from fyle_integrations_platform_connector import PlatformConnector
@@ -325,8 +326,7 @@ def update_non_exported_expenses(data: Dict) -> None:
             Expense.create_expense_objects(
                 expense_objects,
                 expense.workspace_id,
-                skip_update=True,
-                preserve_skipped_status=was_skipped
+                skip_update=True
             )
 
 
@@ -346,7 +346,7 @@ def re_run_skip_export_rule(workspace_id: int) -> None:
             workspace_id=workspace_id,
             is_skipped=False
         ).exclude(
-            accounting_export_summary__isnull=False,
+            ~Q(accounting_export_summary={}),
             accounting_export_summary__state='COMPLETE'
         )
         expense_ids = list(expenses.values_list('id', flat=True))

@@ -125,7 +125,7 @@ class Expense(models.Model):
         db_table = 'expenses'
 
     @staticmethod
-    def create_expense_objects(expenses: List[Dict], workspace_id: int, skip_update: bool = False, preserve_skipped_status: bool = False):
+    def create_expense_objects(expenses: List[Dict], workspace_id: int, skip_update: bool = False):
         """
         Bulk create expense objects
         """
@@ -183,10 +183,6 @@ class Expense(models.Model):
 
             if expense_data_to_append:
                 defaults.update(expense_data_to_append)
-
-            # Only update is_skipped if preserve_skipped_status is False
-            if not preserve_skipped_status:
-                defaults['is_skipped'] = False
 
             expense_object, _ = Expense.objects.update_or_create(
                 expense_id=expense['id'],
