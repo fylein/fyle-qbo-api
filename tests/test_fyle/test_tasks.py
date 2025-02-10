@@ -168,11 +168,15 @@ def test_update_non_exported_expenses(db, create_temp_workspace, mocker, api_cli
         "reason": 'expense update testing',
     }
 
+    # Create initial expense with is_skipped=True
     expense_created, _ = Expense.objects.update_or_create(
         org_id=org_id,
         expense_id='txhJLOSKs1iN',
         workspace_id=1,
-        defaults=default_raw_expense
+        defaults={
+            **default_raw_expense,
+            'is_skipped': True  # Set initial skipped status
+        }
     )
     expense_created.accounting_export_summary = {}
     expense_created.save()
@@ -182,14 +186,26 @@ def test_update_non_exported_expenses(db, create_temp_workspace, mocker, api_cli
     workspace.save()
 
     assert expense_created.category == 'Old Category'
+    assert expense_created.is_skipped == True  # Verify initial skipped status
 
+    # Test update of non-exported expense
     update_non_exported_expenses(payload['data'])
 
     expense = Expense.objects.get(expense_id='txhJLOSKs1iN', org_id=org_id)
     assert expense.category == 'ABN Withholding'
+    assert expense.is_skipped == True  # Verify skipped status is preserved
 
+    # Test that expense in COMPLETE state is not updated
     expense.accounting_export_summary = {"synced": True, "state": "COMPLETE"}
     expense.category = 'Old Category'
+    expense.save()
+
+    update_non_exported_expenses(payload['data'])
+    expense = Expense.objects.get(expense_id='txhJLOSKs1iN', org_id=org_id)
+    assert expense.category == 'Old Category'
+
+    # Test expense in IN_PROGRESS state is not updated
+    expense.accounting_export_summary = {"synced": True, "state": "IN_PROGRESS"}
     expense.save()
 
     update_non_exported_expenses(payload['data'])
