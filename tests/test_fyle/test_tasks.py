@@ -8,13 +8,14 @@ from fyle.platform.exceptions import InternalServerError, InvalidTokenError, Ret
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from apps.fyle.actions import mark_expenses_as_skipped
-from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings
+from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings, ExpenseFilter
 from apps.fyle.tasks import (
     create_expense_groups,
     import_and_export_expenses,
     post_accounting_export_summary,
     sync_dimensions,
     update_non_exported_expenses,
+    re_run_skip_export_rule,
 )
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
@@ -224,3 +225,54 @@ def test_update_non_exported_expenses(db, create_temp_workspace, mocker, api_cli
     url = reverse('exports', kwargs={'workspace_id': 2})
     response = api_client.post(url, data=payload, format='json')
     assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+def test_re_run_skip_export_rule(db, create_temp_workspace, mocker, api_client, test_connection):
+    ExpenseFilter.objects.create(
+        workspace_id=1,
+        condition='employee_email',
+        operator='in',
+        values=['jhonsnow@fyle.in', 'naruto.u@fyle.in'],
+        rank=1,
+        join_by='OR',
+    )
+    ExpenseFilter.objects.create(
+        workspace_id=1,
+        condition='claim_number',
+        operator='in',
+        values=['ajdnwjnadw', 'ajdnwjnlol'],
+        rank=2,
+    )
+
+    expenses = list(data["expenses_spent_at"])
+    for expense in expenses:
+        expense['org_id'] = 'orHVw3ikkCxJ'
+
+    # Create expenses first
+    expense_objects = Expense.create_expense_objects(expenses, 1)
+
+    # Then update their accounting_export_summary directly
+    for expense in Expense.objects.filter(workspace_id=1):
+        expense.accounting_export_summary = {
+            'state': 'FAILED',
+            'synced': False
+        }
+        expense.save()
+
+    ExpenseGroup.create_expense_groups_by_report_id_fund_source(expense_objects, 1)
+    expense_group_ids = ExpenseGroup.objects.filter(workspace_id=1).values_list('id', flat=True)
+
+    re_run_skip_export_rule(1)
+
+    # Verify expenses matching filters are marked as skipped
+    skipped_expenses = Expense.objects.filter(
+        Q(employee_email__in=['jhonsnow@fyle.in', 'naruto.u@fyle.in']) |
+        Q(claim_number__in=['ajdnwjnadw', 'ajdnwjnlol']),
+        workspace_id=1
+    )
+    for expense in skipped_expenses:
+        assert expense.is_skipped is True
+
+    # Verify expense groups are deleted when all expenses are skipped
+    remaining_groups = ExpenseGroup.objects.filter(id__in=expense_group_ids)
+    assert remaining_groups.count() == 0
