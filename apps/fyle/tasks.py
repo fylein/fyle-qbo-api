@@ -346,6 +346,7 @@ def re_run_skip_export_rule(workspace_id: int) -> None:
             workspace_id=workspace_id,
             is_skipped=False
         ).exclude(
+            accounting_export_summary__isnull=False,
             accounting_export_summary__state='COMPLETE'
         )
         expense_ids = list(expenses.values_list('id', flat=True))
