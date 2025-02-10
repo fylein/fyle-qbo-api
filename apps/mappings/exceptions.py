@@ -118,7 +118,7 @@ def handle_import_exceptions_v2(func):
                     qbo_credentials.refresh_token = None
                     qbo_credentials.is_expired = True
                     qbo_credentials.save()
-            except QBOCredential.DoesNotExist as error:
+            except QBOCredential.DoesNotExist:
                 pass
 
         except Exception:
