@@ -52,7 +52,10 @@ def create_expense_groups(workspace_id: int, fund_source: List[str], task_log: T
 
 
 def group_expenses_and_save(expenses: List[Dict], task_log: TaskLog, workspace: Workspace):
+    # First filter out any expenses that are already marked as skipped
     expense_objects = Expense.create_expense_objects(expenses, workspace.id)
+    expense_objects = [exp for exp in expense_objects if not exp.is_skipped]
+
     expense_filters = ExpenseFilter.objects.filter(workspace_id=workspace.id).order_by('rank')
     filtered_expenses = expense_objects
     if expense_filters:
@@ -311,11 +314,19 @@ def update_non_exported_expenses(data: Dict) -> None:
             expense_state = 'NOT_EXPORTED'
 
         if expense_state and expense_state not in ['COMPLETE', 'IN_PROGRESS']:
+            # Store the is_skipped status
+            was_skipped = expense.is_skipped
+
             expense_obj = []
             expense_obj.append(data)
             expense_objects = FyleExpenses().construct_expense_object(expense_obj, expense.workspace_id)
+
+            # Pass the original skipped status
             Expense.create_expense_objects(
-                expense_objects, expense.workspace_id, skip_update=True
+                expense_objects,
+                expense.workspace_id,
+                skip_update=True,
+                preserve_skipped_status=was_skipped
             )
 
 
@@ -323,15 +334,20 @@ def re_run_skip_export_rule(workspace_id: int) -> None:
     """
     Skip expenses before export
     :param workspace_id: Workspace id
-    :param expense_filter: Expense filter instance
     :return: None
     """
     expense_filters = ExpenseFilter.objects.filter(workspace_id=workspace_id).order_by('rank')
     workspace = Workspace.objects.get(id=workspace_id)
     if expense_filters:
         filtered_expense_query = construct_expense_filter_query(expense_filters)
-        # Get all expenses matching the filter query
-        expenses = Expense.objects.filter(filtered_expense_query, workspace_id=workspace_id, exported=False, is_skipped=False)
+        # Get all expenses matching the filter query, excluding those in COMPLETE state
+        expenses = Expense.objects.filter(
+            filtered_expense_query,
+            workspace_id=workspace_id,
+            is_skipped=False
+        ).exclude(
+            accounting_export_summary__state='COMPLETE'
+        )
         expense_ids = list(expenses.values_list('id', flat=True))
         skipped_expenses = mark_expenses_as_skipped(
             filtered_expense_query,
@@ -366,11 +382,13 @@ def re_run_skip_export_rule(workspace_id: int) -> None:
 
                 error = Error.objects.filter(
                     workspace_id=workspace_id,
-                    expense_group_id=expense_group.id
+                    expense_group_id=expense_group.id,
+                    type__in=['QBO_ERROR']
                 ).first()
                 if error:
-                    logger.info('Deleting error for expense group %s before export', expense_group.id)
+                    logger.info('Deleting QBO error for expense group %s before export', expense_group.id)
                     error.delete()
+
                 expense_group.expenses.remove(*skipped_expenses)
                 if not expense_group.expenses.exists():
                     logger.info('Deleting empty expense group %s before export', expense_group.id)
