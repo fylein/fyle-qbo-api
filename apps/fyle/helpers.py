@@ -50,7 +50,6 @@ def patch_request(url, body, refresh_token=None):
     }
     if refresh_token:
         access_token = get_access_token(refresh_token)
-
         api_headers['Authorization'] = 'Bearer {0}'.format(access_token)
 
     response = requests.patch(url, headers=api_headers, data=json.dumps(body))

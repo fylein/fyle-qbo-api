@@ -54,11 +54,11 @@ def get_preferences(workspace_id: int):
         return Response(data={'message': 'QBO credentials not found in workspace'}, status=status.HTTP_400_BAD_REQUEST)
     except (WrongParamsError, InvalidTokenError):
         if qbo_credentials:
+            if not qbo_credentials.is_expired:
+                patch_integration_settings(workspace_id, is_token_expired=True)
             qbo_credentials.refresh_token = None
             qbo_credentials.is_expired = True
             qbo_credentials.save()
-
-            patch_integration_settings(workspace_id, is_token_expired=True)
 
         return Response(data={'message': 'Invalid token or Quickbooks Online connection expired'}, status=status.HTTP_400_BAD_REQUEST)
 

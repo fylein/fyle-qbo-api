@@ -1,6 +1,7 @@
 import logging
 
 from django.db.models import Q
+from apps.quickbooks_online.utils import QBOConnector
 from apps.workspaces.models import QBOCredential, Workspace
 from django_filters.rest_framework import DjangoFilterBackend
 from django_q.tasks import async_task
@@ -78,7 +79,8 @@ class SyncQuickbooksDimensionView(generics.ListCreateAPIView):
 
         # Check for a valid workspace and qbo creds and respond with 400 if not found
         Workspace.objects.get(id=kwargs['workspace_id'])
-        QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
+        quickbooks_credentials = QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
+        QBOConnector(quickbooks_credentials, workspace_id=kwargs['workspace_id'])
 
         async_task('apps.quickbooks_online.actions.sync_quickbooks_dimensions', kwargs['workspace_id'])
 
@@ -98,7 +100,8 @@ class RefreshQuickbooksDimensionView(generics.ListCreateAPIView):
 
         # Check for a valid workspace and qbo creds and respond with 400 if not found
         Workspace.objects.get(id=kwargs['workspace_id'])
-        QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
+        quickbooks_credentials = QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
+        QBOConnector(quickbooks_credentials, workspace_id=kwargs['workspace_id'])
 
         async_task('apps.quickbooks_online.actions.refresh_quickbooks_dimensions', kwargs['workspace_id'])
 
