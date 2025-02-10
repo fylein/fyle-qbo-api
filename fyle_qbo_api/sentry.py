@@ -11,10 +11,13 @@ class Sentry:
         sentry_sdk.init(
             dsn=os.environ.get('SENTRY_DSN'),
             send_default_pii=False,
-            integrations=[DjangoIntegration()],
+            integrations=[
+                DjangoIntegration(),
+            ],
             environment=os.environ.get('SENTRY_ENV'),
             attach_stacktrace=True,
             before_send=Sentry.before_send,
+            brefore_breadcrumb=Sentry.before_breadcrumb,
             max_request_body_size='small',
             in_app_include=['apps.users', 'apps.workspaces', 'apps.mappings', 'apps.fyle', 'apps.quickbooks_online', 'apps.tasks', 'fyle_rest_auth', 'fyle_accounting_mappings'],
         )
@@ -28,3 +31,9 @@ class Sentry:
             elif exc_value.args[0] in ['Error: 502']:
                 return None
         return event
+
+    @staticmethod
+    def before_breadcrumb(crumb, hint):
+        if crumb['category'] in ['email', 'workspace_name', 'org_name', 'user_email']:
+            return None
+        return crumb
