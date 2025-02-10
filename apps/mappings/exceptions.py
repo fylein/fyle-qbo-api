@@ -7,7 +7,7 @@ from fyle.platform.exceptions import (
     WrongParamsError,
     RetryException
 )
-from apps.workspaces.actions import patch_integration_settings
+from apps.exceptions import invalidate_token
 from qbosdk.exceptions import InvalidTokenError as QBOInvalidTokenError
 from qbosdk.exceptions import WrongParamsError as QBOWrongParamsError
 
@@ -45,19 +45,7 @@ def handle_import_exceptions(task_name):
             except (QBOWrongParamsError, QBOInvalidTokenError) as exception:
                 error['message'] = 'QBO token expired'
                 error['response'] = exception.__dict__
-
-                try:
-                    qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
-                    if qbo_credentials:
-                        if not qbo_credentials.is_expired:
-                            patch_integration_settings(workspace_id, is_token_expired=True)
-                        qbo_credentials.refresh_token = None
-                        qbo_credentials.is_expired = True
-                        qbo_credentials.save()
-
-                except QBOCredential.DoesNotExist as error:
-                    logger.error(f'QBO credentials not found for {workspace_id = }:', )
-                    logger.error(error, exc_info=True)
+                invalidate_token(workspace_id)
 
             except Exception:
                 response = traceback.format_exc()
@@ -109,18 +97,8 @@ def handle_import_exceptions_v2(func):
             error['alert'] = False
             error['response'] = exception.__dict__
             import_log.status = 'FAILED'
-
-            try:
-                qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
-                if qbo_credentials:
-                    if not qbo_credentials.is_expired:
-                        patch_integration_settings(workspace_id, is_token_expired=True)
-                    qbo_credentials.refresh_token = None
-                    qbo_credentials.is_expired = True
-                    qbo_credentials.save()
-            except QBOCredential.DoesNotExist:
-                pass
-
+            invalidate_token(workspace_id)
+            
         except Exception:
             response = traceback.format_exc()
             error['message'] = 'Something went wrong'
