@@ -315,9 +315,6 @@ def update_non_exported_expenses(data: Dict) -> None:
             expense_state = 'NOT_EXPORTED'
 
         if expense_state and expense_state not in ['COMPLETE', 'IN_PROGRESS']:
-            # Store the is_skipped status
-            was_skipped = expense.is_skipped
-
             expense_obj = []
             expense_obj.append(data)
             expense_objects = FyleExpenses().construct_expense_object(expense_obj, expense.workspace_id)
