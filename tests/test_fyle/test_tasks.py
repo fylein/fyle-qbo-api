@@ -17,8 +17,9 @@ from apps.fyle.tasks import (
     update_non_exported_expenses,
     re_run_skip_export_rule,
 )
-from apps.tasks.models import TaskLog
-from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
+from apps.tasks.models import TaskLog, Error
+from apps.workspaces.actions import export_to_qbo
+from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings, LastExportDetail
 from tests.helper import dict_compare_keys
 from tests.test_fyle.fixtures import data
 
@@ -262,7 +263,18 @@ def test_re_run_skip_export_rule(db, create_temp_workspace, mocker, api_client, 
     ExpenseGroup.create_expense_groups_by_report_id_fund_source(expense_objects, 1)
     expense_group_ids = ExpenseGroup.objects.filter(workspace_id=1).values_list('id', flat=True)
 
-    re_run_skip_export_rule(1)
+    # Create LastExportDetail object before calling export_to_qbo
+    LastExportDetail.objects.create(
+        workspace_id=1,
+        total_expense_groups_count=len(expense_group_ids),
+        failed_expense_groups_count=0,
+        export_mode='MANUAL'
+    )
+
+    export_to_qbo(1, expense_group_ids=expense_group_ids)
+
+    workspace = Workspace.objects.get(id=1)
+    re_run_skip_export_rule(workspace)
 
     # Verify expenses matching filters are marked as skipped
     skipped_expenses = Expense.objects.filter(
@@ -276,3 +288,16 @@ def test_re_run_skip_export_rule(db, create_temp_workspace, mocker, api_client, 
     # Verify expense groups are deleted when all expenses are skipped
     remaining_groups = ExpenseGroup.objects.filter(id__in=expense_group_ids)
     assert remaining_groups.count() == 0
+
+    # task log should be deleted
+    task_log = TaskLog.objects.filter(workspace_id=1, type='FETCHING_EXPENSES').first()
+    assert task_log is None
+
+    # error should be deleted
+    error = Error.objects.filter(workspace_id=1, expense_group_id__in=expense_group_ids).first()
+    assert error is None
+
+    # last export detail should be updated
+    last_export_detail = LastExportDetail.objects.filter(workspace_id=1).first()
+    assert last_export_detail.failed_expense_groups_count == 0
+    assert last_export_detail.total_expense_groups_count == 1

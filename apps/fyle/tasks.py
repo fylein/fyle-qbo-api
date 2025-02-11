@@ -55,7 +55,6 @@ def create_expense_groups(workspace_id: int, fund_source: List[str], task_log: T
 def group_expenses_and_save(expenses: List[Dict], task_log: TaskLog, workspace: Workspace):
     # First filter out any expenses that are already marked as skipped
     expense_objects = Expense.create_expense_objects(expenses, workspace.id)
-    expense_objects = [exp for exp in expense_objects if not exp.is_skipped]
 
     expense_filters = ExpenseFilter.objects.filter(workspace_id=workspace.id).order_by('rank')
     filtered_expenses = expense_objects
@@ -327,20 +326,19 @@ def update_non_exported_expenses(data: Dict) -> None:
             )
 
 
-def re_run_skip_export_rule(workspace_id: int) -> None:
+def re_run_skip_export_rule(workspace: Workspace) -> None:
     """
     Skip expenses before export
     :param workspace_id: Workspace id
     :return: None
     """
-    expense_filters = ExpenseFilter.objects.filter(workspace_id=workspace_id).order_by('rank')
-    workspace = Workspace.objects.get(id=workspace_id)
+    expense_filters = ExpenseFilter.objects.filter(workspace_id=workspace.id).order_by('rank')
     if expense_filters:
         filtered_expense_query = construct_expense_filter_query(expense_filters)
         # Get all expenses matching the filter query, excluding those in COMPLETE state
         expenses = Expense.objects.filter(
             filtered_expense_query,
-            workspace_id=workspace_id,
+            workspace_id=workspace.id,
             is_skipped=False
         ).exclude(
             ~Q(accounting_export_summary={}),
@@ -353,11 +351,11 @@ def re_run_skip_export_rule(workspace_id: int) -> None:
             workspace
         )
         if skipped_expenses:
-            expense_groups = ExpenseGroup.objects.filter(exported_at__isnull=True, workspace_id=workspace_id)
+            expense_groups = ExpenseGroup.objects.filter(exported_at__isnull=True, workspace_id=workspace.id)
             deleted_failed_expense_groups_count = 0
             for expense_group in expense_groups:
                 task_log = TaskLog.objects.filter(
-                    workspace_id=workspace_id,
+                    workspace_id=workspace.id,
                     expense_group_id=expense_group.id
                 ).first()
                 if task_log:
@@ -366,20 +364,8 @@ def re_run_skip_export_rule(workspace_id: int) -> None:
                     logger.info('Deleting task log for expense group %s before export', expense_group.id)
                     task_log.delete()
 
-                last_export_detail = LastExportDetail.objects.filter(workspace_id=workspace_id, failed_expense_groups_count__gt=0).first()
-                if last_export_detail and deleted_failed_expense_groups_count > 0:
-                    last_export_detail.failed_expense_groups_count = max(
-                        0,
-                        last_export_detail.failed_expense_groups_count - deleted_failed_expense_groups_count
-                    )
-                    last_export_detail.total_expense_groups_count = max(
-                        0,
-                        last_export_detail.total_expense_groups_count - deleted_failed_expense_groups_count
-                    )
-                    last_export_detail.save()
-
                 error = Error.objects.filter(
-                    workspace_id=workspace_id,
+                    workspace_id=workspace.id,
                     expense_group_id=expense_group.id,
                     type__in=['QBO_ERROR']
                 ).first()
@@ -391,3 +377,15 @@ def re_run_skip_export_rule(workspace_id: int) -> None:
                 if not expense_group.expenses.exists():
                     logger.info('Deleting empty expense group %s before export', expense_group.id)
                     expense_group.delete()
+
+            last_export_detail = LastExportDetail.objects.filter(workspace_id=workspace.id, failed_expense_groups_count__gt=0).first()
+            if last_export_detail and deleted_failed_expense_groups_count > 0:
+                last_export_detail.failed_expense_groups_count = max(
+                    0,
+                    last_export_detail.failed_expense_groups_count - deleted_failed_expense_groups_count
+                )
+                last_export_detail.total_expense_groups_count = max(
+                    0,
+                    last_export_detail.total_expense_groups_count - deleted_failed_expense_groups_count
+                )
+                last_export_detail.save()
