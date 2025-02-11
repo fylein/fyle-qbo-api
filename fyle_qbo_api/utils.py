@@ -67,5 +67,4 @@ def invalidate_qbo_credentials(workspace_id, qbo_credentials=None):
             qbo_credentials.is_expired = True
             qbo_credentials.save()
     except QBOCredential.DoesNotExist as error:
-        logger.error(f'QBO credentials not found for {workspace_id = }:', )
-        logger.error(error, exc_info=True)
+        logger.info(f'QBO credentials not found for {workspace_id = }:', )

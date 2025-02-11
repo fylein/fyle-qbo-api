@@ -729,8 +729,7 @@ def check_qbo_object_status(workspace_id):
                     bill.save()
 
     except QBOCredential.DoesNotExist as error:
-        logger.error(f'QBO credentials not found for {workspace_id = }:', )
-        logger.error(error, exc_info=True)
+        logger.info(f'QBO credentials not found for {workspace_id = }:', )
 
     except (WrongParamsError, InvalidTokenError) as exception:
         logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
@@ -806,8 +805,7 @@ def async_sync_accounts(workspace_id):
         qbo_connection.sync_accounts()
 
     except QBOCredential.DoesNotExist as error:
-        logger.error(f'QBO credentials not found for {workspace_id = }:', )
-        logger.error(error, exc_info=True)
+        logger.info(f'QBO credentials not found for {workspace_id = }:', )
 
     except (WrongParamsError, InvalidTokenError) as exception:
         logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
