@@ -69,9 +69,11 @@ def handle_view_exceptions():
     return decorator
 
 
-def invalidate_token(workspace_id):
+def invalidate_token(workspace_id, qbo_credentials=None):
     try:
-        qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
+        if not qbo_credentials:
+            qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
+
         if qbo_credentials:
             if not qbo_credentials.is_expired:
                 patch_integration_settings(workspace_id, is_token_expired=True)
