@@ -2,7 +2,8 @@ import json
 from unittest.mock import MagicMock
 import pytest
 
-from apps.workspaces.actions import patch_integration_settings, post_to_integration_settings
+from apps.workspaces.actions import post_to_integration_settings
+from fyle_qbo_api.utils import patch_integration_settings
 
 
 @pytest.mark.django_db(databases=['default'])

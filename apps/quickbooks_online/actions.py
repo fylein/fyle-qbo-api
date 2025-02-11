@@ -3,7 +3,8 @@ from datetime import datetime, timezone
 
 from django.conf import settings
 from django.db.models import Q
-from apps.workspaces.actions import patch_integration_settings
+from fyle_qbo_api.utils import invalidate_qbo_credentials
+from fyle_qbo_api.utils import patch_integration_settings
 from django_q.tasks import Chain
 from fyle_accounting_mappings.models import MappingSetting
 from qbosdk.exceptions import InvalidTokenError, WrongParamsError
@@ -53,13 +54,7 @@ def get_preferences(workspace_id: int):
     except QBOCredential.DoesNotExist:
         return Response(data={'message': 'QBO credentials not found in workspace'}, status=status.HTTP_400_BAD_REQUEST)
     except (WrongParamsError, InvalidTokenError):
-        if qbo_credentials:
-            if not qbo_credentials.is_expired:
-                patch_integration_settings(workspace_id, is_token_expired=True)
-            qbo_credentials.refresh_token = None
-            qbo_credentials.is_expired = True
-            qbo_credentials.save()
-
+        invalidate_qbo_credentials(workspace_id, qbo_credentials)
         return Response(data={'message': 'Invalid token or Quickbooks Online connection expired'}, status=status.HTTP_400_BAD_REQUEST)
 
 

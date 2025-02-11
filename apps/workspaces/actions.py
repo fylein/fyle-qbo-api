@@ -8,6 +8,7 @@ from django.db import transaction
 from django_q.tasks import async_task
 from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute
 from fyle_integrations_platform_connector import PlatformConnector
+from fyle_qbo_api.utils import patch_integration_settings
 from fyle_rest_auth.helpers import get_fyle_admin
 from fyle_rest_auth.models import AuthToken
 from qbosdk import revoke_refresh_token
@@ -15,7 +16,7 @@ from rest_framework.response import Response
 from rest_framework.views import status
 
 from apps.fyle.actions import update_failed_expenses
-from apps.fyle.helpers import get_cluster_domain, patch_request, post_request
+from apps.fyle.helpers import get_cluster_domain, post_request
 from apps.fyle.models import ExpenseGroup, ExpenseGroupSettings
 from apps.fyle.queue import async_post_accounting_export_summary
 from apps.quickbooks_online.queue import (
@@ -249,29 +250,6 @@ def post_to_integration_settings(workspace_id: int, active: bool):
         post_request(url, payload, refresh_token)
     except Exception as error:
         logger.error(error)
-
-
-def patch_integration_settings(workspace_id: int, errors: int = None, is_token_expired = None):
-    """
-    Patch integration settings
-    """
-
-    refresh_token = FyleCredential.objects.get(workspace_id=workspace_id).refresh_token
-    url = '{}/integrations/'.format(settings.INTEGRATIONS_SETTINGS_API)
-    payload = {
-        'tpa_name': 'Fyle Quickbooks Integration',
-    }
-
-    if errors is not None:
-        payload['errors_count'] = errors
-
-    if is_token_expired is not None:
-        payload['is_token_expired'] = is_token_expired
-
-    try:
-        patch_request(url, payload, refresh_token)
-    except Exception as error:
-        logger.error(error, exc_info=True)
 
 
 def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direct_export:bool = False):
