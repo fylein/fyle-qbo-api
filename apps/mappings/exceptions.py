@@ -7,7 +7,7 @@ from fyle.platform.exceptions import (
     WrongParamsError,
     RetryException
 )
-from apps.exceptions import invalidate_token
+from fyle_qbo_api.utils import invalidate_qbo_credentials
 from qbosdk.exceptions import InvalidTokenError as QBOInvalidTokenError
 from qbosdk.exceptions import WrongParamsError as QBOWrongParamsError
 
@@ -45,7 +45,7 @@ def handle_import_exceptions(task_name):
             except (QBOWrongParamsError, QBOInvalidTokenError) as exception:
                 error['message'] = 'QBO token expired'
                 error['response'] = exception.__dict__
-                invalidate_token(workspace_id)
+                invalidate_qbo_credentials(workspace_id)
 
             except Exception:
                 response = traceback.format_exc()
@@ -97,7 +97,7 @@ def handle_import_exceptions_v2(func):
             error['alert'] = False
             error['response'] = exception.__dict__
             import_log.status = 'FAILED'
-            invalidate_token(workspace_id)
+            invalidate_qbo_credentials(workspace_id)
             
         except Exception:
             response = traceback.format_exc()

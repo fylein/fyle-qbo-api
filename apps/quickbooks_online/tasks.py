@@ -9,7 +9,7 @@ from django.db import transaction
 from django.utils import timezone as django_timezone
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping
 from fyle_integrations_platform_connector import PlatformConnector
-from apps.exceptions import invalidate_token
+from fyle_qbo_api.utils import invalidate_qbo_credentials
 from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 
 from apps.fyle.actions import update_expenses_in_progress
@@ -734,7 +734,7 @@ def check_qbo_object_status(workspace_id):
 
     except (WrongParamsError, InvalidTokenError) as exception:
         logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
-        invalidate_token(workspace_id, qbo_credentials)
+        invalidate_qbo_credentials(workspace_id, qbo_credentials)
 
 
 def process_reimbursements(workspace_id):
@@ -811,7 +811,7 @@ def async_sync_accounts(workspace_id):
 
     except (WrongParamsError, InvalidTokenError) as exception:
         logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
-        invalidate_token(workspace_id, qbo_credentials)
+        invalidate_qbo_credentials(workspace_id, qbo_credentials)
 
 
 def update_expense_and_post_summary(in_progress_expenses: List[Expense], workspace_id: int, fund_source: str) -> None:

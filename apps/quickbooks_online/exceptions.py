@@ -3,7 +3,7 @@ import logging
 import traceback
 
 from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
-from apps.exceptions import invalidate_token
+from fyle_qbo_api.utils import invalidate_qbo_credentials
 from qbosdk.exceptions import InternalServerError, InvalidTokenError, WrongParamsError
 
 from apps.fyle.actions import update_failed_expenses
@@ -25,7 +25,7 @@ def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: Ta
     if 'Fault' not in response:
         logger.info(response)
         if 'error' in response and response['error'] == 'invalid_grant':
-            invalidate_token(expense_group.workspace_id)
+            invalidate_qbo_credentials(expense_group.workspace_id)
 
         errors = response
     else:
@@ -104,7 +104,7 @@ def handle_qbo_exceptions(bill_payment=False):
                 detail = {'expense_group_id': expense_group.id, 'message': 'QBO Account not connected / token expired'}
                 task_log.status = 'FAILED'
                 task_log.detail = detail
-                invalidate_token(expense_group.workspace_id)
+                invalidate_qbo_credentials(expense_group.workspace_id)
 
                 task_log.save()
 

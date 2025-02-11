@@ -2,7 +2,7 @@ import logging
 
 from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
 from fyle.platform.exceptions import NoPrivilegeError
-from apps.workspaces.actions import patch_integration_settings
+from fyle_qbo_api.utils import invalidate_qbo_credentials
 from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 from rest_framework.response import Response
 from rest_framework.views import status
@@ -35,7 +35,7 @@ def handle_view_exceptions():
 
             except WrongParamsError as exception:
                 logger.info('QBO token expired workspace_id - %s %s', kwargs['workspace_id'], {'error': exception.response})
-                invalidate_token(kwargs['workspace_id'])
+                invalidate_qbo_credentials(kwargs['workspace_id'])
                 return Response(data={'message': 'QBO token expired workspace_id'}, status=status.HTTP_400_BAD_REQUEST)
 
             except NoPrivilegeError as exception:
@@ -44,7 +44,7 @@ def handle_view_exceptions():
 
             except InvalidTokenError as exception:
                 logger.info('QBO token expired workspace_id - %s %s', kwargs['workspace_id'], {'error': exception.response})
-                invalidate_token(kwargs['workspace_id'])
+                invalidate_qbo_credentials(kwargs['workspace_id'])
                 return Response(data={'message': 'QBO token expired workspace_id'}, status=status.HTTP_400_BAD_REQUEST)
 
             except Workspace.DoesNotExist:
@@ -69,17 +69,3 @@ def handle_view_exceptions():
     return decorator
 
 
-def invalidate_token(workspace_id, qbo_credentials=None):
-    try:
-        if not qbo_credentials:
-            qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
-
-        if qbo_credentials:
-            if not qbo_credentials.is_expired:
-                patch_integration_settings(workspace_id, is_token_expired=True)
-            qbo_credentials.refresh_token = None
-            qbo_credentials.is_expired = True
-            qbo_credentials.save()
-    except QBOCredential.DoesNotExist as error:
-        logger.error(f'QBO credentials not found for {workspace_id = }:', )
-        logger.error(error, exc_info=True)
