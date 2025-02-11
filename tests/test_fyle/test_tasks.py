@@ -233,26 +233,27 @@ def test_re_run_skip_export_rule(db, create_temp_workspace, mocker, api_client, 
         workspace_id=1,
         condition='employee_email',
         operator='in',
-        values=['jhonsnow@fyle.in', 'naruto.u@fyle.in'],
+        values=['jhonsnow@fyle.in'],  # Only one email to partially match expenses
         rank=1,
         join_by='OR',
     )
-    ExpenseFilter.objects.create(
-        workspace_id=1,
-        condition='claim_number',
-        operator='in',
-        values=['ajdnwjnadw', 'ajdnwjnlol'],
-        rank=2,
-    )
 
     expenses = list(data["expenses_spent_at"])
+    # Modify two expenses to be in the same expense group but with different emails
+    expenses[0]['expense_number'] = 'expense_1'
+    expenses[0]['employee_email'] = 'jhonsnow@fyle.in'  # This one should be skipped
+    expenses[1]['expense_number'] = 'expense_2'
+    expenses[1]['employee_email'] = 'other.email@fyle.in'  # This one should not be skipped
+    expenses[0]['report_id'] = 'report_1'
+    expenses[1]['report_id'] = 'report_1'  # Same report_id to group them together
+
     for expense in expenses:
         expense['org_id'] = 'orHVw3ikkCxJ'
 
     # Create expenses first
     expense_objects = Expense.create_expense_objects(expenses, 1)
 
-    # Then update their accounting_export_summary directly
+    # Update accounting_export_summary
     for expense in Expense.objects.filter(workspace_id=1):
         expense.accounting_export_summary = {
             'state': 'FAILED',
@@ -260,10 +261,18 @@ def test_re_run_skip_export_rule(db, create_temp_workspace, mocker, api_client, 
         }
         expense.save()
 
+    # Create expense groups
     ExpenseGroup.create_expense_groups_by_report_id_fund_source(expense_objects, 1)
-    expense_group_ids = ExpenseGroup.objects.filter(workspace_id=1).values_list('id', flat=True)
+    expense_groups = ExpenseGroup.objects.filter(workspace_id=1)
 
-    # Create LastExportDetail object before calling export_to_qbo
+    # Assert initial state
+    assert expense_groups.count() == 2  # One group with 2 expenses, one group with remaining expenses
+    partially_skipped_group = expense_groups.filter(expenses__expense_number__in=['expense_1', 'expense_2']).first()
+    assert partially_skipped_group.expenses.count() == 1
+
+    expense_group_ids = expense_groups.values_list('id', flat=True)
+
+    # Create LastExportDetail
     LastExportDetail.objects.create(
         workspace_id=1,
         total_expense_groups_count=len(expense_group_ids),
@@ -276,28 +285,28 @@ def test_re_run_skip_export_rule(db, create_temp_workspace, mocker, api_client, 
     workspace = Workspace.objects.get(id=1)
     re_run_skip_export_rule(workspace)
 
-    # Verify expenses matching filters are marked as skipped
-    skipped_expenses = Expense.objects.filter(
-        Q(employee_email__in=['jhonsnow@fyle.in', 'naruto.u@fyle.in']) |
-        Q(claim_number__in=['ajdnwjnadw', 'ajdnwjnlol']),
-        workspace_id=1
-    )
-    for expense in skipped_expenses:
-        assert expense.is_skipped is True
+    # Verify the expense with matching email is skipped
+    skipped_expense = Expense.objects.get(expense_number='expense_1')
+    non_skipped_expense = Expense.objects.get(expense_number='expense_2')
+    assert skipped_expense.is_skipped is True
+    assert non_skipped_expense.is_skipped is False
 
-    # Verify expense groups are deleted when all expenses are skipped
+    # Verify expense groups after re-run
     remaining_groups = ExpenseGroup.objects.filter(id__in=expense_group_ids)
-    assert remaining_groups.count() == 0
+    assert remaining_groups.count() == 1  # Only the group with non-skipped expense remains
+    remaining_group = remaining_groups.first()
+    assert remaining_group.expenses.count() == 1  # Only one expense remains in the group
+    assert remaining_group.expenses.first().expense_number == 'expense_2'
 
-    # task log should be deleted
+    # Verify task log is deleted
     task_log = TaskLog.objects.filter(workspace_id=1, type='FETCHING_EXPENSES').first()
     assert task_log is None
 
-    # error should be deleted
+    # Verify error is deleted
     error = Error.objects.filter(workspace_id=1, expense_group_id__in=expense_group_ids).first()
     assert error is None
 
-    # last export detail should be updated
+    # Verify last export detail is updated
     last_export_detail = LastExportDetail.objects.filter(workspace_id=1).first()
     assert last_export_detail.failed_expense_groups_count == 0
-    assert last_export_detail.total_expense_groups_count == 1
+    assert last_export_detail.total_expense_groups_count == 2
