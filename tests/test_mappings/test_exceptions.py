@@ -1,3 +1,4 @@
+from unittest import mock
 from fyle_integrations_imports.models import ImportLog
 from fyle_integrations_imports.modules.projects import Project
 from apps.workspaces.models import QBOCredential
@@ -8,7 +9,11 @@ from qbosdk.exceptions import InvalidTokenError as QBOInvalidTokenError
 from qbosdk.exceptions import WrongParamsError as QBOWrongParamsError
 
 
-def test_handle_import_exceptions(db):
+def test_handle_import_exceptions(mocker, db):
+
+    mocked_patch = mock.MagicMock()
+    mocker.patch('apps.exceptions.patch_integration_settings', side_effect=mocked_patch)
+
     workspace_id = 3
     ImportLog.objects.create(
         workspace_id=workspace_id,
@@ -71,6 +76,9 @@ def test_handle_import_exceptions(db):
     assert import_log.error_log['task'] == 'Import PROJECT to Fyle and Auto Create Mappings'
     assert import_log.error_log['message'] == 'Invalid Token or QBO credentials does not exist workspace_id - 3'
     assert import_log.error_log['alert'] == False
+    args, kwargs = mocked_patch.call_args
+    assert args[0] == workspace_id
+    assert kwargs['is_token_expired'] == True
 
     # QBOInvalidTokenError
     @handle_import_exceptions_v2
@@ -83,6 +91,9 @@ def test_handle_import_exceptions(db):
     assert import_log.error_log['task'] == 'Import PROJECT to Fyle and Auto Create Mappings'
     assert import_log.error_log['message'] == 'Invalid Token or QBO credentials does not exist workspace_id - 3'
     assert import_log.error_log['alert'] == False
+    args, kwargs = mocked_patch.call_args
+    assert args[0] == workspace_id
+    assert kwargs['is_token_expired'] == True
 
     # QBOCredential.DoesNotExist
     @handle_import_exceptions_v2

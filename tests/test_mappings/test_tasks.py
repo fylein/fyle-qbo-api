@@ -43,6 +43,7 @@ def test_async_auto_map_employees(mocker, db):
     mocker.patch('qbosdk.apis.Employees.get', return_value=[])
     mocker.patch('qbosdk.apis.Vendors.get', return_value=[])
     mocker.patch('fyle_integrations_platform_connector.apis.Employees.sync', return_value=[])
+    mocker.patch('apps.mappings.exceptions.invalidate_token', return_value=None)
     workspace_id = 3
     async_auto_map_employees(workspace_id)
     employee_mappings = EmployeeMapping.objects.filter(workspace_id=workspace_id).count()

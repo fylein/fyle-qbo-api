@@ -811,7 +811,7 @@ def test_handle_quickbooks_errors(mocker, db):
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
 
     mocked_patch = mock.MagicMock()
-    mocker.patch('apps.quickbooks_online.exceptions.patch_integration_settings', side_effect=mocked_patch)
+    mocker.patch('apps.exceptions.patch_integration_settings', side_effect=mocked_patch)
 
     handle_quickbooks_error(exception=WrongParamsError(msg='Some Parameters are wrong', response=json.dumps({'error': 'invalid_grant'})), expense_group=expense_group, task_log=task_log, export_type='Bill')
 
