@@ -10,6 +10,7 @@ from apps.workspaces.models import FyleCredential, QBOCredential
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
 
+
 def assert_valid(condition: bool, message: str) -> Response or None:
     """
     Assert conditions
@@ -66,5 +67,5 @@ def invalidate_qbo_credentials(workspace_id, qbo_credentials=None):
             qbo_credentials.refresh_token = None
             qbo_credentials.is_expired = True
             qbo_credentials.save()
-    except QBOCredential.DoesNotExist as error:
+    except QBOCredential.DoesNotExist:
         logger.info(f'QBO credentials not found for {workspace_id = }:', )
