@@ -64,5 +64,3 @@ def handle_view_exceptions():
         return new_fn
 
     return decorator
-
-

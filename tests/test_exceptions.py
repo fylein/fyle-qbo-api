@@ -1,8 +1,8 @@
 
 from unittest.mock import MagicMock
-from apps.exceptions import handle_view_exceptions
 from fyle_qbo_api.utils import invalidate_qbo_credentials
 from apps.workspaces.models import QBOCredential
+
 
 def test_invalidate_qbo_credentials(mocker, db):
     workspace_id = 3
