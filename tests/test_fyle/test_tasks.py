@@ -230,7 +230,7 @@ def test_update_non_exported_expenses(db, create_temp_workspace, mocker, api_cli
 
 def test_re_run_skip_export_rule(db, create_temp_workspace, mocker, api_client, test_connection):
     """Test the re-running of skip export rules for expenses
-    
+
     This test verifies that expenses are correctly skipped based on email filters,
     expense groups are properly cleaned up, and export details are updated.
     """
@@ -313,7 +313,7 @@ def test_re_run_skip_export_rule(db, create_temp_workspace, mocker, api_client, 
     remaining_groups = ExpenseGroup.objects.filter(id__in=expense_group_ids)
     assert remaining_groups.count() == 1, \
         "Should have only one expense group remaining after removing skipped expenses"
-    
+
     remaining_group = remaining_groups.first()
     assert remaining_group.expenses.count() == 1, \
         "Remaining group should have exactly one non-skipped expense"
