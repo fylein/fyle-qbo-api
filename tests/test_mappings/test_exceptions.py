@@ -12,7 +12,7 @@ from qbosdk.exceptions import WrongParamsError as QBOWrongParamsError
 def test_handle_import_exceptions(mocker, db):
 
     mocked_patch = mock.MagicMock()
-    mocker.patch('apps.exceptions.patch_integration_settings', side_effect=mocked_patch)
+    mocker.patch('fyle_qbo_api.utils.patch_integration_settings', side_effect=mocked_patch)
 
     workspace_id = 3
     ImportLog.objects.create(

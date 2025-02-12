@@ -70,25 +70,23 @@ def test_get_company_preference_exceptions(api_client, test_connection, mocker, 
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
-    mocked_patch = mock.MagicMock()
-    mocker.patch('apps.quickbooks_online.actions.patch_integration_settings', side_effect=mocked_patch)
+    mocked_invalidate = mock.MagicMock()
+    mocker.patch('apps.quickbooks_online.actions.invalidate_qbo_credentials', side_effect=mocked_invalidate)
 
-    with mock.patch('apps.quickbooks_online.utils.QBOConnector.get_company_info') as mock_call:
+    with mock.patch('apps.quickbooks_online.utils.QBOConnector.get_company_preference') as mock_call:
         mock_call.side_effect = WrongParamsError(msg='wrong params', response='invalid_params')
         response = api_client.get(url)
         assert response.status_code == 400
 
-        args, kwargs = mocked_patch.call_args
+        args, _ = mocked_invalidate.call_args
         assert args[0] == 3
-        assert kwargs['is_token_expired'] == True
 
         mock_call.side_effect = InvalidTokenError(msg='Invalid token, try to refresh it', response='Invalid token, try to refresh it')
         response = api_client.get(url)
         assert response.status_code == 400
 
-        args, kwargs = mocked_patch.call_args
+        args, _ = mocked_invalidate.call_args
         assert args[0] == 3
-        assert kwargs['is_token_expired'] == True
 
         mock_call.side_effect = QBOCredential.DoesNotExist()
         response = api_client.get(url)
