@@ -28,7 +28,7 @@ def re_export_stuck_exports():
         logger.info('Re-exporting stuck task_logs')
         logger.info('%s stuck task_logs found', task_logs.count())
         workspace_ids = task_logs.values_list('workspace_id', flat=True).distinct()
-        expense_group_ids = task_logs.values_list('expense_group', flat=True)
+        expense_group_ids = task_logs.values_list('expense_group_id', flat=True)
         ormqs = OrmQ.objects.all()
         for orm in ormqs:
             if 'chain' in orm.task and orm.task['chain']:
