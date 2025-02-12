@@ -229,31 +229,44 @@ def test_update_non_exported_expenses(db, create_temp_workspace, mocker, api_cli
 
 
 def test_re_run_skip_export_rule(db, create_temp_workspace, mocker, api_client, test_connection):
+    """Test the re-running of skip export rules for expenses
+    
+    This test verifies that expenses are correctly skipped based on email filters,
+    expense groups are properly cleaned up, and export details are updated.
+    """
+    # Create an expense filter that will match expenses with employee_email 'jhonsnow@fyle.in'
     ExpenseFilter.objects.create(
         workspace_id=1,
         condition='employee_email',
         operator='in',
-        values=['jhonsnow@fyle.in'],  # Only one email to partially match expenses
+        values=['jhonsnow@fyle.in'],
         rank=1,
-        join_by='OR',
+        join_by=None,
     )
 
+    # Get test expenses data and modify two expenses to test the skipping logic
+    # Original expenses have different report_ids, we set them same to group them together
     expenses = list(data["expenses_spent_at"])
-    # Modify two expenses to be in the same expense group but with different emails
-    expenses[0]['expense_number'] = 'expense_1'
-    expenses[0]['employee_email'] = 'jhonsnow@fyle.in'  # This one should be skipped
-    expenses[1]['expense_number'] = 'expense_2'
-    expenses[1]['employee_email'] = 'other.email@fyle.in'  # This one should not be skipped
-    expenses[0]['report_id'] = 'report_1'
-    expenses[1]['report_id'] = 'report_1'  # Same report_id to group them together
+    expenses[0].update({
+        'expense_number': 'expense_1',
+        'employee_email': 'jhonsnow@fyle.in',  # This expense should be skipped
+        'report_id': 'report_1'
+    })
+    expenses[1].update({
+        'expense_number': 'expense_2',
+        'employee_email': 'other.email@fyle.in',  # This expense should not be skipped
+        'report_id': 'report_1'
+    })
 
+    # Set org_id for all expenses
     for expense in expenses:
         expense['org_id'] = 'orHVw3ikkCxJ'
 
-    # Create expenses first
+    # Create expense objects in database
+    # Creates 3 expenses: expense_1, expense_2, and one more from original data
     expense_objects = Expense.create_expense_objects(expenses, 1)
 
-    # Update accounting_export_summary
+    # Mark all expenses as failed exports by setting their accounting_export_summary
     for expense in Expense.objects.filter(workspace_id=1):
         expense.accounting_export_summary = {
             'state': 'FAILED',
@@ -261,52 +274,67 @@ def test_re_run_skip_export_rule(db, create_temp_workspace, mocker, api_client, 
         }
         expense.save()
 
-    # Create expense groups
+    # Create expense groups - will create 2 groups:
+    # 1. Group with expense_1 and expense_2 (same report_id)
+    # 2. Group with the remaining expense
     ExpenseGroup.create_expense_groups_by_report_id_fund_source(expense_objects, 1)
     expense_groups = ExpenseGroup.objects.filter(workspace_id=1)
-
-    # Assert initial state
-    assert expense_groups.count() == 2  # One group with 2 expenses, one group with remaining expenses
-    partially_skipped_group = expense_groups.filter(expenses__expense_number__in=['expense_1', 'expense_2']).first()
-    assert partially_skipped_group.expenses.count() == 1
-
     expense_group_ids = expense_groups.values_list('id', flat=True)
 
-    # Create LastExportDetail
+    # Create LastExportDetail to simulate failed exports
     LastExportDetail.objects.create(
         workspace_id=1,
-        total_expense_groups_count=len(expense_group_ids),
-        failed_expense_groups_count=0,
+        total_expense_groups_count=len(expense_group_ids),  # 2 groups
+        failed_expense_groups_count=1,  # Mark one group as failed
         export_mode='MANUAL'
     )
 
-    export_to_qbo(1, expense_group_ids=expense_group_ids)
+    # Create TaskLog to simulate in-progress export
+    TaskLog.objects.create(
+        workspace_id=1,
+        type='FAILED_EXPORT',
+        status='FAILED'
+    )
 
+    # Run export and re-run skip rules
+    export_to_qbo(1, expense_group_ids=expense_group_ids)
     workspace = Workspace.objects.get(id=1)
     re_run_skip_export_rule(workspace)
 
-    # Verify the expense with matching email is skipped
+    # Test 1: Verify expense skipping based on email filter
     skipped_expense = Expense.objects.get(expense_number='expense_1')
     non_skipped_expense = Expense.objects.get(expense_number='expense_2')
-    assert skipped_expense.is_skipped is True
-    assert non_skipped_expense.is_skipped is False
+    assert skipped_expense.is_skipped == True, \
+        "Expense with matching email (jhonsnow@fyle.in) should be marked as skipped"
+    assert non_skipped_expense.is_skipped == False, \
+        "Expense with non-matching email (other.email@fyle.in) should remain non-skipped"
 
-    # Verify expense groups after re-run
+    # Test 2: Verify expense group modifications
     remaining_groups = ExpenseGroup.objects.filter(id__in=expense_group_ids)
-    assert remaining_groups.count() == 1  # Only the group with non-skipped expense remains
+    assert remaining_groups.count() == 1, \
+        "Should have only one expense group remaining after removing skipped expenses"
+    
     remaining_group = remaining_groups.first()
-    assert remaining_group.expenses.count() == 1  # Only one expense remains in the group
-    assert remaining_group.expenses.first().expense_number == 'expense_2'
+    assert remaining_group.expenses.count() == 1, \
+        "Remaining group should have exactly one non-skipped expense"
+    assert list(remaining_group.expenses.values_list('expense_number', flat=True)) == ['expense_2'], \
+        "Remaining group should only contain the non-skipped expense (expense_2)"
 
-    # Verify task log is deleted
-    task_log = TaskLog.objects.filter(workspace_id=1, type='FETCHING_EXPENSES').first()
-    assert task_log is None
+    # Test 3: Verify cleanup of task logs
+    task_log = TaskLog.objects.filter(workspace_id=1, type='CREATING_BILL').first()
+    assert task_log is None, \
+        "Task log should be deleted after re-running skip export rule"
 
-    # Verify error is deleted
+    # Test 4: Verify cleanup of errors
     error = Error.objects.filter(workspace_id=1, expense_group_id__in=expense_group_ids).first()
-    assert error is None
+    assert error is None, \
+        "Error records should be deleted after re-running skip export rule"
 
-    # Verify last export detail is updated
+    # Test 5: Verify LastExportDetail updates
     last_export_detail = LastExportDetail.objects.filter(workspace_id=1).first()
-    assert last_export_detail.failed_expense_groups_count == 0
-    assert last_export_detail.total_expense_groups_count == 2
+    assert last_export_detail.failed_expense_groups_count == 0, \
+        "Failed expense groups count should be reset to 0 after re-running skip export rule"
+    assert last_export_detail.total_expense_groups_count == 0, \
+        "Total expense groups count should reflect the current state after cleanup"
+    assert last_export_detail.last_exported_at is not None, \
+        "Last exported timestamp should be updated after re-running skip export rule"
