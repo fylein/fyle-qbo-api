@@ -142,26 +142,6 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
 
             if workspace.ccc_last_synced_at or len(expenses) != reimbursable_expense_count:
                 workspace.ccc_last_synced_at = datetime.now()
-
-            logger.info('=== INITIAL TIMESTAMPS ===')
-            logger.info('Workspace ID: %s', workspace_id)
-            logger.info('Last synced at: %s', last_synced_at)
-            logger.info('CCC last synced at: %s', ccc_last_synced_at)
-            logger.info('Current fund source: %s', fund_source)
-
-            logger.info('PERSONAL expenses count: %s', len(expenses))
-            logger.info('Updating last_synced_at: %s → %s (condition: %s)', 
-                       last_synced_at, datetime.now(), bool(workspace.last_synced_at or expenses))
-
-            logger.info('CCC expenses count: %s', len(expenses) - reimbursable_expense_count)
-            logger.info('Updating ccc_last_synced_at: %s → %s (condition: %s)', 
-                       ccc_last_synced_at, datetime.now(), 
-                       bool(workspace.ccc_last_synced_at or len(expenses) != reimbursable_expense_count))
-
-            logger.info('=== FINAL TIMESTAMPS BEFORE SAVE ===')
-            logger.info('New last_synced_at: %s', workspace.last_synced_at)
-            logger.info('New ccc_last_synced_at: %s', workspace.ccc_last_synced_at)
-
             workspace.save()
 
             group_expenses_and_save(expenses, task_log, workspace)
