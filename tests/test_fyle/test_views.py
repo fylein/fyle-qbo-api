@@ -4,7 +4,6 @@ from unittest import mock
 import pytest
 from django.urls import reverse
 
-from apps.tasks.models import TaskLog
 from apps.workspaces.models import FyleCredential, Workspace
 from tests.helper import dict_compare_keys
 from tests.test_fyle.fixtures import data
