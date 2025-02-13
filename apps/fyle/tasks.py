@@ -55,7 +55,6 @@ def create_expense_groups(workspace_id: int, fund_source: List[str], task_log: T
 def group_expenses_and_save(expenses: List[Dict], task_log: TaskLog, workspace: Workspace):
     # First filter out any expenses that are already marked as skipped
     expense_objects = Expense.create_expense_objects(expenses, workspace.id)
-    expense_objects = [exp for exp in expense_objects if not exp.is_skipped]
     expense_filters = ExpenseFilter.objects.filter(workspace_id=workspace.id).order_by('rank')
     filtered_expenses = expense_objects
     if expense_filters:
@@ -75,12 +74,6 @@ def group_expenses_and_save(expenses: List[Dict], task_log: TaskLog, workspace: 
     ExpenseGroup.create_expense_groups_by_report_id_fund_source(
         filtered_expenses, workspace.id
     )
-
-    ExpenseGroup.objects.filter(
-        expenses__isnull=True,
-        workspace_id=workspace.id,
-        exported_at__isnull=True
-    ).delete()
 
     task_log.status = 'COMPLETE'
     task_log.save()
