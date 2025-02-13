@@ -370,7 +370,7 @@ def filter_expense_groups(
                     filtered_expenses = list(
                         filter(lambda expense: expense.amount > 0, filtered_expenses)
                     )
-        elif reimbursable_export_type != 'JOURNAL ENTRY':
+        elif reimbursable_export_type != 'JOURNAL ENTRY' or ccc_export_type == 'BILL':
             filtered_expenses = list(
                 filter(lambda expense: expense.amount > 0, filtered_expenses)
             )
