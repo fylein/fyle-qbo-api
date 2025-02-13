@@ -1,7 +1,7 @@
 import logging
 
 from apps.fyle.helpers import ExpenseGroupSearchFilter, ExpenseSearchFilter
-
+from django.db.models import Q
 from apps.workspaces.models import FyleCredential, Workspace
 from django_filters.rest_framework import DjangoFilterBackend
 from django_q.tasks import async_task
@@ -36,7 +36,11 @@ class ExpenseGroupView(LookupFieldMixin, generics.ListCreateAPIView):
     List Fyle Expenses
     """
 
-    queryset = ExpenseGroup.objects.all().order_by("-exported_at").distinct()
+    def get_queryset(self):
+        return ExpenseGroup.objects.filter(
+            ~Q(expenses__is_skipped=True),  # Exclude groups with skipped expenses
+            exported_at__isnull=True
+        ).order_by("-created_at").distinct()
     serializer_class = ExpenseGroupSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_class = ExpenseGroupSearchFilter
