@@ -264,7 +264,8 @@ def test_re_run_skip_export_rule(db, create_temp_workspace, mocker, api_client, 
         'employee_email': 'anish@fyle.in',
         'report_id': 'report_3',
         'claim_number': 'claim_3',
-        'fund_source': 'PERSONAL'
+        'fund_source': 'PERSONAL',
+        'amount': 1000
     })
     # Assign org_id to all expenses
     for expense in expenses:
@@ -284,9 +285,7 @@ def test_re_run_skip_export_rule(db, create_temp_workspace, mocker, api_client, 
     # Create expense groups - this should create 3 separate groups, one for each expense
     ExpenseGroup.create_expense_groups_by_report_id_fund_source(expense_objects, 1)
     expense_groups = ExpenseGroup.objects.filter(workspace_id=1)
-
     expense_group_ids = expense_groups.values_list('id', flat=True)
-
     # Create LastExportDetail to simulate failed exports
     LastExportDetail.objects.create(
         workspace_id=1,
@@ -328,7 +327,7 @@ def test_re_run_skip_export_rule(db, create_temp_workspace, mocker, api_client, 
 
     # Test 2: Verify expense group modifications
     remaining_groups = ExpenseGroup.objects.filter(id__in=expense_group_ids)
-    assert remaining_groups.count() == 1
+    assert remaining_groups.count() == 2
 
     # Test 3: Verify cleanup of task logs
     task_log = TaskLog.objects.filter(workspace_id=1).first()
