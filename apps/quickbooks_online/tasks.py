@@ -728,7 +728,7 @@ def check_qbo_object_status(workspace_id):
                     bill.payment_synced = True
                     bill.save()
 
-    except QBOCredential.DoesNotExist as error:
+    except QBOCredential.DoesNotExist:
         logger.info(f'QBO credentials not found for {workspace_id = }:', )
 
     except WrongParamsError as exception:
@@ -807,7 +807,7 @@ def async_sync_accounts(workspace_id):
         qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
         qbo_connection.sync_accounts()
 
-    except QBOCredential.DoesNotExist as error:
+    except QBOCredential.DoesNotExist:
         logger.info(f'QBO credentials not found for {workspace_id = }:', )
 
     except (WrongParamsError, InvalidTokenError) as exception:

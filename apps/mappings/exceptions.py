@@ -98,7 +98,7 @@ def handle_import_exceptions_v2(func):
             error['response'] = exception.__dict__
             import_log.status = 'FAILED'
             invalidate_qbo_credentials(workspace_id)
-            
+
         except Exception:
             response = traceback.format_exc()
             error['message'] = 'Something went wrong'
