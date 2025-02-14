@@ -7,18 +7,18 @@ from django.urls import reverse
 from fyle.platform.exceptions import InternalServerError, InvalidTokenError, RetryException
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
-
 from apps.fyle.actions import mark_expenses_as_skipped
-from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings
+from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings, ExpenseFilter
 from apps.fyle.tasks import (
     create_expense_groups,
     import_and_export_expenses,
     post_accounting_export_summary,
     sync_dimensions,
     update_non_exported_expenses,
+    re_run_skip_export_rule,
 )
-from apps.tasks.models import TaskLog
-from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
+from apps.tasks.models import TaskLog, Error
+from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings, LastExportDetail
 from tests.helper import dict_compare_keys
 from tests.test_fyle.fixtures import data
 
@@ -70,8 +70,10 @@ def test_create_expense_groups(mocker, db):
 
 @pytest.mark.django_db()
 def test_create_expense_group_skipped_flow(mocker, api_client, test_connection):
+    # Mock the re_run_skip_export_rule function
+    mocker.patch('apps.fyle.signals.re_run_skip_export_rule', return_value=None)
+
     access_token = test_connection.access_token
-    # adding the expense-filter
     url = reverse('expense-filters', kwargs={'workspace_id': 1})
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
@@ -167,11 +169,15 @@ def test_update_non_exported_expenses(db, create_temp_workspace, mocker, api_cli
         "reason": 'expense update testing',
     }
 
+    # Create initial expense with is_skipped=True
     expense_created, _ = Expense.objects.update_or_create(
         org_id=org_id,
         expense_id='txhJLOSKs1iN',
         workspace_id=1,
-        defaults=default_raw_expense
+        defaults={
+            **default_raw_expense,
+            'is_skipped': True  # Set initial skipped status
+        }
     )
     expense_created.accounting_export_summary = {}
     expense_created.save()
@@ -181,14 +187,26 @@ def test_update_non_exported_expenses(db, create_temp_workspace, mocker, api_cli
     workspace.save()
 
     assert expense_created.category == 'Old Category'
+    assert expense_created.is_skipped == True  # Verify initial skipped status
 
+    # Test update of non-exported expense
     update_non_exported_expenses(payload['data'])
 
     expense = Expense.objects.get(expense_id='txhJLOSKs1iN', org_id=org_id)
     assert expense.category == 'ABN Withholding'
+    assert expense.is_skipped == True  # Verify skipped status is preserved
 
+    # Test that expense in COMPLETE state is not updated
     expense.accounting_export_summary = {"synced": True, "state": "COMPLETE"}
     expense.category = 'Old Category'
+    expense.save()
+
+    update_non_exported_expenses(payload['data'])
+    expense = Expense.objects.get(expense_id='txhJLOSKs1iN', org_id=org_id)
+    assert expense.category == 'Old Category'
+
+    # Test expense in IN_PROGRESS state is not updated
+    expense.accounting_export_summary = {"synced": True, "state": "IN_PROGRESS"}
     expense.save()
 
     update_non_exported_expenses(payload['data'])
@@ -207,3 +225,118 @@ def test_update_non_exported_expenses(db, create_temp_workspace, mocker, api_cli
     url = reverse('exports', kwargs={'workspace_id': 2})
     response = api_client.post(url, data=payload, format='json')
     assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+def test_re_run_skip_export_rule(db, create_temp_workspace, mocker, api_client, test_connection):
+    """Test the re-running of skip export rules for expenses
+
+    This test verifies that expenses are correctly skipped based on email filters,
+    expense groups are properly cleaned up, and export details are updated.
+    """
+    # Create an expense filter that will match expenses with employee_email 'jhonsnow@fyle.in'
+    ExpenseFilter.objects.create(
+        workspace_id=1,
+        condition='expense_number',
+        operator='in',
+        values=['expense_1'],
+        rank=1,
+        join_by=None,
+    )
+
+    # Retrieve test expenses data and modify them to ensure unique grouping
+    expenses = list(data["expenses_spent_at"])
+    expenses[0].update({
+        'expense_number': 'expense_1',
+        'employee_email': 'jhonsnow@fyle.in',
+        'report_id': 'report_1',
+        'claim_number': 'claim_1',
+        'fund_source': 'PERSONAL'
+    })
+    expenses[1].update({
+        'expense_number': 'expense_2',
+        'employee_email': 'other.email@fyle.in',
+        'report_id': 'report_2',
+        'claim_number': 'claim_2',
+        'fund_source': 'PERSONAL'
+    })
+    expenses[2].update({
+        'expense_number': 'expense_3',
+        'employee_email': 'anish@fyle.in',
+        'report_id': 'report_3',
+        'claim_number': 'claim_3',
+        'fund_source': 'PERSONAL',
+        'amount': 1000
+    })
+    # Assign org_id to all expenses
+    for expense in expenses:
+        expense['org_id'] = 'orHVw3ikkCxJ'
+
+    # Create expense objects in the database
+    expense_objects = Expense.create_expense_objects(expenses, 1)
+
+    # Mark all expenses as failed exports by updating their accounting_export_summary
+    for expense in Expense.objects.filter(workspace_id=1):
+        expense.accounting_export_summary = {
+            'state': 'FAILED',
+            'synced': False
+        }
+        expense.save()
+
+    # Create expense groups - this should create 3 separate groups, one for each expense
+    ExpenseGroup.create_expense_groups_by_report_id_fund_source(expense_objects, 1)
+    expense_groups = ExpenseGroup.objects.filter(workspace_id=1)
+    expense_group_ids = expense_groups.values_list('id', flat=True)
+    # Create LastExportDetail to simulate failed exports
+    LastExportDetail.objects.create(
+        workspace_id=1,
+        total_expense_groups_count=len(expense_group_ids),  # 2 groups
+        failed_expense_groups_count=1,  # Mark one group as failed
+        export_mode='MANUAL'
+    )
+
+    # Create TaskLog to simulate in-progress export
+    # get the first expense group id, and create a task log for it
+    tasklog = TaskLog.objects.create(
+        workspace_id=1,
+        type='CREATING_BILL',
+        status='FAILED',
+        expense_group_id=expense_group_ids[0]
+    )
+
+    # Create error for the first expense group
+    error = Error.objects.create(
+        workspace_id=1,
+        type='QBO_ERROR',
+        error_title='Test error title',
+        error_detail='Test error detail',
+        expense_group=ExpenseGroup.objects.get(id=expense_group_ids[0])
+    )
+
+    workspace = Workspace.objects.get(id=1)
+
+    assert tasklog.status == 'FAILED'
+    assert error.type == 'QBO_ERROR'
+
+    re_run_skip_export_rule(workspace)
+
+    # Test 1: Verify expense skipping based on email filter
+    skipped_expense = Expense.objects.get(expense_number='expense_1')
+    non_skipped_expense = Expense.objects.get(expense_number='expense_2')
+    assert skipped_expense.is_skipped == True
+    assert non_skipped_expense.is_skipped == False
+
+    # Test 2: Verify expense group modifications
+    remaining_groups = ExpenseGroup.objects.filter(id__in=expense_group_ids)
+    assert remaining_groups.count() == 2
+
+    # Test 3: Verify cleanup of task logs
+    task_log = TaskLog.objects.filter(workspace_id=1).first()
+    assert task_log is None
+
+    # Test 4: Verify cleanup of errors
+    error = Error.objects.filter(workspace_id=1, expense_group_id__in=expense_group_ids).first()
+    assert error is None
+
+    # Test 5: Verify LastExportDetail updates
+    last_export_detail = LastExportDetail.objects.filter(workspace_id=1).first()
+    assert last_export_detail.failed_expense_groups_count == 0
