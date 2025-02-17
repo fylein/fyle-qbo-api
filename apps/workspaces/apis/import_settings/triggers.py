@@ -1,13 +1,13 @@
 from datetime import datetime, timezone
 from typing import Dict, List
 
-from django_q.tasks import async_task
 from django.db.models import Q
-from fyle_accounting_mappings.models import MappingSetting, ExpenseAttribute
+from django_q.tasks import async_task
+from fyle_accounting_mappings.models import ExpenseAttribute, MappingSetting
 
 from apps.fyle.models import ExpenseGroupSettings
-from apps.workspaces.models import WorkspaceGeneralSettings
 from apps.mappings.schedules import schedule_or_delete_fyle_import_tasks as new_schedule_or_delete_fyle_import_tasks
+from apps.workspaces.models import WorkspaceGeneralSettings
 from fyle_integrations_imports.models import ImportLog
 
 
@@ -134,7 +134,7 @@ class ImportSettingsTrigger:
 
         ImportLog.objects.filter(workspace_id=workspace_id, attribute_type__in=reset_source_fields).update(last_successful_run_at=None, updated_at=datetime.now(timezone.utc))
 
-    def pre_save_mapping_settings(self):
+    def pre_save_mapping_settings(self, pre_save_general_settings: WorkspaceGeneralSettings):
         """
         Post save action for mapping settings
         """
@@ -150,6 +150,14 @@ class ImportSettingsTrigger:
             new_mappings_settings=mapping_settings,
             workspace_id=self.__workspace_id
         )
+
+        workspace_settings = self.__workspace_general_settings
+
+        old_coa = set(pre_save_general_settings.charts_of_accounts or [])
+        new_coa = set(workspace_settings['charts_of_accounts'] or [])
+
+        if workspace_settings['import_categories'] and old_coa != new_coa:
+            ImportLog.objects.filter(workspace_id=self.__workspace_id, attribute_type='CATEORY').update(last_successful_run_at=None, updated_at=datetime.now(timezone.utc))
 
     def post_save_mapping_settings(self, workspace_general_settings_instance: WorkspaceGeneralSettings):
         """
