@@ -152,10 +152,7 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
             print('Post save workspace: ', Workspace.objects.get(pk=workspace.id).ccc_last_synced_at)
             group_expenses_and_save(expenses, task_log, workspace)
             print('Post grouping workspace: ', Workspace.objects.get(pk=workspace.id).ccc_last_synced_at)            
-
         print('Out of transaction block: ', Workspace.objects.get(pk=workspace.id).ccc_last_synced_at)
-
-    print('Out of transaction and try block: ', Workspace.objects.get(pk=workspace.id).ccc_last_synced_at)  
 
     except FyleCredential.DoesNotExist:
         logger.info('Fyle credentials not found %s', workspace_id)
@@ -187,6 +184,8 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
 
     except Exception:
         handle_import_exception(task_log)
+
+    print('Out of transaction and try block: ', Workspace.objects.get(pk=workspace.id).ccc_last_synced_at)
 
 
 def sync_dimensions(fyle_credentials, is_export: bool = False):
