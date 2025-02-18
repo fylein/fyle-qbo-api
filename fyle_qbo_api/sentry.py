@@ -9,9 +9,8 @@ from sentry_sdk.integrations.django import DjangoIntegration
 class Sentry:
     SENSITIVE_FIELDS = {
         'password', 'secret', 'passwd', 'api_key', 'apikey', 'access_token',
-        'auth_token', 'credentials', 'mysql_pwd', 'stripetoken',
-        'card_number', 'cvv', 'email', 'workspace_name', 'workspace_id',
-        'org_name', 'user_email', 'phone', 'address'
+        'auth_token', 'credentials', 'email', 'workspace_name', 'workspace_id',
+        'org_name', 'user_email'
     }
 
     @staticmethod
