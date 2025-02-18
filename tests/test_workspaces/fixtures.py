@@ -68,7 +68,6 @@ data = {
         'import_vendors_as_merchants': True,
         'created_at': '2022-05-23T11:34:12.831875Z',
         'updated_at': '2022-05-23T12:58:43.146006Z',
-        'is_simplify_report_closure_enabled': True,
         'name_in_journal_entry': 'MERCHANT',
         'is_multi_currency_allowed': True,
         'is_tax_override_enabled': False,

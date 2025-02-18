@@ -6,7 +6,6 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import JSONField
 from django_q.models import Schedule
-
 from fyle_accounting_mappings.mixins import AutoAddCreateUpdateInfoMixin
 
 User = get_user_model()
@@ -115,7 +114,6 @@ class WorkspaceGeneralSettings(AutoAddCreateUpdateInfoMixin, models.Model):
     auto_create_merchants_as_vendors = models.BooleanField(default=False, help_text='Auto create Fyle Merchants as QBO vendors')
     sync_fyle_to_qbo_payments = models.BooleanField(default=False, help_text='Auto Sync Payments from Fyle to QBO')
     sync_qbo_to_fyle_payments = models.BooleanField(default=False, help_text='Auto Sync Payments from QBO to Fyle')
-    is_simplify_report_closure_enabled = models.BooleanField(default=True, help_text='Simplify report closure is enabled')
     category_sync_version = models.CharField(default='v2', max_length=50, help_text='Category sync version')
     je_single_credit_line = models.BooleanField(default=False, help_text='Single Credit Line for Journal Entries')
     map_fyle_cards_qbo_account = models.BooleanField(default=True, help_text='Map Fyle Cards to QBO Accounts')
