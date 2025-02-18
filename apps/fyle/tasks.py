@@ -141,7 +141,7 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
 
             if workspace.ccc_last_synced_at or len(expenses) != reimbursable_expense_count:
                 workspace.ccc_last_synced_at = datetime.now()
-
+            workspace.save()
             group_expenses_and_save(expenses, task_log, workspace)
 
     except FyleCredential.DoesNotExist:
