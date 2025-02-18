@@ -21,7 +21,7 @@ def run_post_save_expense_filters(sender, instance: ExpenseFilter, **kwargs):
     """
     if instance.join_by is None:
         try:
-            re_run_skip_export_rule(instance.workspace)
+            re_run_skip_export_rule(instance.workspace_id)
         except Exception as e:
             logger.error(f'Error while processing expense filter for workspace: {instance.workspace.id} - {str(e)}')
             raise ValidationError('Failed to process expense filter')

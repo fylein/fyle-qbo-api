@@ -142,7 +142,6 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
             if workspace.ccc_last_synced_at or len(expenses) != reimbursable_expense_count:
                 workspace.ccc_last_synced_at = datetime.now()
 
-            workspace = Workspace.objects.get(pk=workspace_id)
             group_expenses_and_save(expenses, task_log, workspace)
 
     except FyleCredential.DoesNotExist:
@@ -324,12 +323,13 @@ def update_non_exported_expenses(data: Dict) -> None:
             )
 
 
-def re_run_skip_export_rule(workspace: Workspace) -> None:
+def re_run_skip_export_rule(workspace_id: int) -> None:
     """
     Skip expenses before export
     :param workspace_id: Workspace id
     :return: None
     """
+    workspace = Workspace.objects.get(pk=workspace_id)
     expense_filters = ExpenseFilter.objects.filter(workspace_id=workspace.id).order_by('rank')
     if expense_filters:
         filtered_expense_query = construct_expense_filter_query(expense_filters)
