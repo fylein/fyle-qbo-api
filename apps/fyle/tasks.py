@@ -323,13 +323,12 @@ def update_non_exported_expenses(data: Dict) -> None:
             )
 
 
-def re_run_skip_export_rule(workspace_id: int) -> None:
+def re_run_skip_export_rule(workspace: Workspace) -> None:
     """
     Skip expenses before export
     :param workspace_id: Workspace id
     :return: None
     """
-    workspace = Workspace.objects.get(pk=workspace_id)
     expense_filters = ExpenseFilter.objects.filter(workspace_id=workspace.id).order_by('rank')
     if expense_filters:
         filtered_expense_query = construct_expense_filter_query(expense_filters)
