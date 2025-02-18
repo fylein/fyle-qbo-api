@@ -146,6 +146,9 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
             
             print('Pre save workspace: ', Workspace.objects.get(pk=workspace.id).ccc_last_synced_at)
             workspace.save()
+
+
+            # workspace = Workspace.objects.get(pk=workspace.id)
             print('Post save workspace: ', Workspace.objects.get(pk=workspace.id).ccc_last_synced_at)
             group_expenses_and_save(expenses, task_log, workspace)
             print('Post grouping workspace: ', Workspace.objects.get(pk=workspace.id).ccc_last_synced_at)            
