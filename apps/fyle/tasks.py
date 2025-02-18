@@ -75,6 +75,12 @@ def group_expenses_and_save(expenses: List[Dict], task_log: TaskLog, workspace: 
         filtered_expenses, workspace.id
     )
 
+    ExpenseGroup.objects.filter(
+        expenses__isnull=True,
+        workspace_id=workspace.id,
+        exported_at__isnull=True
+    ).delete()
+
     task_log.status = 'COMPLETE'
     task_log.save()
 
