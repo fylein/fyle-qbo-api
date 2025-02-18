@@ -52,7 +52,6 @@ class Sentry:
             before_breadcrumb=Sentry.before_breadcrumb,
             max_request_body_size='small',
             in_app_include=['apps.users', 'apps.workspaces', 'apps.mappings', 'apps.fyle', 'apps.quickbooks_online', 'apps.tasks', 'fyle_rest_auth', 'fyle_accounting_mappings'],
-            request_bodies=['never'],
             send_client_reports=False
         )
 
