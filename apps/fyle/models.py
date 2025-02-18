@@ -370,7 +370,7 @@ def filter_expense_groups(
                     filtered_expenses = list(
                         filter(lambda expense: expense.amount > 0, filtered_expenses)
                     )
-        elif reimbursable_export_type != 'JOURNAL ENTRY':
+        elif reimbursable_export_type != 'JOURNAL ENTRY' or ccc_export_type == 'BILL':
             filtered_expenses = list(
                 filter(lambda expense: expense.amount > 0, filtered_expenses)
             )
@@ -488,10 +488,7 @@ class ExpenseGroup(models.Model):
                     workspace_id,
                 )
 
-        if (
-            general_settings.corporate_credit_card_expenses_object == "BILL"
-            and "expense_id" not in corporate_credit_card_expense_group_field
-        ):
+        if general_settings.corporate_credit_card_expenses_object == "BILL":
             filtered_corporate_credit_card_expense_groups = filter_expense_groups(
                 filtered_corporate_credit_card_expense_groups,
                 corporate_credit_card_expenses,
