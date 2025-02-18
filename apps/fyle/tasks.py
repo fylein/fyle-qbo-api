@@ -71,7 +71,7 @@ def group_expenses_and_save(expenses: List[Dict], task_log: TaskLog, workspace: 
             org_id=workspace.fyle_org_id
         )
 
-    # filtered_expenses = filtered_expenses.filter(is_skipped=False)
+    filtered_expenses = filtered_expenses.filter(is_skipped=False)
     ExpenseGroup.create_expense_groups_by_report_id_fund_source(
         filtered_expenses, workspace.id
     )
@@ -142,18 +142,9 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
 
             if workspace.ccc_last_synced_at or len(expenses) != reimbursable_expense_count:
                 workspace.ccc_last_synced_at = datetime.now()
-            
-            
-            print('Pre save workspace: ', Workspace.objects.get(pk=workspace.id).ccc_last_synced_at)
+
             workspace.save()
-
-
-            # workspace = Workspace.objects.get(pk=workspace.id)
-            print('Post save workspace: ', Workspace.objects.get(pk=workspace.id).ccc_last_synced_at)
             group_expenses_and_save(expenses, task_log, workspace)
-            print('Post grouping workspace: ', Workspace.objects.get(pk=workspace.id).ccc_last_synced_at)            
-        print('Out of transaction block: ', Workspace.objects.get(pk=workspace.id).ccc_last_synced_at)
-
     except FyleCredential.DoesNotExist:
         logger.info('Fyle credentials not found %s', workspace_id)
         task_log.detail = {'message': 'Fyle credentials do not exist in workspace'}
