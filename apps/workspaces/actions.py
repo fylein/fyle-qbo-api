@@ -8,6 +8,7 @@ from django.db import transaction
 from django_q.tasks import async_task
 from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute
 from fyle_integrations_platform_connector import PlatformConnector
+from fyle_qbo_api.utils import patch_integration_settings
 from fyle_rest_auth.helpers import get_fyle_admin
 from fyle_rest_auth.models import AuthToken
 from qbosdk import revoke_refresh_token
@@ -121,6 +122,8 @@ def connect_qbo_oauth(refresh_token, realm_id, workspace_id):
 
     if workspace.onboarding_state == 'COMPLETE':
         post_to_integration_settings(workspace_id, True)
+
+    patch_integration_settings(workspace_id, is_token_expired=False)
 
     # Return the QBO credentials as serialized data
     return Response(data=QBOCredentialSerializer(qbo_credentials).data, status=status.HTTP_200_OK)
