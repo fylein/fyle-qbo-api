@@ -18,7 +18,7 @@ from apps.fyle.helpers import (
     handle_import_exception,
 )
 from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings
-from apps.tasks.models import TaskLog, Error
+from apps.tasks.models import Error, TaskLog
 from apps.workspaces.actions import export_to_qbo
 from apps.workspaces.models import FyleCredential, LastExportDetail, Workspace, WorkspaceGeneralSettings
 from fyle_qbo_api.logging_middleware import get_logger
@@ -200,7 +200,7 @@ def sync_dimensions(fyle_credentials, is_export: bool = False):
             platform.projects.sync()
 
 
-def post_accounting_export_summary(org_id: str, workspace_id: int, expense_ids, fund_source: str = None, is_failed: bool = False) -> None:
+def post_accounting_export_summary(org_id: str, workspace_id: int, expense_ids: List = None, fund_source: str = None, is_failed: bool = False) -> None:
     """
     Post accounting export summary to Fyle
     :param org_id: org id
@@ -214,9 +214,11 @@ def post_accounting_export_summary(org_id: str, workspace_id: int, expense_ids, 
     platform = PlatformConnector(fyle_credentials)
     filters = {
         'org_id': org_id,
-        'id__in': expense_ids,
         'accounting_export_summary__synced': False
     }
+
+    if expense_ids:
+        filters['id__in'] = expense_ids
 
     if fund_source:
         filters['fund_source'] = fund_source
