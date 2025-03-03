@@ -9,6 +9,7 @@ from django.db import transaction
 from django.utils import timezone as django_timezone
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping
 from fyle_integrations_platform_connector import PlatformConnector
+from fyle_qbo_api.utils import invalidate_qbo_credentials
 from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 
 from apps.fyle.actions import update_expenses_in_progress
@@ -773,13 +774,14 @@ def check_qbo_object_status(workspace_id):
                     bill.save()
 
     except QBOCredential.DoesNotExist:
-        logger.info(f'QBO credentials not found for {workspace_id =}:', )
+        logger.info(f'QBO credentials not found for {workspace_id = }:', )
 
     except WrongParamsError as exception:
         logger.info('Wrong parameters passed in workspace_id - %s %s', workspace_id, {'error': exception.response})
 
     except InvalidTokenError as exception:
         logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
+        invalidate_qbo_credentials(workspace_id, qbo_credentials)
 
 
 def process_reimbursements(workspace_id):
@@ -851,10 +853,11 @@ def async_sync_accounts(workspace_id):
         qbo_connection.sync_accounts()
 
     except QBOCredential.DoesNotExist:
-        logger.info(f'QBO credentials not found for {workspace_id =}:', )
+        logger.info(f'QBO credentials not found for {workspace_id = }:', )
 
     except (WrongParamsError, InvalidTokenError) as exception:
         logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
+        invalidate_qbo_credentials(workspace_id, qbo_credentials)
 
 
 def update_expense_and_post_summary(in_progress_expenses: List[Expense], workspace_id: int, fund_source: str) -> None:
