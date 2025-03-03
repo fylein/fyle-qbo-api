@@ -17,7 +17,7 @@ from rest_framework.views import status
 from apps.fyle.actions import update_failed_expenses
 from apps.fyle.helpers import get_cluster_domain, post_request
 from apps.fyle.models import ExpenseGroup, ExpenseGroupSettings
-from apps.fyle.queue import async_post_accounting_export_summary
+from apps.fyle.tasks import post_accounting_export_summary
 from apps.quickbooks_online.queue import (
     schedule_bills_creation,
     schedule_cheques_creation,
@@ -263,7 +263,7 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
                 expense_group = ExpenseGroup.objects.get(id=expense_group_id)
                 update_failed_expenses(expense_group.expenses.all(), False)
                 failed_expense_ids.extend(expense_group.expenses.values_list('id', flat=True))
-            async_post_accounting_export_summary(expense_group.workspace.fyle_org_id, workspace_id, failed_expense_ids, True)
+            post_accounting_export_summary(expense_group.workspace.fyle_org_id, workspace_id, failed_expense_ids, True)
         return
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
