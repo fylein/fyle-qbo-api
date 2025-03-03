@@ -64,20 +64,29 @@ def test_get_company_preference(mocker, api_client, test_connection, db):
     assert response['Id'] == '1'
 
 
-def test_get_company_preference_exceptions(api_client, test_connection, db):
+def test_get_company_preference_exceptions(api_client, test_connection, mocker, db):
     access_token = test_connection.access_token
     url = '/api/workspaces/3/qbo/preferences/'
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
-    with mock.patch('apps.quickbooks_online.utils.QBOConnector.get_company_info') as mock_call:
+    mocked_invalidate = mock.MagicMock()
+    mocker.patch('apps.quickbooks_online.actions.invalidate_qbo_credentials', side_effect=mocked_invalidate)
+
+    with mock.patch('apps.quickbooks_online.utils.QBOConnector.get_company_preference') as mock_call:
         mock_call.side_effect = WrongParamsError(msg='wrong params', response='invalid_params')
         response = api_client.get(url)
         assert response.status_code == 400
 
+        args, _ = mocked_invalidate.call_args
+        assert args[0] == 3
+
         mock_call.side_effect = InvalidTokenError(msg='Invalid token, try to refresh it', response='Invalid token, try to refresh it')
         response = api_client.get(url)
         assert response.status_code == 400
+
+        args, _ = mocked_invalidate.call_args
+        assert args[0] == 3
 
         mock_call.side_effect = QBOCredential.DoesNotExist()
         response = api_client.get(url)
