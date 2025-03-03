@@ -29,7 +29,7 @@ def validate_failing_export(is_auto_export: bool, interval_hours: int, error: Er
     return is_auto_export and interval_hours and error and error.repetition_count > 100 and datetime.now().replace(tzinfo=timezone.utc) - error.updated_at <= timedelta(hours=24)
 
 
-def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, fund_source: str, interval_hours: int):
+def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int):
     """
     Schedule bills creation
     :param expense_group_ids: List of expense group ids
@@ -92,7 +92,7 @@ def __create_chain_and_run(workspace_id: int, chain_tasks: List[dict], is_auto_e
     chain.run()
 
 
-def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, fund_source: str, interval_hours: int):
+def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int):
     """
     Schedule cheque creation
     :param expense_group_ids: List of expense group ids
@@ -135,7 +135,7 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], i
             __create_chain_and_run(workspace_id, chain_tasks, is_auto_export)
 
 
-def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, fund_source: str, interval_hours: int):
+def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int):
     """
     Schedule journal_entry creation
     :param expense_group_ids: List of expense group ids
@@ -178,7 +178,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
             __create_chain_and_run(workspace_id, chain_tasks, is_auto_export)
 
 
-def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, fund_source: str, interval_hours: int):
+def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int):
     """
     Schedule credit card purchase creation
     :param expense_group_ids: List of expense group ids
@@ -224,7 +224,7 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
             __create_chain_and_run(workspace_id, chain_tasks, is_auto_export)
 
 
-def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, fund_source: str, interval_hours: int):
+def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int):
     """
     Schedule QBO expense creation
     :param expense_group_ids: List of expense group ids
