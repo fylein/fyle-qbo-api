@@ -7,18 +7,19 @@ from django.urls import reverse
 from fyle.platform.exceptions import InternalServerError, InvalidTokenError, RetryException
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
+
 from apps.fyle.actions import mark_expenses_as_skipped
-from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings, ExpenseFilter
+from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings
 from apps.fyle.tasks import (
     create_expense_groups,
     import_and_export_expenses,
     post_accounting_export_summary,
+    re_run_skip_export_rule,
     sync_dimensions,
     update_non_exported_expenses,
-    re_run_skip_export_rule,
 )
-from apps.tasks.models import TaskLog, Error
-from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings, LastExportDetail
+from apps.tasks.models import Error, TaskLog
+from apps.workspaces.models import FyleCredential, LastExportDetail, Workspace, WorkspaceGeneralSettings
 from tests.helper import dict_compare_keys
 from tests.test_fyle.fixtures import data
 
@@ -149,9 +150,7 @@ def test_sync_dimension(db, mocker):
     mock_platform_instance.categories.get_count.return_value = 5
     mock_platform_instance.projects.get_count.return_value = 10
 
-    fyle_creds = FyleCredential.objects.filter(workspace_id = 1).first()
-
-    sync_dimensions(fyle_credentials=fyle_creds, is_export=True)
+    sync_dimensions(1, is_export=True)
 
     mock_platform_instance.import_fyle_dimensions.assert_called_once_with(is_export=True)
     mock_platform_instance.categories.sync.assert_called_once()

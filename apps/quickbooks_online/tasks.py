@@ -9,7 +9,6 @@ from django.db import transaction
 from django.utils import timezone as django_timezone
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping
 from fyle_integrations_platform_connector import PlatformConnector
-from fyle_qbo_api.utils import invalidate_qbo_credentials
 from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 
 from apps.fyle.actions import update_expenses_in_progress
@@ -38,6 +37,7 @@ from apps.tasks.models import Error, TaskLog
 from apps.workspaces.models import FyleCredential, QBOCredential, Workspace, WorkspaceGeneralSettings
 from fyle_qbo_api.exceptions import BulkError
 from fyle_qbo_api.logging_middleware import get_logger
+from fyle_qbo_api.utils import invalidate_qbo_credentials
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -191,8 +191,11 @@ def create_bill(expense_group, task_log_id, last_export: bool, is_auto_export: b
     in_progress_expenses = []
     # Don't include expenses with previous export state as ERROR and it's an auto import/export run
     if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
-        in_progress_expenses.extend(expense_group.expenses.all())
-        update_expense_and_post_summary(in_progress_expenses, expense_group.workspace_id, expense_group.fund_source)
+        try:
+            in_progress_expenses.extend(expense_group.expenses.all())
+            update_expense_and_post_summary(in_progress_expenses, expense_group.workspace_id, expense_group.fund_source)
+        except Exception as e:
+            logger.error('Error while updating expenses for expense_group_id: %s and posting accounting export summary %s', expense_group.id, e)
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
@@ -376,8 +379,11 @@ def create_cheque(expense_group, task_log_id, last_export: bool, is_auto_export:
     in_progress_expenses = []
     # Don't include expenses with previous export state as ERROR and it's an auto import/export run
     if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
-        in_progress_expenses.extend(expense_group.expenses.all())
-        update_expense_and_post_summary(in_progress_expenses, expense_group.workspace_id, expense_group.fund_source)
+        try:
+            in_progress_expenses.extend(expense_group.expenses.all())
+            update_expense_and_post_summary(in_progress_expenses, expense_group.workspace_id, expense_group.fund_source)
+        except Exception as e:
+            logger.error('Error while updating expenses for expense_group_id: %s and posting accounting export summary %s', expense_group.id, e)
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
@@ -439,8 +445,11 @@ def create_qbo_expense(expense_group, task_log_id, last_export: bool, is_auto_ex
     in_progress_expenses = []
     # Don't include expenses with previous export state as ERROR and it's an auto import/export run
     if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
-        in_progress_expenses.extend(expense_group.expenses.all())
-        update_expense_and_post_summary(in_progress_expenses, expense_group.workspace_id, expense_group.fund_source)
+        try:
+            in_progress_expenses.extend(expense_group.expenses.all())
+            update_expense_and_post_summary(in_progress_expenses, expense_group.workspace_id, expense_group.fund_source)
+        except Exception as e:
+            logger.error('Error while updating expenses for expense_group_id: %s and posting accounting export summary %s', expense_group.id, e)
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
@@ -507,8 +516,11 @@ def create_credit_card_purchase(expense_group: ExpenseGroup, task_log_id, last_e
     in_progress_expenses = []
     # Don't include expenses with previous export state as ERROR and it's an auto import/export run
     if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
-        in_progress_expenses.extend(expense_group.expenses.all())
-        update_expense_and_post_summary(in_progress_expenses, expense_group.workspace_id, expense_group.fund_source)
+        try:
+            in_progress_expenses.extend(expense_group.expenses.all())
+            update_expense_and_post_summary(in_progress_expenses, expense_group.workspace_id, expense_group.fund_source)
+        except Exception as e:
+            logger.error('Error while updating expenses for expense_group_id: %s and posting accounting export summary %s', expense_group.id, e)
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
@@ -574,8 +586,11 @@ def create_journal_entry(expense_group, task_log_id, last_export: bool, is_auto_
     in_progress_expenses = []
     # Don't include expenses with previous export state as ERROR and it's an auto import/export run
     if not (is_auto_export and expense_group.expenses.first().previous_export_state == 'ERROR'):
-        in_progress_expenses.extend(expense_group.expenses.all())
-        update_expense_and_post_summary(in_progress_expenses, expense_group.workspace_id, expense_group.fund_source)
+        try:
+            in_progress_expenses.extend(expense_group.expenses.all())
+            update_expense_and_post_summary(in_progress_expenses, expense_group.workspace_id, expense_group.fund_source)
+        except Exception as e:
+            logger.error('Error while updating expenses for expense_group_id: %s and posting accounting export summary %s', expense_group.id, e)
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
 
@@ -759,7 +774,7 @@ def check_qbo_object_status(workspace_id):
                     bill.save()
 
     except QBOCredential.DoesNotExist:
-        logger.info(f'QBO credentials not found for {workspace_id = }:', )
+        logger.info(f'QBO credentials not found for {workspace_id =}:', )
 
     except WrongParamsError as exception:
         logger.info('Wrong parameters passed in workspace_id - %s %s', workspace_id, {'error': exception.response})
@@ -838,7 +853,7 @@ def async_sync_accounts(workspace_id):
         qbo_connection.sync_accounts()
 
     except QBOCredential.DoesNotExist:
-        logger.info(f'QBO credentials not found for {workspace_id = }:', )
+        logger.info(f'QBO credentials not found for {workspace_id =}:', )
 
     except (WrongParamsError, InvalidTokenError) as exception:
         logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
