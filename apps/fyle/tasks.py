@@ -18,7 +18,7 @@ from apps.fyle.helpers import (
     handle_import_exception,
 )
 from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings
-from apps.tasks.models import TaskLog, Error
+from apps.tasks.models import Error, TaskLog
 from apps.workspaces.actions import export_to_qbo
 from apps.workspaces.models import FyleCredential, LastExportDetail, Workspace, WorkspaceGeneralSettings
 from fyle_qbo_api.logging_middleware import get_logger
@@ -177,14 +177,15 @@ def async_create_expense_groups(workspace_id: int, fund_source: List[str], task_
         handle_import_exception(task_log)
 
 
-def sync_dimensions(fyle_credentials, is_export: bool = False):
+def sync_dimensions(workspace_id: int, is_export: bool = False):
+    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
     platform = PlatformConnector(fyle_credentials)
     platform.import_fyle_dimensions(is_export=is_export)
     if is_export:
         categories_count = platform.categories.get_count()
 
         categories_expense_attribute_count = ExpenseAttribute.objects.filter(
-            attribute_type="CATEGORY", workspace_id=fyle_credentials.workspace_id, active=True
+            attribute_type="CATEGORY", workspace_id=workspace_id, active=True
         ).count()
 
         if categories_count != categories_expense_attribute_count:
@@ -193,14 +194,14 @@ def sync_dimensions(fyle_credentials, is_export: bool = False):
         projects_count = platform.projects.get_count()
 
         projects_expense_attribute_count = ExpenseAttribute.objects.filter(
-            attribute_type="PROJECT", workspace_id=fyle_credentials.workspace_id, active=True
+            attribute_type="PROJECT", workspace_id=workspace_id, active=True
         ).count()
 
         if projects_count != projects_expense_attribute_count:
             platform.projects.sync()
 
 
-def post_accounting_export_summary(org_id: str, workspace_id: int, expense_ids, fund_source: str = None, is_failed: bool = False) -> None:
+def post_accounting_export_summary(org_id: str, workspace_id: int, expense_ids: List = None, fund_source: str = None, is_failed: bool = False) -> None:
     """
     Post accounting export summary to Fyle
     :param org_id: org id
@@ -214,9 +215,11 @@ def post_accounting_export_summary(org_id: str, workspace_id: int, expense_ids, 
     platform = PlatformConnector(fyle_credentials)
     filters = {
         'org_id': org_id,
-        'id__in': expense_ids,
         'accounting_export_summary__synced': False
     }
+
+    if expense_ids:
+        filters['id__in'] = expense_ids
 
     if fund_source:
         filters['fund_source'] = fund_source
