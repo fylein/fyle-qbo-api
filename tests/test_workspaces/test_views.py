@@ -100,21 +100,29 @@ def test_post_connect_qbo_view(mocker, api_client, test_connection):
     mocker.patch('apps.workspaces.views.generate_qbo_refresh_token', return_value='asdfghjk')
     mocker.patch('qbosdk.apis.CompanyInfo.get', return_value=data['company_info'])
     mocker.patch('apps.quickbooks_online.utils.QBOConnector.get_company_preference', return_value={'CurrencyPrefs': {'HomeCurrency': {'value': 'USD'}}})
+    mocked_patch = mock.MagicMock()
+    mocker.patch('apps.workspaces.actions.patch_integration_settings', side_effect=mocked_patch)
+
+    workspace_id = 5
 
     code = 'sdfg'
-    url = '/api/workspaces/5/connect_qbo/authorization_code/'
+    url = f'/api/workspaces/{workspace_id}/connect_qbo/authorization_code/'
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
 
-    qbo_credentials = QBOCredential.objects.filter(workspace=5).first()
+    qbo_credentials = QBOCredential.objects.filter(workspace=workspace_id).first()
     qbo_credentials.delete()
 
-    workspace = Workspace.objects.get(id=5)
+    workspace = Workspace.objects.get(id=workspace_id)
     workspace.onboarding_state = 'CONNECTION'
     workspace.save()
 
     response = api_client.post(url, data={'code': code, 'realm_id': '123146326950399'})
 
     assert response.status_code == 200
+
+    args, kwargs = mocked_patch.call_args
+    assert args[0] == workspace_id
+    assert kwargs['is_token_expired'] == False
 
     response = api_client.post(url, data={'code': code, 'realm_id': '12248888999009'})
     assert response.status_code == 400
