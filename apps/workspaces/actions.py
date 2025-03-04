@@ -8,7 +8,6 @@ from django.db import transaction
 from django_q.tasks import async_task
 from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute
 from fyle_integrations_platform_connector import PlatformConnector
-from fyle_qbo_api.utils import patch_integration_settings
 from fyle_rest_auth.helpers import get_fyle_admin
 from fyle_rest_auth.models import AuthToken
 from qbosdk import revoke_refresh_token
@@ -37,7 +36,7 @@ from apps.workspaces.models import (
 )
 from apps.workspaces.serializers import QBOCredentialSerializer
 from apps.workspaces.signals import post_delete_qbo_connection
-from fyle_qbo_api.utils import assert_valid
+from fyle_qbo_api.utils import assert_valid, patch_integration_settings
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -293,7 +292,6 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
                 is_auto_export=export_mode == 'AUTO',
-                fund_source='PERSONAL',
                 interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0
             )
 
@@ -302,7 +300,6 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
                 is_auto_export=export_mode == 'AUTO',
-                fund_source='PERSONAL',
                 interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0
             )
 
@@ -311,7 +308,6 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
                 is_auto_export=export_mode == 'AUTO',
-                fund_source='PERSONAL',
                 interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0
             )
 
@@ -320,7 +316,6 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
                 is_auto_export=export_mode == 'AUTO',
-                fund_source='PERSONAL',
                 interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0
             )
 
@@ -335,7 +330,6 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
                 is_auto_export=export_mode == 'AUTO',
-                fund_source='CCC',
                 interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0
             )
 
@@ -344,7 +338,6 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
                 is_auto_export=export_mode == 'AUTO',
-                fund_source='CCC',
                 interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0
             )
 
@@ -353,7 +346,6 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
                 is_auto_export=export_mode == 'AUTO',
-                fund_source='CCC',
                 interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0
             )
 
@@ -362,7 +354,6 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
                 is_auto_export=export_mode == 'AUTO',
-                fund_source='CCC',
                 interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0
             )
     if is_expenses_exported:
