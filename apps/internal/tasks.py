@@ -3,11 +3,11 @@ from datetime import datetime, timedelta
 
 from django.db.models import Q
 from django_q.models import OrmQ, Schedule
-from django_q.tasks import async_task
 
 from apps.fyle.actions import update_failed_expenses
 from apps.fyle.models import ExpenseGroup
 from apps.tasks.models import TaskLog
+from apps.workspaces.actions import export_to_qbo
 from apps.workspaces.models import Workspace
 
 logger = logging.getLogger(__name__)
@@ -56,5 +56,5 @@ def re_export_stuck_exports():
             schedule = schedules.filter(args=str(workspace.id)).first()
             # If schedule exist and it's within 1 hour, need not trigger it immediately
             if not (schedule and schedule.next_run < datetime.now(tz=schedule.next_run.tzinfo) + timedelta(minutes=60)):
-                logger.info('Re-triggering sync schedule since no 1 hour schedule for workspace  %s', workspace.id)
-                async_task('apps.workspaces.tasks.run_sync_schedule', workspace.id)
+                logger.info('Re-triggering export for expense group %s since no 1 hour schedule for workspace  %s', expense_group_ids, workspace.id)
+                export_to_qbo(workspace.id, 'AUTO', expense_group_ids)
