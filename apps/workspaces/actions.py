@@ -7,6 +7,7 @@ from django.core.cache import cache
 from django.db import transaction
 from django_q.tasks import async_task
 from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute
+from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from fyle_integrations_platform_connector import PlatformConnector
 from fyle_rest_auth.helpers import get_fyle_admin
 from fyle_rest_auth.models import AuthToken
@@ -17,7 +18,7 @@ from rest_framework.views import status
 from apps.fyle.actions import update_failed_expenses
 from apps.fyle.helpers import get_cluster_domain, post_request
 from apps.fyle.models import ExpenseGroup, ExpenseGroupSettings
-from apps.fyle.queue import async_post_accounting_export_summary
+# from apps.fyle.tasks import post_accounting_export_summary
 from apps.quickbooks_online.queue import (
     schedule_bills_creation,
     schedule_cheques_creation,
@@ -251,7 +252,7 @@ def post_to_integration_settings(workspace_id: int, active: bool):
         logger.error(error)
 
 
-def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direct_export:bool = False):
+def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direct_export:bool = False, triggered_by: ExpenseImportSourceEnum = None):
     active_qbo_credentials = QBOCredential.objects.filter(
         workspace_id=workspace_id,
         is_expired=False,
@@ -265,7 +266,8 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
                 expense_group = ExpenseGroup.objects.get(id=expense_group_id)
                 update_failed_expenses(expense_group.expenses.all(), False)
                 failed_expense_ids.extend(expense_group.expenses.values_list('id', flat=True))
-            async_post_accounting_export_summary(expense_group.workspace.fyle_org_id, workspace_id, failed_expense_ids, True)
+            # TODO: circular import
+            # post_accounting_export_summary(expense_group.workspace.fyle_org_id, workspace_id, failed_expense_ids, True)
         return
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
@@ -292,7 +294,8 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
                 is_auto_export=export_mode == 'AUTO',
-                interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0
+                interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0,
+                triggered_by=triggered_by
             )
 
         elif general_settings.reimbursable_expenses_object == 'EXPENSE':
@@ -300,7 +303,8 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
                 is_auto_export=export_mode == 'AUTO',
-                interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0
+                interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0,
+                triggered_by=triggered_by
             )
 
         elif general_settings.reimbursable_expenses_object == 'CHECK':
@@ -308,7 +312,8 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
                 is_auto_export=export_mode == 'AUTO',
-                interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0
+                interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0,
+                triggered_by=triggered_by
             )
 
         elif general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY':
@@ -316,7 +321,8 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
                 is_auto_export=export_mode == 'AUTO',
-                interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0
+                interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0,
+                triggered_by=triggered_by
             )
 
     if general_settings.corporate_credit_card_expenses_object:
@@ -330,7 +336,8 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
                 is_auto_export=export_mode == 'AUTO',
-                interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0
+                interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0,
+                triggered_by=triggered_by
             )
 
         elif general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE':
@@ -338,7 +345,8 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
                 is_auto_export=export_mode == 'AUTO',
-                interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0
+                interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0,
+                triggered_by=triggered_by
             )
 
         elif general_settings.corporate_credit_card_expenses_object == 'DEBIT CARD EXPENSE':
@@ -346,7 +354,8 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
                 is_auto_export=export_mode == 'AUTO',
-                interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0
+                interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0,
+                triggered_by=triggered_by
             )
 
         elif general_settings.corporate_credit_card_expenses_object == 'BILL':
@@ -354,7 +363,8 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
                 workspace_id=workspace_id,
                 expense_group_ids=expense_group_ids,
                 is_auto_export=export_mode == 'AUTO',
-                interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0
+                interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0,
+                triggered_by=triggered_by
             )
     if is_expenses_exported:
         last_export_detail.last_exported_at = last_exported_at

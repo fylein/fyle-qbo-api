@@ -6,6 +6,7 @@ from unittest import mock
 
 from django_q.models import Schedule
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping
+from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from qbosdk.exceptions import WrongParamsError
 
 from apps.fyle.models import Expense, ExpenseGroup, Reimbursement
@@ -1059,7 +1060,7 @@ def test_schedule_credit_card_purchase_creation(db):
     task_log.status = 'READY'
     task_log.save()
 
-    schedule_credit_card_purchase_creation(workspace_id, [17], False, 1)
+    schedule_credit_card_purchase_creation(workspace_id, [17], False, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'CREATING_CREDIT_CARD_PURCHASE'
@@ -1076,7 +1077,7 @@ def test_schedule_bills_creation(db):
     task_log.status = 'READY'
     task_log.save()
 
-    schedule_bills_creation(workspace_id, [23], False, 1)
+    schedule_bills_creation(workspace_id, [23], False, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'CREATING_BILL'
@@ -1093,7 +1094,7 @@ def test_schedule_cheques_creation(db):
     task_log.status = 'READY'
     task_log.save()
 
-    schedule_cheques_creation(workspace_id, [23], False, 1)
+    schedule_cheques_creation(workspace_id, [23], False, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'CREATING_CHECK'
@@ -1110,7 +1111,7 @@ def test_schedule_qbo_expense_creation(db):
     task_log.status = 'READY'
     task_log.save()
 
-    schedule_qbo_expense_creation(workspace_id, [23], False, 1)
+    schedule_qbo_expense_creation(workspace_id, [23], False, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'CREATING_EXPENSE'
@@ -1127,7 +1128,7 @@ def test_schedule_journal_entry_creation(db):
     task_log.status = 'READY'
     task_log.save()
 
-    schedule_journal_entry_creation(workspace_id, [23], False, 1)
+    schedule_journal_entry_creation(workspace_id, [23], False, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'CREATING_JOURNAL_ENTRY'
@@ -1156,14 +1157,14 @@ def test_skipping_bill_creation(db, mocker):
     task_log.status = 'READY'
     task_log.save()
 
-    schedule_bills_creation(workspace_id, [23], True, 1)
+    schedule_bills_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'FETCHING_EXPENSES'
 
     Error.objects.filter(id=error.id).update(updated_at=datetime(2024, 8, 20))
 
-    schedule_bills_creation(workspace_id, [23], True, 1)
+    schedule_bills_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'CREATING_BILL'
@@ -1192,14 +1193,14 @@ def test_skipping_journal_creation(db, mocker):
     task_log.status = 'READY'
     task_log.save()
 
-    schedule_journal_entry_creation(workspace_id, [23], True, 1)
+    schedule_journal_entry_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'FETCHING_EXPENSES'
 
     Error.objects.filter(id=error.id).update(updated_at=datetime(2024, 8, 20))
 
-    schedule_journal_entry_creation(workspace_id, [23], True, 1)
+    schedule_journal_entry_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'CREATING_JOURNAL_ENTRY'
@@ -1228,14 +1229,14 @@ def test_skipping_qbo_expense_creation(db, mocker):
     task_log.status = 'READY'
     task_log.save()
 
-    schedule_qbo_expense_creation(workspace_id, [23], True, 1)
+    schedule_qbo_expense_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'FETCHING_EXPENSES'
 
     Error.objects.filter(id=error.id).update(updated_at=datetime(2024, 8, 20))
 
-    schedule_qbo_expense_creation(workspace_id, [23], True, 1)
+    schedule_qbo_expense_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'CREATING_EXPENSE'
@@ -1268,14 +1269,14 @@ def test_skipping_credit_card_charge_creation(db, mocker):
     task_log.status = 'READY'
     task_log.save()
 
-    schedule_credit_card_purchase_creation(workspace_id, [17], True, 1)
+    schedule_credit_card_purchase_creation(workspace_id, [17], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'FETCHING_EXPENSES'
 
     Error.objects.filter(id=error.id).update(updated_at=datetime(2024, 8, 20))
 
-    schedule_credit_card_purchase_creation(workspace_id, [17], True, 1)
+    schedule_credit_card_purchase_creation(workspace_id, [17], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'CREATING_CREDIT_CARD_PURCHASE'
@@ -1304,14 +1305,14 @@ def test_skipping_cheque_creation(db, mocker):
     task_log.status = 'READY'
     task_log.save()
 
-    schedule_cheques_creation(workspace_id, [23], True, 1)
+    schedule_cheques_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'FETCHING_EXPENSES'
 
     Error.objects.filter(id=error.id).update(updated_at=datetime(2024, 8, 20))
 
-    schedule_cheques_creation(workspace_id, [23], True, 1)
+    schedule_cheques_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'CREATING_CHECK'
