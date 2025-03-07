@@ -22,13 +22,18 @@ jobs:
         continue-on-error: true
         run: |
           /usr/local/bin/trivy fs --scanners vuln --format json . > trivy-results.json
+          # Create a default empty result if the scan fails or is empty
+          echo '{"Results": []}' > formatted-results.json
+          # Only try to process if trivy-results.json exists and has content
           if [ -s trivy-results.json ]; then
-            jq -r '.Results[] | select(.Vulnerabilities != null) | {Target: .Target, Vulnerabilities: .Vulnerabilities}' trivy-results.json > formatted-results.json
-            if [ -s formatted-results.json ]; then
-              echo "VULNERABILITIES_FOUND=true" >> $GITHUB_ENV
+            # Check if the file contains valid JSON with Results array
+            if jq -e '.Results' trivy-results.json > /dev/null 2>&1; then
+              jq '{Results: [.Results[] | select(.Vulnerabilities != null) | {Target: .Target, Vulnerabilities: .Vulnerabilities}]}' trivy-results.json > formatted-results.json
+              # Check if we found any vulnerabilities
+              if jq -e '.Results[0]' formatted-results.json > /dev/null 2>&1; then
+                echo "VULNERABILITIES_FOUND=true" >> $GITHUB_ENV
+              fi
             fi
-          else
-            echo "[]" > formatted-results.json
           fi
 
       - name: Post Vulnerabilities as GitHub Comment
