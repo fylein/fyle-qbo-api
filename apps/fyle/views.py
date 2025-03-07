@@ -8,6 +8,7 @@ from django_q.tasks import async_task
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import status
+from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 
 from apps.exceptions import handle_view_exceptions
 from apps.fyle.actions import (
@@ -24,7 +25,7 @@ from apps.fyle.serializers import (
     ExpenseGroupSettingsSerializer,
     ExpenseSerializer,
 )
-from apps.fyle.tasks import async_create_expense_groups, get_task_log_and_fund_source
+from apps.fyle.tasks import create_expense_groups, get_task_log_and_fund_source
 from fyle_qbo_api.utils import LookupFieldMixin
 
 logger = logging.getLogger(__name__)
@@ -66,7 +67,7 @@ class ExpenseGroupSyncView(generics.CreateAPIView):
 
         task_log, fund_source = get_task_log_and_fund_source(kwargs['workspace_id'])
 
-        async_create_expense_groups(kwargs['workspace_id'], fund_source, task_log)
+        create_expense_groups(kwargs['workspace_id'], fund_source, task_log, ExpenseImportSourceEnum.DASHBOARD_SYNC)
 
         return Response(status=status.HTTP_200_OK)
 

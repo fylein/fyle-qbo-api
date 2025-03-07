@@ -56,7 +56,9 @@ INSTALLED_APPS = [
     'apps.fyle',
     'apps.quickbooks_online',
     'apps.tasks',
-    'apps.internal'
+    'apps.internal',
+    'fyle_accounting_library.fyle_platform',
+    'fyle_accounting_library.rabbitmq'
 ]
 
 MIDDLEWARE = [
@@ -150,6 +152,11 @@ LOGGING = {
             'propagate': True
         },
         'django.request': {'handlers': ['request_logs'], 'propagate': False},
+        'workers': {
+            'handlers': ['debug_logs'],
+            'level': 'INFO',
+            'propagate': True
+        },
     },
 }
 

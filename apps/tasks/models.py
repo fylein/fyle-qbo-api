@@ -5,6 +5,7 @@ from apps.fyle.models import ExpenseGroup
 from apps.quickbooks_online.models import Bill, BillPayment, Cheque, CreditCardPurchase, JournalEntry, QBOExpense
 from apps.workspaces.models import Workspace
 from fyle_accounting_mappings.models import ExpenseAttribute
+from fyle_accounting_library.fyle_platform.constants import IMPORTED_FROM_CHOICES
 
 
 def get_default():
@@ -32,6 +33,7 @@ class TaskLog(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
     quickbooks_errors = JSONField(help_text='Quickbooks Errors', null=True)
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')
+    triggered_by = models.CharField(max_length=255, help_text="Triggered by", null=True, choices=IMPORTED_FROM_CHOICES)
 
     class Meta:
         db_table = 'task_logs'

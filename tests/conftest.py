@@ -19,6 +19,16 @@ def pytest_configure():
     os.system('sh ./tests/sql_fixtures/reset_db_fixtures/reset_db.sh')
 
 
+@pytest.fixture(autouse=True)
+def mock_rabbitmq():
+    with mock.patch('apps.fyle.queue.RabbitMQConnection.get_instance') as mock_rabbitmq:
+        mock_instance = mock.Mock()
+        mock_instance.publish.return_value = None
+        mock_instance.connect.return_value = None
+        mock_rabbitmq.return_value = mock_instance
+        yield mock_rabbitmq
+
+
 @pytest.fixture
 def api_client():
     return APIClient()
