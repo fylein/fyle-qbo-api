@@ -27,15 +27,27 @@ jobs:
 
           # Create formatted output with specific fields
           jq -r '
-            ["Path", "VulnerabilityID", "PackageName", "Title", "Description", "Severity", "InstalledVersion", "FixedVersion"],
-            (.Results[] | select(.Vulnerabilities) | .Vulnerabilities[] as $vuln |
-              [.Target, $vuln.VulnerabilityID, $vuln.PkgName, $vuln.Title, $vuln.Description, $vuln.Severity, $vuln.InstalledVersion, $vuln.FixedVersion]
-            ) | @csv
+            {
+              vulnerabilities: [
+                .Results[] | select(.Vulnerabilities) | .Vulnerabilities[] | {
+                  path: .Target,
+                  package: .PkgName,
+                  severity: .Severity,
+                  vulnerability_id: .VulnerabilityID,
+                  installed_version: .InstalledVersion,
+                  fixed_version: .FixedVersion,
+                  title: .Title,
+                  description: .Description
+                }
+              ]
+            }
           ' trivy-results.json > formatted-results.json
 
           # Check if we found any vulnerabilities
-          if [ -s formatted-results.json ] && [ "$(wc -l < formatted-results.json)" -gt 1 ]; then
+          if [ -s formatted-results.json ] && [ "$(jq '.vulnerabilities | length' formatted-results.json)" -gt 0 ]; then
             echo "VULNERABILITIES_FOUND=true" >> $GITHUB_ENV
+            # Store the count for the error message
+            echo "VULN_COUNT=$(jq '.vulnerabilities | length' formatted-results.json)" >> $GITHUB_ENV
           fi
 
       - name: Post Vulnerabilities as GitHub Comment
@@ -45,8 +57,32 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            const results = fs.readFileSync('formatted-results.json', 'utf8');
-            const comment = `### Trivy Vulnerability Report ⚠️\n\nFound security vulnerabilities:\n\n\`\`\`csv\n${results}\n\`\`\``;
+            const results = JSON.parse(fs.readFileSync('formatted-results.json', 'utf8'));
+
+            let comment = '### 🚨 Trivy Security Scan Found Vulnerabilities\n\n';
+            comment += `**Found ${process.env.VULN_COUNT} security vulnerabilities:**\n\n`;
+
+            // Group vulnerabilities by severity
+            const severityOrder = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'UNKNOWN'];
+            const grouped = results.vulnerabilities.reduce((acc, vuln) => {
+              acc[vuln.severity] = acc[vuln.severity] || [];
+              acc[vuln.severity].push(vuln);
+              return acc;
+            }, {});
+
+            severityOrder.forEach(severity => {
+              if (grouped[severity]) {
+                comment += `#### ${severity} Severity (${grouped[severity].length})\n\n`;
+                grouped[severity].forEach(vuln => {
+                  comment += `<details>\n`;
+                  comment += `<summary><b>${vuln.package}</b>: ${vuln.vulnerability_id} (${vuln.installed_version} → ${vuln.fixed_version || 'No fix'})</summary>\n\n`;
+                  comment += `**Title:** ${vuln.title}\n\n`;
+                  comment += `**Description:** ${vuln.description}\n\n`;
+                  comment += `**Path:** ${vuln.path}\n`;
+                  comment += `</details>\n\n`;
+                });
+              }
+            });
 
             github.rest.issues.createComment({
               issue_number: context.payload.pull_request ? context.payload.pull_request.number : context.payload.after,
@@ -54,6 +90,12 @@ jobs:
               repo: context.repo.repo,
               body: comment
             });
+
+      - name: Fail if vulnerabilities found
+        if: env.VULNERABILITIES_FOUND == 'true'
+        run: |
+          echo "❌ Security vulnerabilities were found. Please review and fix them before merging."
+          exit 1
 
       - name: Bring up Services and test for token health
         run: |
