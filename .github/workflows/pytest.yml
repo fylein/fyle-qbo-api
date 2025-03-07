@@ -15,13 +15,13 @@ jobs:
 
       - name: Install Trivy
         run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.48.1
 
       - name: Run Trivy Scan
         id: trivy
         continue-on-error: true
         run: |
-          trivy fs --scanners vuln --format json . > trivy-results.json
+          /usr/local/bin/trivy fs --scanners vuln --format json . > trivy-results.json
           cat trivy-results.json | jq '.Results[] | select(.Vulnerabilities != null) | {Target: .Target, Vulnerabilities: .Vulnerabilities}' > formatted-results.json
           if [ -s formatted-results.json ]; then
             echo "VULNERABILITIES_FOUND=true" >> $GITHUB_ENV
