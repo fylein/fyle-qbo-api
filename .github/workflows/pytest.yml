@@ -13,89 +13,126 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install Trivy
-        run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.48.1
+    - name: Install Trivy
+      run: |
+        curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.48.1
 
-      - name: Run Trivy Scan
-        id: trivy
-        run: |
-          if ! /usr/local/bin/trivy fs --scanners vuln --format json . > trivy-results.json; then
-            echo "Trivy scan failed"
-            exit 1
-          fi
-
-          # Create formatted output with specific fields
-          jq -r '
-            {
-              vulnerabilities: [
-                .Results[] | select(.Vulnerabilities) | .Vulnerabilities[] | {
-                  path: .Target,
-                  package: .PkgName,
-                  severity: .Severity,
-                  vulnerability_id: .VulnerabilityID,
-                  installed_version: .InstalledVersion,
-                  fixed_version: .FixedVersion,
-                  title: .Title,
-                  description: .Description
-                }
-              ]
-            }
-          ' trivy-results.json > formatted-results.json
-
-          # Check if we found any vulnerabilities
-          if [ -s formatted-results.json ] && [ "$(jq '.vulnerabilities | length' formatted-results.json)" -gt 0 ]; then
-            echo "VULNERABILITIES_FOUND=true" >> $GITHUB_ENV
-            # Store the count for the error message
-            echo "VULN_COUNT=$(jq '.vulnerabilities | length' formatted-results.json)" >> $GITHUB_ENV
-          fi
-
-      - name: Post Vulnerabilities as GitHub Comment
-        if: env.VULNERABILITIES_FOUND == 'true'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const fs = require('fs');
-            const results = JSON.parse(fs.readFileSync('formatted-results.json', 'utf8'));
-
-            let comment = '### 🚨 Trivy Security Scan Found Vulnerabilities\n\n';
-            comment += `**Found ${process.env.VULN_COUNT} security vulnerabilities:**\n\n`;
-
-            // Group vulnerabilities by severity
-            const severityOrder = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'UNKNOWN'];
-            const grouped = results.vulnerabilities.reduce((acc, vuln) => {
-              acc[vuln.severity] = acc[vuln.severity] || [];
-              acc[vuln.severity].push(vuln);
-              return acc;
-            }, {});
-
-            severityOrder.forEach(severity => {
-              if (grouped[severity]) {
-                comment += `#### ${severity} Severity (${grouped[severity].length})\n\n`;
-                grouped[severity].forEach(vuln => {
-                  comment += `<details>\n`;
-                  comment += `<summary><b>${vuln.package}</b>: ${vuln.vulnerability_id} (${vuln.installed_version} → ${vuln.fixed_version || 'No fix'})</summary>\n\n`;
-                  comment += `**Title:** ${vuln.title}\n\n`;
-                  comment += `**Description:** ${vuln.description}\n\n`;
-                  comment += `**Path:** ${vuln.path}\n`;
-                  comment += `</details>\n\n`;
-                });
-              }
-            });
-
-            github.rest.issues.createComment({
-              issue_number: context.payload.pull_request ? context.payload.pull_request.number : context.payload.after,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
-
-      - name: Fail if vulnerabilities found
-        if: env.VULNERABILITIES_FOUND == 'true'
-        run: |
-          echo "❌ Security vulnerabilities were found. Please review and fix them before merging."
+    - name: Run Trivy Scan
+      id: trivy
+      run: |
+        # Run Trivy scan and output in JSON format directly with the fields we need
+        if ! /usr/local/bin/trivy fs --scanners vuln --format json --severity HIGH,CRITICAL . > trivy-results.json; then
+          echo "Trivy scan failed"
           exit 1
+        fi
+
+        # Check for vulnerabilities and create formatted output in one step
+        jq -r '
+          {
+            vulnerabilities: [
+              .Results[] | select(.Vulnerabilities) | .Vulnerabilities[] | {
+                package: .PkgName,
+                severity: .Severity,
+                vulnerability_id: .VulnerabilityID,
+                installed_version: .InstalledVersion,
+                fixed_version: .FixedVersion,
+                title: .Title,
+                description: .Description,
+                path: .Target
+              }
+            ]
+          }
+        ' trivy-results.json > formatted-results.json
+
+        # Set environment variables for next steps
+        VULN_COUNT=$(jq '.vulnerabilities | length' formatted-results.json)
+        if [ "$VULN_COUNT" -gt 0 ]; then
+          echo "VULNERABILITIES_FOUND=true" >> $GITHUB_ENV
+          echo "VULN_COUNT=$VULN_COUNT" >> $GITHUB_ENV
+        fi
+
+    - name: Post Vulnerabilities as GitHub Comment
+      if: env.VULNERABILITIES_FOUND == 'true'
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs');
+          const results = JSON.parse(fs.readFileSync('formatted-results.json', 'utf8'));
+
+          // Create comment header with emoji and count
+          let comment = `### 🚨 Security Scan: ${process.env.VULN_COUNT} vulnerabilities found\n\n`;
+
+          // Group by severity with collapsible sections
+          const severityOrder = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'UNKNOWN'];
+          const severityEmojis = {
+            'CRITICAL': '🔴',
+            'HIGH': '🟠',
+            'MEDIUM': '🟡',
+            'LOW': '🟢',
+            'UNKNOWN': '⚪'
+          };
+
+          // Group vulnerabilities by severity
+          const grouped = {};
+          results.vulnerabilities.forEach(vuln => {
+            grouped[vuln.severity] = grouped[vuln.severity] || [];
+            grouped[vuln.severity].push(vuln);
+          });
+
+          // Generate markdown for each severity level
+          severityOrder.forEach(severity => {
+            if (grouped[severity] && grouped[severity].length > 0) {
+              comment += `#### ${severityEmojis[severity]} ${severity} Severity (${grouped[severity].length})\n\n`;
+
+              // Group by package name for better organization
+              const byPackage = {};
+              grouped[severity].forEach(vuln => {
+                byPackage[vuln.package] = byPackage[vuln.package] || [];
+                byPackage[vuln.package].push(vuln);
+              });
+
+              // List vulnerabilities by package
+              Object.keys(byPackage).sort().forEach(pkg => {
+                comment += `<details>\n`;
+                comment += `<summary><b>${pkg}</b> (${byPackage[pkg].length} issues)</summary>\n\n`;
+
+                byPackage[pkg].forEach(vuln => {
+                  comment += `- **${vuln.vulnerability_id}**: ${vuln.title}\n`;
+                  comment += `  - Current: ${vuln.installed_version} → Fixed: ${vuln.fixed_version || 'No fix available'}\n`;
+                  if (vuln.description) {
+                    const shortDesc = vuln.description.length > 100 ?
+                      vuln.description.substring(0, 100) + '...' :
+                      vuln.description;
+                    comment += `  - ${shortDesc}\n`;
+                  }
+                  comment += `\n`;
+                });
+
+                comment += `</details>\n\n`;
+              });
+            }
+          });
+
+          // Add advice for remediation
+          comment += `### Remediation\n`;
+          comment += `- Update vulnerable packages to their fixed versions where available\n`;
+          comment += `- Run \`trivy fs --scanners vuln .\` locally to see more details\n`;
+
+          // Post the comment
+          github.rest.issues.createComment({
+            issue_number: context.payload.pull_request ? context.payload.pull_request.number : context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+    - name: Fail if vulnerabilities found
+      if: env.VULNERABILITIES_FOUND == 'true'
+      run: |
+        echo "❌ Security scan failed: ${VULN_COUNT} vulnerabilities detected"
+        echo "Please review the PR comments for details and fix the issues before merging"
+        exit 1
 
       - name: Bring up Services and test for token health
         run: |
