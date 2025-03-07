@@ -22,9 +22,13 @@ jobs:
         continue-on-error: true
         run: |
           /usr/local/bin/trivy fs --scanners vuln --format json . > trivy-results.json
-          cat trivy-results.json | jq '.Results[] | select(.Vulnerabilities != null) | {Target: .Target, Vulnerabilities: .Vulnerabilities}' > formatted-results.json
-          if [ -s formatted-results.json ]; then
-            echo "VULNERABILITIES_FOUND=true" >> $GITHUB_ENV
+          if [ -s trivy-results.json ]; then
+            jq -r '.Results[] | select(.Vulnerabilities != null) | {Target: .Target, Vulnerabilities: .Vulnerabilities}' trivy-results.json > formatted-results.json
+            if [ -s formatted-results.json ]; then
+              echo "VULNERABILITIES_FOUND=true" >> $GITHUB_ENV
+            fi
+          else
+            echo "[]" > formatted-results.json
           fi
 
       - name: Post Vulnerabilities as GitHub Comment
