@@ -2,16 +2,48 @@ name: Continuous Integration
 
 on:
   pull_request:
-    types: [assigned, opened, synchronize, reopened]
+    types: [opened, synchronize, reopened]
 
 jobs:
   pytest:
     runs-on: ubuntu-latest
     environment: CI Environment
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - name: Install Trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh
+
+      - name: Run Trivy Scan
+        id: trivy
+        continue-on-error: true
+        run: |
+          trivy fs --scanners vuln --format json . > trivy-results.json
+          cat trivy-results.json | jq '.Results[] | select(.Vulnerabilities != null) | {Target: .Target, Vulnerabilities: .Vulnerabilities}' > formatted-results.json
+          if [ -s formatted-results.json ]; then
+            echo "VULNERABILITIES_FOUND=true" >> $GITHUB_ENV
+          fi
+
+      - name: Post Vulnerabilities as GitHub Comment
+        if: env.VULNERABILITIES_FOUND == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const results = fs.readFileSync('formatted-results.json', 'utf8');
+            const comment = `### Trivy Vulnerability Report ⚠️\n\n\`\`\`json\n${results}\n\`\`\``;
+
+            github.rest.issues.createComment({
+              issue_number: context.payload.pull_request ? context.payload.pull_request.number : context.payload.after,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
       - name: Bring up Services and test for token health
         run: |
           docker compose -f docker-compose-pipeline.yml build
