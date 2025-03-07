@@ -19,21 +19,23 @@ jobs:
 
       - name: Run Trivy Scan
         id: trivy
-        continue-on-error: true
         run: |
-          /usr/local/bin/trivy fs --scanners vuln --format json . > trivy-results.json
-          # Create a default empty result if the scan fails or is empty
-          echo '{"Results": []}' > formatted-results.json
-          # Only try to process if trivy-results.json exists and has content
-          if [ -s trivy-results.json ]; then
-            # Check if the file contains valid JSON with Results array
-            if jq -e '.Results' trivy-results.json > /dev/null 2>&1; then
-              jq '{Results: [.Results[] | select(.Vulnerabilities != null) | {Target: .Target, Vulnerabilities: .Vulnerabilities}]}' trivy-results.json > formatted-results.json
-              # Check if we found any vulnerabilities
-              if jq -e '.Results[0]' formatted-results.json > /dev/null 2>&1; then
-                echo "VULNERABILITIES_FOUND=true" >> $GITHUB_ENV
-              fi
-            fi
+          if ! /usr/local/bin/trivy fs --scanners vuln --format json . > trivy-results.json; then
+            echo "Trivy scan failed"
+            exit 1
+          fi
+
+          # Create formatted output with specific fields
+          jq -r '
+            ["Path", "VulnerabilityID", "PackageName", "Title", "Description", "Severity", "InstalledVersion", "FixedVersion"],
+            (.Results[] | select(.Vulnerabilities) | .Vulnerabilities[] as $vuln |
+              [.Target, $vuln.VulnerabilityID, $vuln.PkgName, $vuln.Title, $vuln.Description, $vuln.Severity, $vuln.InstalledVersion, $vuln.FixedVersion]
+            ) | @csv
+          ' trivy-results.json > formatted-results.json
+
+          # Check if we found any vulnerabilities
+          if [ -s formatted-results.json ] && [ "$(wc -l < formatted-results.json)" -gt 1 ]; then
+            echo "VULNERABILITIES_FOUND=true" >> $GITHUB_ENV
           fi
 
       - name: Post Vulnerabilities as GitHub Comment
@@ -44,7 +46,7 @@ jobs:
           script: |
             const fs = require('fs');
             const results = fs.readFileSync('formatted-results.json', 'utf8');
-            const comment = `### Trivy Vulnerability Report ⚠️\n\n\`\`\`json\n${results}\n\`\`\``;
+            const comment = `### Trivy Vulnerability Report ⚠️\n\nFound security vulnerabilities:\n\n\`\`\`csv\n${results}\n\`\`\``;
 
             github.rest.issues.createComment({
               issue_number: context.payload.pull_request ? context.payload.pull_request.number : context.payload.after,
