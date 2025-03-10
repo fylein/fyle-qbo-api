@@ -5,6 +5,7 @@ from typing import List
 from django.db.models import Q
 from django_q.models import Schedule
 from django_q.tasks import Chain, async_task
+from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 
 from apps.fyle.models import ExpenseGroup
 from apps.tasks.models import Error, TaskLog
@@ -29,7 +30,7 @@ def validate_failing_export(is_auto_export: bool, interval_hours: int, error: Er
     return is_auto_export and interval_hours and error and error.repetition_count > 100 and datetime.now().replace(tzinfo=timezone.utc) - error.updated_at <= timedelta(hours=24)
 
 
-def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int):
+def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int, triggered_by: ExpenseImportSourceEnum):
     """
     Schedule bills creation
     :param expense_group_ids: List of expense group ids
@@ -51,10 +52,12 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_
             if skip_export:
                 logger.info('Skipping expense group %s as it has %s errors', expense_group.id, error.repetition_count)
                 continue
-            task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_BILL'})
+            task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_BILL', 'triggered_by': triggered_by})
             if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
                 task_log.type = 'CREATING_BILL'
                 task_log.status = 'ENQUEUED'
+                if task_log.triggered_by != triggered_by:
+                    task_log.triggered_by = triggered_by
                 task_log.save()
 
             last_export = False
@@ -92,7 +95,7 @@ def __create_chain_and_run(workspace_id: int, chain_tasks: List[dict], is_auto_e
     chain.run()
 
 
-def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int):
+def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int, triggered_by: ExpenseImportSourceEnum):
     """
     Schedule cheque creation
     :param expense_group_ids: List of expense group ids
@@ -114,10 +117,12 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], i
             if skip_export:
                 logger.info('Skipping expense group %s as it has %s errors', expense_group.id, error.repetition_count)
                 continue
-            task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_CHECK'})
+            task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_CHECK', 'triggered_by': triggered_by})
             if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
                 task_log.type = 'CREATING_CHECK'
                 task_log.status = 'ENQUEUED'
+                if task_log.triggered_by != triggered_by:
+                    task_log.triggered_by = triggered_by
                 task_log.save()
 
             last_export = False
@@ -135,7 +140,7 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], i
             __create_chain_and_run(workspace_id, chain_tasks, is_auto_export)
 
 
-def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int):
+def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int, triggered_by: ExpenseImportSourceEnum):
     """
     Schedule journal_entry creation
     :param expense_group_ids: List of expense group ids
@@ -157,10 +162,12 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
             if skip_export:
                 logger.info('Skipping expense group %s as it has %s errors', expense_group.id, error.repetition_count)
                 continue
-            task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_JOURNAL_ENTRY'})
+            task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_JOURNAL_ENTRY', 'triggered_by': triggered_by})
             if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
                 task_log.type = 'CREATING_JOURNAL_ENTRY'
                 task_log.status = 'ENQUEUED'
+                if task_log.triggered_by != triggered_by:
+                    task_log.triggered_by = triggered_by
                 task_log.save()
 
             last_export = False
@@ -178,7 +185,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
             __create_chain_and_run(workspace_id, chain_tasks, is_auto_export)
 
 
-def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int):
+def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int, triggered_by: ExpenseImportSourceEnum):
     """
     Schedule credit card purchase creation
     :param expense_group_ids: List of expense group ids
@@ -203,10 +210,12 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
                 logger.info('Skipping expense group %s as it has %s errors', expense_group.id, error.repetition_count)
                 continue
 
-            task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_CREDIT_CARD_PURCHASE'})
+            task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_CREDIT_CARD_PURCHASE', 'triggered_by': triggered_by})
             if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
                 task_log.type = 'CREATING_CREDIT_CARD_PURCHASE'
                 task_log.status = 'ENQUEUED'
+                if task_log.triggered_by != triggered_by:
+                    task_log.triggered_by = triggered_by
                 task_log.save()
 
             last_export = False
@@ -224,7 +233,7 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
             __create_chain_and_run(workspace_id, chain_tasks, is_auto_export)
 
 
-def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int):
+def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int, triggered_by: ExpenseImportSourceEnum):
     """
     Schedule QBO expense creation
     :param expense_group_ids: List of expense group ids
@@ -247,11 +256,13 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
                 continue
 
             task_log, _ = TaskLog.objects.get_or_create(
-                workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_EXPENSE' if expense_group.fund_source == 'PERSONAL' else 'CREATING_DEBIT_CARD_EXPENSE'}
+                workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_EXPENSE' if expense_group.fund_source == 'PERSONAL' else 'CREATING_DEBIT_CARD_EXPENSE', 'triggered_by': triggered_by}
             )
             if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
                 task_log.type = 'CREATING_EXPENSE' if expense_group.fund_source == 'PERSONAL' else 'CREATING_DEBIT_CARD_EXPENSE'
                 task_log.status = 'ENQUEUED'
+                if task_log.triggered_by != triggered_by:
+                    task_log.triggered_by = triggered_by
                 task_log.save()
 
             last_export = False

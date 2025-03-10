@@ -8,11 +8,12 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django_q.models import Schedule
 from fyle_accounting_mappings.models import ExpenseAttribute
+from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from fyle_integrations_platform_connector import PlatformConnector
 
 from fyle_rest_auth.helpers import get_fyle_admin
 
-from apps.fyle.tasks import async_create_expense_groups
+from apps.fyle.tasks import create_expense_groups
 from apps.tasks.models import Error, TaskLog
 from apps.workspaces.models import (
     FyleCredential,
@@ -104,10 +105,10 @@ def run_sync_schedule(workspace_id):
     if general_settings.corporate_credit_card_expenses_object:
         fund_source.append('CCC')
 
-    async_create_expense_groups(workspace_id=workspace_id, fund_source=fund_source, task_log=task_log)
+    create_expense_groups(workspace_id=workspace_id, fund_source=fund_source, task_log=task_log, imported_from=ExpenseImportSourceEnum.BACKGROUND_SCHEDULE)
 
     if task_log.status == 'COMPLETE':
-        export_to_qbo(workspace_id, 'AUTO')
+        export_to_qbo(workspace_id, 'AUTO', triggered_by=ExpenseImportSourceEnum.BACKGROUND_SCHEDULE)
 
 
 def run_email_notification(workspace_id):
