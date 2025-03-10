@@ -59,7 +59,7 @@ def patch_integration_settings(workspace_id: int, errors: int = None, is_token_e
 def invalidate_qbo_credentials(workspace_id, qbo_credentials=None):
     try:
         if not qbo_credentials:
-            qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
+            qbo_credentials = QBOCredential.objects.filter(workspace_id=workspace_id, is_expired=False, refresh_token__isnull=False).first()
 
         if qbo_credentials:
             if not qbo_credentials.is_expired:
