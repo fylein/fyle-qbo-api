@@ -6,6 +6,7 @@ from typing import Dict, List
 import unidecode
 from django.conf import settings
 from django.utils import timezone
+from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping
 from qbosdk import QuickbooksOnlineSDK
 from qbosdk.exceptions import WrongParamsError
 
@@ -27,7 +28,6 @@ from apps.quickbooks_online.models import (
 )
 from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSettings
 from apps.workspaces.utils import round_amount
-from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping
 from fyle_integrations_imports.models import ImportLog
 
 logger = logging.getLogger(__name__)
@@ -1071,7 +1071,7 @@ class QBOConnector:
                 credit = True
                 tax_amount = line[i][credit_card_purchase_lineitems[i].detail_type]['TaxAmount']
                 line[i]['Amount'] = abs(line[i]['Amount'])
-                line[i][credit_card_purchase_lineitems[i].detail_type]['TaxAmount'] = abs(tax_amount) if tax_amount else None
+                line[i][credit_card_purchase_lineitems[i].detail_type]['TaxAmount'] = abs(tax_amount) if tax_amount is not None else None
 
         credit_card_purchase_payload = self.purchase_object_payload(credit_card_purchase, line, account_ref=credit_card_purchase.ccc_account_id, payment_type='CreditCard', doc_number=credit_card_purchase.credit_card_purchase_number, credit=credit)
 
