@@ -7,12 +7,6 @@ ENV PYTHONUNBUFFERED 1
 
 RUN apt-get update && apt-get -y install libpq-dev gcc && apt-get install git -y --no-install-recommends
 
-ARG CI
-RUN if [ "$CI" = "ENABLED" ]; then \
-        apt-get update && \
-        apt-get install -y --no-install-recommends postgresql-15; \
-    fi
-
 # Installing requirements
 COPY requirements.txt /tmp/requirements.txt
 RUN pip install --upgrade pip && pip install -r /tmp/requirements.txt
