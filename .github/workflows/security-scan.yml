@@ -40,8 +40,9 @@ jobs:
               vulnerabilities: [
                 (.Results // [])[] |
                 select(.Vulnerabilities) |
+                . as $parent |
                 .Vulnerabilities[] | {
-                  Target: parent.Target,
+                  Target: $parent.Target,
                   package: .PkgName,
                   severity: .Severity,
                   vulnerability_id: .VulnerabilityID,
