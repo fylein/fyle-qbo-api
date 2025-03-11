@@ -41,14 +41,12 @@ jobs:
                 (.Results // [])[] |
                 select(.Vulnerabilities) |
                 .Vulnerabilities[] | {
+                  Target: parent.Target,
                   package: .PkgName,
                   severity: .Severity,
                   vulnerability_id: .VulnerabilityID,
                   installed_version: .InstalledVersion,
-                  fixed_version: .FixedVersion,
-                  title: .Title,
-                  description: .Description,
-                  path: .Target
+                  fixed_version: .FixedVersion
                 }
               ]
             }
