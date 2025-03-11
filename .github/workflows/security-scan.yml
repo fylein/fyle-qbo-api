@@ -8,8 +8,139 @@ jobs:
   security-scan:
     runs-on: ubuntu-latest
     steps:
-      - name: Run Vulnerability Scanner
-        uses: fylein/vulnerability-scan-action@master
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          is_submodule: true
+          submodules: recursive
+
+      - name: Install Trivy
+        shell: bash
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin ${{ inputs.trivy_version }}
+
+      - name: Run Trivy Scan
+        shell: bash
+        run: |
+          # Run Trivy scan for all vulnerabilities
+          if ! /usr/local/bin/trivy fs --scanners vuln --format json . > trivy-results.json; then
+            echo "Trivy scan failed"
+            exit 1
+          fi
+
+          # Check if the file exists and is not empty
+          if [ ! -s trivy-results.json ]; then
+            echo "No vulnerabilities found"
+            echo "{\"vulnerabilities\": []}" > formatted-results.json
+            exit 0
+          fi
+
+          # Check for vulnerabilities and create formatted output
+          if ! jq -r '
+            {
+              vulnerabilities: [
+                (.Results // [])[] |
+                select(.Vulnerabilities) |
+                .Vulnerabilities[] | {
+                  package: .PkgName,
+                  severity: .Severity,
+                  vulnerability_id: .VulnerabilityID,
+                  installed_version: .InstalledVersion,
+                  fixed_version: .FixedVersion,
+                  title: .Title,
+                  description: .Description,
+                  path: .Target
+                }
+              ]
+            }
+          ' trivy-results.json > formatted-results.json; then
+            echo "Error processing scan results"
+            echo "{\"vulnerabilities\": []}" > formatted-results.json
+            exit 0
+          fi
+
+          # Set environment variables for next steps
+          TOTAL_COUNT=$(jq '.vulnerabilities | length' formatted-results.json)
+          HIGH_CRIT_COUNT=$(jq '[.vulnerabilities[] | select(.severity == "CRITICAL" or .severity == "HIGH")] | length' formatted-results.json)
+          if [ "$TOTAL_COUNT" -gt 0 ]; then
+            echo "VULNERABILITIES_FOUND=true" >> $GITHUB_ENV
+            echo "VULN_COUNT=$TOTAL_COUNT" >> $GITHUB_ENV
+          fi
+          if [ "$HIGH_CRIT_COUNT" -gt 0 ]; then
+            echo "HIGH_CRITICAL_FOUND=true" >> $GITHUB_ENV
+            echo "HIGH_CRIT_COUNT=$HIGH_CRIT_COUNT" >> $GITHUB_ENV
+          fi
+
+      - name: Post Vulnerabilities as GitHub Comment
+        if: env.VULNERABILITIES_FOUND == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ inputs.github_token }}
+          script: |
+            const fs = require('fs');
+            const results = JSON.parse(fs.readFileSync('formatted-results.json', 'utf8'));
+
+            let comment = `### 🔍 Security Scan Results\n\n`;
+            const highCritCount = process.env.HIGH_CRIT_COUNT || 0;
+            if (highCritCount > 0) {
+              comment += `⛔️ **Action Required:** ${highCritCount} Critical/High severity vulnerabilities found\n\n`;
+            }
+            comment += `Found ${process.env.VULN_COUNT} total vulnerabilities\n\n`;
+
+            // Create table header
+            comment += `| Path | VulnerabilityID | PackageName | Title | Description | Severity | InstalledVersion | FixedVersion |\n`;
+            comment += `|------|-----------------|-------------|-------|-------------|-----------|------------------|---------------|\n`;
+
+            // Add table rows
+            results.vulnerabilities.forEach(vuln => {
+              const description = vuln.description ?
+                (vuln.description.length > 50 ? vuln.description.substring(0, 47) + '...' : vuln.description) : '';
+              const title = vuln.title ?
+                (vuln.title.length > 50 ? vuln.title.substring(0, 47) + '...' : vuln.title) : '';
+
+              // Escape pipe characters in all fields to prevent table formatting issues
+              const row = [
+                vuln.path || '',
+                vuln.vulnerability_id || '',
+                vuln.package || '',
+                title.replace(/\|/g, '\\|'),
+                description.replace(/\|/g, '\\|'),
+                getSeverityEmoji(vuln.severity) + ' ' + vuln.severity,
+                vuln.installed_version || '',
+                vuln.fixed_version || 'No fix'
+              ].map(cell => cell.replace(/\n/g, ' ')); // Replace newlines with spaces
+
+              comment += `| ${row.join(' | ')} |\n`;
+            });
+
+            comment += `\n### Remediation\n`;
+            if (process.env.HIGH_CRITICAL_FOUND === 'true') {
+              comment += `⚠️ **Action Required:** Critical/High severity vulnerabilities must be fixed before merging\n\n`;
+            }
+            comment += `- Update vulnerable packages to their fixed versions where available\n`;
+            comment += `- Run \`trivy fs --scanners vuln .\` locally to see more details\n`;
+
+            function getSeverityEmoji(severity) {
+              const severityEmojis = {
+                'CRITICAL': '🔴',
+                'HIGH': '🟠',
+                'MEDIUM': '🟡',
+                'LOW': '🟢',
+                'UNKNOWN': '⚪'
+              };
+              return severityEmojis[severity] || '⚪';
+            }
+
+            await github.rest.issues.createComment({
+              issue_number: context.payload.pull_request.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Fail if Critical/High vulnerabilities found
+        if: env.HIGH_CRITICAL_FOUND == 'true'
+        shell: bash
+        run: |
+          echo "❌ Security scan failed: ${HIGH_CRIT_COUNT} Critical/High severity vulnerabilities detected"
+          echo "Please review the PR comments for details and fix the Critical/High severity issues before merging"
+          exit 1
