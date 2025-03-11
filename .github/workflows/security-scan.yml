@@ -87,23 +87,16 @@ jobs:
             comment += `Found ${process.env.VULN_COUNT} total vulnerabilities\n\n`;
 
             // Create table header
-            comment += `| Path | VulnerabilityID | PackageName | Title | Description | Severity | InstalledVersion | FixedVersion |\n`;
-            comment += `|------|-----------------|-------------|-------|-------------|-----------|------------------|---------------|\n`;
+            comment += `| Path | VulnerabilityID | PackageName | Severity | InstalledVersion | FixedVersion |\n`;
+            comment += `|--------|-----------------|-------------|-----------|------------------|---------------|\n`;
 
             // Add table rows
             results.vulnerabilities.forEach(vuln => {
-              const description = vuln.description ?
-                (vuln.description.length > 50 ? vuln.description.substring(0, 47) + '...' : vuln.description) : '';
-              const title = vuln.title ?
-                (vuln.title.length > 50 ? vuln.title.substring(0, 47) + '...' : vuln.title) : '';
-
               // Escape pipe characters in all fields to prevent table formatting issues
               const row = [
-                vuln.path || '',
+                vuln.Target || '',
                 vuln.vulnerability_id || '',
                 vuln.package || '',
-                title.replace(/\|/g, '\\|'),
-                description.replace(/\|/g, '\\|'),
                 getSeverityEmoji(vuln.severity) + ' ' + vuln.severity,
                 vuln.installed_version || '',
                 vuln.fixed_version || 'No fix'
