@@ -3,8 +3,6 @@ from datetime import datetime, timezone
 
 from django.conf import settings
 from django.db.models import Q
-from fyle_qbo_api.utils import invalidate_qbo_credentials
-from fyle_qbo_api.utils import patch_integration_settings
 from django_q.tasks import Chain
 from fyle_accounting_mappings.models import MappingSetting
 from qbosdk.exceptions import InvalidTokenError, WrongParamsError
@@ -20,6 +18,7 @@ from apps.quickbooks_online.helpers import generate_export_type_and_id
 from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import LastExportDetail, QBOCredential, Workspace, WorkspaceGeneralSettings
+from fyle_qbo_api.utils import invalidate_qbo_credentials, patch_integration_settings
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -27,6 +26,7 @@ logger.level = logging.INFO
 
 def update_last_export_details(workspace_id):
     last_export_detail = LastExportDetail.objects.get(workspace_id=workspace_id)
+    workspace = Workspace.objects.get(id=workspace_id)
 
     failed_exports = TaskLog.objects.filter(~Q(type='CREATING_BILL_PAYMENT'), workspace_id=workspace_id, status__in=['FAILED', 'FATAL']).count()
 
@@ -38,6 +38,7 @@ def update_last_export_details(workspace_id):
     last_export_detail.save()
 
     patch_integration_settings(workspace_id, errors=failed_exports)
+    post_accounting_export_summary(workspace.fyle_org_id, workspace_id)
 
     return last_export_detail
 
