@@ -9,7 +9,7 @@ services:
     entrypoint: bash run.sh
     restart: unless-stopped
     volumes:
-    - ./:/fyle-qbo-api
+    - api-volume:/fyle-qbo-api
     depends_on:
     - db
     environment:
@@ -48,3 +48,4 @@ services:
 
 volumes:
   api:
+  api-volume:
