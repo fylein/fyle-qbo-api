@@ -157,7 +157,7 @@ class ImportSettingsTrigger:
         new_coa = set(workspace_settings['charts_of_accounts'] or [])
 
         if workspace_settings['import_categories'] and old_coa != new_coa:
-            ImportLog.objects.filter(workspace_id=self.__workspace_id, attribute_type='CATEORY').update(last_successful_run_at=None, updated_at=datetime.now(timezone.utc))
+            ImportLog.objects.filter(workspace_id=self.__workspace_id, attribute_type='CATEGORY').update(last_successful_run_at=None, updated_at=datetime.now(timezone.utc))
 
     def post_save_mapping_settings(self, workspace_general_settings_instance: WorkspaceGeneralSettings):
         """
