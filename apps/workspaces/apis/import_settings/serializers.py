@@ -1,11 +1,11 @@
 from django.db import transaction
 from fyle_accounting_mappings.models import MappingSetting
-from fyle_integrations_imports.models import ImportLog
 from rest_framework import serializers
 
 from apps.mappings.models import GeneralMapping
 from apps.workspaces.apis.import_settings.triggers import ImportSettingsTrigger
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
+from fyle_integrations_imports.models import ImportLog
 
 
 class MappingSettingFilteredListSerializer(serializers.ListSerializer):
@@ -115,7 +115,7 @@ class ImportSettingsSerializer(serializers.ModelSerializer):
         trigger: ImportSettingsTrigger = ImportSettingsTrigger(workspace_general_settings=workspace_general_settings, mapping_settings=mapping_settings, workspace_id=instance.id)
 
         trigger.post_save_workspace_general_settings(workspace_general_settings_instance, pre_save_general_settings)
-        trigger.pre_save_mapping_settings()
+        trigger.pre_save_mapping_settings(pre_save_general_settings)
 
         if workspace_general_settings['import_tax_codes']:
             mapping_settings.append({'source_field': 'TAX_GROUP', 'destination_field': 'TAX_CODE', 'import_to_fyle': True, 'is_custom': False})
