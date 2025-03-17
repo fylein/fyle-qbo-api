@@ -8,7 +8,7 @@ from django_q.tasks import Chain, async_task
 
 from apps.fyle.models import ExpenseGroup
 from apps.tasks.models import Error, TaskLog
-from apps.workspaces.models import FyleCredential, WorkspaceGeneralSettings
+from apps.workspaces.models import WorkspaceGeneralSettings
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -29,7 +29,7 @@ def validate_failing_export(is_auto_export: bool, interval_hours: int, error: Er
     return is_auto_export and interval_hours and error and error.repetition_count > 100 and datetime.now().replace(tzinfo=timezone.utc) - error.updated_at <= timedelta(hours=24)
 
 
-def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, fund_source: str, interval_hours: int):
+def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int):
     """
     Schedule bills creation
     :param expense_group_ids: List of expense group ids
@@ -69,11 +69,10 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_
             })
 
         if len(chain_tasks) > 0:
-            fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-            __create_chain_and_run(fyle_credentials, chain_tasks, is_auto_export)
+            __create_chain_and_run(workspace_id, chain_tasks, is_auto_export)
 
 
-def __create_chain_and_run(fyle_credentials: FyleCredential, chain_tasks: List[dict], is_auto_export: bool) -> None:
+def __create_chain_and_run(workspace_id: int, chain_tasks: List[dict], is_auto_export: bool) -> None:
     """
     Create chain and run
     :param fyle_credentials: Fyle credentials
@@ -85,7 +84,7 @@ def __create_chain_and_run(fyle_credentials: FyleCredential, chain_tasks: List[d
     """
     chain = Chain()
 
-    chain.append('apps.fyle.tasks.sync_dimensions', fyle_credentials, True)
+    chain.append('apps.fyle.tasks.sync_dimensions', workspace_id, True)
 
     for task in chain_tasks:
         chain.append(task['target'], task['expense_group'], task['task_log_id'], task['last_export'], is_auto_export)
@@ -93,7 +92,7 @@ def __create_chain_and_run(fyle_credentials: FyleCredential, chain_tasks: List[d
     chain.run()
 
 
-def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, fund_source: str, interval_hours: int):
+def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int):
     """
     Schedule cheque creation
     :param expense_group_ids: List of expense group ids
@@ -133,11 +132,10 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], i
             })
 
         if len(chain_tasks) > 0:
-            fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-            __create_chain_and_run(fyle_credentials, chain_tasks, is_auto_export)
+            __create_chain_and_run(workspace_id, chain_tasks, is_auto_export)
 
 
-def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, fund_source: str, interval_hours: int):
+def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int):
     """
     Schedule journal_entry creation
     :param expense_group_ids: List of expense group ids
@@ -177,11 +175,10 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
             })
 
         if len(chain_tasks) > 0:
-            fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-            __create_chain_and_run(fyle_credentials, chain_tasks, is_auto_export)
+            __create_chain_and_run(workspace_id, chain_tasks, is_auto_export)
 
 
-def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, fund_source: str, interval_hours: int):
+def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int):
     """
     Schedule credit card purchase creation
     :param expense_group_ids: List of expense group ids
@@ -224,11 +221,10 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
             })
 
         if len(chain_tasks) > 0:
-            fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-            __create_chain_and_run(fyle_credentials, chain_tasks, is_auto_export)
+            __create_chain_and_run(workspace_id, chain_tasks, is_auto_export)
 
 
-def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, fund_source: str, interval_hours: int):
+def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int):
     """
     Schedule QBO expense creation
     :param expense_group_ids: List of expense group ids
@@ -270,8 +266,7 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
             })
 
         if len(chain_tasks) > 0:
-            fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-            __create_chain_and_run(fyle_credentials, chain_tasks, is_auto_export)
+            __create_chain_and_run(workspace_id, chain_tasks, is_auto_export)
 
 
 def schedule_qbo_objects_status_sync(sync_qbo_to_fyle_payments, workspace_id):

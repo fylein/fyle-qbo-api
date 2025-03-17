@@ -18,6 +18,7 @@ from apps.quickbooks_online.helpers import generate_export_type_and_id
 from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import LastExportDetail, QBOCredential, Workspace, WorkspaceGeneralSettings
+from fyle_qbo_api.utils import invalidate_qbo_credentials, patch_integration_settings
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -25,6 +26,7 @@ logger.level = logging.INFO
 
 def update_last_export_details(workspace_id):
     last_export_detail = LastExportDetail.objects.get(workspace_id=workspace_id)
+    workspace = Workspace.objects.get(id=workspace_id)
 
     failed_exports = TaskLog.objects.filter(~Q(type='CREATING_BILL_PAYMENT'), workspace_id=workspace_id, status__in=['FAILED', 'FATAL']).count()
 
@@ -34,6 +36,9 @@ def update_last_export_details(workspace_id):
     last_export_detail.successful_expense_groups_count = successful_exports
     last_export_detail.total_expense_groups_count = failed_exports + successful_exports
     last_export_detail.save()
+
+    patch_integration_settings(workspace_id, errors=failed_exports)
+    post_accounting_export_summary(workspace.fyle_org_id, workspace_id)
 
     return last_export_detail
 
@@ -50,10 +55,7 @@ def get_preferences(workspace_id: int):
     except QBOCredential.DoesNotExist:
         return Response(data={'message': 'QBO credentials not found in workspace'}, status=status.HTTP_400_BAD_REQUEST)
     except (WrongParamsError, InvalidTokenError):
-        if qbo_credentials:
-            qbo_credentials.refresh_token = None
-            qbo_credentials.is_expired = True
-            qbo_credentials.save()
+        invalidate_qbo_credentials(workspace_id, qbo_credentials)
         return Response(data={'message': 'Invalid token or Quickbooks Online connection expired'}, status=status.HTTP_400_BAD_REQUEST)
 
 

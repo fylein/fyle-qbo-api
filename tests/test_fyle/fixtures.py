@@ -290,6 +290,7 @@ data = {
             },
             'is_posted_at_null': False,
             'masked_corporate_card_number': '**** 4567',
+            'is_skipped': False,
         },
         {
             'id': '1235',
@@ -334,6 +335,7 @@ data = {
             },
             'is_posted_at_null': True,
             'masked_corporate_card_number': '**** 4567',
+            'is_skipped': False,
         },
         {
             'id': '1236',
@@ -378,6 +380,7 @@ data = {
             },
             'is_posted_at_null': True,
             'masked_corporate_card_number': '**** 4567',
+            'is_skipped': False,
         },
     ],
 
@@ -812,7 +815,7 @@ data = {
         "updated_at": "2023-01-06T17:06:21.592546Z",
         "workspace": 1,
     },
-    "expense_filter_1": {"condition": "employee_email", "operator": "in", "values": ["ashwinnnnn.t@fyle.in", "admin1@fyleforleaf.in"], "rank": "1", "join_by": "AND", "is_custom": False},
+    "expense_filter_1": {"condition": "employee_email", "operator": "in", "values": ["ashwinnnnn.t@fyle.in", "admin1@fyleforleaf.in", "jhonsnow@fyle.in"], "rank": "1", "join_by": None, "is_custom": False, "workspace": 1},
     "expense_filter_1_response": {
         "id": 1,
         "condition": "employee_email",
