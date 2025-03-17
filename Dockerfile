@@ -24,8 +24,11 @@ RUN flake8 .
 #================================================================
 RUN groupadd -r qbo_api_service && \
     useradd -r -g qbo_api_service qbo_api_user && \
-    mkdir -p /fyle-qbo-api/test-reports && \
     chown -R qbo_api_user:qbo_api_service /fyle-qbo-api
+
+RUN mkdir -p /fyle-qbo-api/test-reports && \
+    chown -R qbo_api_user:qbo_api_service /fyle-qbo-api/test-reports && \
+    chmod 755 /fyle-qbo-api/test-reports
 
 # Switch to non-root user
 USER qbo_api_user
