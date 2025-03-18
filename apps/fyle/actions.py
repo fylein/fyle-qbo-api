@@ -13,6 +13,8 @@ from apps.fyle.constants import DEFAULT_FYLE_CONDITIONS
 from apps.fyle.helpers import get_batched_expenses, get_updated_accounting_export_summary
 from apps.fyle.models import Expense, ExpenseGroup
 from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
+from fyle_qbo_api.logging_middleware import get_logger
+
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -301,3 +303,54 @@ def create_generator_and_post_in_batches(accounting_export_summary_batches: List
             )
         except Exception as exception:
             __handle_post_accounting_export_summary_exception(exception, workspace_id)
+
+
+def post_accounting_export_summary(org_id: str, workspace_id: int, expense_ids: List = None, fund_source: str = None, is_failed: bool = False) -> None:
+    """
+    Post accounting export summary to Fyle
+    :param org_id: org id
+    :param workspace_id: workspace id
+    :param fund_source: fund source
+    :return: None
+    """
+    worker_logger = get_logger()
+    # Iterate through all expenses which are not synced and post accounting export summary to Fyle in batches
+    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+    platform = PlatformConnector(fyle_credentials)
+    filters = {
+        'org_id': org_id,
+        'accounting_export_summary__synced': False
+    }
+
+    if expense_ids:
+        filters['id__in'] = expense_ids
+
+    if fund_source:
+        filters['fund_source'] = fund_source
+
+    if is_failed:
+        filters['accounting_export_summary__state'] = 'ERROR'
+
+    expenses_count = Expense.objects.filter(**filters).count()
+
+    accounting_export_summary_batches = []
+    page_size = 200
+    for offset in range(0, expenses_count, page_size):
+        limit = offset + page_size
+        paginated_expenses = Expense.objects.filter(**filters).order_by('id')[offset:limit]
+
+        payload = []
+
+        for expense in paginated_expenses:
+            accounting_export_summary = expense.accounting_export_summary
+            accounting_export_summary.pop('synced')
+            payload.append(expense.accounting_export_summary)
+
+        accounting_export_summary_batches.append(payload)
+
+    worker_logger.info(
+        'Posting accounting export summary to Fyle workspace_id: %s, payload: %s',
+        workspace_id,
+        accounting_export_summary_batches
+    )
+    create_generator_and_post_in_batches(accounting_export_summary_batches, platform, workspace_id)

@@ -11,7 +11,7 @@ from fyle_integrations_platform_connector.apis.expenses import Expenses as FyleE
 from fyle_accounting_library.fyle_platform.helpers import get_expense_import_states, filter_expenses_based_on_state
 from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 
-from apps.fyle.actions import create_generator_and_post_in_batches, mark_expenses_as_skipped
+from apps.fyle.actions import mark_expenses_as_skipped, post_accounting_export_summary
 from apps.fyle.helpers import (
     construct_expense_filter_query,
     get_filter_credit_expenses,
@@ -23,7 +23,7 @@ from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupS
 from apps.tasks.models import Error, TaskLog
 from apps.workspaces.actions import export_to_qbo
 from apps.workspaces.models import FyleCredential, LastExportDetail, Workspace, WorkspaceGeneralSettings
-from fyle_qbo_api.logging_middleware import get_logger
+
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -184,57 +184,6 @@ def sync_dimensions(workspace_id: int, is_export: bool = False):
 
         if projects_count != projects_expense_attribute_count:
             platform.projects.sync()
-
-
-def post_accounting_export_summary(org_id: str, workspace_id: int, expense_ids: List = None, fund_source: str = None, is_failed: bool = False) -> None:
-    """
-    Post accounting export summary to Fyle
-    :param org_id: org id
-    :param workspace_id: workspace id
-    :param fund_source: fund source
-    :return: None
-    """
-    worker_logger = get_logger()
-    # Iterate through all expenses which are not synced and post accounting export summary to Fyle in batches
-    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-    platform = PlatformConnector(fyle_credentials)
-    filters = {
-        'org_id': org_id,
-        'accounting_export_summary__synced': False
-    }
-
-    if expense_ids:
-        filters['id__in'] = expense_ids
-
-    if fund_source:
-        filters['fund_source'] = fund_source
-
-    if is_failed:
-        filters['accounting_export_summary__state'] = 'ERROR'
-
-    expenses_count = Expense.objects.filter(**filters).count()
-
-    accounting_export_summary_batches = []
-    page_size = 200
-    for offset in range(0, expenses_count, page_size):
-        limit = offset + page_size
-        paginated_expenses = Expense.objects.filter(**filters).order_by('id')[offset:limit]
-
-        payload = []
-
-        for expense in paginated_expenses:
-            accounting_export_summary = expense.accounting_export_summary
-            accounting_export_summary.pop('synced')
-            payload.append(expense.accounting_export_summary)
-
-        accounting_export_summary_batches.append(payload)
-
-    worker_logger.info(
-        'Posting accounting export summary to Fyle workspace_id: %s, payload: %s',
-        workspace_id,
-        accounting_export_summary_batches
-    )
-    create_generator_and_post_in_batches(accounting_export_summary_batches, platform, workspace_id)
 
 
 def import_and_export_expenses(report_id: str, org_id: str, is_state_change_event: bool, report_state: str = None, imported_from: ExpenseImportSourceEnum = None) -> None:

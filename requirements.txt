@@ -1,7 +1,5 @@
 cryptography==44.0.1
-Brotli==1.0.9
 Babel==2.9.1
-Click==7.0
 dj-database-url==2.3.0
 dj-redis-url==0.1.4
 Django==4.2.20
@@ -35,5 +33,4 @@ pytest==8.3.4
 pytest-cov==6.0.0
 pytest-django==4.9.0
 pytest-mock==3.14.0
-pika==1.1.0
 git+https://github.com/fylein/pgevents.git@main#egg=pgevents
