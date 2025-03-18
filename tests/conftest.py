@@ -1,22 +1,17 @@
-import os
 from datetime import datetime, timezone
 from unittest import mock
 
 import pytest
 from fyle.platform import Platform
+from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute
 from fyle_rest_auth.models import AuthToken, User
 from rest_framework.test import APIClient
 
+from apps.fyle.helpers import get_access_token
 from apps.fyle.models import ExpenseGroupSettings
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
-from apps.fyle.helpers import get_access_token
 from fyle_qbo_api.tests import settings
 from tests.test_workspaces.fixtures import data as fyle_data
-from fyle_accounting_mappings.models import ExpenseAttribute, DestinationAttribute
-
-
-def pytest_configure():
-    os.system('sh ./tests/sql_fixtures/reset_db_fixtures/reset_db.sh')
 
 
 @pytest.fixture(autouse=True)
