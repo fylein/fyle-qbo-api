@@ -1,7 +1,7 @@
+from apps.fyle.models import ExpenseGroup
+from apps.tasks.models import Error, TaskLog
 from apps.workspaces.apis.export_settings.triggers import ExportSettingsTrigger
 from apps.workspaces.models import WorkspaceGeneralSettings
-from apps.tasks.models import TaskLog, Error
-from apps.fyle.models import ExpenseGroup
 
 
 def test_post_save_workspace_general_settings_export_trigger(mocker, db):
