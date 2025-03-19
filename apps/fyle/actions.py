@@ -266,7 +266,8 @@ def __handle_post_accounting_export_summary_exception(exception: Exception, work
                         id=expense_instance.id,
                         accounting_export_summary=get_updated_accounting_export_summary(
                             expense_instance.expense_id,
-                            'DELETED', None,
+                            'DELETED',
+                            None,
                             '{}/main/dashboard'.format(settings.QBO_INTEGRATION_APP_URL),
                             True
                         )
