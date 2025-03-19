@@ -161,3 +161,6 @@ fyle_integrations_platform_connector/
 qbosdk/
 fyle_rest_auth/
 commits.csv
+fyle_accounting_library/
+common/
+consumer/

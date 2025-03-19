@@ -9,9 +9,8 @@ from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 from rest_framework.response import Response
 from rest_framework.views import status
 
-from apps.fyle.actions import update_complete_expenses
+from apps.fyle.actions import update_complete_expenses, post_accounting_export_summary
 from apps.fyle.models import ExpenseGroup
-from apps.fyle.tasks import post_accounting_export_summary
 from apps.mappings.constants import SYNC_METHODS
 from apps.mappings.helpers import get_auto_sync_permission
 from apps.quickbooks_online.helpers import generate_export_type_and_id

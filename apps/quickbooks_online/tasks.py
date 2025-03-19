@@ -11,10 +11,9 @@ from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMappin
 from fyle_integrations_platform_connector import PlatformConnector
 from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 
-from apps.fyle.actions import update_expenses_in_progress
+from apps.fyle.actions import update_expenses_in_progress, post_accounting_export_summary
 from apps.fyle.helpers import get_filter_credit_expenses
 from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings
-from apps.fyle.tasks import post_accounting_export_summary
 from apps.mappings.models import GeneralMapping
 from apps.quickbooks_online.actions import generate_export_url_and_update_expense, update_last_export_details
 from apps.quickbooks_online.exceptions import handle_qbo_exceptions
