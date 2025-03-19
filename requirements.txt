@@ -2,7 +2,7 @@ cryptography==44.0.1
 Babel==2.9.1
 dj-database-url==2.3.0
 dj-redis-url==0.1.4
-Django==3.2.11
+Django==4.2.20
 django-db-geventpool==4.0.1
 django-cors-headers==4.6.0
 django-filter==24.3
@@ -33,3 +33,4 @@ pytest==8.3.4
 pytest-cov==6.0.0
 pytest-django==4.9.0
 pytest-mock==3.14.0
+future==0.18.2
