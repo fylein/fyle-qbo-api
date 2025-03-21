@@ -96,7 +96,9 @@ def __bulk_update_expenses(expense_to_be_updated: List[Expense]) -> None:
     :return: None
     """
     if expense_to_be_updated:
-        Expense.objects.bulk_update(expense_to_be_updated, ['is_skipped', 'accounting_export_summary'], batch_size=50)
+        for expense in expense_to_be_updated:
+            expense.updated_at = datetime.now()
+        Expense.objects.bulk_update(expense_to_be_updated, ['is_skipped', 'accounting_export_summary', 'updated_at'], batch_size=50)
 
 
 def update_expenses_in_progress(in_progress_expenses: List[Expense]) -> None:
