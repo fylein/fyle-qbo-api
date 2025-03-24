@@ -97,7 +97,7 @@ def __bulk_update_expenses(expense_to_be_updated: List[Expense]) -> None:
     """
     if expense_to_be_updated:
         for expense in expense_to_be_updated:
-            expense.updated_at = datetime.now()
+            expense.updated_at = datetime.now(timezone.utc)
         Expense.objects.bulk_update(expense_to_be_updated, ['is_skipped', 'accounting_export_summary', 'updated_at'], batch_size=50)
 
 
