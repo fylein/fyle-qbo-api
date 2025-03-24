@@ -99,6 +99,16 @@ class ImportSettingsTrigger:
         """
         changed_source_fields = []
 
+        # Old Settings
+        #     destination_field: location
+        #     new field: location
+
+        # New settings
+        #     1. destination_field: location
+        #        new field: cost center
+        #     2. destination_field: department
+        #        new field: location
+
         for new_setting in new_mappings_settings:
             destination_field = new_setting['destination_field']
             source_field = new_setting['source_field']
