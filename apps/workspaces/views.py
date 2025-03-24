@@ -9,7 +9,7 @@ from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import status
-
+from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from apps.exceptions import handle_view_exceptions
 from apps.workspaces.actions import (
     connect_qbo_oauth,
@@ -150,7 +150,7 @@ class ExportToQBOView(generics.CreateAPIView):
     """
 
     def post(self, request, *args, **kwargs):
-        export_to_qbo(workspace_id=kwargs['workspace_id'])
+        export_to_qbo(workspace_id=kwargs['workspace_id'], triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
 
         return Response(status=status.HTTP_200_OK)
 
