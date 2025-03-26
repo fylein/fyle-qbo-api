@@ -95,7 +95,7 @@ class ImportSettingsSerializer(serializers.ModelSerializer):
                 category_import_log.last_successful_run_at = None
                 category_import_log.save()
 
-        pre_save_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=instance.id).first()
+        pre_save_workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=instance.id).first()
 
         workspace_general_settings_instance, _ = WorkspaceGeneralSettings.objects.update_or_create(
             workspace=instance,
@@ -114,8 +114,8 @@ class ImportSettingsSerializer(serializers.ModelSerializer):
 
         trigger: ImportSettingsTrigger = ImportSettingsTrigger(workspace_general_settings=workspace_general_settings, mapping_settings=mapping_settings, workspace_id=instance.id)
 
-        trigger.post_save_workspace_general_settings(workspace_general_settings_instance, pre_save_general_settings)
-        trigger.pre_save_mapping_settings(pre_save_general_settings)
+        trigger.post_save_workspace_general_settings(workspace_general_settings_instance, pre_save_workspace_general_settings)
+        trigger.pre_save_mapping_settings(pre_save_workspace_general_settings)
 
         if workspace_general_settings['import_tax_codes']:
             mapping_settings.append({'source_field': 'TAX_GROUP', 'destination_field': 'TAX_CODE', 'import_to_fyle': True, 'is_custom': False})
