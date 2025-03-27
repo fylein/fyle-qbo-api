@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 import logging
 from typing import List
 
@@ -36,7 +37,7 @@ def resolve_expense_attribute_errors(source_attribute_type: str, workspace_id: i
             mapped_attribute_ids: List[int] = EmployeeMapping.objects.filter(**params).values_list('source_employee_id', flat=True)
 
         if mapped_attribute_ids:
-            Error.objects.filter(expense_attribute_id__in=mapped_attribute_ids).update(is_resolved=True)
+            Error.objects.filter(expense_attribute_id__in=mapped_attribute_ids).update(is_resolved=True, updated_at=datetime.now(timezone.utc))
 
 
 def get_existing_source_and_mappings(destination_type: str, workspace_id: int):
