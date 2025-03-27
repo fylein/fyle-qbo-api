@@ -19,6 +19,21 @@ WORKDIR /fyle-qbo-api
 # Do linting checks
 RUN flake8 .
 
+#================================================================
+# Set default GID if not provided during build
+#================================================================
+ARG SERVICE_GID=1001
+
+#================================================================
+# Setup non-root user and permissions
+#================================================================
+RUN groupadd -r -g ${SERVICE_GID} qbo_api_service && \
+    useradd -r -g qbo_api_service qbo_api_user && \
+    chown -R qbo_api_user:qbo_api_service /fyle-qbo-api
+
+# Switch to non-root user
+USER qbo_api_user
+
 # Expose development port
 EXPOSE 8000
 

@@ -124,7 +124,7 @@ class ImportSettingsTrigger:
             source_field = new_setting['source_field']
             current_setting = current_mapping_settings.filter(source_field=source_field).first()
             if current_setting and current_setting.destination_field != destination_field:
-                changed_source_fields.add(source_field)
+                changed_source_fields.add(current_setting.source_field)
 
         current_source_fields = set(mapping_setting.source_field for mapping_setting in current_mapping_settings)
         new_source_fields = set(mapping_setting['source_field'] for mapping_setting in new_mappings_settings)
@@ -134,7 +134,7 @@ class ImportSettingsTrigger:
 
         ImportLog.objects.filter(workspace_id=workspace_id, attribute_type__in=reset_source_fields).update(last_successful_run_at=None, updated_at=datetime.now(timezone.utc))
 
-    def pre_save_mapping_settings(self, pre_save_general_settings: WorkspaceGeneralSettings):
+    def pre_save_mapping_settings(self, pre_save_workspace_general_settings: WorkspaceGeneralSettings = None):
         """
         Post save action for mapping settings
         """
@@ -151,13 +151,13 @@ class ImportSettingsTrigger:
             workspace_id=self.__workspace_id
         )
 
-        workspace_settings = self.__workspace_general_settings
+        if pre_save_workspace_general_settings:
+            workspace_settings = self.__workspace_general_settings
+            old_coa = set(pre_save_workspace_general_settings.charts_of_accounts or [])
+            new_coa = set(workspace_settings['charts_of_accounts'] or [])
 
-        old_coa = set(pre_save_general_settings.charts_of_accounts or [])
-        new_coa = set(workspace_settings['charts_of_accounts'] or [])
-
-        if workspace_settings['import_categories'] and old_coa != new_coa:
-            ImportLog.objects.filter(workspace_id=self.__workspace_id, attribute_type='CATEGORY').update(last_successful_run_at=None, updated_at=datetime.now(timezone.utc))
+            if workspace_settings['import_categories'] and old_coa != new_coa:
+                ImportLog.objects.filter(workspace_id=self.__workspace_id, attribute_type='CATEGORY').update(last_successful_run_at=None, updated_at=datetime.now(timezone.utc))
 
     def post_save_mapping_settings(self, workspace_general_settings_instance: WorkspaceGeneralSettings):
         """
