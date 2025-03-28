@@ -51,8 +51,8 @@ sql_files = [
     'fyle-integrations-db-migrations/qbo/views/product_export_settings_view.sql',
     'fyle-integrations-db-migrations/qbo/views/product_import_settings_view.sql',
 
-    # QBO Specific Trigger
-    'fyle-integrations-db-migrations/qbo/triggers/update_logs.sql',
+    'fyle-integrations-db-migrations/common/global_shared/helpers/add-replication-identity.sql',
+    'fyle-integrations-db-migrations/qbo/helpers/add-tables-to-publication.sql'
 ]
 
 
