@@ -9,7 +9,7 @@ services:
     entrypoint: bash run.sh
     restart: unless-stopped
     volumes:
-    - api-volume:/fyle-qbo-api
+    - .:/fyle-qbo-api
     depends_on:
     - db
     - rabbitmq
@@ -58,5 +58,4 @@ services:
       - rabbitmq-data:/data/
 
 volumes:
-  api-volume:
   rabbitmq-data:
