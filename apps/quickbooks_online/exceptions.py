@@ -18,14 +18,30 @@ logger = logging.getLogger(__name__)
 logger.level = logging.INFO
 
 
-def handle_qbo_invalid_token_error(expense_group: ExpenseGroup):
-    error = Error.objects.filter(workspace_id=expense_group.workspace_id, error_title='Invalid Token Error', is_resolved=False).first()
-    if not error:
+def handle_qbo_invalid_token_error(expense_group: ExpenseGroup) -> None:
+    """
+    Handles the case when QuickBooks Online token expires by creating
+    Args:
+        expense_group (ExpenseGroup): The expense group for which the token error occurred
+    """
+    logger.info(
+        'Creating/updating QBO token error for workspace %s and expense group %s',
+        expense_group.workspace_id,
+        expense_group.id
+    )
+
+    existing_error = Error.objects.filter(
+        workspace_id=expense_group.workspace_id,
+        error_title='QuickBooks Online Token Expired',
+        is_resolved=False
+    ).first()
+
+    if not existing_error:
         Error.objects.update_or_create(
             workspace_id=expense_group.workspace_id,
             expense_group=expense_group,
             defaults={
-                'error_title': 'Invalid Token Error',
+                'error_title': 'QuickBooks Online Token Expired',
                 'type': 'QBO_ERROR',
                 'error_detail': 'Export failed due to quickbooks token expiry, please click on Export to export again',
                 'is_resolved': False,

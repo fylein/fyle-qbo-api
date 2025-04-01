@@ -889,7 +889,7 @@ def test_handle_qbo_invalid_token_error(db):
     # Delete any existing invalid token errors for this workspace
     Error.objects.filter(
         workspace_id=expense_group.workspace_id,
-        error_title='Invalid Token Error',
+        error_title='QuickBooks Online Token Expired',
         is_resolved=False
     ).delete()
 
@@ -899,7 +899,7 @@ def test_handle_qbo_invalid_token_error(db):
     # Verify that a new error was created with correct details
     error = Error.objects.get(
         workspace_id=expense_group.workspace_id,
-        error_title='Invalid Token Error',
+        error_title='QuickBooks Online Token Expired',
         is_resolved=False
     )
 
@@ -911,7 +911,7 @@ def test_handle_qbo_invalid_token_error(db):
     handle_qbo_invalid_token_error(expense_group)
     error_count = Error.objects.filter(
         workspace_id=expense_group.workspace_id,
-        error_title='Invalid Token Error',
+        error_title='QuickBooks Online Token Expired',
         is_resolved=False
     ).count()
     assert error_count == 1
