@@ -10,7 +10,7 @@ services:
     restart: unless-stopped
     user: root
     volumes:
-    - .:/fyle-qbo-api
+    - ./:/fyle-qbo-api
     depends_on:
     - db
     - rabbitmq
