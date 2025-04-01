@@ -3,19 +3,36 @@ import logging
 import traceback
 
 from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
-from fyle_qbo_api.utils import invalidate_qbo_credentials
 from qbosdk.exceptions import InternalServerError, InvalidTokenError, WrongParamsError
 
-from apps.fyle.actions import update_failed_expenses, post_accounting_export_summary
+from apps.fyle.actions import post_accounting_export_summary, update_failed_expenses
 from apps.fyle.models import ExpenseGroup
 from apps.quickbooks_online.actions import update_last_export_details
 from apps.quickbooks_online.errors.helpers import error_matcher, get_entity_values, replace_destination_id_with_values
 from apps.tasks.models import Error, TaskLog
 from apps.workspaces.models import FyleCredential, QBOCredential
 from fyle_qbo_api.exceptions import BulkError
+from fyle_qbo_api.utils import invalidate_qbo_credentials
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
+
+
+def handle_qbo_invalid_token_error(expense_group: ExpenseGroup):
+    error = Error.objects.filter(workspace_id=expense_group.workspace_id, error_title='Invalid Token Error', is_resolved=False).first()
+    if not error:
+        Error.objects.update_or_create(
+            workspace_id=expense_group.workspace_id,
+            expense_group=expense_group,
+            defaults={
+                'error_title': 'Invalid Token Error',
+                'type': 'QBO_ERROR',
+                'error_detail': 'Export failed due to quickbooks token expiry, please click on Export to export again',
+                'is_resolved': False,
+                'is_parsed': False,
+                'attribute_type': None,
+                'article_link': None
+            })
 
 
 def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: TaskLog, export_type: str):
@@ -104,7 +121,7 @@ def handle_qbo_exceptions(bill_payment=False):
                 task_log.status = 'FAILED'
                 task_log.detail = detail
                 invalidate_qbo_credentials(expense_group.workspace_id)
-
+                handle_qbo_invalid_token_error(expense_group)
                 task_log.save()
 
                 if not bill_payment:
