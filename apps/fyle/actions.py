@@ -15,7 +15,6 @@ from apps.fyle.models import Expense, ExpenseGroup
 from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
 from fyle_qbo_api.logging_middleware import get_logger
 
-
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
 
@@ -184,17 +183,20 @@ def mark_accounting_export_summary_as_synced(expenses: List[Expense]) -> None:
     Expense.objects.bulk_update(expense_to_be_updated, ['accounting_export_summary', 'previous_export_state'], batch_size=50)
 
 
-def update_failed_expenses(failed_expenses: List[Expense], is_mapping_error: bool) -> None:
+def update_failed_expenses(failed_expenses: List[Expense], is_mapping_error: bool, is_token_expired: bool = False) -> None:
     """
     Update failed expenses
     :param failed_expenses: Failed expenses
+    :param is_mapping_error: Whether the error is a mapping error
+    :param is_token_expired: Whether the token has expired
     """
     expense_to_be_updated = []
     for expense in failed_expenses:
         error_type = 'MAPPING' if is_mapping_error else 'ACCOUNTING_INTEGRATION_ERROR'
 
-        # Skip dummy updates (if it is already in error state with the same error type)
-        if not (expense.accounting_export_summary.get('state') == 'ERROR' and \
+        # Update if token expired regardless of current state
+        # Otherwise, skip dummy updates (if it is already in error state with the same error type)
+        if is_token_expired or not (expense.accounting_export_summary.get('state') == 'ERROR' and \
             expense.accounting_export_summary.get('error_type') == error_type):
             expense_to_be_updated.append(
                 Expense(
