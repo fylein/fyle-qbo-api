@@ -141,7 +141,7 @@ def handle_qbo_exceptions(bill_payment=False):
                 task_log.save()
 
                 if not bill_payment:
-                    update_failed_expenses(expense_group.expenses.all(), True)
+                    update_failed_expenses(expense_group.expenses.all(), False)
 
             except WrongParamsError as exception:
                 handle_quickbooks_error(exception, expense_group, task_log, 'Bill')
@@ -157,7 +157,7 @@ def handle_qbo_exceptions(bill_payment=False):
                 logger.error('Internal Server Error for workspace_id: %s %s', task_log.workspace_id, task_log.detail)
 
                 if not bill_payment:
-                    update_failed_expenses(expense_group.expenses.all(), True)
+                    update_failed_expenses(expense_group.expenses.all(), False)
 
             except BulkError as exception:
                 logger.info(exception.response)
