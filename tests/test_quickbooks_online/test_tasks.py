@@ -5,13 +5,13 @@ from datetime import datetime, timedelta, timezone
 from unittest import mock
 
 from django_q.models import Schedule
-from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping
 from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
+from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping
 from qbosdk.exceptions import WrongParamsError
 
 from apps.fyle.models import Expense, ExpenseGroup, Reimbursement
 from apps.mappings.queues import schedule_bill_payment_creation
-from apps.quickbooks_online.exceptions import handle_quickbooks_error
+from apps.quickbooks_online.exceptions import handle_qbo_invalid_token_error, handle_quickbooks_error
 from apps.quickbooks_online.models import CreditCardPurchaseLineitem
 from apps.quickbooks_online.queue import (
     schedule_bills_creation,
@@ -880,6 +880,41 @@ def test_handle_quickbooks_errors(mocker, db):
     errors = Error.objects.filter(workspace_id=task_log.workspace_id, is_resolved=False, error_title='ValidationFault / 6210').all()
 
     assert errors.count() == 0
+
+
+def test_handle_qbo_invalid_token_error(db):
+    # Get an expense group for testing
+    expense_group = ExpenseGroup.objects.get(id=8)
+
+    # Delete any existing invalid token errors for this workspace
+    Error.objects.filter(
+        workspace_id=expense_group.workspace_id,
+        error_title='QuickBooks Online Connection Expired',
+        is_resolved=False
+    ).delete()
+
+    # Call the function
+    handle_qbo_invalid_token_error(expense_group)
+
+    # Verify that a new error was created with correct details
+    error = Error.objects.get(
+        workspace_id=expense_group.workspace_id,
+        error_title='QuickBooks Online Connection Expired',
+        is_resolved=False
+    )
+
+    assert error.type == 'QBO_ERROR'
+    assert error.error_detail == 'Your QuickBooks Online connection had expired during the previous export. Please click \'Export\' to retry exporting your expenses.'
+    assert error.expense_group == expense_group
+
+    # Test that calling again doesn't create duplicate error
+    handle_qbo_invalid_token_error(expense_group)
+    error_count = Error.objects.filter(
+        workspace_id=expense_group.workspace_id,
+        error_title='QuickBooks Online Connection Expired',
+        is_resolved=False
+    ).count()
+    assert error_count == 1
 
 
 def test_check_qbo_object_status(mocker, db):
