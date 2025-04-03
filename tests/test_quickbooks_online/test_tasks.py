@@ -904,7 +904,7 @@ def test_handle_qbo_invalid_token_error(db):
     )
 
     assert error.type == 'QBO_ERROR'
-    assert error.error_detail == 'Your QuickBooks connection had expired during the previous export. Please click \'Export\' to retry exporting your expenses.'
+    assert error.error_detail == 'Your QuickBooks Online connection had expired during the previous export. Please click \'Export\' to retry exporting your expenses.'
     assert error.expense_group == expense_group
 
     # Test that calling again doesn't create duplicate error
