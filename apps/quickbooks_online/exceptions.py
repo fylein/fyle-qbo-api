@@ -32,7 +32,7 @@ def handle_qbo_invalid_token_error(expense_group: ExpenseGroup) -> None:
 
     existing_error = Error.objects.filter(
         workspace_id=expense_group.workspace_id,
-        error_title='QuickBooks Online Token Expired',
+        error_title='QuickBooks Online Connection Expired',
         is_resolved=False
     ).first()
 
@@ -41,9 +41,9 @@ def handle_qbo_invalid_token_error(expense_group: ExpenseGroup) -> None:
             workspace_id=expense_group.workspace_id,
             expense_group=expense_group,
             defaults={
-                'error_title': 'QuickBooks Online Token Expired',
+                'error_title': 'QuickBooks Online Connection Expired',
                 'type': 'QBO_ERROR',
-                'error_detail': 'Export failed due to quickbooks token expiry, please click on Export to export again',
+                'error_detail': 'Your QuickBooks Online connection had expired during the previous export. Please click \'Export\' to retry exporting your expenses.',
                 'is_resolved': False,
                 'is_parsed': False,
                 'attribute_type': None,
