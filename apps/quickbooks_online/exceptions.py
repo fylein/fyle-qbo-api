@@ -3,16 +3,16 @@ import logging
 import traceback
 
 from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
-from fyle_qbo_api.utils import invalidate_qbo_credentials
 from qbosdk.exceptions import InternalServerError, InvalidTokenError, WrongParamsError
 
-from apps.fyle.actions import update_failed_expenses, post_accounting_export_summary
+from apps.fyle.actions import post_accounting_export_summary, update_failed_expenses
 from apps.fyle.models import ExpenseGroup
 from apps.quickbooks_online.actions import update_last_export_details
 from apps.quickbooks_online.errors.helpers import error_matcher, get_entity_values, replace_destination_id_with_values
 from apps.tasks.models import Error, TaskLog
 from apps.workspaces.models import FyleCredential, QBOCredential
 from fyle_qbo_api.exceptions import BulkError
+from fyle_qbo_api.utils import invalidate_qbo_credentials
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -108,7 +108,7 @@ def handle_qbo_exceptions(bill_payment=False):
                 task_log.save()
 
                 if not bill_payment:
-                    update_failed_expenses(expense_group.expenses.all(), True)
+                    update_failed_expenses(expense_group.expenses.all(), False)
 
             except WrongParamsError as exception:
                 handle_quickbooks_error(exception, expense_group, task_log, 'Bill')
@@ -124,7 +124,7 @@ def handle_qbo_exceptions(bill_payment=False):
                 logger.error('Internal Server Error for workspace_id: %s %s', task_log.workspace_id, task_log.detail)
 
                 if not bill_payment:
-                    update_failed_expenses(expense_group.expenses.all(), True)
+                    update_failed_expenses(expense_group.expenses.all(), False)
 
             except BulkError as exception:
                 logger.info(exception.response)
