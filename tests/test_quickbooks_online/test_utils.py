@@ -1,16 +1,16 @@
 import json
 import logging
-from unittest import mock
 from datetime import datetime
+from unittest import mock
 
 import pytest
 from fyle.platform.exceptions import NoPrivilegeError
-from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, Mapping, CategoryMapping
+from fyle_accounting_mappings.models import CategoryMapping, DestinationAttribute, EmployeeMapping, Mapping
 from qbosdk.exceptions import WrongParamsError
 
 from apps.fyle.models import ExpenseGroup
 from apps.mappings.models import GeneralMapping
-from apps.quickbooks_online.utils import QBOConnector, QBOCredential, WorkspaceGeneralSettings, Workspace
+from apps.quickbooks_online.utils import QBOConnector, QBOCredential, Workspace, WorkspaceGeneralSettings
 from tests.helper import dict_compare_keys
 from tests.test_quickbooks_online.fixtures import data
 
@@ -119,6 +119,9 @@ def test_construct_bill(add_destination_attribute_tax_code, create_bill, mocker,
     mocker.patch('qbosdk.apis.ExchangeRates.get_by_source', return_value={'Rate': 1.2309})
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+    workspace_general_settings = qbo_credentials.workspace.workspace_general_settings
+    workspace_general_settings.import_tax_codes = False
+    workspace_general_settings.save()
 
     # for account-based line-items
     bill, bill_lineitems = create_bill
@@ -127,7 +130,6 @@ def test_construct_bill(add_destination_attribute_tax_code, create_bill, mocker,
 
     assert dict_compare_keys(bill_object, data['bill_payload']) == [], 'construct bill_payload entry api return diffs in keys'
 
-    workspace_general_settings = qbo_credentials.workspace.workspace_general_settings
     workspace_general_settings.is_multi_currency_allowed = True
     workspace_general_settings.save()
 
@@ -145,7 +147,6 @@ def test_construct_bill(add_destination_attribute_tax_code, create_bill, mocker,
     general_mappings = GeneralMapping.objects.filter(workspace_id=3).first()
 
     general_settings.import_tax_codes = True
-    general_settings.is_tax_override_enabled = True
     general_settings.save()
 
     general_mappings.default_tax_code_id = '17'
@@ -158,7 +159,6 @@ def test_construct_bill(add_destination_attribute_tax_code, create_bill, mocker,
     assert dict_compare_keys(bill_object, data['bill_payload_with_tax_override']) == [], 'construct bill_payload entry api return diffs in keys'
 
     general_settings.import_tax_codes = False
-    general_settings.is_tax_override_enabled = False
     general_settings.save()
 
 
@@ -166,6 +166,9 @@ def test_construct_bill_item_based(add_destination_attribute_tax_code, create_bi
     mocker.patch('qbosdk.apis.ExchangeRates.get_by_source', return_value={'Rate': 1.2309})
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+    workspace_general_settings = qbo_credentials.workspace.workspace_general_settings
+    workspace_general_settings.import_tax_codes = False
+    workspace_general_settings.save()
 
     # for item-based line-items
     bill, bill_lineitems = create_bill_item_based
@@ -178,7 +181,6 @@ def test_construct_bill_item_based(add_destination_attribute_tax_code, create_bi
     general_mappings = GeneralMapping.objects.filter(workspace_id=3).first()
 
     general_settings.import_tax_codes = True
-    general_settings.is_tax_override_enabled = True
     general_settings.save()
 
     general_mappings.default_tax_code_id = '17'
@@ -191,7 +193,6 @@ def test_construct_bill_item_based(add_destination_attribute_tax_code, create_bi
     assert dict_compare_keys(bill_object, data['bill_payload_item_based_payload_with_tax_override']) == [], 'construct bill_payload entry api return diffs in keys'
 
     general_settings.import_tax_codes = False
-    general_settings.is_tax_override_enabled = False
     general_settings.save()
 
 
@@ -199,6 +200,9 @@ def test_construct_bill_item_and_account_based(add_destination_attribute_tax_cod
     mocker.patch('qbosdk.apis.ExchangeRates.get_by_source', return_value={'Rate': 1.2309})
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+    workspace_general_settings = qbo_credentials.workspace.workspace_general_settings
+    workspace_general_settings.import_tax_codes = False
+    workspace_general_settings.save()
 
     # for item-based and account-based line-items
     bill, bill_lineitems = create_bill_item_and_account_based
@@ -215,7 +219,6 @@ def test_construct_bill_item_and_account_based(add_destination_attribute_tax_cod
     general_mappings = GeneralMapping.objects.filter(workspace_id=3).first()
 
     general_settings.import_tax_codes = True
-    general_settings.is_tax_override_enabled = True
     general_settings.save()
 
     general_mappings.default_tax_code_id = '17'
@@ -230,13 +233,15 @@ def test_construct_bill_item_and_account_based(add_destination_attribute_tax_cod
     assert dict_compare_keys(bill_object, data['bill_payload_item_and_account_based_payload_with_tax_override']) == [], 'construct bill_payload entry api return diffs in keys'
 
     general_settings.import_tax_codes = False
-    general_settings.is_tax_override_enabled = False
     general_settings.save()
 
 
 def test_construct_credit_card_purchase(add_destination_attribute_tax_code, create_credit_card_purchase, db):
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+    workspace_general_settings = qbo_credentials.workspace.workspace_general_settings
+    workspace_general_settings.import_tax_codes = False
+    workspace_general_settings.save()
 
     credit_card_purchase, credit_card_purchase_lineitems = create_credit_card_purchase
     credit_crad_purchase_object = qbo_connection._QBOConnector__construct_credit_card_purchase(credit_card_purchase=credit_card_purchase, credit_card_purchase_lineitems=credit_card_purchase_lineitems)
@@ -249,7 +254,6 @@ def test_construct_credit_card_purchase(add_destination_attribute_tax_code, crea
     general_mappings = GeneralMapping.objects.filter(workspace_id=3).first()
 
     general_settings.import_tax_codes = True
-    general_settings.is_tax_override_enabled = True
     general_settings.save()
 
     general_mappings.default_tax_code_id = '17'
@@ -261,13 +265,15 @@ def test_construct_credit_card_purchase(add_destination_attribute_tax_code, crea
     assert dict_compare_keys(credit_crad_purchase_object, data['credit_card_purchase_payload_with_tax_override']) == [], 'construct credit_card_purchase_payload entry api return diffs in keys'
 
     general_settings.import_tax_codes = False
-    general_settings.is_tax_override_enabled = False
     general_settings.save()
 
 
 def test_construct_credit_card_purchase_item_based(add_destination_attribute_tax_code, create_credit_card_purchase_item_based, db):
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+    workspace_general_settings = qbo_credentials.workspace.workspace_general_settings
+    workspace_general_settings.import_tax_codes = False
+    workspace_general_settings.save()
 
     credit_card_purchase, credit_card_purchase_lineitems = create_credit_card_purchase_item_based
     credit_crad_purchase_object = qbo_connection._QBOConnector__construct_credit_card_purchase(credit_card_purchase=credit_card_purchase, credit_card_purchase_lineitems=credit_card_purchase_lineitems)
@@ -280,7 +286,6 @@ def test_construct_credit_card_purchase_item_based(add_destination_attribute_tax
     general_mappings = GeneralMapping.objects.filter(workspace_id=3).first()
 
     general_settings.import_tax_codes = True
-    general_settings.is_tax_override_enabled = True
     general_settings.save()
 
     general_mappings.default_tax_code_id = '17'
@@ -295,13 +300,15 @@ def test_construct_credit_card_purchase_item_based(add_destination_attribute_tax
     assert dict_compare_keys(credit_crad_purchase_object, data['credit_card_purchase_item_based_payload_with_tax_override']) == [], 'construct credit_card_purchase_payload entry api return diffs in keys'
 
     general_settings.import_tax_codes = False
-    general_settings.is_tax_override_enabled = False
     general_settings.save()
 
 
 def test_construct_credit_card_purchase_item_and_account_based(add_destination_attribute_tax_code, create_credit_card_purchase_item_and_account_based, db):
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+    workspace_general_settings = qbo_credentials.workspace.workspace_general_settings
+    workspace_general_settings.import_tax_codes = False
+    workspace_general_settings.save()
 
     credit_card_purchase, credit_card_purchase_lineitems = create_credit_card_purchase_item_and_account_based
     credit_crad_purchase_object = qbo_connection._QBOConnector__construct_credit_card_purchase(credit_card_purchase=credit_card_purchase, credit_card_purchase_lineitems=credit_card_purchase_lineitems)
@@ -315,7 +322,6 @@ def test_construct_credit_card_purchase_item_and_account_based(add_destination_a
     general_mappings = GeneralMapping.objects.filter(workspace_id=3).first()
 
     general_settings.import_tax_codes = True
-    general_settings.is_tax_override_enabled = True
     general_settings.save()
 
     general_mappings.default_tax_code_id = '17'
@@ -331,7 +337,6 @@ def test_construct_credit_card_purchase_item_and_account_based(add_destination_a
     assert dict_compare_keys(credit_crad_purchase_object, data['credit_card_purchase_item_and_account_based_payload_with_tax_override']) == [], 'construct credit_card_purchase_payload entry api return diffs in keys'
 
     general_settings.import_tax_codes = False
-    general_settings.is_tax_override_enabled = False
     general_settings.save()
 
 
@@ -356,6 +361,9 @@ def test_construct_journal_entry(create_journal_entry, db):
 def test_construct_qbo_expense(add_destination_attribute_tax_code, create_qbo_expense, db):
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+    workspace_general_settings = qbo_credentials.workspace.workspace_general_settings
+    workspace_general_settings.import_tax_codes = False
+    workspace_general_settings.save()
 
     qbo_expense, qbo_expense_lineitems = create_qbo_expense
     qbo_expense_object = qbo_connection._QBOConnector__construct_qbo_expense(qbo_expense=qbo_expense, qbo_expense_lineitems=qbo_expense_lineitems)
@@ -368,7 +376,6 @@ def test_construct_qbo_expense(add_destination_attribute_tax_code, create_qbo_ex
     general_mappings = GeneralMapping.objects.filter(workspace_id=3).first()
 
     general_settings.import_tax_codes = True
-    general_settings.is_tax_override_enabled = True
     general_settings.save()
 
     general_mappings.default_tax_code_id = '17'
@@ -381,13 +388,15 @@ def test_construct_qbo_expense(add_destination_attribute_tax_code, create_qbo_ex
     assert dict_compare_keys(qbo_expense_object, data['qbo_expense_payload_with_tax_override']) == [], 'construct expense api return diffs in keys'
 
     general_settings.import_tax_codes = False
-    general_settings.is_tax_override_enabled = False
     general_settings.save()
 
 
 def test_construct_qbo_expense_item_based(add_destination_attribute_tax_code, create_qbo_expense_item_based, db):
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+    workspace_general_settings = qbo_credentials.workspace.workspace_general_settings
+    workspace_general_settings.import_tax_codes = False
+    workspace_general_settings.save()
 
     qbo_expense, qbo_expense_lineitems = create_qbo_expense_item_based
     qbo_expense_object = qbo_connection._QBOConnector__construct_qbo_expense(qbo_expense=qbo_expense, qbo_expense_lineitems=qbo_expense_lineitems)
@@ -400,7 +409,6 @@ def test_construct_qbo_expense_item_based(add_destination_attribute_tax_code, cr
     general_mappings = GeneralMapping.objects.filter(workspace_id=3).first()
 
     general_settings.import_tax_codes = True
-    general_settings.is_tax_override_enabled = True
     general_settings.save()
 
     general_mappings.default_tax_code_id = '17'
@@ -415,13 +423,15 @@ def test_construct_qbo_expense_item_based(add_destination_attribute_tax_code, cr
     assert dict_compare_keys(qbo_expense_object, data['qbo_expense_item_based_payload_with_tax_override']) == [], 'construct expense api return diffs in keys'
 
     general_settings.import_tax_codes = False
-    general_settings.is_tax_override_enabled = False
     general_settings.save()
 
 
 def test_construct_qbo_expense_item_and_account_based(add_destination_attribute_tax_code, create_qbo_expense_item_and_account_based, db):
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+    workspace_general_settings = qbo_credentials.workspace.workspace_general_settings
+    workspace_general_settings.import_tax_codes = False
+    workspace_general_settings.save()
 
     qbo_expense, qbo_expense_lineitems = create_qbo_expense_item_and_account_based
     qbo_expense_object = qbo_connection._QBOConnector__construct_qbo_expense(qbo_expense=qbo_expense, qbo_expense_lineitems=qbo_expense_lineitems)
@@ -438,7 +448,6 @@ def test_construct_qbo_expense_item_and_account_based(add_destination_attribute_
     general_mappings = GeneralMapping.objects.filter(workspace_id=3).first()
 
     general_settings.import_tax_codes = True
-    general_settings.is_tax_override_enabled = True
     general_settings.save()
 
     general_mappings.default_tax_code_id = '17'
@@ -454,13 +463,15 @@ def test_construct_qbo_expense_item_and_account_based(add_destination_attribute_
     assert dict_compare_keys(qbo_expense_object, data['qbo_expense_item_and_account_based_payload_with_tax_override']) == [], 'construct expense api return diffs in keys'
 
     general_settings.import_tax_codes = False
-    general_settings.is_tax_override_enabled = False
     general_settings.save()
 
 
 def test_construct_cheque(add_destination_attribute_tax_code, create_cheque, db):
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+    workspace_general_settings = qbo_credentials.workspace.workspace_general_settings
+    workspace_general_settings.import_tax_codes = False
+    workspace_general_settings.save()
 
     cheque, cheque_lineitems = create_cheque
     cheque_object = qbo_connection._QBOConnector__construct_cheque(cheque=cheque, cheque_lineitems=cheque_lineitems)
@@ -473,7 +484,6 @@ def test_construct_cheque(add_destination_attribute_tax_code, create_cheque, db)
     general_mappings = GeneralMapping.objects.filter(workspace_id=3).first()
 
     general_settings.import_tax_codes = True
-    general_settings.is_tax_override_enabled = True
     general_settings.save()
 
     general_mappings.default_tax_code_id = '17'
@@ -486,13 +496,15 @@ def test_construct_cheque(add_destination_attribute_tax_code, create_cheque, db)
     assert dict_compare_keys(cheque_object, data['cheque_payload_with_tax_override']) == [], 'construct cheque api return diffs in keys'
 
     general_settings.import_tax_codes = False
-    general_settings.is_tax_override_enabled = False
     general_settings.save()
 
 
 def test_construct_cheque_item_based(add_destination_attribute_tax_code, create_cheque_item_based, db):
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+    workspace_general_settings = qbo_credentials.workspace.workspace_general_settings
+    workspace_general_settings.import_tax_codes = False
+    workspace_general_settings.save()
 
     cheque, cheque_lineitems = create_cheque_item_based
     cheque_object = qbo_connection._QBOConnector__construct_cheque(cheque=cheque, cheque_lineitems=cheque_lineitems)
@@ -505,7 +517,6 @@ def test_construct_cheque_item_based(add_destination_attribute_tax_code, create_
     general_mappings = GeneralMapping.objects.filter(workspace_id=3).first()
 
     general_settings.import_tax_codes = True
-    general_settings.is_tax_override_enabled = True
     general_settings.save()
 
     general_mappings.default_tax_code_id = '17'
@@ -520,13 +531,15 @@ def test_construct_cheque_item_based(add_destination_attribute_tax_code, create_
     assert dict_compare_keys(cheque_object, data['cheque_item_based_payload_with_tax_override']) == [], 'construct cheque api return diffs in keys'
 
     general_settings.import_tax_codes = False
-    general_settings.is_tax_override_enabled = False
     general_settings.save()
 
 
 def test_construct_cheque_item_and_account_based(add_destination_attribute_tax_code, create_cheque_item_and_account_based, db):
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+    workspace_general_settings = qbo_credentials.workspace.workspace_general_settings
+    workspace_general_settings.import_tax_codes = False
+    workspace_general_settings.save()
 
     cheque, cheque_lineitems = create_cheque_item_and_account_based
     cheque_object = qbo_connection._QBOConnector__construct_cheque(cheque=cheque, cheque_lineitems=cheque_lineitems)
@@ -540,7 +553,6 @@ def test_construct_cheque_item_and_account_based(add_destination_attribute_tax_c
     general_mappings = GeneralMapping.objects.filter(workspace_id=3).first()
 
     general_settings.import_tax_codes = True
-    general_settings.is_tax_override_enabled = True
     general_settings.save()
 
     general_mappings.default_tax_code_id = '17'
@@ -556,7 +568,6 @@ def test_construct_cheque_item_and_account_based(add_destination_attribute_tax_c
     assert dict_compare_keys(cheque_object, data['cheque_item_and_account_based_payload_with_tax_override']) == [], 'construct cheque api return diffs in keys'
 
     general_settings.import_tax_codes = False
-    general_settings.is_tax_override_enabled = False
     general_settings.save()
 
 
