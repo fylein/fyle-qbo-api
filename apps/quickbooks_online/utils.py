@@ -742,8 +742,6 @@ class QBOConnector:
                 'GlobalTaxCalculation': 'TaxExcluded',
                 'TxnTaxDetail': {"TaxLine": tax_details}
             })
-        else:
-            purchase_object_payload.update({'GlobalTaxCalculation': 'TaxInclusive'})
 
         [line['ItemBasedExpenseLineDetail'].pop('TaxAmount') for line in purchase_object_payload['Line'] if 'ItemBasedExpenseLineDetail' in line]
 
@@ -820,8 +818,6 @@ class QBOConnector:
         if general_settings.import_tax_codes:
             tax_details = self.get_override_tax_details(lines)
             bill_payload.update({'GlobalTaxCalculation': 'TaxExcluded', 'TxnTaxDetail': {"TaxLine": tax_details}})
-        else:
-            bill_payload.update({'GlobalTaxCalculation': 'TaxInclusive'})
 
         [line['ItemBasedExpenseLineDetail'].pop('TaxAmount') for line in bill_payload['Line'] if 'ItemBasedExpenseLineDetail' in line]
 
