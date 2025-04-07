@@ -13,6 +13,19 @@ def get_default():
     return {'default': 'default value'}
 
 
+def get_error_type_mapping(attribute_type: str) -> str:
+    """
+    Returns the error type string based on the attribute type.
+    Defaults to 'CATEGORY_MAPPING' if the type is not explicitly mapped.
+    """
+    mapping = {
+        'EMPLOYEE': 'EMPLOYEE_MAPPING',
+        'CATEGORY': 'CATEGORY_MAPPING',
+        'TAX_GROUP': 'TAX_MAPPING'
+    }
+    return mapping.get(attribute_type, 'CATEGORY_MAPPING')
+
+
 class TaskLog(models.Model):
     """
     Table to store task logs
@@ -79,23 +92,23 @@ class Error(models.Model):
         is present in mapping_error_expense_group_ids (without duplicates).
         """
         with transaction.atomic():
+            error_type = get_error_type_mapping(expense_attribute.attribute_type)
+            error_detail = f"{expense_attribute.display_name} mapping is missing"
+
             error, created = Error.objects.get_or_create(
                 workspace_id=expense_group.workspace_id,
                 expense_attribute=expense_attribute,
                 defaults={
-                    'type': 'EMPLOYEE_MAPPING' if expense_attribute.attribute_type == 'EMPLOYEE' else 'CATEGORY_MAPPING',
+                    'type': error_type,
+                    'error_detail': error_detail,
                     'error_title': expense_attribute.value,
-                    'error_detail': 'Employee mapping is missing' if expense_attribute.attribute_type == 'EMPLOYEE' else 'Category mapping is missing',
                     'is_resolved': False,
-                    # if creating, initialize the array with the given id:
                     'mapping_error_expense_group_ids': [expense_group.id],
                 }
             )
 
             if not created and expense_group.id not in error.mapping_error_expense_group_ids:
-                error.mapping_error_expense_group_ids = list(
-                    set(error.mapping_error_expense_group_ids + [expense_group.id])
-                )
+                error.mapping_error_expense_group_ids = list(set(error.mapping_error_expense_group_ids + [expense_group.id]))
                 error.save(update_fields=['mapping_error_expense_group_ids'])
             return error, created
 

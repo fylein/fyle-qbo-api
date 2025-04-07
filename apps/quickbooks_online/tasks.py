@@ -349,7 +349,7 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                 bulk_errors.append({'row': row, 'expense_group_id': expense_group.id, 'value': tax_group.value, 'type': 'Tax Group Mapping', 'message': 'Tax Group Mapping not found'})
 
                 if tax_group:
-                    error, created = Error.objects.update_or_create(workspace_id=expense_group.workspace_id, expense_attribute=tax_group, defaults={'type': 'TAX_MAPPING', 'error_title': tax_group.value, 'error_detail': 'Tax mapping is missing', 'is_resolved': False})
+                    error, created = Error.get_or_create_error_with_expense_group(expense_group, tax_group)
                     error.increase_repetition_count_by_one(created)
         row = row + 1
 

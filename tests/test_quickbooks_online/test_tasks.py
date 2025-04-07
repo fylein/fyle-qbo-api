@@ -1540,3 +1540,32 @@ def test_get_or_create_error_with_expense_group_duplicate_expense_group(db):
     assert error2.id == error1.id
     assert len(error2.mapping_error_expense_group_ids) == 1
     assert error2.mapping_error_expense_group_ids == [expense_group.id]
+
+
+def test_get_or_create_error_with_expense_group_tax_mapping(db):
+    """
+    Test creating tax mapping error
+    """
+    workspace_id = 3
+    expense_group = ExpenseGroup.objects.get(id=14)
+
+    tax_attribute = ExpenseAttribute.objects.create(
+        workspace_id=workspace_id,
+        attribute_type='TAX_GROUP',
+        value='GST 10%',
+        source_id='789',
+        display_name='Tax Group'
+    )
+
+    error, created = Error.get_or_create_error_with_expense_group(
+        expense_group,
+        tax_attribute
+    )
+
+    assert created == True
+    assert error.type == 'TAX_MAPPING'
+    assert error.error_title == 'GST 10%'
+    assert error.error_detail == 'Tax Group mapping is missing'
+    assert error.mapping_error_expense_group_ids == [expense_group.id]
+    assert error.workspace_id == workspace_id
+    assert error.is_resolved == False
