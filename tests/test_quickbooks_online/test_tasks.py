@@ -1432,6 +1432,7 @@ def test_get_or_create_error_with_expense_group_create_new(db):
     expense_attribute = ExpenseAttribute.objects.create(
         workspace_id=workspace_id,
         attribute_type='EMPLOYEE',
+        display_name='Employee',
         value='john.doe@fyle.in',
         source_id='123'
     )
@@ -1460,6 +1461,7 @@ def test_get_or_create_error_with_expense_group_update_existing(db):
     expense_attribute = ExpenseAttribute.objects.create(
         workspace_id=workspace_id,
         attribute_type='EMPLOYEE',
+        display_name='Employee',
         value='john.doe@fyle.in',
         source_id='123'
     )
@@ -1494,6 +1496,7 @@ def test_get_or_create_error_with_expense_group_category_mapping(db):
     category_attribute = ExpenseAttribute.objects.create(
         workspace_id=workspace_id,
         attribute_type='CATEGORY',
+        display_name='Category',
         value='Travel Test',
         source_id='456'
     )
@@ -1520,6 +1523,7 @@ def test_get_or_create_error_with_expense_group_duplicate_expense_group(db):
     expense_attribute = ExpenseAttribute.objects.create(
         workspace_id=workspace_id,
         attribute_type='EMPLOYEE',
+        display_name='Employee',
         value='john.doe@fyle.in',
         source_id='123'
     )
