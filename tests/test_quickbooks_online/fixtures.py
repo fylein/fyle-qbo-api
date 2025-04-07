@@ -15,6 +15,7 @@ data = {
             }
         ],
         "DocNumber": "C/2022/01/R/8",
+        'GlobalTaxCalculation': 'TaxInclusive'
     },
     "bill_payload_with_tax_override": {
         "DocNumber": "C/2022/01/R/8",
@@ -64,6 +65,7 @@ data = {
         "TxnDate": "2022-01-21",
         "CurrencyRef": {"value": "USD"},
         "PrivateNote": "Reimbursable expense by ashwin.t@fyle.in on 2022-01-21 ",
+        'GlobalTaxCalculation': 'TaxInclusive',
         "Line": [
             {
                 "Description": "ashwin.t@fyle.in - Travel - 2022-01-21 - C/2022/01/R/8 -  - https://staging.fyle.tech/app/admin/#/enterprise/view_expense/txlPjmNxssq1?org_id=orGcBCVPijjO",
@@ -71,9 +73,9 @@ data = {
                 "Amount": 60.0,
                 "ItemBasedExpenseLineDetail": {"ItemRef": {"value": "125"},"Qty": 1,"CustomerRef": {"value": "None"},"ClassRef": {"value": "None"},"TaxCodeRef": {"value": "None"},"BillableStatus": "NotBillable"},
             }
-        ],
+        ]
     },
-    "bill_payload_item_based_payload_with_tax_override":{
+    "bill_payload_item_based_payload_with_tax_override": {
         "DocNumber": "C/2022/01/R/8",
         "VendorRef": {"value": "84"},
         "APAccountRef": {"value": "33"},
@@ -118,7 +120,7 @@ data = {
                     },
                 },
             ]
-        },
+        }
     },
     "bill_payload_item_and_account_based_payload": {
         "DocNumber": "C/2022/01/R/8",
@@ -128,6 +130,7 @@ data = {
         'TxnDate': '2023-07-06',
         'CurrencyRef': {'value': 'USD'},
         'PrivateNote': 'Credit card expense by sravan.kumar@fyle.in',
+        'GlobalTaxCalculation': 'TaxInclusive',
         'Line': [
             {
                 'Description': 'sravan.kumar@fyle.in - Concrete - 2023-07-06 - C/2023/04/R/2 -  - None/app/admin/#/enterprise/view_expense/txybL0Dw709h?org_id=orPJvXuoLqvJ',
@@ -221,6 +224,7 @@ data = {
                 "AccountBasedExpenseLineDetail": {"AccountRef": {"value": "57"},"CustomerRef": {"value": "None"},"ClassRef": {"value": "None"},"TaxCodeRef": {"value": "None"},"TaxAmount": 0.0,"BillableStatus": "NotBillable"},
             }
         ],
+        'GlobalTaxCalculation': 'TaxInclusive'
     },
     "credit_card_purchase_payload_with_tax_override": {
         'DocNumber': 'E/2022/05/T/17',
@@ -274,6 +278,7 @@ data = {
                 "ItemBasedExpenseLineDetail": {"ItemRef": {"value": "3"},"Qty": 1,"CustomerRef": {"value": "None"},"ClassRef": {"value": "None"},"TaxCodeRef": {"value": "None"},"BillableStatus": "NotBillable"},
             }
         ],
+        'GlobalTaxCalculation': 'TaxInclusive'
     },
     "credit_card_purchase_item_based_payload_with_tax_override": {
         "DocNumber": "E/2023/04/T/4",
@@ -333,6 +338,7 @@ data = {
                 'AccountBasedExpenseLineDetail': {'CustomerRef': {'value': None},'ClassRef': {'value': None},'TaxCodeRef': {'value': None},'BillableStatus': 'NotBillable','AccountRef': {'value': '13'},'TaxAmount': 0.0},
             },
         ],
+        'GlobalTaxCalculation': 'TaxInclusive'
     },
     "credit_card_purchase_item_and_account_based_payload_with_tax_override": {
         "DocNumber": "E/2023/04/T/6",
@@ -414,6 +420,7 @@ data = {
                 'ItemBasedExpenseLineDetail': {'ItemRef': {'value': '3'},'Qty': 1,'CustomerRef': {'value': None},'ClassRef': {'value': None},'TaxCodeRef': {'value': None},'BillableStatus': 'NotBillable'},
             }
         ],
+        'GlobalTaxCalculation': 'TaxInclusive'
     },
     "qbo_expense_item_based_payload_with_tax_override": {
         "DocNumber": None,
@@ -488,6 +495,7 @@ data = {
                 'ItemBasedExpenseLineDetail': {'CustomerRef': {'value': None},'ClassRef': {'value': None},'TaxCodeRef': {'value': None},'BillableStatus': 'NotBillable','ItemRef': {'value': '3'},'Qty': 1},
             },
         ],
+        'GlobalTaxCalculation': 'TaxInclusive'
     },
     "qbo_expense_item_and_account_based_payload_with_tax_override": {
         "DocNumber": None,
@@ -569,6 +577,7 @@ data = {
                 "AccountBasedExpenseLineDetail": {"AccountRef": {"value": "56"},"CustomerRef": {"value": "None"},"ClassRef": {"value": "None"},"TaxCodeRef": {"value": "None"},"TaxAmount": 0.0,"BillableStatus": "NotBillable"},
             }
         ],
+        'GlobalTaxCalculation': 'TaxInclusive'
     },
     "qbo_expense_payload_with_tax_override": {
         'DocNumber': None,
@@ -669,6 +678,7 @@ data = {
                 "AccountBasedExpenseLineDetail": {"AccountRef": {"value": "56"},"ClassRef": {"value": "None"},"CustomerRef": {"value": "None"},"TaxCodeRef": {"value": "None"},"TaxAmount": 0.0,"BillableStatus": "NotBillable"},
             }
         ],
+        'GlobalTaxCalculation': 'TaxInclusive'
     },
     "cheque_payload_with_tax_override": {
         "DocNumber": None,
@@ -763,6 +773,7 @@ data = {
                 "ItemBasedExpenseLineDetail": {"ItemRef": {"value": "3"},"Qty": 1,"CustomerRef": {"value": "None"},"ClassRef": {"value": "None"},"TaxCodeRef": {"value": "None"},"BillableStatus": "NotBillable"},
             }
         ],
+        'GlobalTaxCalculation': 'TaxInclusive'
     },
     "cheque_item_based_payload_with_tax_override": {
         "DocNumber": None,
@@ -837,6 +848,7 @@ data = {
                 "AccountBasedExpenseLineDetail": {"AccountRef": {"value": "13"},"ClassRef": {"value": "None"},"CustomerRef": {"value": "None"},"TaxCodeRef": {"value": "None"},"TaxAmount": 0.0,"BillableStatus": "NotBillable"},
             },
         ],
+        'GlobalTaxCalculation': 'TaxInclusive'
     },
     "cheque_item_and_account_based_payload_with_tax_override": {
         "DocNumber": None,

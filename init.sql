@@ -1,6 +1,9 @@
 -- Create the main application database
 CREATE DATABASE qbo_db;
 
+-- Drop the test database if it exists
+DROP DATABASE IF EXISTS test_qbo_db;
+
 -- Create the test database
 CREATE DATABASE test_qbo_db;
 
