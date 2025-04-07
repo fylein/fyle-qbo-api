@@ -92,12 +92,11 @@ class Error(models.Model):
                 }
             )
 
-            if not created:
-                if expense_group.id not in error.mapping_error_expense_group_ids:
-                    error.mapping_error_expense_group_ids = list(
-                        set(error.mapping_error_expense_group_ids + [expense_group.id])
-                    )
-                    error.save(update_fields=['mapping_error_expense_group_ids'])
+            if not created and expense_group.id not in error.mapping_error_expense_group_ids:
+                error.mapping_error_expense_group_ids = list(
+                    set(error.mapping_error_expense_group_ids + [expense_group.id])
+                )
+                error.save(update_fields=['mapping_error_expense_group_ids'])
             return error, created
 
     class Meta:
