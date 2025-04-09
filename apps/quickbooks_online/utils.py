@@ -737,14 +737,11 @@ class QBOConnector:
                 purchase_object.save(update_fields=['exchange_rate'])
 
         if general_settings.import_tax_codes:
-            if general_settings.is_tax_override_enabled:
-                tax_details = self.get_override_tax_details(line)
-                purchase_object_payload.update({
-                    'GlobalTaxCalculation': 'TaxExcluded',
-                    'TxnTaxDetail': {"TaxLine": tax_details}
-                })
-            else:
-                purchase_object_payload.update({'GlobalTaxCalculation': 'TaxInclusive'})
+            tax_details = self.get_override_tax_details(line)
+            purchase_object_payload.update({
+                'GlobalTaxCalculation': 'TaxExcluded',
+                'TxnTaxDetail': {"TaxLine": tax_details}
+            })
 
         [line['ItemBasedExpenseLineDetail'].pop('TaxAmount') for line in purchase_object_payload['Line'] if 'ItemBasedExpenseLineDetail' in line]
 
@@ -819,11 +816,8 @@ class QBOConnector:
             bill.save(update_fields=['exchange_rate'])
 
         if general_settings.import_tax_codes:
-            if general_settings.is_tax_override_enabled:
-                tax_details = self.get_override_tax_details(lines)
-                bill_payload.update({'GlobalTaxCalculation': 'TaxExcluded', 'TxnTaxDetail': {"TaxLine": tax_details}})
-            else:
-                bill_payload.update({'GlobalTaxCalculation': 'TaxInclusive'})
+            tax_details = self.get_override_tax_details(lines)
+            bill_payload.update({'GlobalTaxCalculation': 'TaxExcluded', 'TxnTaxDetail': {"TaxLine": tax_details}})
 
         [line['ItemBasedExpenseLineDetail'].pop('TaxAmount') for line in bill_payload['Line'] if 'ItemBasedExpenseLineDetail' in line]
 

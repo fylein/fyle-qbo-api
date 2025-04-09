@@ -182,7 +182,7 @@ def test_get_department_id_or_none(mocker):
 
     for lineitem in expenses:
         location_id = get_department_id_or_none(expense_group, lineitem)
-        assert location_id == None
+        assert location_id is None
 
     mapping_setting = MappingSetting.objects.filter(workspace_id=expense_group.workspace_id, destination_field='DEPARTMENT').first()
 
@@ -190,13 +190,13 @@ def test_get_department_id_or_none(mocker):
     mapping_setting.save()
     for lineitem in expenses:
         location_id = get_department_id_or_none(expense_group, lineitem)
-        assert location_id == None
+        assert location_id is None
 
     mapping_setting.source_field = 'COST_CENTER'
     mapping_setting.save()
     for lineitem in expenses:
         location_id = get_department_id_or_none(expense_group, lineitem)
-        assert location_id == None
+        assert location_id is None
 
 
 @pytest.mark.django_db(databases=['default'])
