@@ -181,7 +181,7 @@ def handle_qbo_exceptions(bill_payment=False):
                 if not bill_payment:
                     update_failed_expenses(expense_group.expenses.all(), True)
 
-            post_accounting_export_summary(expense_group.workspace.fyle_org_id, expense_group.workspace_id, [expense.id for expense in expense_group.expenses.all()], expense_group.fund_source, True)
+            post_accounting_export_summary(expense_group.workspace_id, [expense.id for expense in expense_group.expenses.all()], expense_group.fund_source, True)
             if len(args) > 2 and args[2] == True and not bill_payment:
                 update_last_export_details(expense_group.workspace_id)
 
