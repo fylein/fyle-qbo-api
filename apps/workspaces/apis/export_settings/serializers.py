@@ -109,9 +109,7 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
             if workspace_general_settings_instance.category_sync_version:
                 category_sync_version = workspace_general_settings_instance.category_sync_version
 
-        enable_cards_mapping = False
-        if workspace_general_settings.get('corporate_credit_card_expenses_object') and (workspace_general_settings.get('corporate_credit_card_expenses_object') not in ('BILL', 'DEBIT CARD EXPENSE')):
-            enable_cards_mapping = True
+        enable_cards_mapping = True if workspace_general_settings.get('corporate_credit_card_expenses_object') and workspace_general_settings.get('corporate_credit_card_expenses_object') != 'BILL' else False
 
         WorkspaceGeneralSettings.objects.update_or_create(
             workspace=instance,
