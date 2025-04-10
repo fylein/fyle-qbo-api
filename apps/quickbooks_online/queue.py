@@ -169,7 +169,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
             error = errors.filter(workspace_id=workspace_id, expense_group=expense_group, is_resolved=False).first()
             skip_export = validate_failing_export(is_auto_export, interval_hours, error, expense_group)
             if skip_export:
-                skip_reason = f"{error.repetition_count} errors" if error else "mapping errors"
+                skip_reason = f"{error.repetition_count} repeated attempts" if error else "mapping errors"
                 logger.info(f"Skipping expense group {expense_group.id} due to {skip_reason}")
                 continue
             task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_JOURNAL_ENTRY', 'triggered_by': triggered_by})
