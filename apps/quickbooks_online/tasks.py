@@ -33,7 +33,7 @@ from apps.quickbooks_online.models import (
 )
 from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import Error, TaskLog
-from apps.workspaces.models import FyleCredential, QBOCredential, Workspace, WorkspaceGeneralSettings
+from apps.workspaces.models import FyleCredential, QBOCredential, WorkspaceGeneralSettings
 from fyle_qbo_api.exceptions import BulkError
 from fyle_qbo_api.logging_middleware import get_logger
 from fyle_qbo_api.utils import invalidate_qbo_credentials
@@ -861,6 +861,5 @@ def update_expense_and_post_summary(in_progress_expenses: List[Expense], workspa
     :param fund_source: Fund source
     :return: None
     """
-    fyle_org_id = Workspace.objects.get(pk=workspace_id).fyle_org_id
     update_expenses_in_progress(in_progress_expenses)
-    post_accounting_export_summary(fyle_org_id, workspace_id, [expense.id for expense in in_progress_expenses], fund_source)
+    post_accounting_export_summary(workspace_id, [expense.id for expense in in_progress_expenses], fund_source)
