@@ -57,10 +57,9 @@ def get_expense_purpose(workspace_id, lineitem, category, workspace_general_sett
 
 def construct_private_note(expense_group: ExpenseGroup):
     expense = expense_group.expenses.first()
-    workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
     expense_type = 'Reimbursable'
     if expense_group.fund_source == 'CCC':
-        expense_type = 'Debit Card' if workspace_general_settings.corporate_credit_card_expenses_object == 'DEBIT CARD EXPENSE' else 'Credit card'
+        expense_type = 'Corporate Card Expense'
     merchant = ' spent on merchant {0}'.format(expense.vendor) if expense.vendor else ''
     spent_at = ' on {0} '.format(expense.spent_at.date()) if expense.spent_at else ''
 
@@ -489,13 +488,17 @@ class QBOExpense(models.Model):
         workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
         employee_field_mapping = workspace_general_settings.employee_field_mapping
 
+        account_id = general_mappings.qbo_expense_account_id if expense_group.fund_source == 'PERSONAL' else general_mappings.default_debit_card_account_id
+
         if workspace_general_settings.map_merchant_to_vendor and expense_group.fund_source == 'CCC':
             merchant = expense.vendor if expense.vendor else ''
 
             entity = DestinationAttribute.objects.filter(value__iexact=merchant, attribute_type='VENDOR', workspace_id=expense_group.workspace_id, active=True).order_by('-updated_at').first()
 
             if not entity:
-                entity_id = DestinationAttribute.objects.filter(value='Debit Card Misc', workspace_id=expense_group.workspace_id).first().destination_id
+                destination_attribute = DestinationAttribute.objects.filter(destination_id=account_id, workspace_id=expense_group.workspace_id).first()
+                payee_type = 'Debit Card Misc' if destination_attribute.attribute_type == 'BANK_ACCOUNT' else 'Credit Card Misc'
+                entity_id = DestinationAttribute.objects.filter(value=payee_type, workspace_id=expense_group.workspace_id).first().destination_id
             else:
                 entity_id = entity.destination_id
 
