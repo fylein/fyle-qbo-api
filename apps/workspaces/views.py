@@ -42,13 +42,13 @@ class TokenHealthView(generics.RetrieveAPIView):
     """
 
     def get(self, request, *args, **kwargs):
-        qbo_credentials = QBOCredential.objects.get(workspace=kwargs['workspace_id'])
-
-        if not qbo_credentials:
+        try:
+            qbo_credentials = QBOCredential.objects.get(workspace=kwargs['workspace_id'])
+        except QBOCredential.DoesNotExist:
             return Response(
                 {"message": "Quickbooks Online credentials not found"},
                 status=status.HTTP_400_BAD_REQUEST
-            )
+            ) 
 
         if qbo_credentials.is_expired:
             return Response(
