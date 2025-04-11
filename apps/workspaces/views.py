@@ -48,11 +48,10 @@ class TokenHealthView(generics.RetrieveAPIView):
             return Response(
                 {"message": "Quickbooks Online credentials not found"},
                 status=status.HTTP_400_BAD_REQUEST
-            ) 
+            )
 
         if qbo_credentials.is_expired:
-            return Response(
-                {"message": "Quickbooks Online connection expired"},
+            return Response({"message": "Quickbooks Online connection expired"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
