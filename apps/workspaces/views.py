@@ -35,6 +35,34 @@ logger.level = logging.INFO
 User = get_user_model()
 auth_utils = AuthUtils()
 
+class TokenHealthView(generics.RetrieveAPIView):
+    """
+    Token Health View
+    """
+
+    def get(self, request, *args, **kwargs):
+        qbo_credentials = QBOCredential.objects.get(workspace=kwargs['workspace_id'])
+
+        if not qbo_credentials:
+            return Response(
+                {"message": "Quickbooks Online credentials not found"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if qbo_credentials.is_expired:
+            return Response(
+                {"message": "Quickbooks Online connection expired"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        elif not qbo_credentials.refresh_token:
+            return Response(
+                {"message": "Quickbooks Online disconnected"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return Response({"message": "Quickbooks Online connection is active"},status=status.HTTP_200_OK)
+
 
 class WorkspaceView(generics.CreateAPIView, generics.RetrieveUpdateAPIView):
     """
