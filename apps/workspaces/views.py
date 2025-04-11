@@ -35,6 +35,7 @@ logger.level = logging.INFO
 User = get_user_model()
 auth_utils = AuthUtils()
 
+
 class TokenHealthView(generics.RetrieveAPIView):
     """
     Token Health View
