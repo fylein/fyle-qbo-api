@@ -11,7 +11,7 @@ from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMappin
 from fyle_integrations_platform_connector import PlatformConnector
 from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 
-from apps.fyle.actions import update_expenses_in_progress, post_accounting_export_summary
+from apps.fyle.actions import post_accounting_export_summary, update_expenses_in_progress
 from apps.fyle.helpers import get_filter_credit_expenses
 from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings
 from apps.mappings.models import GeneralMapping
@@ -33,7 +33,7 @@ from apps.quickbooks_online.models import (
 )
 from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import Error, TaskLog
-from apps.workspaces.models import FyleCredential, QBOCredential, Workspace, WorkspaceGeneralSettings
+from apps.workspaces.models import FyleCredential, QBOCredential, WorkspaceGeneralSettings
 from fyle_qbo_api.exceptions import BulkError
 from fyle_qbo_api.logging_middleware import get_logger
 from fyle_qbo_api.utils import invalidate_qbo_credentials
@@ -168,9 +168,7 @@ def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connectio
             if error_response['code'] == '6240':
                 logger.error('Destination Attribute with value %s not found in workspace %s', source_employee.detail['full_name'], expense_group.workspace_id)
                 if source_employee:
-                    error, created = Error.objects.update_or_create(
-                        workspace_id=expense_group.workspace_id, expense_attribute=source_employee, defaults={'type': 'EMPLOYEE_MAPPING', 'error_title': source_employee.value, 'error_detail': 'Employee mapping is missing', 'is_resolved': False}
-                    )
+                    error, created = Error.get_or_create_error_with_expense_group(expense_group, source_employee)
                     error.increase_repetition_count_by_one(created)
 
             raise BulkError('Mappings are missing', [{'row': None, 'expense_group_id': expense_group.id, 'value': expense_group.description.get('employee_email'), 'type': 'Employee Mapping', 'message': 'Employee mapping not found'}])
@@ -320,9 +318,7 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
         except EmployeeMapping.DoesNotExist:
             bulk_errors.append({'row': None, 'expense_group_id': expense_group.id, 'value': expense_group.description.get('employee_email'), 'type': 'Employee Mapping', 'message': 'Employee mapping not found'})
             if employee_attribute:
-                error, created = Error.objects.update_or_create(
-                    workspace_id=expense_group.workspace_id, expense_attribute=employee_attribute, defaults={'type': 'EMPLOYEE_MAPPING', 'error_title': employee_attribute.value, 'error_detail': 'Employee mapping is missing', 'is_resolved': False}
-                )
+                error, created = Error.get_or_create_error_with_expense_group(expense_group, employee_attribute)
                 error.increase_repetition_count_by_one(created)
 
     expenses = expense_group.expenses.all()
@@ -341,9 +337,7 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
             bulk_errors.append({'row': row, 'expense_group_id': expense_group.id, 'value': category, 'type': 'Category Mapping', 'message': 'Category Mapping not found'})
 
             if category_attribute:
-                error, created = Error.objects.update_or_create(
-                    workspace_id=expense_group.workspace_id, expense_attribute=category_attribute, defaults={'type': 'CATEGORY_MAPPING', 'error_title': category_attribute.value, 'error_detail': 'Category mapping is missing', 'is_resolved': False}
-                )
+                error, created = Error.get_or_create_error_with_expense_group(expense_group, category_attribute)
                 error.increase_repetition_count_by_one(created)
 
         if general_settings.import_tax_codes and lineitem.tax_group_id:
@@ -355,7 +349,7 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                 bulk_errors.append({'row': row, 'expense_group_id': expense_group.id, 'value': tax_group.value, 'type': 'Tax Group Mapping', 'message': 'Tax Group Mapping not found'})
 
                 if tax_group:
-                    error, created = Error.objects.update_or_create(workspace_id=expense_group.workspace_id, expense_attribute=tax_group, defaults={'type': 'TAX_MAPPING', 'error_title': tax_group.value, 'error_detail': 'Tax mapping is missing', 'is_resolved': False})
+                    error, created = Error.get_or_create_error_with_expense_group(expense_group, tax_group)
                     error.increase_repetition_count_by_one(created)
         row = row + 1
 
@@ -867,6 +861,5 @@ def update_expense_and_post_summary(in_progress_expenses: List[Expense], workspa
     :param fund_source: Fund source
     :return: None
     """
-    fyle_org_id = Workspace.objects.get(pk=workspace_id).fyle_org_id
     update_expenses_in_progress(in_progress_expenses)
-    post_accounting_export_summary(fyle_org_id, workspace_id, [expense.id for expense in in_progress_expenses], fund_source)
+    post_accounting_export_summary(workspace_id, [expense.id for expense in in_progress_expenses], fund_source)
