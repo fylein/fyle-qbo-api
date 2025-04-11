@@ -45,21 +45,13 @@ class TokenHealthView(generics.RetrieveAPIView):
         try:
             qbo_credentials = QBOCredential.objects.get(workspace=kwargs['workspace_id'])
         except QBOCredential.DoesNotExist:
-            return Response(
-                {"message": "Quickbooks Online credentials not found"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"message": "Quickbooks Online credentials not found"},status=status.HTTP_400_BAD_REQUEST)
 
         if qbo_credentials.is_expired:
-            return Response({"message": "Quickbooks Online connection expired"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"message": "Quickbooks Online connection expired"},status=status.HTTP_400_BAD_REQUEST)
 
         elif not qbo_credentials.refresh_token:
-            return Response(
-                {"message": "Quickbooks Online disconnected"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"message": "Quickbooks Online disconnected"},status=status.HTTP_400_BAD_REQUEST)
 
         return Response({"message": "Quickbooks Online connection is active"},status=status.HTTP_200_OK)
 
