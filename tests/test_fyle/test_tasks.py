@@ -5,9 +5,9 @@ import pytest
 from django.db.models import Q
 from django.urls import reverse
 from fyle.platform.exceptions import InternalServerError, InvalidTokenError, RetryException
+from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
-from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 
 from apps.fyle.actions import mark_expenses_as_skipped
 from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings
@@ -128,7 +128,7 @@ def test_post_accounting_export_summary(db, mocker):
         'fyle_integrations_platform_connector.apis.Expenses.post_bulk_accounting_export_summary',
         return_value=[]
     )
-    post_accounting_export_summary('or79Cob97KSh', 3, [expense_id])
+    post_accounting_export_summary(3, [expense_id])
 
     assert Expense.objects.filter(id=expense_id).first().accounting_export_summary['synced'] == True
 
