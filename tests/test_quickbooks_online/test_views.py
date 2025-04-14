@@ -3,10 +3,7 @@ from unittest import mock
 
 from django.urls import reverse
 from fyle_accounting_mappings.models import DestinationAttribute
-from qbosdk.exceptions import InvalidTokenError, WrongParamsError
-
 from apps.workspaces.models import QBOCredential
-from tests.test_quickbooks_online.fixtures import data
 
 
 def test_destination_attributes_view(api_client, test_connection):
