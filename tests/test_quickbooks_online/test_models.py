@@ -78,7 +78,7 @@ def test_qbo_expense(db):
     assert qbo_expense.currency == 'USD'
     assert qbo_expense.transaction_date == '2022-05-17'
     assert qbo_expense.expense_account_id == '41'
-    assert qbo_expense.entity_id == '60'
+    assert qbo_expense.entity_id == '58'
 
 
 def test_create_journal_entry(mocker,db):
