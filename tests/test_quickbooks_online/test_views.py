@@ -71,7 +71,7 @@ def test_get_company_preference_exceptions(api_client, test_connection, mocker, 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
     mocked_invalidate = mock.MagicMock()
-    mocker.patch('apps.quickbooks_online.actions.invalidate_qbo_credentials', side_effect=mocked_invalidate)
+    mocker.patch('apps.mappings.exceptions.invalidate_qbo_credentials', side_effect=mocked_invalidate)
 
     with mock.patch('apps.quickbooks_online.utils.QBOConnector.get_company_preference') as mock_call:
         mock_call.side_effect = WrongParamsError(msg='wrong params', response='invalid_params')
