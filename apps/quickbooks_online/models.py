@@ -492,7 +492,6 @@ class QBOExpense(models.Model):
             account_id = general_mappings.qbo_expense_account_id
         else:
             ccc_account_id = get_ccc_account_id(workspace_general_settings, general_mappings, expense, description)
-            print('ccc_account_id', ccc_account_id)
             if ccc_account_id:
                 account_id = ccc_account_id
             else:
