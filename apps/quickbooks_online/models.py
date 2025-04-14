@@ -498,7 +498,6 @@ class QBOExpense(models.Model):
             else:
                 account_id = general_mappings.default_debit_card_account_id
 
-        print('account_id', account_id)
 
         if workspace_general_settings.map_merchant_to_vendor and expense_group.fund_source == 'CCC':
             merchant = expense.vendor if expense.vendor else ''
@@ -506,7 +505,6 @@ class QBOExpense(models.Model):
             entity = DestinationAttribute.objects.filter(value__iexact=merchant, attribute_type='VENDOR', workspace_id=expense_group.workspace_id, active=True).order_by('-updated_at').first()
 
             if not entity:
-                print('account_id, workspace_id', account_id, expense_group.workspace_id)
                 destination_attribute = DestinationAttribute.objects.filter(destination_id=account_id, workspace_id=expense_group.workspace_id).first()
                 payee_type = 'Debit Card Misc' if destination_attribute.attribute_type == 'BANK_ACCOUNT' else 'Credit Card Misc'
                 entity_id = DestinationAttribute.objects.filter(value=payee_type, workspace_id=expense_group.workspace_id).first().destination_id
