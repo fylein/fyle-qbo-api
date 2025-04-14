@@ -498,7 +498,6 @@ class QBOExpense(models.Model):
             else:
                 account_id = general_mappings.default_debit_card_account_id
 
-
         if workspace_general_settings.map_merchant_to_vendor and expense_group.fund_source == 'CCC':
             merchant = expense.vendor if expense.vendor else ''
 
