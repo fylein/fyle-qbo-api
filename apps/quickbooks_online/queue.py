@@ -19,13 +19,20 @@ def async_run_post_configration_triggers(workspace_general_settings: WorkspaceGe
     async_task('apps.quickbooks_online.tasks.async_sync_accounts', int(workspace_general_settings.workspace_id), q_options={'cluster': 'import'})
 
 
-def validate_failing_export(is_auto_export: bool, interval_hours: int, error: Error):
+def validate_failing_export(is_auto_export: bool, interval_hours: int, error: Error, expense_group: ExpenseGroup):
     """
     Validate failing export
     :param is_auto_export: Is auto export
     :param interval_hours: Interval hours
     :param error: Error
     """
+    mapping_error = Error.objects.filter(
+        workspace_id=expense_group.workspace_id,
+        mapping_error_expense_group_ids__contains=[expense_group.id],
+        is_resolved=False
+    ).first()
+    if mapping_error:
+        return True
     # If auto export is enabled and interval hours is set and error repetition count is greater than 100, export only once a day
     return is_auto_export and interval_hours and error and error.repetition_count > 100 and datetime.now().replace(tzinfo=timezone.utc) - error.updated_at <= timedelta(hours=24)
 
@@ -48,9 +55,10 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_
 
         for index, expense_group in enumerate(expense_groups):
             error = errors.filter(workspace_id=workspace_id, expense_group=expense_group, is_resolved=False).first()
-            skip_export = validate_failing_export(is_auto_export, interval_hours, error)
+            skip_export = validate_failing_export(is_auto_export, interval_hours, error, expense_group)
             if skip_export:
-                logger.info('Skipping expense group %s as it has %s errors', expense_group.id, error.repetition_count)
+                skip_reason = f"{error.repetition_count} errors" if error else "mapping errors"
+                logger.info(f"Skipping expense group {expense_group.id} due to {skip_reason}")
                 continue
             task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_BILL', 'triggered_by': triggered_by})
             if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
@@ -113,9 +121,10 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], i
 
         for index, expense_group in enumerate(expense_groups):
             error = errors.filter(workspace_id=workspace_id, expense_group=expense_group, is_resolved=False).first()
-            skip_export = validate_failing_export(is_auto_export, interval_hours, error)
+            skip_export = validate_failing_export(is_auto_export, interval_hours, error, expense_group)
             if skip_export:
-                logger.info('Skipping expense group %s as it has %s errors', expense_group.id, error.repetition_count)
+                skip_reason = f"{error.repetition_count} errors" if error else "mapping errors"
+                logger.info(f"Skipping expense group {expense_group.id} due to {skip_reason}")
                 continue
             task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_CHECK', 'triggered_by': triggered_by})
             if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
@@ -158,9 +167,10 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
 
         for index, expense_group in enumerate(expense_groups):
             error = errors.filter(workspace_id=workspace_id, expense_group=expense_group, is_resolved=False).first()
-            skip_export = validate_failing_export(is_auto_export, interval_hours, error)
+            skip_export = validate_failing_export(is_auto_export, interval_hours, error, expense_group)
             if skip_export:
-                logger.info('Skipping expense group %s as it has %s errors', expense_group.id, error.repetition_count)
+                skip_reason = f"{error.repetition_count} repeated attempts" if error else "mapping errors"
+                logger.info(f"Skipping expense group {expense_group.id} due to {skip_reason}")
                 continue
             task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_JOURNAL_ENTRY', 'triggered_by': triggered_by})
             if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
@@ -205,9 +215,10 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
 
         for index, expense_group in enumerate(expense_groups):
             error = errors.filter(workspace_id=workspace_id, expense_group=expense_group, is_resolved=False).first()
-            skip_export = validate_failing_export(is_auto_export, interval_hours, error)
+            skip_export = validate_failing_export(is_auto_export, interval_hours, error, expense_group)
             if skip_export:
-                logger.info('Skipping expense group %s as it has %s errors', expense_group.id, error.repetition_count)
+                skip_reason = f"{error.repetition_count} errors" if error else "mapping errors"
+                logger.info(f"Skipping expense group {expense_group.id} due to {skip_reason}")
                 continue
 
             task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_CREDIT_CARD_PURCHASE', 'triggered_by': triggered_by})
@@ -250,9 +261,10 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
 
         for index, expense_group in enumerate(expense_groups):
             error = errors.filter(workspace_id=workspace_id, expense_group=expense_group, is_resolved=False).first()
-            skip_export = validate_failing_export(is_auto_export, interval_hours, error)
+            skip_export = validate_failing_export(is_auto_export, interval_hours, error, expense_group)
             if skip_export:
-                logger.info('Skipping expense group %s as it has %s errors', expense_group.id, error.repetition_count)
+                skip_reason = f"{error.repetition_count} errors" if error else "mapping errors"
+                logger.info(f"Skipping expense group {expense_group.id} due to {skip_reason}")
                 continue
 
             task_log, _ = TaskLog.objects.get_or_create(

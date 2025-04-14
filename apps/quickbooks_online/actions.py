@@ -9,7 +9,7 @@ from qbosdk.exceptions import InvalidTokenError, WrongParamsError
 from rest_framework.response import Response
 from rest_framework.views import status
 
-from apps.fyle.actions import update_complete_expenses, post_accounting_export_summary
+from apps.fyle.actions import post_accounting_export_summary, update_complete_expenses
 from apps.fyle.models import ExpenseGroup
 from apps.mappings.constants import SYNC_METHODS
 from apps.mappings.helpers import get_auto_sync_permission
@@ -25,7 +25,6 @@ logger.level = logging.INFO
 
 def update_last_export_details(workspace_id):
     last_export_detail = LastExportDetail.objects.get(workspace_id=workspace_id)
-    workspace = Workspace.objects.get(id=workspace_id)
 
     failed_exports = TaskLog.objects.filter(~Q(type='CREATING_BILL_PAYMENT'), workspace_id=workspace_id, status__in=['FAILED', 'FATAL']).count()
 
@@ -37,7 +36,10 @@ def update_last_export_details(workspace_id):
     last_export_detail.save()
 
     patch_integration_settings(workspace_id, errors=failed_exports)
-    post_accounting_export_summary(workspace.fyle_org_id, workspace_id)
+    try:
+        post_accounting_export_summary(workspace_id)
+    except Exception as e:
+        logger.error(f"Error posting accounting export summary: {e} for workspace id {workspace_id}")
 
     return last_export_detail
 
@@ -189,4 +191,4 @@ def generate_export_url_and_update_expense(expense_group: ExpenseGroup) -> None:
     expense_group.save()
 
     update_complete_expenses(expense_group.expenses.all(), url)
-    post_accounting_export_summary(expense_group.workspace.fyle_org_id, expense_group.workspace.id, [expense.id for expense in expense_group.expenses.all()], expense_group.fund_source)
+    post_accounting_export_summary(expense_group.workspace.id, [expense.id for expense in expense_group.expenses.all()], expense_group.fund_source)
