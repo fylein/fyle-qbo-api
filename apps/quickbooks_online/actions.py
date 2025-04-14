@@ -5,10 +5,6 @@ from django.conf import settings
 from django.db.models import Q
 from django_q.tasks import Chain
 from fyle_accounting_mappings.models import MappingSetting
-from qbosdk.exceptions import InvalidTokenError, WrongParamsError
-from rest_framework.response import Response
-from rest_framework.views import status
-
 from apps.fyle.actions import post_accounting_export_summary, update_complete_expenses
 from apps.fyle.models import ExpenseGroup
 from apps.mappings.constants import SYNC_METHODS
@@ -17,7 +13,7 @@ from apps.quickbooks_online.helpers import generate_export_type_and_id
 from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import LastExportDetail, QBOCredential, Workspace, WorkspaceGeneralSettings
-from fyle_qbo_api.utils import invalidate_qbo_credentials, patch_integration_settings
+from fyle_qbo_api.utils import patch_integration_settings
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
