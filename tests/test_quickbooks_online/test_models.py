@@ -66,6 +66,14 @@ def test_qbo_expense(db):
     assert qbo_expense.entity_id == '55'
 
     expense_group = ExpenseGroup.objects.get(id=17)
+    DestinationAttribute.objects.create(
+                attribute_type='BANK_ACCOUNT',
+                display_name='Bank Account',
+                value='Cash on hand',
+                destination_id='94',
+                workspace_id=3,
+                active=True
+            )
     workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
     qbo_expense = QBOExpense.create_qbo_expense(expense_group)
     qbo_expense_lineitems = QBOExpenseLineitem.create_qbo_expense_lineitems(expense_group, workspace_general_settings)
@@ -77,8 +85,8 @@ def test_qbo_expense(db):
 
     assert qbo_expense.currency == 'USD'
     assert qbo_expense.transaction_date == '2022-05-17'
-    assert qbo_expense.expense_account_id == '41'
-    assert qbo_expense.entity_id == '58'
+    assert qbo_expense.expense_account_id == '94'
+    assert qbo_expense.entity_id == '60'
 
 
 def test_create_journal_entry(mocker,db):
