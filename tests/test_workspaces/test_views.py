@@ -13,6 +13,50 @@ from apps.workspaces.actions import export_to_qbo
 from apps.fyle.models import ExpenseGroup
 
 
+def test_get_qbo_token_health(mocker, api_client, test_connection):
+    workspace_id = 1
+    mocker.patch("apps.quickbooks_online.utils.QBOConnector.__init__", return_value=None)
+    mocker.patch("apps.quickbooks_online.utils.QBOConnector.get_company_preference", return_value={'CompanyName': 'Test Company'})
+
+    access_token = test_connection.access_token
+    url = "/api/workspaces/{}/token_health/".format(workspace_id)
+
+    api_client.credentials(HTTP_AUTHORIZATION="Bearer {}".format(access_token))
+
+    QBOCredential.objects.filter(workspace=workspace_id).delete()
+
+    response = api_client.get(url)
+    assert response.status_code == 400
+    assert response.data['message'] == "Quickbooks Online credentials not found"
+
+    QBOCredential.objects.create(workspace_id=workspace_id, refresh_token="some_token", is_expired=True)
+    response = api_client.get(url)
+    assert response.status_code == 400
+    assert response.data['message'] == "Quickbooks Online connection expired"
+
+    QBOCredential.objects.filter(workspace=workspace_id).delete()
+    QBOCredential.objects.create(workspace_id=workspace_id, refresh_token=None, is_expired=False)
+    response = api_client.get(url)
+    assert response.status_code == 400
+    assert response.data['message'] == "Quickbooks Online disconnected"
+
+    QBOCredential.objects.filter(workspace=workspace_id).delete()
+    QBOCredential.objects.create(workspace_id=workspace_id, refresh_token="valid_refresh_token", is_expired=False)
+    response = api_client.get(url)
+    assert response.status_code == 200
+    assert response.data['message'] == "Quickbooks Online connection is active"
+
+    mocker.patch("apps.quickbooks_online.utils.QBOConnector.get_company_preference", side_effect=qbo_exc.InvalidTokenError("Token expired"))
+    response = api_client.get(url)
+    assert response.status_code == 400
+    assert response.data['message'] == "Quickbooks Online connection expired"
+
+    mocker.patch("apps.quickbooks_online.utils.QBOConnector.get_company_preference", side_effect=qbo_exc.WrongParamsError("Wrong parameters"))
+    response = api_client.get(url)
+    assert response.status_code == 400
+    assert response.data['message'] == "Quickbooks Online connection expired"
+
+
 def test_get_workspace(api_client, test_connection):
 
     url = reverse('workspace')
