@@ -44,22 +44,6 @@ def update_last_export_details(workspace_id):
     return last_export_detail
 
 
-def get_preferences(workspace_id: int):
-    try:
-        qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
-
-        qbo_connector = QBOConnector(qbo_credentials, workspace_id=workspace_id)
-
-        preferences = qbo_connector.get_company_preference()
-
-        return Response(data=preferences, status=status.HTTP_200_OK)
-    except QBOCredential.DoesNotExist:
-        return Response(data={'message': 'QBO credentials not found in workspace'}, status=status.HTTP_400_BAD_REQUEST)
-    except (WrongParamsError, InvalidTokenError):
-        invalidate_qbo_credentials(workspace_id, qbo_credentials)
-        return Response(data={'message': 'Invalid token or Quickbooks Online connection expired'}, status=status.HTTP_400_BAD_REQUEST)
-
-
 def refresh_quickbooks_dimensions(workspace_id: int):
     quickbooks_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
     quickbooks_connector = QBOConnector(quickbooks_credentials, workspace_id=workspace_id)

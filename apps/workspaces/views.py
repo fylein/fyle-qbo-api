@@ -27,6 +27,8 @@ from apps.workspaces.serializers import (
     WorkSpaceGeneralSettingsSerializer,
     WorkspaceSerializer,
 )
+from apps.quickbooks_online.utils import QBOConnector
+from fyle_qbo_api.utils import invalidate_qbo_credentials
 from apps.workspaces.utils import generate_qbo_refresh_token
 
 logger = logging.getLogger(__name__)
@@ -42,18 +44,31 @@ class TokenHealthView(generics.RetrieveAPIView):
     """
 
     def get(self, request, *args, **kwargs):
-        try:
-            qbo_credentials = QBOCredential.objects.get(workspace=kwargs['workspace_id'])
-        except QBOCredential.DoesNotExist:
-            return Response({"message": "Quickbooks Online credentials not found"},status=status.HTTP_400_BAD_REQUEST)
+        status_code = status.HTTP_200_OK
+        message = "Quickbooks Online connection is active"
 
-        if qbo_credentials.is_expired:
-            return Response({"message": "Quickbooks Online connection expired"},status=status.HTTP_400_BAD_REQUEST)
+        workspace_id = kwargs.get('workspace_id')
+        qbo_credentials = QBOCredential.objects.filter(workspace=workspace_id).first()
 
+        if not qbo_credentials:
+            status_code = status.HTTP_400_BAD_REQUEST
+            message = "Quickbooks Online credentials not found"
+        elif qbo_credentials.is_expired:
+            status_code = status.HTTP_400_BAD_REQUEST
+            message = "Quickbooks Online connection expired"
         elif not qbo_credentials.refresh_token:
-            return Response({"message": "Quickbooks Online disconnected"},status=status.HTTP_400_BAD_REQUEST)
+            status_code = status.HTTP_400_BAD_REQUEST
+            message = "Quickbooks Online disconnected"
+        else:
+            try:
+                qbo_connector = QBOConnector(qbo_credentials, workspace_id=workspace_id)
+                qbo_connector.get_company_preference()
+            except (qbo_exc.WrongParamsError, qbo_exc.InvalidTokenError):
+                invalidate_qbo_credentials(workspace_id, qbo_credentials)
+                status_code = status.HTTP_400_BAD_REQUEST
+                message = "Quickbooks Online connection expired"
 
-        return Response({"message": "Quickbooks Online connection is active"},status=status.HTTP_200_OK)
+        return Response({"message": message}, status=status_code)
 
 
 class WorkspaceView(generics.CreateAPIView, generics.RetrieveUpdateAPIView):
