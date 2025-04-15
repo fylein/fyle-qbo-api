@@ -18,7 +18,6 @@ from django.urls import path
 from apps.quickbooks_online.views import (
     DestinationAttributesView,
     EmployeeView,
-    PreferencesView,
     QBOAttributesView,
     RefreshQuickbooksDimensionView,
     SearchedDestinationAttributesView,
@@ -28,7 +27,6 @@ from apps.quickbooks_online.views import (
 )
 
 urlpatterns = [
-    path('preferences/', PreferencesView.as_view()),
     path('vendors/', VendorView.as_view()),
     path('employees/', EmployeeView.as_view()),
     path('sync_dimensions/', SyncQuickbooksDimensionView.as_view()),
