@@ -3,10 +3,7 @@ from unittest import mock
 
 from django.urls import reverse
 from fyle_accounting_mappings.models import DestinationAttribute
-from qbosdk.exceptions import InvalidTokenError, WrongParamsError
-
 from apps.workspaces.models import QBOCredential
-from tests.test_quickbooks_online.fixtures import data
 
 
 def test_destination_attributes_view(api_client, test_connection):
@@ -48,52 +45,6 @@ def test_qbo_attributes_view(api_client, test_connection):
     response = json.loads(response.content)
 
     assert len(response) == 1
-
-
-def test_get_company_preference(mocker, api_client, test_connection, db):
-    mocker.patch('qbosdk.apis.Preferences.get', return_value=data['company_info'])
-    access_token = test_connection.access_token
-    url = '/api/workspaces/3/qbo/preferences/'
-
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
-
-    response = api_client.get(url)
-    assert response.status_code == 200
-
-    response = json.loads(response.content)
-    assert response['Id'] == '1'
-
-
-def test_get_company_preference_exceptions(api_client, test_connection, mocker, db):
-    access_token = test_connection.access_token
-    url = '/api/workspaces/3/qbo/preferences/'
-
-    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
-
-    mocked_invalidate = mock.MagicMock()
-    mocker.patch('apps.quickbooks_online.actions.invalidate_qbo_credentials', side_effect=mocked_invalidate)
-
-    with mock.patch('apps.quickbooks_online.utils.QBOConnector.get_company_preference') as mock_call:
-        mock_call.side_effect = WrongParamsError(msg='wrong params', response='invalid_params')
-        response = api_client.get(url)
-        assert response.status_code == 400
-
-        args, _ = mocked_invalidate.call_args
-        assert args[0] == 3
-
-        mock_call.side_effect = InvalidTokenError(msg='Invalid token, try to refresh it', response='Invalid token, try to refresh it')
-        response = api_client.get(url)
-        assert response.status_code == 400
-
-        args, _ = mocked_invalidate.call_args
-        assert args[0] == 3
-
-        mock_call.side_effect = QBOCredential.DoesNotExist()
-        response = api_client.get(url)
-        assert response.status_code == 400
-
-        response = json.loads(response.content)
-        assert response['message'] == 'QBO credentials not found in workspace'
 
 
 def test_vendor_view(mocker, api_client, test_connection):

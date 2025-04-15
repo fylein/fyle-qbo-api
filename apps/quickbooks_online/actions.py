@@ -5,10 +5,6 @@ from django.conf import settings
 from django.db.models import Q
 from django_q.tasks import Chain
 from fyle_accounting_mappings.models import MappingSetting
-from qbosdk.exceptions import InvalidTokenError, WrongParamsError
-from rest_framework.response import Response
-from rest_framework.views import status
-
 from apps.fyle.actions import post_accounting_export_summary, update_complete_expenses
 from apps.fyle.models import ExpenseGroup
 from apps.mappings.constants import SYNC_METHODS
@@ -17,7 +13,7 @@ from apps.quickbooks_online.helpers import generate_export_type_and_id
 from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import LastExportDetail, QBOCredential, Workspace, WorkspaceGeneralSettings
-from fyle_qbo_api.utils import invalidate_qbo_credentials, patch_integration_settings
+from fyle_qbo_api.utils import patch_integration_settings
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -42,22 +38,6 @@ def update_last_export_details(workspace_id):
         logger.error(f"Error posting accounting export summary: {e} for workspace id {workspace_id}")
 
     return last_export_detail
-
-
-def get_preferences(workspace_id: int):
-    try:
-        qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
-
-        qbo_connector = QBOConnector(qbo_credentials, workspace_id=workspace_id)
-
-        preferences = qbo_connector.get_company_preference()
-
-        return Response(data=preferences, status=status.HTTP_200_OK)
-    except QBOCredential.DoesNotExist:
-        return Response(data={'message': 'QBO credentials not found in workspace'}, status=status.HTTP_400_BAD_REQUEST)
-    except (WrongParamsError, InvalidTokenError):
-        invalidate_qbo_credentials(workspace_id, qbo_credentials)
-        return Response(data={'message': 'Invalid token or Quickbooks Online connection expired'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 def refresh_quickbooks_dimensions(workspace_id: int):
