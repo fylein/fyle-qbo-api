@@ -438,7 +438,7 @@ def create_qbo_expense_item_and_account_based(db):
         workspace_id=3,
         active=True,
     )
-    
+
     expense_group.expenses.add(*[expense_1, expense_2])
 
     create_item_based_mapping(workspace_id=3)

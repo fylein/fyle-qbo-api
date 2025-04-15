@@ -383,8 +383,6 @@ def test_post_qbo_expenses_success(mocker, create_task_logs, db):
     create_qbo_expense(expense_group, task_log.id, True, True)
 
     task_log = TaskLog.objects.get(pk=task_log.id)
-    
-
     qbo_expense = QBOExpense.objects.get(expense_group_id=expense_group.id)
 
     assert task_log.status == 'COMPLETE'
