@@ -862,4 +862,4 @@ def update_expense_and_post_summary(in_progress_expenses: List[Expense], workspa
     :return: None
     """
     update_expenses_in_progress(in_progress_expenses)
-    post_accounting_export_summary(workspace_id, [expense.id for expense in in_progress_expenses], fund_source)
+    post_accounting_export_summary(workspace_id=workspace_id, expense_ids=[expense.id for expense in in_progress_expenses], fund_source=fund_source)
