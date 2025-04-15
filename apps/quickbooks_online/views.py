@@ -11,7 +11,6 @@ from rest_framework.response import Response
 from rest_framework.views import status
 
 from apps.exceptions import handle_view_exceptions
-from apps.quickbooks_online.actions import get_preferences
 from fyle_qbo_api.utils import LookupFieldMixin
 
 from .serializers import QuickbooksFieldSerializer
@@ -57,15 +56,6 @@ class EmployeeView(LookupFieldMixin, generics.ListAPIView):
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = {'value': {'icontains'}, 'attribute_type': {'exact', 'in'}, 'active': {'exact'}}
     ordering_fields = ('value',)
-
-
-class PreferencesView(generics.RetrieveAPIView):
-    """
-    Preferences View
-    """
-
-    def get(self, request, *args, **kwargs):
-        return get_preferences(kwargs['workspace_id'])
 
 
 class SyncQuickbooksDimensionView(generics.ListCreateAPIView):

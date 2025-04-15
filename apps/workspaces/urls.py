@@ -21,6 +21,7 @@ from apps.workspaces.views import (
     GeneralSettingsView,
     LastExportDetailView,
     ReadyView,
+    TokenHealthView,
     SetupE2ETestView,
     WorkspaceAdminsView,
     WorkspaceView,
@@ -29,6 +30,7 @@ from apps.workspaces.views import (
 urlpatterns = [
     path('', WorkspaceView.as_view(), name='workspace'),
     path('<int:workspace_id>/', WorkspaceView.as_view(), name='workspace-by-id'),
+    path('<int:workspace_id>/token_health/', TokenHealthView.as_view()),
     path('<int:workspace_id>/export_detail/', LastExportDetailView.as_view(), name='export-detail'),
     path('<int:workspace_id>/settings/general/', GeneralSettingsView.as_view(), name='workspace-general-settings'),
     path('<int:workspace_id>/connect_qbo/authorization_code/', ConnectQBOView.as_view()),
