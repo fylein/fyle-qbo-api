@@ -176,11 +176,12 @@ def mark_accounting_export_summary_as_synced(expenses: List[Expense]) -> None:
             Expense(
                 id=expense.id,
                 accounting_export_summary=updated_accounting_export_summary,
-                previous_export_state=updated_accounting_export_summary['state']
+                previous_export_state=updated_accounting_export_summary['state'],
+                updated_at=datetime.now(timezone.utc)
             )
         )
 
-    Expense.objects.bulk_update(expense_to_be_updated, ['accounting_export_summary', 'previous_export_state'], batch_size=50)
+    Expense.objects.bulk_update(expense_to_be_updated, ['accounting_export_summary', 'previous_export_state', 'updated_at'], batch_size=50)
 
 
 def update_failed_expenses(failed_expenses: List[Expense], is_mapping_error: bool, is_token_expired: bool = False) -> None:
