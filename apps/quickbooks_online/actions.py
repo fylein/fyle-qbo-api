@@ -37,7 +37,7 @@ def update_last_export_details(workspace_id):
 
     patch_integration_settings(workspace_id, errors=failed_exports)
     try:
-        post_accounting_export_summary(workspace_id)
+        post_accounting_export_summary(workspace_id=workspace_id)
     except Exception as e:
         logger.error(f"Error posting accounting export summary: {e} for workspace id {workspace_id}")
 
@@ -191,4 +191,4 @@ def generate_export_url_and_update_expense(expense_group: ExpenseGroup) -> None:
     expense_group.save()
 
     update_complete_expenses(expense_group.expenses.all(), url)
-    post_accounting_export_summary(expense_group.workspace.id, [expense.id for expense in expense_group.expenses.all()], expense_group.fund_source)
+    post_accounting_export_summary(workspace_id=expense_group.workspace.id, expense_ids=[expense.id for expense in expense_group.expenses.all()], fund_source=expense_group.fund_source)
