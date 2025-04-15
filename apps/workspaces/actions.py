@@ -264,7 +264,7 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
             for expense_group_id in expense_group_ids:
                 expense_group = ExpenseGroup.objects.get(id=expense_group_id)
                 first_expense = expense_group.expenses.first()
-                update_expenses_in_progress(first_expense)
+                update_expenses_in_progress([first_expense])
                 post_accounting_export_summary(workspace_id=workspace_id, expense_ids=[first_expense.id])
                 update_failed_expenses(expense_group.expenses.all(), False, True)
                 failed_expense_ids.extend(expense_group.expenses.values_list('id', flat=True))
