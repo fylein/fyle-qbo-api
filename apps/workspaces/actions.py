@@ -15,7 +15,7 @@ from qbosdk import revoke_refresh_token
 from rest_framework.response import Response
 from rest_framework.views import status
 
-from apps.fyle.actions import post_accounting_export_summary, update_failed_expenses
+from apps.fyle.actions import post_accounting_export_summary, update_expenses_in_progress, update_failed_expenses
 from apps.fyle.helpers import get_cluster_domain, post_request
 from apps.fyle.models import ExpenseGroup, ExpenseGroupSettings
 from apps.quickbooks_online.queue import (
@@ -261,8 +261,12 @@ def export_to_qbo(workspace_id, export_mode=None, expense_group_ids=[], is_direc
     if not active_qbo_credentials:
         if is_direct_export:
             failed_expense_ids = []
-            for expense_group_id in expense_group_ids:
+            for index, expense_group_id in enumerate(expense_group_ids):
                 expense_group = ExpenseGroup.objects.get(id=expense_group_id)
+                if index == 0:
+                    first_expense = expense_group.expenses.first()
+                    update_expenses_in_progress([first_expense])
+                    post_accounting_export_summary(workspace_id=workspace_id, expense_ids=[first_expense.id])
                 update_failed_expenses(expense_group.expenses.all(), False, True)
                 failed_expense_ids.extend(expense_group.expenses.values_list('id', flat=True))
             post_accounting_export_summary(workspace_id=workspace_id, expense_ids=failed_expense_ids, is_failed=True)
