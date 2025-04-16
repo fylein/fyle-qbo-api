@@ -1,26 +1,16 @@
-from datetime import (
-    datetime,
-    timezone,
-    timedelta
-)
-from fyle_accounting_mappings.models import (
-    DestinationAttribute,
-    ExpenseAttribute,
-    Mapping
-)
+from datetime import datetime, timedelta, timezone
 from unittest import mock
-from apps.workspaces.models import Workspace
-from apps.workspaces.models import QBOCredential
+
+from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute, Mapping
+
 from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import Error
-from fyle_integrations_imports.modules.projects import Project
-from fyle_integrations_imports.modules.categories import Category
+from apps.workspaces.models import QBOCredential, Workspace
 from fyle_integrations_imports.models import ImportLog
-from tests.test_fyle_integrations_imports.helpers import (
-    get_base_class_instance,
-    get_platform_connection
-)
-from tests.test_fyle_integrations_imports.test_modules.fixtures import projects_data, categories_data
+from fyle_integrations_imports.modules.categories import Category
+from fyle_integrations_imports.modules.projects import Project
+from tests.test_fyle_integrations_imports.helpers import get_base_class_instance, get_platform_connection
+from tests.test_fyle_integrations_imports.test_modules.fixtures import categories_data, projects_data
 
 
 def test_remove_duplicates(db):
@@ -121,7 +111,7 @@ def test_auto_create_destination_attributes(mocker, db):
 
     mocker.patch('qbosdk.apis.Customers.get_inactive', return_value=[])
 
-    with mock.patch('fyle.platform.apis.v1beta.admin.Projects.list_all') as mock_call:
+    with mock.patch('fyle.platform.apis.v1.admin.Projects.list_all') as mock_call:
         mocker.patch(
             'fyle_integrations_platform_connector.apis.Projects.post_bulk',
             return_value=[]
@@ -185,7 +175,7 @@ def test_auto_create_destination_attributes(mocker, db):
     DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='CUSTOMER').delete()
     ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type='PROJECT').delete()
 
-    with mock.patch('fyle.platform.apis.v1beta.admin.Projects.list_all') as mock_call:
+    with mock.patch('fyle.platform.apis.v1.admin.Projects.list_all') as mock_call:
         mocker.patch(
             'fyle_integrations_platform_connector.apis.Projects.post_bulk',
             return_value=[]
@@ -218,7 +208,7 @@ def test_auto_create_destination_attributes(mocker, db):
     ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type='CATEGORY').delete()
 
     category = Category(2, 'ACCOUNT', None,  qbo_connection, ['items'], True, False, ['Expense', 'Fixed Asset'])
-    with mock.patch('fyle.platform.apis.v1beta.admin.Categories.list_all') as mock_call:
+    with mock.patch('fyle.platform.apis.v1.admin.Categories.list_all') as mock_call:
         mocker.patch(
             'fyle_integrations_platform_connector.apis.Categories.post_bulk',
             return_value=[]

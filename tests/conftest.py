@@ -2,7 +2,6 @@ from datetime import datetime, timezone
 from unittest import mock
 
 import pytest
-from fyle.platform import Platform
 from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute
 from fyle_rest_auth.models import AuthToken, User
 from rest_framework.test import APIClient
@@ -10,6 +9,7 @@ from rest_framework.test import APIClient
 from apps.fyle.helpers import get_access_token
 from apps.fyle.models import ExpenseGroupSettings
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
+from fyle.platform import Platform
 from fyle_qbo_api.tests import settings
 from tests.test_workspaces.fixtures import data as fyle_data
 
@@ -44,7 +44,7 @@ def test_connection(db):
 
     access_token = get_access_token(refresh_token)
     fyle_connection.access_token = access_token
-    user_profile = fyle_connection.v1beta.spender.my_profile.get()['data']
+    user_profile = fyle_connection.v1.spender.my_profile.get()['data']
     user = User(password='', last_login=datetime.now(tz=timezone.utc), id=1, email=user_profile['user']['email'], user_id=user_profile['user_id'], full_name='', active='t', staff='f', admin='t')
 
     user.save()
@@ -83,7 +83,7 @@ def default_session_fixture(request):
     patched_4 = mock.patch('apps.fyle.helpers.post_request', return_value={'access_token': 'easnfkjo12233.asnfaosnfa.absfjoabsfjk', 'cluster_domain': 'https://staging.fyle.tech'})
     patched_4.__enter__()
 
-    patched_5 = mock.patch('fyle.platform.apis.v1beta.spender.MyProfile.get', return_value=fyle_data['admin_user'])
+    patched_5 = mock.patch('fyle.platform.apis.v1.spender.MyProfile.get', return_value=fyle_data['admin_user'])
     patched_5.__enter__()
 
 

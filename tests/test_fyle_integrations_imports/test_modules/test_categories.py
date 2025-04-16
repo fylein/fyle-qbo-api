@@ -1,15 +1,13 @@
 from unittest import mock
-from fyle_accounting_mappings.models import (
-    DestinationAttribute,
-    ExpenseAttribute,
-    Mapping,
-)
-from apps.quickbooks_online.utils import QBOConnector
-from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSettings, FyleCredential
+
+from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute, Mapping
 from fyle_integrations_platform_connector import PlatformConnector
+
+from apps.quickbooks_online.utils import QBOConnector
+from apps.workspaces.models import FyleCredential, QBOCredential, Workspace, WorkspaceGeneralSettings
 from fyle_integrations_imports.modules.categories import Category, disable_categories
-from tests.test_fyle_integrations_imports.test_modules.fixtures import categories_data
 from tests.helper import dict_compare_keys
+from tests.test_fyle_integrations_imports.test_modules.fixtures import categories_data
 
 
 def test_sync_destination_attributes(mocker, db):
@@ -80,7 +78,7 @@ def test_sync_expense_atrributes(mocker, db):
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
     mocker.patch(
-        'fyle.platform.apis.v1beta.admin.Categories.list_all',
+        'fyle.platform.apis.v1.admin.Categories.list_all',
         return_value=[]
     )
 
@@ -94,7 +92,7 @@ def test_sync_expense_atrributes(mocker, db):
     assert categories_count == 279
 
     mocker.patch(
-        'fyle.platform.apis.v1beta.admin.Categories.list_all',
+        'fyle.platform.apis.v1.admin.Categories.list_all',
         return_value=categories_data['create_new_auto_create_categories_expense_attributes_1']
     )
     category.sync_expense_attributes(platform)
@@ -144,7 +142,7 @@ def test_auto_create_destination_attributes(mocker, db):
     )
 
     # create new case for categories import
-    with mock.patch('fyle.platform.apis.v1beta.admin.Categories.list_all') as mock_call:
+    with mock.patch('fyle.platform.apis.v1.admin.Categories.list_all') as mock_call:
         mocker.patch(
             'fyle_integrations_platform_connector.apis.Categories.post_bulk',
             return_value=[]
@@ -192,7 +190,7 @@ def test_auto_create_destination_attributes(mocker, db):
         assert mappings_count == 3
 
     # disable case for categories import
-    with mock.patch('fyle.platform.apis.v1beta.admin.Categories.list_all') as mock_call:
+    with mock.patch('fyle.platform.apis.v1.admin.Categories.list_all') as mock_call:
         mocker.patch(
             'fyle_integrations_platform_connector.apis.Categories.post_bulk',
             return_value=[]
@@ -244,7 +242,7 @@ def test_auto_create_destination_attributes(mocker, db):
         assert post_run_expense_attribute_disabled_count == pre_run_expense_attribute_disabled_count + 1
 
     # not re-enable case for categories import
-    with mock.patch('fyle.platform.apis.v1beta.admin.Categories.list_all') as mock_call:
+    with mock.patch('fyle.platform.apis.v1.admin.Categories.list_all') as mock_call:
         mocker.patch(
             'fyle_integrations_platform_connector.apis.Categories.post_bulk',
             return_value=[]
@@ -285,7 +283,7 @@ def test_auto_create_destination_attributes(mocker, db):
     category = Category(2, 'ACCOUNT', None,  qbo_connection, ['accounts', 'items'], True, False, ['Expense', 'Fixed Asset'])
     WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(import_categories=True, import_items=True)
     # create new case for items import
-    with mock.patch('fyle.platform.apis.v1beta.admin.Categories.list_all') as mock_call:
+    with mock.patch('fyle.platform.apis.v1.admin.Categories.list_all') as mock_call:
         mocker.patch(
             'fyle_integrations_platform_connector.apis.Categories.post_bulk',
             return_value=[]
@@ -331,7 +329,7 @@ def test_auto_create_destination_attributes(mocker, db):
         assert mappings_count == 6
 
     # disable case for items import
-    with mock.patch('fyle.platform.apis.v1beta.admin.Categories.list_all') as mock_call:
+    with mock.patch('fyle.platform.apis.v1.admin.Categories.list_all') as mock_call:
         mocker.patch(
             'fyle_integrations_platform_connector.apis.Categories.post_bulk',
             return_value=[]
@@ -389,7 +387,7 @@ def test_auto_create_destination_attributes(mocker, db):
         assert post_run_expense_attribute_disabled_count == pre_run_expense_attribute_disabled_count + 1
 
     # not re-enable case for items import
-    with mock.patch('fyle.platform.apis.v1beta.admin.Categories.list_all') as mock_call:
+    with mock.patch('fyle.platform.apis.v1.admin.Categories.list_all') as mock_call:
         mocker.patch(
             'fyle_integrations_platform_connector.apis.Categories.post_bulk',
             return_value=[]
@@ -435,7 +433,7 @@ def test_auto_create_destination_attributes(mocker, db):
 
     # Disbale all items case when import_items is False
     WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(import_items=False)
-    with mock.patch('fyle.platform.apis.v1beta.admin.Categories.list_all') as mock_call:
+    with mock.patch('fyle.platform.apis.v1.admin.Categories.list_all') as mock_call:
         mocker.patch(
             'fyle_integrations_platform_connector.apis.Categories.post_bulk',
             return_value=[]

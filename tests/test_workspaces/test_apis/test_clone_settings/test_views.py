@@ -1,9 +1,10 @@
 
 import json
+
 from apps.workspaces.models import Workspace
 from tests.helper import dict_compare_keys
-from .fixtures import data
 from tests.test_fyle_integrations_imports.test_modules.fixtures import expense_custom_field_data
+from tests.test_workspaces.test_apis.test_clone_settings.fixtures import data
 
 
 def assert_4xx_cases(api_client, url, payload):
@@ -23,7 +24,7 @@ def test_clone_settings(mocker, api_client, test_connection):
     workspace.save()
 
     mocker.patch(
-        'fyle.platform.apis.v1beta.admin.expense_fields.list_all',
+        'fyle.platform.apis.v1.admin.expense_fields.list_all',
         return_value=expense_custom_field_data['create_new_auto_create_expense_custom_fields_expense_attributes_0']
     )
 

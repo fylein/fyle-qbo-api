@@ -1,12 +1,10 @@
 from unittest import mock
-from fyle_accounting_mappings.models import (
-    DestinationAttribute,
-    ExpenseAttribute,
-    Mapping,
-)
-from apps.quickbooks_online.utils import QBOConnector
-from apps.workspaces.models import QBOCredential, FyleCredential, Workspace
+
+from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute, Mapping
 from fyle_integrations_platform_connector import PlatformConnector
+
+from apps.quickbooks_online.utils import QBOConnector
+from apps.workspaces.models import FyleCredential, QBOCredential, Workspace
 from fyle_integrations_imports.modules.merchants import Merchant
 from tests.test_fyle_integrations_imports.test_modules.fixtures import merchants_data
 
@@ -54,7 +52,7 @@ def test_sync_expense_atrributes(mocker, db):
     ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type='MERCHANT').delete()
 
     mocker.patch(
-        'fyle.platform.apis.v1beta.admin.expense_fields.list_all',
+        'fyle.platform.apis.v1.admin.expense_fields.list_all',
         return_value=[]
     )
 
@@ -68,7 +66,7 @@ def test_sync_expense_atrributes(mocker, db):
     assert merchant_count == 0
 
     mocker.patch(
-        'fyle.platform.apis.v1beta.admin.expense_fields.list_all',
+        'fyle.platform.apis.v1.admin.expense_fields.list_all',
         return_value=merchants_data['create_new_auto_create_merchants_expense_attributes_0']
     )
 
@@ -98,7 +96,7 @@ def test_auto_create_destination_attributes(mocker, db):
     )
 
     # create new case for merchants import
-    with mock.patch('fyle.platform.apis.v1beta.admin.expense_fields.list_all') as mock_call:
+    with mock.patch('fyle.platform.apis.v1.admin.expense_fields.list_all') as mock_call:
         mocker.patch(
             'fyle_integrations_platform_connector.apis.Merchants.post',
             return_value=[]
@@ -136,7 +134,7 @@ def test_auto_create_destination_attributes(mocker, db):
         assert mappings_count == 0
 
     # create subsequent case for merchants import
-    with mock.patch('fyle.platform.apis.v1beta.admin.expense_fields.list_all') as mock_call:
+    with mock.patch('fyle.platform.apis.v1.admin.expense_fields.list_all') as mock_call:
         mocker.patch(
             'fyle_integrations_platform_connector.apis.Merchants.post',
             return_value=[]

@@ -1,20 +1,12 @@
 from unittest import mock
-from fyle_integrations_imports.tasks import (
-    trigger_import_via_schedule,
-    disable_category_for_items_mapping
-)
-from fyle_integrations_imports.models import ImportLog
-from apps.workspaces.models import QBOCredential
+
+from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute, Mapping
+
 from apps.tasks.models import Error
-from tests.test_fyle_integrations_imports.test_modules.fixtures import (
-    projects_data,
-    categories_data
-)
-from fyle_accounting_mappings.models import (
-    DestinationAttribute,
-    ExpenseAttribute,
-    Mapping
-)
+from apps.workspaces.models import QBOCredential
+from fyle_integrations_imports.models import ImportLog
+from fyle_integrations_imports.tasks import disable_category_for_items_mapping, trigger_import_via_schedule
+from tests.test_fyle_integrations_imports.test_modules.fixtures import categories_data, projects_data
 
 
 def test_trigger_import_via_schedule(mocker, db):
@@ -22,7 +14,7 @@ def test_trigger_import_via_schedule(mocker, db):
     # delete all the import logs
     ImportLog.objects.filter(workspace_id=workspace_id).delete()
     credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
-    with mock.patch('fyle.platform.apis.v1beta.admin.Projects.list_all') as mock_call:
+    with mock.patch('fyle.platform.apis.v1.admin.Projects.list_all') as mock_call:
         mocker.patch(
             'fyle_integrations_platform_connector.apis.Projects.post_bulk',
             return_value=[]
@@ -68,7 +60,7 @@ def test_disable_category_for_items_mapping(mocker, db):
     credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
 
     # case where items mappings is not present
-    with mock.patch('fyle.platform.apis.v1beta.admin.Categories.list_all') as mock_call:
+    with mock.patch('fyle.platform.apis.v1.admin.Categories.list_all') as mock_call:
         mocker.patch(
             'fyle_integrations_platform_connector.apis.Categories.post_bulk',
             return_value=[]
@@ -128,7 +120,7 @@ def test_disable_category_for_items_mapping(mocker, db):
         workspace_id=workspace_id,
     )
 
-    with mock.patch('fyle.platform.apis.v1beta.admin.Categories.list_all') as mock_call:
+    with mock.patch('fyle.platform.apis.v1.admin.Categories.list_all') as mock_call:
         mocker.patch(
             'fyle_integrations_platform_connector.apis.Categories.post_bulk',
             return_value=[]

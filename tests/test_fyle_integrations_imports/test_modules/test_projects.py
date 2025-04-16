@@ -40,7 +40,7 @@ def test_sync_expense_atrributes(mocker, db):
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
     mocker.patch(
-        'fyle.platform.apis.v1beta.admin.Projects.list_all',
+        'fyle.platform.apis.v1.admin.Projects.list_all',
         return_value=[]
     )
 
@@ -54,7 +54,7 @@ def test_sync_expense_atrributes(mocker, db):
     assert projects_count == 1222
 
     mocker.patch(
-        'fyle.platform.apis.v1beta.admin.Projects.list_all',
+        'fyle.platform.apis.v1.admin.Projects.list_all',
         return_value=projects_data['create_new_auto_create_projects_expense_attributes_0']
     )
     project.sync_expense_attributes(platform)
@@ -82,7 +82,7 @@ def test_auto_create_destination_attributes(mocker, db):
     mocker.patch('qbosdk.apis.Customers.get_all_generator', return_value=[])
 
     # create new case for projects import
-    with mock.patch('fyle.platform.apis.v1beta.admin.Projects.list_all') as mock_call:
+    with mock.patch('fyle.platform.apis.v1.admin.Projects.list_all') as mock_call:
         mocker.patch(
             'fyle_integrations_platform_connector.apis.Projects.post_bulk',
             return_value=[]
@@ -119,7 +119,7 @@ def test_auto_create_destination_attributes(mocker, db):
         assert mappings_count == 3
 
     # disable case for project import
-    with mock.patch('fyle.platform.apis.v1beta.admin.Projects.list_all') as mock_call:
+    with mock.patch('fyle.platform.apis.v1.admin.Projects.list_all') as mock_call:
         mocker.patch(
             'fyle_integrations_platform_connector.apis.Projects.post_bulk',
             return_value=[]
@@ -169,7 +169,7 @@ def test_auto_create_destination_attributes(mocker, db):
         assert post_run_expense_attribute_disabled_count == 2
 
     # not re-enable case for project import
-    with mock.patch('fyle.platform.apis.v1beta.admin.Projects.list_all') as mock_call:
+    with mock.patch('fyle.platform.apis.v1.admin.Projects.list_all') as mock_call:
         mocker.patch(
             'fyle_integrations_platform_connector.apis.Projects.post_bulk',
             return_value=[]
