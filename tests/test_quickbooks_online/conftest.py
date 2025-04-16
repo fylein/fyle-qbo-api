@@ -347,6 +347,15 @@ def create_qbo_expense_item_based(db):
     expense_group = ExpenseGroup.objects.create(
         workspace_id=3, fund_source='CCC', description=json.loads('{"report_id": "rpcegBZcwpoP", "fund_source": "CCC", "claim_number": "C/2023/04/R/6", "employee_email": "sravan.kumar@fyle.in"}'), employee_name='sravan k'
     )
+    print('expense_group.id', expense_group.id)
+    DestinationAttribute.objects.create(
+        attribute_type="BANK_ACCOUNT",
+        display_name="Bank Account",
+        value="Cash on hand",
+        destination_id="94",
+        workspace_id=3,
+        active=True,
+    )
 
     expense_group.expenses.add(expense)
 
@@ -419,6 +428,15 @@ def create_qbo_expense_item_and_account_based(db):
 
     expense_group = ExpenseGroup.objects.create(
         workspace_id=3, fund_source='CCC', description=json.loads('{"report_id": "rpcegBZcwUkpiL", "fund_source": "CCC", "claim_number": "C/2023/04/R/6", "employee_email": "sravan.kumar@fyle.in"}'), employee_name='sravan k'
+    )
+
+    DestinationAttribute.objects.create(
+        attribute_type="BANK_ACCOUNT",
+        display_name="Bank Account",
+        value="Cash on hand",
+        destination_id="94",
+        workspace_id=3,
+        active=True,
     )
 
     expense_group.expenses.add(*[expense_1, expense_2])

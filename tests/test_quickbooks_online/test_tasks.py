@@ -320,6 +320,15 @@ def test_post_qbo_expenses_success(mocker, create_task_logs, db):
     task_log.status = 'READY'
     task_log.save()
 
+    DestinationAttribute.objects.create(
+        attribute_type="BANK_ACCOUNT",
+        display_name="Bank Account",
+        value="Cash on hand",
+        destination_id="94",
+        workspace_id=3,
+        active=True,
+    )
+
     expense_group = ExpenseGroup.objects.get(id=14)
     expenses = expense_group.expenses.all()
 
