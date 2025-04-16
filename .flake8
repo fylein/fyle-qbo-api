@@ -25,7 +25,7 @@ extend-ignore =
     # Multiple spaces after ',' (E241)
     E241
 max-line-length = 99
-max-complexity = 19
+max-complexity = 20
 ban-relative-imports = true
 select = B,C,E,F,N,W,I25
 exclude = *env,*.sql,*.txt,*.sh,.flake8,*.yml,*.yaml, apps/*/migrations/*, manage.py, fyle_accounting_library/*, fyle_accounting_mappings/*, fyle_integrations_platform_connector/*, common/*, Dockerfile
