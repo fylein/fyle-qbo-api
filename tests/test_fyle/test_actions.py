@@ -2,24 +2,23 @@ from unittest import mock
 
 from django.conf import settings
 from django.db.models import Q
-
-from fyle_integrations_platform_connector import PlatformConnector
 from fyle.platform.exceptions import InternalServerError, RetryException, WrongParamsError
+from fyle_integrations_platform_connector import PlatformConnector
 
-from apps.fyle.models import Expense, ExpenseGroup
 from apps.fyle.actions import (
+    bulk_post_accounting_export_summary,
+    create_generator_and_post_in_batches,
+    mark_accounting_export_summary_as_synced,
+    mark_expenses_as_skipped,
     refresh_fyle_dimension,
     sync_fyle_dimensions,
-    update_expenses_in_progress,
-    mark_expenses_as_skipped,
-    mark_accounting_export_summary_as_synced,
-    update_failed_expenses,
     update_complete_expenses,
-    bulk_post_accounting_export_summary,
-    create_generator_and_post_in_batches
+    update_expenses_in_progress,
+    update_failed_expenses,
 )
 from apps.fyle.helpers import get_updated_accounting_export_summary
-from apps.workspaces.models import Workspace, FyleCredential
+from apps.fyle.models import Expense, ExpenseGroup
+from apps.workspaces.models import FyleCredential, Workspace
 
 
 def test_update_expenses_in_progress(db):
@@ -109,7 +108,7 @@ def test_bulk_post_accounting_export_summary(db):
     fyle_credentails = FyleCredential.objects.get(workspace_id=3)
     platform = PlatformConnector(fyle_credentails)
 
-    with mock.patch('fyle.platform.apis.v1beta.admin.Expenses.post_bulk_accounting_export_summary') as mock_call:
+    with mock.patch('fyle.platform.apis.v1.admin.Expenses.post_bulk_accounting_export_summary') as mock_call:
         mock_call.side_effect = InternalServerError('Timeout')
         try:
             bulk_post_accounting_export_summary(platform, {})
@@ -121,7 +120,7 @@ def test_create_generator_and_post_in_batches(db):
     fyle_credentails = FyleCredential.objects.get(workspace_id=3)
     platform = PlatformConnector(fyle_credentails)
 
-    with mock.patch('fyle.platform.apis.v1beta.admin.Expenses.post_bulk_accounting_export_summary') as mock_call:
+    with mock.patch('fyle.platform.apis.v1.admin.Expenses.post_bulk_accounting_export_summary') as mock_call:
         mock_call.side_effect = RetryException('Timeout')
         try:
             create_generator_and_post_in_batches([{
@@ -144,7 +143,7 @@ def test_handle_post_accounting_export_summary_exception(db):
 
     expense_id = expense.expense_id
 
-    with mock.patch('fyle.platform.apis.v1beta.admin.Expenses.post_bulk_accounting_export_summary') as mock_call:
+    with mock.patch('fyle.platform.apis.v1.admin.Expenses.post_bulk_accounting_export_summary') as mock_call:
         mock_call.side_effect = WrongParamsError('Some of the parameters are wrong', {
             'data': [
                 {
