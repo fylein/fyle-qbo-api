@@ -1,12 +1,10 @@
 from unittest import mock
-from fyle_accounting_mappings.models import (
-    DestinationAttribute,
-    ExpenseAttribute,
-    Mapping,
-)
-from apps.quickbooks_online.utils import QBOConnector
-from apps.workspaces.models import QBOCredential, FyleCredential, Workspace
+
+from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute, Mapping
 from fyle_integrations_platform_connector import PlatformConnector
+
+from apps.quickbooks_online.utils import QBOConnector
+from apps.workspaces.models import FyleCredential, QBOCredential, Workspace
 from fyle_integrations_imports.modules.cost_centers import CostCenter
 from tests.test_fyle_integrations_imports.test_modules.fixtures import cost_center_data
 
@@ -47,7 +45,7 @@ def test_sync_expense_atrributes(mocker, db):
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
     mocker.patch(
-        'fyle.platform.apis.v1beta.admin.CostCenters.list_all',
+        'fyle.platform.apis.v1.admin.CostCenters.list_all',
         return_value=[]
     )
 
@@ -61,7 +59,7 @@ def test_sync_expense_atrributes(mocker, db):
     assert cost_center_count == 537
 
     mocker.patch(
-        'fyle.platform.apis.v1beta.admin.CostCenters.list_all',
+        'fyle.platform.apis.v1.admin.CostCenters.list_all',
         return_value=cost_center_data['create_new_auto_create_cost_centers_expense_attributes_0']
     )
     cost_center.sync_expense_attributes(platform)
@@ -86,7 +84,7 @@ def test_auto_create_destination_attributes(mocker, db):
     ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type='COST_CENTER').delete()
 
     # create new case for projects import
-    with mock.patch('fyle.platform.apis.v1beta.admin.CostCenters.list_all') as mock_call:
+    with mock.patch('fyle.platform.apis.v1.admin.CostCenters.list_all') as mock_call:
         mocker.patch(
             'fyle_integrations_platform_connector.apis.CostCenters.post_bulk',
             return_value=[]
@@ -123,7 +121,7 @@ def test_auto_create_destination_attributes(mocker, db):
         assert mappings_count == 2
 
     # create new project sub-sequent run (we will be adding 2 new CLASSES)
-    with mock.patch('fyle.platform.apis.v1beta.admin.CostCenters.list_all') as mock_call:
+    with mock.patch('fyle.platform.apis.v1.admin.CostCenters.list_all') as mock_call:
         mocker.patch(
             'fyle_integrations_platform_connector.apis.CostCenters.post_bulk',
             return_value=[]

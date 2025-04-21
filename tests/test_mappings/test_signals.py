@@ -43,7 +43,7 @@ def test_resolve_post_employees_mapping_errors(test_connection):
 def test_run_post_mapping_settings_triggers(test_connection, mocker):
     mocker.patch('fyle_integrations_platform_connector.apis.ExpenseCustomFields.post', return_value=[])
 
-    mocker.patch('fyle.platform.apis.v1beta.admin.ExpenseFields.list_all', return_value=fyle_data['get_all_expense_fields'])
+    mocker.patch('fyle.platform.apis.v1.admin.ExpenseFields.list_all', return_value=fyle_data['get_all_expense_fields'])
 
     mapping_setting = MappingSetting(source_field='PROJECT', destination_field='DEPARTMENT', workspace_id=1, import_to_fyle=False, is_custom=False)
 
@@ -70,7 +70,7 @@ def test_run_post_delete_mapping_settings_triggers(test_connection):
 def test_run_pre_mapping_settings_triggers(db, mocker, test_connection):
     mocker.patch('fyle_integrations_platform_connector.apis.ExpenseCustomFields.post', return_value=[])
 
-    mocker.patch('fyle.platform.apis.v1beta.admin.ExpenseFields.list_all', return_value=fyle_data['get_all_expense_fields'])
+    mocker.patch('fyle.platform.apis.v1.admin.ExpenseFields.list_all', return_value=fyle_data['get_all_expense_fields'])
 
     workspace_id = 1
 
