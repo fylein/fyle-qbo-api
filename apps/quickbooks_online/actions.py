@@ -5,6 +5,7 @@ from django.conf import settings
 from django.db.models import Q
 from django_q.tasks import Chain
 from fyle_accounting_mappings.models import MappingSetting
+from qbosdk.exceptions import WrongParamsError
 
 from apps.fyle.actions import post_accounting_export_summary, update_complete_expenses
 from apps.fyle.models import ExpenseGroup
@@ -141,12 +142,17 @@ def sync_quickbooks_dimensions(workspace_id: int):
         time_interval = datetime.now(timezone.utc) - workspace.destination_synced_at
 
     if workspace.destination_synced_at is None or time_interval.days > 0:
-        quickbooks_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
-        quickbooks_connector = QBOConnector(quickbooks_credentials, workspace_id=workspace_id)
-        quickbooks_connector.sync_dimensions()
+        try:
+            quickbooks_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
+            quickbooks_connector = QBOConnector(quickbooks_credentials, workspace_id=workspace_id)
+            quickbooks_connector.sync_dimensions()
 
-        workspace.destination_synced_at = datetime.now()
-        workspace.save(update_fields=['destination_synced_at'])
+            workspace.destination_synced_at = datetime.now()
+            workspace.save(update_fields=['destination_synced_at'])
+        except WrongParamsError as exception:
+            logger.info('QBO token expired workspace_id - %s %s',  workspace_id, {'error': exception.response})
+        except Exception as exception:
+            logger.info('Error syncing dimensions workspace_id - %s %s',  workspace_id, {'error': exception.response})
 
 
 def generate_export_url_and_update_expense(expense_group: ExpenseGroup) -> None:
