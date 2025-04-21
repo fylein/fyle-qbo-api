@@ -229,7 +229,7 @@ def test_custom_fields(mocker, api_client, test_connection):
 
     url = reverse('custom-field', kwargs={'workspace_id': 1})
 
-    mocker.patch('fyle.platform.apis.v1beta.admin.expense_fields.list_all', return_value=data['get_all_custom_fields'])
+    mocker.patch('fyle.platform.apis.v1.admin.expense_fields.list_all', return_value=data['get_all_custom_fields'])
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 

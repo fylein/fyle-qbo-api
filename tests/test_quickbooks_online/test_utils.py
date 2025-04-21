@@ -830,7 +830,7 @@ def test_sync_dimensions_exception(db):
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
-    with mock.patch('fyle.platform.apis.v1beta.admin.expense_fields.list_all') as mock_call:
+    with mock.patch('fyle.platform.apis.v1.admin.expense_fields.list_all') as mock_call:
         mock_call.side_effect = NoPrivilegeError
         qbo_connection.sync_dimensions()
 
