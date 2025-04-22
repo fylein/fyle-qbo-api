@@ -73,7 +73,7 @@ def construct_private_note(expense_group: ExpenseGroup):
 
 def get_ccc_account_id(workspace_general_settings, general_mappings, expense, description, export_type='CREDIT_CARD_EXPENSE'):
     if workspace_general_settings.map_fyle_cards_qbo_account:
-        ccc_account = Mapping.objects.filter(source_type='CORPORATE_CARD', destination_type='CREDIT_CARD_ACCOUNT', source__source_id=expense.corporate_card_id, workspace_id=workspace_general_settings.workspace_id).first()
+        ccc_account = Mapping.objects.filter(source_type='CORPORATE_CARD', source__source_id=expense.corporate_card_id, workspace_id=workspace_general_settings.workspace_id).first()
         if export_type == 'DEBIT_CARD_EXPENSE' and not ccc_account:
             return None
 
