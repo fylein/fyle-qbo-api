@@ -152,7 +152,7 @@ def sync_quickbooks_dimensions(workspace_id: int):
         except WrongParamsError as exception:
             logger.info('QBO token expired workspace_id - %s %s',  workspace_id, {'error': exception.response})
         except Exception as exception:
-            logger.info('Error syncing dimensions workspace_id - %s %s',  workspace_id, {'error': exception.response})
+            logger.exception('Error syncing dimensions workspace_id - %s %s',  workspace_id, {'error': exception.response})
 
 
 def generate_export_url_and_update_expense(expense_group: ExpenseGroup) -> None:
