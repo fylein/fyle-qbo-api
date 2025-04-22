@@ -60,7 +60,7 @@ def construct_private_note(expense_group: ExpenseGroup):
     workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
     expense_type = 'Reimbursable'
     if expense_group.fund_source == 'CCC':
-        expense_type = 'Debit Card' if workspace_general_settings.corporate_credit_card_expenses_object == 'DEBIT CARD EXPENSE' else 'Credit card'
+        expense_type = 'Corporate Card' if workspace_general_settings.corporate_credit_card_expenses_object == 'DEBIT CARD EXPENSE' else 'Credit card'
     merchant = ' spent on merchant {0}'.format(expense.vendor) if expense.vendor else ''
     spent_at = ' on {0} '.format(expense.spent_at.date()) if expense.spent_at else ''
 
@@ -71,13 +71,13 @@ def construct_private_note(expense_group: ExpenseGroup):
     return private_note
 
 
-def get_ccc_account_id(workspace_general_settings, general_mappings, expense, description):
+def get_ccc_account_id(workspace_general_settings, general_mappings, expense, description, export_type='CREDIT_CARD_EXPENSE'):
     if workspace_general_settings.map_fyle_cards_qbo_account:
-        ccc_account = Mapping.objects.filter(source_type='CORPORATE_CARD', destination_type='CREDIT_CARD_ACCOUNT', source__source_id=expense.corporate_card_id, workspace_id=workspace_general_settings.workspace_id).first()
-        if ccc_account:
-            ccc_account_id = ccc_account.destination.destination_id
-        else:
-            ccc_account_id = general_mappings.default_ccc_account_id
+        ccc_account = Mapping.objects.filter(source_type='CORPORATE_CARD', source__source_id=expense.corporate_card_id, workspace_id=workspace_general_settings.workspace_id).first()
+        if export_type == 'DEBIT_CARD_EXPENSE' and not ccc_account:
+            return None
+
+        return ccc_account.destination.destination_id if ccc_account else general_mappings.default_ccc_account_id
     else:
         ccc_account_mapping: EmployeeMapping = EmployeeMapping.objects.filter(source_employee__value=description.get('employee_email'), workspace_id=workspace_general_settings.workspace_id).first()
         ccc_account_id = ccc_account_mapping.destination_card_account.destination_id if ccc_account_mapping and ccc_account_mapping.destination_card_account else general_mappings.default_ccc_account_id
@@ -489,13 +489,24 @@ class QBOExpense(models.Model):
         workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=expense_group.workspace_id)
         employee_field_mapping = workspace_general_settings.employee_field_mapping
 
+        if expense_group.fund_source == 'PERSONAL':
+            account_id = general_mappings.qbo_expense_account_id
+        else:
+            ccc_account_id = get_ccc_account_id(workspace_general_settings, general_mappings, expense, description, 'DEBIT_CARD_EXPENSE')
+            if ccc_account_id:
+                account_id = ccc_account_id
+            else:
+                account_id = general_mappings.default_debit_card_account_id
+
         if workspace_general_settings.map_merchant_to_vendor and expense_group.fund_source == 'CCC':
             merchant = expense.vendor if expense.vendor else ''
 
             entity = DestinationAttribute.objects.filter(value__iexact=merchant, attribute_type='VENDOR', workspace_id=expense_group.workspace_id, active=True).order_by('-updated_at').first()
 
             if not entity:
-                entity_id = DestinationAttribute.objects.filter(value='Debit Card Misc', workspace_id=expense_group.workspace_id).first().destination_id
+                destination_attribute = DestinationAttribute.objects.filter(destination_id=account_id, workspace_id=expense_group.workspace_id).first()
+                payee_type = 'Debit Card Misc' if destination_attribute.attribute_type == 'BANK_ACCOUNT' else 'Credit Card Misc'
+                entity_id = DestinationAttribute.objects.filter(value=payee_type, workspace_id=expense_group.workspace_id).first().destination_id
             else:
                 entity_id = entity.destination_id
 
@@ -506,7 +517,7 @@ class QBOExpense(models.Model):
         qbo_expense_object, _ = QBOExpense.objects.update_or_create(
             expense_group=expense_group,
             defaults={
-                'expense_account_id': general_mappings.qbo_expense_account_id if expense_group.fund_source == 'PERSONAL' else general_mappings.default_debit_card_account_id,
+                'expense_account_id': account_id,
                 'entity_id': entity_id,
                 'department_id': department_id,
                 'transaction_date': get_transaction_date(expense_group),
