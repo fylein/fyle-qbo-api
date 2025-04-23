@@ -5,7 +5,7 @@ from fyle_accounting_mappings.models import DestinationAttribute
 field_map = {
     'Accounts': {'type': 'ACCOUNT', 'article_link': None},
     'Klasses': {'type': 'CLASS', 'article_link': None},
-    'Names': {'type': 'VENDOR', 'article_link': None},
+    'Names': {'type': ['VENDOR', 'EMPLOYEE', 'CUSTOMER'], 'article_link': None},
     'Depts': {'type': 'DEPARTMENT', 'article_link': None}
 }
 
@@ -44,12 +44,15 @@ def get_entity_values(error_dict, workspace_id):
     :param workspace_id: ID of the workspace
     :return: Dictionary with 'destination_id' and 'value' if found, otherwise an empty dictionary
     '''
-    # Fetch the destination attribute based on destination ID and attribute type
+    # Convert attribute_type to list if it's not already
+    attribute_types = error_dict['attribute_type'] if isinstance(error_dict['attribute_type'], list) else [error_dict['attribute_type']]
+
+    # Fetch the destination attribute using attribute_type__in
     destination_attribute = DestinationAttribute.objects.filter(
         destination_id=error_dict['destination_id'],
-        attribute_type=error_dict['attribute_type'].upper(),
+        attribute_type__in=[attr_type.upper() for attr_type in attribute_types],
         workspace_id=workspace_id
-    ).first()
+    ).order_by('-updated_at').first()
 
     # If the destination attribute is found, return a dictionary with 'destination_id' and 'value'
     if destination_attribute:
