@@ -53,3 +53,14 @@ SYNC_METHODS = {
     'CLASS': 'classes',
     'CUSTOMER': 'customers',
 }
+
+GENERAL_MAPPING_ERROR_TYPES = {
+    'Accounts Payable': 'accounts_payable_name',
+    'Expense Account': 'qbo_expense_account_name',
+    'Bank Account': 'bank_account_name',
+    'Default Credit Card Account': 'default_ccc_account_name',
+    'Default Debit Card Account': 'default_debit_card_account_name',
+    'Default CCC Vendor': 'default_ccc_vendor_name',
+    'Default Tax Code': 'default_tax_code_name',
+    'Bill Payment Account': 'bill_payment_account_name'
+}

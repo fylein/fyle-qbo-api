@@ -165,6 +165,20 @@ def handle_qbo_exceptions(bill_payment=False):
                 task_log.status = 'FAILED'
                 task_log.detail = detail
 
+                for error in detail:
+                    if error.get('type') == 'General Mapping':
+                        Error.objects.update_or_create(
+                            workspace_id=expense_group.workspace_id,
+                            defaults={
+                                'error_title': error['message'],
+                                'type': 'GENERAL_MAPPING_ERROR',
+                                'error_detail': error['value'],
+                                'is_resolved': False,
+                                'is_parsed': False,
+                                'attribute_type': None,
+                                'article_link': None
+                            })
+
                 task_log.save()
 
                 if not bill_payment:
