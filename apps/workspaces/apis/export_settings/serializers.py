@@ -25,7 +25,7 @@ class ReadWriteSerializerMethodField(serializers.SerializerMethodField):
 class WorkspaceGeneralSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkspaceGeneralSettings
-        fields = ['reimbursable_expenses_object', 'corporate_credit_card_expenses_object', 'name_in_journal_entry']
+        fields = ['reimbursable_expenses_object', 'corporate_credit_card_expenses_object', 'name_in_journal_entry', 'employee_field_mapping']
 
 
 class ExpenseGroupSettingsSerializer(serializers.ModelSerializer):
@@ -232,10 +232,5 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
             if general_settings.get('name_in_journal_entry') == 'MERCHANT':
                 if not (general_mappings.get('default_ccc_account', {}).get('id') or general_mappings.get('default_ccc_account', {}).get('name')):
                     raise serializers.ValidationError('Default Credit Card Account is required for JOURNAL ENTRY with MERCHANT name')
-
-        # Validate tax code settings
-        if general_settings.get('import_tax_codes'):
-            if not (general_mappings.get('default_tax_code', {}).get('id') or general_mappings.get('default_tax_code', {}).get('name')):
-                raise serializers.ValidationError('Default Tax Code is required when tax codes are imported')
 
         return data
