@@ -194,48 +194,48 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
 
         # Validate based on reimbursable expenses object
         if general_settings.get('reimbursable_expenses_object') == 'BILL':
-            if not (general_mappings.get('accounts_payable_id') or general_mappings.get('accounts_payable_name')):
+            if not (general_mappings.get('accounts_payable', {}).get('id') or general_mappings.get('accounts_payable', {}).get('name')):
                 raise serializers.ValidationError('Accounts Payable is required for BILL type reimbursable expenses')
 
         elif general_settings.get('reimbursable_expenses_object') == 'CHECK':
-            if not (general_mappings.get('bank_account_id') or general_mappings.get('bank_account_name')):
+            if not (general_mappings.get('bank_account', {}).get('id') or general_mappings.get('bank_account', {}).get('name')):
                 raise serializers.ValidationError('Bank Account is required for CHECK type reimbursable expenses')
 
         elif general_settings.get('reimbursable_expenses_object') == 'EXPENSE':
-            if not (general_mappings.get('qbo_expense_account_id') or general_mappings.get('qbo_expense_account_name')):
+            if not (general_mappings.get('qbo_expense_account', {}).get('id') or general_mappings.get('qbo_expense_account', {}).get('name')):
                 raise serializers.ValidationError('Expense Payment Account is required for EXPENSE type reimbursable expenses')
 
         elif general_settings.get('reimbursable_expenses_object') == 'JOURNAL ENTRY':
             if general_settings.get('employee_field_mapping') == 'VENDOR':
-                if not (general_mappings.get('accounts_payable_id') or general_mappings.get('accounts_payable_name')):
+                if not (general_mappings.get('accounts_payable', {}).get('id') or general_mappings.get('accounts_payable', {}).get('name')):
                     raise serializers.ValidationError('Accounts Payable is required for JOURNAL ENTRY with VENDOR mapping')
             elif general_settings.get('employee_field_mapping') == 'EMPLOYEE':
-                if not (general_mappings.get('bank_account_id') or general_mappings.get('bank_account_name')):
+                if not (general_mappings.get('bank_account', {}).get('id') or general_mappings.get('bank_account', {}).get('name')):
                     raise serializers.ValidationError('Bank Account is required for JOURNAL ENTRY with EMPLOYEE mapping')
 
         # Validate based on corporate credit card expenses object
         if general_settings.get('corporate_credit_card_expenses_object') == 'BILL':
-            if not (general_mappings.get('accounts_payable_id') or general_mappings.get('accounts_payable_name')):
+            if not (general_mappings.get('accounts_payable', {}).get('id') or general_mappings.get('accounts_payable', {}).get('name')):
                 raise serializers.ValidationError('Accounts Payable is required for BILL type corporate credit card expenses')
-            if not (general_mappings.get('default_ccc_vendor_id') or general_mappings.get('default_ccc_vendor_name')):
+            if not (general_mappings.get('default_ccc_vendor', {}).get('id') or general_mappings.get('default_ccc_vendor', {}).get('name')):
                 raise serializers.ValidationError('Default Credit Card Vendor is required for BILL type corporate credit card expenses')
 
         elif general_settings.get('corporate_credit_card_expenses_object') == 'CREDIT CARD PURCHASE':
-            if not (general_mappings.get('default_ccc_account_id') or general_mappings.get('default_ccc_account_name')):
+            if not (general_mappings.get('default_ccc_account', {}).get('id') or general_mappings.get('default_ccc_account', {}).get('name')):
                 raise serializers.ValidationError('Default Credit Card Account is required for CREDIT CARD PURCHASE type expenses')
 
         elif general_settings.get('corporate_credit_card_expenses_object') == 'DEBIT CARD EXPENSE':
-            if not (general_mappings.get('default_debit_card_account_id') or general_mappings.get('default_debit_card_account_name')):
+            if not (general_mappings.get('default_debit_card_account', {}).get('id') or general_mappings.get('default_debit_card_account', {}).get('name')):
                 raise serializers.ValidationError('Default Debit Card Account is required for DEBIT CARD EXPENSE type expenses')
 
         elif general_settings.get('corporate_credit_card_expenses_object') == 'JOURNAL ENTRY':
             if general_settings.get('name_in_journal_entry') == 'MERCHANT':
-                if not (general_mappings.get('default_ccc_account_id') or general_mappings.get('default_ccc_account_name')):
+                if not (general_mappings.get('default_ccc_account', {}).get('id') or general_mappings.get('default_ccc_account', {}).get('name')):
                     raise serializers.ValidationError('Default Credit Card Account is required for JOURNAL ENTRY with MERCHANT name')
 
         # Validate tax code settings
         if general_settings.get('import_tax_codes'):
-            if not (general_mappings.get('default_tax_code_id') or general_mappings.get('default_tax_code_name')):
+            if not (general_mappings.get('default_tax_code', {}).get('id') or general_mappings.get('default_tax_code', {}).get('name')):
                 raise serializers.ValidationError('Default Tax Code is required when tax codes are imported')
 
         return data
