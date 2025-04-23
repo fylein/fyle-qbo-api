@@ -60,7 +60,7 @@ def get_entity_values(error_dict, workspace_id):
             'destination_id': error_dict['destination_id'],
             'value': destination_attribute.value,
             'error_attribute': error_dict['error_attribute'],
-            'attribute_type': error_dict['attribute_type']
+            'attribute_type': destination_attribute.attribute_type
         }
 
     # If no match is found or destination attribute is not active, return an empty dictionary

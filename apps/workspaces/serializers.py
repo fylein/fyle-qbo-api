@@ -40,7 +40,7 @@ class WorkSpaceGeneralSettingsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = WorkspaceGeneralSettings
-        fields = '__all__'
+        exclude = ['skip_accounting_export_summary_post']
 
 
 class FyleCredentialSerializer(serializers.ModelSerializer):
