@@ -9,14 +9,14 @@ result_dict_list = [
     {'attribute_type': 'ACCOUNT', 'destination_id': '7', 'error_attribute': 'Accounts', 'article_link': None},
     {'attribute_type': 'CLASS', 'destination_id': '5000000000000142240', 'error_attribute': 'Klasses', 'article_link': None},
     {'attribute_type': 'DEPARTMENT', 'destination_id': '2', 'error_attribute': 'Depts', 'article_link': None},
-    {'attribute_type': 'VENDOR', 'destination_id': '75', 'error_attribute': 'Names', 'article_link': None},
+    {'attribute_type': ['VENDOR', 'EMPLOYEE', 'CUSTOMER'], 'destination_id': '75', 'error_attribute': 'Names', 'article_link': None},
 ]
 
 error_dict = [
     {'attribute_type': 'ACCOUNT', 'destination_id': '7', 'error_attribute': 'Accounts', 'article_link': None},
     {'attribute_type': 'CLASS', 'destination_id': '5000000000000142240', 'error_attribute': 'Klasses', 'article_link': None},
     {'attribute_type': 'DEPARTMENT', 'destination_id': '2', 'error_attribute': 'Depts', 'article_link': None},
-    {'attribute_type': 'VENDOR', 'destination_id': '75', 'error_attribute': 'Names', 'article_link': None},
+    {'attribute_type': ['VENDOR', 'EMPLOYEE', 'CUSTOMER'], 'destination_id': '75', 'error_attribute': 'Names', 'article_link': None},
 ]
 
 entity_result_dict_list = [
