@@ -289,7 +289,6 @@ def test_re_run_skip_export_rule(db, create_temp_workspace, mocker, api_client, 
     expense_group_ids = expense_groups.values_list('id', flat=True)
     expense_group_skipped = ExpenseGroup.objects.filter(workspace_id=1, expenses__expense_id=expenses[0]['id']).first()
 
-
     # Create TaskLog to simulate in-progress export
     # get the first expense group id, and create a task log for it
     tasklog = TaskLog.objects.create(
