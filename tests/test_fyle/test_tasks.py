@@ -287,13 +287,7 @@ def test_re_run_skip_export_rule(db, create_temp_workspace, mocker, api_client, 
     ExpenseGroup.create_expense_groups_by_report_id_fund_source(expense_objects, 1)
     expense_groups = ExpenseGroup.objects.filter(workspace_id=1)
     expense_group_ids = expense_groups.values_list('id', flat=True)
-    # Create LastExportDetail to simulate failed exports
-    LastExportDetail.objects.create(
-        workspace_id=1,
-        total_expense_groups_count=len(expense_group_ids),  # 2 groups
-        failed_expense_groups_count=1,  # Mark one group as failed
-        export_mode='MANUAL'
-    )
+    expense_group_skipped = ExpenseGroup.objects.filter(workspace_id=1, expenses__expense_id=expenses[0]['id']).first()
 
     # Create TaskLog to simulate in-progress export
     # get the first expense group id, and create a task log for it
@@ -301,7 +295,7 @@ def test_re_run_skip_export_rule(db, create_temp_workspace, mocker, api_client, 
         workspace_id=1,
         type='CREATING_BILL',
         status='FAILED',
-        expense_group_id=expense_group_ids[0]
+        expense_group_id=expense_group_skipped.id
     )
 
     # Create error for the first expense group
@@ -310,7 +304,16 @@ def test_re_run_skip_export_rule(db, create_temp_workspace, mocker, api_client, 
         type='QBO_ERROR',
         error_title='Test error title',
         error_detail='Test error detail',
-        expense_group=ExpenseGroup.objects.get(id=expense_group_ids[0])
+        expense_group=ExpenseGroup.objects.get(id=expense_group_skipped.id)
+    )
+
+    LastExportDetail.objects.update_or_create(
+        workspace_id=1,
+        defaults={
+            'total_expense_groups_count': len(expense_groups),
+            'failed_expense_groups_count': 1,
+            'export_mode': 'MANUAL'
+        }
     )
 
     workspace = Workspace.objects.get(id=1)
