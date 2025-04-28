@@ -5,7 +5,8 @@ data = {
             "workspace_general_settings": {
                 "reimbursable_expenses_object": "EXPENSE",
                 "corporate_credit_card_expenses_object": None,
-                "name_in_journal_entry": "MERCHANT"
+                "name_in_journal_entry": "MERCHANT",
+                "employee_field_mapping": "EMPLOYEE"
             },
             "expense_group_settings": {
                 "reimbursable_expense_group_fields": [
@@ -142,7 +143,8 @@ data = {
             "workspace_general_settings": {
                 "reimbursable_expenses_object": "EXPENSE",
                 "corporate_credit_card_expenses_object": None,
-                "name_in_journal_entry": "MERCHANT"
+                "name_in_journal_entry": "MERCHANT",
+                "employee_field_mapping": "EMPLOYEE"
             },
             "expense_group_settings": {
                 "reimbursable_expense_group_fields": [
