@@ -292,12 +292,9 @@ def re_run_skip_export_rule(workspace: Workspace) -> None:
         filtered_expense_query = construct_expense_filter_query(expense_filters)
         # Get all expenses matching the filter query, excluding those in COMPLETE state
         expenses = Expense.objects.filter(
-            filtered_expense_query,
-            workspace_id=workspace.id,
-            is_skipped=False
-        ).exclude(
-            ~Q(accounting_export_summary={}),
-            accounting_export_summary__state='COMPLETE'
+            filtered_expense_query, workspace_id=workspace.id, is_skipped=False
+        ).filter(
+            Q(accounting_export_summary={}) | ~Q(accounting_export_summary__state="COMPLETE")
         )
         expense_ids = list(expenses.values_list('id', flat=True))
         skipped_expenses = mark_expenses_as_skipped(
@@ -306,8 +303,9 @@ def re_run_skip_export_rule(workspace: Workspace) -> None:
             workspace
         )
         if skipped_expenses:
-            expense_groups = ExpenseGroup.objects.filter(exported_at__isnull=True, workspace_id=workspace.id)
+            expense_groups = ExpenseGroup.objects.filter(exported_at__isnull=True, workspace_id=workspace.id, expenses__in=skipped_expenses)
             deleted_failed_expense_groups_count = 0
+            deleted_total_expense_groups_count = 0
             for expense_group in expense_groups:
                 task_log = TaskLog.objects.filter(
                     workspace_id=workspace.id,
@@ -321,8 +319,7 @@ def re_run_skip_export_rule(workspace: Workspace) -> None:
 
                 error = Error.objects.filter(
                     workspace_id=workspace.id,
-                    expense_group_id=expense_group.id,
-                    type__in=['QBO_ERROR']
+                    expense_group_id=expense_group.id
                 ).first()
                 if error:
                     logger.info('Deleting QBO error for expense group %s before export', expense_group.id)
@@ -332,15 +329,16 @@ def re_run_skip_export_rule(workspace: Workspace) -> None:
                 if not expense_group.expenses.exists():
                     logger.info('Deleting empty expense group %s before export', expense_group.id)
                     expense_group.delete()
+                    deleted_total_expense_groups_count += 1
 
-            last_export_detail = LastExportDetail.objects.filter(workspace_id=workspace.id, failed_expense_groups_count__gt=0).first()
-            if last_export_detail and deleted_failed_expense_groups_count > 0:
+            last_export_detail = LastExportDetail.objects.filter(workspace_id=workspace.id).first()
+            if last_export_detail:
                 last_export_detail.failed_expense_groups_count = max(
                     0,
                     last_export_detail.failed_expense_groups_count - deleted_failed_expense_groups_count
                 )
                 last_export_detail.total_expense_groups_count = max(
                     0,
-                    last_export_detail.total_expense_groups_count - deleted_failed_expense_groups_count
+                    last_export_detail.total_expense_groups_count - deleted_total_expense_groups_count
                 )
                 last_export_detail.save()
