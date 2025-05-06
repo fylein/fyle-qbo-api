@@ -239,6 +239,7 @@ def update_complete_expenses(exported_expenses: List[Expense], url: str) -> None
         )
 
     __bulk_update_expenses(expense_to_be_updated)
+    return True
 
 
 @retry(n=3, backoff=1, exceptions=InternalServerError)
