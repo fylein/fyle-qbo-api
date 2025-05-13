@@ -15,6 +15,7 @@ from apps.quickbooks_online.models import (
     JournalEntry,
     JournalEntryLineitem,
     get_bill_number,
+    get_journal_number,
     get_ccc_account_id,
     get_class_id_or_none,
     get_customer_id_or_none,
@@ -429,3 +430,50 @@ def test_support_post_date_integrations(mocker, db):
     assert bill.accounts_payable_id == '33'
     assert bill.vendor_id == '56'
     assert bill.transaction_date.strftime("%m/%d/%Y") == expense_objects.posted_at.strftime("%m/%d/%Y")
+
+
+def test_journal_number(db):
+    expense_group = ExpenseGroup.objects.get(id=3)
+    expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=expense_group.workspace_id)
+
+    # Reimbursable - group by report
+    expense_group.fund_source = 'PERSONAL'
+    expense_group.save()
+
+    if 'expense_id' in expense_group_settings.reimbursable_expense_group_fields:
+        expense_group_settings.reimbursable_expense_group_fields.remove('expense_id')
+        expense_group_settings.save()
+
+    journal_number = get_journal_number(expense_group)
+    assert journal_number.startswith('C/'), 'Journal numbers for journals grouped by report should be report numbers'
+
+    # Reimbursable - group by expense
+    expense_group.fund_source = 'PERSONAL'
+    expense_group.save()
+
+    expense_group_settings.reimbursable_expense_group_fields.append('expense_id')
+    expense_group_settings.save()
+
+    journal_number = get_journal_number(expense_group)
+    assert journal_number.startswith('E/'), 'Journal numbers for journals grouped by expense should be expense numbers'
+
+    # CCC - group by report
+    expense_group.fund_source = 'CCC'
+    expense_group.save()
+
+    if 'expense_id' in expense_group_settings.corporate_credit_card_expense_group_fields:
+        expense_group_settings.corporate_credit_card_expense_group_fields.remove('expense_id')
+        expense_group_settings.save()
+
+    journal_number = get_journal_number(expense_group)
+    assert journal_number.startswith('C/'), 'Journal numbers for journals grouped by report should be report numbers'
+
+    # CCC - group by expense
+    expense_group.fund_source = 'CCC'
+    expense_group.save()
+
+    expense_group_settings.corporate_credit_card_expense_group_fields.append('expense_id')
+    expense_group_settings.save()
+
+    journal_number = get_journal_number(expense_group)
+    assert journal_number.startswith('E/'), 'Journal numbers for journals grouped by expense should be expense numbers'

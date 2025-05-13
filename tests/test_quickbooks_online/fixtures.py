@@ -623,6 +623,7 @@ data = {
         "GlobalTaxCalculation": "TaxInclusive",
         "TxnDate": "2022-01-23",
         "PrivateNote": "Credit card expense by ashwin.t@fyle.in on 2022-01-23 ",
+        "DocNumber": "1",
         "Line": [
             {
                 "DetailType": "JournalEntryLineDetail",

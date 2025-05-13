@@ -195,6 +195,7 @@ def get_groupby_field(expense_group: ExpenseGroup):
     group_by_field_value = expense_group.expenses.first().__getattribute__(group_by_field)
     return group_by_field_value
 
+
 def _generate_number(expense_group: ExpenseGroup, exported_module: "Bill | JournalEntry", field_name: str) -> str:
     key = get_groupby_field(expense_group)
     exported_module_qs = exported_module.objects.filter(
@@ -206,11 +207,14 @@ def _generate_number(expense_group: ExpenseGroup, exported_module: "Bill | Journ
     count = exported_module_qs.count()
     return f"{key} - {count}" if count else key
 
+
 def get_bill_number(expense_group: ExpenseGroup) -> str:
     return _generate_number(expense_group, Bill, "bill_number")
 
+
 def get_journal_number(expense_group: ExpenseGroup) -> str:
     return _generate_number(expense_group, JournalEntry, "journal_number")
+
 
 class Bill(models.Model):
     """
