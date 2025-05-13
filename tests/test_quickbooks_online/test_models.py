@@ -477,3 +477,24 @@ def test_journal_number(db):
 
     journal_number = get_journal_number(expense_group)
     assert journal_number.startswith('E/'), 'Journal numbers for journals grouped by expense should be expense numbers'
+
+
+def test_journal_number_with_count(db):
+    expense_group = ExpenseGroup.objects.get(id=12)
+    expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=expense_group.workspace_id)
+
+    journal_entry = JournalEntry.objects.create(
+        expense_group=expense_group,
+        transaction_date=datetime.now(),
+        private_note="Credit card expense by ashwin.t@fyle.in on 2022-01-23 ",
+        currency='USD',
+        journal_number='C/2021/04/R/42',
+    )
+    journal_entry.save()
+
+    if 'expense_id' in expense_group_settings.corporate_credit_card_expense_group_fields:
+        expense_group_settings.corporate_credit_card_expense_group_fields.remove('expense_id')
+        expense_group_settings.save()
+
+    journal_number = get_journal_number(expense_group)
+    assert journal_number == 'C/2021/04/R/42 - 1'
