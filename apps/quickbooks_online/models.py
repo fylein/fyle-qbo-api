@@ -181,7 +181,7 @@ def get_credit_card_purchase_number(expense_group: ExpenseGroup, expense: Expens
         return expense.expense_number
 
 
-def get_groupby_field(expense_group: ExpenseGroup):
+def get_fyle_identifier_number(expense_group: ExpenseGroup):
     expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=expense_group.workspace_id)
 
     group_fields = expense_group_settings.corporate_credit_card_expense_group_fields
@@ -196,8 +196,8 @@ def get_groupby_field(expense_group: ExpenseGroup):
     return group_by_field_value
 
 
-def _generate_number(expense_group: ExpenseGroup, exported_module: "Bill | JournalEntry", field_name: str) -> str:
-    key = get_groupby_field(expense_group)
+def _get_export_number(expense_group: ExpenseGroup, exported_module: "Bill | JournalEntry", field_name: str) -> str:
+    key = get_fyle_identifier_number(expense_group)
     exported_module_qs = exported_module.objects.filter(
         **{
             f"{field_name}__icontains": key,
@@ -209,11 +209,11 @@ def _generate_number(expense_group: ExpenseGroup, exported_module: "Bill | Journ
 
 
 def get_bill_number(expense_group: ExpenseGroup) -> str:
-    return _generate_number(expense_group, Bill, "bill_number")
+    return _get_export_number(expense_group, Bill, "bill_number")
 
 
 def get_journal_number(expense_group: ExpenseGroup) -> str:
-    return _generate_number(expense_group, JournalEntry, "journal_number")
+    return _get_export_number(expense_group, JournalEntry, "journal_number")
 
 
 class Bill(models.Model):
