@@ -62,7 +62,7 @@ def group_expenses_and_save(expenses: List[Dict], task_log: TaskLog, workspace: 
     _, skipped_expense_ids = ExpenseGroup.create_expense_groups_by_report_id_fund_source(
         filtered_expenses, workspace.id
     )
-    print("group_expenses_and_save",skipped_expense_ids)
+
     if skipped_expense_ids:
         skipped_expenses = mark_expenses_as_skipped(final_query=Q(), expenses_object_ids=skipped_expense_ids, workspace=workspace)
         if skipped_expenses:

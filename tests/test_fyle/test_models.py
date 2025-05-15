@@ -9,11 +9,11 @@ from apps.fyle.models import (
     WorkspaceGeneralSettings,
     _format_date,
     _group_expenses,
+    _round_to_currency_fraction,
     get_default_ccc_expense_state,
     get_default_expense_group_fields,
     get_default_expense_state,
     parser,
-    _round_to_currency_fraction
 )
 from tests.test_fyle.fixtures import data
 
@@ -302,7 +302,7 @@ def test_create_expense_groups_by_report_id_fund_source(db):
     expense_groups = _group_expenses(expenses, ['claim_number', 'fund_source', 'project', 'employee_email', 'report_id', 'Killua'], 4)
     assert expense_groups == [{'claim_number': 'C/2022/05/R/6', 'fund_source': 'PERSONAL', 'project': 'Bebe Rexha', 'employee_email': 'sravan.kumar@fyle.in', 'report_id': 'rpawE81idoYo', 'killua': '', 'total': 1, 'expense_ids': [33]}]
 
-    expense_groups = ExpenseGroup.create_expense_groups_by_report_id_fund_source([expense_objects], workspace_id)
+    expense_groups, _ = ExpenseGroup.create_expense_groups_by_report_id_fund_source([expense_objects], workspace_id)
     assert len(expense_groups) == 1
 
     expense_groups = ExpenseGroup.objects.last()
