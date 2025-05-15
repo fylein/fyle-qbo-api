@@ -181,23 +181,39 @@ def get_credit_card_purchase_number(expense_group: ExpenseGroup, expense: Expens
         return expense.expense_number
 
 
-def get_bill_number(expense_group: ExpenseGroup):
+def get_fyle_identifier_number(expense_group: ExpenseGroup):
     expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=expense_group.workspace_id)
 
     group_fields = expense_group_settings.corporate_credit_card_expense_group_fields
     if expense_group.fund_source == 'PERSONAL':
         group_fields = expense_group_settings.reimbursable_expense_group_fields
 
-    bill_number_field = 'claim_number'
+    group_by_field = 'claim_number'
     if 'expense_id' in group_fields:
-        bill_number_field = 'expense_number'
+        group_by_field = 'expense_number'
 
-    bill_number = expense_group.expenses.first().__getattribute__(bill_number_field)
+    group_by_field_value = expense_group.expenses.first().__getattribute__(group_by_field)
+    return group_by_field_value
 
-    count = Bill.objects.filter(bill_number__icontains=bill_number, expense_group__workspace_id=expense_group.workspace.id).count()
-    if count > 0:
-        bill_number = '{} - {}'.format(bill_number, count)
-    return bill_number
+
+def _get_export_number(expense_group: ExpenseGroup, exported_module: "Bill | JournalEntry", field_name: str) -> str:
+    key = get_fyle_identifier_number(expense_group)
+    exported_module_qs = exported_module.objects.filter(
+        **{
+            f"{field_name}__icontains": key,
+            "expense_group__workspace_id": expense_group.workspace_id,
+        }
+    )
+    count = exported_module_qs.count()
+    return f"{key} - {count}" if count else key
+
+
+def get_bill_number(expense_group: ExpenseGroup) -> str:
+    return _get_export_number(expense_group, Bill, "bill_number")
+
+
+def get_journal_number(expense_group: ExpenseGroup) -> str:
+    return _get_export_number(expense_group, JournalEntry, "journal_number")
 
 
 class Bill(models.Model):
@@ -497,7 +513,6 @@ class QBOExpense(models.Model):
                 account_id = ccc_account_id
             else:
                 account_id = general_mappings.default_debit_card_account_id
-
         if workspace_general_settings.map_merchant_to_vendor and expense_group.fund_source == 'CCC':
             merchant = expense.vendor if expense.vendor else ''
 
@@ -751,6 +766,7 @@ class JournalEntry(models.Model):
     currency = models.CharField(max_length=255, help_text='JournalEntry Currency')
     private_note = models.TextField(help_text='JournalEntry Description')
     exchange_rate = models.FloatField(help_text='Exchange rate', null=True)
+    journal_number = models.CharField(max_length=255, help_text='Journal number', null=True)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
@@ -768,7 +784,15 @@ class JournalEntry(models.Model):
 
         private_note = construct_private_note(expense_group)
 
-        journal_entry_object, _ = JournalEntry.objects.update_or_create(expense_group=expense_group, defaults={'transaction_date': get_transaction_date(expense_group), 'private_note': private_note, 'currency': expense.currency})
+        journal_entry_object, _ = JournalEntry.objects.update_or_create(
+            expense_group=expense_group,
+            defaults={
+                "transaction_date": get_transaction_date(expense_group),
+                "private_note": private_note,
+                "currency": expense.currency,
+                "journal_number": get_journal_number(expense_group),
+            },
+        )
         return journal_entry_object
 
 

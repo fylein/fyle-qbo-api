@@ -1242,7 +1242,14 @@ class QBOConnector:
         lines.extend(credit_line)
         lines.extend(debit_line)
 
-        journal_entry_payload = {'TxnDate': journal_entry.transaction_date, 'PrivateNote': journal_entry.private_note, 'Line': lines, 'CurrencyRef': {"value": journal_entry.currency}, 'TxnTaxDetail': {'TaxLine': []}}
+        journal_entry_payload = {
+            "TxnDate": journal_entry.transaction_date,
+            "PrivateNote": journal_entry.private_note,
+            "Line": lines,
+            "CurrencyRef": {"value": journal_entry.currency},
+            "TxnTaxDetail": {"TaxLine": []},
+            "DocNumber": journal_entry.journal_number,
+        }
 
         if general_settings.is_multi_currency_allowed and fyle_home_currency != qbo_home_currency and qbo_home_currency:
             exchange_rate = self.connection.exchange_rates.get_by_source(source_currency_code=fyle_home_currency)
