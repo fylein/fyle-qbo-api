@@ -20,7 +20,6 @@ from apps.quickbooks_online.models import (
     get_customer_id_or_none,
     get_department_id_or_none,
     get_expense_purpose,
-    get_journal_number,
     get_tax_code_id_or_none,
     get_transaction_date,
 )
