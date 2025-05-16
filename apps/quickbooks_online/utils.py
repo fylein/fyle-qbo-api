@@ -709,7 +709,7 @@ class QBOConnector:
                 tax_details = self.update_tax_details(tax_details, line, tax_rate_refs, total_tax_rate, line_tax_amount)
 
         return tax_details
-    
+
     def get_exchange_rate(self, top_level_item: Bill | CreditCardPurchase | JournalEntry | QBOExpense):
         """
         Get the exchange rate for a given source currency code and as of date.
