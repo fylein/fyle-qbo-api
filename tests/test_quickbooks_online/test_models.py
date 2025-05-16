@@ -21,6 +21,7 @@ from apps.quickbooks_online.models import (
     get_customer_id_or_none,
     get_department_id_or_none,
     get_expense_purpose,
+    get_journal_number,
     get_tax_code_id_or_none,
     get_transaction_date,
 )
@@ -387,7 +388,7 @@ def test_support_post_date_integrations(mocker, db):
     field.attribute_type = 'KILLUA'
     field.save()
 
-    expense_groups = ExpenseGroup.create_expense_groups_by_report_id_fund_source([expense_objects], workspace_id)
+    expense_groups, _ = ExpenseGroup.create_expense_groups_by_report_id_fund_source([expense_objects], workspace_id)
     assert expense_groups[0].description['posted_at'] == '2021-11-08'
 
     mapping_setting = MappingSetting(source_field='CATEGORY', destination_field='ACCOUNT', workspace_id=workspace_id, import_to_fyle=False, is_custom=False)
