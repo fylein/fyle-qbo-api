@@ -1,9 +1,10 @@
+import inspect
 import json
 import logging
-import traceback
+import os
 import random
 import string
-import os
+import traceback
 
 from django.conf import settings
 from django.http import HttpResponse
@@ -30,6 +31,23 @@ def get_logger():
     updated_logger.setLevel(logging.INFO)
 
     return updated_logger
+
+
+def get_caller_info() -> str:
+    """
+    Get information about the caller of the current function
+    Returns a string containing the caller's module name and function name
+    """
+    frame = inspect.currentframe()
+    if frame:
+        # Get the caller's frame (2 levels up from current frame)
+        caller_frame = frame.f_back.f_back
+        if caller_frame:
+            # Get the caller's module and function name
+            module_name = caller_frame.f_globals.get('__name__', 'unknown')
+            function_name = caller_frame.f_code.co_name
+            return f"{module_name}.{function_name}"
+    return "unknown"
 
 
 class ErrorHandlerMiddleware:
