@@ -6,6 +6,8 @@ from typing import Dict, List
 import unidecode
 from django.conf import settings
 from django.utils import timezone
+from django.db.models import Max
+
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping
 from qbosdk import QuickbooksOnlineSDK
 from qbosdk.exceptions import WrongParamsError
@@ -714,7 +716,7 @@ class QBOConnector:
         """
         Get the exchange rate for a given source currency code and as of date.
         """
-        spent_date = top_level_item.expense_group.expenses.last().spent_at
+        spent_date = top_level_item.expense_group.expenses.aggregate(latest_spent_at=Max('spent_at'))['latest_spent_at']
         currency = top_level_item.currency
         exchange_rate = self.connection.exchange_rates.get_by_source(source_currency_code=currency, as_of_date=spent_date)
         return exchange_rate['Rate'] if "Rate" in exchange_rate else 1
