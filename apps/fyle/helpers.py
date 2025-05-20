@@ -358,3 +358,11 @@ class ExpenseSearchFilter(AdvanceSearchFilter):
         model = Expense
         fields = ['org_id', 'is_skipped', 'updated_at__gte', 'updated_at__lte']
         or_fields = ['expense_number', 'employee_name', 'employee_email', 'claim_number']
+
+
+def update_task_log_post_import(task_log: TaskLog, status: str, message: str = None, error: str = None):
+    """Helper function to update task log status and details"""
+    if task_log:
+        task_log.status = status
+        task_log.detail = {"message": message} if message else {"error": error}
+        task_log.save()

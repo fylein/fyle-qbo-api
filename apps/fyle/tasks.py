@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+import traceback
 from typing import Dict, List
 
 from django.db import transaction
@@ -19,11 +20,13 @@ from apps.fyle.helpers import (
     get_fund_source,
     get_source_account_type,
     handle_import_exception,
+    update_task_log_post_import
 )
 from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings
 from apps.tasks.models import Error, TaskLog
 from apps.workspaces.actions import export_to_qbo
 from apps.workspaces.models import FyleCredential, LastExportDetail, Workspace, WorkspaceGeneralSettings, WorkspaceSchedule
+
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -146,43 +149,37 @@ def create_expense_groups(workspace_id: int, fund_source: List[str], task_log: T
             group_expenses_and_save(expenses, task_log, workspace, imported_from=imported_from)
 
     except FyleCredential.DoesNotExist:
-        logger.info('Fyle credentials not found %s', workspace_id)
-
-        if task_log:
-            task_log.detail = {'message': 'Fyle credentials do not exist in workspace'}
-            task_log.status = 'FAILED'
-            task_log.save()
-
-    except RetryException:
-        logger.info('Fyle Retry Exception occured in workspace_id %s', workspace_id)
-
-        if task_log:
-            task_log.detail = {'message': 'Retrying task'}
-            task_log.status = 'FATAL'
-            task_log.save()
+        logger.info("Fyle credentials not found %s", workspace_id)
+        update_task_log_post_import(
+            task_log,
+            'FAILED',
+            "Fyle credentials do not exist in workspace"
+        )
 
     except InvalidTokenError:
-        logger.info('Invalid Token for Fyle')
+        logger.info("Invalid Token for Fyle")
+        update_task_log_post_import(
+            task_log,
+            'FAILED',
+            "Invalid Fyle credentials"
+        )
 
-        if task_log:
-            task_log.detail = {
-                'message': 'Invalid Token for Fyle'
-            }
-            task_log.status = 'FAILED'
-            task_log.save()
-
-    except InternalServerError:
-        logger.info('Fyle Internal Server Error occured in workspace_id: %s', workspace_id)
-
-        if task_log:
-            task_log.detail = {
-                'message': 'Fyle Internal Server Error occured'
-            }
-            task_log.status = 'FAILED'
-            task_log.save()
+    except (RetryException, InternalServerError) as e:
+        error_msg = f"Fyle {e.__class__.__name__} occurred"
+        logger.info("%s in workspace_id: %s", error_msg, workspace_id)
+        update_task_log_post_import(
+            task_log,
+            'FATAL' if isinstance(e, RetryException) else 'FAILED',
+            error_msg
+        )
 
     except Exception:
-        handle_import_exception(task_log)
+        error = traceback.format_exc()
+        logger.exception(
+            "Something unexpected happened workspace_id: %s",
+            workspace_id
+        )
+        update_task_log_post_import(task_log, 'FATAL', error=error)
 
 
 def sync_dimensions(workspace_id: int, is_export: bool = False):
