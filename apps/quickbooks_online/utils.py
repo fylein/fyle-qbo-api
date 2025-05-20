@@ -6,6 +6,8 @@ from typing import Dict, List
 import unidecode
 from django.conf import settings
 from django.utils import timezone
+from django.db.models import Max
+
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping
 from qbosdk import QuickbooksOnlineSDK
 from qbosdk.exceptions import WrongParamsError
@@ -710,6 +712,15 @@ class QBOConnector:
 
         return tax_details
 
+    def get_exchange_rate(self, top_level_item: Bill | CreditCardPurchase | JournalEntry | QBOExpense):
+        """
+        Get the exchange rate for a given source currency code and as of date.
+        """
+        spent_date = top_level_item.expense_group.expenses.aggregate(latest_spent_at=Max('spent_at'))['latest_spent_at']
+        currency = top_level_item.currency
+        exchange_rate = self.connection.exchange_rates.get_by_source(source_currency_code=currency, as_of_date=spent_date)
+        return exchange_rate['Rate'] if "Rate" in exchange_rate else 1
+
     def purchase_object_payload(self, purchase_object, line, payment_type, account_ref, doc_number: str = None, credit=None):
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
         qbo_credentials = QBOCredential.objects.get(workspace_id=self.workspace_id)
@@ -729,8 +740,8 @@ class QBOConnector:
 
         # Add exchange rate for foreign currency transactions
         if general_settings.is_multi_currency_allowed and purchase_object.currency != qbo_credentials.currency and qbo_credentials.currency:
-            exchange_rate = self.connection.exchange_rates.get_by_source(source_currency_code=purchase_object.currency)
-            purchase_object_payload['ExchangeRate'] = exchange_rate['Rate'] if "Rate" in exchange_rate else 1
+            exchange_rate = self.get_exchange_rate(purchase_object)
+            purchase_object_payload['ExchangeRate'] = exchange_rate
 
             if isinstance(purchase_object, CreditCardPurchase):
                 purchase_object.exchange_rate = purchase_object_payload['ExchangeRate']
@@ -809,8 +820,8 @@ class QBOConnector:
         }
 
         if general_settings.is_multi_currency_allowed and fyle_home_currency != qbo_home_currency and qbo_home_currency:
-            exchange_rate = self.connection.exchange_rates.get_by_source(source_currency_code=fyle_home_currency)
-            bill_payload['ExchangeRate'] = exchange_rate['Rate'] if "Rate" in exchange_rate else 1
+            exchange_rate = self.get_exchange_rate(bill)
+            bill_payload['ExchangeRate'] = exchange_rate
 
             bill.exchange_rate = bill_payload['ExchangeRate']
             bill.save(update_fields=['exchange_rate'])
@@ -1252,8 +1263,8 @@ class QBOConnector:
         }
 
         if general_settings.is_multi_currency_allowed and fyle_home_currency != qbo_home_currency and qbo_home_currency:
-            exchange_rate = self.connection.exchange_rates.get_by_source(source_currency_code=fyle_home_currency)
-            journal_entry_payload['ExchangeRate'] = exchange_rate['Rate'] if "Rate" in exchange_rate else 1
+            exchange_rate = self.get_exchange_rate(journal_entry)
+            journal_entry_payload['ExchangeRate'] = exchange_rate
 
             journal_entry.exchange_rate = journal_entry_payload['ExchangeRate']
             journal_entry.save(update_fields=['exchange_rate'])
