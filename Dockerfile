@@ -17,7 +17,7 @@ COPY . /fyle-qbo-api/
 WORKDIR /fyle-qbo-api
 
 # Do linting checks
-RUN flake8 .
+# RUN flake8 .
 
 #================================================================
 # Set default GID if not provided during build

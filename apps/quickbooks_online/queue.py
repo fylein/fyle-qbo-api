@@ -66,7 +66,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_
             if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
                 task_log.type = 'CREATING_BILL'
                 task_log.status = 'ENQUEUED'
-                if task_log.triggered_by != triggered_by:
+                if triggered_by and task_log.triggered_by != triggered_by:
                     task_log.triggered_by = triggered_by
                 task_log.save()
 
@@ -133,7 +133,7 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], i
             if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
                 task_log.type = 'CREATING_CHECK'
                 task_log.status = 'ENQUEUED'
-                if task_log.triggered_by != triggered_by:
+                if triggered_by and task_log.triggered_by != triggered_by:
                     task_log.triggered_by = triggered_by
                 task_log.save()
 
@@ -180,7 +180,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
             if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
                 task_log.type = 'CREATING_JOURNAL_ENTRY'
                 task_log.status = 'ENQUEUED'
-                if task_log.triggered_by != triggered_by:
+                if triggered_by and task_log.triggered_by != triggered_by:
                     task_log.triggered_by = triggered_by
                 task_log.save()
 
@@ -230,7 +230,7 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
             if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
                 task_log.type = 'CREATING_CREDIT_CARD_PURCHASE'
                 task_log.status = 'ENQUEUED'
-                if task_log.triggered_by != triggered_by:
+                if triggered_by and task_log.triggered_by != triggered_by:
                     task_log.triggered_by = triggered_by
                 task_log.save()
 
@@ -279,7 +279,7 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
             if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
                 task_log.type = 'CREATING_EXPENSE' if expense_group.fund_source == 'PERSONAL' else 'CREATING_DEBIT_CARD_EXPENSE'
                 task_log.status = 'ENQUEUED'
-                if task_log.triggered_by != triggered_by:
+                if triggered_by and task_log.triggered_by != triggered_by:
                     task_log.triggered_by = triggered_by
                 task_log.save()
 
