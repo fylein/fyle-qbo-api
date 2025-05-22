@@ -3,9 +3,11 @@ from unittest import mock
 from datetime import datetime, timedelta
 
 from django.urls import reverse
+from django.db.models import Q
 from qbosdk import exceptions as qbo_exc
 
 from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSettings, LastExportDetail
+from apps.tasks.models import TaskLog
 from fyle_qbo_api.tests import settings
 from tests.helper import dict_compare_keys
 from tests.test_workspaces.fixtures import data
@@ -282,6 +284,40 @@ def test_last_export_detail_view(db, api_client, test_connection):
 
     response = api_client.get(url)
     assert response.status_code == 200
+
+
+def test_last_export_detail_2(mocker, api_client, test_connection):
+    workspace_id = 3
+
+    WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(
+        reimbursable_expenses_object='BILL',
+        corporate_credit_card_expenses_object='BILL'
+    )
+
+    url = "/api/workspaces/{}/export_detail/?start_date=2025-05-01".format(workspace_id)
+
+    api_client.credentials(
+        HTTP_AUTHORIZATION="Bearer {}".format(test_connection.access_token)
+    )
+
+    last_export_detail = LastExportDetail.objects.get(workspace_id=workspace_id)
+    last_export_detail.last_exported_at = datetime.now()
+    last_export_detail.total_expense_groups_count = 1
+    last_export_detail.save()
+
+    task_log = TaskLog.objects.filter(~Q(type__in=['CREATING_BILL_PAYMENT', 'FETCHING_EXPENSES']), workspace_id=workspace_id, status='COMPLETE').first()
+    task_log.updated_at = datetime.now()
+    task_log.save()
+
+    failed_count = TaskLog.objects.filter(workspace_id=workspace_id, status__in=['FAILED', 'FATAL']).count()
+
+    response = api_client.get(url)
+    assert response.status_code == 200
+
+    response = json.loads(response.content)
+    assert response['repurposed_successful_count'] == 1
+    assert response['repurposed_failed_count'] == failed_count
+    assert response['repurposed_last_exported_at'] is not None
 
 
 def test_workspace_admin_view(mocker, db, api_client, test_connection):

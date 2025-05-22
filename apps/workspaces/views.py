@@ -2,6 +2,7 @@ import logging
 
 from django.contrib.auth import get_user_model
 from django.db import connection
+from django.db.models import Q
 from django_q.tasks import async_task
 from fyle_rest_auth.utils import AuthUtils
 from qbosdk import exceptions as qbo_exc
@@ -19,6 +20,7 @@ from apps.workspaces.actions import (
     setup_e2e_tests,
     update_or_create_workspace,
 )
+from apps.tasks.models import TaskLog
 from apps.workspaces.models import LastExportDetail, QBOCredential, Workspace, WorkspaceGeneralSettings
 from apps.workspaces.permissions import IsAuthenticatedForInternalAPI
 from apps.workspaces.serializers import (
@@ -195,11 +197,48 @@ class LastExportDetailView(generics.RetrieveAPIView):
     Last Export Details
     """
 
-    lookup_field = 'workspace_id'
-    lookup_url_kwarg = 'workspace_id'
-
-    queryset = LastExportDetail.objects.filter(last_exported_at__isnull=False, total_expense_groups_count__gt=0)
+    lookup_field = "workspace_id"
+    lookup_url_kwarg = "workspace_id"
     serializer_class = LastExportDetailSerializer
+    queryset = LastExportDetail.objects.filter(
+        last_exported_at__isnull=False, total_expense_groups_count__gt=0
+    )
+
+    def get_queryset(self):
+        return super().get_queryset()
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        response_data = serializer.data
+
+        start_date = request.query_params.get('start_date')
+
+        if start_date and response_data:
+            misc_task_log_types = ['CREATING_BILL_PAYMENT', 'FETCHING_EXPENSES']
+
+            task_logs = TaskLog.objects.filter(
+                ~Q(type__in=misc_task_log_types),
+                workspace_id=kwargs['workspace_id'],
+                updated_at__gte=start_date,
+                status='COMPLETE',
+            ).order_by('-updated_at')
+
+            successful_count = task_logs.count()
+
+            failed_count = TaskLog.objects.filter(
+                ~Q(type__in=misc_task_log_types),
+                status__in=['FAILED', 'FATAL'],
+                workspace_id=kwargs['workspace_id'],
+            ).count()
+
+            response_data.update({
+                'repurposed_successful_count': successful_count,
+                'repurposed_failed_count': failed_count,
+                'repurposed_last_exported_at': task_logs.last().updated_at if task_logs.last() else None
+            })
+
+        return Response(response_data)
 
 
 class WorkspaceAdminsView(generics.RetrieveAPIView):

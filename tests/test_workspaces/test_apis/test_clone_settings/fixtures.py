@@ -118,7 +118,8 @@ data = {
                 "enabled": True,
                 "interval_hours": 24,
                 "additional_email_options": [],
-                "emails_selected": []
+                "emails_selected": [],
+                "is_real_time_export_enabled": False,
             },
             "workspace_id": 1
         },
@@ -255,7 +256,8 @@ data = {
                 "enabled": True,
                 "interval_hours": 24,
                 "additional_email_options": [],
-                "emails_selected": []
+                "emails_selected": [],
+                "is_real_time_export_enabled": False,
             },
             "workspace_id": 1
         },

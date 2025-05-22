@@ -1,6 +1,7 @@
 import json
 import logging
 import traceback
+from datetime import datetime
 from typing import List, Union
 
 import django_filters
@@ -263,17 +264,20 @@ def get_filter_credit_expenses(expense_group_settings: ExpenseGroupSettings) -> 
     return filter_credit_expenses
 
 
-def handle_import_exception(task_log: TaskLog) -> None:
+def handle_import_exception(task_log: TaskLog | None) -> None:
     """
     Handle import exception
     :param task_log: task log
     :return: None
     """
     error = traceback.format_exc()
-    task_log.detail = {'error': error}
-    task_log.status = 'FATAL'
-    task_log.save()
-    logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
+    if task_log:
+        task_log.detail = {'error': error}
+        task_log.status = 'FATAL'
+        task_log.save()
+        logger.error('Something unexpected happened workspace_id: %s %s', task_log.workspace_id, task_log.detail)
+    else:
+        logger.error('Something unexpected happened %s', error)
 
 
 def get_batched_expenses(batched_payload: List[dict], workspace_id: int) -> List[Expense]:
@@ -355,3 +359,12 @@ class ExpenseSearchFilter(AdvanceSearchFilter):
         model = Expense
         fields = ['org_id', 'is_skipped', 'updated_at__gte', 'updated_at__lte']
         or_fields = ['expense_number', 'employee_name', 'employee_email', 'claim_number']
+
+
+def update_task_log_post_import(task_log: TaskLog, status: str, message: str = None, error: str = None):
+    """Helper function to update task log status and details"""
+    if task_log:
+        task_log.status = status
+        task_log.detail = {"message": message} if message else {"error": error}
+        task_log.updated_at = datetime.now()
+        task_log.save(update_fields=['status', 'detail', 'updated_at'])
