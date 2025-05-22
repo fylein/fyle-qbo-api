@@ -15,12 +15,12 @@ from apps.quickbooks_online.models import (
     JournalEntry,
     JournalEntryLineitem,
     get_bill_number,
+    get_journal_number,
     get_ccc_account_id,
     get_class_id_or_none,
     get_customer_id_or_none,
     get_department_id_or_none,
     get_expense_purpose,
-    get_journal_number,
     get_tax_code_id_or_none,
     get_transaction_date,
 )
