@@ -4,7 +4,6 @@ from django_q.models import Schedule
 from fyle_accounting_mappings.models import MappingSetting
 
 from apps.mappings.constants import SYNC_METHODS
-from apps.mappings.helpers import get_auto_sync_permission
 from apps.mappings.models import GeneralMapping
 from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings
 from fyle_integrations_imports.dataclasses import TaskSetting
@@ -79,7 +78,7 @@ def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
         task_settings['import_categories'] = {
             'destination_field': 'ACCOUNT',
             'destination_sync_methods': destination_sync_methods,
-            'is_auto_sync_enabled': get_auto_sync_permission(workspace_general_settings),
+            'is_auto_sync_enabled': True,
             'is_3d_mapping': False,
             'charts_of_accounts': workspace_general_settings.charts_of_accounts if 'accounts' in destination_sync_methods else None,
             'prepend_code_to_name': True if 'ACCOUNT' in workspace_general_settings.import_code_fields else False
@@ -89,7 +88,7 @@ def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
         task_settings['import_tax'] = {
             'destination_field': 'TAX_CODE',
             'destination_sync_methods': [SYNC_METHODS['TAX_CODE']],
-            'is_auto_sync_enabled': get_auto_sync_permission(workspace_general_settings),
+            'is_auto_sync_enabled': False,
             'is_3d_mapping': False,
         }
 
@@ -97,7 +96,7 @@ def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
         task_settings['import_vendors_as_merchants'] = {
             'destination_field': 'VENDOR',
             'destination_sync_methods': [SYNC_METHODS['VENDOR']],
-            'is_auto_sync_enabled': get_auto_sync_permission(workspace_general_settings),
+            'is_auto_sync_enabled': True,
             'is_3d_mapping': False,
         }
 
@@ -114,7 +113,7 @@ def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
                     'source_field': mapping_setting.source_field,
                     'destination_field': mapping_setting.destination_field,
                     'destination_sync_methods': [SYNC_METHODS[mapping_setting.destination_field]],
-                    'is_auto_sync_enabled': get_auto_sync_permission(workspace_general_settings, mapping_setting),
+                    'is_auto_sync_enabled': True,
                     'is_custom': mapping_setting.is_custom
                 })
 
