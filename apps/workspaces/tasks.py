@@ -93,6 +93,8 @@ def schedule_sync(workspace_id: int, schedule_enabled: bool, hours: int, email_a
         ws_schedule.schedule = None
         ws_schedule.save()
         schedule.delete()
+    else:
+        ws_schedule.save()
 
     return ws_schedule
 
