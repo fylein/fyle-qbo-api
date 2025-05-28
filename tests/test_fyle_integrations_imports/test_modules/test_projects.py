@@ -4,7 +4,7 @@ from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribu
 from fyle_integrations_platform_connector import PlatformConnector
 
 from apps.quickbooks_online.utils import QBOConnector
-from apps.workspaces.models import FyleCredential, QBOCredential, Workspace
+from apps.workspaces.models import FyleCredential, QBOCredential, Workspace, WorkspaceGeneralSettings
 from fyle_integrations_imports.modules import Project
 from tests.test_fyle_integrations_imports.test_modules.fixtures import projects_data
 
@@ -205,3 +205,82 @@ def test_auto_create_destination_attributes(mocker, db):
         post_run_expense_attribute_count = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'PROJECT', active=False).count()
 
         assert pre_run_expense_attribute_count == post_run_expense_attribute_count
+
+
+def test_disable_projects(db, mocker):
+    from fyle_integrations_imports.modules.projects import disable_projects
+    workspace_id = 1
+
+    projects_to_disable = {
+        'destination_id': {
+            'value': 'old_project',
+            'updated_value': 'new_project',
+            'code': 'old_project_code',
+            'updated_code': 'old_project_code'
+        }
+    }
+
+    ExpenseAttribute.objects.create(
+        workspace_id=workspace_id,
+        attribute_type='PROJECT',
+        display_name='Project',
+        value='old_project',
+        source_id='source_id',
+        active=True
+    )
+
+    mock_platform = mocker.patch('fyle_integrations_imports.modules.projects.PlatformConnector')
+    bulk_post_call = mocker.patch.object(mock_platform.return_value.projects, 'post_bulk')
+
+    disable_projects(workspace_id, projects_to_disable, is_import_to_fyle_enabled=True)
+
+    assert bulk_post_call.call_count == 1
+
+    projects_to_disable = {
+        'destination_id': {
+            'value': 'old_project_2',
+            'updated_value': 'new_project',
+            'code': 'old_project_code',
+            'updated_code': 'new_project_code'
+        }
+    }
+
+    disable_projects(workspace_id, projects_to_disable, is_import_to_fyle_enabled=True)
+    assert bulk_post_call.call_count == 1
+
+    # Test disable project with code in naming
+    general_setting = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
+    general_setting.import_code_fields = ['JOB']
+    general_setting.save()
+
+    ExpenseAttribute.objects.create(
+        workspace_id=workspace_id,
+        attribute_type='PROJECT',
+        display_name='Project',
+        value='old_project_code: old_project',
+        source_id='source_id_123',
+        active=True
+    )
+
+    projects_to_disable = {
+        'destination_id': {
+            'value': 'old_project',
+            'updated_value': 'new_project',
+            'code': 'old_project_code',
+            'updated_code': 'old_project_code'
+        }
+    }
+
+    payload = [{
+        'name': 'old_project_code: old_project',
+        'code': 'destination_id',
+        'description': mocker.ANY,  # Description is dynamic
+        'is_enabled': False,
+        'id': 'source_id_123'
+    }]
+
+    bulk_payload = disable_projects(workspace_id, projects_to_disable, is_import_to_fyle_enabled=True)
+    # Only check keys and values except description
+    for actual, expected in zip(bulk_payload, payload):
+        for k in expected:
+            assert actual[k] == expected[k] or expected[k] == mocker.ANY

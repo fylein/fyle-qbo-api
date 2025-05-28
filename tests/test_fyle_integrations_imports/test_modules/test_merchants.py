@@ -4,8 +4,8 @@ from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribu
 from fyle_integrations_platform_connector import PlatformConnector
 
 from apps.quickbooks_online.utils import QBOConnector
-from apps.workspaces.models import FyleCredential, QBOCredential, Workspace
-from fyle_integrations_imports.modules.merchants import Merchant
+from apps.workspaces.models import FyleCredential, QBOCredential, Workspace, WorkspaceGeneralSettings
+from fyle_integrations_imports.modules.merchants import Merchant, disable_merchants
 from tests.helper import dict_compare_keys
 from tests.test_fyle_integrations_imports.test_modules.fixtures import merchants_data
 
@@ -190,3 +190,69 @@ def test_construct_fyle_payload(db):
     )
 
     assert dict_compare_keys(fyle_payload, merchants_data['create_fyle_merchants_payload_create_new_case']) == [], 'Payload mismatches'
+
+
+def test_disable_merchants(db, mocker):
+    workspace_id = 5
+
+    merchants_to_disable = {
+        'destination_id': {
+            'value': 'old_merchant',
+            'updated_value': 'new_merchant',
+            'code': 'old_merchant_code',
+            'updated_code': 'old_merchant_code'
+        }
+    }
+
+    ExpenseAttribute.objects.create(
+        workspace_id=workspace_id,
+        attribute_type='MERCHANT',
+        value='old_merchant',
+        source_id='source_id',
+        active=True
+    )
+
+    mock_platform = mocker.patch('fyle_integrations_imports.modules.merchants.PlatformConnector')
+    post_call = mocker.patch.object(mock_platform.return_value.merchants, 'post')
+
+    disable_merchants(workspace_id, merchants_to_disable, is_import_to_fyle_enabled=True)
+
+    assert post_call.call_count == 1
+
+    # Test skip if value and updated_value are the same and code is the same (should not call post)
+    merchants_to_disable = {
+        'destination_id': {
+            'value': 'old_merchant_2',
+            'updated_value': 'new_merchant',
+            'code': 'old_merchant_code',
+            'updated_code': 'new_merchant_code'
+        }
+    }
+    disable_merchants(workspace_id, merchants_to_disable, is_import_to_fyle_enabled=True)
+    assert post_call.call_count == 1  # No new call
+
+    # Test disable merchant with code in naming
+    general_setting = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
+    general_setting.import_code_fields = ['VENDOR']
+    general_setting.save()
+
+    ExpenseAttribute.objects.create(
+        workspace_id=workspace_id,
+        attribute_type='MERCHANT',
+        value='old_merchant_code: old_merchant',
+        source_id='source_id_123',
+        active=True
+    )
+
+    merchants_to_disable = {
+        'destination_id': {
+            'value': 'old_merchant',
+            'updated_value': 'new_merchant',
+            'code': 'old_merchant_code',
+            'updated_code': 'old_merchant_code'
+        }
+    }
+
+    # The payload is just the value list, so we check the return value
+    bulk_payload = disable_merchants(workspace_id, merchants_to_disable, is_import_to_fyle_enabled=True)
+    assert 'old_merchant_code: old_merchant' in list(bulk_payload)

@@ -1,11 +1,11 @@
 from unittest import mock
 
-from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute, Mapping
+from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute, Mapping, MappingSetting
 from fyle_integrations_platform_connector import PlatformConnector
 
 from apps.quickbooks_online.utils import QBOConnector
-from apps.workspaces.models import FyleCredential, QBOCredential, Workspace
-from fyle_integrations_imports.modules.cost_centers import CostCenter
+from apps.workspaces.models import FyleCredential, QBOCredential, Workspace, WorkspaceGeneralSettings
+from fyle_integrations_imports.modules.cost_centers import CostCenter, disable_cost_centers
 from tests.helper import dict_compare_keys
 from tests.test_fyle_integrations_imports.test_modules.fixtures import cost_center_data
 
@@ -176,3 +176,76 @@ def test_construct_fyle_payload(db):
     )
 
     assert dict_compare_keys(fyle_payload, cost_center_data['create_fyle_cost_centers_payload_create_new_case']) == [], 'Payload mismatches'
+
+
+def test_disable_cost_centers(db, mocker):
+    workspace_id = 3
+
+    # Setup MappingSetting for destination_type
+    MappingSetting.objects.update_or_create(
+        workspace_id=workspace_id,
+        source_field='COST_CENTER',
+        defaults={'destination_field': 'CLASS'}
+    )
+
+    cost_centers_to_disable = {
+        'destination_id': {
+            'value': 'old_cost_center',
+            'updated_value': 'new_cost_center',
+            'code': 'old_cost_center_code',
+            'updated_code': 'old_cost_center_code'
+        }
+    }
+
+    ExpenseAttribute.objects.create(
+        workspace_id=workspace_id,
+        attribute_type='COST_CENTER',
+        value='old_cost_center',
+        source_id='source_id',
+        active=True
+    )
+
+    mock_platform = mocker.patch('fyle_integrations_imports.modules.cost_centers.PlatformConnector')
+    post_bulk_call = mocker.patch.object(mock_platform.return_value.cost_centers, 'post_bulk')
+
+    disable_cost_centers(workspace_id, cost_centers_to_disable, is_import_to_fyle_enabled=True)
+
+    assert post_bulk_call.call_count == 1
+
+    # Test skip if value and updated_value are the same and code is the same (should not call post_bulk)
+    cost_centers_to_disable = {
+        'destination_id': {
+            'value': 'old_cost_center_2',
+            'updated_value': 'new_cost_center',
+            'code': 'old_cost_center_code',
+            'updated_code': 'new_cost_center_code'
+        }
+    }
+    disable_cost_centers(workspace_id, cost_centers_to_disable, is_import_to_fyle_enabled=True)
+    assert post_bulk_call.call_count == 1  # No new call
+
+    # Test disable cost center with code in naming
+    general_setting = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
+    general_setting.import_code_fields = ['CLASS']
+    general_setting.save()
+
+    ExpenseAttribute.objects.create(
+        workspace_id=workspace_id,
+        attribute_type='COST_CENTER',
+        value='old_cost_center_code: old_cost_center',
+        source_id='source_id_123',
+        active=True
+    )
+
+    cost_centers_to_disable = {
+        'destination_id': {
+            'value': 'old_cost_center',
+            'updated_value': 'new_cost_center',
+            'code': 'old_cost_center_code',
+            'updated_code': 'old_cost_center_code'
+        }
+    }
+
+    bulk_payload = disable_cost_centers(workspace_id, cost_centers_to_disable, is_import_to_fyle_enabled=True)
+    # Should contain a dict with name 'old_cost_center_code: old_cost_center'
+    assert any(item['name'] == 'old_cost_center_code: old_cost_center' for item in bulk_payload)
