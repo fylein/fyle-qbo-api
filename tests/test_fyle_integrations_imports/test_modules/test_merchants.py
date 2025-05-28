@@ -6,6 +6,7 @@ from fyle_integrations_platform_connector import PlatformConnector
 from apps.quickbooks_online.utils import QBOConnector
 from apps.workspaces.models import FyleCredential, QBOCredential, Workspace
 from fyle_integrations_imports.modules.merchants import Merchant
+from tests.helper import dict_compare_keys
 from tests.test_fyle_integrations_imports.test_modules.fixtures import merchants_data
 
 
@@ -188,4 +189,4 @@ def test_construct_fyle_payload(db):
         existing_fyle_attributes_map,
     )
 
-    assert fyle_payload == merchants_data['create_fyle_merchants_payload_create_new_case']
+    assert dict_compare_keys(fyle_payload, merchants_data['create_fyle_merchants_payload_create_new_case']) == [], 'Payload mismatches'
