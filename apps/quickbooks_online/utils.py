@@ -1,14 +1,16 @@
 import json
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, List
+from typing import Dict, List, Optional
+
+from django.db import transaction
 
 import unidecode
 from django.conf import settings
 from django.utils import timezone
 from django.db.models import Max
 
-from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping
+from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, MappingSetting
 from qbosdk import QuickbooksOnlineSDK
 from qbosdk.exceptions import WrongParamsError
 
@@ -28,6 +30,7 @@ from apps.quickbooks_online.models import (
     QBOExpense,
     QBOExpenseLineitem,
 )
+from apps.workspaces.helpers import get_app_name
 from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSettings
 from apps.workspaces.utils import round_amount
 from fyle_integrations_imports.models import ImportLog
@@ -86,7 +89,10 @@ def get_last_synced_time(workspace_id: int, attribute_type: str):
 
 CHARTS_OF_ACCOUNTS = ['Expense', 'Other Expense', 'Fixed Asset', 'Cost of Goods Sold', 'Current Liability', 'Equity', 'Other Current Asset', 'Other Current Liability', 'Long Term Liability', 'Current Asset', 'Income', 'Other Income', 'Other Asset']
 ATTRIBUTE_CALLBACK_PATH = {
-    'ACCOUNT': 'fyle_integrations_imports.modules.categories.disable_categories'
+    'ACCOUNT': 'fyle_integrations_imports.modules.categories.disable_categories',
+    'VENDOR': 'fyle_integrations_imports.modules.merchants.disable_merchants',
+    'PROJECT': 'fyle_integrations_imports.modules.projects.disable_projects',
+    'COST_CENTER': 'fyle_integrations_imports.modules.cost_centers.disable_cost_centers'
 }
 
 
@@ -107,6 +113,64 @@ class QBOConnector:
 
         credentials_object.refresh_token = self.connection.refresh_token
         credentials_object.save()
+
+    def is_duplicate_deletion_skipped(self, attribute_type: str) -> bool:
+        """
+        Check if duplicate deletion is skipped for the attribute type
+        :param attribute_type: Type of the attribute
+        :return: Whether deletion is skipped
+        """
+        if attribute_type in [
+            'ACCOUNT', 'VENDOR', 'ITEM', 'CUSTOMER', 'DEPARTMENT', 'CLASS'
+        ]:
+            return False
+
+        return True
+
+    def is_import_enabled(self, attribute_type: str) -> bool:
+        """
+        Check if import is enabled for the attribute type
+        :param attribute_type: Type of the attribute
+        :return: Whether import is enabled
+        """
+        is_import_to_fyle_enabled = False
+
+        configuration = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+        if not configuration:
+            return is_import_to_fyle_enabled
+
+        if attribute_type == 'ACCOUNT' and configuration.import_categories:
+            is_import_to_fyle_enabled = True
+
+        elif attribute_type == 'ITEM' and configuration.import_items:
+            is_import_to_fyle_enabled = True
+
+        elif attribute_type == 'VENDOR' and configuration.import_vendors_as_merchants:
+            is_import_to_fyle_enabled = True
+
+        elif attribute_type in ['CUSTOMER', 'DEPARTMENT', 'CLASS']:
+            mapping_setting = MappingSetting.objects.filter(workspace_id=self.workspace_id, destination_field=attribute_type).first()
+            if mapping_setting and mapping_setting.import_to_fyle:
+                is_import_to_fyle_enabled = True
+
+        return is_import_to_fyle_enabled
+
+    def get_attribute_disable_callback_path(self, attribute_type: str) -> Optional[str]:
+        """
+        Get the attribute disable callback path
+        :param attribute_type: Type of the attribute
+        :return: attribute disable callback path or none
+        """
+        if attribute_type in ['ACCOUNT', 'VENDOR']:
+            return ATTRIBUTE_CALLBACK_PATH.get(attribute_type)
+
+        mapping_setting = MappingSetting.objects.filter(
+            workspace_id=self.workspace_id,
+            destination_field=attribute_type
+        ).first()
+
+        if mapping_setting and not mapping_setting.is_custom:
+            return ATTRIBUTE_CALLBACK_PATH.get(mapping_setting.source_field)
 
     def get_or_create_vendor(self, vendor_name: str, email: str = None, create: bool = False):
         """
@@ -195,7 +259,13 @@ class QBOConnector:
             for item in items:
                 if item['Active']:
                     item_attributes.append({'attribute_type': 'ACCOUNT', 'display_name': 'Item', 'value': item['FullyQualifiedName'], 'destination_id': item['Id'], 'active': general_settings.import_items if general_settings else False})
-            DestinationAttribute.bulk_create_or_update_destination_attributes(item_attributes, 'ACCOUNT', self.workspace_id, True, 'Item')
+            DestinationAttribute.bulk_create_or_update_destination_attributes(
+                item_attributes, 'ACCOUNT', self.workspace_id, True, 'Item',
+                skip_deletion=self.is_duplicate_deletion_skipped(attribute_type='ITEM'),
+                app_name=get_app_name(),
+                attribute_disable_callback_path=self.get_attribute_disable_callback_path(attribute_type='ACCOUNT'),
+                is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='ITEM')
+            )
 
         last_synced_time = get_last_synced_time(self.workspace_id, 'CATEGORY')
 
@@ -207,7 +277,13 @@ class QBOConnector:
             for inactive_item in inactive_items:
                 value = inactive_item['FullyQualifiedName'].replace(" (deleted)", "").rstrip()
                 inactive_item_attributes.append({'attribute_type': 'ACCOUNT', 'display_name': 'Item', 'value': value, 'destination_id': inactive_item['Id'], 'active': False})
-            DestinationAttribute.bulk_create_or_update_destination_attributes(inactive_item_attributes, 'ACCOUNT', self.workspace_id, True, 'Item')
+            DestinationAttribute.bulk_create_or_update_destination_attributes(
+                inactive_item_attributes, 'ACCOUNT', self.workspace_id, True, 'Item',
+                skip_deletion=self.is_duplicate_deletion_skipped(attribute_type='ITEM'),
+                app_name=get_app_name(),
+                attribute_disable_callback_path=self.get_attribute_disable_callback_path(attribute_type='ACCOUNT'),
+                is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='ITEM')
+            )
 
         return []
 
@@ -295,7 +371,9 @@ class QBOConnector:
                         self.workspace_id,
                         True,
                         attribute_type.title().replace('_', ' '),
-                        attribute_disable_callback_path=ATTRIBUTE_CALLBACK_PATH.get(attribute_type.upper()),
+                        skip_deletion=self.is_duplicate_deletion_skipped(attribute_type='ACCOUNT'),
+                        app_name=get_app_name(),
+                        attribute_disable_callback_path=self.get_attribute_disable_callback_path(attribute_type='ACCOUNT'),
                         is_import_to_fyle_enabled=is_category_import_to_fyle_enabled
                     )
 
@@ -331,7 +409,10 @@ class QBOConnector:
                         self.workspace_id,
                         True,
                         attribute_type.title().replace('_', ' '),
-                        attribute_disable_callback_path=ATTRIBUTE_CALLBACK_PATH.get(attribute_type.upper())
+                        skip_deletion=self.is_duplicate_deletion_skipped(attribute_type=attribute_type.upper()),
+                        app_name=get_app_name(),
+                        attribute_disable_callback_path=self.get_attribute_disable_callback_path(attribute_type=attribute_type.upper()),
+                        is_import_to_fyle_enabled=is_category_import_to_fyle_enabled
                     )
 
         return []
@@ -347,13 +428,32 @@ class QBOConnector:
 
         departments_generator = self.connection.departments.get_all_generator()
 
+        active_existing_departments = list(DestinationAttribute.objects.filter(attribute_type='DEPARTMENT', workspace_id=self.workspace_id, active=True).values_list('destination_id', flat=True))
+
         for departments in departments_generator:
             department_attributes = []
             for department in departments:
                 department_attributes.append({'attribute_type': 'DEPARTMENT', 'display_name': 'Department', 'value': department['FullyQualifiedName'], 'destination_id': department['Id'], 'active': department['Active']})
+                if department['Id'] in active_existing_departments:
+                    active_existing_departments.remove(department['Id'])
 
-            DestinationAttribute.bulk_create_or_update_destination_attributes(department_attributes, 'DEPARTMENT', self.workspace_id, True)
+            DestinationAttribute.bulk_create_or_update_destination_attributes(department_attributes, 'DEPARTMENT', self.workspace_id, True,
+                skip_deletion=self.is_duplicate_deletion_skipped(attribute_type='DEPARTMENT'),
+                app_name=get_app_name(),
+                attribute_disable_callback_path=self.get_attribute_disable_callback_path(attribute_type='DEPARTMENT'),
+                is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='DEPARTMENT')
+            )
 
+        BATCH_SIZE = 50
+        for i in range(0, len(active_existing_departments), BATCH_SIZE):
+            batch = active_existing_departments[i: i + BATCH_SIZE]
+            with transaction.atomic():
+                DestinationAttribute.objects.filter(
+                    attribute_type='DEPARTMENT',
+                    workspace_id=self.workspace_id,
+                    destination_id__in=batch,
+                    active=True
+                ).update(active=False, updated_at=timezone.now())
         return []
 
     def sync_tax_codes(self):
@@ -410,7 +510,13 @@ class QBOConnector:
                     }
                     vendor_attributes.append({'attribute_type': 'VENDOR', 'display_name': 'vendor', 'value': vendor['DisplayName'], 'destination_id': vendor['Id'], 'detail': detail, 'active': vendor['Active']})
 
-            DestinationAttribute.bulk_create_or_update_destination_attributes(vendor_attributes, 'VENDOR', self.workspace_id, True)
+            DestinationAttribute.bulk_create_or_update_destination_attributes(
+                vendor_attributes, 'VENDOR', self.workspace_id, True,
+                skip_deletion=self.is_duplicate_deletion_skipped(attribute_type='VENDOR'),
+                app_name=get_app_name(),
+                attribute_disable_callback_path=self.get_attribute_disable_callback_path(attribute_type='VENDOR'),
+                is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='VENDOR')
+            )
 
         last_synced_time = get_last_synced_time(self.workspace_id, 'MERCHANT')
 
@@ -423,7 +529,13 @@ class QBOConnector:
                 vendor_display_name = inactive_vendor['DisplayName'].replace(" (deleted)", "").rstrip()
                 inactive_vendor_attributes.append({'attribute_type': 'VENDOR', 'display_name': 'vendor', 'value': vendor_display_name, 'destination_id': inactive_vendor['Id'], 'active': False})
 
-            DestinationAttribute.bulk_create_or_update_destination_attributes(inactive_vendor_attributes, 'VENDOR', self.workspace_id, True)
+            DestinationAttribute.bulk_create_or_update_destination_attributes(
+                inactive_vendor_attributes, 'VENDOR', self.workspace_id, True,
+                skip_deletion=self.is_duplicate_deletion_skipped(attribute_type='VENDOR'),
+                app_name=get_app_name(),
+                attribute_disable_callback_path=self.get_attribute_disable_callback_path(attribute_type='VENDOR'),
+                is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='VENDOR')
+            )
 
         return []
 
@@ -489,12 +601,33 @@ class QBOConnector:
 
         classes_generator = self.connection.classes.get_all_generator()
 
+        active_existing_classes = list(DestinationAttribute.objects.filter(attribute_type='CLASS', workspace_id=self.workspace_id, active=True).values_list('destination_id', flat=True))
+
         for classes in classes_generator:
             class_attributes = []
             for qbo_class in classes:
                 class_attributes.append({'attribute_type': 'CLASS', 'display_name': 'class', 'value': qbo_class['FullyQualifiedName'], 'destination_id': qbo_class['Id'], 'active': qbo_class['Active']})
+                if qbo_class['Id'] in active_existing_classes:
+                    active_existing_classes.remove(qbo_class['Id'])
 
-            DestinationAttribute.bulk_create_or_update_destination_attributes(class_attributes, 'CLASS', self.workspace_id, True)
+            DestinationAttribute.bulk_create_or_update_destination_attributes(
+                class_attributes, 'CLASS', self.workspace_id, True,
+                skip_deletion=self.is_duplicate_deletion_skipped(attribute_type='CLASS'),
+                app_name=get_app_name(),
+                attribute_disable_callback_path=self.get_attribute_disable_callback_path(attribute_type='CLASS'),
+                is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='CLASS')
+            )
+
+        BATCH_SIZE = 50
+        for i in range(0, len(active_existing_classes), BATCH_SIZE):
+            batch = active_existing_classes[i: i + BATCH_SIZE]
+            with transaction.atomic():
+                DestinationAttribute.objects.filter(
+                    attribute_type='CLASS',
+                    workspace_id=self.workspace_id,
+                    destination_id__in=batch,
+                    active=True
+                ).update(active=False, updated_at=timezone.now())
 
         return []
 
@@ -516,7 +649,12 @@ class QBOConnector:
                 if customer['Active'] and value:
                     customer_attributes.append({'attribute_type': 'CUSTOMER', 'display_name': 'customer', 'value': value, 'destination_id': customer['Id'], 'active': True})
 
-            DestinationAttribute.bulk_create_or_update_destination_attributes(customer_attributes, 'CUSTOMER', self.workspace_id, True)
+            DestinationAttribute.bulk_create_or_update_destination_attributes(customer_attributes, 'CUSTOMER', self.workspace_id, True,
+                skip_deletion=self.is_duplicate_deletion_skipped(attribute_type='CUSTOMER'),
+                app_name=get_app_name(),
+                attribute_disable_callback_path=self.get_attribute_disable_callback_path(attribute_type='CUSTOMER'),
+                is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='CUSTOMER')
+            )
 
         last_synced_time = get_last_synced_time(self.workspace_id, 'PROJECT')
 
@@ -529,7 +667,12 @@ class QBOConnector:
                 display_name = inactive_customer['DisplayName'].replace(" (deleted)", "").rstrip()
                 inactive_customer_attributes.append({'attribute_type': 'CUSTOMER', 'display_name': 'customer', 'value': display_name, 'destination_id': inactive_customer['Id'], 'active': False})
 
-            DestinationAttribute.bulk_create_or_update_destination_attributes(inactive_customer_attributes, 'CUSTOMER', self.workspace_id, True)
+            DestinationAttribute.bulk_create_or_update_destination_attributes(inactive_customer_attributes, 'CUSTOMER', self.workspace_id, True,
+                skip_deletion=self.is_duplicate_deletion_skipped(attribute_type='CUSTOMER'),
+                app_name=get_app_name(),
+                attribute_disable_callback_path=self.get_attribute_disable_callback_path(attribute_type='CUSTOMER'),
+                is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='CUSTOMER')
+            )
 
         return []
 

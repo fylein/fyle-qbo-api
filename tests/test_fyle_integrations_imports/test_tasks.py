@@ -2,11 +2,10 @@ from unittest import mock
 
 from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute, Mapping
 
-from apps.tasks.models import Error
-from apps.workspaces.models import QBOCredential
+from apps.workspaces.models import FyleCredential, QBOCredential
 from fyle_integrations_imports.models import ImportLog
-from fyle_integrations_imports.tasks import disable_category_for_items_mapping, trigger_import_via_schedule
-from tests.test_fyle_integrations_imports.test_modules.fixtures import categories_data, projects_data
+from fyle_integrations_imports.tasks import disable_items, trigger_import_via_schedule
+from tests.test_fyle_integrations_imports.test_modules.fixtures import projects_data
 
 
 def test_trigger_import_via_schedule(mocker, db):
@@ -53,98 +52,69 @@ def test_trigger_import_via_schedule(mocker, db):
         assert import_logs.attribute_type == 'PROJECT'
 
 
-def test_disable_category_for_items_mapping(mocker, db):
-    workspace_id = 5
-    # delete all the import logs
-    ImportLog.objects.filter(workspace_id=workspace_id).delete()
-    credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
+def test_disable_items_1(mocker, db):
+    workspace_id = 1
 
-    # case where items mappings is not present
-    with mock.patch('fyle.platform.apis.v1.admin.Categories.list_all') as mock_call:
-        mocker.patch(
-            'fyle_integrations_platform_connector.apis.Categories.post_bulk',
-            return_value=[]
-        )
-        mocker.patch(
-            'qbosdk.apis.Items.get',
-            return_value=categories_data['create_new_auto_create_categories_destination_attributes_items']
-        )
-        mocker.patch(
-            'qbosdk.apis.Accounts.get',
-            return_value=[]
-        )
-        mock_call.side_effect = [
-            categories_data['create_new_auto_create_categories_expense_attributes_1'],
-            categories_data['create_new_auto_create_categories_expense_attributes_2']
-        ]
+    # Setup: create FyleCredential
+    FyleCredential.objects.get(workspace_id=workspace_id)
 
-        disable_category_for_items_mapping(
-            workspace_id,
-            'apps.quickbooks_online.utils.QBOConnector',
-            credentials
-        )
-
-        import_logs = ImportLog.objects.filter(workspace_id=workspace_id).first()
-
-        assert import_logs is None
-
-    # delete all destination attributes, expense attributes and mappings
-    Error.objects.filter(workspace_id=workspace_id).delete()
-    Mapping.objects.filter(workspace_id=workspace_id, source_type='CATEGORY').delete()
-    DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT').delete()
-    ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type='CATEGORY').delete()
-
-    # create the item<>category mapping
-    destination_attribute = DestinationAttribute.objects.create(
+    # Setup: create DestinationAttribute and ExpenseAttribute to be disabled
+    dest_attr = DestinationAttribute.objects.create(
+        workspace_id=workspace_id,
         attribute_type='ACCOUNT',
         display_name='Item',
-        value='Machine',
-        destination_id='Machine',
-        workspace_id=workspace_id,
+        value='Test Item',
+        destination_id='item-1',
         active=True
     )
-
-    expense_attribute = ExpenseAttribute.objects.create(
+    exp_attr = ExpenseAttribute.objects.create(
+        workspace_id=workspace_id,
         attribute_type='CATEGORY',
-        value='Machine',
-        source_id='FyleMachine',
-        workspace_id=workspace_id,
+        value='Test Item',
+        source_id='fyle-1',
         active=True
     )
-
     Mapping.objects.create(
         source_type='CATEGORY',
         destination_type='ACCOUNT',
-        source_id=expense_attribute.id,
-        destination_id=destination_attribute.id,
-        workspace_id=workspace_id,
+        source_id=exp_attr.id,
+        destination_id=dest_attr.id,
+        workspace_id=workspace_id
     )
 
-    with mock.patch('fyle.platform.apis.v1.admin.Categories.list_all') as mock_call:
-        mocker.patch(
-            'fyle_integrations_platform_connector.apis.Categories.post_bulk',
-            return_value=[]
-        )
-        mocker.patch(
-            'qbosdk.apis.Items.get',
-            return_value=categories_data['create_new_auto_create_categories_destination_attributes_items']
-        )
-        mocker.patch(
-            'qbosdk.apis.Accounts.get',
-            return_value=[]
-        )
-        mock_call.side_effect = [
-            categories_data['create_new_auto_create_categories_expense_attributes_1'],
-            categories_data['create_new_auto_create_categories_expense_attributes_2']
-        ]
+    # Patch PlatformConnector and its categories.post_bulk
+    mock_platform = mocker.patch('fyle_integrations_imports.tasks.PlatformConnector')
+    mock_post_bulk = mocker.patch.object(mock_platform.return_value.categories, 'post_bulk')
 
-        disable_category_for_items_mapping(
-            workspace_id,
-            'apps.quickbooks_online.utils.QBOConnector',
-            credentials
-        )
+    # Run
+    disable_items(workspace_id=workspace_id, is_import_enabled=False)
 
-        import_logs = ImportLog.objects.filter(workspace_id=workspace_id).first()
+    # Assert post_bulk called with correct payload
+    mock_post_bulk.assert_called_once_with([{
+        'id': 'fyle-1',
+        'name': 'Test Item',
+        'is_enabled': False
+    }])
 
-        assert import_logs.status in ['COMPLETE', 'IN_PROGRESS']
-        assert import_logs.attribute_type == 'CATEGORY'
+    # Assert categories.sync called
+    mock_platform.return_value.categories.sync.assert_called_once()
+
+
+def test_disable_items_no_items(mocker, db):
+    workspace_id = 1
+
+    # Setup: create FyleCredential
+    FyleCredential.objects.get(workspace_id=workspace_id)
+
+    # Patch PlatformConnector and its categories.post_bulk
+    mock_platform = mocker.patch('fyle_integrations_imports.tasks.PlatformConnector')
+    mock_post_bulk = mocker.patch.object(mock_platform.return_value.categories, 'post_bulk')
+
+    # Run
+    disable_items(workspace_id)
+
+    # Assert post_bulk not called (no items to disable)
+    mock_post_bulk.assert_not_called()
+
+    # Assert categories.sync called
+    mock_platform.return_value.categories.sync.assert_called_once()

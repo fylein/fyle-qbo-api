@@ -5936,51 +5936,61 @@ cost_center_data = {
     "create_fyle_cost_centers_payload_create_new_case":[
         {
             "name": "Adidas",
+            "code": "5100000000000030664",
             "is_enabled": True,
             "description": "Cost Center - Adidas, Id - 5100000000000030664",
         },
         {
             "name": "cc1",
+            "code": "5100000000000030665",
             "is_enabled": True,
             "description": "Cost Center - cc1, Id - 5100000000000030665",
         },
         {
             "name": "cc2",
+            "code": "5100000000000030666",
             "is_enabled": True,
             "description": "Cost Center - cc2, Id - 5100000000000030666",
         },
         {
             "name": "Coachella",
+            "code": "5100000000000030667",
             "is_enabled": True,
             "description": "Cost Center - Coachella, Id - 5100000000000030667",
         },
         {
             "name": "Employees",
+            "code": "200200000000000042900",
             "is_enabled": True,
             "description": "Cost Center - Employees, Id - 200200000000000042900",
         },
         {
             "name": "Parties",
+            "code": "200200000000000042901",
             "is_enabled": True,
             "description": "Cost Center - Parties, Id - 200200000000000042901",
         },
         {
             "name": "Promotional Items",
+            "code": "200200000000000042903",
             "is_enabled": True,
             "description": "Cost Center - Promotional Items, Id - 200200000000000042903",
         },
         {
             "name": "Radio",
+            "code": "5100000000000030668",
             "is_enabled": True,
             "description": "Cost Center - Radio, Id - 5100000000000030668",
         },
         {
             "name": "Retreats",
+            "code": "200200000000000042902",
             "is_enabled": True,
             "description": "Cost Center - Retreats, Id - 200200000000000042902",
         },
         {
             "name": "Test",
+            "code": "5100000000000030855",
             "is_enabled": True,
             "description": "Cost Center - Test, Id - 5100000000000030855",
         }

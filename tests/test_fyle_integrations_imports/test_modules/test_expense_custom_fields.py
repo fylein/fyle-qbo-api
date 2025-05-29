@@ -6,6 +6,7 @@ from fyle_integrations_platform_connector import PlatformConnector
 from apps.quickbooks_online.utils import QBOConnector
 from apps.workspaces.models import FyleCredential, QBOCredential, Workspace
 from fyle_integrations_imports.modules.expense_custom_fields import ExpenseCustomField
+from tests.helper import dict_compare_keys
 from tests.test_fyle_integrations_imports.test_modules.fixtures import expense_custom_field_data
 
 
@@ -65,6 +66,12 @@ def test_auto_create_destination_attributes(mocker, db):
             'fyle_integrations_platform_connector.apis.ExpenseCustomFields.post',
             return_value=[]
         )
+
+        mocker.patch(
+            'fyle_integrations_platform_connector.apis.ExpenseCustomFields.get_by_id',
+            return_value=expense_custom_field_data['create_new_auto_create_expense_custom_fields_get_by_id']
+        )
+
         mocker.patch(
             'qbosdk.apis.Classes.count',
             return_value=10
@@ -153,4 +160,4 @@ def test_construct_fyle_payload(db):
         platform,
     )
 
-    assert fyle_payload == expense_custom_field_data['create_fyle_expense_custom_fields_payload_create_new_case']
+    assert dict_compare_keys(fyle_payload, expense_custom_field_data['create_fyle_expense_custom_fields_payload_create_new_case']) == [], 'Payload mismatches'

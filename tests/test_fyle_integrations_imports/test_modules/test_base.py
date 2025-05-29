@@ -289,3 +289,20 @@ def test_resolve_expense_attribute_errors(db):
 
     category.resolve_expense_attribute_errors()
     assert Error.objects.get(id=error.id).is_resolved == True
+
+
+def test_update_or_create_in_progress_import_log(db):
+    workspace_id = 1
+    attribute_type = 'PROJECT'
+
+    # First call should create the log
+    import_log = ImportLog.update_or_create_in_progress_import_log(attribute_type, workspace_id)
+    assert import_log.status == 'IN_PROGRESS'
+    assert import_log.attribute_type == attribute_type
+    assert import_log.workspace_id == workspace_id
+
+    # Second call should update the existing log (not create a new one)
+    import_log2 = ImportLog.update_or_create_in_progress_import_log(attribute_type, workspace_id)
+    assert import_log2.id == import_log.id
+    assert import_log2.status == 'IN_PROGRESS'
+    assert ImportLog.objects.filter(workspace_id=workspace_id, attribute_type=attribute_type).count() == 1
