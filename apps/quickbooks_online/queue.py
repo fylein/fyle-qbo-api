@@ -81,7 +81,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_
             skip_export = validate_failing_export(is_auto_export, interval_hours, error, expense_group)
             if skip_export:
                 skip_export_count = handle_export_scheduling_logic(
-                    expense_groups, index, skip_export, workspace_id, skip_export_count,
+                    expense_groups=expense_groups, index=index, skip_export_count=skip_export_count,
                     error=error, expense_group=expense_group, triggered_by=triggered_by
                 )
                 continue
@@ -147,7 +147,7 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], i
             skip_export = validate_failing_export(is_auto_export, interval_hours, error, expense_group)
             if skip_export:
                 skip_export_count = handle_export_scheduling_logic(
-                    expense_groups, index, skip_export, workspace_id, skip_export_count,
+                    expense_groups=expense_groups, index=index, skip_export_count=skip_export_count,
                     error=error, expense_group=expense_group, triggered_by=triggered_by
                 )
                 continue
@@ -193,7 +193,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
             skip_export = validate_failing_export(is_auto_export, interval_hours, error, expense_group)
             if skip_export:
                 skip_export_count = handle_export_scheduling_logic(
-                    expense_groups, index, skip_export, workspace_id, skip_export_count,
+                    expense_groups=expense_groups, index=index, skip_export_count=skip_export_count,
                     error=error, expense_group=expense_group, triggered_by=triggered_by
                 )
                 continue
@@ -241,7 +241,7 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
             skip_export = validate_failing_export(is_auto_export, interval_hours, error, expense_group)
             if skip_export:
                 skip_export_count = handle_export_scheduling_logic(
-                    expense_groups, index, skip_export, workspace_id, skip_export_count,
+                    expense_groups=expense_groups, index=index, skip_export_count=skip_export_count,
                     error=error, expense_group=expense_group, triggered_by=triggered_by
                 )
                 continue
@@ -286,7 +286,7 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
             skip_export = validate_failing_export(is_auto_export, interval_hours, error, expense_group)
             if skip_export:
                 skip_export_count = handle_export_scheduling_logic(
-                    expense_groups, index, skip_export, workspace_id, skip_export_count,
+                    expense_groups=expense_groups, index=index, skip_export_count=skip_export_count,
                     error=error, expense_group=expense_group, triggered_by=triggered_by
                 )
                 continue
