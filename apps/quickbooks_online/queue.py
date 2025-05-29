@@ -54,6 +54,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_
         errors = Error.objects.filter(workspace_id=workspace_id, is_resolved=False, expense_group_id__in=expense_group_ids).all()
 
         chain_tasks = []
+        skip_export_count = 0
 
         for index, expense_group in enumerate(expense_groups):
             error = errors.filter(workspace_id=workspace_id, expense_group=expense_group, is_resolved=False).first()
@@ -62,11 +63,12 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_
             if expense_groups.count() == index + 1:
                 last_export = True
             if skip_export:
+                skip_export_count += 1
                 skip_reason = f"{error.repetition_count} errors" if error else "mapping errors"
                 if triggered_by == ExpenseImportSourceEnum.DIRECT_EXPORT:
                     post_accounting_export_summary_for_skipped_exports(expense_group, workspace_id, is_mapping_error=False if error else True)
                 logger.info(f"Skipping expense group {expense_group.id} due to {skip_reason}")
-                if last_export:
+                if last_export and skip_export_count == expense_groups.count():
                     update_last_export_details(workspace_id)
                 continue
             task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_BILL', 'triggered_by': triggered_by})
@@ -123,6 +125,7 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], i
         errors = Error.objects.filter(workspace_id=workspace_id, is_resolved=False, expense_group_id__in=expense_group_ids).all()
 
         chain_tasks = []
+        skip_export_count = 0
 
         for index, expense_group in enumerate(expense_groups):
             error = errors.filter(workspace_id=workspace_id, expense_group=expense_group, is_resolved=False).first()
@@ -131,11 +134,12 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], i
             if expense_groups.count() == index + 1:
                 last_export = True
             if skip_export:
+                skip_export_count += 1
                 skip_reason = f"{error.repetition_count} errors" if error else "mapping errors"
                 if triggered_by == ExpenseImportSourceEnum.DIRECT_EXPORT:
                     post_accounting_export_summary_for_skipped_exports(expense_group, workspace_id, is_mapping_error=False if error else True)
                 logger.info(f"Skipping expense group {expense_group.id} due to {skip_reason}")
-                if last_export:
+                if last_export and skip_export_count == expense_groups.count():
                     update_last_export_details(workspace_id)
                 continue
             task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_CHECK', 'triggered_by': triggered_by})
@@ -172,6 +176,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
         errors = Error.objects.filter(workspace_id=workspace_id, is_resolved=False, expense_group_id__in=expense_group_ids).all()
 
         chain_tasks = []
+        skip_export_count = 0
 
         for index, expense_group in enumerate(expense_groups):
             error = errors.filter(workspace_id=workspace_id, expense_group=expense_group, is_resolved=False).first()
@@ -180,11 +185,12 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
             if expense_groups.count() == index + 1:
                 last_export = True
             if skip_export:
+                skip_export_count += 1
                 skip_reason = f"{error.repetition_count} repeated attempts" if error else "mapping errors"
                 if triggered_by == ExpenseImportSourceEnum.DIRECT_EXPORT:
                     post_accounting_export_summary_for_skipped_exports(expense_group, workspace_id, is_mapping_error=False if error else True)
                 logger.info(f"Skipping expense group {expense_group.id} due to {skip_reason}")
-                if last_export:
+                if last_export and skip_export_count == expense_groups.count():
                     update_last_export_details(workspace_id)
                 continue
             task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_JOURNAL_ENTRY', 'triggered_by': triggered_by})
@@ -223,6 +229,7 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
         errors = Error.objects.filter(workspace_id=workspace_id, is_resolved=False, expense_group_id__in=expense_group_ids).all()
 
         chain_tasks = []
+        skip_export_count = 0
 
         for index, expense_group in enumerate(expense_groups):
             error = errors.filter(workspace_id=workspace_id, expense_group=expense_group, is_resolved=False).first()
@@ -231,11 +238,12 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
             if expense_groups.count() == index + 1:
                 last_export = True
             if skip_export:
+                skip_export_count += 1
                 skip_reason = f"{error.repetition_count} errors" if error else "mapping errors"
                 if triggered_by == ExpenseImportSourceEnum.DIRECT_EXPORT:
                     post_accounting_export_summary_for_skipped_exports(expense_group, workspace_id, is_mapping_error=False if error else True)
                 logger.info(f"Skipping expense group {expense_group.id} due to {skip_reason}")
-                if last_export:
+                if last_export and skip_export_count == expense_groups.count():
                     update_last_export_details(workspace_id)
                 continue
 
@@ -272,6 +280,7 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
         errors = Error.objects.filter(workspace_id=workspace_id, is_resolved=False, expense_group_id__in=expense_group_ids).all()
 
         chain_tasks = []
+        skip_export_count = 0
 
         for index, expense_group in enumerate(expense_groups):
             error = errors.filter(workspace_id=workspace_id, expense_group=expense_group, is_resolved=False).first()
@@ -280,11 +289,12 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
             if expense_groups.count() == index + 1:
                 last_export = True
             if skip_export:
+                skip_export_count += 1
                 skip_reason = f"{error.repetition_count} errors" if error else "mapping errors"
                 if triggered_by == ExpenseImportSourceEnum.DIRECT_EXPORT:
                     post_accounting_export_summary_for_skipped_exports(expense_group, workspace_id, is_mapping_error=False if error else True)
                 logger.info(f"Skipping expense group {expense_group.id} due to {skip_reason}")
-                if last_export:
+                if last_export and skip_export_count == expense_groups.count():
                     update_last_export_details(workspace_id)
                 continue
 
