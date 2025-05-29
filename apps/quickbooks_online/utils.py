@@ -137,10 +137,10 @@ class QBOConnector:
         if not configuration:
             return is_import_to_fyle_enabled
 
-        if attribute_type in ['ACCOUNT'] and configuration.import_categories:
+        if attribute_type == 'ACCOUNT' and configuration.import_categories:
             is_import_to_fyle_enabled = True
 
-        elif attribute_type in ['ITEM'] and configuration.import_items:
+        elif attribute_type == 'ITEM' and configuration.import_items:
             is_import_to_fyle_enabled = True
 
         elif attribute_type == 'VENDOR' and configuration.import_vendors_as_merchants:
