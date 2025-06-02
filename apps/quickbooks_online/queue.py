@@ -21,7 +21,7 @@ def async_run_post_configration_triggers(workspace_general_settings: WorkspaceGe
     async_task('apps.quickbooks_online.tasks.async_sync_accounts', int(workspace_general_settings.workspace_id), q_options={'cluster': 'import'})
 
 
-def handle_export_scheduling_logic(expense_groups, index, skip_export_count, error = None, expense_group = None, triggered_by = None):
+def handle_skipped_exports(expense_groups: List[ExpenseGroup], index: int, skip_export_count: int, error: Error = None, expense_group: ExpenseGroup = None, triggered_by: ExpenseImportSourceEnum = None):
     """
     Handle common export scheduling logic for skip tracking, logging, posting skipped export summaries, and last export updates.
     """
@@ -80,7 +80,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_
             error = errors.filter(workspace_id=workspace_id, expense_group=expense_group, is_resolved=False).first()
             skip_export = validate_failing_export(is_auto_export, interval_hours, error, expense_group)
             if skip_export:
-                skip_export_count = handle_export_scheduling_logic(
+                skip_export_count = handle_skipped_exports(
                     expense_groups=expense_groups, index=index, skip_export_count=skip_export_count,
                     error=error, expense_group=expense_group, triggered_by=triggered_by
                 )
@@ -146,7 +146,7 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], i
             error = errors.filter(workspace_id=workspace_id, expense_group=expense_group, is_resolved=False).first()
             skip_export = validate_failing_export(is_auto_export, interval_hours, error, expense_group)
             if skip_export:
-                skip_export_count = handle_export_scheduling_logic(
+                skip_export_count = handle_skipped_exports(
                     expense_groups=expense_groups, index=index, skip_export_count=skip_export_count,
                     error=error, expense_group=expense_group, triggered_by=triggered_by
                 )
@@ -192,7 +192,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
             error = errors.filter(workspace_id=workspace_id, expense_group=expense_group, is_resolved=False).first()
             skip_export = validate_failing_export(is_auto_export, interval_hours, error, expense_group)
             if skip_export:
-                skip_export_count = handle_export_scheduling_logic(
+                skip_export_count = handle_skipped_exports(
                     expense_groups=expense_groups, index=index, skip_export_count=skip_export_count,
                     error=error, expense_group=expense_group, triggered_by=triggered_by
                 )
@@ -240,7 +240,7 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
             error = errors.filter(workspace_id=workspace_id, expense_group=expense_group, is_resolved=False).first()
             skip_export = validate_failing_export(is_auto_export, interval_hours, error, expense_group)
             if skip_export:
-                skip_export_count = handle_export_scheduling_logic(
+                skip_export_count = handle_skipped_exports(
                     expense_groups=expense_groups, index=index, skip_export_count=skip_export_count,
                     error=error, expense_group=expense_group, triggered_by=triggered_by
                 )
@@ -285,7 +285,7 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
             error = errors.filter(workspace_id=workspace_id, expense_group=expense_group, is_resolved=False).first()
             skip_export = validate_failing_export(is_auto_export, interval_hours, error, expense_group)
             if skip_export:
-                skip_export_count = handle_export_scheduling_logic(
+                skip_export_count = handle_skipped_exports(
                     expense_groups=expense_groups, index=index, skip_export_count=skip_export_count,
                     error=error, expense_group=expense_group, triggered_by=triggered_by
                 )
