@@ -211,6 +211,8 @@ def test_disable_projects(db, mocker):
     from fyle_integrations_imports.modules.projects import disable_projects
     workspace_id = 1
 
+    WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(import_code_fields=[])
+
     projects_to_disable = {
         'destination_id': {
             'value': 'old_project',
