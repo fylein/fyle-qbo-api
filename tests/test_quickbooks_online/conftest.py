@@ -20,7 +20,7 @@ from apps.quickbooks_online.models import (
     QBOExpenseLineitem,
 )
 from apps.tasks.models import TaskLog
-from apps.workspaces.models import WorkspaceGeneralSettings
+from apps.workspaces.models import LastExportDetail, WorkspaceGeneralSettings
 
 
 def create_item_based_mapping(workspace_id):
@@ -613,4 +613,16 @@ def add_destination_attribute_tax_code(db):
         workspace_id=3,
         active=True,
         detail={"tax_rate": 12, "tax_refs": [{"name": "GST (ITC)", "value": "28", "taxRate": 7}, {"name": "PST (BC) Purchase", "value": "37", "taxRate": 5}]}
+    )
+
+
+@pytest.fixture
+def create_last_export_detail(db):
+    LastExportDetail.objects.create(
+        workspace_id=1,
+        export_mode='MANUAL',
+        total_expense_groups_count=2,
+        successful_expense_groups_count=0,
+        failed_expense_groups_count=0,
+        last_exported_at=datetime.now(),
     )
