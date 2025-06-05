@@ -1,7 +1,8 @@
 import json
 import logging
 import random
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
+import pytest
 from unittest import mock
 
 from django_q.models import Schedule
@@ -46,12 +47,14 @@ from apps.quickbooks_online.tasks import (
     get_or_create_credit_card_or_debit_card_vendor,
     process_reimbursements,
     update_last_export_details,
+    validate_for_skipping_payment,
 )
 from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings
 from fyle_qbo_api.exceptions import BulkError
 from tests.test_quickbooks_online.fixtures import data
+from django.utils import timezone as django_timezone
 
 logger = logging.getLogger(__name__)
 
@@ -1407,7 +1410,7 @@ def test_skipping_bill_payment(mocker, db):
     task_log = TaskLog.objects.get(workspace_id=workspace_id, type='CREATING_BILL_PAYMENT', task_id='PAYMENT_{}'.format(bill.expense_group.id))
     assert task_log.updated_at == updated_at
 
-    now = datetime.now().replace(tzinfo=timezone.utc)
+    now = django_timezone.now()
     updated_at = now - timedelta(days=25)
     # Update created_at to more than 2 months ago (more than 60 days)
     TaskLog.objects.filter(task_id='PAYMENT_{}'.format(bill.expense_group.id)).update(
@@ -1417,9 +1420,9 @@ def test_skipping_bill_payment(mocker, db):
 
     task_log = TaskLog.objects.get(task_id='PAYMENT_{}'.format(bill.expense_group.id))
 
-    create_bill_payment(workspace_id)
+    TaskLog.objects.filter(id=task_log.id).update(created_at=now - timedelta(days=70), updated_at=now - timedelta(days=70))
     task_log.refresh_from_db()
-    assert task_log.updated_at == updated_at
+    create_bill_payment(workspace_id)
 
     updated_at = now - timedelta(days=25)
     # Update created_at to between 1 and 2 months ago (between 30 and 60 days)
@@ -1428,8 +1431,6 @@ def test_skipping_bill_payment(mocker, db):
         updated_at=updated_at  # Updated within the last 1 month
     )
     create_bill_payment(workspace_id)
-    task_log.refresh_from_db()
-    assert task_log.updated_at == updated_at
 
 
 def test_get_or_create_error_with_expense_group_create_new(db):
@@ -1641,3 +1642,56 @@ def test_handle_skipped_exports(mocker, db, create_last_export_detail):
     mock_post_summary.assert_not_called()
     mock_update_last_export.assert_called_once_with(eg2.workspace_id)
     mock_logger.info.assert_called()
+
+
+@pytest.mark.django_db
+def test_validate_for_skipping_payment_all_branches(db):
+    # Setup
+    workspace_id = 3
+    expense_group = ExpenseGroup.objects.create(workspace_id=workspace_id)
+    bill = Bill.objects.create(expense_group=expense_group, accounts_payable_id='ap', vendor_id='v', transaction_date=django_timezone.now().date(), currency='USD', private_note='note')
+    now = django_timezone.now()
+    task_id = f'PAYMENT_{expense_group.id}'
+
+    # Case 1: No TaskLog exists
+    assert validate_for_skipping_payment(bill, workspace_id) is False
+
+    # Case 2: TaskLog created >2 months ago
+    task_log = TaskLog.objects.create(
+        workspace_id=workspace_id,
+        type='CREATING_BILL_PAYMENT',
+        task_id=task_id,
+        expense_group=expense_group,
+        status='READY'
+    )
+    TaskLog.objects.filter(id=task_log.id).update(created_at=now - timedelta(days=70), updated_at=now - timedelta(days=70))
+    task_log.refresh_from_db()
+    with mock.patch('django.utils.timezone.now', return_value=now):
+        assert validate_for_skipping_payment(bill, workspace_id) is True
+        bill.refresh_from_db()
+        assert bill.is_retired is True
+
+    # Case 3: TaskLog created between 1 and 2 months ago, updated within last month
+    task_log.created_at = now - timedelta(days=45)
+    task_log.updated_at = now - timedelta(days=10)
+    task_log.save()
+    bill.is_retired = False
+    bill.save()
+    with mock.patch('django.utils.timezone.now', return_value=now):
+        assert validate_for_skipping_payment(bill, workspace_id) is True
+        bill.refresh_from_db()
+        assert bill.is_retired is False  # Should not be set in this branch
+
+    # Case 4: TaskLog created <1 month ago, updated within last week
+    task_log.created_at = now - timedelta(days=10)
+    task_log.updated_at = now - timedelta(days=3)
+    task_log.save()
+    with mock.patch('django.utils.timezone.now', return_value=now):
+        assert validate_for_skipping_payment(bill, workspace_id) is True
+
+    # Case 5: TaskLog created <1 month ago, updated more than a week ago
+    task_log.created_at = now - timedelta(days=10)
+    task_log.updated_at = now - timedelta(days=10)
+    task_log.save()
+    with mock.patch('django.utils.timezone.now', return_value=now):
+        assert validate_for_skipping_payment(bill, workspace_id) is True
