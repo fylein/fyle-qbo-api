@@ -5,7 +5,7 @@ from unittest import mock
 
 import pytest
 from fyle.platform.exceptions import NoPrivilegeError
-from fyle_accounting_mappings.models import CategoryMapping, DestinationAttribute, EmployeeMapping, Mapping
+from fyle_accounting_mappings.models import CategoryMapping, DestinationAttribute, EmployeeMapping, Mapping, MappingSetting
 from qbosdk.exceptions import WrongParamsError
 
 from apps.fyle.models import ExpenseGroup
@@ -1126,3 +1126,108 @@ def test_skip_sync_attributes(mocker, db):
 
     new_project_count = DestinationAttribute.objects.filter(workspace_id=1, attribute_type='TAX_CODE').count()
     assert new_project_count == 0
+
+
+def test_is_duplicate_deletion_skipped(db):
+    # Create a dummy QBOCredential object
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(1)
+    connector = QBOConnector(credentials_object=qbo_credentials, workspace_id=1)
+
+    # These should return False
+    for attr in ['ACCOUNT', 'VENDOR', 'ITEM', 'CUSTOMER', 'DEPARTMENT', 'CLASS']:
+        assert connector.is_duplicate_deletion_skipped(attr) is False
+
+    # These should return True (any attribute not in the above list)
+    for attr in ['EMPLOYEE', 'TAX_CODE', 'SOMETHING_ELSE']:
+        assert connector.is_duplicate_deletion_skipped(attr) is True
+
+
+def test_is_import_enabled(db):
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(1)
+    connector = QBOConnector(credentials_object=qbo_credentials, workspace_id=1)
+
+    # Clean up any previous settings
+    MappingSetting.objects.filter(workspace_id=1).delete()
+
+    # Mock pre_save and post_save signals for MappingSetting
+    with mock.patch('django.db.models.signals.pre_save.send'), \
+         mock.patch('django.db.models.signals.post_save.send'):
+
+        # Create WorkspaceGeneralSettings with all import flags False
+        WorkspaceGeneralSettings.objects.filter(workspace_id=1).update(
+            workspace_id=1,
+            import_categories=False,
+            import_items=False,
+            import_vendors_as_merchants=False
+        )
+
+        # ACCOUNT: import_categories False
+        assert connector.is_import_enabled('ACCOUNT') is False
+        # Set import_categories True
+        WorkspaceGeneralSettings.objects.filter(workspace_id=1).update(import_categories=True)
+        assert connector.is_import_enabled('ACCOUNT') is True
+
+        # ITEM: import_items False
+        WorkspaceGeneralSettings.objects.filter(workspace_id=1).update(import_items=False)
+        assert connector.is_import_enabled('ITEM') is False
+        # Set import_items True
+        WorkspaceGeneralSettings.objects.filter(workspace_id=1).update(import_items=True)
+        assert connector.is_import_enabled('ITEM') is True
+
+        # VENDOR: import_vendors_as_merchants False
+        WorkspaceGeneralSettings.objects.filter(workspace_id=1).update(import_vendors_as_merchants=False)
+        assert connector.is_import_enabled('VENDOR') is False
+        # Set import_vendors_as_merchants True
+        WorkspaceGeneralSettings.objects.filter(workspace_id=1).update(import_vendors_as_merchants=True)
+        assert connector.is_import_enabled('VENDOR') is True
+
+        # CUSTOMER, DEPARTMENT, CLASS: MappingSetting.import_to_fyle False
+        for attr in ['CUSTOMER', 'DEPARTMENT', 'CLASS']:
+            MappingSetting.objects.filter(workspace_id=1, destination_field=attr).delete()
+            # Create with import_to_fyle False
+            MappingSetting.objects.create(
+                workspace_id=1,
+                destination_field=attr,
+                source_field=attr,
+                is_custom=False,
+                import_to_fyle=False
+            )
+            assert connector.is_import_enabled(attr) is False
+            # Now update to import_to_fyle True
+            MappingSetting.objects.filter(workspace_id=1, destination_field=attr).update(import_to_fyle=True)
+            assert connector.is_import_enabled(attr) is True
+
+        # Negative case: unknown attribute_type
+        assert connector.is_import_enabled('SOMETHING_ELSE') is False
+
+
+def test_get_attribute_disable_callback_path(db, mocker):
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(1)
+    connector = QBOConnector(credentials_object=qbo_credentials, workspace_id=1)
+
+    # Direct ACCOUNT and VENDOR
+    assert connector.get_attribute_disable_callback_path('ACCOUNT') == 'fyle_integrations_imports.modules.categories.disable_categories'
+    assert connector.get_attribute_disable_callback_path('VENDOR') == 'fyle_integrations_imports.modules.merchants.disable_merchants'
+
+    # MappingSetting with is_custom False and known source_field
+    with mock.patch('apps.quickbooks_online.utils.MappingSetting.objects.filter') as mock_filter:
+        mock_instance = mock.Mock()
+        mock_instance.is_custom = False
+        mock_instance.source_field = 'PROJECT'
+        mock_filter.return_value.first.return_value = mock_instance
+        result = connector.get_attribute_disable_callback_path('CUSTOMER')
+        assert result == 'fyle_integrations_imports.modules.projects.disable_projects'
+
+    # MappingSetting with is_custom True (should return None)
+    with mock.patch('apps.quickbooks_online.utils.MappingSetting.objects.filter') as mock_filter:
+        mock_instance = mock.Mock()
+        mock_instance.is_custom = True
+        mock_filter.return_value.first.return_value = mock_instance
+        result = connector.get_attribute_disable_callback_path('CUSTOMER')
+        assert result is None
+
+    # No MappingSetting found (should return None)
+    with mock.patch('apps.quickbooks_online.utils.MappingSetting.objects.filter') as mock_filter:
+        mock_filter.return_value.first.return_value = None
+        result = connector.get_attribute_disable_callback_path('CUSTOMER')
+        assert result is None
