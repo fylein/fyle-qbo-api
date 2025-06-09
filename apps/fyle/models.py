@@ -61,7 +61,7 @@ def _format_date(date_string) -> datetime:
 
 
 def _round_to_currency_fraction(amount: float, currency: str) -> float:
-    fraction = get_currency_precision(currency) or 2
+    fraction = get_currency_precision(currency) or 3
     rounded_amount = round_amount(amount, fraction)
 
     return rounded_amount
