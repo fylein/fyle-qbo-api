@@ -5,7 +5,6 @@ from collections import defaultdict
 from datetime import datetime
 from typing import Dict, List
 
-from babel.numbers import get_currency_precision
 from dateutil import parser
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.fields import ArrayField
@@ -18,7 +17,6 @@ from fyle_accounting_mappings.mixins import AutoAddCreateUpdateInfoMixin
 from fyle_accounting_mappings.models import ExpenseAttribute
 
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
-from apps.workspaces.utils import round_amount
 
 ALLOWED_FIELDS = ['employee_email', 'report_id', 'claim_number', 'settlement_id', 'fund_source', 'vendor', 'category', 'project', 'cost_center', 'verified_at', 'approved_at', 'spent_at', 'expense_id', 'posted_at', 'bank_transaction_id']
 
@@ -58,13 +56,6 @@ def _format_date(date_string) -> datetime:
     if date_string:
         date_string = parser.parse(date_string)
     return date_string
-
-
-def _round_to_currency_fraction(amount: float, currency: str) -> float:
-    fraction = get_currency_precision(currency) or 3
-    rounded_amount = round_amount(amount, fraction)
-
-    return rounded_amount
 
 
 class Expense(models.Model):
@@ -162,11 +153,11 @@ class Expense(models.Model):
                 'project': expense['project'],
                 'expense_number': expense['expense_number'],
                 'org_id': expense['org_id'],
-                'amount': _round_to_currency_fraction(expense['amount'], expense['currency']),
+                'amount': expense['amount'],
                 'currency': expense['currency'],
                 'foreign_amount': expense['foreign_amount'],
                 'foreign_currency': expense['foreign_currency'],
-                'tax_amount': _round_to_currency_fraction(expense['tax_amount'], expense['currency']) if expense['tax_amount'] is not None else expense['tax_amount'],
+                'tax_amount': expense['tax_amount'],
                 'tax_group_id': expense['tax_group_id'],
                 'reimbursable': expense['reimbursable'],
                 'billable': expense['billable'],
