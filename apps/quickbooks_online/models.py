@@ -10,7 +10,7 @@ from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMappin
 
 from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings
 from apps.mappings.models import GeneralMapping
-from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSettings
+from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 
 
 def get_transaction_date(expense_group: ExpenseGroup) -> str:
@@ -486,7 +486,7 @@ class QBOExpense(models.Model):
         db_table = 'qbo_expenses'
 
     @staticmethod
-    def create_qbo_expense(expense_group: ExpenseGroup, qbo_connection: "QBOConnector"):
+    def create_qbo_expense(expense_group: ExpenseGroup, qbo_connection):
         """
         Create QBO Expense
         :param expense_group: expense group
