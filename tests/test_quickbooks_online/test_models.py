@@ -53,7 +53,9 @@ def test_qbo_expense(db):
 
     expense_group = ExpenseGroup.objects.get(id=14)
     workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
-    qbo_expense = QBOExpense.create_qbo_expense(expense_group)
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(expense_group.workspace_id)
+    qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
+    qbo_expense = QBOExpense.create_qbo_expense(expense_group, qbo_connection)
     qbo_expense_lineitems = QBOExpenseLineitem.create_qbo_expense_lineitems(expense_group, workspace_general_settings)
 
     for qbo_expense_lineitem in qbo_expense_lineitems:
@@ -76,7 +78,7 @@ def test_qbo_expense(db):
         active=True,
     )
     workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
-    qbo_expense = QBOExpense.create_qbo_expense(expense_group)
+    qbo_expense = QBOExpense.create_qbo_expense(expense_group, qbo_connection)
     qbo_expense_lineitems = QBOExpenseLineitem.create_qbo_expense_lineitems(expense_group, workspace_general_settings)
 
     for qbo_expense_lineitem in qbo_expense_lineitems:

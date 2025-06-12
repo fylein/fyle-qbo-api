@@ -468,7 +468,7 @@ def create_qbo_expense(expense_group, task_log_id, last_export: bool, is_auto_ex
     worker_logger.info('Validated Expense Group %s successfully', expense_group.id)
 
     with transaction.atomic():
-        qbo_expense_object = QBOExpense.create_qbo_expense(expense_group)
+        qbo_expense_object = QBOExpense.create_qbo_expense(expense_group, qbo_connection)
 
         qbo_expense_line_item_objects = QBOExpenseLineitem.create_qbo_expense_lineitems(expense_group, general_settings)
 
