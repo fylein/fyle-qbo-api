@@ -1617,3 +1617,17 @@ class QBOConnector:
         response = [row for responses in generator for row in responses]
 
         return json.loads(json.dumps(response, default=str))
+
+def get_or_create_misc_vendor(debit_card_expense: bool, qbo_connection: QBOConnector):
+    """
+    Get or create miscellaneous vendor (Credit Card Misc or Debit Card Misc)
+    :param debit_card_expense: Boolean indicating if it's a debit card expense
+    :param qbo_connection: QBO Connection object
+    :return: Vendor
+    """
+    if debit_card_expense:
+        vendor = qbo_connection.get_or_create_vendor('Debit Card Misc', create=True)
+    else:
+        vendor = qbo_connection.get_or_create_vendor('Credit Card Misc', create=True)
+
+    return vendor

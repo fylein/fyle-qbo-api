@@ -31,7 +31,7 @@ from apps.quickbooks_online.models import (
     QBOExpense,
     QBOExpenseLineitem,
 )
-from apps.quickbooks_online.utils import QBOConnector
+from apps.quickbooks_online.utils import QBOConnector, get_or_create_misc_vendor
 from apps.tasks.models import Error, TaskLog
 from apps.workspaces.models import FyleCredential, QBOCredential, WorkspaceGeneralSettings
 from fyle_qbo_api.exceptions import BulkError
@@ -48,15 +48,6 @@ def resolve_errors_for_exported_expense_group(expense_group: ExpenseGroup):
     :param expense_group: Expense group
     """
     Error.objects.filter(workspace_id=expense_group.workspace_id, expense_group=expense_group, is_resolved=False).update(is_resolved=True, updated_at=datetime.now(timezone.utc))
-
-
-def get_or_create_misc_vendor(debit_card_expense: bool, qbo_connection: QBOConnector):
-    if debit_card_expense:
-        vendor = qbo_connection.get_or_create_vendor('Debit Card Misc', create=True)
-    else:
-        vendor = qbo_connection.get_or_create_vendor('Credit Card Misc', create=True)
-
-    return vendor
 
 
 def get_or_create_credit_card_or_debit_card_vendor(workspace_id: int, merchant: str, debit_card_expense: bool, general_settings: WorkspaceGeneralSettings):
