@@ -6,11 +6,13 @@ from typing import Dict, List
 
 from django.conf import settings
 from django.db import models
+from apps.quickbooks_online.tasks import get_or_create_misc_vendor
+from apps.quickbooks_online.utils import QBOConnector
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping, MappingSetting
 
 from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings
 from apps.mappings.models import GeneralMapping
-from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
+from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSettings
 
 
 def get_transaction_date(expense_group: ExpenseGroup) -> str:
@@ -521,6 +523,14 @@ class QBOExpense(models.Model):
             if not entity:
                 destination_attribute = DestinationAttribute.objects.filter(destination_id=account_id, workspace_id=expense_group.workspace_id).first()
                 payee_type = 'Debit Card Misc' if destination_attribute.attribute_type == 'BANK_ACCOUNT' else 'Credit Card Misc'
+                # In case credit card account is selected, we need to create credit card misc vendor
+                if payee_type == 'Credit Card Misc':
+                    qbo_credentials = QBOCredential.get_active_qbo_credentials(expense_group.workspace_id)
+                    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=expense_group.workspace_id)
+                    entity = get_or_create_misc_vendor(False, qbo_connection)
+                    if entity:
+                        entity_id = entity.destination_id
+
                 entity_id = DestinationAttribute.objects.filter(value=payee_type, workspace_id=expense_group.workspace_id).first().destination_id
             else:
                 entity_id = entity.destination_id
