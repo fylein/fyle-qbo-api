@@ -6,7 +6,7 @@ from typing import Dict, List
 
 from django.conf import settings
 from django.db import models
-from apps.quickbooks_online.utils import QBOConnector
+from apps.quickbooks_online.utils import QBOConnector, get_or_create_misc_vendor
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping, MappingSetting
 
 from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings
