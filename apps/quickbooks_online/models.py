@@ -526,6 +526,8 @@ class QBOExpense(models.Model):
                 entity_id = DestinationAttribute.objects.filter(value=payee_type, workspace_id=expense_group.workspace_id).first()
                 if not entity_id:
                     entity_id = qbo_connection.get_or_create_vendor(payee_type, create=True).destination_id
+                else:
+                    entity_id = entity_id.destination_id
             else:
                 entity_id = entity.destination_id
 
