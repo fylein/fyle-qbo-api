@@ -1016,15 +1016,15 @@ def test_update_tax_details(db):
 
     tax_details = []
     line = {'Amount': 100, 'TaxAmount': 10}
-    tax_rate_refs = [{'taxRate': 10, 'value': '1'}, {'taxRate': 20, 'value': '2'}]
-    total_tax_rate = 30
+    tax_rate_refs = [{'taxRate': 3, 'value': '1'}, {'taxRate': 2, 'value': '2'}]
+    total_tax_rate = 5
     line_tax_amount = 100
 
     updated_tax_details = qbo_connector.update_tax_details(tax_details, line, tax_rate_refs, total_tax_rate, line_tax_amount)
 
     assert len(updated_tax_details) == 2
-    assert updated_tax_details[0]['Amount'] == 33.33
-    assert updated_tax_details[1]['Amount'] == 66.67
+    assert updated_tax_details[0]['Amount'] == 60
+    assert updated_tax_details[1]['Amount'] == 40
 
 
 def test_get_override_tax_details(db, mocker):
