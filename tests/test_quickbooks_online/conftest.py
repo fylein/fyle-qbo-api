@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 
 import pytest
+from apps.quickbooks_online.utils import QBOConnector
 from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute, Mapping
 
 from apps.fyle.models import Expense, ExpenseGroup
@@ -20,7 +21,7 @@ from apps.quickbooks_online.models import (
     QBOExpenseLineitem,
 )
 from apps.tasks.models import TaskLog
-from apps.workspaces.models import LastExportDetail, WorkspaceGeneralSettings
+from apps.workspaces.models import LastExportDetail, QBOCredential, WorkspaceGeneralSettings
 
 
 def create_item_based_mapping(workspace_id):
@@ -309,7 +310,9 @@ def create_qbo_expense(db):
 
     expense_group = ExpenseGroup.objects.get(id=14)
     workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
-    qbo_expense = QBOExpense.create_qbo_expense(expense_group)
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(expense_group.workspace_id)
+    qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
+    qbo_expense = QBOExpense.create_qbo_expense(expense_group, qbo_connection)
     qbo_expense_lineitems = QBOExpenseLineitem.create_qbo_expense_lineitems(expense_group, workspace_general_settings)
 
     return qbo_expense, qbo_expense_lineitems
@@ -364,7 +367,9 @@ def create_qbo_expense_item_based(db):
     workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
     workspace_general_settings.import_items = True
     expense_group = ExpenseGroup.objects.get(id=expense_group.id)
-    qbo_expense = QBOExpense.create_qbo_expense(expense_group)
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(expense_group.workspace_id)
+    qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
+    qbo_expense = QBOExpense.create_qbo_expense(expense_group, qbo_connection)
     qbo_expense_lineitems = QBOExpenseLineitem.create_qbo_expense_lineitems(expense_group, workspace_general_settings)
 
     return qbo_expense, qbo_expense_lineitems
@@ -446,7 +451,9 @@ def create_qbo_expense_item_and_account_based(db):
     workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
     workspace_general_settings.import_items = True
     expense_group = ExpenseGroup.objects.get(id=expense_group.id)
-    qbo_expense = QBOExpense.create_qbo_expense(expense_group)
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(expense_group.workspace_id)
+    qbo_connection = QBOConnector(qbo_credentials, expense_group.workspace_id)
+    qbo_expense = QBOExpense.create_qbo_expense(expense_group, qbo_connection)
     qbo_expense_lineitems = QBOExpenseLineitem.create_qbo_expense_lineitems(expense_group, workspace_general_settings)
 
     return qbo_expense, qbo_expense_lineitems

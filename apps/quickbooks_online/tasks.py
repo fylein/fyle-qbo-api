@@ -51,6 +51,12 @@ def resolve_errors_for_exported_expense_group(expense_group: ExpenseGroup):
 
 
 def get_or_create_misc_vendor(debit_card_expense: bool, qbo_connection: QBOConnector):
+    """
+    Get or create miscellaneous vendor (Credit Card Misc or Debit Card Misc)
+    :param debit_card_expense: Boolean indicating if it's a debit card expense
+    :param qbo_connection: QBO Connection object
+    :return: Vendor
+    """
     if debit_card_expense:
         vendor = qbo_connection.get_or_create_vendor('Debit Card Misc', create=True)
     else:
@@ -462,7 +468,7 @@ def create_qbo_expense(expense_group, task_log_id, last_export: bool, is_auto_ex
     worker_logger.info('Validated Expense Group %s successfully', expense_group.id)
 
     with transaction.atomic():
-        qbo_expense_object = QBOExpense.create_qbo_expense(expense_group)
+        qbo_expense_object = QBOExpense.create_qbo_expense(expense_group, qbo_connection)
 
         qbo_expense_line_item_objects = QBOExpenseLineitem.create_qbo_expense_lineitems(expense_group, general_settings)
 
