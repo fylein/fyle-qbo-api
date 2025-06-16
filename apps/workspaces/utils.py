@@ -1,7 +1,6 @@
 import base64
 import json
 import logging
-from decimal import ROUND_HALF_UP, Decimal
 from typing import List
 
 import requests
@@ -76,8 +75,3 @@ def send_email(recipient_email: List[str], subject: str, message: str, sender_em
         html_content=message
     )
     sg.send(mail)
-
-
-def round_amount(amount, fraction):
-    amount = Decimal(str(amount))
-    return float(amount.quantize(Decimal('1.' + '0' * fraction), rounding=ROUND_HALF_UP))
