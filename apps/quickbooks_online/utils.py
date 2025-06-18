@@ -1289,7 +1289,7 @@ class QBOConnector:
                 {
                     'DetailType': 'JournalEntryLineDetail',
                     'Description': 'Total Amount',
-                    'Amount': round(line['amount'], 5) - round(line['total_tax'], 5),
+                    'Amount': round(line['amount'], 3) - round(line['total_tax'], 3),
                     'JournalEntryLineDetail': {
                         'PostingType': 'Credit',
                         'AccountRef': {'value': line['debit_account_id']},
@@ -1297,9 +1297,9 @@ class QBOConnector:
                         'ClassRef': {'value': None},
                         'Entity': {'EntityRef': {'value': line['entity_id']}, 'Type': line['entity_type']},
                         'TaxCodeRef': {'value': line['tax_code'] if line['tax_code'] else general_mappings.default_tax_code_id},
-                        'TaxInclusiveAmt': round(line['amount'], 5),
+                        'TaxInclusiveAmt': round(line['amount'], 3),
                         "TaxApplicableOn": "Purchase",
-                        'TaxAmount': round(line['total_tax'], 5),
+                        'TaxAmount': round(line['total_tax'], 3),
                     },
                 }
             )
@@ -1356,16 +1356,16 @@ class QBOConnector:
             lineitem = {
                 'DetailType': 'JournalEntryLineDetail',
                 'Description': line.description,
-                'Amount': final_amount if not single_credit_line else round(final_amount, 5),
+                'Amount': final_amount if not single_credit_line else round(final_amount, 3),
                 'JournalEntryLineDetail': {
                     'PostingType': posting_type,
                     'AccountRef': {'value': account_ref},
                     'DepartmentRef': {'value': line.department_id},
                     'ClassRef': {'value': line.class_id},
                     'Entity': {'EntityRef': {'value': line.entity_id}, 'Type': line.entity_type},
-                    'TaxInclusiveAmt': abs(line.amount) if not single_credit_line else round(abs(line.amount), 5),
+                    'TaxInclusiveAmt': abs(line.amount) if not single_credit_line else round(abs(line.amount), 3),
                     'TaxCodeRef': {'value': line.tax_code if (line.tax_code and line.tax_amount is not None) else general_mappings.default_tax_code_id},
-                    'TaxAmount': abs(line.tax_amount if (line.tax_code and line.tax_amount is not None) else (line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id))) if not single_credit_line else round(abs(line.tax_amount if (line.tax_code and line.tax_amount is not None) else (line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id))), 5),
+                    'TaxAmount': abs(line.tax_amount if (line.tax_code and line.tax_amount is not None) else (line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id))) if not single_credit_line else round(abs(line.tax_amount if (line.tax_code and line.tax_amount is not None) else (line.amount - self.get_tax_inclusive_amount(line.amount, general_mappings.default_tax_code_id))), 3),
                     "TaxApplicableOn": "Purchase",
                 },
             }
