@@ -1256,7 +1256,7 @@ class QBOConnector:
         if lineitem.tax_code and lineitem.tax_amount is not None:
             total_tax += round(lineitem.tax_amount, 2)
         else:
-            total_tax += round(lineitem.amount - self.get_tax_inclusive_amount(lineitem.amount, general_mappings.default_tax_code_id), 2)
+            total_tax += round(lineitem.amount, 2) - self.get_tax_inclusive_amount(round(lineitem.amount, 2), general_mappings.default_tax_code_id)
         return total_tax
 
     def __group_journal_entry_credits(self, journal_entry_lineitems: List[JournalEntryLineitem], general_mappings: GeneralMapping) -> List[Dict]:
