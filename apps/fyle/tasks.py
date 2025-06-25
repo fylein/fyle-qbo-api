@@ -40,11 +40,65 @@ def get_task_log_and_fund_source(workspace_id: int):
     return task_log, fund_source
 
 
-def group_expenses_and_save(expenses: List[Dict], task_log: TaskLog, workspace: Workspace, imported_from: ExpenseImportSourceEnum = None):
-    # First filter out any expenses that are already marked as skipped
+def skip_expenses_and_post_accounting_export_summary(expense_ids: List[int], workspace: Workspace):
+    """
+    Skip expenses and post accounting export summary
+    :param expense_ids: List of expense ids
+    :param workspace: Workspace object
+    :return: None
+    """
+    skipped_expenses = mark_expenses_as_skipped(Q(), expense_ids, workspace)
+    if skipped_expenses:
+        try:
+            post_accounting_export_summary(workspace_id=workspace.id, expense_ids=[expense.id for expense in skipped_expenses])
+        except Exception:
+            logger.exception('Error posting accounting export summary for workspace_id: %s', workspace.id)
+
+
+def group_expenses_and_save(
+    expenses: List[Dict],
+    task_log: TaskLog,
+    workspace: Workspace,
+    imported_from: ExpenseImportSourceEnum = None,
+    filter_credit_expenses: bool = False
+):
+    """
+    Group expenses and save them as expense groups
+    :param expenses: List of expenses
+    :param task_log: Task log object
+    :param workspace: Workspace object
+    :param imported_from: Imported from
+    :param filter_credit_expenses: Filter credit expenses
+    """
     expense_objects = Expense.create_expense_objects(expenses, workspace.id, imported_from=imported_from)
     expense_filters = ExpenseFilter.objects.filter(workspace_id=workspace.id).order_by('rank')
+    configuration = WorkspaceGeneralSettings.objects.get(workspace_id=workspace.id)
+
+    # Step 1: Mark negative expenses as skipped if filter_credit_expenses is True
+    if filter_credit_expenses:
+        negative_expense_ids = [e.id for e in expense_objects if e.amount < 0 and not e.is_skipped]
+        if negative_expense_ids:
+            expense_objects = [e for e in expense_objects if e.id not in negative_expense_ids]
+            skip_expenses_and_post_accounting_export_summary(negative_expense_ids, workspace)
+
+    # Skip reimbursable expenses if reimbursable expense settings is not configured
+    if not configuration.reimbursable_expenses_object:
+        reimbursable_expense_ids = [e.id for e in expense_objects if e.fund_source == 'PERSONAL']
+
+        if reimbursable_expense_ids:
+            expense_objects = [e for e in expense_objects if e.id not in reimbursable_expense_ids]
+            skip_expenses_and_post_accounting_export_summary(reimbursable_expense_ids, workspace)
+
+    # Skip corporate credit card expenses if corporate credit card expense settings is not configured
+    if not configuration.corporate_credit_card_expenses_object:
+        ccc_expense_ids = [e.id for e in expense_objects if e.fund_source == 'CCC']
+
+        if ccc_expense_ids:
+            expense_objects = [e for e in expense_objects if e.id not in ccc_expense_ids]
+            skip_expenses_and_post_accounting_export_summary(ccc_expense_ids, workspace)
+
     filtered_expenses = expense_objects
+
     if expense_filters:
         expenses_object_ids = [expense_object.id for expense_object in expense_objects]
         final_query = construct_expense_filter_query(expense_filters)
@@ -136,7 +190,7 @@ def create_expense_groups(workspace_id: int, fund_source: List[str], task_log: T
                         state=expense_group_settings.ccc_expense_state,
                         settled_at=settled_at,
                         approved_at=approved_at,
-                        filter_credit_expenses=filter_credit_expenses,
+                        filter_credit_expenses=False,
                         last_paid_at=last_paid_at,
                     )
                 )
@@ -147,7 +201,7 @@ def create_expense_groups(workspace_id: int, fund_source: List[str], task_log: T
             if imported_from != ExpenseImportSourceEnum.CONFIGURATION_UPDATE:
                 workspace.save()
 
-            group_expenses_and_save(expenses, task_log, workspace, imported_from=imported_from)
+            group_expenses_and_save(expenses, task_log, workspace, imported_from=imported_from, filter_credit_expenses=filter_credit_expenses)
 
     except FyleCredential.DoesNotExist:
         logger.info("Fyle credentials not found %s", workspace_id)
@@ -214,6 +268,7 @@ def import_and_export_expenses(report_id: str, org_id: str, is_state_change_even
     :param org_id: org id
     :return: None
     """
+    task_log = None
     workspace = Workspace.objects.get(fyle_org_id=org_id)
     expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace.id)
 
@@ -228,7 +283,12 @@ def import_and_export_expenses(report_id: str, org_id: str, is_state_change_even
     try:
         with transaction.atomic():
             fund_source = get_fund_source(workspace.id)
-            source_account_type = get_source_account_type(fund_source)
+
+            if imported_from == ExpenseImportSourceEnum.DIRECT_EXPORT:
+                source_account_type = ['PERSONAL_CASH_ACCOUNT', 'PERSONAL_CORPORATE_CREDIT_CARD_ACCOUNT']
+            else:
+                source_account_type = get_source_account_type(fund_source)
+
             filter_credit_expenses = get_filter_credit_expenses(expense_group_settings)
 
             task_log, _ = TaskLog.objects.update_or_create(workspace_id=workspace.id, type='FETCHING_EXPENSES', defaults={'status': 'IN_PROGRESS'})
@@ -236,7 +296,7 @@ def import_and_export_expenses(report_id: str, org_id: str, is_state_change_even
             platform = PlatformConnector(fyle_credentials)
             expenses = platform.expenses.get(
                 source_account_type,
-                filter_credit_expenses=filter_credit_expenses,
+                filter_credit_expenses=False,
                 report_id=report_id,
                 import_states=import_states if is_state_change_event else None
             )
@@ -244,7 +304,7 @@ def import_and_export_expenses(report_id: str, org_id: str, is_state_change_even
             if is_state_change_event:
                 expenses = filter_expenses_based_on_state(expenses, expense_group_settings)
 
-            group_expenses_and_save(expenses, task_log, workspace, imported_from=imported_from)
+            group_expenses_and_save(expenses, task_log, workspace, imported_from=imported_from, filter_credit_expenses=filter_credit_expenses)
 
         # Export only selected expense groups
         expense_ids = Expense.objects.filter(report_id=report_id, org_id=org_id).values_list('id', flat=True)

@@ -35,12 +35,15 @@ data = {
             "expense_updated_at": "2021-12-27T05:26:43.954470+00:00",
             "source_account_type": "PERSONAL_CASH_ACCOUNT",
             "verified_at": None,
+            "report_title": "report 1",
+            "payment_number": "P/2021/12/T/1",
             "custom_properties": {
                 "Vehicle Type": "",
                 "Fyle Categories": "",
             },
             "bank_transaction_id": None,
-            "is_posted_at_null": False
+            "is_posted_at_null": False,
+            "masked_corporate_card_number": "**** 4567",
         },
     ],
     "raw_expense": {
