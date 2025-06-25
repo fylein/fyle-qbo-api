@@ -1,6 +1,11 @@
 from unittest import mock
+
 from apps.fyle.models import ExpenseGroup
-from apps.quickbooks_online.actions import generate_export_url_and_update_expense, refresh_quickbooks_dimensions, sync_quickbooks_dimensions
+from apps.quickbooks_online.actions import (
+    generate_export_url_and_update_expense,
+    refresh_quickbooks_dimensions,
+    sync_quickbooks_dimensions,
+)
 from apps.workspaces.models import Workspace
 
 

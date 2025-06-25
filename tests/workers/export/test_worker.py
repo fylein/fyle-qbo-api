@@ -1,9 +1,10 @@
-import pytest
 from unittest.mock import Mock, patch
 
-from workers.export.worker import ExportWorker
-from fyle_accounting_library.rabbitmq.models import FailedEvent
+import pytest
 from common.event import BaseEvent
+from fyle_accounting_library.rabbitmq.models import FailedEvent
+
+from workers.export.worker import ExportWorker
 
 
 @pytest.fixture

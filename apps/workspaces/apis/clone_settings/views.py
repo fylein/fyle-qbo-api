@@ -1,10 +1,10 @@
 from rest_framework import generics, status
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
-from apps.workspaces.models import Workspace
-from apps.workspaces.apis.clone_settings.serializers import CloneSettingsSerializer
 from apps.workspaces.apis.clone_settings.helpers import get_latest_workspace
+from apps.workspaces.apis.clone_settings.serializers import CloneSettingsSerializer
+from apps.workspaces.models import Workspace
 
 
 class CloneSettingsView(generics.RetrieveUpdateAPIView):

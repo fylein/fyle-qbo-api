@@ -2,7 +2,6 @@ import json
 from datetime import datetime
 
 import pytest
-from apps.quickbooks_online.utils import QBOConnector
 from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute, Mapping
 
 from apps.fyle.models import Expense, ExpenseGroup
@@ -20,6 +19,7 @@ from apps.quickbooks_online.models import (
     QBOExpense,
     QBOExpenseLineitem,
 )
+from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import LastExportDetail, QBOCredential, WorkspaceGeneralSettings
 

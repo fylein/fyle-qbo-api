@@ -1,12 +1,14 @@
 from unittest import mock
-from fyle_integrations_imports.models import ImportLog
-from fyle_integrations_imports.modules.projects import Project
-from apps.workspaces.models import QBOCredential
-from apps.quickbooks_online.utils import QBOConnector
-from apps.mappings.exceptions import handle_import_exceptions_v2
+
 from fyle.platform.exceptions import InternalServerError, InvalidTokenError, WrongParamsError
 from qbosdk.exceptions import InvalidTokenError as QBOInvalidTokenError
 from qbosdk.exceptions import WrongParamsError as QBOWrongParamsError
+
+from apps.mappings.exceptions import handle_import_exceptions_v2
+from apps.quickbooks_online.utils import QBOConnector
+from apps.workspaces.models import QBOCredential
+from fyle_integrations_imports.models import ImportLog
+from fyle_integrations_imports.modules.projects import Project
 
 
 def test_handle_import_exceptions(mocker, db):

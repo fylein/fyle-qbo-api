@@ -1,7 +1,6 @@
 import logging
 
 from django.db.models import Q
-from apps.workspaces.models import QBOCredential, Workspace
 from django_filters.rest_framework import DjangoFilterBackend
 from django_q.tasks import async_task
 from fyle_accounting_mappings.models import DestinationAttribute
@@ -11,9 +10,9 @@ from rest_framework.response import Response
 from rest_framework.views import status
 
 from apps.exceptions import handle_view_exceptions
+from apps.quickbooks_online.serializers import QuickbooksFieldSerializer
+from apps.workspaces.models import QBOCredential, Workspace
 from fyle_qbo_api.utils import LookupFieldMixin
-
-from .serializers import QuickbooksFieldSerializer
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -36,10 +35,10 @@ class QBOFieldView(LookupFieldMixin, generics.ListAPIView):
     QBOField view
     """
     queryset = DestinationAttribute.objects.filter(
-        ~Q(attribute_type='EMPLOYEE') & ~Q(attribute_type='VENDOR') &
-        ~Q(attribute_type='ACCOUNTS_PAYABLE') & ~Q(attribute_type='ACCOUNT') &
-        ~Q(attribute_type='TAX_CODE') & ~Q(attribute_type='BANK_ACCOUNT') &
-        ~Q(attribute_type='CREDIT_CARD_ACCOUNT')
+        ~Q(attribute_type='EMPLOYEE') & ~Q(attribute_type='VENDOR') \
+        & ~Q(attribute_type='ACCOUNTS_PAYABLE') & ~Q(attribute_type='ACCOUNT') \
+        & ~Q(attribute_type='TAX_CODE') & ~Q(attribute_type='BANK_ACCOUNT') \
+        & ~Q(attribute_type='CREDIT_CARD_ACCOUNT')
     ).values('attribute_type', 'display_name').distinct()
     serializer_class = QuickbooksFieldSerializer
     filter_backends = (DjangoFilterBackend,)

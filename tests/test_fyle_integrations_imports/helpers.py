@@ -1,18 +1,13 @@
-from fyle_integrations_imports.modules.base import Base
-from fyle_integrations_platform_connector import PlatformConnector
-from apps.workspaces.models import FyleCredential, QBOCredential
-from apps.quickbooks_online.utils import QBOConnector
 from typing import List
 
+from fyle_integrations_platform_connector import PlatformConnector
 
-def get_base_class_instance(
-        workspace_id: int = 1,
-        source_field: str = 'PROJECT',
-        destination_field: str = 'PROJECT',
-        platform_class_name: str = 'projects',
-        sync_after: str = None,
-        destination_sync_methods: List[str] = ['customers']
-    ):
+from apps.quickbooks_online.utils import QBOConnector
+from apps.workspaces.models import FyleCredential, QBOCredential
+from fyle_integrations_imports.modules.base import Base
+
+
+def get_base_class_instance(workspace_id: int = 1, source_field: str = 'PROJECT', destination_field: str = 'PROJECT', platform_class_name: str = 'projects', sync_after: str = None, destination_sync_methods: List[str] = ['customers']):
 
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)

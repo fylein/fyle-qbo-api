@@ -2,21 +2,23 @@
 Mapping Signals
 """
 import logging
+from datetime import datetime, timedelta, timezone
+
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
-from rest_framework.exceptions import ValidationError
-from datetime import datetime, timedelta, timezone
-from fyle_accounting_mappings.models import EmployeeMapping, Mapping, MappingSetting
-from fyle_integrations_imports.models import ImportLog
-from apps.quickbooks_online.utils import QBOConnector
-from apps.workspaces.models import FyleCredential, QBOCredential, WorkspaceGeneralSettings
 from fyle.platform.exceptions import WrongParamsError
+from fyle_accounting_mappings.models import EmployeeMapping, Mapping, MappingSetting
 from fyle_integrations_platform_connector import PlatformConnector
-from fyle_integrations_imports.modules.expense_custom_fields import ExpenseCustomField
+from rest_framework.exceptions import ValidationError
+
+from apps.mappings.constants import SYNC_METHODS
+from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import Error
 from apps.workspaces.apis.import_settings.triggers import ImportSettingsTrigger
+from apps.workspaces.models import FyleCredential, QBOCredential, WorkspaceGeneralSettings
 from apps.workspaces.utils import delete_cards_mapping_settings
-from apps.mappings.constants import SYNC_METHODS
+from fyle_integrations_imports.models import ImportLog
+from fyle_integrations_imports.modules.expense_custom_fields import ExpenseCustomField
 
 logger = logging.getLogger(__name__)
 

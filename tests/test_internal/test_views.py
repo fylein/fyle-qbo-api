@@ -1,9 +1,9 @@
-import pytest
 from unittest.mock import patch
+
+import pytest
 from django.urls import reverse
 
 from apps.workspaces.permissions import IsAuthenticatedForInternalAPI
-
 from tests.test_quickbooks_online.fixtures import data
 
 
