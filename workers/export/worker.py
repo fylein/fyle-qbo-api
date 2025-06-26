@@ -2,14 +2,16 @@ import logging
 import os
 import signal
 
+# isort: off
+from workers.export.actions import handle_exports
+# isort: on
+
 from common.event import BaseEvent
 from common.qconnector import RabbitMQConnector
 from consumer.event_consumer import EventConsumer
 from fyle_accounting_library.fyle_platform.enums import RoutingKeyEnum
 from fyle_accounting_library.rabbitmq.data_class import RabbitMQData
 from fyle_accounting_library.rabbitmq.models import FailedEvent
-
-from workers.export.actions import handle_exports
 
 logger = logging.getLogger('workers')
 
