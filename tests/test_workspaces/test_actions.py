@@ -1,5 +1,6 @@
 import json
 from unittest.mock import MagicMock
+
 import pytest
 
 from apps.workspaces.actions import post_to_integration_settings

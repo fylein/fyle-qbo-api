@@ -6,8 +6,10 @@ from django.db.models import Q
 from django_q.models import Schedule
 from django_q.tasks import Chain, async_task
 from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
+from fyle_accounting_library.rabbitmq.data_class import Task
+from fyle_accounting_library.rabbitmq.helpers import TaskChainRunner
 
-from apps.fyle.actions import post_accounting_export_summary_for_skipped_exports
+from apps.fyle.actions import post_accounting_export_summary_for_skipped_exports, sync_fyle_dimensions
 from apps.fyle.models import ExpenseGroup
 from apps.quickbooks_online.actions import update_last_export_details
 from apps.tasks.models import Error, TaskLog
@@ -59,7 +61,7 @@ def validate_failing_export(is_auto_export: bool, interval_hours: int, error: Er
     return is_auto_export and interval_hours and error and error.repetition_count > 100 and datetime.now().replace(tzinfo=timezone.utc) - error.updated_at <= timedelta(hours=24)
 
 
-def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int, triggered_by: ExpenseImportSourceEnum):
+def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int, triggered_by: ExpenseImportSourceEnum, run_in_rabbitmq_worker: bool):
     """
     Schedule bills creation
     :param expense_group_ids: List of expense group ids
@@ -94,18 +96,16 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_
                     task_log.triggered_by = triggered_by
                 task_log.save()
 
-            chain_tasks.append({
-                'target': 'apps.quickbooks_online.tasks.create_bill',
-                'expense_group': expense_group,
-                'task_log_id': task_log.id,
-                'last_export': (expense_groups.count() == index + 1)
-            })
+            chain_tasks.append(Task(
+                target='apps.quickbooks_online.tasks.create_bill',
+                args=[expense_group.id, task_log.id, (expense_groups.count() == index + 1), is_auto_export]
+            ))
 
         if len(chain_tasks) > 0:
-            __create_chain_and_run(workspace_id, chain_tasks, is_auto_export)
+            __create_chain_and_run(workspace_id, chain_tasks, run_in_rabbitmq_worker)
 
 
-def __create_chain_and_run(workspace_id: int, chain_tasks: List[dict], is_auto_export: bool) -> None:
+def __create_chain_and_run(workspace_id: int, chain_tasks: List[Task], run_in_rabbitmq_worker: bool) -> None:
     """
     Create chain and run
     :param fyle_credentials: Fyle credentials
@@ -115,17 +115,24 @@ def __create_chain_and_run(workspace_id: int, chain_tasks: List[dict], is_auto_e
     :param fund_source: Fund source
     :return: None
     """
-    chain = Chain()
+    if run_in_rabbitmq_worker:
+        # This function checks intervals and triggers sync if needed, syncing dimension for all exports is overkill
+        sync_fyle_dimensions(workspace_id)
 
-    chain.append('apps.fyle.tasks.sync_dimensions', workspace_id, True)
+        task_executor = TaskChainRunner()
+        task_executor.run(chain_tasks, workspace_id)
+    else:
+        chain = Chain()
 
-    for task in chain_tasks:
-        chain.append(task['target'], task['expense_group'], task['task_log_id'], task['last_export'], is_auto_export)
+        chain.append('apps.fyle.tasks.sync_dimensions', workspace_id, True)
 
-    chain.run()
+        for task in chain_tasks:
+            chain.append(task.target, *task.args)
+
+        chain.run()
 
 
-def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int, triggered_by: ExpenseImportSourceEnum):
+def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int, triggered_by: ExpenseImportSourceEnum, run_in_rabbitmq_worker: bool):
     """
     Schedule cheque creation
     :param expense_group_ids: List of expense group ids
@@ -160,18 +167,16 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], i
                     task_log.triggered_by = triggered_by
                 task_log.save()
 
-            chain_tasks.append({
-                'target': 'apps.quickbooks_online.tasks.create_cheque',
-                'expense_group': expense_group,
-                'task_log_id': task_log.id,
-                'last_export': (expense_groups.count() == index + 1)
-            })
+            chain_tasks.append(Task(
+                target='apps.quickbooks_online.tasks.create_cheque',
+                args=[expense_group.id, task_log.id, (expense_groups.count() == index + 1), is_auto_export]
+            ))
 
         if len(chain_tasks) > 0:
-            __create_chain_and_run(workspace_id, chain_tasks, is_auto_export)
+            __create_chain_and_run(workspace_id, chain_tasks, run_in_rabbitmq_worker)
 
 
-def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int, triggered_by: ExpenseImportSourceEnum):
+def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int, triggered_by: ExpenseImportSourceEnum, run_in_rabbitmq_worker: bool):
     """
     Schedule journal_entry creation
     :param expense_group_ids: List of expense group ids
@@ -206,18 +211,16 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
                     task_log.triggered_by = triggered_by
                 task_log.save()
 
-            chain_tasks.append({
-                'target': 'apps.quickbooks_online.tasks.create_journal_entry',
-                'expense_group': expense_group,
-                'task_log_id': task_log.id,
-                'last_export': (expense_groups.count() == index + 1)
-            })
+            chain_tasks.append(Task(
+                target='apps.quickbooks_online.tasks.create_journal_entry',
+                args=[expense_group.id, task_log.id, (expense_groups.count() == index + 1), is_auto_export]
+            ))
 
         if len(chain_tasks) > 0:
-            __create_chain_and_run(workspace_id, chain_tasks, is_auto_export)
+            __create_chain_and_run(workspace_id, chain_tasks, run_in_rabbitmq_worker)
 
 
-def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int, triggered_by: ExpenseImportSourceEnum):
+def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int, triggered_by: ExpenseImportSourceEnum, run_in_rabbitmq_worker: bool):
     """
     Schedule credit card purchase creation
     :param expense_group_ids: List of expense group ids
@@ -254,18 +257,16 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
                     task_log.triggered_by = triggered_by
                 task_log.save()
 
-            chain_tasks.append({
-                'target': 'apps.quickbooks_online.tasks.create_credit_card_purchase',
-                'expense_group': expense_group,
-                'task_log_id': task_log.id,
-                'last_export': (expense_groups.count() == index + 1)
-            })
+            chain_tasks.append(Task(
+                target='apps.quickbooks_online.tasks.create_credit_card_purchase',
+                args=[expense_group.id, task_log.id, (expense_groups.count() == index + 1), is_auto_export]
+            ))
 
         if len(chain_tasks) > 0:
-            __create_chain_and_run(workspace_id, chain_tasks, is_auto_export)
+            __create_chain_and_run(workspace_id, chain_tasks, run_in_rabbitmq_worker)
 
 
-def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int, triggered_by: ExpenseImportSourceEnum):
+def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str], is_auto_export: bool, interval_hours: int, triggered_by: ExpenseImportSourceEnum, run_in_rabbitmq_worker: bool):
     """
     Schedule QBO expense creation
     :param expense_group_ids: List of expense group ids
@@ -301,15 +302,13 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
                     task_log.triggered_by = triggered_by
                 task_log.save()
 
-            chain_tasks.append({
-                'target': 'apps.quickbooks_online.tasks.create_qbo_expense',
-                'expense_group': expense_group,
-                'task_log_id': task_log.id,
-                'last_export': (expense_groups.count() == index + 1)
-            })
+            chain_tasks.append(Task(
+                target='apps.quickbooks_online.tasks.create_qbo_expense',
+                args=[expense_group.id, task_log.id, (expense_groups.count() == index + 1), is_auto_export]
+            ))
 
         if len(chain_tasks) > 0:
-            __create_chain_and_run(workspace_id, chain_tasks, is_auto_export)
+            __create_chain_and_run(workspace_id, chain_tasks, run_in_rabbitmq_worker)
 
 
 def schedule_qbo_objects_status_sync(sync_qbo_to_fyle_payments, workspace_id):

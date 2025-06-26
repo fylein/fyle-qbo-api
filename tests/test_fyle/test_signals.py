@@ -1,4 +1,4 @@
-from fyle_accounting_library.fyle_platform.enums import FundSourceEnum, ExpenseImportSourceEnum, ExpenseStateEnum
+from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum, ExpenseStateEnum, FundSourceEnum
 
 from apps.fyle.models import ExpenseGroupSettings
 from apps.workspaces.models import WorkspaceGeneralSettings

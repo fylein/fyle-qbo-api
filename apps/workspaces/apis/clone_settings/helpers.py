@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 
 User = get_user_model()

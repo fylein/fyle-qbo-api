@@ -21,8 +21,8 @@ from apps.workspaces.views import (
     GeneralSettingsView,
     LastExportDetailView,
     ReadyView,
-    TokenHealthView,
     SetupE2ETestView,
+    TokenHealthView,
     WorkspaceAdminsView,
     WorkspaceView,
 )

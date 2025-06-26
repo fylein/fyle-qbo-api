@@ -1,5 +1,5 @@
-from rest_framework import serializers
 from django_q.tasks import async_task
+from rest_framework import serializers
 
 from apps.mappings.models import GeneralMapping
 from apps.workspaces.apis.advanced_configurations.triggers import AdvancedConfigurationsTriggers

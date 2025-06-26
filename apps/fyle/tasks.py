@@ -1,14 +1,14 @@
 import logging
-from datetime import datetime
 import traceback
+from datetime import datetime
 from typing import Dict, List
 
 from django.db import transaction
 from django.db.models import Q
 from fyle.platform.exceptions import InternalServerError, InvalidTokenError, RetryException
+from fyle_accounting_library.fyle_platform.branding import feature_configuration
 from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from fyle_accounting_library.fyle_platform.helpers import filter_expenses_based_on_state, get_expense_import_states
-from fyle_accounting_library.fyle_platform.branding import feature_configuration
 from fyle_accounting_mappings.models import ExpenseAttribute
 from fyle_integrations_platform_connector import PlatformConnector
 from fyle_integrations_platform_connector.apis.expenses import Expenses as FyleExpenses
@@ -20,13 +20,12 @@ from apps.fyle.helpers import (
     get_fund_source,
     get_source_account_type,
     handle_import_exception,
-    update_task_log_post_import
+    update_task_log_post_import,
 )
 from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings
 from apps.tasks.models import Error, TaskLog
 from apps.workspaces.actions import export_to_qbo
 from apps.workspaces.models import FyleCredential, LastExportDetail, Workspace, WorkspaceGeneralSettings, WorkspaceSchedule
-
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -279,6 +278,7 @@ def import_and_export_expenses(report_id: str, org_id: str, is_state_change_even
         return
 
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace.id)
+    task_log = None
 
     try:
         with transaction.atomic():

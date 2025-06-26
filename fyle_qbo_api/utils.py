@@ -1,11 +1,11 @@
 import logging
+
 from django.conf import settings
 from rest_framework.serializers import ValidationError
 from rest_framework.views import Response
 
 from apps.fyle.helpers import patch_request
 from apps.workspaces.models import FyleCredential, QBOCredential
-
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO

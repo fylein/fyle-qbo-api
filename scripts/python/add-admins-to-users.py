@@ -1,10 +1,10 @@
 from time import sleep
-from django.db.models import Q
 
+from django.db.models import Q
 from fyle_integrations_platform_connector import PlatformConnector
 
-from apps.workspaces.models import FyleCredential, Workspace
 from apps.users.models import User
+from apps.workspaces.models import FyleCredential, Workspace
 
 workspaces = Workspace.objects.filter(
     ~Q(name__icontains='fyle for') & ~Q(name__icontains='test')

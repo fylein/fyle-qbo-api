@@ -1,5 +1,6 @@
-from apps.mappings.queues import construct_tasks_and_chain_import_fields_to_fyle
 from fyle_accounting_mappings.models import MappingSetting
+
+from apps.mappings.queues import construct_tasks_and_chain_import_fields_to_fyle
 
 
 def test_construct_tasks_and_chain_import_fields_to_fyle(db):

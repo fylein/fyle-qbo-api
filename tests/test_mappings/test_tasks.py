@@ -1,12 +1,9 @@
 from django_q.models import Schedule
-from fyle_accounting_mappings.models import (
-    EmployeeMapping,
-)
+from fyle.platform.exceptions import InternalServerError
+from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
+from fyle_accounting_mappings.models import EmployeeMapping
 
-from apps.mappings.queues import (
-    schedule_auto_map_ccc_employees,
-    schedule_auto_map_employees
-)
+from apps.mappings.queues import schedule_auto_map_ccc_employees, schedule_auto_map_employees
 from apps.mappings.tasks import (
     async_auto_map_ccc_account,
     async_auto_map_employees,
@@ -16,10 +13,6 @@ from apps.mappings.tasks import (
 )
 from apps.tasks.models import Error
 from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings
-from fyle.platform.exceptions import (
-    InvalidTokenError as FyleInvalidTokenError,
-    InternalServerError
-)
 
 
 def test_auto_map_employees(db):
