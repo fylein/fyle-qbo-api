@@ -19,11 +19,11 @@ from apps.quickbooks_online.views import (
     DestinationAttributesView,
     EmployeeView,
     QBOAttributesView,
+    QBOFieldView,
     RefreshQuickbooksDimensionView,
     SearchedDestinationAttributesView,
     SyncQuickbooksDimensionView,
     VendorView,
-    QBOFieldView
 )
 
 urlpatterns = [

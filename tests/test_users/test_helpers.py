@@ -1,10 +1,10 @@
 from datetime import datetime, timezone
 
+from fyle.platform import Platform
 from fyle_rest_auth.models import User
 
 from apps.users.helpers import get_cluster_domain_and_refresh_token
 from apps.workspaces.models import FyleCredential
-from fyle.platform import Platform
 from fyle_qbo_api.tests import settings
 
 

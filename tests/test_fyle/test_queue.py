@@ -1,3 +1,5 @@
+from fyle_accounting_library.rabbitmq.data_class import Task
+
 from apps.fyle.queue import async_import_and_export_expenses
 from apps.quickbooks_online.queue import __create_chain_and_run
 from apps.workspaces.models import Workspace
@@ -7,12 +9,10 @@ from apps.workspaces.models import Workspace
 def test_create_chain_and_run(db):
     workspace_id = 3
     chain_tasks = [
-        {
-            'target': 'apps.quickbooks_online.tasks.create_cheque',
-            'expense_group': 1,
-            'task_log_id': 1,
-            'last_export': True
-        }
+        Task(
+            target='apps.quickbooks_online.tasks.create_cheque',
+            args=[1, 1, True, False]
+        )
     ]
 
     __create_chain_and_run(workspace_id, chain_tasks, True)

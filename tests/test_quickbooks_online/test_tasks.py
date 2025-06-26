@@ -2,9 +2,10 @@ import json
 import logging
 import random
 from datetime import datetime, timedelta
-import pytest
 from unittest import mock
 
+import pytest
+from django.utils import timezone as django_timezone
 from django_q.models import Schedule
 from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping
@@ -54,7 +55,6 @@ from apps.tasks.models import TaskLog
 from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings
 from fyle_qbo_api.exceptions import BulkError
 from tests.test_quickbooks_online.fixtures import data
-from django.utils import timezone as django_timezone
 
 logger = logging.getLogger(__name__)
 
@@ -152,7 +152,7 @@ def test_post_bill_success(mocker, create_task_logs, db):
     general_settings.auto_create_destination_entity = True
     general_settings.save()
 
-    create_bill(expense_group, task_log.id, False, True)
+    create_bill(expense_group.id, task_log.id, False, True)
 
     task_log = TaskLog.objects.get(pk=task_log.id)
     bill = Bill.objects.get(expense_group_id=expense_group.id)
@@ -186,7 +186,7 @@ def test_create_bill_exceptions(db, create_task_logs):
 
     with mock.patch('apps.quickbooks_online.models.Bill.create_bill') as mock_call:
         mock_call.side_effect = QBOCredential.DoesNotExist()
-        create_bill(expense_group, task_log.id, False, True)
+        create_bill(expense_group.id, task_log.id, False, True)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
@@ -194,7 +194,7 @@ def test_create_bill_exceptions(db, create_task_logs):
         qbo_credentials.is_expired = False
         qbo_credentials.save()
         mock_call.side_effect = BulkError(msg='employess not found', response='mapping error')
-        create_bill(expense_group, task_log.id, True, True)
+        create_bill(expense_group.id, task_log.id, True, True)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
@@ -202,7 +202,7 @@ def test_create_bill_exceptions(db, create_task_logs):
         qbo_credentials.is_expired = False
         qbo_credentials.save()
         mock_call.side_effect = Exception()
-        create_bill(expense_group, task_log.id, False, True)
+        create_bill(expense_group.id, task_log.id, False, True)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FATAL'
@@ -210,7 +210,7 @@ def test_create_bill_exceptions(db, create_task_logs):
         qbo_credentials.is_expired = False
         qbo_credentials.save()
         mock_call.side_effect = WrongParamsError(msg={'Message': 'Invalid parametrs'}, response=json.dumps({'Fault': {'Error': [{'code': 400, 'Message': 'Invalid parametrs', 'Detail': 'Invalid parametrs'}], 'type': 'Invalid_params'}}))
-        create_bill(expense_group, task_log.id, False, True)
+        create_bill(expense_group.id, task_log.id, False, True)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
@@ -265,7 +265,7 @@ def test_changing_accounting_period(mocker, db, create_task_logs):
         workspace_general_settings.change_accounting_period = False
         workspace_general_settings.save()
 
-        create_bill(expense_group, task_log.id, False, True)
+        create_bill(expense_group.id, task_log.id, False, True)
         errors = Error.objects.filter(workspace_id=task_log.workspace_id, is_resolved=False, error_title='ValidationFault / 6210').all()
 
         task_log = TaskLog.objects.get(id=task_log.id)
@@ -305,7 +305,7 @@ def test_changing_accounting_period(mocker, db, create_task_logs):
         workspace_general_settings.change_accounting_period = True
         workspace_general_settings.save()
 
-        create_bill(expense_group, task_log.id, False, True)
+        create_bill(expense_group.id, task_log.id, False, True)
         errors = Error.objects.filter(workspace_id=task_log.workspace_id, is_resolved=False, error_title='ValidationFault / 6210').all()
 
         task_log = TaskLog.objects.get(id=task_log.id)
@@ -364,7 +364,7 @@ def test_post_qbo_expenses_success(mocker, create_task_logs, db):
     general_mapping.default_tax_code_name = 'GST-free capital - 0%'
     general_mapping.save()
 
-    create_qbo_expense(expense_group, task_log.id, True, True)
+    create_qbo_expense(expense_group.id, task_log.id, True, True)
 
     task_log = TaskLog.objects.get(pk=task_log.id)
     qbo_expense = QBOExpense.objects.get(expense_group_id=expense_group.id)
@@ -384,7 +384,7 @@ def test_post_qbo_expenses_success(mocker, create_task_logs, db):
         expense.previous_export_state = 'ERROR'
         expense.save()
 
-    create_qbo_expense(expense_group, task_log.id, True, True)
+    create_qbo_expense(expense_group.id, task_log.id, True, True)
 
     task_log = TaskLog.objects.get(pk=task_log.id)
     qbo_expense = QBOExpense.objects.get(expense_group_id=expense_group.id)
@@ -420,7 +420,7 @@ def test_post_qbo_expenses_exceptions(create_task_logs, db):
 
     with mock.patch('apps.quickbooks_online.models.QBOExpense.create_qbo_expense') as mock_call:
         mock_call.side_effect = QBOCredential.DoesNotExist()
-        create_qbo_expense(expense_group, task_log.id, False, True)
+        create_qbo_expense(expense_group.id, task_log.id, False, True)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
@@ -428,7 +428,7 @@ def test_post_qbo_expenses_exceptions(create_task_logs, db):
         qbo_credentials.is_expired = False
         qbo_credentials.save()
         mock_call.side_effect = BulkError(msg='employess not found', response='mapping error')
-        create_qbo_expense(expense_group, task_log.id, False, True)
+        create_qbo_expense(expense_group.id, task_log.id, False, True)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
@@ -436,7 +436,7 @@ def test_post_qbo_expenses_exceptions(create_task_logs, db):
         qbo_credentials.is_expired = False
         qbo_credentials.save()
         mock_call.side_effect = Exception()
-        create_qbo_expense(expense_group, task_log.id, False, True)
+        create_qbo_expense(expense_group.id, task_log.id, False, True)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FATAL'
@@ -444,7 +444,7 @@ def test_post_qbo_expenses_exceptions(create_task_logs, db):
         qbo_credentials.is_expired = False
         qbo_credentials.save()
         mock_call.side_effect = WrongParamsError(msg={'Message': 'Invalid parametrs'}, response=json.dumps({'Fault': {'Error': [{'code': 400, 'Message': 'Invalid parametrs', 'Detail': 'Invalid parametrs'}], 'type': 'Invalid_params'}}))
-        create_qbo_expense(expense_group, task_log.id, False, True)
+        create_qbo_expense(expense_group.id, task_log.id, False, True)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
@@ -477,7 +477,7 @@ def test_post_credit_card_purchase_success(mocker, create_task_logs, db):
     general_settings.auto_create_destination_entity = True
     general_settings.save()
 
-    create_credit_card_purchase(expense_group, task_log.id, True, True)
+    create_credit_card_purchase(expense_group.id, task_log.id, True, True)
 
     task_log = TaskLog.objects.get(pk=task_log.id)
     credit_card_purchase = CreditCardPurchase.objects.get(expense_group_id=expense_group.id)
@@ -510,7 +510,7 @@ def test_post_credit_card_exceptions(mocker, create_task_logs, db):
 
     with mock.patch('apps.quickbooks_online.models.CreditCardPurchase.create_credit_card_purchase') as mock_call:
         mock_call.side_effect = QBOCredential.DoesNotExist()
-        create_credit_card_purchase(expense_group, task_log.id, False, True)
+        create_credit_card_purchase(expense_group.id, task_log.id, False, True)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
@@ -518,7 +518,7 @@ def test_post_credit_card_exceptions(mocker, create_task_logs, db):
         qbo_credentials.is_expired = False
         qbo_credentials.save()
         mock_call.side_effect = BulkError(msg='employess not found', response='mapping error')
-        create_credit_card_purchase(expense_group, task_log.id, False, True)
+        create_credit_card_purchase(expense_group.id, task_log.id, False, True)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
@@ -526,7 +526,7 @@ def test_post_credit_card_exceptions(mocker, create_task_logs, db):
         qbo_credentials.is_expired = False
         qbo_credentials.save()
         mock_call.side_effect = Exception()
-        create_credit_card_purchase(expense_group, task_log.id, False, True)
+        create_credit_card_purchase(expense_group.id, task_log.id, False, True)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FATAL'
@@ -534,7 +534,7 @@ def test_post_credit_card_exceptions(mocker, create_task_logs, db):
         qbo_credentials.is_expired = False
         qbo_credentials.save()
         mock_call.side_effect = WrongParamsError(msg={'Message': 'Invalid parametrs'}, response=json.dumps({'Fault': {'Error': [{'code': 400, 'Message': 'Invalid parametrs', 'Detail': 'Invalid parametrs'}], 'type': 'Invalid_params'}}))
-        create_credit_card_purchase(expense_group, task_log.id, False, True)
+        create_credit_card_purchase(expense_group.id, task_log.id, False, True)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
@@ -567,7 +567,7 @@ def test_post_journal_entry_success(mocker, create_task_logs, db):
     general_settings.auto_create_destination_entity = True
     general_settings.save()
 
-    create_journal_entry(expense_group, task_log.id, True, True)
+    create_journal_entry(expense_group.id, task_log.id, True, True)
 
     task_log = TaskLog.objects.get(id=task_log.id)
     journal_entry = JournalEntry.objects.get(expense_group_id=expense_group.id)
@@ -588,7 +588,7 @@ def test_post_journal_entry_success(mocker, create_task_logs, db):
     task_log.status = 'READY'
     task_log.save()
 
-    create_journal_entry(expense_group, task_log.id, True, True)
+    create_journal_entry(expense_group.id, task_log.id, True, True)
 
     task_log = TaskLog.objects.get(id=task_log.id)
     journal_entry = JournalEntry.objects.get(expense_group_id=expense_group.id)
@@ -621,7 +621,7 @@ def test_post_create_journal_entry_exceptions(create_task_logs, db):
 
     with mock.patch('apps.quickbooks_online.models.JournalEntry.create_journal_entry') as mock_call:
         mock_call.side_effect = QBOCredential.DoesNotExist()
-        create_journal_entry(expense_group, task_log.id, False, True)
+        create_journal_entry(expense_group.id, task_log.id, False, True)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
@@ -629,7 +629,7 @@ def test_post_create_journal_entry_exceptions(create_task_logs, db):
         qbo_credentials.is_expired = False
         qbo_credentials.save()
         mock_call.side_effect = BulkError(msg='employess not found', response='mapping error')
-        create_journal_entry(expense_group, task_log.id, False, True)
+        create_journal_entry(expense_group.id, task_log.id, False, True)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
@@ -637,7 +637,7 @@ def test_post_create_journal_entry_exceptions(create_task_logs, db):
         qbo_credentials.is_expired = False
         qbo_credentials.save()
         mock_call.side_effect = Exception()
-        create_journal_entry(expense_group, task_log.id, False, True)
+        create_journal_entry(expense_group.id, task_log.id, False, True)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FATAL'
@@ -645,7 +645,7 @@ def test_post_create_journal_entry_exceptions(create_task_logs, db):
         qbo_credentials.is_expired = False
         qbo_credentials.save()
         mock_call.side_effect = WrongParamsError(msg={'Message': 'Invalid parametrs'}, response=json.dumps({'Fault': {'Error': [{'code': 400, 'Message': 'Invalid parametrs', 'Detail': 'Invalid parametrs'}], 'type': 'Invalid_params'}}))
-        create_journal_entry(expense_group, task_log.id, False, True)
+        create_journal_entry(expense_group.id, task_log.id, False, True)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
@@ -670,7 +670,7 @@ def test_post_cheque_success(mocker, create_task_logs, db):
     general_settings.auto_create_destination_entity = True
     general_settings.save()
 
-    create_cheque(expense_group, task_log.id, True, True)
+    create_cheque(expense_group.id, task_log.id, True, True)
 
     task_log = TaskLog.objects.get(id=task_log.id)
     cheque = Cheque.objects.get(expense_group_id=expense_group.id)
@@ -704,7 +704,7 @@ def test_post_create_cheque_exceptions(create_task_logs, db):
 
     with mock.patch('apps.quickbooks_online.models.Cheque.create_cheque') as mock_call:
         mock_call.side_effect = QBOCredential.DoesNotExist()
-        create_cheque(expense_group, task_log.id, False, True)
+        create_cheque(expense_group.id, task_log.id, False, True)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
@@ -712,7 +712,7 @@ def test_post_create_cheque_exceptions(create_task_logs, db):
         qbo_credentials.is_expired = False
         qbo_credentials.save()
         mock_call.side_effect = BulkError(msg='employess not found', response='mapping error')
-        create_cheque(expense_group, task_log.id, False, True)
+        create_cheque(expense_group.id, task_log.id, False, True)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
@@ -720,7 +720,7 @@ def test_post_create_cheque_exceptions(create_task_logs, db):
         qbo_credentials.is_expired = False
         qbo_credentials.save()
         mock_call.side_effect = Exception()
-        create_cheque(expense_group, task_log.id, False, True)
+        create_cheque(expense_group.id, task_log.id, False, True)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FATAL'
@@ -728,7 +728,7 @@ def test_post_create_cheque_exceptions(create_task_logs, db):
         qbo_credentials.is_expired = False
         qbo_credentials.save()
         mock_call.side_effect = WrongParamsError(msg={'Message': 'Invalid parametrs'}, response=json.dumps({'Fault': {'Error': [{'code': 400, 'Message': 'Invalid parametrs', 'Detail': 'Invalid parametrs'}], 'type': 'Invalid_params'}}))
-        create_cheque(expense_group, task_log.id, False, True)
+        create_cheque(expense_group.id, task_log.id, False, True)
 
         task_log = TaskLog.objects.get(id=task_log.id)
         assert task_log.status == 'FAILED'
@@ -760,7 +760,7 @@ def test_create_bill_payment(mocker, db):
     expense_group.expenses.set(expenses)
     expense_group.save()
 
-    create_bill(expense_group, task_log.id, False, True)
+    create_bill(expense_group.id, task_log.id, False, True)
 
     bill = Bill.objects.last()
     task_log = TaskLog.objects.get(id=task_log.id)
@@ -801,7 +801,7 @@ def test_post_bill_payment_exceptions(mocker, db):
     expense_group.expenses.set(expenses)
     expense_group.save()
 
-    create_bill(expense_group, task_log.id, False, True)
+    create_bill(expense_group.id, task_log.id, False, True)
 
     bill = Bill.objects.last()
     task_log = TaskLog.objects.get(id=task_log.id)
@@ -1108,7 +1108,7 @@ def test_schedule_credit_card_purchase_creation(db):
     task_log.status = 'READY'
     task_log.save()
 
-    schedule_credit_card_purchase_creation(workspace_id, [17], False, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
+    schedule_credit_card_purchase_creation(workspace_id, [17], False, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'CREATING_CREDIT_CARD_PURCHASE'
@@ -1125,7 +1125,7 @@ def test_schedule_bills_creation(db):
     task_log.status = 'READY'
     task_log.save()
 
-    schedule_bills_creation(workspace_id, [23], False, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
+    schedule_bills_creation(workspace_id, [23], False, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'CREATING_BILL'
@@ -1142,7 +1142,7 @@ def test_schedule_cheques_creation(db):
     task_log.status = 'READY'
     task_log.save()
 
-    schedule_cheques_creation(workspace_id, [23], False, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
+    schedule_cheques_creation(workspace_id, [23], False, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'CREATING_CHECK'
@@ -1159,7 +1159,7 @@ def test_schedule_qbo_expense_creation(db):
     task_log.status = 'READY'
     task_log.save()
 
-    schedule_qbo_expense_creation(workspace_id, [23], False, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
+    schedule_qbo_expense_creation(workspace_id, [23], False, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'CREATING_EXPENSE'
@@ -1176,7 +1176,7 @@ def test_schedule_journal_entry_creation(db):
     task_log.status = 'READY'
     task_log.save()
 
-    schedule_journal_entry_creation(workspace_id, [23], False, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
+    schedule_journal_entry_creation(workspace_id, [23], False, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'CREATING_JOURNAL_ENTRY'
@@ -1205,14 +1205,14 @@ def test_skipping_bill_creation(db, mocker):
     task_log.status = 'READY'
     task_log.save()
 
-    schedule_bills_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
+    schedule_bills_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'FETCHING_EXPENSES'
 
     Error.objects.filter(id=error.id).update(updated_at=datetime(2024, 8, 20))
 
-    schedule_bills_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
+    schedule_bills_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'CREATING_BILL'
@@ -1241,14 +1241,14 @@ def test_skipping_journal_creation(db, mocker):
     task_log.status = 'READY'
     task_log.save()
 
-    schedule_journal_entry_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
+    schedule_journal_entry_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'FETCHING_EXPENSES'
 
     Error.objects.filter(id=error.id).update(updated_at=datetime(2024, 8, 20))
 
-    schedule_journal_entry_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
+    schedule_journal_entry_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'CREATING_JOURNAL_ENTRY'
@@ -1277,14 +1277,14 @@ def test_skipping_qbo_expense_creation(db, mocker):
     task_log.status = 'READY'
     task_log.save()
 
-    schedule_qbo_expense_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
+    schedule_qbo_expense_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'FETCHING_EXPENSES'
 
     Error.objects.filter(id=error.id).update(updated_at=datetime(2024, 8, 20))
 
-    schedule_qbo_expense_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
+    schedule_qbo_expense_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'CREATING_EXPENSE'
@@ -1317,14 +1317,14 @@ def test_skipping_credit_card_charge_creation(db, mocker):
     task_log.status = 'READY'
     task_log.save()
 
-    schedule_credit_card_purchase_creation(workspace_id, [17], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
+    schedule_credit_card_purchase_creation(workspace_id, [17], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'FETCHING_EXPENSES'
 
     Error.objects.filter(id=error.id).update(updated_at=datetime(2024, 8, 20))
 
-    schedule_credit_card_purchase_creation(workspace_id, [17], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
+    schedule_credit_card_purchase_creation(workspace_id, [17], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'CREATING_CREDIT_CARD_PURCHASE'
@@ -1353,14 +1353,14 @@ def test_skipping_cheque_creation(db, mocker):
     task_log.status = 'READY'
     task_log.save()
 
-    schedule_cheques_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
+    schedule_cheques_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'FETCHING_EXPENSES'
 
     Error.objects.filter(id=error.id).update(updated_at=datetime(2024, 8, 20))
 
-    schedule_cheques_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
+    schedule_cheques_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
 
     task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
     assert task_log.type == 'CREATING_CHECK'
@@ -1392,7 +1392,7 @@ def test_skipping_bill_payment(mocker, db):
     expense_group.expenses.set(expenses)
     expense_group.save()
 
-    create_bill(expense_group, task_log.id, False, True)
+    create_bill(expense_group.id, task_log.id, False, True)
 
     bill = Bill.objects.last()
     task_log = TaskLog.objects.get(id=task_log.id)

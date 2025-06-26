@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from apps.workspaces.models import Workspace, FyleCredential
+from apps.workspaces.models import FyleCredential, Workspace
 from tests.helper import dict_compare_keys
 from tests.test_workspaces.test_apis.test_advanced_config.fixtures import data
 

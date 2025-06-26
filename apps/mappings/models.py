@@ -2,9 +2,9 @@
 Mapping Models
 """
 from django.db import models
+from fyle_accounting_mappings.mixins import AutoAddCreateUpdateInfoMixin
 
 from apps.workspaces.models import Workspace
-from fyle_accounting_mappings.mixins import AutoAddCreateUpdateInfoMixin
 
 
 class GeneralMapping(AutoAddCreateUpdateInfoMixin, models.Model):

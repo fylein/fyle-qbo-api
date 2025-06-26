@@ -4,7 +4,6 @@ from typing import Dict
 
 import django
 
-
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "fyle_qbo_api.settings")
 django.setup()
 

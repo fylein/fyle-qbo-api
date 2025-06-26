@@ -1,13 +1,11 @@
-from datetime import datetime, timezone
 import logging
+from datetime import datetime, timezone
 from typing import List
 
+from fyle.platform.exceptions import InternalServerError
+from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute
 from fyle_integrations_platform_connector import PlatformConnector
-from fyle.platform.exceptions import (
-    InvalidTokenError as FyleInvalidTokenError,
-    InternalServerError
-)
 
 from apps.mappings.exceptions import handle_import_exceptions
 from apps.mappings.models import GeneralMapping

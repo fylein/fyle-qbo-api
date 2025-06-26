@@ -1,10 +1,11 @@
 import json
 
 from django.urls import reverse
+
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
+from fyle_integrations_imports.models import ImportLog
 from tests.helper import dict_compare_keys
 from tests.test_workspaces.test_apis.test_import_settings.fixtures import data
-from fyle_integrations_imports.models import ImportLog
 
 
 def test_import_settings(mocker, api_client, test_connection):
