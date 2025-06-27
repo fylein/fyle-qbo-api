@@ -16,7 +16,7 @@ jobs:
         run: |
           docker compose -f docker-compose-pipeline.yml build
           docker compose -f docker-compose-pipeline.yml up -d
-          docker compose -f docker-compose-pipeline.yml exec -T api pytest tests/ --cov --cov-report=xml --cov-fail-under=93 --junit-xml=test-reports/report.xml
+          docker compose -f docker-compose-pipeline.yml exec -T api pytest tests/ --cov --cov-report=xml --cov-report=term-missing --cov-fail-under=93 --junit-xml=test-reports/report.xml | tee pytest-coverage.txt
           echo "STATUS=$(cat pytest-coverage.txt | grep 'Required test' | awk '{ print $1 }')" >> $GITHUB_ENV
           echo "FAILED=$(cat test-reports/report.xml | awk -F'=' '{print $5}' | awk -F' ' '{gsub(/"/, "", $1); print $1}')" >> $GITHUB_ENV
         env:
@@ -33,14 +33,30 @@ jobs:
           ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
           E2E_TESTS_CLIENT_SECRET: ${{ secrets.E2E_TESTS_CLIENT_SECRET }}
           E2E_TESTS_REALM_ID: ${{ secrets.E2E_TESTS_REALM_ID }}
-      - name: Upload coverage reports to Codecov with GitHub Action
-        uses: codecov/codecov-action@v3
+
       - name: Pytest coverage comment
         uses: MishaKav/pytest-coverage-comment@main
         if: ${{ always() && github.ref != 'refs/heads/master' }}
         with:
           create-new-comment: true
           junitxml-path: ./test-reports/report.xml
+          pytest-coverage-path: ./pytest-coverage.txt
+
+      - name: Perform coverage check
+        shell: bash
+        run: |
+          set -o pipefail
+          python -m pip install diff-cover
+
+          git fetch origin master --depth=1
+          diff-cover coverage.xml --compare-branch=origin/master --diff-range-notation .. --fail-under=98 > result.txt 2>&1
+
+      - name: Comment coverage check
+        if: always()
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          filePath: result.txt
+
       - name: Evaluate Coverage
         if: ${{ (env.STATUS == 'FAIL') || (env.FAILED > 0) }}
         run: exit 1
