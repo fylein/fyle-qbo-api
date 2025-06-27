@@ -993,3 +993,53 @@ class BillPaymentLineitem(models.Model):
         bill_payment_lineitem_objects.append(bill_payment_lineitem_object)
 
         return bill_payment_lineitem_objects
+
+
+class WebhookData(models.Model):
+    """
+    Table to store webhook data for analysis
+    """
+    id = models.AutoField(primary_key=True)
+    workspace = models.ForeignKey(
+        Workspace,
+        on_delete=models.PROTECT,
+        help_text='Reference to workspace'
+    )
+    realm_id = models.CharField(
+        max_length=40,
+        help_text='QBO realm ID',
+        db_index=True
+    )
+    entity_type = models.CharField(
+        max_length=50,
+        help_text='Entity type (Account, Item, etc.)',
+        db_index=True
+    )
+    entity_id = models.CharField(
+        max_length=50,
+        help_text='QBO entity ID'
+    )
+    operation = models.CharField(
+        max_length=20,
+        help_text='Operation type (Create, Update, Delete)',
+        db_index=True
+    )
+    last_updated = models.DateTimeField(
+        help_text='Entity last updated timestamp'
+    )
+    # POC: Storing complete payload for analysis during proof of concept phase
+    raw_payload = models.JSONField(
+        help_text='Complete webhook payload'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text='Webhook received timestamp',
+        db_index=True
+    )
+
+    class Meta:
+        db_table = 'qbo_webhook'
+        indexes = [
+            models.Index(fields=['workspace', 'entity_type', 'created_at']),
+            models.Index(fields=['realm_id', 'operation']),
+        ]

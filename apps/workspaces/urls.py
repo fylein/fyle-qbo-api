@@ -15,6 +15,7 @@ Including another URLconf
 """
 from django.urls import include, path
 
+from apps.quickbooks_online.urls import webhook_patterns
 from apps.workspaces.views import (
     ConnectQBOView,
     ExportToQBOView,
@@ -38,6 +39,7 @@ urlpatterns = [
     path('<int:workspace_id>/exports/trigger/', ExportToQBOView.as_view(), name='export-to-qbo'),
     path('<int:workspace_id>/fyle/', include('apps.fyle.urls')),
     path('<int:workspace_id>/qbo/', include('apps.quickbooks_online.urls')),
+    path('qbo/webhook/', include(webhook_patterns)),
     path('<int:workspace_id>/mappings/', include('apps.mappings.urls')),
     path('<int:workspace_id>/tasks/', include('apps.tasks.urls')),
     path('<int:workspace_id>/admins/', WorkspaceAdminsView.as_view(), name='admin'),

@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework.views import status
 
 from apps.exceptions import handle_view_exceptions
-from apps.quickbooks_online.serializers import QuickbooksFieldSerializer
+from apps.quickbooks_online.serializers import QBOWebhookSerializer, QuickbooksFieldSerializer
 from apps.workspaces.models import QBOCredential, Workspace
 from fyle_qbo_api.utils import LookupFieldMixin
 
@@ -129,3 +129,28 @@ class QBOAttributesView(LookupFieldMixin, generics.ListAPIView):
     pagination_class = None
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = {'attribute_type': {'exact', 'in'}}
+
+
+class QBOWebhookView(generics.CreateAPIView):
+    """
+    Webhook data collection endpoint
+    """
+    authentication_classes = []
+    permission_classes = []
+    serializer_class = QBOWebhookSerializer
+
+    def post(self, request, *args, **kwargs):
+        """
+        Process webhook data and return 202 Accepted
+        """
+        try:
+            serializer = self.get_serializer(data=request.data, context={'request': request})
+            serializer.is_valid(raise_exception=True)
+
+            # Process webhook data directly instead of calling serializer.save()
+            serializer.create(serializer.validated_data)
+
+            return Response(status=status.HTTP_202_ACCEPTED)
+        except Exception as e:
+            logger.error(f"Webhook processing failed: {str(e)}")
+            return Response(status=status.HTTP_202_ACCEPTED)
