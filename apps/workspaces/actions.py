@@ -383,4 +383,4 @@ def export_to_qbo(workspace_id, expense_group_ids=[], is_direct_export:bool = Fa
         if workspace_schedule:
             last_export_detail.next_export_at = last_exported_at + timedelta(hours=workspace_schedule.interval_hours)
 
-        last_export_detail.save()
+        last_export_detail.save(update_fields=['last_exported_at', 'export_mode', 'next_export_at'])
