@@ -2,11 +2,11 @@ import base64
 import hashlib
 import hmac
 import json
-import os
 from unittest import mock
 from unittest.mock import patch
 
 import pytest
+from django.test import override_settings
 from django.urls import resolve, reverse
 from fyle_accounting_mappings.models import DestinationAttribute
 from rest_framework import status
@@ -196,7 +196,7 @@ def test_qbo_webhook_complete_flow(api_client, test_connection):
     invalid_signature = 'invalid_signature_123'
 
     # Test 1: Invalid signature should return 403
-    with patch.dict(os.environ, {'QBO_WEBHOOK_TOKEN': webhook_token}):
+    with override_settings(QBO_WEBHOOK_TOKEN=webhook_token):
         response = api_client.post(
             webhook_url,
             data=payload_json,
@@ -226,7 +226,7 @@ def test_qbo_webhook_complete_flow(api_client, test_connection):
         ).digest()
     ).decode('utf-8')
 
-    with patch.dict(os.environ, {'QBO_WEBHOOK_TOKEN': webhook_token}):
+    with override_settings(QBO_WEBHOOK_TOKEN=webhook_token):
         response = api_client.post(
             webhook_url,
             data=payload_json,
@@ -276,7 +276,7 @@ def test_qbo_webhook_complete_flow(api_client, test_connection):
         ).digest()
     ).decode('utf-8')
 
-    with patch.dict(os.environ, {'QBO_WEBHOOK_TOKEN': webhook_token}):
+    with override_settings(QBO_WEBHOOK_TOKEN=webhook_token):
         response = api_client.post(
             webhook_url,
             data=single_payload_json,
@@ -317,7 +317,7 @@ def test_qbo_webhook_complete_flow(api_client, test_connection):
         ).digest()
     ).decode('utf-8')
 
-    with patch.dict(os.environ, {'QBO_WEBHOOK_TOKEN': webhook_token}):
+    with override_settings(QBO_WEBHOOK_TOKEN=webhook_token):
         response = api_client.post(
             webhook_url,
             data=nonexistent_payload_json,
@@ -330,7 +330,7 @@ def test_qbo_webhook_complete_flow(api_client, test_connection):
     assert QBOWebhookIncoming.objects.count() == initial_count
 
     # Test 7: Exception handling should still return 202
-    with patch.dict(os.environ, {'QBO_WEBHOOK_TOKEN': webhook_token}):
+    with override_settings(QBO_WEBHOOK_TOKEN=webhook_token):
         with patch('apps.quickbooks_online.serializers.QBOWebhookIncomingSerializer.create') as mock_create:
             mock_create.side_effect = Exception("Simulated processing error")
 
