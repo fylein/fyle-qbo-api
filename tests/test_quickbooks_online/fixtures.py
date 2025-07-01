@@ -1337,4 +1337,61 @@ data = {
             "MetaData": {"CreateTime": "2019-12-16T10:45:49-08:00","LastUpdatedTime": "2019-12-16T10:45:49-08:00"},
         },
     ],
+    "webhook_payload_multi_entity": {
+        "eventNotifications": [
+            {
+                "realmId": "123456789",
+                "dataChangeEvent": {
+                    "entities": [
+                        {
+                            "name": "Account",
+                            "id": "1",
+                            "operation": "Create",
+                            "lastUpdated": "2023-12-01T10:00:00-08:00"
+                        },
+                        {
+                            "name": "Item",
+                            "id": "2",
+                            "operation": "Update",
+                            "lastUpdated": "2023-12-01T10:05:00-08:00"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "webhook_payload_single_entity": {
+        "eventNotifications": [
+            {
+                "realmId": "987654321",
+                "dataChangeEvent": {
+                    "entities": [
+                        {
+                            "name": "Vendor",
+                            "id": "3",
+                            "operation": "Delete",
+                            "lastUpdated": "2023-12-01T11:00:00-08:00"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "webhook_payload_nonexistent_realm": {
+        "eventNotifications": [
+            {
+                "realmId": "nonexistent_realm",
+                "dataChangeEvent": {
+                    "entities": [
+                        {
+                            "name": "Account",
+                            "id": "999",
+                            "operation": "Create",
+                            "lastUpdated": "2023-12-01T12:00:00-08:00"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
 }
