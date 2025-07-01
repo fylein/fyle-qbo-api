@@ -39,6 +39,7 @@ services:
       INTEGRATIONS_SETTINGS_API: http://localhost:8006/api
       QBO_APP_URL: https://lolo.qbo.com
       RABBITMQ_URL: amqp://admin:password@rabbitmq:5673/?heartbeat=0
+      STRICT_MODE: "false"
   db:
     image: "postgres:15"
     environment:
