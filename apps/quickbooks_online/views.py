@@ -146,7 +146,7 @@ class QBOWebhookIncomingView(generics.CreateAPIView):
         """
         try:
             serializer = self.get_serializer(data=request.data, context={'request': request})
-            serializer.create(serializer.validated_data)
+            serializer.create()
         except Exception as e:
             logger.error(f"Webhook processing failed: {str(e)}")
 

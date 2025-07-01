@@ -1000,11 +1000,6 @@ class QBOWebhookIncoming(models.Model):
     Table to store webhook data for analysis
     """
     id = models.AutoField(primary_key=True)
-    workspace = models.ForeignKey(
-        Workspace,
-        on_delete=models.PROTECT,
-        help_text='Reference to workspace'
-    )
     realm_id = models.CharField(
         max_length=40,
         help_text='QBO realm ID',
@@ -1024,17 +1019,28 @@ class QBOWebhookIncoming(models.Model):
         help_text='Operation type (Create, Update, Delete)',
         db_index=True
     )
-    last_updated_at = models.DateTimeField(
-        help_text='Entity last updated timestamp'
-    )
     # POC: Storing complete payload for analysis during proof of concept phase
     raw_response = models.JSONField(
         help_text='Complete webhook response'
+    )
+    workspace = models.ForeignKey(
+        Workspace,
+        on_delete=models.PROTECT,
+        help_text='Reference to workspace'
+    )
+    additional_workspace_ids = models.JSONField(
+        default=list,
+        help_text='Additional workspace IDs that share the same realm_id',
+        blank=True
     )
     created_at = models.DateTimeField(
         auto_now_add=True,
         help_text='Webhook received timestamp',
         db_index=True
+    )
+    updated_at = models.DateTimeField(
+        help_text='Webhook updated timestamp',
+        auto_now=True
     )
 
     class Meta:
