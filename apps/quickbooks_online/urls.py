@@ -20,7 +20,7 @@ from apps.quickbooks_online.views import (
     EmployeeView,
     QBOAttributesView,
     QBOFieldView,
-    QBOWebhookView,
+    QBOWebhookIncomingView,
     RefreshQuickbooksDimensionView,
     SearchedDestinationAttributesView,
     SyncQuickbooksDimensionView,
@@ -39,5 +39,5 @@ urlpatterns = [
 ]
 
 webhook_patterns = [
-    path('', QBOWebhookView.as_view(), name='qbo-webhook'),
+    path('', QBOWebhookIncomingView.as_view(), name='qbo-webhook-incoming'),
 ]

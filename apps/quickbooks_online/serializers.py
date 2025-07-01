@@ -1,5 +1,4 @@
 import logging
-import os
 
 from fyle_accounting_mappings.models import DestinationAttribute
 from rest_framework import serializers
@@ -13,10 +12,9 @@ from apps.quickbooks_online.models import (
     CreditCardPurchaseLineitem,
     JournalEntry,
     JournalEntryLineitem,
-    WebhookData,
+    QBOWebhookIncoming,
 )
 from apps.workspaces.models import QBOCredential
-from fyle_qbo_api.utils import validate_webhook_signature
 
 logger = logging.getLogger(__name__)
 
@@ -111,45 +109,45 @@ class QuickbooksFieldSerializer(serializers.ModelSerializer):
         fields = ['attribute_type', 'display_name']
 
 
-class QBOWebhookSerializer(serializers.Serializer):
+class QBOWebhookIncomingSerializer(serializers.Serializer):
     """
     Serializer for QBO webhook data collection
     """
 
     def create(self, validated_data):
         """
-        Process and store webhook data
+        Process and store webhook data for all workspaces
         """
         request = self.context['request']
-
-        raw_body = request.body
-        signature = request.headers.get('intuit-signature')
         payload = request.data
-
-        if not validate_webhook_signature(raw_body, signature, os.getenv('QBO_WEBHOOK_TOKEN')):
-            logger.error('Invalid signature')
-            return
+        webhook_objects = []
 
         for event_notification in payload.get('eventNotifications', []):
             realm_id = event_notification.get('realmId')
-
-            try:
-                qbo_credential = QBOCredential.objects.select_related('workspace').filter(realm_id=realm_id).order_by('-created_at').first()
-                workspace = qbo_credential.workspace
-
-                data_change_event = event_notification.get('dataChangeEvent', {})
-                entities = data_change_event.get('entities', [])
-
-                for entity in entities:
-                    WebhookData.objects.create(
-                        workspace=workspace,
-                        realm_id=realm_id,
-                        entity_type=entity.get('name'),
-                        entity_id=entity.get('id'),
-                        operation=entity.get('operation'),
-                        last_updated=entity.get('lastUpdated'),
-                        raw_payload=payload
-                    )
-            except QBOCredential.DoesNotExist:
+            qbo_credentials = QBOCredential.objects.select_related('workspace').filter(realm_id=realm_id)
+            if not qbo_credentials.exists():
                 logger.warning(f"No workspace found for realm_id: {realm_id}")
                 continue
+
+            data_change_event = event_notification.get('dataChangeEvent', {})
+            entities = data_change_event.get('entities', [])
+
+            for qbo_credential in qbo_credentials:
+                workspace = qbo_credential.workspace
+                for entity in entities:
+                    webhook_objects.append(
+                        QBOWebhookIncoming(
+                            workspace=workspace,
+                            realm_id=realm_id,
+                            entity_type=entity.get('name'),
+                            destination_id=entity.get('id'),
+                            operation_type=entity.get('operation'),
+                            last_updated_at=entity.get('lastUpdated'),
+                            raw_response=payload
+                        )
+                    )
+
+        if webhook_objects:
+            QBOWebhookIncoming.objects.bulk_create(webhook_objects)
+
+        return {}

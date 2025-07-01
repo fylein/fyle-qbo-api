@@ -1,6 +1,3 @@
-import base64
-import hashlib
-import hmac
 import logging
 
 from django.conf import settings
@@ -69,26 +66,3 @@ def invalidate_qbo_credentials(workspace_id, qbo_credentials=None):
         qbo_credentials.refresh_token = None
         qbo_credentials.is_expired = True
         qbo_credentials.save()
-
-
-def validate_webhook_signature(payload: bytes, signature: str, webhook_token: str) -> bool:
-    """
-    Validate QuickBooks Online webhook signature using HMAC SHA256
-    """
-    try:
-        expected = base64.b64encode(
-            hmac.new(
-                webhook_token.encode('utf-8'),
-                payload,
-                hashlib.sha256
-            ).digest()
-        ).decode('utf-8')
-
-        if not hmac.compare_digest(signature, expected):
-            logger.error("Invalid signature")
-            return False
-
-        return True
-    except Exception as e:
-        logger.error(f"Signature validation error: {str(e)}")
-        return False

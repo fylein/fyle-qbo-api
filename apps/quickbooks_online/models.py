@@ -995,7 +995,7 @@ class BillPaymentLineitem(models.Model):
         return bill_payment_lineitem_objects
 
 
-class WebhookData(models.Model):
+class QBOWebhookIncoming(models.Model):
     """
     Table to store webhook data for analysis
     """
@@ -1015,21 +1015,21 @@ class WebhookData(models.Model):
         help_text='Entity type (Account, Item, etc.)',
         db_index=True
     )
-    entity_id = models.CharField(
+    destination_id = models.CharField(
         max_length=50,
-        help_text='QBO entity ID'
+        help_text='QBO destination ID'
     )
-    operation = models.CharField(
+    operation_type = models.CharField(
         max_length=20,
         help_text='Operation type (Create, Update, Delete)',
         db_index=True
     )
-    last_updated = models.DateTimeField(
+    last_updated_at = models.DateTimeField(
         help_text='Entity last updated timestamp'
     )
     # POC: Storing complete payload for analysis during proof of concept phase
-    raw_payload = models.JSONField(
-        help_text='Complete webhook payload'
+    raw_response = models.JSONField(
+        help_text='Complete webhook response'
     )
     created_at = models.DateTimeField(
         auto_now_add=True,
@@ -1038,8 +1038,8 @@ class WebhookData(models.Model):
     )
 
     class Meta:
-        db_table = 'qbo_webhook'
+        db_table = 'qbo_webhook_incoming'
         indexes = [
             models.Index(fields=['workspace', 'entity_type', 'created_at']),
-            models.Index(fields=['realm_id', 'operation']),
+            models.Index(fields=['realm_id', 'operation_type']),
         ]

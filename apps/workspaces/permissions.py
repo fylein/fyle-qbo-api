@@ -1,4 +1,8 @@
+import base64
+import hashlib
+import hmac
 import logging
+import os
 
 from cryptography.fernet import Fernet
 from django.conf import settings
@@ -62,3 +66,30 @@ class IsAuthenticatedForInternalAPI(permissions.BasePermission):
             return False
 
         return False
+
+
+class IsAuthenticatedForQuickbooksWebhook(permissions.BasePermission):
+    """
+    Custom auth for Quickbooks webhook APIs using signature validation
+    """
+
+    def has_permission(self, request, view):
+        try:
+            signature = request.headers.get('intuit-signature')
+            payload = request.body
+            expected = base64.b64encode(
+                hmac.new(
+                    os.getenv('QBO_WEBHOOK_TOKEN').encode('utf-8'),
+                    payload,
+                    hashlib.sha256
+                ).digest()
+            ).decode('utf-8')
+
+            if not hmac.compare_digest(signature, expected):
+                logger.error("Invalid signature")
+                return False
+
+            return True
+        except Exception as e:
+            logger.error(f"Webhook authentication error: {str(e)}")
+            return False
