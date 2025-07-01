@@ -329,6 +329,32 @@ def test_qbo_webhook_complete_flow(api_client, test_connection):
     assert response.status_code == status.HTTP_202_ACCEPTED
     assert QBOWebhookIncoming.objects.count() == initial_count
 
+    # Test 7: Exception handling should still return 202
+    with patch.dict(os.environ, {'QBO_WEBHOOK_TOKEN': webhook_token}):
+        with patch('apps.quickbooks_online.serializers.QBOWebhookIncomingSerializer.create') as mock_create:
+            mock_create.side_effect = Exception("Simulated processing error")
+
+            exception_payload = data['webhook_payload_single_entity']
+            exception_payload_json = json.dumps(exception_payload)
+            exception_payload_bytes = exception_payload_json.encode('utf-8')
+            exception_signature = base64.b64encode(
+                hmac.new(
+                    webhook_token.encode('utf-8'),
+                    exception_payload_bytes,
+                    hashlib.sha256
+                ).digest()
+            ).decode('utf-8')
+
+            response = api_client.post(
+                webhook_url,
+                data=exception_payload_json,
+                content_type='application/json',
+                **{'HTTP_INTUIT_SIGNATURE': exception_signature}
+            )
+
+            assert response.status_code == status.HTTP_202_ACCEPTED
+            mock_create.assert_called_once()
+
     # Cleanup: Reset credentials to original state
     qbo_credential_3.realm_id = original_realm_id_3
     qbo_credential_3.save()
