@@ -1033,8 +1033,7 @@ class QBOWebhookIncoming(models.Model):
     )
     additional_workspace_ids = models.JSONField(
         default=list,
-        help_text='Additional workspace IDs that share the same realm_id',
-        blank=True
+        help_text='Additional workspace IDs that share the same realm_id'
     )
     created_at = models.DateTimeField(
         auto_now_add=True,
