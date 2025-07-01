@@ -2,7 +2,6 @@ import base64
 import hashlib
 import hmac
 import logging
-import os
 
 from cryptography.fernet import Fernet
 from django.conf import settings
@@ -77,9 +76,10 @@ class IsAuthenticatedForQuickbooksWebhook(permissions.BasePermission):
         try:
             signature = request.headers.get('intuit-signature')
             payload = request.body
+            qbo_webhook_token = settings.QBO_WEBHOOK_TOKEN
             expected = base64.b64encode(
                 hmac.new(
-                    os.getenv('QBO_WEBHOOK_TOKEN').encode('utf-8'),
+                    qbo_webhook_token.encode('utf-8'),
                     payload,
                     hashlib.sha256
                 ).digest()
