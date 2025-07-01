@@ -144,6 +144,7 @@ class QBOWebhookIncomingSerializer(serializers.Serializer):
                         entity_type=entity.get('name'),
                         destination_id=entity.get('id'),
                         operation_type=entity.get('operation'),
+                        last_updated_at=entity.get('lastUpdated'),
                         raw_response=payload
                     )
                 )

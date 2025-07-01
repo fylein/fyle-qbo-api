@@ -1023,6 +1023,9 @@ class QBOWebhookIncoming(models.Model):
     raw_response = models.JSONField(
         help_text='Complete webhook response'
     )
+    last_updated_at = models.DateTimeField(
+        help_text='Entity last updated timestamp'
+    )
     workspace = models.ForeignKey(
         Workspace,
         on_delete=models.PROTECT,
@@ -1037,10 +1040,6 @@ class QBOWebhookIncoming(models.Model):
         auto_now_add=True,
         help_text='Webhook received timestamp',
         db_index=True
-    )
-    updated_at = models.DateTimeField(
-        help_text='Webhook updated timestamp',
-        auto_now=True
     )
 
     class Meta:
