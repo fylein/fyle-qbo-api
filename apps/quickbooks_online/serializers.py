@@ -1,3 +1,5 @@
+import logging
+
 from fyle_accounting_mappings.models import DestinationAttribute
 from rest_framework import serializers
 
@@ -10,7 +12,11 @@ from apps.quickbooks_online.models import (
     CreditCardPurchaseLineitem,
     JournalEntry,
     JournalEntryLineitem,
+    QBOWebhookIncoming,
 )
+from apps.workspaces.models import QBOCredential
+
+logger = logging.getLogger(__name__)
 
 
 class BillSerializer(serializers.ModelSerializer):
@@ -101,3 +107,49 @@ class QuickbooksFieldSerializer(serializers.ModelSerializer):
     class Meta:
         model = DestinationAttribute
         fields = ['attribute_type', 'display_name']
+
+
+class QBOWebhookIncomingSerializer(serializers.Serializer):
+    """
+    Serializer for QBO webhook data collection
+    """
+
+    def create(self):
+        """
+        Process and store webhook data for all workspaces
+        """
+        request = self.context['request']
+        payload = request.data
+        webhook_objects = []
+
+        for event_notification in payload.get('eventNotifications', []):
+            realm_id = event_notification.get('realmId')
+            qbo_credentials = QBOCredential.objects.filter(realm_id=realm_id).order_by('created_at')
+            if not qbo_credentials.exists():
+                logger.warning(f"No workspace found for realm_id: {realm_id}")
+                continue
+
+            primary_workspace = qbo_credentials.first().workspace
+            additional_workspace_ids = list(qbo_credentials.values_list('workspace_id', flat=True)[1:])
+
+            data_change_event = event_notification.get('dataChangeEvent', {})
+            entities = data_change_event.get('entities', [])
+
+            for entity in entities:
+                webhook_objects.append(
+                    QBOWebhookIncoming(
+                        workspace=primary_workspace,
+                        additional_workspace_ids=additional_workspace_ids,
+                        realm_id=realm_id,
+                        entity_type=entity.get('name'),
+                        destination_id=entity.get('id'),
+                        operation_type=entity.get('operation'),
+                        last_updated_at=entity.get('lastUpdated'),
+                        raw_response=payload
+                    )
+                )
+
+        if webhook_objects:
+            QBOWebhookIncoming.objects.bulk_create(webhook_objects)
+
+        return {}
