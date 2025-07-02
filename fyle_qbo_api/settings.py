@@ -251,6 +251,7 @@ INTEGRATIONS_APP_URL = os.environ.get('INTEGRATIONS_APP_URL')
 # QBO Settings
 QBO_CLIENT_ID = os.environ.get('QBO_CLIENT_ID')
 QBO_CLIENT_SECRET = os.environ.get('QBO_CLIENT_SECRET')
+QBO_WEBHOOK_TOKEN = os.environ.get('QBO_WEBHOOK_TOKEN')
 QBO_REDIRECT_URI = os.environ.get('QBO_REDIRECT_URI')
 QBO_TOKEN_URI = os.environ.get('QBO_TOKEN_URI')
 QBO_ENVIRONMENT = os.environ.get('QBO_ENVIRONMENT')
