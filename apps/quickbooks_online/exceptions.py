@@ -3,7 +3,7 @@ import logging
 import traceback
 
 from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
-from qbosdk.exceptions import InternalServerError, InvalidTokenError, WrongParamsError
+from qbosdk.exceptions import InternalServerError, InvalidTokenError, UnauthorizedClientError, WrongParamsError
 
 from apps.fyle.actions import post_accounting_export_summary, update_failed_expenses
 from apps.fyle.models import ExpenseGroup
@@ -132,7 +132,7 @@ def handle_qbo_exceptions(bill_payment=False):
                 if not bill_payment:
                     update_failed_expenses(expense_group.expenses.all(), True)
 
-            except (QBOCredential.DoesNotExist, InvalidTokenError):
+            except (QBOCredential.DoesNotExist, InvalidTokenError, UnauthorizedClientError):
                 logger.info('QBO Account not connected / token expired for workspace_id %s / expense group %s', expense_group.workspace_id, expense_group.id)
                 detail = {'expense_group_id': expense_group.id, 'message': 'QBO Account not connected / token expired'}
                 task_log.status = 'FAILED'
