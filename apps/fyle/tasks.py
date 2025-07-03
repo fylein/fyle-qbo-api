@@ -9,9 +9,6 @@ from fyle.platform.exceptions import InternalServerError, InvalidTokenError, Ret
 from fyle_accounting_library.fyle_platform.branding import feature_configuration
 from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from fyle_accounting_library.fyle_platform.helpers import filter_expenses_based_on_state, get_expense_import_states
-from fyle_accounting_mappings.models import ExpenseAttribute
-from fyle_integrations_platform_connector import PlatformConnector
-from fyle_integrations_platform_connector.apis.expenses import Expenses as FyleExpenses
 
 from apps.fyle.actions import mark_expenses_as_skipped, post_accounting_export_summary
 from apps.fyle.helpers import (
@@ -26,6 +23,9 @@ from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupS
 from apps.tasks.models import Error, TaskLog
 from apps.workspaces.actions import export_to_qbo
 from apps.workspaces.models import FyleCredential, LastExportDetail, Workspace, WorkspaceGeneralSettings, WorkspaceSchedule
+from fyle_accounting_mappings.models import ExpenseAttribute
+from fyle_integrations_platform_connector import PlatformConnector
+from fyle_integrations_platform_connector.apis.expenses import Expenses as FyleExpenses
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -427,11 +427,11 @@ def re_run_skip_export_rule(workspace: Workspace) -> None:
             if last_export_detail:
                 last_export_detail.failed_expense_groups_count = max(
                     0,
-                    last_export_detail.failed_expense_groups_count - deleted_failed_expense_groups_count
+                    (last_export_detail.failed_expense_groups_count or 0) - deleted_failed_expense_groups_count
                 )
                 last_export_detail.total_expense_groups_count = max(
                     0,
-                    last_export_detail.total_expense_groups_count - deleted_total_expense_groups_count
+                    (last_export_detail.total_expense_groups_count or 0) - deleted_total_expense_groups_count
                 )
                 last_export_detail.save()
             try:
