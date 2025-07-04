@@ -1,5 +1,6 @@
 from rest_framework.throttling import SimpleRateThrottle
 
+
 class PerUserPathThrottle(SimpleRateThrottle):
     scope = 'per_user_path'
 
