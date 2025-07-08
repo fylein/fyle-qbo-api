@@ -127,6 +127,7 @@ def __create_chain_and_run(workspace_id: int, chain_tasks: List[Task], run_in_ra
         chain.append('apps.fyle.tasks.sync_dimensions', workspace_id, True)
 
         for task in chain_tasks:
+            logger.info(f"Executing {task.target} with args {task.args} and kwargs {task.kwargs}")
             chain.append(task.target, *task.args)
 
         chain.run()
