@@ -105,7 +105,7 @@ def run_sync_schedule(workspace_id):
         logger.info(f"Task log already enqueued for workspace {workspace_id} with count {task_log_enqueued_count}, skipping sync schedule")
         return
 
-    task_log, _ = TaskLog.objects.update_or_create(workspace_id=workspace_id, type='FETCHING_EXPENSES', defaults={'status': 'IN_PROGRESS', 'triggered_by': 'BACKGROUND_SCHEDULE'})
+    task_log, _ = TaskLog.objects.update_or_create(workspace_id=workspace_id, type='FETCHING_EXPENSES', defaults={'status': 'IN_PROGRESS'})
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
 
