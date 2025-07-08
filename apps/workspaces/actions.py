@@ -252,6 +252,7 @@ def post_to_integration_settings(workspace_id: int, active: bool):
 
 
 def export_to_qbo(workspace_id, expense_group_ids=[], is_direct_export:bool = False, triggered_by: ExpenseImportSourceEnum = None):
+    logger.info(f"Exporting to QBO for workspace {workspace_id} with expense group ids {expense_group_ids}, triggered by {triggered_by}")
     active_qbo_credentials = QBOCredential.objects.filter(
         workspace_id=workspace_id,
         is_expired=False,

@@ -97,6 +97,14 @@ def run_sync_schedule(workspace_id):
     :param workspace_id: workspace id
     :return: None
     """
+    logger.info(f"Running sync schedule for workspace {workspace_id}")
+
+    task_log_enqueued_count = TaskLog.objects.filter(workspace_id=workspace_id, status__in=['IN_PROGRESS', 'ENQUEUED']).exclude(type__in=['FETCHING_EXPENSES', 'CREATING_BILL_PAYMENT']).count()
+
+    if task_log_enqueued_count > 0:
+        logger.info(f"Task log already enqueued for workspace {workspace_id} with count {task_log_enqueued_count}, skipping sync schedule")
+        return
+
     task_log, _ = TaskLog.objects.update_or_create(workspace_id=workspace_id, type='FETCHING_EXPENSES', defaults={'status': 'IN_PROGRESS'})
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
