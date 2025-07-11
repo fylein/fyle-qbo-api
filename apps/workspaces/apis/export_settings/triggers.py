@@ -1,10 +1,11 @@
+from datetime import datetime, timezone
 from typing import Dict
 
 from apps.fyle.models import ExpenseGroup
 from apps.mappings.schedules import schedule_or_delete_fyle_import_tasks as new_schedule_or_delete_fyle_import_tasks
 from apps.quickbooks_online.actions import update_last_export_details
 from apps.tasks.models import Error, TaskLog
-from apps.workspaces.models import LastExportDetail, WorkspaceGeneralSettings
+from apps.workspaces.models import LastExportDetail, QBOCredential, Workspace, WorkspaceGeneralSettings
 
 
 class ExportSettingsTrigger:
@@ -18,6 +19,15 @@ class ExportSettingsTrigger:
         """
 
         workspace_general_settings: WorkspaceGeneralSettings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.__workspace_id).first()
+
+        if not workspace_general_settings.is_multi_currency_allowed:
+            workspace = Workspace.objects.filter(id=self.__workspace_id).first()
+            qbo_credential = QBOCredential.objects.filter(workspace_id=self.__workspace_id).first()
+            if qbo_credential.currency and qbo_credential.currency != workspace.fyle_currency:
+                WorkspaceGeneralSettings.objects.filter(workspace_id=self.__workspace_id).update(
+                    is_multi_currency_allowed=True,
+                    updated_at=datetime.now(timezone.utc)
+                )
 
         if (self.__workspace_general_settings['reimbursable_expenses_object'] == 'JOURNAL ENTRY' or self.__workspace_general_settings['corporate_credit_card_expenses_object'] == 'JOURNAL ENTRY') and workspace_general_settings.import_items:
 

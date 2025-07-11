@@ -1,6 +1,7 @@
 """
 Workspace Signals
 """
+
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping
