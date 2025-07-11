@@ -1,7 +1,7 @@
 from apps.fyle.models import ExpenseGroup
 from apps.tasks.models import Error, TaskLog
 from apps.workspaces.apis.export_settings.triggers import ExportSettingsTrigger
-from apps.workspaces.models import WorkspaceGeneralSettings
+from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSettings
 
 
 def test_post_save_workspace_general_settings_export_trigger(mocker, db):
@@ -91,3 +91,23 @@ def test_post_save_workspace_general_settings_export_trigger_3(mocker, db):
 
     assert after_errors_count == 0
     assert after_delete_count == before_delete_count - expense_grp_personal_count
+
+
+def test_post_save_workspace_general_settings_export_trigger_4(mocker, db):
+    # multi currency allowed test case
+    workspace_general_setting = WorkspaceGeneralSettings.objects.filter(workspace_id=5).first()
+    workspace_general_setting.is_multi_currency_allowed = False
+    workspace_general_setting.save()
+
+    # payload for the export trigger
+    workspace_general_settings_payload = {'reimbursable_expenses_object': 'JOURNAL ENTRY', 'corporate_credit_card_expenses_object': 'JOURNAL ENTRY'}
+    workspace_id = 5
+
+    Workspace.objects.filter(id=workspace_id).update(fyle_currency='YOLO')
+    QBOCredential.objects.filter(workspace_id=workspace_id).update(currency='USD')
+
+    export_trigger = ExportSettingsTrigger(workspace_general_settings=workspace_general_settings_payload, workspace_id=workspace_id)
+    export_trigger.post_save_workspace_general_settings()
+
+    workspace_general_setting = WorkspaceGeneralSettings.objects.filter(workspace_id=5).first()
+    assert workspace_general_setting.is_multi_currency_allowed == True
