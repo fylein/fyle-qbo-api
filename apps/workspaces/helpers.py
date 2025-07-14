@@ -1,6 +1,10 @@
+import logging
 from datetime import datetime, timezone
 
 from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 def get_error_model_path() -> str:
@@ -39,6 +43,7 @@ def enable_multi_currency_support(workspace_general_settings: WorkspaceGeneralSe
         return
 
     if qbo_credential.currency and qbo_credential.currency != workspace_general_settings.workspace.fyle_currency:
+        logger.info(f'Enabling multi currency support for workspace {workspace_id}')
         WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(
             is_multi_currency_allowed=True,
             updated_at=datetime.now(timezone.utc)
