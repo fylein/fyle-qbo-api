@@ -3,6 +3,7 @@ from unittest import mock
 
 from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute, Mapping
 
+from apps.quickbooks_online.models import QBOSyncTimestamp
 from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import Error
 from apps.workspaces.models import QBOCredential, Workspace
@@ -102,6 +103,8 @@ def test_auto_create_destination_attributes(mocker, db):
     project.sync_after = None
 
     Workspace.objects.filter(id=workspace_id).update(fyle_org_id='or5qYLrvnoF9')
+
+    QBOSyncTimestamp.objects.create(workspace_id=workspace_id)
 
     # delete all destination attributes, expense attributes and mappings
     Mapping.objects.filter(workspace_id=workspace_id, source_type='PROJECT').delete()

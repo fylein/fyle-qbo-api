@@ -3,6 +3,7 @@ from unittest import mock
 from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute, Mapping
 from fyle_integrations_platform_connector import PlatformConnector
 
+from apps.quickbooks_online.models import QBOSyncTimestamp
 from apps.quickbooks_online.utils import QBOConnector
 from apps.workspaces.models import FyleCredential, QBOCredential, Workspace
 from fyle_integrations_imports.modules.tax_groups import TaxGroup
@@ -27,6 +28,7 @@ def test_sync_destination_attributes(mocker, db):
 
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
+    QBOSyncTimestamp.objects.create(workspace_id=workspace_id)
 
     Mapping.objects.filter(workspace_id=workspace_id, source_type='TAX_GROUP').delete()
     DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='TAX_CODE').delete()
@@ -87,6 +89,8 @@ def test_auto_create_destination_attributes(mocker, db):
     workspace_id = 5
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
+    QBOSyncTimestamp.objects.create(workspace_id=workspace_id)
+
     tax_group = TaxGroup(workspace_id, 'TAX_CODE', None,  qbo_connection, ['tax_codes'])
     tax_group.sync_after = None
 

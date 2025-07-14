@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 import pytest
 
 from apps.fyle.models import ExpenseGroupSettings
+from apps.quickbooks_online.models import QBOSyncTimestamp
 from apps.workspaces.models import Workspace
 
 
@@ -24,6 +25,8 @@ def create_temp_workspace(db):
     )
 
     workspace.save()
+
+    QBOSyncTimestamp.objects.create(workspace=workspace)
 
     ExpenseGroupSettings.objects.create(
         reimbursable_expense_group_fields='{employee_email,report_id,claim_number,fund_source}',

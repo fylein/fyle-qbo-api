@@ -3,6 +3,7 @@ from unittest import mock
 from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute, Mapping
 from fyle_integrations_platform_connector import PlatformConnector
 
+from apps.quickbooks_online.models import QBOSyncTimestamp
 from apps.quickbooks_online.utils import QBOConnector
 from apps.workspaces.models import FyleCredential, QBOCredential, Workspace
 from fyle_integrations_imports.modules.expense_custom_fields import ExpenseCustomField
@@ -49,6 +50,8 @@ def test_auto_create_destination_attributes(mocker, db):
     workspace_id = 3
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
+    QBOSyncTimestamp.objects.create(workspace_id=workspace_id)
+
     expense_custom_field = ExpenseCustomField(workspace_id, 'LUKE', 'CLASS', None, qbo_connection, ['classes'])
     expense_custom_field.sync_after = None
 

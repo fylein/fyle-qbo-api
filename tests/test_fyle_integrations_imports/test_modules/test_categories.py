@@ -3,6 +3,7 @@ from unittest import mock
 from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute, Mapping
 from fyle_integrations_platform_connector import PlatformConnector
 
+from apps.quickbooks_online.models import QBOSyncTimestamp
 from apps.quickbooks_online.utils import QBOConnector
 from apps.workspaces.models import FyleCredential, QBOCredential, Workspace, WorkspaceGeneralSettings
 from fyle_integrations_imports.modules.categories import Category, disable_categories
@@ -12,6 +13,8 @@ from tests.test_fyle_integrations_imports.test_modules.fixtures import categorie
 
 def test_sync_destination_attributes(mocker, db):
     workspace_id = 2
+
+    QBOSyncTimestamp.objects.create(workspace_id=workspace_id)
 
     # import categories
     mocker.patch('qbosdk.apis.Accounts.count', return_value=10)
@@ -105,6 +108,7 @@ def test_auto_create_destination_attributes(mocker, db):
     workspace_id = 2
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
+    QBOSyncTimestamp.objects.create(workspace_id=workspace_id)
 
     category = Category(2, 'ACCOUNT', None,  qbo_connection, ['accounts'], True, False, ['Expense', 'Fixed Asset'])
     category.sync_after = None
