@@ -1047,3 +1047,31 @@ class QBOWebhookIncoming(models.Model):
             models.Index(fields=['workspace', 'entity_type', 'created_at']),
             models.Index(fields=['realm_id', 'operation_type']),
         ]
+
+
+class QBOSyncTimestamp(models.Model):
+    """
+    Table to store sync timestamps
+    """
+    id = models.AutoField(primary_key=True)
+    workspace = models.ForeignKey(
+        Workspace,
+        on_delete=models.PROTECT,
+        help_text='Reference to workspace'
+    )
+    account_synced_at = models.DateTimeField(help_text='Datetime when accounts were synced last', null=True)
+    item_synced_at = models.DateTimeField(help_text='Datetime when items were synced last', null=True)
+    vendor_synced_at = models.DateTimeField(help_text='Datetime when vendors were synced last', null=True)
+    employee_synced_at = models.DateTimeField(help_text='Datetime when employees were synced last', null=True)
+    department_synced_at = models.DateTimeField(help_text='Datetime when departments were synced last', null=True)
+    tax_code_synced_at = models.DateTimeField(help_text='Datetime when tax codes were synced last', null=True)
+    class_synced_at = models.DateTimeField(help_text='Datetime when classes were synced last', null=True)
+    customer_synced_at = models.DateTimeField(help_text='Datetime when customers were synced last', null=True)
+    created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime', db_index=True)
+    updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime', db_index=True)
+
+    class Meta:
+        db_table = 'qbo_sync_timestamps'
+        indexes = [
+            models.Index(fields=['workspace', 'created_at']),
+        ]
