@@ -1072,6 +1072,3 @@ class QBOSyncTimestamp(models.Model):
 
     class Meta:
         db_table = 'qbo_sync_timestamps'
-        indexes = [
-            models.Index(fields=['workspace', 'created_at']),
-        ]

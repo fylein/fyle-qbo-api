@@ -60,6 +60,18 @@ def format_special_characters(value: str) -> str:
     return formatted_string
 
 
+def get_entity_sync_timestamp(workspace_id: int, entity_type: str) -> tuple:
+    """
+    Get the last synced time for the given entity type
+    :param workspace_id: workspace id
+    :param entity_type: entity type
+    :return: last synced time
+    """
+    qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=workspace_id)
+    sync_after = (getattr(qbo_sync_timestamp, f'{entity_type}_synced_at') - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S') if getattr(qbo_sync_timestamp, f'{entity_type}_synced_at') else None
+    return qbo_sync_timestamp, sync_after
+
+
 def get_last_synced_time(workspace_id: int, attribute_type: str):
     """
     Get the last synced time for the given attribute type
@@ -248,8 +260,7 @@ class QBOConnector:
             logger.info('Skipping sync of items for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
             return
 
-        qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=self.workspace_id)
-        sync_after = (qbo_sync_timestamp.item_synced_at - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S') if qbo_sync_timestamp.item_synced_at else None
+        qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'item')
         items_generator = self.connection.items.get_all_generator(sync_after)
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
 
@@ -299,8 +310,7 @@ class QBOConnector:
             logger.info('Skipping sync of accounts for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
             return
 
-        qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=self.workspace_id)
-        sync_after = (qbo_sync_timestamp.account_synced_at - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S') if qbo_sync_timestamp.account_synced_at else None
+        qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'account')
         accounts_generator = self.connection.accounts.get_all_generator(sync_after)
         category_sync_version = 'v2'
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
@@ -434,8 +444,7 @@ class QBOConnector:
             logger.info('Skipping sync of department for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
             return
 
-        qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=self.workspace_id)
-        sync_after = (qbo_sync_timestamp.department_synced_at - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S') if qbo_sync_timestamp.department_synced_at else None
+        qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'department')
         departments_generator = self.connection.departments.get_all_generator(sync_after)
 
         active_existing_departments = list(DestinationAttribute.objects.filter(attribute_type='DEPARTMENT', workspace_id=self.workspace_id, active=True).values_list('destination_id', flat=True))
@@ -479,8 +488,7 @@ class QBOConnector:
             logger.info('Skipping sync of tax_codes for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
             return
 
-        qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=self.workspace_id)
-        sync_after = (qbo_sync_timestamp.tax_code_synced_at - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S') if qbo_sync_timestamp.tax_code_synced_at else None
+        qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'tax_code')
         tax_codes_generator = self.connection.tax_codes.get_all_generator(sync_after)
 
         for tax_codes in tax_codes_generator:
@@ -517,8 +525,7 @@ class QBOConnector:
             logger.info('Skipping sync of vendors for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
             return
 
-        qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=self.workspace_id)
-        sync_after = (qbo_sync_timestamp.vendor_synced_at - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S') if qbo_sync_timestamp.vendor_synced_at else None
+        qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'vendor')
         vendors_generator = self.connection.vendors.get_all_generator(sync_after)
 
         for vendors in vendors_generator:
@@ -602,8 +609,7 @@ class QBOConnector:
         """
         Get employees
         """
-        qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=self.workspace_id)
-        sync_after = (qbo_sync_timestamp.employee_synced_at - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S') if qbo_sync_timestamp.employee_synced_at else None
+        qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'employee')
         employees_generator = self.connection.employees.get_all_generator(sync_after)
 
         for employees in employees_generator:
@@ -628,8 +634,7 @@ class QBOConnector:
             logger.info('Skipping sync of classes for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
             return
 
-        qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=self.workspace_id)
-        sync_after = (qbo_sync_timestamp.class_synced_at - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S') if qbo_sync_timestamp.class_synced_at else None
+        qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'class')
         classes_generator = self.connection.classes.get_all_generator(sync_after)
 
         active_existing_classes = list(DestinationAttribute.objects.filter(attribute_type='CLASS', workspace_id=self.workspace_id, active=True).values_list('destination_id', flat=True))
@@ -674,8 +679,7 @@ class QBOConnector:
             logger.info('Skipping sync of customers for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
             return
 
-        qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=self.workspace_id)
-        sync_after = (qbo_sync_timestamp.customer_synced_at - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S') if qbo_sync_timestamp.customer_synced_at else None
+        qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'customer')
         customers_generator = self.connection.customers.get_all_generator(sync_after)
 
         for customers in customers_generator:
