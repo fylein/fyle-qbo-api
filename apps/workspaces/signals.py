@@ -7,17 +7,21 @@ from django.dispatch import receiver
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping
 
 from apps.quickbooks_online.queue import async_run_post_configration_triggers
+from apps.workspaces.helpers import enable_multi_currency_support
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from apps.workspaces.utils import delete_cards_mapping_settings
 
 
 @receiver(post_save, sender=WorkspaceGeneralSettings)
-def run_post_configration_triggers(sender, instance: WorkspaceGeneralSettings, **kwargs):
+def run_post_configration_triggers(sender, instance: WorkspaceGeneralSettings, created: bool, **kwargs):
     """
     :param sender: Sender Class
     :param instance: Row Instance of Sender Class
     :return: None
     """
+    if created:
+        enable_multi_currency_support(instance)
+
     async_run_post_configration_triggers(instance)
 
     delete_cards_mapping_settings(instance)
