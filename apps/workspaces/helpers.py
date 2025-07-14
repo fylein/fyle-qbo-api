@@ -35,6 +35,9 @@ def enable_multi_currency_support(workspace_general_settings: WorkspaceGeneralSe
     """
     workspace_id = workspace_general_settings.workspace.id
     qbo_credential = QBOCredential.objects.filter(workspace_id=workspace_id).first()
+    if not qbo_credential:
+        return
+
     if qbo_credential.currency and qbo_credential.currency != workspace_general_settings.workspace.fyle_currency:
         WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(
             is_multi_currency_allowed=True,
