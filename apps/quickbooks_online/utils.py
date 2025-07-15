@@ -254,7 +254,7 @@ class QBOConnector:
         for items in items_generator:
             item_attributes = []
             for item in items:
-                if item['Active']:
+                if item['Active'] and item['Type'] != 'Category':
                     item_attributes.append({'attribute_type': 'ACCOUNT', 'display_name': 'Item', 'value': item['FullyQualifiedName'], 'destination_id': item['Id'], 'active': general_settings.import_items if general_settings else False})
             DestinationAttribute.bulk_create_or_update_destination_attributes(
                 item_attributes, 'ACCOUNT', self.workspace_id, True, 'Item',
