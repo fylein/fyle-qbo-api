@@ -2,7 +2,6 @@ from datetime import datetime, timezone
 
 import pytest
 
-from apps.quickbooks_online.models import QBOSyncTimestamp
 from apps.workspaces.models import Workspace
 
 
@@ -25,5 +24,3 @@ def add_workspace_to_database():
     )
 
     workspace.save()
-
-    QBOSyncTimestamp.objects.create(workspace=workspace)

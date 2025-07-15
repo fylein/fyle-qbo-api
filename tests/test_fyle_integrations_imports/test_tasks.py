@@ -2,7 +2,6 @@ from unittest import mock
 
 from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute, Mapping
 
-from apps.quickbooks_online.models import QBOSyncTimestamp
 from apps.workspaces.models import FyleCredential, QBOCredential
 from fyle_integrations_imports.models import ImportLog
 from fyle_integrations_imports.tasks import disable_items, trigger_import_via_schedule
@@ -14,7 +13,6 @@ def test_trigger_import_via_schedule(mocker, db):
     # delete all the import logs
     ImportLog.objects.filter(workspace_id=workspace_id).delete()
     credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
-    QBOSyncTimestamp.objects.create(workspace_id=workspace_id)
     with mock.patch('fyle.platform.apis.v1.admin.Projects.list_all') as mock_call:
         mocker.patch(
             'fyle_integrations_platform_connector.apis.Projects.post_bulk',

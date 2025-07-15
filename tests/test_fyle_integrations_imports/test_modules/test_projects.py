@@ -3,7 +3,6 @@ from unittest import mock
 from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute, Mapping
 from fyle_integrations_platform_connector import PlatformConnector
 
-from apps.quickbooks_online.models import QBOSyncTimestamp
 from apps.quickbooks_online.utils import QBOConnector
 from apps.workspaces.models import FyleCredential, QBOCredential, Workspace, WorkspaceGeneralSettings
 from fyle_integrations_imports.modules import Project
@@ -19,7 +18,6 @@ def test_sync_destination_attributes(mocker, db):
 
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
-    QBOSyncTimestamp.objects.create(workspace_id=workspace_id)
 
     destination_attributes_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='CUSTOMER').count()
     assert destination_attributes_count == 29
@@ -69,7 +67,6 @@ def test_auto_create_destination_attributes(mocker, db):
     workspace_id = 3
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
-    QBOSyncTimestamp.objects.create(workspace_id=workspace_id)
 
     project = Project(3, 'CUSTOMER', None,  qbo_connection, ['customers'], True)
     project.sync_after = None
