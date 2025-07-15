@@ -193,7 +193,7 @@ def create_bill(expense_group_id: int, task_log_id: int, last_export: bool, is_a
             task_log.status = 'IN_PROGRESS'
             task_log.save()
         else:
-            logger.info('Task log %s is already in %s state, workspace id %s, so skipping the task', task_log_id, task_log.status, task_log.workspace_id)
+            worker_logger.info('Task log %s is already in %s state, workspace id %s, so skipping the task', task_log_id, task_log.status, task_log.workspace_id)
             return
 
     in_progress_expenses = []
@@ -381,7 +381,7 @@ def create_cheque(expense_group_id: int, task_log_id: int, last_export: bool, is
             task_log.status = 'IN_PROGRESS'
             task_log.save()
         else:
-            logger.info('Task log %s is already in %s state, workspace id %s, so skipping the task', task_log_id, task_log.status, task_log.workspace_id)
+            worker_logger.info('Task log %s is already in %s state, workspace id %s, so skipping the task', task_log_id, task_log.status, task_log.workspace_id)
             return
 
     in_progress_expenses = []
@@ -451,7 +451,7 @@ def create_qbo_expense(expense_group_id: int, task_log_id: int, last_export: boo
             task_log.status = 'IN_PROGRESS'
             task_log.save()
         else:
-            logger.info('Task log %s is already in %s state, workspace id %s, so skipping the task', task_log_id, task_log.status, task_log.workspace_id)
+            worker_logger.info('Task log %s is already in %s state, workspace id %s, so skipping the task', task_log_id, task_log.status, task_log.workspace_id)
             return
 
     in_progress_expenses = []
@@ -526,7 +526,7 @@ def create_credit_card_purchase(expense_group_id: int, task_log_id: int, last_ex
             task_log.status = 'IN_PROGRESS'
             task_log.save()
         else:
-            logger.info('Task log %s is already in %s state, workspace id %s, so skipping the task', task_log_id, task_log.status, task_log.workspace_id)
+            worker_logger.info('Task log %s is already in %s state, workspace id %s, so skipping the task', task_log_id, task_log.status, task_log.workspace_id)
             return
 
     in_progress_expenses = []
@@ -600,7 +600,7 @@ def create_journal_entry(expense_group_id: int, task_log_id: int, last_export: b
             task_log.status = 'IN_PROGRESS'
             task_log.save()
         else:
-            logger.info('Task log %s is already in %s state, workspace id %s, so skipping the task', task_log_id, task_log.status, task_log.workspace_id)
+            worker_logger.info('Task log %s is already in %s state, workspace id %s, so skipping the task', task_log_id, task_log.status, task_log.workspace_id)
             return
 
     in_progress_expenses = []
