@@ -18,6 +18,7 @@ from rest_framework.views import status
 from apps.fyle.actions import post_accounting_export_summary, update_expenses_in_progress, update_failed_expenses
 from apps.fyle.helpers import get_cluster_domain, post_request
 from apps.fyle.models import ExpenseGroup, ExpenseGroupSettings
+from apps.quickbooks_online.models import QBOSyncTimestamp
 from apps.quickbooks_online.queue import (
     schedule_bills_creation,
     schedule_cheques_creation,
@@ -61,6 +62,8 @@ def update_or_create_workspace(user, access_token):
         ExpenseGroupSettings.objects.create(workspace_id=workspace.id)
 
         LastExportDetail.objects.create(workspace_id=workspace.id)
+
+        QBOSyncTimestamp.objects.create(workspace_id=workspace.id)
 
         workspace.user.add(User.objects.get(user_id=user))
 

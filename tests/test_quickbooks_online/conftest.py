@@ -350,7 +350,6 @@ def create_qbo_expense_item_based(db):
     expense_group = ExpenseGroup.objects.create(
         workspace_id=3, fund_source='CCC', description=json.loads('{"report_id": "rpcegBZcwpoP", "fund_source": "CCC", "claim_number": "C/2023/04/R/6", "employee_email": "sravan.kumar@fyle.in"}'), employee_name='sravan k'
     )
-    print('expense_group.id', expense_group.id)
     DestinationAttribute.objects.create(
         attribute_type="BANK_ACCOUNT",
         display_name="Bank Account",
