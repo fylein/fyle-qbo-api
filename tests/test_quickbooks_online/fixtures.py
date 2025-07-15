@@ -1014,6 +1014,24 @@ data = {
             "MetaData": {"CreateTime": "2015-07-24T09:34:35-07:00","LastUpdatedTime": "2015-07-24T09:34:35-07:00"},
         }
     ],
+    "employee_response_after_sync": [
+        {
+            "SyncToken": "0",
+            "domain": "QBO",
+            "DisplayName": "Bill Miller 1",
+            "PrimaryPhone": {"FreeFormNumber": "234-525-1234"},
+            "PrintOnCheckName": "Bill Miller 1",
+            "FamilyName": "Miller 1",
+            "Active": True,
+            "SSN": "XXX-XX-XXXX",
+            "PrimaryAddr": {"CountrySubDivisionCode": "CA","City": "Middlefield","PostalCode": "93242","Id": "116","Line1": "45 N. Elm Street"},
+            "sparse": False,
+            "BillableTime": False,
+            "GivenName": "Bill 1",
+            "Id": "72",
+            "MetaData": {"CreateTime": "2015-07-24T09:34:35-07:00","LastUpdatedTime": "2015-07-24T09:34:35-07:00"},
+        }
+    ],
     "class_response": [
         {
             "FullyQualifiedName": "France",
@@ -1413,4 +1431,118 @@ data = {
             }
         ]
     },
+    "vendor_response_after_sync": [
+        {
+            "PrimaryEmailAddr": {"Address": "NewBooks@Intuit.com"},
+            "Vendor1099": False,
+            "domain": "QBO",
+            "GivenName": "Anna 1",
+            "DisplayName": "Sync After testing",
+            'CurrencyRef': {'value': 'USD','name': 'United States Dollar'},
+            "BillAddr": {"City": "San Francisco","Line1": "25 Market St.","PostalCode": "94102","Lat": "37.445013","Long": "-122.1391443","CountrySubDivisionCode": "CA","Id": "32"},
+            "SyncToken": "0",
+            "PrintOnCheckName": "Books by Anna 1",
+            "FamilyName": "Johnson 1",
+            "PrimaryPhone": {"FreeFormNumber": "(650) 555-8856"},
+            "AcctNum": "1346",
+            "CompanyName": "Books by Anna 1",
+            "WebAddr": {"URI": "http://www.booksbyanna.co"},
+            "sparse": False,
+            "Active": True,
+            "Balance": 0,
+            "Id": "32sync",
+            "MetaData": {"CreateTime": "2014-09-12T10:07:56-07:00","LastUpdatedTime": "2014-09-17T11:13:46-07:00"},
+        }
+    ],
+    "department_response_after_sync": [
+        {
+            "FullyQualifiedName": "Sales Department 1",
+            "domain": "QBO",
+            "Name": "Sales Department 1",
+            "SyncToken": "0",
+            "SubDepartment": False,
+            "sparse": False,
+            "Active": True,
+            "Id": "33",
+            "MetaData": {"CreateTime": "2013-08-13T11:52:48-07:00","LastUpdatedTime": "2013-08-13T11:52:48-07:00"},
+        }
+    ],
+    "items_response_after_sync": [
+        {
+            "Name": "Garden Tools 1",
+            "Description": "Garden Tools and Equipment",
+            "Active": True,
+            "FullyQualifiedName": "Garden Sync After",
+            "Taxable": True,
+            "UnitPrice": 0,
+            "Type": "Service",
+            "IncomeAccountRef": {"value": "49","name": "Garden Tools and Equipment"},
+            "PurchaseCost": 0,
+            "TrackQtyOnHand": False,
+            "domain": "QBO",
+            "sparse": False,
+            "Id": "12sync",
+            "SyncToken": "1",
+            "MetaData": {"CreateTime": "2019-12-16T10:36:03-08:00","LastUpdatedTime": "2019-12-19T12:47:47-08:00"},
+        }
+    ],
+    "tax_code_response_after_sync": [
+        {
+            "SyncToken": "0",
+            "domain": "QBO",
+            "TaxGroup": True,
+            "Name": "New Sync After",
+            "Taxable": True,
+            "PurchaseTaxRateList": {"TaxRateDetail": [{"TaxRateRef": {"value": "7","name": "NY TAX PURCHASE"},"TaxTypeApplicable": "TaxOnAmount","TaxOrder": 0}]},
+            "sparse": False,
+            "Active": True,
+            "Description": "New York 1",
+            "MetaData": {"CreateTime": "2014-09-18T12:17:04-07:00","LastUpdatedTime": "2014-09-18T12:17:04-07:00"},
+            "Id": "4sync",
+            "SalesTaxRateList": {"TaxRateDetail": [{"TaxTypeApplicable": "TaxOnAmount","TaxRateRef": {"name": "New York","value": "4"},"TaxOrder": 0}]},
+        }
+    ],
+    "account_response_after_sync": [
+        {
+            "FullyQualifiedName": "Office Supplies 23",
+            "domain": "QBO",
+            "Name": "Office Supplies 2",
+            "Classification": "Expense",
+            "AccountSubType": "OfficeExpenses",
+            "CurrentBalanceWithSubAccounts": -500.00,
+            "sparse": False,
+            "MetaData": {"CreateTime": "2014-09-12T10:12:02-07:00","LastUpdatedTime": "2015-06-30T15:09:07-07:00"},
+            "AccountType": "Expense",
+            "CurrentBalance": -500.00,
+            "Active": True,
+            "SyncToken": "0",
+            "Id": "4110",
+            "SubAccount": False,
+        }
+    ],
+    "class_response_after_sync": [
+        {
+            "FullyQualifiedName": "Germany 1",
+            "domain": "QBO",
+            "Name": "Germany 1",
+            "SyncToken": "0",
+            "SubClass": False,
+            "sparse": False,
+            "Active": True,
+            "Id": "5000000000000007282",
+            "MetaData": {"CreateTime": "2015-07-22T13:57:27-07:00","LastUpdatedTime": "2015-07-22T13:57:27-07:00"},
+        }
+    ],
+    "customer_response_after_sync": [
+        {
+            "FullyQualifiedName": "Spain Sync After",
+            "domain": "QBO",
+            "Name": "Spain 1",
+            "SyncToken": "0",
+            "sparse": False,
+            "Active": True,
+            "Id": "12sync",
+            "MetaData": {"CreateTime": "2015-07-22T13:57:27-07:00","LastUpdatedTime": "2015-07-22T13:57:27-07:00"},
+        }
+    ],
 }

@@ -7,6 +7,7 @@ from django.urls import reverse
 from qbosdk import exceptions as qbo_exc
 
 from apps.fyle.models import ExpenseGroup
+from apps.quickbooks_online.models import QBOSyncTimestamp
 from apps.tasks.models import TaskLog
 from apps.workspaces.actions import export_to_qbo
 from apps.workspaces.models import LastExportDetail, QBOCredential, Workspace, WorkspaceGeneralSettings
@@ -104,6 +105,7 @@ def test_post_of_workspace(mocker, api_client, test_connection):
 
 
 def test_post_of_new_workspace(mocker, api_client, test_connection):
+    QBOSyncTimestamp.objects.filter(workspace_id=1).delete()
     mocker.patch('apps.workspaces.actions.get_fyle_admin', return_value={'data': {'org': {'name': 'Test Trip', 'id': 'orZu2y7zdy', 'currency': 'USD'}}})
     url = reverse('workspace')
 

@@ -11,13 +11,13 @@ from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribu
 from fyle_integrations_platform_connector import PlatformConnector
 from fyle_rest_auth.helpers import get_fyle_admin
 from fyle_rest_auth.models import AuthToken
-from qbosdk import revoke_refresh_token
 from rest_framework.response import Response
 from rest_framework.views import status
 
 from apps.fyle.actions import post_accounting_export_summary, update_expenses_in_progress, update_failed_expenses
 from apps.fyle.helpers import get_cluster_domain, post_request
 from apps.fyle.models import ExpenseGroup, ExpenseGroupSettings
+from apps.quickbooks_online.models import QBOSyncTimestamp
 from apps.quickbooks_online.queue import (
     schedule_bills_creation,
     schedule_cheques_creation,
@@ -37,6 +37,7 @@ from apps.workspaces.models import (
 from apps.workspaces.serializers import QBOCredentialSerializer
 from apps.workspaces.signals import post_delete_qbo_connection
 from fyle_qbo_api.utils import assert_valid, patch_integration_settings
+from qbosdk import revoke_refresh_token
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -61,6 +62,8 @@ def update_or_create_workspace(user, access_token):
         ExpenseGroupSettings.objects.create(workspace_id=workspace.id)
 
         LastExportDetail.objects.create(workspace_id=workspace.id)
+
+        QBOSyncTimestamp.objects.create(workspace_id=workspace.id)
 
         workspace.user.add(User.objects.get(user_id=user))
 
