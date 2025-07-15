@@ -49,7 +49,6 @@ def test_auto_create_destination_attributes(mocker, db):
     workspace_id = 3
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
-
     expense_custom_field = ExpenseCustomField(workspace_id, 'LUKE', 'CLASS', None, qbo_connection, ['classes'])
     expense_custom_field.sync_after = None
 

@@ -73,7 +73,6 @@ def test_auto_create_destination_attributes(mocker, db):
     workspace_id = 3
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
-
     cost_center = CostCenter(workspace_id, 'CLASS', None,  qbo_connection, ['classes'])
     cost_center.sync_after = None
 
