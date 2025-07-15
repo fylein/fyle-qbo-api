@@ -9,6 +9,8 @@ from django.db import transaction
 from django.db.models import Max
 from django.utils import timezone
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, MappingSetting
+from qbosdk import QuickbooksOnlineSDK
+from qbosdk.exceptions import WrongParamsError
 
 from apps.fyle.models import ExpenseGroup
 from apps.mappings.models import GeneralMapping
@@ -30,8 +32,6 @@ from apps.quickbooks_online.models import (
 from apps.workspaces.helpers import get_app_name
 from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSettings
 from fyle_integrations_imports.models import ImportLog
-from qbosdk import QuickbooksOnlineSDK
-from qbosdk.exceptions import WrongParamsError
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -268,7 +268,7 @@ class QBOConnector:
         for items in items_generator:
             item_attributes = []
             for item in items:
-                if item['Active']:
+                if item['Active'] and item['Type'] != 'Category':
                     item_attributes.append({'attribute_type': 'ACCOUNT', 'display_name': 'Item', 'value': item['FullyQualifiedName'], 'destination_id': item['Id'], 'active': general_settings.import_items if general_settings else False})
             DestinationAttribute.bulk_create_or_update_destination_attributes(
                 item_attributes, 'ACCOUNT', self.workspace_id, True, 'Item',

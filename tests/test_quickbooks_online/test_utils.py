@@ -187,6 +187,12 @@ def test_sync_items(mocker, db):
     assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT', display_name='Item', active=True).count() == 2
     assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT', display_name='Item', active=False).count() == 2
 
+    mock_get_all_generator.return_value = [data['items_response_with_category']]
+
+    qbo_connection.sync_items()
+
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT', display_name='Item').count() == 4
+
     previous_sync_time = timezone.now() - timedelta(days=5)
     qbo_sync_timestamp.item_synced_at = previous_sync_time
     qbo_sync_timestamp.save()

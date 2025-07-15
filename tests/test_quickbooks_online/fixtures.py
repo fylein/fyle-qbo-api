@@ -1285,6 +1285,25 @@ data = {
             "MetaData": {"CreateTime": "2019-12-16T10:45:18-08:00","LastUpdatedTime": "2019-12-16T10:45:18-08:00"},
         },
     ],
+    'items_response_with_category': [
+        {
+            "Name": "Concrete Category",
+            "Description": "Concrete for fountain installation",
+            "Active": True,
+            "FullyQualifiedName": "Concrete Category Sync",
+            "Taxable": True,
+            "UnitPrice": 0,
+            "Type": "Category",
+            "IncomeAccountRef": {"value": "48","name": "Fountains and Garden Lighting"},
+            "PurchaseCost": 0,
+            "TrackQtyOnHand": False,
+            "domain": "QBO",
+            "sparse": False,
+            "Id": "3category",
+            "SyncToken": "1",
+            "MetaData": {"CreateTime": "2019-12-16T10:36:03-08:00","LastUpdatedTime": "2019-12-19T12:47:47-08:00"},
+        },
+    ],
     'items_response': [
         {
             "Name": "Concrete",
