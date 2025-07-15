@@ -1,15 +1,17 @@
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest import mock
 
 import pytest
+from django.utils import timezone
 from fyle.platform.exceptions import NoPrivilegeError
 from fyle_accounting_mappings.models import CategoryMapping, DestinationAttribute, EmployeeMapping, Mapping, MappingSetting
 from qbosdk.exceptions import WrongParamsError
 
 from apps.fyle.models import ExpenseGroup
 from apps.mappings.models import GeneralMapping
+from apps.quickbooks_online.models import QBOSyncTimestamp
 from apps.quickbooks_online.utils import QBOConnector, QBOCredential, Workspace, WorkspaceGeneralSettings
 from tests.helper import dict_compare_keys
 from tests.test_quickbooks_online.fixtures import data
@@ -26,17 +28,37 @@ def sort_lines(expense):
 
 @pytest.mark.django_db
 def test_sync_employees(mocker, db):
-    mocker.patch('qbosdk.apis.Employees.get_all_generator', return_value=[data['employee_response']])
-    qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
-    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+    """
+    Test sync_employees function covering both initial sync and subsequent sync scenarios
+    """
+    workspace_id = 3
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
-    employee_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='EMPLOYEE').count()
-    assert employee_count == 2
+    mock_get_all_generator = mocker.patch('qbosdk.apis.Employees.get_all_generator', return_value=[data['employee_response']])
+
+    qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=workspace_id)
+
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='EMPLOYEE').count() == 2
+
+    qbo_sync_timestamp.employee_synced_at = None
 
     qbo_connection.sync_employees()
 
-    new_employee_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='EMPLOYEE').count()
-    assert new_employee_count == 3
+    mock_get_all_generator.assert_called_with(None)
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='EMPLOYEE').count() == 3
+
+    mock_get_all_generator.reset_mock()
+    previous_sync_time = timezone.now() - timedelta(days=5)
+    qbo_sync_timestamp.employee_synced_at = previous_sync_time
+    qbo_sync_timestamp.save()
+    mock_get_all_generator.return_value = [data['employee_response_after_sync']]
+
+    qbo_connection.sync_employees()
+
+    expected_sync_after = (previous_sync_time - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S')
+    mock_get_all_generator.assert_called_with(expected_sync_after)
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='EMPLOYEE').count() == 4
 
 
 def test_post_vendor(mocker, db):
@@ -53,66 +75,128 @@ def test_post_vendor(mocker, db):
 
 
 def test_sync_vendors(mocker, db):
-    mocker.patch('qbosdk.apis.Vendors.count', return_value=10)
-    mocker.patch('qbosdk.apis.Vendors.get_all_generator', return_value=[data['vendor_response']])
-    mocker.patch('qbosdk.apis.Vendors.get_inactive', return_value=[])
-    qbo_credentials = QBOCredential.get_active_qbo_credentials(4)
-    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=4)
+    """
+    Test sync_vendors function covering both initial sync and subsequent sync scenarios
+    """
+    workspace_id = 4
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
-    vendor_count = DestinationAttribute.objects.filter(workspace_id=4, attribute_type='VENDOR').count()
+    mocker.patch('qbosdk.apis.Vendors.count', return_value=10)
+    mock_get_all_generator = mocker.patch('qbosdk.apis.Vendors.get_all_generator', return_value=[data['vendor_response']])
+    mocker.patch('qbosdk.apis.Vendors.get_inactive', return_value=[])
+
+    qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=workspace_id)
+
+    vendor_count = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='VENDOR').count()
     assert vendor_count == 47
+
+    qbo_sync_timestamp.vendor_synced_at = None
+    qbo_sync_timestamp.save()
 
     qbo_connection.sync_vendors()
 
-    new_vendor_count = DestinationAttribute.objects.filter(workspace_id=4, attribute_type='VENDOR').count()
-    assert new_vendor_count == 47
+    mock_get_all_generator.assert_called_with(None)
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='VENDOR').count() == 47
+
+    mock_get_all_generator.reset_mock()
+    previous_sync_time = timezone.now() - timedelta(days=5)
+    qbo_sync_timestamp.vendor_synced_at = previous_sync_time
+    qbo_sync_timestamp.save()
+    mock_get_all_generator.return_value = [data['vendor_response_after_sync']]
+
+    qbo_connection.sync_vendors()
+
+    expected_sync_after = (previous_sync_time - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S')
+    mock_get_all_generator.assert_called_with(expected_sync_after)
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='VENDOR').count() == 48
 
 
 def test_sync_departments(mocker, db):
-    mocker.patch('qbosdk.apis.Departments.count', return_value=10)
-    mocker.patch('qbosdk.apis.Departments.get_all_generator', return_value=[data['department_response']])
-    qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
-    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+    """
+    Test sync_departments function covering both initial sync and subsequent sync scenarios
+    """
+    workspace_id = 3
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
-    department_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='DEPARTMENT').count()
-    assert department_count == 0
+    mocker.patch('qbosdk.apis.Departments.count', return_value=10)
+    mock_get_all_generator = mocker.patch('qbosdk.apis.Departments.get_all_generator', return_value=[data['department_response']])
+
+    qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=workspace_id)
+
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='DEPARTMENT').count() == 0
+
+    qbo_sync_timestamp.department_synced_at = None
+    qbo_sync_timestamp.save()
 
     qbo_connection.sync_departments()
 
-    new_department_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='DEPARTMENT').count()
-    assert new_department_count == 1
+    mock_get_all_generator.assert_called_with(None)
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='DEPARTMENT').count() == 1
+
+    mock_get_all_generator.reset_mock()
+    previous_sync_time = timezone.now() - timedelta(days=5)
+    qbo_sync_timestamp.department_synced_at = previous_sync_time
+    qbo_sync_timestamp.save()
+    mock_get_all_generator.return_value = [data['department_response_after_sync']]
+
+    qbo_connection.sync_departments()
+
+    expected_sync_after = (previous_sync_time - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S')
+    mock_get_all_generator.assert_called_with(expected_sync_after)
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='DEPARTMENT').count() == 2
 
 
 def test_sync_items(mocker, db):
+    """
+    Test sync_items function covering both initial sync and subsequent sync scenarios
+    """
+    workspace_id = 3
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
+
     mocker.patch('qbosdk.apis.Items.count', return_value=0)
     mock_inactive = mocker.patch('qbosdk.apis.Items.get_inactive', return_value=[])
-    with mock.patch('qbosdk.apis.Items.get_all_generator') as mock_call:
-        mock_call.return_value = [data['items_response']]
+    mock_get_all_generator = mocker.patch('qbosdk.apis.Items.get_all_generator', return_value=[data['items_response']])
 
-        qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
-        qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+    qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=workspace_id)
 
-        item_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='ACCOUNT', display_name='Item').count()
-        assert item_count == 0
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT', display_name='Item').count() == 0
 
-        qbo_connection.sync_items()
+    qbo_sync_timestamp.item_synced_at = None
+    qbo_sync_timestamp.save()
 
-        new_item_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='ACCOUNT', display_name='Item', active=True).count()
-        assert new_item_count == 0
+    qbo_connection.sync_items()
 
-        WorkspaceGeneralSettings.objects.filter(workspace_id=3).update(import_items=True)
-        qbo_connection.sync_items()
-        new_item_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='ACCOUNT', display_name='Item', active=True).count()
-        assert new_item_count == 4
+    mock_get_all_generator.assert_called_with(None)
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT', display_name='Item', active=True).count() == 0
 
-        mock_inactive.return_value = [data['items_response_with_inactive_values']]
+    WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(import_items=True)
+    mock_get_all_generator.reset_mock()
+    qbo_sync_timestamp.item_synced_at = None
+    qbo_sync_timestamp.save()
 
-        qbo_connection.sync_items()
+    qbo_connection.sync_items()
+    mock_get_all_generator.assert_called_with(None)
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT', display_name='Item', active=True).count() == 4
 
-        active_item_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='ACCOUNT', display_name='Item', active=True).count()
-        assert active_item_count == 2
-        inactive_item_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='ACCOUNT', display_name='Item', active=False).count()
-        assert inactive_item_count == 2
+    mock_inactive.return_value = [data['items_response_with_inactive_values']]
+
+    qbo_connection.sync_items()
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT', display_name='Item', active=True).count() == 2
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT', display_name='Item', active=False).count() == 2
+
+    previous_sync_time = timezone.now() - timedelta(days=5)
+    qbo_sync_timestamp.item_synced_at = previous_sync_time
+    qbo_sync_timestamp.save()
+    mock_get_all_generator.return_value = [data['items_response_after_sync']]
+
+    qbo_connection.sync_items()
+
+    expected_sync_after = (previous_sync_time - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S')
+    mock_get_all_generator.assert_called_with(expected_sync_after)
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT', display_name='Item', active=True).count() == 3
 
 
 def test_construct_bill(add_destination_attribute_tax_code, create_bill, mocker, db):
@@ -600,36 +684,77 @@ def test_get_tax_inclusive_amount(db):
 
 
 def test_sync_tax_codes(mocker, db):
-    mocker.patch('qbosdk.apis.TaxCodes.count', return_value=10)
-    mocker.patch('qbosdk.apis.TaxCodes.get_all_generator', return_value=[data['tax_code_response']])
-    mocker.patch('qbosdk.apis.TaxRates.get_by_id', return_value=data['tax_rate_get_by_id'])
-    qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
-    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+    """
+    Test sync_tax_codes function covering both initial sync and subsequent sync scenarios
+    """
+    workspace_id = 3
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
-    tax_code_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='TAX_CODE').count()
+    mocker.patch('qbosdk.apis.TaxCodes.count', return_value=10)
+    mock_get_all_generator = mocker.patch('qbosdk.apis.TaxCodes.get_all_generator', return_value=[data['tax_code_response']])
+    mocker.patch('qbosdk.apis.TaxRates.get_by_id', return_value=data['tax_rate_get_by_id'])
+
+    qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=workspace_id)
+
+    tax_code_count = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='TAX_CODE').count()
     assert tax_code_count == 1
+
+    qbo_sync_timestamp.tax_code_synced_at = None
+    qbo_sync_timestamp.save()
 
     qbo_connection.sync_tax_codes()
 
-    new_tax_code_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='TAX_CODE').count()
-    assert new_tax_code_count == 2
+    mock_get_all_generator.assert_called_with(None)
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='TAX_CODE').count() == 2
+
+    mock_get_all_generator.reset_mock()
+    previous_sync_time = timezone.now() - timedelta(days=5)
+    qbo_sync_timestamp.tax_code_synced_at = previous_sync_time
+    qbo_sync_timestamp.save()
+    mock_get_all_generator.return_value = [data['tax_code_response_after_sync']]
+
+    qbo_connection.sync_tax_codes()
+
+    expected_sync_after = (previous_sync_time - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S')
+    mock_get_all_generator.assert_called_with(expected_sync_after)
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='TAX_CODE').count() == 3
 
 
 def tests_sync_accounts(mocker, db):
+    """
+    Test sync_accounts function covering both initial sync and subsequent sync scenarios
+    """
+    workspace_id = 1
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
+
     mocker.patch('qbosdk.apis.Accounts.count', return_value=10)
     mocker.patch('qbosdk.apis.Accounts.get_inactive', return_value=[])
-    mocker.patch('qbosdk.apis.Accounts.get_all_generator', return_value=[data['account_response']])
+    mock_get_all_generator = mocker.patch('qbosdk.apis.Accounts.get_all_generator', return_value=[data['account_response']])
 
-    qbo_credentials = QBOCredential.get_active_qbo_credentials(1)
-    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=1)
+    qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=workspace_id)
 
-    account_count = DestinationAttribute.objects.filter(workspace_id=1, attribute_type='ACCOUNT').count()
-    assert account_count == 63
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT').count() == 63
+
+    qbo_sync_timestamp.account_synced_at = None
+    qbo_sync_timestamp.save()
 
     qbo_connection.sync_accounts()
 
-    new_account_count = DestinationAttribute.objects.filter(workspace_id=1, attribute_type='ACCOUNT').count()
-    assert new_account_count == 63
+    mock_get_all_generator.assert_called_with(None)
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT').count() == 63
+
+    mock_get_all_generator.reset_mock()
+    mock_get_all_generator.return_value = [data['account_response_after_sync']]
+    previous_sync_time = timezone.now() - timedelta(days=5)
+    qbo_sync_timestamp.account_synced_at = previous_sync_time
+    qbo_sync_timestamp.save()
+
+    qbo_connection.sync_accounts()
+    expected_sync_after = (previous_sync_time - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S')
+    mock_get_all_generator.assert_called_with(expected_sync_after)
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT').count() == 64
 
 
 def test_sync_dimensions(mocker, db):
@@ -663,34 +788,77 @@ def test_sync_dimensions(mocker, db):
 
 
 def test_sync_classes(mocker, db):
-    mocker.patch('qbosdk.apis.Classes.count', return_value=10)
-    mocker.patch('qbosdk.apis.Classes.get_all_generator', return_value=[data['class_response']])
-    qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
-    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+    """
+    Test sync_classes function covering both initial sync and subsequent sync scenarios
+    """
+    workspace_id = 3
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
-    class_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='CLASS').count()
-    assert class_count == 0
+    mocker.patch('qbosdk.apis.Classes.count', return_value=10)
+    mock_get_all_generator = mocker.patch('qbosdk.apis.Classes.get_all_generator', return_value=[data['class_response']])
+
+    qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=workspace_id)
+
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='CLASS').count() == 0
+
+    qbo_sync_timestamp.class_synced_at = None
+    qbo_sync_timestamp.save()
 
     qbo_connection.sync_classes()
 
-    new_class_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='CLASS').count()
-    assert new_class_count == 2
+    mock_get_all_generator.assert_called_with(None)
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='CLASS').count() == 2
+
+    mock_get_all_generator.reset_mock()
+    previous_sync_time = timezone.now() - timedelta(days=5)
+    qbo_sync_timestamp.class_synced_at = previous_sync_time
+    qbo_sync_timestamp.save()
+    mock_get_all_generator.return_value = [data['class_response_after_sync']]
+
+    qbo_connection.sync_classes()
+
+    expected_sync_after = (previous_sync_time - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S')
+    mock_get_all_generator.assert_called_with(expected_sync_after)
+    final_class_count = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='CLASS').count()
+    assert final_class_count >= 2
 
 
 def test_sync_customers(mocker, db):
+    """
+    Test sync_customers function covering both initial sync and subsequent sync scenarios
+    """
+    workspace_id = 3
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
+
     mocker.patch('qbosdk.apis.Customers.get_inactive', return_value=[])
     mocker.patch('qbosdk.apis.Customers.count', return_value=5)
-    mocker.patch('qbosdk.apis.Customers.get_all_generator', return_value=[data['class_response']])
-    qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
-    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
+    mock_get_all_generator = mocker.patch('qbosdk.apis.Customers.get_all_generator', return_value=[data['class_response']])
 
-    customer_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='CUSTOMER').count()
-    assert customer_count == 29
+    qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=workspace_id)
+
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='CUSTOMER').count() == 29
+
+    qbo_sync_timestamp.customer_synced_at = None
+    qbo_sync_timestamp.save()
 
     qbo_connection.sync_customers()
 
-    new_customer_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='CUSTOMER').count()
-    assert new_customer_count == 30
+    mock_get_all_generator.assert_called_with(None)
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='CUSTOMER').count() == 30
+
+    mock_get_all_generator.reset_mock()
+    previous_sync_time = timezone.now() - timedelta(days=5)
+    qbo_sync_timestamp.customer_synced_at = previous_sync_time
+    qbo_sync_timestamp.save()
+    mock_get_all_generator.return_value = [data['customer_response_after_sync']]
+
+    qbo_connection.sync_customers()
+
+    expected_sync_after = (previous_sync_time - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S')
+    mock_get_all_generator.assert_called_with(expected_sync_after)
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='CUSTOMER').count() == 31
 
 
 def test_post_bill_exception(mocker, db, create_bill):
