@@ -29,7 +29,9 @@ def sort_lines(expense):
 @pytest.mark.django_db
 def test_sync_employees(mocker, db):
     """
-    Test sync_employees function covering both initial sync and subsequent sync scenarios
+    Test the sync_employees function for both initial and incremental synchronization scenarios.
+    
+    Verifies that employee records are correctly synchronized from QBO during an initial sync (when no previous sync timestamp exists) and during a subsequent sync (using a prior timestamp), ensuring the correct API parameters are used and the expected number of DestinationAttribute records are created.
     """
     workspace_id = 3
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
@@ -62,6 +64,11 @@ def test_sync_employees(mocker, db):
 
 
 def test_post_vendor(mocker, db):
+    """
+    Tests posting a new vendor to QuickBooks Online and verifies that the created vendor has the expected value.
+    
+    This test mocks the QBO API calls for searching and posting vendors, ensures no duplicate vendor exists, and asserts that the returned vendor matches the expected data.
+    """
     mocker.patch('qbosdk.apis.Vendors.search_vendor_by_display_name', return_value=[])
     mocker.patch('qbosdk.apis.Vendors.post', return_value=data['post_vendor_resp'])
     qbo_credentials = QBOCredential.get_active_qbo_credentials(4)
@@ -76,7 +83,9 @@ def test_post_vendor(mocker, db):
 
 def test_sync_vendors(mocker, db):
     """
-    Test sync_vendors function covering both initial sync and subsequent sync scenarios
+    Test the vendor synchronization process for both initial and incremental syncs.
+    
+    Verifies that the `sync_vendors` method correctly handles cases where no previous sync has occurred (initial sync) and where a previous sync timestamp exists (incremental sync). Asserts that the correct API calls are made and that the number of vendor attributes is updated appropriately after each sync.
     """
     workspace_id = 4
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
@@ -114,7 +123,9 @@ def test_sync_vendors(mocker, db):
 
 def test_sync_departments(mocker, db):
     """
-    Test sync_departments function covering both initial sync and subsequent sync scenarios
+    Test synchronization of QBO departments for both initial and incremental sync scenarios.
+    
+    Verifies that the sync_departments function correctly handles cases where no previous sync has occurred (initial sync) and where a previous sync timestamp exists (incremental sync). Asserts that the correct API calls are made and that the expected number of DestinationAttribute records are created for each scenario.
     """
     workspace_id = 3
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
@@ -150,7 +161,12 @@ def test_sync_departments(mocker, db):
 
 def test_sync_items(mocker, db):
     """
-    Test sync_items function covering both initial sync and subsequent sync scenarios
+    Test the sync_items function for both initial and incremental synchronization scenarios, including handling of active and inactive items and import settings.
+    
+    This test verifies that:
+    - Items are not synced when import is disabled.
+    - Active and inactive items are correctly counted and updated based on API responses.
+    - The correct API call parameters are used for initial sync (no timestamp) and subsequent syncs (timestamp one day before last sync).
     """
     workspace_id = 3
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
@@ -200,6 +216,11 @@ def test_sync_items(mocker, db):
 
 
 def test_construct_bill(add_destination_attribute_tax_code, create_bill, mocker, db):
+    """
+    Test construction of QBO bill payloads for account-based line items under various workspace settings.
+    
+    This test verifies that the bill payload is constructed correctly when tax code import and multi-currency settings are toggled, and that the payload matches expected data fixtures for each scenario.
+    """
     mocker.patch('qbosdk.apis.ExchangeRates.get_by_source', return_value={'Rate': 1.2309})
     qbo_credentials = QBOCredential.get_active_qbo_credentials(3)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=3)
@@ -685,7 +706,9 @@ def test_get_tax_inclusive_amount(db):
 
 def test_sync_tax_codes(mocker, db):
     """
-    Test sync_tax_codes function covering both initial sync and subsequent sync scenarios
+    Tests the sync_tax_codes function for both initial and incremental synchronization scenarios.
+    
+    Verifies that tax codes are correctly synchronized from QBO during the first sync (with no previous timestamp) and during subsequent syncs (using the last sync timestamp), ensuring the correct API parameters are used and the expected number of DestinationAttribute records are created.
     """
     workspace_id = 3
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
@@ -723,7 +746,9 @@ def test_sync_tax_codes(mocker, db):
 
 def tests_sync_accounts(mocker, db):
     """
-    Test sync_accounts function covering both initial sync and subsequent sync scenarios
+    Test the sync_accounts function for both initial and incremental synchronization scenarios.
+    
+    Verifies that the correct API calls are made and the expected number of account attributes are created for both a first-time sync (with no previous timestamp) and a subsequent sync (with a prior sync timestamp).
     """
     workspace_id = 1
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
@@ -758,6 +783,11 @@ def tests_sync_accounts(mocker, db):
 
 
 def test_sync_dimensions(mocker, db):
+    """
+    Test the overall dimension synchronization process for QBOConnector.
+    
+    Verifies that synchronizing dimensions (employees, accounts, vendors) does not alter the count of corresponding DestinationAttribute records when no new data is available. Mocks all relevant QBO API calls to isolate the sync logic.
+    """
     mocker.patch('qbosdk.apis.Accounts.get_all_generator')
     mocker.patch('qbosdk.apis.Employees.get_all_generator')
     mocker.patch('qbosdk.apis.Vendors.get_all_generator')
@@ -789,7 +819,9 @@ def test_sync_dimensions(mocker, db):
 
 def test_sync_classes(mocker, db):
     """
-    Test sync_classes function covering both initial sync and subsequent sync scenarios
+    Test the sync_classes function for both initial and incremental synchronization scenarios.
+    
+    Verifies that the correct API calls are made based on the last sync timestamp and that the expected number of class attributes are created in the database for both initial sync (no previous timestamp) and subsequent syncs (with a previous timestamp).
     """
     workspace_id = 3
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
@@ -826,7 +858,9 @@ def test_sync_classes(mocker, db):
 
 def test_sync_customers(mocker, db):
     """
-    Test sync_customers function covering both initial sync and subsequent sync scenarios
+    Test the synchronization of customer records from QuickBooks Online for both initial and incremental sync scenarios.
+    
+    Verifies that the sync_customers function correctly handles cases where no previous sync has occurred (initial sync) and where a previous sync timestamp exists (incremental sync), ensuring the correct API calls are made and the expected number of DestinationAttribute records are created.
     """
     workspace_id = 3
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
@@ -862,6 +896,11 @@ def test_sync_customers(mocker, db):
 
 
 def test_post_bill_exception(mocker, db, create_bill):
+    """
+    Test posting a bill to QBO with exception handling for closed accounting periods.
+    
+    Simulates posting a bill where the first attempt raises a WrongParamsError due to a closed accounting period, and verifies that the posting is retried and succeeds on the second attempt.
+    """
     mocker.patch('qbosdk.apis.Bills.post', return_value=data['construct_bill'])
     mocker.patch('qbosdk.apis.Preferences.get', return_value=data['preference_response'])
     workspace_id = 4

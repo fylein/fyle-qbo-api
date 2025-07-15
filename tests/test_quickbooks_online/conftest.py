@@ -320,6 +320,12 @@ def create_qbo_expense(db):
 
 @pytest.fixture
 def create_qbo_expense_item_based(db):
+    """
+    Creates a QBOExpense and its line items for a single item-based expense in workspace 3.
+    
+    Returns:
+        tuple: A tuple containing the created QBOExpense instance and a list of its associated QBOExpenseLineitem objects.
+    """
     expense = Expense.objects.create(
         employee_email='sravan.kumar@fyle.in',
         employee_name='sravan k',

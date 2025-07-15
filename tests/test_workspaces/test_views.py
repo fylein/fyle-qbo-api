@@ -105,6 +105,11 @@ def test_post_of_workspace(mocker, api_client, test_connection):
 
 
 def test_post_of_new_workspace(mocker, api_client, test_connection):
+    """
+    Test creating a new workspace via POST request after ensuring no existing QBOSyncTimestamp records for the workspace.
+    
+    Deletes any existing QBOSyncTimestamp entries for workspace ID 1, mocks Fyle admin data retrieval, and verifies that the workspace creation endpoint responds with HTTP 200.
+    """
     QBOSyncTimestamp.objects.filter(workspace_id=1).delete()
     mocker.patch('apps.workspaces.actions.get_fyle_admin', return_value={'data': {'org': {'name': 'Test Trip', 'id': 'orZu2y7zdy', 'currency': 'USD'}}})
     url = reverse('workspace')

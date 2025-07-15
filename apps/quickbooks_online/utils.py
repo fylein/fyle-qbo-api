@@ -49,9 +49,15 @@ SYNC_UPPER_LIMIT = {
 
 def format_special_characters(value: str) -> str:
     """
-    Formats special characters in the string.
-    :param value: string to be formatted
-    :return: formatted string
+    Convert special characters in a string to their closest ASCII equivalents.
+    
+    If the resulting string is empty or contains only whitespace, returns an empty string.
+    
+    Parameters:
+        value (str): The input string to be converted.
+    
+    Returns:
+        str: The ASCII-converted string, or an empty string if the result is blank.
     """
     formatted_string = unidecode.unidecode(u'{}'.format(value))
     if not formatted_string.strip():
@@ -62,10 +68,10 @@ def format_special_characters(value: str) -> str:
 
 def get_entity_sync_timestamp(workspace_id: int, entity_type: str) -> tuple:
     """
-    Get the last synced time for the given entity type
-    :param workspace_id: workspace id
-    :param entity_type: entity type
-    :return: last synced time
+    Retrieve the last synchronization timestamp for a specific entity type in a workspace.
+    
+    Returns:
+        tuple: A tuple containing the QBOSyncTimestamp object for the workspace and a formatted string representing the last sync time minus one day, or None if no sync has occurred.
     """
     qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=workspace_id)
     sync_after = (getattr(qbo_sync_timestamp, f'{entity_type}_synced_at') - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S') if getattr(qbo_sync_timestamp, f'{entity_type}_synced_at') else None
@@ -74,10 +80,9 @@ def get_entity_sync_timestamp(workspace_id: int, entity_type: str) -> tuple:
 
 def get_last_synced_time(workspace_id: int, attribute_type: str):
     """
-    Get the last synced time for the given attribute type
-    :param workspace_id: workspace id
-    :param attribute_type: attribute type
-    :return: last synced time
+    Returns the last successful import time for a given attribute type in a workspace as an ISO-formatted string.
+    
+    If no successful import is found, returns the workspace creation time instead.
     """
     import_log = ImportLog.objects.filter(
         workspace_id=workspace_id,
@@ -253,7 +258,12 @@ class QBOConnector:
 
     def sync_items(self):
         """
-        Get items
+        Synchronizes item records from QuickBooks Online to the workspace.
+        
+        Fetches active and inactive items updated since the last sync, updates or creates corresponding destination attributes, and records the latest sync timestamp. Skips synchronization if the item count exceeds the configured upper limit.
+        
+        Returns:
+            list: An empty list after synchronization is complete.
         """
         attribute_count = self.connection.items.count()
         if not self.is_sync_allowed(attribute_type = 'items', attribute_count = attribute_count):
@@ -303,7 +313,9 @@ class QBOConnector:
 
     def sync_accounts(self):
         """
-        Get accounts
+        Synchronizes account records from QuickBooks Online to the workspace.
+        
+        Fetches active and inactive accounts updated since the last sync, updates or creates corresponding destination attributes, and updates the sync timestamp. Handles multiple account types, including credit card, bank, and accounts payable, and respects workspace category import settings.
         """
         attribute_count = self.connection.accounts.count()
         if not self.is_sync_allowed(attribute_type = 'accounts', attribute_count=attribute_count):
@@ -437,7 +449,12 @@ class QBOConnector:
 
     def sync_departments(self):
         """
-        Get departments
+        Synchronizes department records from QuickBooks Online to the workspace.
+        
+        Performs an incremental sync by fetching departments updated since the last sync timestamp, updating or creating corresponding destination attributes, and marking departments as inactive if they no longer exist in QBO. Updates the sync timestamp upon completion.
+        
+        Returns:
+            list: An empty list after synchronization is complete.
         """
         attribute_count = self.connection.departments.count()
         if not self.is_sync_allowed(attribute_type = 'departments', attribute_count = attribute_count):
@@ -481,7 +498,12 @@ class QBOConnector:
 
     def sync_tax_codes(self):
         """
-        Get Tax Codes
+        Synchronizes tax codes from QuickBooks Online to the workspace.
+        
+        Fetches tax codes updated since the last sync, processes active tax codes with purchase tax rates, and updates or creates corresponding destination attributes. Updates the last sync timestamp upon completion.
+        
+        Returns:
+            list: An empty list after synchronization is complete.
         """
         attribute_count = self.connection.tax_codes.count()
         if not self.is_sync_allowed(attribute_type = 'tax_codes', attribute_count = attribute_count):
@@ -518,7 +540,12 @@ class QBOConnector:
 
     def sync_vendors(self):
         """
-        Get vendors
+        Synchronizes vendor records from QuickBooks Online to the workspace.
+        
+        Fetches active and inactive vendors updated since the last sync, updates or creates corresponding destination attributes, and updates the vendor sync timestamp. Skips synchronization if the vendor count exceeds the configured upper limit.
+        
+        Returns:
+            list: Always returns an empty list after synchronization.
         """
         attribute_count = self.connection.vendors.count()
         if not self.is_sync_allowed(attribute_type = 'vendors', attribute_count = attribute_count):
@@ -571,6 +598,15 @@ class QBOConnector:
         return []
 
     def create_vendor_destionation_attribute(self, vendor):
+        """
+        Creates or updates a DestinationAttribute record for a vendor in the workspace.
+        
+        Parameters:
+            vendor (dict): Vendor data from QBO, including display name, ID, active status, and optionally email.
+        
+        Returns:
+            DestinationAttribute: The created or updated destination attribute for the vendor.
+        """
         created_vendor = DestinationAttribute.create_or_update_destination_attribute(
             {
                 'attribute_type': 'VENDOR',
@@ -607,7 +643,9 @@ class QBOConnector:
 
     def sync_employees(self):
         """
-        Get employees
+        Synchronizes employee records from QuickBooks Online to the workspace.
+        
+        Fetches employees updated since the last sync, updates or creates corresponding destination attributes, and updates the employee sync timestamp.
         """
         qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'employee')
         employees_generator = self.connection.employees.get_all_generator(sync_after)
@@ -627,7 +665,12 @@ class QBOConnector:
 
     def sync_classes(self):
         """
-        Get classes
+        Synchronizes class records from QuickBooks Online to the workspace.
+        
+        Performs an incremental sync of class entities, updating or creating destination attributes for active classes and marking inactive classes as such. Updates the last sync timestamp upon completion.
+        
+        Returns:
+            list: An empty list after synchronization is complete.
         """
         attribute_count = self.connection.classes.count()
         if not self.is_sync_allowed(attribute_type = 'classes', attribute_count = attribute_count):
@@ -672,7 +715,12 @@ class QBOConnector:
 
     def sync_customers(self):
         """
-        Get customers
+        Synchronizes customer records from QuickBooks Online to the workspace.
+        
+        Fetches active and inactive customers updated since the last sync, updates or creates corresponding destination attributes, and records the latest sync timestamp. Skips synchronization if the customer count exceeds the configured upper limit.
+        
+        Returns:
+            list: An empty list after synchronization is complete.
         """
         attribute_count = self.connection.customers.count()
         if not self.is_sync_allowed(attribute_type = 'customers', attribute_count = attribute_count):
@@ -721,6 +769,11 @@ class QBOConnector:
 
     def sync_dimensions(self):
 
+        """
+        Synchronize all supported dimension entities from QuickBooks Online to the workspace.
+        
+        Attempts to sync accounts, employees, vendors, customers, classes, tax codes, departments, and items sequentially. Exceptions during individual sync operations are logged, allowing the process to continue for remaining entities.
+        """
         try:
             self.sync_accounts()
         except Exception as exception:

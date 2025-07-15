@@ -45,6 +45,14 @@ logger.level = logging.INFO
 
 
 def update_or_create_workspace(user, access_token):
+    """
+    Creates a new workspace or updates an existing one based on the Fyle organization associated with the provided access token.
+    
+    If a workspace for the Fyle organization already exists, adds the user to it, updates its name, and clears its cache. If not, creates a new workspace and initializes related settings and credentials, then adds the user as an admin.
+    
+    Returns:
+        Workspace: The created or updated workspace instance.
+    """
     fyle_user = get_fyle_admin(access_token.split(' ')[1], None)
     org_id = fyle_user['data']['org']['id']
     org_name = fyle_user['data']['org']['name']
