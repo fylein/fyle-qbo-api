@@ -114,6 +114,12 @@ def test_sync_items(mocker, db):
         inactive_item_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='ACCOUNT', display_name='Item', active=False).count()
         assert inactive_item_count == 2
 
+        mock_call.return_value = [data['items_response_with_category']]
+        qbo_connection.sync_items()
+
+        item_count = DestinationAttribute.objects.filter(workspace_id=3, attribute_type='ACCOUNT', display_name='Item').count()
+        assert item_count == 4
+
 
 def test_construct_bill(add_destination_attribute_tax_code, create_bill, mocker, db):
     mocker.patch('qbosdk.apis.ExchangeRates.get_by_source', return_value={'Rate': 1.2309})
