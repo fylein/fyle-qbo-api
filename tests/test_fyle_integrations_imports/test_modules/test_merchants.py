@@ -212,10 +212,19 @@ def test_disable_merchants(db, mocker):
         active=True
     )
 
+    DestinationAttribute.objects.create(
+        workspace_id=workspace_id,
+        attribute_type='VENDOR',
+        display_name='Vendor',
+        value='old_merchant',
+        destination_id='old_merchant_code',
+        code='old_merchant_code'
+    )
+
     mock_platform = mocker.patch('fyle_integrations_imports.modules.merchants.PlatformConnector')
     post_call = mocker.patch.object(mock_platform.return_value.merchants, 'post')
 
-    disable_merchants(workspace_id, merchants_to_disable, is_import_to_fyle_enabled=True)
+    disable_merchants(workspace_id, merchants_to_disable, is_import_to_fyle_enabled=True, attribute_type='VENDOR')
 
     assert post_call.call_count == 1
 
@@ -228,7 +237,7 @@ def test_disable_merchants(db, mocker):
             'updated_code': 'new_merchant_code'
         }
     }
-    disable_merchants(workspace_id, merchants_to_disable, is_import_to_fyle_enabled=True)
+    disable_merchants(workspace_id, merchants_to_disable, is_import_to_fyle_enabled=True, attribute_type='VENDOR')
     assert post_call.call_count == 1  # No new call
 
     # Test disable merchant with code in naming
@@ -254,5 +263,5 @@ def test_disable_merchants(db, mocker):
     }
 
     # The payload is just the value list, so we check the return value
-    bulk_payload = disable_merchants(workspace_id, merchants_to_disable, is_import_to_fyle_enabled=True)
+    bulk_payload = disable_merchants(workspace_id, merchants_to_disable, is_import_to_fyle_enabled=True, attribute_type='VENDOR')
     assert 'old_merchant_code: old_merchant' in list(bulk_payload)

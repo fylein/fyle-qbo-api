@@ -231,10 +231,19 @@ def test_disable_projects(db, mocker):
         active=True
     )
 
+    DestinationAttribute.objects.create(
+        workspace_id=workspace_id,
+        attribute_type='PROJECT',
+        display_name='Project',
+        value='old_project',
+        destination_id='old_project_code',
+        code='old_project_code'
+    )
+
     mock_platform = mocker.patch('fyle_integrations_imports.modules.projects.PlatformConnector')
     bulk_post_call = mocker.patch.object(mock_platform.return_value.projects, 'post_bulk')
 
-    disable_projects(workspace_id, projects_to_disable, is_import_to_fyle_enabled=True)
+    disable_projects(workspace_id, projects_to_disable, is_import_to_fyle_enabled=True, attribute_type='PROJECT')
 
     assert bulk_post_call.call_count == 1
 
@@ -247,7 +256,7 @@ def test_disable_projects(db, mocker):
         }
     }
 
-    disable_projects(workspace_id, projects_to_disable, is_import_to_fyle_enabled=True)
+    disable_projects(workspace_id, projects_to_disable, is_import_to_fyle_enabled=True, attribute_type='PROJECT')
     assert bulk_post_call.call_count == 1
 
     # Test disable project with code in naming
@@ -281,7 +290,7 @@ def test_disable_projects(db, mocker):
         'id': 'source_id_123'
     }]
 
-    bulk_payload = disable_projects(workspace_id, projects_to_disable, is_import_to_fyle_enabled=True)
+    bulk_payload = disable_projects(workspace_id, projects_to_disable, is_import_to_fyle_enabled=True, attribute_type='PROJECT')
     # Only check keys and values except description
     for actual, expected in zip(bulk_payload, payload):
         for k in expected:
