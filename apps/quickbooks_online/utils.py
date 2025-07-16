@@ -307,7 +307,7 @@ class QBOConnector:
             for account in accounts:
                 value = format_special_characters(account['Name'] if category_sync_version == 'v1' else account['FullyQualifiedName'])
                 code = ' '.join(account['AcctNum'].split()) if 'AcctNum' in account and account['AcctNum'] else None
-                if general_settings and account['AccountType'] in CHARTS_OF_ACCOUNTS and value:
+                if account['AccountType'] in CHARTS_OF_ACCOUNTS and value:
                     account_attributes['account'].append(
                         {
                             'attribute_type': 'ACCOUNT',
