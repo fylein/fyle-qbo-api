@@ -315,7 +315,6 @@ class QBOConnector:
         category_sync_version = 'v2'
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
         is_category_import_to_fyle_enabled = False
-        category_sync_version = 'v2'
 
         if general_settings:
             category_sync_version = general_settings.category_sync_version
