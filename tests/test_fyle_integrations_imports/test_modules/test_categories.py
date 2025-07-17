@@ -549,10 +549,19 @@ def test_disable_categories(
         active=True
     )
 
+    DestinationAttribute.objects.create(
+        workspace_id=workspace_id,
+        attribute_type='ACCOUNT',
+        display_name='Account',
+        value='old_category',
+        destination_id='old_category_code',
+        code='old_category_code'
+    )
+
     mock_platform = mocker.patch('fyle_integrations_imports.modules.categories.PlatformConnector')
     bulk_post_call = mocker.patch.object(mock_platform.return_value.categories, 'post_bulk')
 
-    disable_categories(workspace_id, categories_to_disable, is_import_to_fyle_enabled=True)
+    disable_categories(workspace_id, categories_to_disable, is_import_to_fyle_enabled=True, attribute_type='ACCOUNT')
 
     assert bulk_post_call.call_count == 1
 
@@ -565,7 +574,7 @@ def test_disable_categories(
         }
     }
 
-    disable_categories(workspace_id, categories_to_disable, is_import_to_fyle_enabled=True)
+    disable_categories(workspace_id, categories_to_disable, is_import_to_fyle_enabled=True, attribute_type='ACCOUNT')
     assert bulk_post_call.call_count == 1
 
     # Test disable category with code in naming
@@ -598,7 +607,7 @@ def test_disable_categories(
         'id': 'source_id_123'
     }]
 
-    bulk_payload = disable_categories(workspace_id, categories_to_disable, is_import_to_fyle_enabled=True)
+    bulk_payload = disable_categories(workspace_id, categories_to_disable, is_import_to_fyle_enabled=True, attribute_type='ACCOUNT')
     assert bulk_payload == payload
 
 
@@ -728,3 +737,33 @@ def test_get_mapped_attributes_ids(db, mocker):
     category.source_field = 'SOMETHING_ELSE'
     result = category.get_mapped_attributes_ids(errored_attribute_ids)
     assert result == []
+
+
+def test_create_category_mappings(db, mocker):
+    """
+    Test create_category_mappings method
+    """
+    workspace_id = 2
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
+
+    # Create destination attributes
+    DestinationAttribute.objects.create(
+        workspace_id=workspace_id,
+        attribute_type='ACCOUNT',
+        display_name='Account',
+        value='old_category',
+        destination_id='old_category_code',
+        code='old_category_code'
+    )
+
+    category = Category(2, 'ACCOUNT', None,  qbo_connection, ['accounts'], True, False, ['Expense', 'Fixed Asset'])
+    category.sync_after = None
+
+    Workspace.objects.filter(id=workspace_id).update(fyle_org_id='or5qYLrvnoF9')
+
+    mock_call = mocker.patch('fyle_accounting_mappings.models.CategoryMapping.bulk_create_mappings')
+
+    category.create_category_mappings()
+
+    assert mock_call.call_count == 1

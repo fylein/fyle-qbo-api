@@ -205,10 +205,19 @@ def test_disable_cost_centers(db, mocker):
         active=True
     )
 
+    DestinationAttribute.objects.create(
+        workspace_id=workspace_id,
+        attribute_type='CLASS',
+        display_name='Class',
+        value='old_cost_center',
+        destination_id='old_cost_center_code',
+        code='old_cost_center_code'
+    )
+
     mock_platform = mocker.patch('fyle_integrations_imports.modules.cost_centers.PlatformConnector')
     post_bulk_call = mocker.patch.object(mock_platform.return_value.cost_centers, 'post_bulk')
 
-    disable_cost_centers(workspace_id, cost_centers_to_disable, is_import_to_fyle_enabled=True)
+    disable_cost_centers(workspace_id, cost_centers_to_disable, is_import_to_fyle_enabled=True, attribute_type='CLASS')
 
     assert post_bulk_call.call_count == 1
 
@@ -221,7 +230,7 @@ def test_disable_cost_centers(db, mocker):
             'updated_code': 'new_cost_center_code'
         }
     }
-    disable_cost_centers(workspace_id, cost_centers_to_disable, is_import_to_fyle_enabled=True)
+    disable_cost_centers(workspace_id, cost_centers_to_disable, is_import_to_fyle_enabled=True, attribute_type='CLASS')
     assert post_bulk_call.call_count == 1  # No new call
 
     # Test disable cost center with code in naming
@@ -246,6 +255,6 @@ def test_disable_cost_centers(db, mocker):
         }
     }
 
-    bulk_payload = disable_cost_centers(workspace_id, cost_centers_to_disable, is_import_to_fyle_enabled=True)
+    bulk_payload = disable_cost_centers(workspace_id, cost_centers_to_disable, is_import_to_fyle_enabled=True, attribute_type='CLASS')
     # Should contain a dict with name 'old_cost_center_code: old_cost_center'
     assert any(item['name'] == 'old_cost_center_code: old_cost_center' for item in bulk_payload)
