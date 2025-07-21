@@ -122,6 +122,7 @@ def test_sync_departments(mocker, db):
 
     mocker.patch('qbosdk.apis.Departments.count', return_value=10)
     mock_get_all_generator = mocker.patch('qbosdk.apis.Departments.get_all_generator', return_value=[data['department_response']])
+    mocker.patch('qbosdk.apis.Departments.get_inactive', return_value=[[]])
 
     qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=workspace_id)
 
@@ -803,6 +804,7 @@ def test_sync_classes(mocker, db):
 
     mocker.patch('qbosdk.apis.Classes.count', return_value=10)
     mock_get_all_generator = mocker.patch('qbosdk.apis.Classes.get_all_generator', return_value=[data['class_response']])
+    mocker.patch('qbosdk.apis.Classes.get_inactive', return_value=[[]])
 
     qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=workspace_id)
 
