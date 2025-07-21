@@ -641,8 +641,6 @@ class QBOConnector:
 
         active_existing_classes = list(DestinationAttribute.objects.filter(attribute_type='CLASS', workspace_id=self.workspace_id, active=True).values_list('destination_id', flat=True))
 
-        active_existing_classes = list(DestinationAttribute.objects.filter(attribute_type='CLASS', workspace_id=self.workspace_id, active=True).values_list('destination_id', flat=True))
-
         for classes in classes_generator:
             class_attributes = []
             for qbo_class in classes:
