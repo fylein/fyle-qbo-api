@@ -21,6 +21,10 @@ def test_sync_destination_attributes(mocker, db):
         'qbosdk.apis.Classes.get_all_generator',
         return_value=[cost_center_data['create_new_auto_create_cost_centers_destination_attributes']]
     )
+    mocker.patch(
+        'qbosdk.apis.Classes.get_inactive',
+        return_value=[[]]
+    )
 
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
@@ -97,6 +101,10 @@ def test_auto_create_destination_attributes(mocker, db):
         mocker.patch(
             'qbosdk.apis.Classes.get_all_generator',
             return_value=[cost_center_data['create_new_auto_create_cost_centers_destination_attributes']]
+        )
+        mocker.patch(
+            'qbosdk.apis.Classes.get_inactive',
+            return_value=[[]]
         )
         mock_call.side_effect = [
             cost_center_data['create_new_auto_create_cost_centers_expense_attributes_0'],
