@@ -449,6 +449,8 @@ class QBOConnector:
 
         active_existing_departments = list(DestinationAttribute.objects.filter(attribute_type='DEPARTMENT', workspace_id=self.workspace_id, active=True).values_list('destination_id', flat=True))
 
+        active_existing_departments = list(DestinationAttribute.objects.filter(attribute_type='DEPARTMENT', workspace_id=self.workspace_id, active=True).values_list('destination_id', flat=True))
+
         for departments in departments_generator:
             department_attributes = []
             for department in departments:
@@ -636,6 +638,8 @@ class QBOConnector:
 
         # qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'class')
         classes_generator = self.connection.classes.get_all_generator()
+
+        active_existing_classes = list(DestinationAttribute.objects.filter(attribute_type='CLASS', workspace_id=self.workspace_id, active=True).values_list('destination_id', flat=True))
 
         active_existing_classes = list(DestinationAttribute.objects.filter(attribute_type='CLASS', workspace_id=self.workspace_id, active=True).values_list('destination_id', flat=True))
 
