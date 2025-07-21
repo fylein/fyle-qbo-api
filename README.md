@@ -15,6 +15,7 @@ Django Rest Framework API for Fyle Quickbooks Online Integration
     Follow these steps to ensure your changes are applied correctly:
 
     1. **Make changes** in the [`fyle-integrations-db-migrations`](https://github.com/fylein/fyle-integrations-db-migrations) repository.
+
     2. **Update the submodule** in the QBO API:
         ```bash
         git submodule init
