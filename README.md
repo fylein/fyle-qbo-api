@@ -10,6 +10,7 @@ Django Rest Framework API for Fyle Quickbooks Online Integration
     $ git submodule update
     ```
 
+
 * ### Adding a New View, Function, or Trigger:
     Follow these steps to ensure your changes are applied correctly:
 
