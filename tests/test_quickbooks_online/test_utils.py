@@ -33,7 +33,7 @@ def test_sync_employees(mocker, db):
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
-    # mock_get_all_generator = mocker.patch('qbosdk.apis.Employees.get_all_generator', return_value=[data['employee_response']])
+    mocker.patch('qbosdk.apis.Employees.get_all_generator', return_value=[data['employee_response']])
 
     # qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=workspace_id)
 
@@ -81,7 +81,7 @@ def test_sync_vendors(mocker, db):
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
     mocker.patch('qbosdk.apis.Vendors.count', return_value=10)
-    # mock_get_all_generator = mocker.patch('qbosdk.apis.Vendors.get_all_generator', return_value=[data['vendor_response']])
+    mocker.patch('qbosdk.apis.Vendors.get_all_generator', return_value=[data['vendor_response']])
     mocker.patch('qbosdk.apis.Vendors.get_inactive', return_value=[])
 
     # qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=workspace_id)
@@ -119,7 +119,7 @@ def test_sync_departments(mocker, db):
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
     mocker.patch('qbosdk.apis.Departments.count', return_value=10)
-    # mock_get_all_generator = mocker.patch('qbosdk.apis.Departments.get_all_generator', return_value=[data['department_response']])
+    mocker.patch('qbosdk.apis.Departments.get_all_generator', return_value=[data['department_response']])
 
     # qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=workspace_id)
 
@@ -171,7 +171,7 @@ def test_sync_items(mocker, db):
     assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT', display_name='Item', active=True).count() == 0
 
     WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(import_items=True)
-    mock_get_all_generator.reset_mock()
+    # mock_get_all_generator.reset_mock()
     # qbo_sync_timestamp.item_synced_at = None
     # qbo_sync_timestamp.save()
 
@@ -696,7 +696,7 @@ def test_sync_tax_codes(mocker, db):
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
     mocker.patch('qbosdk.apis.TaxCodes.count', return_value=10)
-    # mock_get_all_generator = mocker.patch('qbosdk.apis.TaxCodes.get_all_generator', return_value=[data['tax_code_response']])
+    mocker.patch('qbosdk.apis.TaxCodes.get_all_generator', return_value=[data['tax_code_response']])
     mocker.patch('qbosdk.apis.TaxRates.get_by_id', return_value=data['tax_rate_get_by_id'])
 
     # qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=workspace_id)
@@ -735,7 +735,7 @@ def tests_sync_accounts(mocker, db):
 
     mocker.patch('qbosdk.apis.Accounts.count', return_value=10)
     mocker.patch('qbosdk.apis.Accounts.get_inactive', return_value=[])
-    # mock_get_all_generator = mocker.patch('qbosdk.apis.Accounts.get_all_generator', return_value=[data['account_response']])
+    mocker.patch('qbosdk.apis.Accounts.get_all_generator', return_value=[data['account_response']])
 
     # qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=workspace_id)
 
@@ -800,7 +800,7 @@ def test_sync_classes(mocker, db):
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
     mocker.patch('qbosdk.apis.Classes.count', return_value=10)
-    # mock_get_all_generator = mocker.patch('qbosdk.apis.Classes.get_all_generator', return_value=[data['class_response']])
+    mocker.patch('qbosdk.apis.Classes.get_all_generator', return_value=[data['class_response']])
 
     # qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=workspace_id)
 
@@ -838,7 +838,7 @@ def test_sync_customers(mocker, db):
 
     mocker.patch('qbosdk.apis.Customers.get_inactive', return_value=[])
     mocker.patch('qbosdk.apis.Customers.count', return_value=5)
-    # mock_get_all_generator = mocker.patch('qbosdk.apis.Customers.get_all_generator', return_value=[data['class_response']])
+    mocker.patch('qbosdk.apis.Customers.get_all_generator', return_value=[data['class_response']])
 
     # qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=workspace_id)
 
