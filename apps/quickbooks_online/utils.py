@@ -464,7 +464,8 @@ class QBOConnector:
         for inactive_departments in inactive_departments_generator:
             inactive_department_attributes = []
             for inactive_department in inactive_departments:
-                inactive_department_attributes.append({'attribute_type': 'DEPARTMENT', 'display_name': 'Department', 'value': inactive_department['FullyQualifiedName'], 'destination_id': inactive_department['Id'], 'active': False})
+                department_display_name = inactive_department['FullyQualifiedName'].replace(" (deleted)", "").rstrip()
+                inactive_department_attributes.append({'attribute_type': 'DEPARTMENT', 'display_name': 'Department', 'value': department_display_name, 'destination_id': inactive_department['Id'], 'active': False})
 
             DestinationAttribute.bulk_create_or_update_destination_attributes(
                 inactive_department_attributes, 'DEPARTMENT', self.workspace_id, True,
@@ -656,7 +657,8 @@ class QBOConnector:
         for inactive_classes in inactive_classes_generator:
             inactive_class_attributes = []
             for inactive_class in inactive_classes:
-                inactive_class_attributes.append({'attribute_type': 'CLASS', 'display_name': 'class', 'value': inactive_class['FullyQualifiedName'], 'destination_id': inactive_class['Id'], 'active': False})
+                class_display_name = inactive_class['FullyQualifiedName'].replace(" (deleted)", "").rstrip()
+                inactive_class_attributes.append({'attribute_type': 'CLASS', 'display_name': 'class', 'value': class_display_name, 'destination_id': inactive_class['Id'], 'active': False})
 
             DestinationAttribute.bulk_create_or_update_destination_attributes(
                 inactive_class_attributes, 'CLASS', self.workspace_id, True,
