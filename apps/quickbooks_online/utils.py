@@ -260,8 +260,8 @@ class QBOConnector:
             logger.info('Skipping sync of items for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
             return
 
-        qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'item')
-        items_generator = self.connection.items.get_all_generator(sync_after)
+        # qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'item')
+        items_generator = self.connection.items.get_all_generator()
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
 
         # For getting all the items, any inactive item will not be returned
@@ -296,8 +296,8 @@ class QBOConnector:
                 is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='ITEM')
             )
 
-        qbo_sync_timestamp.item_synced_at = timezone.now()
-        qbo_sync_timestamp.save(update_fields=['item_synced_at', 'updated_at'])
+        # qbo_sync_timestamp.item_synced_at = timezone.now()
+        # qbo_sync_timestamp.save(update_fields=['item_synced_at', 'updated_at'])
 
         return []
 
@@ -310,8 +310,8 @@ class QBOConnector:
             logger.info('Skipping sync of accounts for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
             return
 
-        qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'account')
-        accounts_generator = self.connection.accounts.get_all_generator(sync_after)
+        # qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'account')
+        accounts_generator = self.connection.accounts.get_all_generator()
         category_sync_version = 'v2'
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
         is_category_import_to_fyle_enabled = False
@@ -430,8 +430,8 @@ class QBOConnector:
                         is_import_to_fyle_enabled=is_category_import_to_fyle_enabled
                     )
 
-        qbo_sync_timestamp.account_synced_at = timezone.now()
-        qbo_sync_timestamp.save(update_fields=['account_synced_at', 'updated_at'])
+        # qbo_sync_timestamp.account_synced_at = timezone.now()
+        # qbo_sync_timestamp.save(update_fields=['account_synced_at', 'updated_at'])
 
         return []
 
@@ -444,8 +444,10 @@ class QBOConnector:
             logger.info('Skipping sync of department for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
             return
 
-        qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'department')
-        departments_generator = self.connection.departments.get_all_generator(sync_after)
+        # qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'department')
+        departments_generator = self.connection.departments.get_all_generator()
+
+        active_existing_departments = list(DestinationAttribute.objects.filter(attribute_type='DEPARTMENT', workspace_id=self.workspace_id, active=True).values_list('destination_id', flat=True))
 
         active_existing_departments = list(DestinationAttribute.objects.filter(attribute_type='DEPARTMENT', workspace_id=self.workspace_id, active=True).values_list('destination_id', flat=True))
 
@@ -474,8 +476,8 @@ class QBOConnector:
                     active=True
                 ).update(active=False, updated_at=timezone.now())
 
-        qbo_sync_timestamp.department_synced_at = timezone.now()
-        qbo_sync_timestamp.save(update_fields=['department_synced_at', 'updated_at'])
+        # qbo_sync_timestamp.department_synced_at = timezone.now()
+        # qbo_sync_timestamp.save(update_fields=['department_synced_at', 'updated_at'])
 
         return []
 
@@ -488,8 +490,8 @@ class QBOConnector:
             logger.info('Skipping sync of tax_codes for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
             return
 
-        qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'tax_code')
-        tax_codes_generator = self.connection.tax_codes.get_all_generator(sync_after)
+        # qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'tax_code')
+        tax_codes_generator = self.connection.tax_codes.get_all_generator()
 
         for tax_codes in tax_codes_generator:
             tax_attributes = []
@@ -511,8 +513,8 @@ class QBOConnector:
 
             DestinationAttribute.bulk_create_or_update_destination_attributes(tax_attributes, 'TAX_CODE', self.workspace_id, True)
 
-        qbo_sync_timestamp.tax_code_synced_at = timezone.now()
-        qbo_sync_timestamp.save(update_fields=['tax_code_synced_at', 'updated_at'])
+        # qbo_sync_timestamp.tax_code_synced_at = timezone.now()
+        # qbo_sync_timestamp.save(update_fields=['tax_code_synced_at', 'updated_at'])
 
         return []
 
@@ -525,8 +527,8 @@ class QBOConnector:
             logger.info('Skipping sync of vendors for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
             return
 
-        qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'vendor')
-        vendors_generator = self.connection.vendors.get_all_generator(sync_after)
+        # qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'vendor')
+        vendors_generator = self.connection.vendors.get_all_generator()
 
         for vendors in vendors_generator:
             vendor_attributes = []
@@ -565,8 +567,8 @@ class QBOConnector:
                 is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='VENDOR')
             )
 
-        qbo_sync_timestamp.vendor_synced_at = timezone.now()
-        qbo_sync_timestamp.save(update_fields=['vendor_synced_at', 'updated_at'])
+        # qbo_sync_timestamp.vendor_synced_at = timezone.now()
+        # qbo_sync_timestamp.save(update_fields=['vendor_synced_at', 'updated_at'])
 
         return []
 
@@ -609,8 +611,8 @@ class QBOConnector:
         """
         Get employees
         """
-        qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'employee')
-        employees_generator = self.connection.employees.get_all_generator(sync_after)
+        # qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'employee')
+        employees_generator = self.connection.employees.get_all_generator()
 
         for employees in employees_generator:
             employee_attributes = []
@@ -620,8 +622,8 @@ class QBOConnector:
 
             DestinationAttribute.bulk_create_or_update_destination_attributes(employee_attributes, 'EMPLOYEE', self.workspace_id, True)
 
-        qbo_sync_timestamp.employee_synced_at = timezone.now()
-        qbo_sync_timestamp.save(update_fields=['employee_synced_at', 'updated_at'])
+        # qbo_sync_timestamp.employee_synced_at = timezone.now()
+        # qbo_sync_timestamp.save(update_fields=['employee_synced_at', 'updated_at'])
 
         return []
 
@@ -634,8 +636,8 @@ class QBOConnector:
             logger.info('Skipping sync of classes for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
             return
 
-        qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'class')
-        classes_generator = self.connection.classes.get_all_generator(sync_after)
+        # qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'class')
+        classes_generator = self.connection.classes.get_all_generator()
 
         active_existing_classes = list(DestinationAttribute.objects.filter(attribute_type='CLASS', workspace_id=self.workspace_id, active=True).values_list('destination_id', flat=True))
 
@@ -665,8 +667,8 @@ class QBOConnector:
                     active=True
                 ).update(active=False, updated_at=timezone.now())
 
-        qbo_sync_timestamp.class_synced_at = timezone.now()
-        qbo_sync_timestamp.save(update_fields=['class_synced_at', 'updated_at'])
+        # qbo_sync_timestamp.class_synced_at = timezone.now()
+        # qbo_sync_timestamp.save(update_fields=['class_synced_at', 'updated_at'])
 
         return []
 
@@ -679,8 +681,8 @@ class QBOConnector:
             logger.info('Skipping sync of customers for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
             return
 
-        qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'customer')
-        customers_generator = self.connection.customers.get_all_generator(sync_after)
+        # qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'customer')
+        customers_generator = self.connection.customers.get_all_generator()
 
         for customers in customers_generator:
             customer_attributes = []
@@ -714,8 +716,8 @@ class QBOConnector:
                 is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='CUSTOMER')
             )
 
-        qbo_sync_timestamp.customer_synced_at = timezone.now()
-        qbo_sync_timestamp.save(update_fields=['customer_synced_at', 'updated_at'])
+        # qbo_sync_timestamp.customer_synced_at = timezone.now()
+        # qbo_sync_timestamp.save(update_fields=['customer_synced_at', 'updated_at'])
 
         return []
 
