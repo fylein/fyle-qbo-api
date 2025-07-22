@@ -464,15 +464,19 @@ class QBOConnector:
                 is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='DEPARTMENT')
             )
 
-        inactive_departments = self.connection.departments.get_inactive(sync_after)
+        inactive_departments_generator = self.connection.departments.get_inactive(sync_after)
 
-        for inactive_departments in inactive_departments:
+        for inactive_departments in inactive_departments_generator:
             inactive_department_attributes = []
             for inactive_department in inactive_departments:
                 department_display_name = inactive_department['FullyQualifiedName'].replace(" (deleted)", "").rstrip()
                 inactive_department_attributes.append({'attribute_type': 'DEPARTMENT', 'display_name': 'Department', 'value': department_display_name, 'destination_id': inactive_department['Id'], 'active': False})
 
-            DestinationAttribute.bulk_create_or_update_destination_attributes(inactive_department_attributes, 'DEPARTMENT', self.workspace_id, True,
+            DestinationAttribute.bulk_create_or_update_destination_attributes(
+                inactive_department_attributes,
+                'DEPARTMENT',
+                self.workspace_id,
+                True,
                 skip_deletion=self.is_duplicate_deletion_skipped(attribute_type='DEPARTMENT'),
                 app_name=get_app_name(),
                 attribute_disable_callback_path=self.get_attribute_disable_callback_path(attribute_type='DEPARTMENT'),
@@ -642,32 +646,49 @@ class QBOConnector:
         qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'class')
         classes_generator = self.connection.classes.get_all_generator()
 
-        active_existing_classes = list(DestinationAttribute.objects.filter(attribute_type='CLASS', workspace_id=self.workspace_id, active=True).values_list('destination_id', flat=True))
-
         for classes in classes_generator:
             class_attributes = []
             for qbo_class in classes:
-                class_attributes.append({'attribute_type': 'CLASS', 'display_name': 'class', 'value': qbo_class['FullyQualifiedName'], 'destination_id': qbo_class['Id'], 'active': qbo_class['Active']})
-                if qbo_class['Id'] in active_existing_classes:
-                    active_existing_classes.remove(qbo_class['Id'])
+                class_attributes.append(
+                    {
+                        'attribute_type': 'CLASS',
+                        'display_name': 'class',
+                        'value': qbo_class['FullyQualifiedName'],
+                        'destination_id': qbo_class['Id'],
+                        'active': qbo_class['Active']
+                    }
+                )
 
             DestinationAttribute.bulk_create_or_update_destination_attributes(
-                class_attributes, 'CLASS', self.workspace_id, True,
+                class_attributes,
+                'CLASS',
+                self.workspace_id,
+                True,
                 skip_deletion=self.is_duplicate_deletion_skipped(attribute_type='CLASS'),
                 app_name=get_app_name(),
                 attribute_disable_callback_path=self.get_attribute_disable_callback_path(attribute_type='CLASS'),
                 is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='CLASS')
             )
 
-        inactive_classes = self.connection.classes.get_inactive(sync_after)
+        inactive_classes_generator = self.connection.classes.get_inactive(sync_after)
 
-        for inactive_classes in inactive_classes:
+        for inactive_classes in inactive_classes_generator:
             inactive_class_attributes = []
             for inactive_class in inactive_classes:
                 class_display_name = inactive_class['FullyQualifiedName'].replace(" (deleted)", "").rstrip()
-                inactive_class_attributes.append({'attribute_type': 'CLASS', 'display_name': 'class', 'value': class_display_name, 'destination_id': inactive_class['Id'], 'active': False})
+                inactive_class_attributes.append({
+                    'attribute_type': 'CLASS',
+                    'display_name': 'class',
+                    'value': class_display_name,
+                    'destination_id': inactive_class['Id'],
+                    'active': False
+                })
 
-            DestinationAttribute.bulk_create_or_update_destination_attributes(inactive_class_attributes, 'CLASS', self.workspace_id, True,
+            DestinationAttribute.bulk_create_or_update_destination_attributes(
+                inactive_class_attributes,
+                'CLASS',
+                self.workspace_id,
+                True,
                 skip_deletion=self.is_duplicate_deletion_skipped(attribute_type='CLASS'),
                 app_name=get_app_name(),
                 attribute_disable_callback_path=self.get_attribute_disable_callback_path(attribute_type='CLASS'),
