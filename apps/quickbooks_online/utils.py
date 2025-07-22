@@ -67,7 +67,11 @@ def get_entity_sync_timestamp(workspace_id: int, entity_type: str) -> tuple:
     :return: last synced time
     """
     qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=workspace_id)
-    sync_after = (getattr(qbo_sync_timestamp, f'{entity_type}_synced_at') - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S') if getattr(qbo_sync_timestamp, f'{entity_type}_synced_at') else None
+    workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+    if workspace_general_settings.is_sync_after_timestamp_enabled:
+        sync_after = (getattr(qbo_sync_timestamp, f'{entity_type}_synced_at') - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S') if getattr(qbo_sync_timestamp, f'{entity_type}_synced_at') else None
+    else:
+        sync_after = None
     return qbo_sync_timestamp, sync_after
 
 
