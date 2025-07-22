@@ -38,7 +38,7 @@ def handle_import_exceptions(task_name):
                 error['response'] = exception.__dict__
 
             except QBOWrongParamsError as exception:
-                error['message'] = 'Something went wrong while importing to QBO'
+                error['message'] = 'Something went wrong while importing to QBO workspace_id - {0}'.format(workspace_id)
                 error['response'] = exception.__dict__
 
             except QBOInvalidTokenError as exception:
@@ -92,7 +92,7 @@ def handle_import_exceptions_v2(func):
             import_log.status = 'FAILED'
 
         except QBOWrongParamsError as exception:
-            error['message'] = 'Something went wrong while importing to QBO'
+            error['message'] = 'Something went wrong while importing to QBO workspace_id - {0}'.format(workspace_id)
             error['alert'] = False
             error['response'] = exception.__dict__
             import_log.status = 'FAILED'

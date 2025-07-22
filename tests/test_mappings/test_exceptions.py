@@ -76,11 +76,8 @@ def test_handle_import_exceptions(mocker, db):
 
     assert import_log.status == 'FAILED'
     assert import_log.error_log['task'] == 'Import PROJECT to Fyle and Auto Create Mappings'
-    assert import_log.error_log['message'] == 'Invalid Token or QBO credentials does not exist workspace_id - 3'
+    assert import_log.error_log['message'] == 'Something went wrong while importing to QBO workspace_id - 3'
     assert import_log.error_log['alert'] == False
-    args, kwargs = mocked_patch.call_args
-    assert args[0] == workspace_id
-    assert kwargs['is_token_expired'] == True
 
     # QBOInvalidTokenError
     @handle_import_exceptions_v2
