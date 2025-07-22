@@ -875,7 +875,10 @@ def async_sync_accounts(workspace_id):
     except QBOCredential.DoesNotExist:
         logger.info(f'QBO credentials not found for {workspace_id =}:', )
 
-    except (WrongParamsError, InvalidTokenError) as exception:
+    except WrongParamsError as exception:
+        logger.info('Something went wrong while syncing accounts workspace_id - %s %s', workspace_id, {'error': exception.response})
+
+    except InvalidTokenError as exception:
         logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
         invalidate_qbo_credentials(workspace_id, qbo_credentials)
 

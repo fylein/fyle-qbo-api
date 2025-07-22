@@ -66,7 +66,10 @@ class TokenHealthView(generics.RetrieveAPIView):
             try:
                 qbo_connector = QBOConnector(qbo_credentials, workspace_id=workspace_id)
                 qbo_connector.get_company_preference()
-            except (qbo_exc.WrongParamsError, qbo_exc.InvalidTokenError):
+            except qbo_exc.WrongParamsError:
+                status_code = status.HTTP_400_BAD_REQUEST
+                message = "Something went wrong while syncing accounts"
+            except qbo_exc.InvalidTokenError:
                 invalidate_qbo_credentials(workspace_id, qbo_credentials)
                 status_code = status.HTTP_400_BAD_REQUEST
                 message = "Quickbooks Online connection expired"
