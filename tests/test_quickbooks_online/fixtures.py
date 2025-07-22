@@ -1467,6 +1467,19 @@ data = {
             "MetaData": {"CreateTime": "2013-08-13T11:52:48-07:00","LastUpdatedTime": "2013-08-13T11:52:48-07:00"},
         }
     ],
+    "department_response_with_inactive_values": [
+        {
+            "FullyQualifiedName": "Sales Department taxi",
+            "domain": "QBO",
+            "Name": "Sales Department taxi",
+            "SyncToken": "0",
+            "SubDepartment": False,
+            "sparse": False,
+            "Active": False,
+            "Id": "33",
+            "MetaData": {"CreateTime": "2013-08-13T11:52:48-07:00","LastUpdatedTime": "2013-08-13T11:52:48-07:00"},
+        }
+    ],
     "items_response_after_sync": [
         {
             "Name": "Garden Tools 1",
@@ -1529,6 +1542,19 @@ data = {
             "SubClass": False,
             "sparse": False,
             "Active": True,
+            "Id": "5000000000000007282",
+            "MetaData": {"CreateTime": "2015-07-22T13:57:27-07:00","LastUpdatedTime": "2015-07-22T13:57:27-07:00"},
+        }
+    ],
+    "class_response_with_inactive_values": [
+        {
+            "FullyQualifiedName": "Germany 1 tax",
+            "domain": "QBO",
+            "Name": "Germany 1 tax",
+            "SyncToken": "0",
+            "SubClass": False,
+            "sparse": False,
+            "Active": False,
             "Id": "5000000000000007282",
             "MetaData": {"CreateTime": "2015-07-22T13:57:27-07:00","LastUpdatedTime": "2015-07-22T13:57:27-07:00"},
         }

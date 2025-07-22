@@ -260,7 +260,7 @@ class QBOConnector:
             return
 
         qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'item')
-        items_generator = self.connection.items.get_all_generator()
+        items_generator = self.connection.items.get_all_generator(sync_after)
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
 
         # For getting all the items, any inactive item will not be returned
@@ -277,10 +277,8 @@ class QBOConnector:
                 is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='ITEM')
             )
 
-        last_synced_time = get_last_synced_time(self.workspace_id, 'CATEGORY')
-
         # get the inactive items generator
-        inactive_items_generator = self.connection.items.get_inactive(last_synced_time)
+        inactive_items_generator = self.connection.items.get_inactive(sync_after)
 
         for inactive_items in inactive_items_generator:
             inactive_item_attributes = []
@@ -310,7 +308,7 @@ class QBOConnector:
             return
 
         qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'account')
-        accounts_generator = self.connection.accounts.get_all_generator()
+        accounts_generator = self.connection.accounts.get_all_generator(sync_after)
         category_sync_version = 'v2'
         general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
         is_category_import_to_fyle_enabled = False
@@ -391,10 +389,8 @@ class QBOConnector:
                         is_import_to_fyle_enabled=is_category_import_to_fyle_enabled
                     )
 
-        last_synced_time = get_last_synced_time(self.workspace_id, 'CATEGORY')
-
         # get the inactive accounts generator
-        inactive_accounts_generator = self.connection.accounts.get_inactive(last_synced_time)
+        inactive_accounts_generator = self.connection.accounts.get_inactive(sync_after)
 
         for inactive_accounts in inactive_accounts_generator:
             inactive_account_attributes = {'account': []}
@@ -444,7 +440,7 @@ class QBOConnector:
             return
 
         qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'department')
-        departments_generator = self.connection.departments.get_all_generator()
+        departments_generator = self.connection.departments.get_all_generator(sync_after)
 
         active_existing_departments = list(DestinationAttribute.objects.filter(attribute_type='DEPARTMENT', workspace_id=self.workspace_id, active=True).values_list('destination_id', flat=True))
 
@@ -498,7 +494,7 @@ class QBOConnector:
             return
 
         qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'tax_code')
-        tax_codes_generator = self.connection.tax_codes.get_all_generator()
+        tax_codes_generator = self.connection.tax_codes.get_all_generator(sync_after)
 
         for tax_codes in tax_codes_generator:
             tax_attributes = []
@@ -535,7 +531,7 @@ class QBOConnector:
             return
 
         qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'vendor')
-        vendors_generator = self.connection.vendors.get_all_generator()
+        vendors_generator = self.connection.vendors.get_all_generator(sync_after)
 
         for vendors in vendors_generator:
             vendor_attributes = []
@@ -555,10 +551,8 @@ class QBOConnector:
                 is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='VENDOR')
             )
 
-        last_synced_time = get_last_synced_time(self.workspace_id, 'MERCHANT')
-
         # get the inactive vendors generator
-        inactive_vendors_generator = self.connection.vendors.get_inactive(last_synced_time)
+        inactive_vendors_generator = self.connection.vendors.get_inactive(sync_after)
 
         for inactive_vendors in inactive_vendors_generator:
             inactive_vendor_attributes = []
@@ -619,7 +613,7 @@ class QBOConnector:
         Get employees
         """
         qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'employee')
-        employees_generator = self.connection.employees.get_all_generator()
+        employees_generator = self.connection.employees.get_all_generator(sync_after)
 
         for employees in employees_generator:
             employee_attributes = []
@@ -644,7 +638,7 @@ class QBOConnector:
             return
 
         qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'class')
-        classes_generator = self.connection.classes.get_all_generator()
+        classes_generator = self.connection.classes.get_all_generator(sync_after)
 
         for classes in classes_generator:
             class_attributes = []
@@ -710,7 +704,7 @@ class QBOConnector:
             return
 
         qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'customer')
-        customers_generator = self.connection.customers.get_all_generator()
+        customers_generator = self.connection.customers.get_all_generator(sync_after)
 
         for customers in customers_generator:
             customer_attributes = []
@@ -726,10 +720,8 @@ class QBOConnector:
                 is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='CUSTOMER')
             )
 
-        last_synced_time = get_last_synced_time(self.workspace_id, 'PROJECT')
-
         # get the inactive customers generator
-        inactive_customers_generator = self.connection.customers.get_inactive(last_synced_time)
+        inactive_customers_generator = self.connection.customers.get_inactive(sync_after)
 
         for inactive_customers in inactive_customers_generator:
             inactive_customer_attributes = []
