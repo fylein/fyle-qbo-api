@@ -1,0 +1,63 @@
+version: '3.7'
+
+services:
+  api:
+    build:
+      context: ./
+      args:
+        CI: ENABLED
+    entrypoint: bash run.sh
+    restart: unless-stopped
+    user: root
+    volumes:
+    - ./:/fyle-qbo-api
+    depends_on:
+    - db
+    - rabbitmq
+    environment:
+      SECRET_KEY: thisisthedjangosecretkey
+      ALLOWED_HOSTS: "*"
+      DEBUG: "False"
+      NO_WORKERS: 1
+      API_URL: http://localhost:8000/api
+      DATABASE_URL: postgres://postgres:postgres@db:5432/qbo_db
+      DB_HOST: db
+      FYLE_BASE_URL: ${FYLE_BASE_URL}
+      FYLE_CLIENT_ID: ${FYLE_CLIENT_ID}
+      FYLE_CLIENT_SECRET: ${FYLE_CLIENT_SECRET}
+      FYLE_REFRESH_TOKEN: ${FYLE_REFRESH_TOKEN}
+      FYLE_TOKEN_URI: ${FYLE_TOKEN_URI}
+      FYLE_SERVER_URL: ${FYLE_SERVER_URL}
+      QBO_CLIENT_ID: ${QBO_CLIENT_ID}
+      QBO_CLIENT_SECRET: ${QBO_CLIENT_SECRET}
+      QBO_REDIRECT_URI: ${QBO_REDIRECT_URI}
+      QBO_TOKEN_URI: ${QBO_TOKEN_URI}
+      QBO_ENVIRONMENT: SANDBOX
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      E2E_TESTS_CLIENT_SECRET: ${E2E_TESTS_CLIENT_SECRET}
+      E2E_TESTS_REALM_ID: ${E2E_TESTS_REALM_ID}
+      INTEGRATIONS_SETTINGS_API: http://localhost:8006/api
+      QBO_APP_URL: https://lolo.qbo.com
+      RABBITMQ_URL: amqp://admin:password@rabbitmq:5673/?heartbeat=0
+      STRICT_MODE: "false"
+  db:
+    image: "postgres:15"
+    environment:
+      POSTGRES_DB: dummy
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./tests/sql_fixtures/reset_db_fixtures/reset_db.sql:/docker-entrypoint-initdb.d/reset_db.sql
+  rabbitmq:
+    image: rabbitmq:3.8.9-management-alpine
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=password
+    ports:
+      - '5673:5673'
+    volumes:
+      - rabbitmq-data:/data/
+
+volumes:
+  rabbitmq-data:
