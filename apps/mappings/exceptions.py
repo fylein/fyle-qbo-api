@@ -37,7 +37,11 @@ def handle_import_exceptions(task_name):
                 error['message'] = 'Internal server error while importing to Fyle'
                 error['response'] = exception.__dict__
 
-            except (QBOWrongParamsError, QBOInvalidTokenError) as exception:
+            except QBOWrongParamsError as exception:
+                error['message'] = 'Something went wrong while importing to QBO workspace_id - {0}'.format(workspace_id)
+                error['response'] = exception.__dict__
+
+            except QBOInvalidTokenError as exception:
                 error['message'] = 'QBO token expired'
                 error['response'] = exception.__dict__
                 invalidate_qbo_credentials(workspace_id)
@@ -87,7 +91,13 @@ def handle_import_exceptions_v2(func):
             error['alert'] = True
             import_log.status = 'FAILED'
 
-        except (QBOWrongParamsError, QBOInvalidTokenError, QBOCredential.DoesNotExist) as exception:
+        except QBOWrongParamsError as exception:
+            error['message'] = 'Something went wrong while importing to QBO workspace_id - {0}'.format(workspace_id)
+            error['alert'] = False
+            error['response'] = exception.__dict__
+            import_log.status = 'FAILED'
+
+        except (QBOInvalidTokenError, QBOCredential.DoesNotExist) as exception:
             error['message'] = 'Invalid Token or QBO credentials does not exist workspace_id - {0}'.format(workspace_id)
             error['alert'] = False
             error['response'] = exception.__dict__
