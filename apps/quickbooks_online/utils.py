@@ -470,14 +470,14 @@ class QBOConnector:
 
         departments_generator = self.connection.departments.get_all_generator(sync_after)
 
-        if not workspace_general_settings.is_sync_after_timestamp_enabled:
+        if not is_sync_after_timestamp_enabled:
             active_existing_departments = list(DestinationAttribute.objects.filter(attribute_type='DEPARTMENT', workspace_id=self.workspace_id, active=True).values_list('destination_id', flat=True))
 
         for departments in departments_generator:
             department_attributes = []
             for department in departments:
                 department_attributes.append({'attribute_type': 'DEPARTMENT', 'display_name': 'Department', 'value': department['FullyQualifiedName'], 'destination_id': department['Id'], 'active': department['Active']})
-                if department['Id'] in active_existing_departments and not workspace_general_settings.is_sync_after_timestamp_enabled:
+                if department['Id'] in active_existing_departments and not is_sync_after_timestamp_enabled:
                     active_existing_departments.remove(department['Id'])
 
             DestinationAttribute.bulk_create_or_update_destination_attributes(department_attributes, 'DEPARTMENT', self.workspace_id, True,
@@ -487,7 +487,7 @@ class QBOConnector:
                 is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='DEPARTMENT')
             )
 
-        if workspace_general_settings.is_sync_after_timestamp_enabled:
+        if is_sync_after_timestamp_enabled:
             inactive_departments_generator = self.connection.departments.get_inactive(sync_after)
 
             for inactive_departments in inactive_departments_generator:
@@ -533,8 +533,9 @@ class QBOConnector:
             return
 
         sync_after = None
-        workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=self.workspace_id)
-        if workspace_general_settings.is_sync_after_timestamp_enabled:
+        workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+        is_sync_after_timestamp_enabled = workspace_general_settings.is_sync_after_timestamp_enabled if workspace_general_settings else False
+        if is_sync_after_timestamp_enabled:
             qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'tax_code')
 
         tax_codes_generator = self.connection.tax_codes.get_all_generator(sync_after)
@@ -559,7 +560,7 @@ class QBOConnector:
 
             DestinationAttribute.bulk_create_or_update_destination_attributes(tax_attributes, 'TAX_CODE', self.workspace_id, True)
 
-        if workspace_general_settings.is_sync_after_timestamp_enabled:
+        if is_sync_after_timestamp_enabled:
             inactive_tax_codes_generator = self.connection.tax_codes.get_inactive(sync_after)
 
             for inactive_tax_codes in inactive_tax_codes_generator:
@@ -638,7 +639,7 @@ class QBOConnector:
             )
 
         # Update the sync timestamp if sync after timestamp is enabled
-        if workspace_general_settings.is_sync_after_timestamp_enabled:
+        if is_sync_after_timestamp_enabled:
             qbo_sync_timestamp.vendor_synced_at = timezone.now()
             qbo_sync_timestamp.save(update_fields=['vendor_synced_at', 'updated_at'])
 
