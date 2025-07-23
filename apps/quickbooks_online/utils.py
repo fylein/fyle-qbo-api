@@ -261,8 +261,9 @@ class QBOConnector:
             return
 
         sync_after = None
-        workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=self.workspace_id)
-        if workspace_general_settings.is_sync_after_timestamp_enabled:
+        workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+        is_sync_after_timestamp_enabled = workspace_general_settings.is_sync_after_timestamp_enabled if workspace_general_settings else False
+        if is_sync_after_timestamp_enabled:
             qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'item')
 
         items_generator = self.connection.items.get_all_generator(sync_after)
@@ -283,7 +284,7 @@ class QBOConnector:
             )
 
         # get the inactive items generator
-        if workspace_general_settings.is_sync_after_timestamp_enabled:
+        if is_sync_after_timestamp_enabled:
             inactive_items_generator = self.connection.items.get_inactive(sync_after)
         else:
             last_synced_time = get_last_synced_time(self.workspace_id, 'CATEGORY')
@@ -303,7 +304,7 @@ class QBOConnector:
             )
 
         # Update the sync timestamp if sync after timestamp is enabled
-        if workspace_general_settings.is_sync_after_timestamp_enabled:
+        if is_sync_after_timestamp_enabled:
             qbo_sync_timestamp.item_synced_at = timezone.now()
             qbo_sync_timestamp.save(update_fields=['item_synced_at', 'updated_at'])
 
@@ -319,8 +320,9 @@ class QBOConnector:
             return
 
         sync_after = None
-        workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=self.workspace_id)
-        if workspace_general_settings.is_sync_after_timestamp_enabled:
+        workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+        is_sync_after_timestamp_enabled = workspace_general_settings.is_sync_after_timestamp_enabled if workspace_general_settings else False
+        if is_sync_after_timestamp_enabled:
             qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'account')
 
         accounts_generator = self.connection.accounts.get_all_generator(sync_after)
@@ -405,7 +407,7 @@ class QBOConnector:
                     )
 
         # get the inactive accounts generator
-        if workspace_general_settings.is_sync_after_timestamp_enabled:
+        if is_sync_after_timestamp_enabled:
             inactive_accounts_generator = self.connection.accounts.get_inactive(sync_after)
         else:
             last_synced_time = get_last_synced_time(self.workspace_id, 'CATEGORY')
@@ -445,7 +447,7 @@ class QBOConnector:
                     )
 
         # Update the sync timestamp if sync after timestamp is enabled
-        if workspace_general_settings.is_sync_after_timestamp_enabled:
+        if is_sync_after_timestamp_enabled:
             qbo_sync_timestamp.account_synced_at = timezone.now()
             qbo_sync_timestamp.save(update_fields=['account_synced_at', 'updated_at'])
 
@@ -588,8 +590,9 @@ class QBOConnector:
             return
 
         sync_after = None
-        workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=self.workspace_id)
-        if workspace_general_settings.is_sync_after_timestamp_enabled:
+        workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+        is_sync_after_timestamp_enabled = workspace_general_settings.is_sync_after_timestamp_enabled if workspace_general_settings else False
+        if is_sync_after_timestamp_enabled:
             qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'vendor')
 
         vendors_generator = self.connection.vendors.get_all_generator(sync_after)
@@ -613,7 +616,7 @@ class QBOConnector:
             )
 
         # get the inactive vendors generator
-        if workspace_general_settings.is_sync_after_timestamp_enabled:
+        if is_sync_after_timestamp_enabled:
             inactive_vendors_generator = self.connection.vendors.get_inactive(sync_after)
         else:
             last_synced_time = get_last_synced_time(self.workspace_id, 'MERCHANT')
@@ -680,8 +683,9 @@ class QBOConnector:
         Get employees
         """
         sync_after = None
-        workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=self.workspace_id)
-        if workspace_general_settings.is_sync_after_timestamp_enabled:
+        workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+        is_sync_after_timestamp_enabled = workspace_general_settings.is_sync_after_timestamp_enabled if workspace_general_settings else False
+        if is_sync_after_timestamp_enabled:
             qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'employee')
 
         employees_generator = self.connection.employees.get_all_generator(sync_after)
@@ -694,7 +698,7 @@ class QBOConnector:
 
             DestinationAttribute.bulk_create_or_update_destination_attributes(employee_attributes, 'EMPLOYEE', self.workspace_id, True)
 
-        if workspace_general_settings.is_sync_after_timestamp_enabled:
+        if is_sync_after_timestamp_enabled:
             inactive_employees_generator = self.connection.employees.get_inactive(sync_after)
 
             for inactive_employees in inactive_employees_generator:
@@ -720,13 +724,14 @@ class QBOConnector:
             return
 
         sync_after = None
-        workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=self.workspace_id)
-        if workspace_general_settings.is_sync_after_timestamp_enabled:
+        workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+        is_sync_after_timestamp_enabled = workspace_general_settings.is_sync_after_timestamp_enabled if workspace_general_settings else False
+        if is_sync_after_timestamp_enabled:
             qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'class')
 
         classes_generator = self.connection.classes.get_all_generator(sync_after)
 
-        if not workspace_general_settings.is_sync_after_timestamp_enabled:
+        if not is_sync_after_timestamp_enabled:
             active_existing_classes = list(DestinationAttribute.objects.filter(attribute_type='CLASS', workspace_id=self.workspace_id, active=True).values_list('destination_id', flat=True))
 
         for classes in classes_generator:
@@ -741,7 +746,7 @@ class QBOConnector:
                         'active': qbo_class['Active']
                     }
                 )
-                if qbo_class['Id'] in active_existing_classes and not workspace_general_settings.is_sync_after_timestamp_enabled:
+                if qbo_class['Id'] in active_existing_classes and not is_sync_after_timestamp_enabled:
                     active_existing_classes.remove(qbo_class['Id'])
 
             DestinationAttribute.bulk_create_or_update_destination_attributes(
@@ -755,7 +760,7 @@ class QBOConnector:
                 is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='CLASS')
             )
 
-        if workspace_general_settings.is_sync_after_timestamp_enabled:
+        if is_sync_after_timestamp_enabled:
             inactive_classes_generator = self.connection.classes.get_inactive(sync_after)
 
             for inactive_classes in inactive_classes_generator:
@@ -806,8 +811,9 @@ class QBOConnector:
             return
 
         sync_after = None
-        workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=self.workspace_id)
-        if workspace_general_settings.is_sync_after_timestamp_enabled:
+        workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+        is_sync_after_timestamp_enabled = workspace_general_settings.is_sync_after_timestamp_enabled if workspace_general_settings else False
+        if is_sync_after_timestamp_enabled:
             qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'customer')
 
         customers_generator = self.connection.customers.get_all_generator(sync_after)
@@ -827,7 +833,7 @@ class QBOConnector:
             )
 
         # get the inactive customers generator
-        if workspace_general_settings.is_sync_after_timestamp_enabled:
+        if is_sync_after_timestamp_enabled:
             inactive_customers_generator = self.connection.customers.get_inactive(sync_after)
         else:
             last_synced_time = get_last_synced_time(self.workspace_id, 'PROJECT')
@@ -847,7 +853,7 @@ class QBOConnector:
             )
 
         # Update the sync timestamp if sync after timestamp is enabled
-        if workspace_general_settings.is_sync_after_timestamp_enabled:
+        if is_sync_after_timestamp_enabled:
             qbo_sync_timestamp.customer_synced_at = timezone.now()
             qbo_sync_timestamp.save(update_fields=['customer_synced_at', 'updated_at'])
 
