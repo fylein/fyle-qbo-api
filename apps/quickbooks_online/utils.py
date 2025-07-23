@@ -463,8 +463,9 @@ class QBOConnector:
             return
 
         sync_after = None
-        workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=self.workspace_id)
-        if workspace_general_settings.is_sync_after_timestamp_enabled:
+        workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
+        is_sync_after_timestamp_enabled = workspace_general_settings.is_sync_after_timestamp_enabled if workspace_general_settings else False
+        if is_sync_after_timestamp_enabled:
             qbo_sync_timestamp, sync_after = get_entity_sync_timestamp(self.workspace_id, 'department')
 
         departments_generator = self.connection.departments.get_all_generator(sync_after)
