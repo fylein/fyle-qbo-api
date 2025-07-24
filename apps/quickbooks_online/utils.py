@@ -9,8 +9,6 @@ from django.db import transaction
 from django.db.models import Max
 from django.utils import timezone
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, MappingSetting
-from qbosdk import QuickbooksOnlineSDK
-from qbosdk.exceptions import WrongParamsError
 
 from apps.fyle.models import ExpenseGroup
 from apps.mappings.models import GeneralMapping
@@ -32,6 +30,8 @@ from apps.quickbooks_online.models import (
 from apps.workspaces.helpers import get_app_name
 from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSettings
 from fyle_integrations_imports.models import ImportLog
+from qbosdk import QuickbooksOnlineSDK
+from qbosdk.exceptions import WrongParamsError
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -573,13 +573,15 @@ class QBOConnector:
                 inactive_tax_attributes = []
                 for inactive_tax_code in inactive_tax_codes:
                     display_name = inactive_tax_code['Name'].replace(" (deleted)", "").rstrip()
-                    inactive_tax_attributes.append({
-                        'attribute_type': 'TAX_CODE',
-                        'display_name': 'Tax Code',
-                        'value': '{0} @{1}%'.format(display_name, effective_tax_rate),
-                        'destination_id': inactive_tax_code['Id'],
-                        'active': False
-                    })
+                    effective_tax_rate, tax_rates = self.get_effective_tax_rates(inactive_tax_code['PurchaseTaxRateList']['TaxRateDetail'])
+                    if effective_tax_rate >= 0:
+                        inactive_tax_attributes.append({
+                            'attribute_type': 'TAX_CODE',
+                            'display_name': 'Tax Code',
+                            'value': '{0} @{1}%'.format(display_name, effective_tax_rate),
+                            'destination_id': inactive_tax_code['Id'],
+                            'active': False
+                        })
 
                 DestinationAttribute.bulk_create_or_update_destination_attributes(inactive_tax_attributes, 'TAX_CODE', self.workspace_id, True)
 
