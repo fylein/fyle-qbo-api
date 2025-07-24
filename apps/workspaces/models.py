@@ -134,6 +134,7 @@ class WorkspaceGeneralSettings(AutoAddCreateUpdateInfoMixin, models.Model):
         default=list
     )
     skip_accounting_export_summary_post = models.BooleanField(default=False, help_text='Skip accounting export summary post')
+    is_sync_after_timestamp_enabled = models.BooleanField(default=False, help_text='Sync after timestamp enabled')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at')
 
