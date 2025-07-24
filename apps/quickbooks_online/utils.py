@@ -479,7 +479,7 @@ class QBOConnector:
             department_attributes = []
             for department in departments:
                 department_attributes.append({'attribute_type': 'DEPARTMENT', 'display_name': 'Department', 'value': department['FullyQualifiedName'], 'destination_id': department['Id'], 'active': department['Active']})
-                if department['Id'] in active_existing_departments and not is_sync_after_timestamp_enabled:
+                if not is_sync_after_timestamp_enabled and department['Id'] in active_existing_departments:
                     active_existing_departments.remove(department['Id'])
 
             DestinationAttribute.bulk_create_or_update_destination_attributes(department_attributes, 'DEPARTMENT', self.workspace_id, True,
@@ -718,7 +718,7 @@ class QBOConnector:
                     employee_display_name = inactive_employee['DisplayName'].replace(" (deleted)", "").rstrip()
                     inactive_employee_attributes.append({'attribute_type': 'EMPLOYEE', 'display_name': 'employee', 'value': employee_display_name, 'destination_id': inactive_employee['Id'], 'active': False})
 
-            DestinationAttribute.bulk_create_or_update_destination_attributes(employee_attributes, 'EMPLOYEE', self.workspace_id, True)
+                DestinationAttribute.bulk_create_or_update_destination_attributes(inactive_employee_attributes, 'EMPLOYEE', self.workspace_id, True)
 
             qbo_sync_timestamp.employee_synced_at = timezone.now()
             qbo_sync_timestamp.save(update_fields=['employee_synced_at', 'updated_at'])
@@ -757,7 +757,7 @@ class QBOConnector:
                         'active': qbo_class['Active']
                     }
                 )
-                if qbo_class['Id'] in active_existing_classes and not is_sync_after_timestamp_enabled:
+                if not is_sync_after_timestamp_enabled and qbo_class['Id'] in active_existing_classes:
                     active_existing_classes.remove(qbo_class['Id'])
 
             DestinationAttribute.bulk_create_or_update_destination_attributes(

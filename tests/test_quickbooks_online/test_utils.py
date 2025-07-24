@@ -36,6 +36,7 @@ def test_sync_employees(mocker, db):
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
     mock_get_all_generator = mocker.patch('qbosdk.apis.Employees.get_all_generator', return_value=[data['employee_response']])
+    mocker.patch('qbosdk.apis.Employees.get_inactive', return_value=[])
 
     qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=workspace_id)
 
@@ -48,17 +49,25 @@ def test_sync_employees(mocker, db):
     mock_get_all_generator.assert_called_with(None)
     assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='EMPLOYEE').count() == 3
 
+    WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(is_sync_after_timestamp_enabled=True)
     mock_get_all_generator.reset_mock()
     previous_sync_time = timezone.now() - timedelta(days=5)
     qbo_sync_timestamp.employee_synced_at = previous_sync_time
     qbo_sync_timestamp.save()
     mock_get_all_generator.return_value = [data['employee_response_after_sync']]
+    mock_get_inactive = mocker.patch('qbosdk.apis.Employees.get_inactive', return_value=[data['employee_response_with_inactive_values']])
 
     qbo_connection.sync_employees()
 
     expected_sync_after = (previous_sync_time - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S')
     mock_get_all_generator.assert_called_with(expected_sync_after)
-    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='EMPLOYEE').count() == 4
+    mock_get_inactive.assert_called_with(expected_sync_after)
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='EMPLOYEE').count() == 5
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='EMPLOYEE', active=False).count() == 1
+
+    WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(is_sync_after_timestamp_enabled=False)
+    qbo_connection.sync_employees()
+    mock_get_all_generator.assert_called_with(None)
 
 
 def test_post_vendor(mocker, db):
@@ -99,6 +108,7 @@ def test_sync_vendors(mocker, db):
     mock_get_all_generator.assert_called_with(None)
     assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='VENDOR').count() == 47
 
+    WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(is_sync_after_timestamp_enabled=True)
     mock_get_all_generator.reset_mock()
     previous_sync_time = timezone.now() - timedelta(days=5)
     qbo_sync_timestamp.vendor_synced_at = previous_sync_time
@@ -110,6 +120,10 @@ def test_sync_vendors(mocker, db):
     expected_sync_after = (previous_sync_time - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S')
     mock_get_all_generator.assert_called_with(expected_sync_after)
     assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='VENDOR').count() == 48
+
+    WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(is_sync_after_timestamp_enabled=False)
+    qbo_connection.sync_vendors()
+    mock_get_all_generator.assert_called_with(None)
 
 
 def test_sync_departments(mocker, db):
@@ -136,6 +150,7 @@ def test_sync_departments(mocker, db):
     mock_get_all_generator.assert_called_with(None)
     assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='DEPARTMENT').count() == 1
 
+    WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(is_sync_after_timestamp_enabled=True)
     mock_get_all_generator.reset_mock()
     previous_sync_time = timezone.now() - timedelta(days=5)
     qbo_sync_timestamp.department_synced_at = previous_sync_time
@@ -150,6 +165,10 @@ def test_sync_departments(mocker, db):
     mock_inactive.assert_called_with(expected_sync_after)
     assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='DEPARTMENT').count() == 2
     assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='DEPARTMENT', active=False).count() == 1
+
+    WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(is_sync_after_timestamp_enabled=False)
+    qbo_connection.sync_departments()
+    mock_get_all_generator.assert_called_with(None)
 
 
 def test_sync_items(mocker, db):
@@ -197,6 +216,7 @@ def test_sync_items(mocker, db):
 
     assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT', display_name='Item').count() == 4
 
+    WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(is_sync_after_timestamp_enabled=True)
     previous_sync_time = timezone.now() - timedelta(days=5)
     qbo_sync_timestamp.item_synced_at = previous_sync_time
     qbo_sync_timestamp.save()
@@ -207,6 +227,10 @@ def test_sync_items(mocker, db):
     expected_sync_after = (previous_sync_time - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S')
     mock_get_all_generator.assert_called_with(expected_sync_after)
     assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT', display_name='Item', active=True).count() == 3
+
+    WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(is_sync_after_timestamp_enabled=False)
+    qbo_connection.sync_items()
+    mock_get_all_generator.assert_called_with(None)
 
 
 def test_construct_bill(add_destination_attribute_tax_code, create_bill, mocker, db):
@@ -703,6 +727,7 @@ def test_sync_tax_codes(mocker, db):
 
     mocker.patch('qbosdk.apis.TaxCodes.count', return_value=10)
     mock_get_all_generator = mocker.patch('qbosdk.apis.TaxCodes.get_all_generator', return_value=[data['tax_code_response']])
+    mocker.patch('qbosdk.apis.TaxCodes.get_inactive', return_value=[])
     mocker.patch('qbosdk.apis.TaxRates.get_by_id', return_value=data['tax_rate_get_by_id'])
 
     qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=workspace_id)
@@ -718,17 +743,25 @@ def test_sync_tax_codes(mocker, db):
     mock_get_all_generator.assert_called_with(None)
     assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='TAX_CODE').count() == 2
 
+    WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(is_sync_after_timestamp_enabled=True)
     mock_get_all_generator.reset_mock()
     previous_sync_time = timezone.now() - timedelta(days=5)
     qbo_sync_timestamp.tax_code_synced_at = previous_sync_time
     qbo_sync_timestamp.save()
     mock_get_all_generator.return_value = [data['tax_code_response_after_sync']]
+    mock_get_inactive = mocker.patch('qbosdk.apis.TaxCodes.get_inactive', return_value=[data['tax_code_response_with_inactive_values']])
 
     qbo_connection.sync_tax_codes()
 
     expected_sync_after = (previous_sync_time - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S')
     mock_get_all_generator.assert_called_with(expected_sync_after)
-    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='TAX_CODE').count() == 3
+    mock_get_inactive.assert_called_with(expected_sync_after)
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='TAX_CODE').count() == 4
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='TAX_CODE', active=False).count() == 1
+
+    WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(is_sync_after_timestamp_enabled=False)
+    qbo_connection.sync_tax_codes()
+    mock_get_all_generator.assert_called_with(None)
 
 
 def tests_sync_accounts(mocker, db):
@@ -755,6 +788,7 @@ def tests_sync_accounts(mocker, db):
     mock_get_all_generator.assert_called_with(None)
     assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT').count() == 63
 
+    WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(is_sync_after_timestamp_enabled=True)
     mock_get_all_generator.reset_mock()
     mock_get_all_generator.return_value = [data['account_response_after_sync']]
     previous_sync_time = timezone.now() - timedelta(days=5)
@@ -765,6 +799,10 @@ def tests_sync_accounts(mocker, db):
     expected_sync_after = (previous_sync_time - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S')
     mock_get_all_generator.assert_called_with(expected_sync_after)
     assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT').count() == 64
+
+    WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(is_sync_after_timestamp_enabled=False)
+    qbo_connection.sync_accounts()
+    mock_get_all_generator.assert_called_with(None)
 
 
 def test_sync_dimensions(mocker, db):
@@ -821,6 +859,7 @@ def test_sync_classes(mocker, db):
     mock_get_all_generator.assert_called_with(None)
     assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='CLASS').count() == 2
 
+    WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(is_sync_after_timestamp_enabled=True)
     mock_get_all_generator.reset_mock()
     previous_sync_time = timezone.now() - timedelta(days=5)
     qbo_sync_timestamp.class_synced_at = previous_sync_time
@@ -835,6 +874,10 @@ def test_sync_classes(mocker, db):
     mock_inactive.assert_called_with(expected_sync_after)
     assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='CLASS').count() == 3
     assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='CLASS', active=False).count() == 1
+
+    WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(is_sync_after_timestamp_enabled=False)
+    qbo_connection.sync_classes()
+    mock_get_all_generator.assert_called_with(None)
 
 
 def test_sync_customers(mocker, db):
@@ -861,6 +904,7 @@ def test_sync_customers(mocker, db):
     mock_get_all_generator.assert_called_with(None)
     assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='CUSTOMER').count() == 30
 
+    WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(is_sync_after_timestamp_enabled=True)
     mock_get_all_generator.reset_mock()
     previous_sync_time = timezone.now() - timedelta(days=5)
     qbo_sync_timestamp.customer_synced_at = previous_sync_time
@@ -872,6 +916,10 @@ def test_sync_customers(mocker, db):
     expected_sync_after = (previous_sync_time - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S')
     mock_get_all_generator.assert_called_with(expected_sync_after)
     assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='CUSTOMER').count() == 31
+
+    WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(is_sync_after_timestamp_enabled=False)
+    qbo_connection.sync_customers()
+    mock_get_all_generator.assert_called_with(None)
 
 
 def test_post_bill_exception(mocker, db, create_bill):
