@@ -61,6 +61,6 @@ class Migration(migrations.Migration):
         ('quickbooks_online', '0018_creditcardpurchase_exchange_rate'),
         ('tasks', '0013_alter_tasklog_expense_group'),
         ('users', '0002_auto_20201228_0715'),
-        ('workspaces', '0050_auto_20241226_1155')
+        ('workspaces', '0052_workspacegeneralsettings_skip_accounting_export_summary_post')
     ]  # This is the first migration
     operations = safe_run_sql(sql_files)
