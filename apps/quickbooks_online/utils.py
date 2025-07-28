@@ -9,6 +9,8 @@ from django.db import transaction
 from django.db.models import Max
 from django.utils import timezone
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, MappingSetting
+from qbosdk import QuickbooksOnlineSDK
+from qbosdk.exceptions import WrongParamsError
 
 from apps.fyle.models import ExpenseGroup
 from apps.mappings.models import GeneralMapping
@@ -30,8 +32,6 @@ from apps.quickbooks_online.models import (
 from apps.workspaces.helpers import get_app_name
 from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSettings
 from fyle_integrations_imports.models import ImportLog
-from qbosdk import QuickbooksOnlineSDK
-from qbosdk.exceptions import WrongParamsError
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -306,8 +306,7 @@ class QBOConnector:
 
         # Update the sync timestamp if sync after timestamp is enabled
         if is_sync_after_timestamp_enabled:
-            qbo_sync_timestamp.item_synced_at = timezone.now()
-            qbo_sync_timestamp.save(update_fields=['item_synced_at', 'updated_at'])
+            QBOSyncTimestamp.update_sync_timestamp(self.workspace_id, 'item')
 
         return []
 
@@ -450,8 +449,7 @@ class QBOConnector:
 
         # Update the sync timestamp if sync after timestamp is enabled
         if is_sync_after_timestamp_enabled:
-            qbo_sync_timestamp.account_synced_at = timezone.now()
-            qbo_sync_timestamp.save(update_fields=['account_synced_at', 'updated_at'])
+            QBOSyncTimestamp.update_sync_timestamp(self.workspace_id, 'account')
 
         return []
 
@@ -511,8 +509,7 @@ class QBOConnector:
                     is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='DEPARTMENT')
                 )
 
-            qbo_sync_timestamp.department_synced_at = timezone.now()
-            qbo_sync_timestamp.save(update_fields=['department_synced_at', 'updated_at'])
+            QBOSyncTimestamp.update_sync_timestamp(self.workspace_id, 'department')
         else:
             BATCH_SIZE = 50
             for i in range(0, len(active_existing_departments), BATCH_SIZE):
@@ -585,8 +582,7 @@ class QBOConnector:
 
                 DestinationAttribute.bulk_create_or_update_destination_attributes(inactive_tax_attributes, 'TAX_CODE', self.workspace_id, True)
 
-            qbo_sync_timestamp.tax_code_synced_at = timezone.now()
-            qbo_sync_timestamp.save(update_fields=['tax_code_synced_at', 'updated_at'])
+            QBOSyncTimestamp.update_sync_timestamp(self.workspace_id, 'tax_code')
 
         return []
 
@@ -649,8 +645,7 @@ class QBOConnector:
 
         # Update the sync timestamp if sync after timestamp is enabled
         if is_sync_after_timestamp_enabled:
-            qbo_sync_timestamp.vendor_synced_at = timezone.now()
-            qbo_sync_timestamp.save(update_fields=['vendor_synced_at', 'updated_at'])
+            QBOSyncTimestamp.update_sync_timestamp(self.workspace_id, 'vendor')
 
         return []
 
@@ -722,8 +717,7 @@ class QBOConnector:
 
                 DestinationAttribute.bulk_create_or_update_destination_attributes(inactive_employee_attributes, 'EMPLOYEE', self.workspace_id, True)
 
-            qbo_sync_timestamp.employee_synced_at = timezone.now()
-            qbo_sync_timestamp.save(update_fields=['employee_synced_at', 'updated_at'])
+            QBOSyncTimestamp.update_sync_timestamp(self.workspace_id, 'employee')
 
         return []
 
@@ -800,8 +794,7 @@ class QBOConnector:
                     attribute_disable_callback_path=self.get_attribute_disable_callback_path(attribute_type='CLASS'),
                     is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='CLASS')
                 )
-            qbo_sync_timestamp.class_synced_at = timezone.now()
-            qbo_sync_timestamp.save(update_fields=['class_synced_at', 'updated_at'])
+            QBOSyncTimestamp.update_sync_timestamp(self.workspace_id, 'class')
         else:
             BATCH_SIZE = 50
             for i in range(0, len(active_existing_classes), BATCH_SIZE):
@@ -870,8 +863,7 @@ class QBOConnector:
 
         # Update the sync timestamp if sync after timestamp is enabled
         if is_sync_after_timestamp_enabled:
-            qbo_sync_timestamp.customer_synced_at = timezone.now()
-            qbo_sync_timestamp.save(update_fields=['customer_synced_at', 'updated_at'])
+            QBOSyncTimestamp.update_sync_timestamp(self.workspace_id, 'customer')
 
         return []
 
