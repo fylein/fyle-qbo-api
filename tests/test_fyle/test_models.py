@@ -415,4 +415,4 @@ def test_create_expense_object_tax_amount(db):
         elif expense.expense_id == payload[1]['id']:
             assert expense.tax_amount == 10
         elif expense.expense_id == payload[2]['id']:
-            assert expense.tax_amount == 0
+            assert expense.tax_amount is None
