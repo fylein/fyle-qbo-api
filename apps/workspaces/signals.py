@@ -2,7 +2,7 @@
 Workspace Signals
 """
 
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping
 
@@ -10,6 +10,18 @@ from apps.quickbooks_online.queue import async_run_post_configration_triggers
 from apps.workspaces.helpers import enable_multi_currency_support
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from apps.workspaces.utils import delete_cards_mapping_settings
+
+
+@receiver(pre_save, sender=WorkspaceGeneralSettings)
+def pre_save_workspace_general_settings(sender, instance: WorkspaceGeneralSettings, **kwargs):
+    """
+    :param sender: Sender Class
+    :param instance: Row Instance of Sender Class
+    :return: None
+    """
+    old_instance = WorkspaceGeneralSettings.objects.filter(workspace_id=instance.workspace_id).first()
+    if old_instance and old_instance.import_items == True and instance.import_items == False:
+        DestinationAttribute.objects.filter(workspace_id=instance.workspace_id, attribute_type='ACCOUNT', display_name='Item', active=True).update(active=False)
 
 
 @receiver(post_save, sender=WorkspaceGeneralSettings)
