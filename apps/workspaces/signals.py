@@ -2,6 +2,8 @@
 Workspace Signals
 """
 
+from datetime import datetime, timezone
+
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping
@@ -21,7 +23,7 @@ def pre_save_workspace_general_settings(sender, instance: WorkspaceGeneralSettin
     """
     old_instance = WorkspaceGeneralSettings.objects.filter(workspace_id=instance.workspace_id).first()
     if old_instance and old_instance.import_items == True and instance.import_items == False:
-        DestinationAttribute.objects.filter(workspace_id=instance.workspace_id, attribute_type='ACCOUNT', display_name='Item', active=True).update(active=False)
+        DestinationAttribute.objects.filter(workspace_id=instance.workspace_id, attribute_type='ACCOUNT', display_name='Item', active=True).update(active=False, updated_at=datetime.now(tz=timezone.utc))
 
 
 @receiver(post_save, sender=WorkspaceGeneralSettings)
