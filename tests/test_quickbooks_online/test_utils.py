@@ -191,16 +191,6 @@ def test_sync_items(mocker, db):
     qbo_sync_timestamp.save()
 
     qbo_connection.sync_items()
-
-    mock_get_all_generator.assert_called_with(None)
-    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT', display_name='Item', active=True).count() == 0
-
-    WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).update(import_items=True)
-    mock_get_all_generator.reset_mock()
-    qbo_sync_timestamp.item_synced_at = None
-    qbo_sync_timestamp.save()
-
-    qbo_connection.sync_items()
     mock_get_all_generator.assert_called_with(None)
     assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT', display_name='Item', active=True).count() == 4
 

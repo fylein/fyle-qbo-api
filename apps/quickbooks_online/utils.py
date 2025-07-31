@@ -267,14 +267,13 @@ class QBOConnector:
             sync_after = get_entity_sync_timestamp(self.workspace_id, 'item')
 
         items_generator = self.connection.items.get_all_generator(sync_after)
-        general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
 
         # For getting all the items, any inactive item will not be returned
         for items in items_generator:
             item_attributes = []
             for item in items:
                 if item['Active'] and item['Type'] != 'Category':
-                    item_attributes.append({'attribute_type': 'ACCOUNT', 'display_name': 'Item', 'value': item['FullyQualifiedName'], 'destination_id': item['Id'], 'active': general_settings.import_items if general_settings else False})
+                    item_attributes.append({'attribute_type': 'ACCOUNT', 'display_name': 'Item', 'value': item['FullyQualifiedName'], 'destination_id': item['Id'], 'active': item['Active']})
             DestinationAttribute.bulk_create_or_update_destination_attributes(
                 item_attributes, 'ACCOUNT', self.workspace_id, True, 'Item',
                 skip_deletion=self.is_duplicate_deletion_skipped(attribute_type='ITEM'),
