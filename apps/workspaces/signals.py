@@ -6,12 +6,13 @@ from datetime import datetime, timezone
 
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
-from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping
+from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute
 
 from apps.quickbooks_online.queue import async_run_post_configration_triggers
 from apps.workspaces.helpers import enable_multi_currency_support
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from apps.workspaces.utils import delete_cards_mapping_settings
+from fyle_qbo_api.utils import patch_integration_settings_for_unmapped_cards
 
 
 @receiver(pre_save, sender=WorkspaceGeneralSettings)
@@ -39,6 +40,14 @@ def run_post_configration_triggers(sender, instance: WorkspaceGeneralSettings, c
     async_run_post_configration_triggers(instance)
 
     delete_cards_mapping_settings(instance)
+
+    if instance.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE':
+        unmapped_card_count = ExpenseAttribute.objects.filter(
+            attribute_type="CORPORATE_CARD", workspace_id=instance.workspace_id, active=True, mapping__isnull=True
+        ).count()
+        patch_integration_settings_for_unmapped_cards(workspace_id=instance.workspace_id, unmapped_card_count=unmapped_card_count)
+    else:
+        patch_integration_settings_for_unmapped_cards(workspace_id=instance.workspace_id, unmapped_card_count=0)
 
 
 # This is a manually triggered function

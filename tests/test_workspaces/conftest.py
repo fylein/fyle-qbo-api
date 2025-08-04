@@ -1,9 +1,9 @@
 from datetime import datetime, timezone
 
 import pytest
-from fyle_accounting_mappings.models import DestinationAttribute
+from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute
 
-from apps.workspaces.models import Workspace
+from apps.workspaces.models import LastExportDetail, Workspace
 
 
 @pytest.fixture
@@ -25,6 +25,8 @@ def add_workspace_to_database():
     )
 
     workspace.save()
+
+    LastExportDetail.objects.update_or_create(workspace=workspace)
 
 
 @pytest.fixture
@@ -66,3 +68,28 @@ def add_destination_attributes_for_import_items_test():
         'item_attribute_2': item_attribute_2,
         'inactive_item_attribute': inactive_item_attribute
     }
+
+
+@pytest.fixture
+def add_expense_attributes_for_unmapped_cards_test():
+    """
+    Add ExpenseAttribute test data for run_post_configration_triggers signal test
+    """
+    workspace_id = 1
+
+    ExpenseAttribute.objects.get_or_create(
+        attribute_type='CORPORATE_CARD',
+        workspace_id=workspace_id,
+        display_name='Test Card 1',
+        value='card1',
+        source_id='card1',
+        defaults={'active': True}
+    )
+    ExpenseAttribute.objects.get_or_create(
+        attribute_type='CORPORATE_CARD',
+        workspace_id=workspace_id,
+        display_name='Test Card 2',
+        value='card2',
+        source_id='card2',
+        defaults={'active': True}
+    )

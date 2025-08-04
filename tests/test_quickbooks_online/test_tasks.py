@@ -1586,7 +1586,7 @@ def test_get_or_create_error_with_expense_group_tax_mapping(db):
     assert error.is_resolved == False
 
 
-def test_handle_skipped_exports(mocker, db, create_last_export_detail):
+def test_handle_skipped_exports(mocker, db):
     mock_post_summary = mocker.patch('apps.quickbooks_online.queue.post_accounting_export_summary_for_skipped_exports', return_value=None)
     mock_update_last_export = mocker.patch('apps.quickbooks_online.queue.update_last_export_details')
     mock_logger = mocker.patch('apps.quickbooks_online.queue.logger')
