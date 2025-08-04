@@ -1072,3 +1072,15 @@ class QBOSyncTimestamp(models.Model):
 
     class Meta:
         db_table = 'qbo_sync_timestamps'
+
+    @staticmethod
+    def update_sync_timestamp(workspace_id: int, entity_type: str):
+        """
+        Update sync timestamp
+        :param workspace_id: workspace id
+        :param entity_type: entity type
+        :return: sync timestamp
+        """
+        qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=workspace_id)
+        setattr(qbo_sync_timestamp, f'{entity_type}_synced_at', datetime.now())
+        qbo_sync_timestamp.save(update_fields=[f'{entity_type}_synced_at', 'updated_at'])
