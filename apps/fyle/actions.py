@@ -62,7 +62,7 @@ def sync_fyle_dimensions(workspace_id: int):
         unmapped_card_count = ExpenseAttribute.objects.filter(
             attribute_type="CORPORATE_CARD", workspace_id=workspace_id, active=True, mapping__isnull=True
         ).count()
-        if workspace_general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE':
+        if workspace_general_settings.corporate_credit_card_expenses_object in ('CREDIT CARD PURCHASE', 'DEBIT CARD EXPENSE'):
             import_string('fyle_qbo_api.utils.patch_integration_settings_for_unmapped_cards')(workspace_id=workspace_id, unmapped_card_count=unmapped_card_count)
 
         workspace.source_synced_at = datetime.now()

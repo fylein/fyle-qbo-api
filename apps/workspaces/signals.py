@@ -41,7 +41,7 @@ def run_post_configration_triggers(sender, instance: WorkspaceGeneralSettings, c
 
     delete_cards_mapping_settings(instance)
 
-    if instance.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE':
+    if instance.corporate_credit_card_expenses_object in ('CREDIT CARD PURCHASE', 'DEBIT CARD EXPENSE'):
         unmapped_card_count = ExpenseAttribute.objects.filter(
             attribute_type="CORPORATE_CARD", workspace_id=instance.workspace_id, active=True, mapping__isnull=True
         ).count()
