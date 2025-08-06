@@ -3,12 +3,11 @@ from datetime import datetime, timezone
 import pytest
 
 from apps.fyle.models import ExpenseGroupSettings
-from apps.workspaces.models import Workspace
+from apps.workspaces.models import LastExportDetail, Workspace
 
 
 @pytest.fixture
 def create_temp_workspace(db):
-
     workspace = Workspace.objects.create(
         id=98,
         name='Fyle for Testing',
@@ -33,3 +32,5 @@ def create_temp_workspace(db):
         workspace_id=98,
         import_card_credits=False,
     )
+
+    LastExportDetail.objects.update_or_create(workspace=workspace)

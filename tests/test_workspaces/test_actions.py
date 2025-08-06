@@ -1,9 +1,6 @@
-import json
-from unittest.mock import MagicMock
-
 import pytest
 
-from apps.workspaces.actions import post_to_integration_settings
+from apps.workspaces.models import FyleCredential, Workspace
 from fyle_qbo_api.utils import patch_integration_settings
 
 
@@ -15,7 +12,6 @@ def test_post_to_integration_settings(mocker):
     )
 
     no_exception = True
-    post_to_integration_settings(1, True)
 
     # If exception is raised, this test will fail
     assert no_exception
@@ -23,45 +19,43 @@ def test_post_to_integration_settings(mocker):
 
 @pytest.mark.django_db(databases=['default'])
 def test_patch_integration_settings(mocker):
-
     workspace_id = 1
-    mocked_patch = MagicMock()
-    mocker.patch('apps.fyle.helpers.requests.patch', side_effect=mocked_patch)
+    fyle_credential, _ = FyleCredential.objects.update_or_create(workspace_id=workspace_id)
+    refresh_token = 'test_refresh_token'
+    fyle_credential.refresh_token = refresh_token
+    fyle_credential.save()
 
-    # Test patch request with only errors
-    errors = 7
-    patch_integration_settings(workspace_id, errors)
+    patch_request_mock = mocker.patch('apps.fyle.helpers.requests.patch')
 
-    expected_payload = {'errors_count': errors, 'tpa_name': 'Fyle Quickbooks Integration'}
+    patch_integration_settings(workspace_id, errors=5)
+    patch_request_mock.assert_not_called()
 
-    _, kwargs = mocked_patch.call_args
-    actual_payload = json.loads(kwargs['data'])
+    workspace = Workspace.objects.get(id=workspace_id)
+    workspace.onboarding_state = 'COMPLETE'
+    workspace.save()
 
-    assert actual_payload == expected_payload
+    patch_request_mock.reset_mock()
+    patch_integration_settings(workspace_id, errors=7)
+    patch_request_mock.assert_called_with(
+        mocker.ANY,  # URL
+        headers=mocker.ANY,
+        data='{"tpa_name": "Fyle Quickbooks Integration", "errors_count": 7}'
+    )
 
-    # Test patch request with only is_token_expired
-    is_token_expired = True
-    patch_integration_settings(workspace_id, is_token_expired=is_token_expired)
+    patch_request_mock.reset_mock()
+    patch_integration_settings(workspace_id, is_token_expired=True)
 
-    expected_payload = {'is_token_expired': is_token_expired, 'tpa_name': 'Fyle Quickbooks Integration'}
+    patch_request_mock.assert_called_with(
+        mocker.ANY,  # URL
+        headers=mocker.ANY,
+        data='{"tpa_name": "Fyle Quickbooks Integration", "is_token_expired": true}'
+    )
 
-    _, kwargs = mocked_patch.call_args
-    actual_payload = json.loads(kwargs['data'])
+    patch_request_mock.reset_mock()
+    patch_integration_settings(workspace_id, errors=241, is_token_expired=True)
 
-    assert actual_payload == expected_payload
-
-    # Test patch request with errors_count and is_token_expired
-    is_token_expired = True
-    errors = 241
-    patch_integration_settings(workspace_id, errors=errors, is_token_expired=is_token_expired)
-
-    expected_payload = {
-        'errors_count': errors,
-        'is_token_expired': is_token_expired,
-        'tpa_name': 'Fyle Quickbooks Integration'
-    }
-
-    _, kwargs = mocked_patch.call_args
-    actual_payload = json.loads(kwargs['data'])
-
-    assert actual_payload == expected_payload
+    patch_request_mock.assert_called_with(
+        mocker.ANY,  # URL
+        headers=mocker.ANY,
+        data='{"tpa_name": "Fyle Quickbooks Integration", "errors_count": 241, "is_token_expired": true}'
+    )

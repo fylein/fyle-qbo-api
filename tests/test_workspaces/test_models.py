@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 import pytest
 from fyle_rest_auth.models import User
 
-from apps.workspaces.models import Workspace, get_default_chart_of_accounts, get_default_memo_fields
+from apps.workspaces.models import LastExportDetail, Workspace, get_default_chart_of_accounts, get_default_memo_fields
 
 
 @pytest.mark.django_db
@@ -30,6 +30,8 @@ def test_workspace_creation():
     new_workspace.user.add(user)
 
     workspace = Workspace.objects.get(id=101)
+
+    LastExportDetail.objects.create(workspace=workspace)
 
     assert workspace.name == 'Fyle for labhvam'
     assert workspace.fyle_org_id == 'l@bhv@m'
