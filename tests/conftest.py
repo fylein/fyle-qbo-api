@@ -9,7 +9,7 @@ from rest_framework.test import APIClient
 
 from apps.fyle.helpers import get_access_token
 from apps.fyle.models import ExpenseGroupSettings
-from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
+from apps.workspaces.models import LastExportDetail, Workspace, WorkspaceGeneralSettings
 from fyle_qbo_api.tests import settings
 from tests.test_workspaces.fixtures import data as fyle_data
 
@@ -60,6 +60,7 @@ def test_connection(db):
         onboarding_state='COMPLETE'
     )
     workspace.user.add(user)
+    LastExportDetail.objects.update_or_create(workspace=workspace)
     WorkspaceGeneralSettings.objects.create(
         workspace=workspace,
         reimbursable_expenses_object='BILL'

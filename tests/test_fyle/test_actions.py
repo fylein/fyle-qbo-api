@@ -3,6 +3,7 @@ from unittest import mock
 from django.conf import settings
 from django.db.models import Q
 from fyle.platform.exceptions import InternalServerError, RetryException, WrongParamsError
+from fyle_accounting_mappings.models import ExpenseAttribute
 from fyle_integrations_platform_connector import PlatformConnector
 
 from apps.fyle.actions import (
@@ -18,7 +19,7 @@ from apps.fyle.actions import (
 )
 from apps.fyle.helpers import get_updated_accounting_export_summary
 from apps.fyle.models import Expense, ExpenseGroup
-from apps.workspaces.models import FyleCredential, Workspace
+from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
 
 
 def test_update_expenses_in_progress(db):
@@ -180,6 +181,82 @@ def test_sync_fyle_dimensions(db):
         old_source_synced_at = workspace.source_synced_at
         sync_fyle_dimensions(3)
         assert workspace.source_synced_at == old_source_synced_at
+
+
+def test_sync_fyle_dimensions_with_corporate_credit_card(db):
+    """
+    Test sync_fyle_dimensions with corporate credit card expenses object set to 'CREDIT CARD PURCHASE'
+    """
+    workspace = Workspace.objects.get(id=3)
+    workspace.source_synced_at = None
+    workspace.save()
+    workspace_general_settings, created = WorkspaceGeneralSettings.objects.get_or_create(
+        workspace_id=3,
+        defaults={
+            'corporate_credit_card_expenses_object': 'CREDIT CARD PURCHASE'
+        }
+    )
+    if not created:
+        workspace_general_settings.corporate_credit_card_expenses_object = 'CREDIT CARD PURCHASE'
+        workspace_general_settings.save()
+
+    ExpenseAttribute.objects.get_or_create(
+        attribute_type='CORPORATE_CARD',
+        workspace_id=3,
+        display_name='Test Card 1',
+        value='card1',
+        source_id='card1',
+        defaults={'active': True}
+    )
+
+    ExpenseAttribute.objects.get_or_create(
+        attribute_type='CORPORATE_CARD',
+        workspace_id=3,
+        display_name='Test Card 2',
+        value='card2',
+        source_id='card2',
+        defaults={'active': True}
+    )
+
+    with mock.patch('fyle_integrations_platform_connector.fyle_integrations_platform_connector.PlatformConnector.import_fyle_dimensions') as mock_import:
+        with mock.patch('fyle_qbo_api.utils.patch_integration_settings_for_unmapped_cards') as mock_patch_function:
+            mock_import.return_value = None
+            sync_fyle_dimensions(3)
+            workspace.refresh_from_db()
+            workspace_general_settings.refresh_from_db()
+            assert workspace_general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE'
+            expected_unmapped_count = ExpenseAttribute.objects.filter(
+                attribute_type="CORPORATE_CARD",
+                workspace_id=3,
+                active=True,
+                mapping__isnull=True
+            ).count()
+
+            mock_patch_function.assert_called_once_with(workspace_id=3, unmapped_card_count=expected_unmapped_count)
+            assert workspace.source_synced_at is not None
+
+
+def test_sync_fyle_dimensions_without_corporate_credit_card(db):
+    """
+    Test sync_fyle_dimensions with corporate_credit_card_expenses_object not set to 'CREDIT CARD PURCHASE'
+    """
+    workspace = Workspace.objects.get(id=3)
+    workspace.source_synced_at = None
+    workspace.save()
+
+    workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=3)
+    workspace_general_settings.corporate_credit_card_expenses_object = 'BILL'
+    workspace_general_settings.save()
+
+    with mock.patch('fyle_integrations_platform_connector.fyle_integrations_platform_connector.PlatformConnector.import_fyle_dimensions') as mock_import:
+        with mock.patch('fyle_qbo_api.utils.patch_integration_settings_for_unmapped_cards') as mock_patch_function:
+            mock_import.return_value = None
+            sync_fyle_dimensions(3)
+            workspace.refresh_from_db()
+            workspace_general_settings.refresh_from_db()
+            assert workspace_general_settings.corporate_credit_card_expenses_object == 'BILL'
+            mock_patch_function.assert_not_called()
+            assert workspace.source_synced_at is not None
 
 
 def test_refresh_fyle_dimension(db):
