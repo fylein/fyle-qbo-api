@@ -58,7 +58,6 @@ def patch_integration_settings(workspace_id: int, errors: int = None, is_token_e
         if fyle_credential.workspace.onboarding_state == 'COMPLETE':
             patch_request(url, payload, refresh_token)
             return True
-        return False
     except Exception as error:
         logger.error(error, exc_info=True)
         return False
