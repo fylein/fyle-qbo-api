@@ -1,4 +1,5 @@
 import logging
+import traceback
 
 from django.contrib.auth import get_user_model
 from django.db import connection
@@ -66,10 +67,15 @@ class TokenHealthView(generics.RetrieveAPIView):
             try:
                 qbo_connector = QBOConnector(qbo_credentials, workspace_id=workspace_id)
                 qbo_connector.get_company_preference()
-            except (qbo_exc.InvalidTokenError, qbo_exc.WrongParamsError):
+            except qbo_exc.InvalidTokenError:
                 invalidate_qbo_credentials(workspace_id, qbo_credentials)
                 status_code = status.HTTP_400_BAD_REQUEST
                 message = "Quickbooks Online connection expired"
+                logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': traceback.format_exc()})
+            except Exception:
+                status_code = status.HTTP_400_BAD_REQUEST
+                message = "Something went wrong while syncing accounts"
+                logger.error('Something went wrong while syncing accounts workspace_id - %s %s', workspace_id, {'error': traceback.format_exc()})
 
         return Response({"message": message}, status=status_code)
 
