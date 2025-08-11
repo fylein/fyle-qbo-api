@@ -6,6 +6,7 @@ from django.conf import settings
 from django.db.models import Q
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
+from apps.fyle.models import ExpenseGroup
 from django_q.models import Schedule
 from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from fyle_accounting_mappings.models import ExpenseAttribute
@@ -118,7 +119,19 @@ def run_sync_schedule(workspace_id):
     create_expense_groups(workspace_id=workspace_id, fund_source=fund_source, task_log=task_log, imported_from=ExpenseImportSourceEnum.BACKGROUND_SCHEDULE)
 
     if task_log.status == 'COMPLETE':
-        export_to_qbo(workspace_id, triggered_by=ExpenseImportSourceEnum.BACKGROUND_SCHEDULE)
+        eligible_expense_group_ids = ExpenseGroup.objects.filter(
+            workspace_id=workspace_id,
+            exported_at__isnull=True
+        ).filter(
+            Q(tasklog__isnull=True)
+            | Q(tasklog__type__in=['CREATING_BILL', 'CREATING_DEBIT_CARD_EXPENSE', 'CREATING_CHECK', 'CREATING_JOURNAL_ENTRY', 'CREATING_CREDIT_CARD_PURCHASE', 'CREATING_EXPENSE'])
+        ).exclude(
+            tasklog__status='FAILED',
+            tasklog__re_attempt_export=False
+        ).values_list('id', flat=True).distinct()
+
+        if eligible_expense_group_ids:
+            export_to_qbo(workspace_id, expense_group_ids=eligible_expense_group_ids, triggered_by=ExpenseImportSourceEnum.BACKGROUND_SCHEDULE)
 
 
 def run_email_notification(workspace_id):
