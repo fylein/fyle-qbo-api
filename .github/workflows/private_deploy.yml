@@ -1,4 +1,4 @@
-name: Deploy to Private Environments
+name: Deploy Private Branch to Any Environment
 
 on:
   pull_request:
