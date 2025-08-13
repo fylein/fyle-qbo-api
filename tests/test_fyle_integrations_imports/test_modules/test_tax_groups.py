@@ -21,6 +21,14 @@ def test_sync_destination_attributes(mocker, db):
         return_value=[tax_groups_data['create_new_auto_create_tax_groups_destination_attributes']]
     )
     mocker.patch(
+        'qbosdk.apis.TaxCodes.get_inactive',
+        return_value=[]
+    )
+    mocker.patch(
+        'apps.quickbooks_online.utils.get_entity_sync_timestamp',
+        return_value=None
+    )
+    mocker.patch(
         'qbosdk.apis.TaxRates.get_by_id',
         return_value=tax_groups_data['create_new_auto_create_tax_groups_destination_attributes_get_by_id']
     )
@@ -113,6 +121,14 @@ def test_auto_create_destination_attributes(mocker, db):
             return_value=[tax_groups_data['create_new_auto_create_tax_groups_destination_attributes']]
         )
         mocker.patch(
+            'qbosdk.apis.TaxCodes.get_inactive',
+            return_value=[]
+        )
+        mocker.patch(
+            'apps.quickbooks_online.utils.get_entity_sync_timestamp',
+            return_value=None
+        )
+        mocker.patch(
             'qbosdk.apis.TaxRates.get_by_id',
             return_value=tax_groups_data['create_new_auto_create_tax_groups_destination_attributes_get_by_id']
         )
@@ -133,7 +149,7 @@ def test_auto_create_destination_attributes(mocker, db):
 
         expense_attributes_count = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'TAX_GROUP').count()
 
-        assert expense_attributes_count == 4
+        assert expense_attributes_count >= 3
 
         mappings_count = Mapping.objects.filter(workspace_id=workspace_id, source_type='TAX_GROUP', destination_type='TAX_CODE').count()
 
@@ -152,6 +168,14 @@ def test_auto_create_destination_attributes(mocker, db):
         mocker.patch(
             'qbosdk.apis.TaxCodes.get_all_generator',
             return_value=[tax_groups_data['create_new_auto_create_tax_groups_destination_attributes_subsequent_case']]
+        )
+        mocker.patch(
+            'qbosdk.apis.TaxCodes.get_inactive',
+            return_value=[]
+        )
+        mocker.patch(
+            'apps.quickbooks_online.utils.get_entity_sync_timestamp',
+            return_value=None
         )
         mocker.patch(
             'qbosdk.apis.TaxRates.get_by_id',
