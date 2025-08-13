@@ -51,7 +51,7 @@ def test_sync_items(mocker, db):
     mock_get_all_generator.assert_called_with(None)
     mock_get_inactive.assert_called_with(None)
     # Count should be the existing items plus new ones
-    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT', display_name='Item', active=True).count() >= 4
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT', display_name='Item', active=True).count() == 4
 
     # Case 2: Sync after with previous timestamp
     mock_get_all_generator.reset_mock()
@@ -70,7 +70,8 @@ def test_sync_items(mocker, db):
     mock_get_inactive.return_value = [data['items_response_with_inactive_values']]
     qbo_connection.sync_items()
     mock_get_inactive.assert_called_with(expected_sync_after)
-    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT', display_name='Item', active=False).count() >= 1
+    # items_response_with_inactive_values has 2 items
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT', display_name='Item', active=False).count() == 2
 
 
 def test_sync_accounts(mocker, db):
@@ -96,7 +97,7 @@ def test_sync_accounts(mocker, db):
     qbo_connection.sync_accounts()
     mock_get_all_generator.assert_called_with(None)
     mock_get_inactive.assert_called_with(None)
-    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT').count() >= 60
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='ACCOUNT').count() == 63
 
     # Case 2: Sync after with previous timestamp
     mock_get_all_generator.reset_mock()
@@ -135,10 +136,14 @@ def test_sync_employees(mocker, db):
     qbo_sync_timestamp.save()
     mock_get_entity_sync_timestamp.return_value = None
 
+    # Get initial count before sync
+    initial_employee_count = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='EMPLOYEE').count()
+
     qbo_connection.sync_employees()
     mock_get_all_generator.assert_called_with(None)
     mock_get_inactive.assert_called_with(None)
-    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='EMPLOYEE').count() >= 2
+    # employee_response has 1 item, so total = initial + 1
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='EMPLOYEE').count() == initial_employee_count + 1
 
     # Case 2: Sync after with previous timestamp
     mock_get_all_generator.reset_mock()
@@ -157,7 +162,7 @@ def test_sync_employees(mocker, db):
     mock_get_inactive.return_value = [data['employee_response_with_inactive_values']]
     qbo_connection.sync_employees()
     mock_get_inactive.assert_called_with(expected_sync_after)
-    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='EMPLOYEE', active=False).count() >= 0
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='EMPLOYEE', active=False).count() == 1
 
 
 def test_sync_vendors(mocker, db):
@@ -180,10 +185,14 @@ def test_sync_vendors(mocker, db):
     qbo_sync_timestamp.save()
     mock_get_entity_sync_timestamp.return_value = None
 
+    # Get initial count before sync
+    initial_vendor_count = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='VENDOR').count()
+
     qbo_connection.sync_vendors()
     mock_get_all_generator.assert_called_with(None)
     mock_get_inactive.assert_called_with(None)
-    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='VENDOR').count() >= 40
+    # vendor_response has 1 item, so total = initial + 1
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='VENDOR').count() == initial_vendor_count + 1
 
     # Case 2: Sync after with previous timestamp
     mock_get_all_generator.reset_mock()
@@ -223,10 +232,14 @@ def test_sync_departments(mocker, db):
     qbo_sync_timestamp.save()
     mock_get_entity_sync_timestamp.return_value = None
 
+    # Get initial count before sync
+    initial_department_count = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='DEPARTMENT').count()
+
     qbo_connection.sync_departments()
     mock_get_all_generator.assert_called_with(None)
     mock_get_inactive.assert_called_with(None)
-    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='DEPARTMENT').count() >= 0
+    # department_response has 1 item, so total = initial + 1
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='DEPARTMENT').count() == initial_department_count + 1
 
     # Case 2: Sync after with previous timestamp
     mock_get_all_generator.reset_mock()
@@ -245,7 +258,7 @@ def test_sync_departments(mocker, db):
     mock_get_inactive.return_value = [data['department_response_with_inactive_values']]
     qbo_connection.sync_departments()
     mock_get_inactive.assert_called_with(expected_sync_after)
-    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='DEPARTMENT', active=False).count() >= 0
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='DEPARTMENT', active=False).count() == 1
 
 
 def test_sync_classes(mocker, db):
@@ -271,7 +284,8 @@ def test_sync_classes(mocker, db):
     qbo_connection.sync_classes()
     mock_get_all_generator.assert_called_with(None)
     mock_get_inactive.assert_called_with(None)
-    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='CLASS').count() >= 0
+    # class_response has 2 items
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='CLASS').count() == 2
 
     # Case 2: Sync after with previous timestamp
     mock_get_all_generator.reset_mock()
@@ -290,7 +304,8 @@ def test_sync_classes(mocker, db):
     mock_get_inactive.return_value = [data['class_response_with_inactive_values']]
     qbo_connection.sync_classes()
     mock_get_inactive.assert_called_with(expected_sync_after)
-    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='CLASS', active=False).count() >= 0
+    # class_response_with_inactive_values has 1 item
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='CLASS', active=False).count() == 1
 
 
 def test_sync_customers(mocker, db):
@@ -302,7 +317,7 @@ def test_sync_customers(mocker, db):
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
     mocker.patch('qbosdk.apis.Customers.count', return_value=5)
-    mock_get_all_generator = mocker.patch('qbosdk.apis.Customers.get_all_generator', return_value=[data['class_response']])
+    mock_get_all_generator = mocker.patch('qbosdk.apis.Customers.get_all_generator', return_value=[data['customer_response_after_sync']])  # Use correct customer fixture
     mock_get_inactive = mocker.patch('qbosdk.apis.Customers.get_inactive', return_value=[])
     mock_get_entity_sync_timestamp = mocker.patch('apps.quickbooks_online.utils.get_entity_sync_timestamp')
 
@@ -313,10 +328,14 @@ def test_sync_customers(mocker, db):
     qbo_sync_timestamp.save()
     mock_get_entity_sync_timestamp.return_value = None
 
+    # Get initial count before sync
+    initial_customer_count = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='CUSTOMER').count()
+
     qbo_connection.sync_customers()
     mock_get_all_generator.assert_called_with(None)
     mock_get_inactive.assert_called_with(None)
-    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='CUSTOMER').count() >= 25
+    # customer_response_after_sync has 1 item, so total = initial + 1
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='CUSTOMER').count() == initial_customer_count + 1
 
     # Case 2: Sync after with previous timestamp
     mock_get_all_generator.reset_mock()
@@ -324,7 +343,7 @@ def test_sync_customers(mocker, db):
     previous_sync_time = timezone.now() - timedelta(days=5)
     expected_sync_after = (previous_sync_time - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S')
     mock_get_entity_sync_timestamp.return_value = expected_sync_after
-    mock_get_all_generator.return_value = [data['customer_response_after_sync']]
+    mock_get_all_generator.return_value = [data['customer_response_after_sync']]  # This fixture has 1 item
 
     qbo_connection.sync_customers()
 
@@ -357,10 +376,14 @@ def test_sync_tax_codes(mocker, db):
     qbo_sync_timestamp.save()
     mock_get_entity_sync_timestamp.return_value = None
 
+    # Get initial count before sync
+    initial_tax_code_count = DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='TAX_CODE').count()
+
     qbo_connection.sync_tax_codes()
     mock_get_all_generator.assert_called_with(None)
     mock_get_inactive.assert_called_with(None)
-    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='TAX_CODE').count() >= 1
+    # tax_code_response has 1 item, so total = initial + 1
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='TAX_CODE').count() == initial_tax_code_count + 1
 
     # Case 2: Sync after with previous timestamp
     mock_get_all_generator.reset_mock()
@@ -379,7 +402,8 @@ def test_sync_tax_codes(mocker, db):
     mock_get_inactive.return_value = [data['tax_code_response_with_inactive_values']]
     qbo_connection.sync_tax_codes()
     mock_get_inactive.assert_called_with(expected_sync_after)
-    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='TAX_CODE', active=False).count() >= 0
+    # tax_code_response_with_inactive_values has 1 item
+    assert DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='TAX_CODE', active=False).count() == 1
 
 
 def test_post_vendor(mocker, db):

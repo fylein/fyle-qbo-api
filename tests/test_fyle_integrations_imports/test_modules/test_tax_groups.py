@@ -149,7 +149,7 @@ def test_auto_create_destination_attributes(mocker, db):
 
         expense_attributes_count = ExpenseAttribute.objects.filter(workspace_id=workspace_id, attribute_type = 'TAX_GROUP').count()
 
-        assert expense_attributes_count >= 3
+        assert expense_attributes_count == 4
 
         mappings_count = Mapping.objects.filter(workspace_id=workspace_id, source_type='TAX_GROUP', destination_type='TAX_CODE').count()
 
