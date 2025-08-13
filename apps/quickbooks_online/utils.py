@@ -5,7 +5,6 @@ from typing import Dict, List, Optional
 
 import unidecode
 from django.conf import settings
-from django.db import transaction
 from django.db.models import Max
 from django.utils import timezone
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, MappingSetting
@@ -60,7 +59,7 @@ def format_special_characters(value: str) -> str:
     return formatted_string
 
 
-def get_entity_sync_timestamp(workspace_id: int, entity_type: str) -> tuple:
+def get_entity_sync_timestamp(workspace_id: int, entity_type: str) -> str:
     """
     Get the last synced time for the given entity type
     :param workspace_id: workspace id
@@ -260,11 +259,7 @@ class QBOConnector:
             logger.info('Skipping sync of items for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
             return
 
-        sync_after = None
-        workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
-        is_sync_after_timestamp_enabled = workspace_general_settings.is_sync_after_timestamp_enabled if workspace_general_settings else False
-        if is_sync_after_timestamp_enabled:
-            sync_after = get_entity_sync_timestamp(self.workspace_id, 'item')
+        sync_after = get_entity_sync_timestamp(self.workspace_id, 'item')
 
         items_generator = self.connection.items.get_all_generator(sync_after)
 
@@ -283,12 +278,7 @@ class QBOConnector:
             )
 
         # get the inactive items generator
-        last_synced_time = get_last_synced_time(self.workspace_id, 'CATEGORY')
-        if is_sync_after_timestamp_enabled:
-            inactive_sync_after = sync_after if sync_after else last_synced_time
-            inactive_items_generator = self.connection.items.get_inactive(inactive_sync_after)
-        else:
-            inactive_items_generator = self.connection.items.get_inactive(last_synced_time)
+        inactive_items_generator = self.connection.items.get_inactive(sync_after)
 
         for inactive_items in inactive_items_generator:
             inactive_item_attributes = []
@@ -303,9 +293,7 @@ class QBOConnector:
                 is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='ITEM')
             )
 
-        # Update the sync timestamp if sync after timestamp is enabled
-        if is_sync_after_timestamp_enabled:
-            QBOSyncTimestamp.update_sync_timestamp(self.workspace_id, 'item')
+        QBOSyncTimestamp.update_sync_timestamp(self.workspace_id, 'item')
 
         return []
 
@@ -318,11 +306,7 @@ class QBOConnector:
             logger.info('Skipping sync of accounts for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
             return
 
-        sync_after = None
-        workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
-        is_sync_after_timestamp_enabled = workspace_general_settings.is_sync_after_timestamp_enabled if workspace_general_settings else False
-        if is_sync_after_timestamp_enabled:
-            sync_after = get_entity_sync_timestamp(self.workspace_id, 'account')
+        sync_after = get_entity_sync_timestamp(self.workspace_id, 'account')
 
         accounts_generator = self.connection.accounts.get_all_generator(sync_after)
         category_sync_version = 'v2'
@@ -405,13 +389,7 @@ class QBOConnector:
                         is_import_to_fyle_enabled=is_category_import_to_fyle_enabled
                     )
 
-        last_synced_time = get_last_synced_time(self.workspace_id, 'CATEGORY')
-        # get the inactive accounts generator
-        if is_sync_after_timestamp_enabled:
-            inactive_sync_after = sync_after if sync_after else last_synced_time
-            inactive_accounts_generator = self.connection.accounts.get_inactive(inactive_sync_after)
-        else:
-            inactive_accounts_generator = self.connection.accounts.get_inactive(last_synced_time)
+        inactive_accounts_generator = self.connection.accounts.get_inactive(sync_after)
 
         for inactive_accounts in inactive_accounts_generator:
             inactive_account_attributes = {'account': []}
@@ -446,9 +424,7 @@ class QBOConnector:
                         is_import_to_fyle_enabled=is_category_import_to_fyle_enabled
                     )
 
-        # Update the sync timestamp if sync after timestamp is enabled
-        if is_sync_after_timestamp_enabled:
-            QBOSyncTimestamp.update_sync_timestamp(self.workspace_id, 'account')
+        QBOSyncTimestamp.update_sync_timestamp(self.workspace_id, 'account')
 
         return []
 
@@ -461,23 +437,13 @@ class QBOConnector:
             logger.info('Skipping sync of department for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
             return
 
-        sync_after = None
-        workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
-        is_sync_after_timestamp_enabled = workspace_general_settings.is_sync_after_timestamp_enabled if workspace_general_settings else False
-        if is_sync_after_timestamp_enabled:
-            sync_after = get_entity_sync_timestamp(self.workspace_id, 'department')
-
+        sync_after = get_entity_sync_timestamp(self.workspace_id, 'department')
         departments_generator = self.connection.departments.get_all_generator(sync_after)
-
-        if not is_sync_after_timestamp_enabled:
-            active_existing_departments = list(DestinationAttribute.objects.filter(attribute_type='DEPARTMENT', workspace_id=self.workspace_id, active=True).values_list('destination_id', flat=True))
 
         for departments in departments_generator:
             department_attributes = []
             for department in departments:
                 department_attributes.append({'attribute_type': 'DEPARTMENT', 'display_name': 'Department', 'value': department['FullyQualifiedName'], 'destination_id': department['Id'], 'active': department['Active']})
-                if not is_sync_after_timestamp_enabled and department['Id'] in active_existing_departments:
-                    active_existing_departments.remove(department['Id'])
 
             DestinationAttribute.bulk_create_or_update_destination_attributes(department_attributes, 'DEPARTMENT', self.workspace_id, True,
                 skip_deletion=self.is_duplicate_deletion_skipped(attribute_type='DEPARTMENT'),
@@ -486,40 +452,26 @@ class QBOConnector:
                 is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='DEPARTMENT')
             )
 
-        if is_sync_after_timestamp_enabled:
-            last_synced_time = get_last_synced_time(self.workspace_id, 'PROJECT')
-            inactive_sync_after = sync_after if sync_after else last_synced_time
-            inactive_departments_generator = self.connection.departments.get_inactive(inactive_sync_after)
+        inactive_departments_generator = self.connection.departments.get_inactive(sync_after)
 
-            for inactive_departments in inactive_departments_generator:
-                inactive_department_attributes = []
-                for inactive_department in inactive_departments:
-                    department_display_name = inactive_department['FullyQualifiedName'].replace(" (deleted)", "").rstrip()
-                    inactive_department_attributes.append({'attribute_type': 'DEPARTMENT', 'display_name': 'Department', 'value': department_display_name, 'destination_id': inactive_department['Id'], 'active': False})
+        for inactive_departments in inactive_departments_generator:
+            inactive_department_attributes = []
+            for inactive_department in inactive_departments:
+                department_display_name = inactive_department['FullyQualifiedName'].replace(" (deleted)", "").rstrip()
+                inactive_department_attributes.append({'attribute_type': 'DEPARTMENT', 'display_name': 'Department', 'value': department_display_name, 'destination_id': inactive_department['Id'], 'active': False})
 
-                DestinationAttribute.bulk_create_or_update_destination_attributes(
-                    inactive_department_attributes,
-                    'DEPARTMENT',
-                    self.workspace_id,
-                    True,
-                    skip_deletion=self.is_duplicate_deletion_skipped(attribute_type='DEPARTMENT'),
-                    app_name=get_app_name(),
-                    attribute_disable_callback_path=self.get_attribute_disable_callback_path(attribute_type='DEPARTMENT'),
-                    is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='DEPARTMENT')
-                )
+            DestinationAttribute.bulk_create_or_update_destination_attributes(
+                inactive_department_attributes,
+                'DEPARTMENT',
+                self.workspace_id,
+                True,
+                skip_deletion=self.is_duplicate_deletion_skipped(attribute_type='DEPARTMENT'),
+                app_name=get_app_name(),
+                attribute_disable_callback_path=self.get_attribute_disable_callback_path(attribute_type='DEPARTMENT'),
+                is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='DEPARTMENT')
+            )
 
-            QBOSyncTimestamp.update_sync_timestamp(self.workspace_id, 'department')
-        else:
-            BATCH_SIZE = 50
-            for i in range(0, len(active_existing_departments), BATCH_SIZE):
-                batch = active_existing_departments[i: i + BATCH_SIZE]
-                with transaction.atomic():
-                    DestinationAttribute.objects.filter(
-                        attribute_type='DEPARTMENT',
-                        workspace_id=self.workspace_id,
-                        destination_id__in=batch,
-                        active=True
-                    ).update(active=False, updated_at=timezone.now())
+        QBOSyncTimestamp.update_sync_timestamp(self.workspace_id, 'department')
 
         return []
 
@@ -532,12 +484,7 @@ class QBOConnector:
             logger.info('Skipping sync of tax_codes for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
             return
 
-        sync_after = None
-        workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
-        is_sync_after_timestamp_enabled = workspace_general_settings.is_sync_after_timestamp_enabled if workspace_general_settings else False
-        if is_sync_after_timestamp_enabled:
-            sync_after = get_entity_sync_timestamp(self.workspace_id, 'tax_code')
-
+        sync_after = get_entity_sync_timestamp(self.workspace_id, 'tax_code')
         tax_codes_generator = self.connection.tax_codes.get_all_generator(sync_after)
 
         for tax_codes in tax_codes_generator:
@@ -560,28 +507,25 @@ class QBOConnector:
 
             DestinationAttribute.bulk_create_or_update_destination_attributes(tax_attributes, 'TAX_CODE', self.workspace_id, True)
 
-        if is_sync_after_timestamp_enabled:
-            last_synced_time = get_last_synced_time(self.workspace_id, 'TAX_CODE')
-            inactive_sync_after = sync_after if sync_after else last_synced_time
-            inactive_tax_codes_generator = self.connection.tax_codes.get_inactive(inactive_sync_after)
+        inactive_tax_codes_generator = self.connection.tax_codes.get_inactive(sync_after)
 
-            for inactive_tax_codes in inactive_tax_codes_generator:
-                inactive_tax_attributes = []
-                for inactive_tax_code in inactive_tax_codes:
-                    display_name = inactive_tax_code['Name'].replace(" (deleted)", "").rstrip()
-                    effective_tax_rate, tax_rates = self.get_effective_tax_rates(inactive_tax_code['PurchaseTaxRateList']['TaxRateDetail'])
-                    if effective_tax_rate >= 0:
-                        inactive_tax_attributes.append({
-                            'attribute_type': 'TAX_CODE',
-                            'display_name': 'Tax Code',
-                            'value': '{0} @{1}%'.format(display_name, effective_tax_rate),
-                            'destination_id': inactive_tax_code['Id'],
-                            'active': False
-                        })
+        for inactive_tax_codes in inactive_tax_codes_generator:
+            inactive_tax_attributes = []
+            for inactive_tax_code in inactive_tax_codes:
+                display_name = inactive_tax_code['Name'].replace(" (deleted)", "").rstrip()
+                effective_tax_rate, tax_rates = self.get_effective_tax_rates(inactive_tax_code['PurchaseTaxRateList']['TaxRateDetail'])
+                if effective_tax_rate >= 0:
+                    inactive_tax_attributes.append({
+                        'attribute_type': 'TAX_CODE',
+                        'display_name': 'Tax Code',
+                        'value': '{0} @{1}%'.format(display_name, effective_tax_rate),
+                        'destination_id': inactive_tax_code['Id'],
+                        'active': False
+                    })
 
-                DestinationAttribute.bulk_create_or_update_destination_attributes(inactive_tax_attributes, 'TAX_CODE', self.workspace_id, True)
+            DestinationAttribute.bulk_create_or_update_destination_attributes(inactive_tax_attributes, 'TAX_CODE', self.workspace_id, True)
 
-            QBOSyncTimestamp.update_sync_timestamp(self.workspace_id, 'tax_code')
+        QBOSyncTimestamp.update_sync_timestamp(self.workspace_id, 'tax_code')
 
         return []
 
@@ -594,12 +538,7 @@ class QBOConnector:
             logger.info('Skipping sync of vendors for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
             return
 
-        sync_after = None
-        workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
-        is_sync_after_timestamp_enabled = workspace_general_settings.is_sync_after_timestamp_enabled if workspace_general_settings else False
-        if is_sync_after_timestamp_enabled:
-            sync_after = get_entity_sync_timestamp(self.workspace_id, 'vendor')
-
+        sync_after = get_entity_sync_timestamp(self.workspace_id, 'vendor')
         vendors_generator = self.connection.vendors.get_all_generator(sync_after)
 
         for vendors in vendors_generator:
@@ -620,13 +559,7 @@ class QBOConnector:
                 is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='VENDOR')
             )
 
-        last_synced_time = get_last_synced_time(self.workspace_id, 'MERCHANT')
-        # get the inactive vendors generator
-        if is_sync_after_timestamp_enabled:
-            inactive_sync_after = sync_after if sync_after else last_synced_time
-            inactive_vendors_generator = self.connection.vendors.get_inactive(inactive_sync_after)
-        else:
-            inactive_vendors_generator = self.connection.vendors.get_inactive(last_synced_time)
+        inactive_vendors_generator = self.connection.vendors.get_inactive(sync_after)
 
         for inactive_vendors in inactive_vendors_generator:
             inactive_vendor_attributes = []
@@ -642,9 +575,7 @@ class QBOConnector:
                 is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='VENDOR')
             )
 
-        # Update the sync timestamp if sync after timestamp is enabled
-        if is_sync_after_timestamp_enabled:
-            QBOSyncTimestamp.update_sync_timestamp(self.workspace_id, 'vendor')
+        QBOSyncTimestamp.update_sync_timestamp(self.workspace_id, 'vendor')
 
         return []
 
@@ -687,12 +618,7 @@ class QBOConnector:
         """
         Get employees
         """
-        sync_after = None
-        workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
-        is_sync_after_timestamp_enabled = workspace_general_settings.is_sync_after_timestamp_enabled if workspace_general_settings else False
-        if is_sync_after_timestamp_enabled:
-            sync_after = get_entity_sync_timestamp(self.workspace_id, 'employee')
-
+        sync_after = get_entity_sync_timestamp(self.workspace_id, 'employee')
         employees_generator = self.connection.employees.get_all_generator(sync_after)
 
         for employees in employees_generator:
@@ -703,20 +629,17 @@ class QBOConnector:
 
             DestinationAttribute.bulk_create_or_update_destination_attributes(employee_attributes, 'EMPLOYEE', self.workspace_id, True)
 
-        if is_sync_after_timestamp_enabled:
-            last_synced_time = get_last_synced_time(self.workspace_id, 'EMPLOYEE')
-            inactive_sync_after = sync_after if sync_after else last_synced_time
-            inactive_employees_generator = self.connection.employees.get_inactive(inactive_sync_after)
+        inactive_employees_generator = self.connection.employees.get_inactive(sync_after)
 
-            for inactive_employees in inactive_employees_generator:
-                inactive_employee_attributes = []
-                for inactive_employee in inactive_employees:
-                    employee_display_name = inactive_employee['DisplayName'].replace(" (deleted)", "").rstrip()
-                    inactive_employee_attributes.append({'attribute_type': 'EMPLOYEE', 'display_name': 'employee', 'value': employee_display_name, 'destination_id': inactive_employee['Id'], 'active': False})
+        for inactive_employees in inactive_employees_generator:
+            inactive_employee_attributes = []
+            for inactive_employee in inactive_employees:
+                employee_display_name = inactive_employee['DisplayName'].replace(" (deleted)", "").rstrip()
+                inactive_employee_attributes.append({'attribute_type': 'EMPLOYEE', 'display_name': 'employee', 'value': employee_display_name, 'destination_id': inactive_employee['Id'], 'active': False})
 
-                DestinationAttribute.bulk_create_or_update_destination_attributes(inactive_employee_attributes, 'EMPLOYEE', self.workspace_id, True)
+            DestinationAttribute.bulk_create_or_update_destination_attributes(inactive_employee_attributes, 'EMPLOYEE', self.workspace_id, True)
 
-            QBOSyncTimestamp.update_sync_timestamp(self.workspace_id, 'employee')
+        QBOSyncTimestamp.update_sync_timestamp(self.workspace_id, 'employee')
 
         return []
 
@@ -729,16 +652,8 @@ class QBOConnector:
             logger.info('Skipping sync of classes for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
             return
 
-        sync_after = None
-        workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
-        is_sync_after_timestamp_enabled = workspace_general_settings.is_sync_after_timestamp_enabled if workspace_general_settings else False
-        if is_sync_after_timestamp_enabled:
-            sync_after = get_entity_sync_timestamp(self.workspace_id, 'class')
-
+        sync_after = get_entity_sync_timestamp(self.workspace_id, 'class')
         classes_generator = self.connection.classes.get_all_generator(sync_after)
-
-        if not is_sync_after_timestamp_enabled:
-            active_existing_classes = list(DestinationAttribute.objects.filter(attribute_type='CLASS', workspace_id=self.workspace_id, active=True).values_list('destination_id', flat=True))
 
         for classes in classes_generator:
             class_attributes = []
@@ -752,8 +667,6 @@ class QBOConnector:
                         'active': qbo_class['Active']
                     }
                 )
-                if not is_sync_after_timestamp_enabled and qbo_class['Id'] in active_existing_classes:
-                    active_existing_classes.remove(qbo_class['Id'])
 
             DestinationAttribute.bulk_create_or_update_destination_attributes(
                 class_attributes,
@@ -766,45 +679,31 @@ class QBOConnector:
                 is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='CLASS')
             )
 
-        if is_sync_after_timestamp_enabled:
-            last_synced_time = get_last_synced_time(self.workspace_id, 'COST_CENTER')
-            inactive_sync_after = sync_after if sync_after else last_synced_time
-            inactive_classes_generator = self.connection.classes.get_inactive(inactive_sync_after)
+        inactive_classes_generator = self.connection.classes.get_inactive(sync_after)
 
-            for inactive_classes in inactive_classes_generator:
-                inactive_class_attributes = []
-                for inactive_class in inactive_classes:
-                    class_display_name = inactive_class['FullyQualifiedName'].replace(" (deleted)", "").rstrip()
-                    inactive_class_attributes.append({
-                        'attribute_type': 'CLASS',
-                        'display_name': 'class',
-                        'value': class_display_name,
-                        'destination_id': inactive_class['Id'],
-                        'active': False
-                    })
+        for inactive_classes in inactive_classes_generator:
+            inactive_class_attributes = []
+            for inactive_class in inactive_classes:
+                class_display_name = inactive_class['FullyQualifiedName'].replace(" (deleted)", "").rstrip()
+                inactive_class_attributes.append({
+                    'attribute_type': 'CLASS',
+                    'display_name': 'class',
+                    'value': class_display_name,
+                    'destination_id': inactive_class['Id'],
+                    'active': False
+                })
 
-                DestinationAttribute.bulk_create_or_update_destination_attributes(
-                    inactive_class_attributes,
-                    'CLASS',
-                    self.workspace_id,
-                    True,
-                    skip_deletion=self.is_duplicate_deletion_skipped(attribute_type='CLASS'),
-                    app_name=get_app_name(),
-                    attribute_disable_callback_path=self.get_attribute_disable_callback_path(attribute_type='CLASS'),
-                    is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='CLASS')
-                )
-            QBOSyncTimestamp.update_sync_timestamp(self.workspace_id, 'class')
-        else:
-            BATCH_SIZE = 50
-            for i in range(0, len(active_existing_classes), BATCH_SIZE):
-                batch = active_existing_classes[i: i + BATCH_SIZE]
-                with transaction.atomic():
-                    DestinationAttribute.objects.filter(
-                        attribute_type='CLASS',
-                        workspace_id=self.workspace_id,
-                        destination_id__in=batch,
-                        active=True
-                    ).update(active=False, updated_at=timezone.now())
+            DestinationAttribute.bulk_create_or_update_destination_attributes(
+                inactive_class_attributes,
+                'CLASS',
+                self.workspace_id,
+                True,
+                skip_deletion=self.is_duplicate_deletion_skipped(attribute_type='CLASS'),
+                app_name=get_app_name(),
+                attribute_disable_callback_path=self.get_attribute_disable_callback_path(attribute_type='CLASS'),
+                is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='CLASS')
+            )
+        QBOSyncTimestamp.update_sync_timestamp(self.workspace_id, 'class')
 
         return []
 
@@ -817,11 +716,7 @@ class QBOConnector:
             logger.info('Skipping sync of customers for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
             return
 
-        sync_after = None
-        workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
-        is_sync_after_timestamp_enabled = workspace_general_settings.is_sync_after_timestamp_enabled if workspace_general_settings else False
-        if is_sync_after_timestamp_enabled:
-            sync_after = get_entity_sync_timestamp(self.workspace_id, 'customer')
+        sync_after = get_entity_sync_timestamp(self.workspace_id, 'customer')
 
         customers_generator = self.connection.customers.get_all_generator(sync_after)
 
@@ -839,13 +734,7 @@ class QBOConnector:
                 is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='CUSTOMER')
             )
 
-        last_synced_time = get_last_synced_time(self.workspace_id, 'PROJECT')
-        # get the inactive customers generator
-        if is_sync_after_timestamp_enabled:
-            inactive_sync_after = sync_after if sync_after else last_synced_time
-            inactive_customers_generator = self.connection.customers.get_inactive(inactive_sync_after)
-        else:
-            inactive_customers_generator = self.connection.customers.get_inactive(last_synced_time)
+        inactive_customers_generator = self.connection.customers.get_inactive(sync_after)
 
         for inactive_customers in inactive_customers_generator:
             inactive_customer_attributes = []
@@ -860,9 +749,7 @@ class QBOConnector:
                 is_import_to_fyle_enabled=self.is_import_enabled(attribute_type='CUSTOMER')
             )
 
-        # Update the sync timestamp if sync after timestamp is enabled
-        if is_sync_after_timestamp_enabled:
-            QBOSyncTimestamp.update_sync_timestamp(self.workspace_id, 'customer')
+        QBOSyncTimestamp.update_sync_timestamp(self.workspace_id, 'customer')
 
         return []
 
