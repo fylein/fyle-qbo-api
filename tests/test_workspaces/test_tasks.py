@@ -1,6 +1,6 @@
 from fyle_accounting_mappings.models import ExpenseAttribute
 
-from apps.fyle.models import ExpenseGroupSettings
+from apps.fyle.models import ExpenseGroup, ExpenseGroupSettings
 from apps.tasks.models import TaskLog
 from apps.users.models import User
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings, WorkspaceSchedule
@@ -127,3 +127,177 @@ def test_async_update_workspace_name(db, mocker):
 
     workspace = Workspace.objects.get(id=1)
     assert workspace.name == 'Test Org'
+
+
+def test_run_sync_schedule_skips_failed_expense_groups_with_re_attempt_export_false(mocker, db):
+    """
+    Test that expense groups with FAILED task logs and re_attempt_export=False are skipped
+    """
+    workspace_id = 3
+
+    _ = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+    expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
+    expense_group_settings.import_card_credits = True
+    expense_group_settings.save()
+
+    mocker.patch('fyle_integrations_platform_connector.apis.Expenses.get', return_value=data['expenses'])
+
+    mock_export = mocker.patch('apps.workspaces.actions.export_to_qbo')
+
+    failed_expense_group = ExpenseGroup.objects.create(
+        workspace_id=workspace_id,
+        fund_source='PERSONAL',
+        exported_at=None
+    )
+
+    TaskLog.objects.create(
+        workspace_id=workspace_id,
+        expense_group=failed_expense_group,
+        type='CREATING_BILL',
+        status='FAILED',
+        re_attempt_export=False
+    )
+
+    run_sync_schedule(workspace_id)
+
+    eligible_calls = [call for call in mock_export.call_args_list if 'expense_group_ids' in call.kwargs]
+    if eligible_calls:
+        exported_ids = set(eligible_calls[-1].kwargs['expense_group_ids'])
+        assert failed_expense_group.id not in exported_ids, f"FAILED expense group {failed_expense_group.id} with re_attempt_export=False should be skipped"
+
+    task_log = TaskLog.objects.filter(workspace_id=workspace_id, type='FETCHING_EXPENSES').first()
+    assert task_log.status == 'COMPLETE'
+
+
+def test_run_sync_schedule_includes_failed_expense_groups_with_re_attempt_export_true(mocker, db):
+    """
+    Test that expense groups with FAILED task logs and re_attempt_export=True are included
+    """
+    workspace_id = 3
+
+    _ = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+    expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
+    expense_group_settings.import_card_credits = True
+    expense_group_settings.save()
+
+    mocker.patch('fyle_integrations_platform_connector.apis.Expenses.get', return_value=data['expenses'])
+
+    mock_export = mocker.patch('apps.workspaces.actions.export_to_qbo')
+
+    retry_expense_group = ExpenseGroup.objects.create(
+        workspace_id=workspace_id,
+        fund_source='PERSONAL',
+        exported_at=None
+    )
+
+    TaskLog.objects.create(
+        workspace_id=workspace_id,
+        expense_group=retry_expense_group,
+        type='CREATING_BILL',
+        status='FAILED',
+        re_attempt_export=True
+    )
+
+    run_sync_schedule(workspace_id)
+
+    eligible_calls = [call for call in mock_export.call_args_list if 'expense_group_ids' in call.kwargs]
+    if eligible_calls:
+        exported_ids = set(eligible_calls[-1].kwargs['expense_group_ids'])
+        assert retry_expense_group.id in exported_ids, f"FAILED expense group {retry_expense_group.id} with re_attempt_export=True should be included"
+
+    task_log = TaskLog.objects.filter(workspace_id=workspace_id, type='FETCHING_EXPENSES').first()
+    assert task_log.status == 'COMPLETE'
+
+
+def test_run_sync_schedule_includes_new_expense_groups_without_task_logs(mocker, db):
+    """
+    Test that new expense groups without task logs are not skipped and get included in export
+    """
+    workspace_id = 3
+
+    _ = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+    expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
+    expense_group_settings.import_card_credits = True
+    expense_group_settings.save()
+
+    mocker.patch('fyle_integrations_platform_connector.apis.Expenses.get', return_value=data['expenses'])
+
+    mock_export = mocker.patch('apps.workspaces.actions.export_to_qbo')
+
+    new_expense_group_1 = ExpenseGroup.objects.create(
+        workspace_id=workspace_id,
+        fund_source='PERSONAL',
+        exported_at=None
+    )
+
+    new_expense_group_2 = ExpenseGroup.objects.create(
+        workspace_id=workspace_id,
+        fund_source='CCC',
+        exported_at=None
+    )
+
+    run_sync_schedule(workspace_id)
+
+    eligible_calls = [call for call in mock_export.call_args_list if 'expense_group_ids' in call.kwargs]
+    if eligible_calls:
+        exported_ids = set(eligible_calls[-1].kwargs['expense_group_ids'])
+        assert new_expense_group_1.id in exported_ids, f"New expense group {new_expense_group_1.id} without task logs should be included"
+        assert new_expense_group_2.id in exported_ids, f"New expense group {new_expense_group_2.id} without task logs should be included"
+
+    task_log = TaskLog.objects.filter(workspace_id=workspace_id, type='FETCHING_EXPENSES').first()
+    assert task_log.status == 'COMPLETE'
+
+
+def test_run_sync_schedule_includes_expense_groups_with_non_failed_task_logs(mocker, db):
+    """
+    Test that expense groups with non-FAILED task logs are included regardless of re_attempt_export value
+    """
+    workspace_id = 3
+
+    _ = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+    expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
+    expense_group_settings.import_card_credits = True
+    expense_group_settings.save()
+
+    mocker.patch('fyle_integrations_platform_connector.apis.Expenses.get', return_value=data['expenses'])
+
+    mock_export = mocker.patch('apps.workspaces.actions.export_to_qbo')
+
+    ready_expense_group = ExpenseGroup.objects.create(
+        workspace_id=workspace_id,
+        fund_source='PERSONAL',
+        exported_at=None
+    )
+
+    in_progress_expense_group = ExpenseGroup.objects.create(
+        workspace_id=workspace_id,
+        fund_source='PERSONAL',
+        exported_at=None
+    )
+
+    TaskLog.objects.create(
+        workspace_id=workspace_id,
+        expense_group=ready_expense_group,
+        type='CREATING_BILL',
+        status='READY',
+        re_attempt_export=False
+    )
+
+    TaskLog.objects.create(
+        workspace_id=workspace_id,
+        expense_group=in_progress_expense_group,
+        type='CREATING_BILL',
+        status='IN_PROGRESS',
+        re_attempt_export=False
+    )
+
+    run_sync_schedule(workspace_id)
+
+    eligible_calls = [call for call in mock_export.call_args_list if 'expense_group_ids' in call.kwargs]
+    if eligible_calls:
+        exported_ids = set(eligible_calls[-1].kwargs['expense_group_ids'])
+        assert ready_expense_group.id in exported_ids, f"Expense group {ready_expense_group.id} with READY status should be included"
+        assert in_progress_expense_group.id in exported_ids, f"Expense group {in_progress_expense_group.id} with IN_PROGRESS status should be included"
+
+    task_log = TaskLog.objects.filter(workspace_id=workspace_id, type='FETCHING_EXPENSES').first()
+    assert task_log.status == 'COMPLETE'

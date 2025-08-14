@@ -335,6 +335,7 @@ def import_and_export_expenses(report_id: str, org_id: str, is_state_change_even
 
         task_log.detail = {'message': 'Workspace general settings do not exist in workspace'}
         task_log.status = 'FAILED'
+        task_log.re_attempt_export = False
         task_log.save()
 
     except Exception:

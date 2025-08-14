@@ -1,7 +1,7 @@
 import json
 import logging
 import random
-from datetime import datetime, timedelta
+from datetime import timedelta
 from unittest import mock
 
 import pytest
@@ -14,7 +14,7 @@ from qbosdk.exceptions import WrongParamsError
 from apps.fyle.models import Expense, ExpenseGroup, Reimbursement
 from apps.mappings.queues import schedule_bill_payment_creation
 from apps.quickbooks_online.exceptions import handle_qbo_invalid_token_error, handle_quickbooks_error
-from apps.quickbooks_online.models import CreditCardPurchaseLineitem
+
 from apps.quickbooks_online.queue import (
     handle_skipped_exports,
     schedule_bills_creation,
@@ -54,6 +54,7 @@ from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings
 from fyle_qbo_api.exceptions import BulkError
+
 from tests.test_quickbooks_online.fixtures import data
 
 logger = logging.getLogger(__name__)
@@ -1182,190 +1183,6 @@ def test_schedule_journal_entry_creation(db):
     assert task_log.type == 'CREATING_JOURNAL_ENTRY'
 
 
-def test_skipping_bill_creation(db, mocker):
-    workspace_id = 4
-
-    expense_group = ExpenseGroup.objects.get(id=23)
-    expense_group.exported_at = None
-    expense_group.save()
-
-    error = Error.objects.filter(workspace_id=workspace_id, expense_group=expense_group).delete()
-
-    error = Error.objects.create(
-        workspace_id=workspace_id,
-        type='NETSUITE_ERROR',
-        error_title='NetSuite System Error',
-        error_detail='An error occured in a upsert request: Please enter value(s) for: Location',
-        expense_group=expense_group,
-        repetition_count=106
-    )
-
-    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
-    task_log.type = 'FETCHING_EXPENSES'
-    task_log.status = 'READY'
-    task_log.save()
-
-    schedule_bills_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
-
-    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
-    assert task_log.type == 'FETCHING_EXPENSES'
-
-    Error.objects.filter(id=error.id).update(updated_at=datetime(2024, 8, 20))
-
-    schedule_bills_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
-
-    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
-    assert task_log.type == 'CREATING_BILL'
-
-
-def test_skipping_journal_creation(db, mocker):
-    workspace_id = 4
-
-    expense_group = ExpenseGroup.objects.get(id=23)
-    expense_group.exported_at = None
-    expense_group.save()
-
-    error = Error.objects.filter(workspace_id=workspace_id, expense_group=expense_group).delete()
-
-    error = Error.objects.create(
-        workspace_id=workspace_id,
-        type='NETSUITE_ERROR',
-        error_title='NetSuite System Error',
-        error_detail='An error occured in a upsert request: Please enter value(s) for: Location',
-        expense_group=expense_group,
-        repetition_count=106
-    )
-
-    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
-    task_log.type = 'FETCHING_EXPENSES'
-    task_log.status = 'READY'
-    task_log.save()
-
-    schedule_journal_entry_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
-
-    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
-    assert task_log.type == 'FETCHING_EXPENSES'
-
-    Error.objects.filter(id=error.id).update(updated_at=datetime(2024, 8, 20))
-
-    schedule_journal_entry_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
-
-    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
-    assert task_log.type == 'CREATING_JOURNAL_ENTRY'
-
-
-def test_skipping_qbo_expense_creation(db, mocker):
-    workspace_id = 4
-
-    expense_group = ExpenseGroup.objects.get(id=23)
-    expense_group.exported_at = None
-    expense_group.save()
-
-    error = Error.objects.filter(workspace_id=workspace_id, expense_group=expense_group).delete()
-
-    error = Error.objects.create(
-        workspace_id=workspace_id,
-        type='NETSUITE_ERROR',
-        error_title='NetSuite System Error',
-        error_detail='An error occured in a upsert request: Please enter value(s) for: Location',
-        expense_group=expense_group,
-        repetition_count=106
-    )
-
-    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
-    task_log.type = 'FETCHING_EXPENSES'
-    task_log.status = 'READY'
-    task_log.save()
-
-    schedule_qbo_expense_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
-
-    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
-    assert task_log.type == 'FETCHING_EXPENSES'
-
-    Error.objects.filter(id=error.id).update(updated_at=datetime(2024, 8, 20))
-
-    schedule_qbo_expense_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
-
-    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
-    assert task_log.type == 'CREATING_EXPENSE'
-
-
-def test_skipping_credit_card_charge_creation(db, mocker):
-    workspace_id = 3
-
-    expense_group = ExpenseGroup.objects.get(id=17)
-    expense_group.exported_at = None
-    expense_group.save()
-
-    credit = CreditCardPurchase.objects.get(expense_group_id=17)
-    CreditCardPurchaseLineitem.objects.filter(credit_card_purchase=credit).delete()
-    TaskLog.objects.filter(credit_card_purchase=credit).update(credit_card_purchase=None)
-
-    credit.delete()
-
-    error = Error.objects.create(
-        workspace_id=workspace_id,
-        type='NETSUITE_ERROR',
-        error_title='NetSuite System Error',
-        error_detail='An error occured in a upsert request: Please enter value(s) for: Location',
-        expense_group=expense_group,
-        repetition_count=106
-    )
-
-    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
-    task_log.type = 'FETCHING_EXPENSES'
-    task_log.status = 'READY'
-    task_log.save()
-
-    schedule_credit_card_purchase_creation(workspace_id, [17], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
-
-    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
-    assert task_log.type == 'FETCHING_EXPENSES'
-
-    Error.objects.filter(id=error.id).update(updated_at=datetime(2024, 8, 20))
-
-    schedule_credit_card_purchase_creation(workspace_id, [17], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
-
-    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
-    assert task_log.type == 'CREATING_CREDIT_CARD_PURCHASE'
-
-
-def test_skipping_cheque_creation(db, mocker):
-    workspace_id = 4
-
-    expense_group = ExpenseGroup.objects.get(id=23)
-    expense_group.exported_at = None
-    expense_group.save()
-
-    error = Error.objects.filter(workspace_id=workspace_id, expense_group=expense_group).delete()
-
-    error = Error.objects.create(
-        workspace_id=workspace_id,
-        type='NETSUITE_ERROR',
-        error_title='NetSuite System Error',
-        error_detail='An error occured in a upsert request: Please enter value(s) for: Location',
-        expense_group_id=expense_group.id,
-        repetition_count=106
-    )
-
-    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
-    task_log.type = 'FETCHING_EXPENSES'
-    task_log.status = 'READY'
-    task_log.save()
-
-    schedule_cheques_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
-
-    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
-    assert task_log.type == 'FETCHING_EXPENSES'
-
-    Error.objects.filter(id=error.id).update(updated_at=datetime(2024, 8, 20))
-
-    schedule_cheques_creation(workspace_id, [23], True, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
-
-    task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
-    assert task_log.type == 'CREATING_CHECK'
-
-
 def test_skipping_bill_payment(mocker, db):
     mocker.patch('apps.quickbooks_online.tasks.load_attachments', return_value=[])
     mocker.patch('fyle_integrations_platform_connector.apis.Reimbursements.sync', return_value=None)
@@ -1478,7 +1295,7 @@ def test_get_or_create_error_with_expense_group_update_existing(db):
     )
 
     # Create initial error
-    error1, created1 = Error.get_or_create_error_with_expense_group(
+    error1, _ = Error.get_or_create_error_with_expense_group(
         expense_group,
         expense_attribute
     )

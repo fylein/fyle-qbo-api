@@ -104,6 +104,7 @@ def handle_quickbooks_error(exception, expense_group: ExpenseGroup, task_log: Ta
                 error.increase_repetition_count_by_one(created)
 
     task_log.status = 'FAILED'
+    task_log.re_attempt_export = False
     task_log.detail = None
     task_log.quickbooks_errors = errors
     task_log.save()
@@ -126,7 +127,7 @@ def handle_qbo_exceptions(bill_payment=False):
                 logger.info('Fyle credentials not found %s', expense_group.workspace_id)
                 task_log.detail = {'message': 'Fyle credentials do not exist in workspace'}
                 task_log.status = 'FAILED'
-
+                task_log.re_attempt_export = False
                 task_log.save()
 
                 if not bill_payment:
@@ -136,6 +137,7 @@ def handle_qbo_exceptions(bill_payment=False):
                 logger.info('QBO Account not connected / token expired for workspace_id %s / expense group %s', expense_group.workspace_id, expense_group.id)
                 detail = {'expense_group_id': expense_group.id, 'message': 'QBO Account not connected / token expired'}
                 task_log.status = 'FAILED'
+                task_log.re_attempt_export = False
                 task_log.detail = detail
                 invalidate_qbo_credentials(expense_group.workspace_id)
                 handle_qbo_invalid_token_error(expense_group)
@@ -153,7 +155,7 @@ def handle_qbo_exceptions(bill_payment=False):
             except InternalServerError as error:
                 task_log.detail = {'error': error}
                 task_log.status = 'FAILED'
-
+                task_log.re_attempt_export = False
                 task_log.save()
                 logger.error('Internal Server Error for workspace_id: %s %s', task_log.workspace_id, task_log.detail)
 
@@ -164,8 +166,8 @@ def handle_qbo_exceptions(bill_payment=False):
                 logger.info(exception.response)
                 detail = exception.response
                 task_log.status = 'FAILED'
+                task_log.re_attempt_export = False
                 task_log.detail = detail
-
                 task_log.save()
 
                 if not bill_payment:
