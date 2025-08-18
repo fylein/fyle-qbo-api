@@ -53,7 +53,7 @@ def sync_fyle_dimensions(workspace_id: int):
         time_interval = datetime.now(timezone.utc) - workspace.source_synced_at
 
     if workspace.source_synced_at is None or time_interval.days > 0:
-        workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+        workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
         fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
         platform = PlatformConnector(fyle_credentials)
 
@@ -62,7 +62,7 @@ def sync_fyle_dimensions(workspace_id: int):
         unmapped_card_count = ExpenseAttribute.objects.filter(
             attribute_type="CORPORATE_CARD", workspace_id=workspace_id, active=True, mapping__isnull=True
         ).count()
-        if workspace_general_settings.corporate_credit_card_expenses_object in ('CREDIT CARD PURCHASE', 'DEBIT CARD EXPENSE'):
+        if workspace_general_settings and workspace_general_settings.corporate_credit_card_expenses_object in ('CREDIT CARD PURCHASE', 'DEBIT CARD EXPENSE'):
             import_string('fyle_qbo_api.utils.patch_integration_settings_for_unmapped_cards')(workspace_id=workspace_id, unmapped_card_count=unmapped_card_count)
 
         workspace.source_synced_at = datetime.now()
