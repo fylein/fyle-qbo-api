@@ -14,7 +14,6 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: recursive
-
       - name: push to dockerhub
         uses: fylein/docker-release-action@master
         env:
@@ -30,7 +29,7 @@ jobs:
       - name: Clone another repository
         uses: actions/checkout@v2
         with:
-          repository: ${{ vars.STAGING_DEPLOY_REPO }}   # e.g. org/repo
+          repository: ${{ vars.STAGING_DEPLOY_REPO }}
           ref: master
           path: ${{ vars.STAGING_DEPLOY_REPO }}
           persist-credentials: false
@@ -40,23 +39,22 @@ jobs:
         run: |
           NEW_TAG="v$(git rev-parse --short HEAD)"
           if [[ "${{ github.event.label.name }}" == "staging_deploy" ]]; then
-            cd "${{ vars.STAGING_DEPLOY_REPO }}/${{ vars.STAGING_DEPLOY_DIR }}/staging/integrations"
+            cd ${{ vars.STAGING_DEPLOY_REPO }}/${{ vars.STAGING_DEPLOY_DIR }}/staging/integrations
           elif [[ "${{ github.event.label.name }}" == "drstrange_deploy" ]]; then
-            cd "${{ vars.STAGING_DEPLOY_REPO }}/${{ vars.STAGING_DEPLOY_DIR }}/drstrange/integrations"
+            cd ${{ vars.STAGING_DEPLOY_REPO }}/${{ vars.STAGING_DEPLOY_DIR }}/drstrange/integrations
           elif [[ "${{ github.event.label.name }}" == "c1_qa_deploy" ]]; then
-            cd "${{ vars.STAGING_DEPLOY_REPO }}/${{ vars.C1_STAGING_DEPLOY_DIR }}/qa/integrations"
+            cd ${{ vars.STAGING_DEPLOY_REPO }}/${{ vars.C1_STAGING_DEPLOY_DIR }}/qa/integrations
           elif [[ "${{ github.event.label.name }}" == "c1_staging_deploy" ]]; then
-            cd "${{ vars.STAGING_DEPLOY_REPO }}/${{ vars.C1_STAGING_DEPLOY_DIR }}/staging/integrations"
+            cd ${{ vars.STAGING_DEPLOY_REPO }}/${{ vars.C1_STAGING_DEPLOY_DIR }}/staging/integrations
           fi
           kustomize edit set image docker.io/${{ secrets.DOCKERHUB_USERNAME }}/fyle_qbo-api=docker.io/${{ secrets.DOCKERHUB_USERNAME }}/fyle_qbo-api:$NEW_TAG
 
       - name: Commit and push changes
         run: |
-          cd "${{ vars.STAGING_DEPLOY_REPO }}/"
+          cd ${{ vars.STAGING_DEPLOY_REPO }}/
           git config --global user.email "integrations@fylehq.com"
           git config --global user.name "GitHub Actions"
           git add .
-          NEW_TAG="v$(git rev-parse --short HEAD)"
           if [[ "${{ github.event.label.name }}" == "staging_deploy" ]]; then
             git commit -m "Deployed fyle_qbo-api:$NEW_TAG to staging"
           elif [[ "${{ github.event.label.name }}" == "drstrange_deploy" ]]; then
@@ -67,5 +65,5 @@ jobs:
             git commit -m "Deployed fyle_qbo-api:$NEW_TAG to c1-staging"
           fi
           git remote set-url origin "https://x-access-token:${{ secrets.DEPLOY_GIT_ACCESS_TOKEN }}@github.com/${{ vars.STAGING_DEPLOY_REPO }}"
-          git pull --rebase origin master
+          git pull origin master
           git push origin master
