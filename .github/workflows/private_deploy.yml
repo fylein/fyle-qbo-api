@@ -64,6 +64,6 @@ jobs:
           elif [[ "${{ github.event.label.name }}" == "c1_staging_deploy" ]]; then
             git commit -m "Deployed fyle_qbo-api:$NEW_TAG to c1-staging"
           fi
-          git remote set-url origin "https://x-access-token:${{ secrets.DEPLOY_GIT_ACCESS_TOKEN }}@github.com/${{ vars.STAGING_DEPLOY_REPO }}"
+          git remote set-url origin https://x-access-token:${{ secrets.DEPLOY_GIT_ACCESS_TOKEN }}@github.com/${{ vars.STAGING_DEPLOY_REPO }}
           git pull origin master
           git push origin master
