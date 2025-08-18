@@ -2,10 +2,10 @@ import base64
 import json
 import logging
 from typing import List
+from urllib.parse import urlencode
 
 import requests
 from django.conf import settings
-from future.moves.urllib.parse import urlencode
 from fyle_accounting_mappings.models import MappingSetting
 from qbosdk import InternalServerError, NotFoundClientError, UnauthorizedClientError, WrongParamsError
 from sendgrid import SendGridAPIClient
