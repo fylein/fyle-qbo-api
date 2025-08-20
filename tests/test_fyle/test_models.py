@@ -274,11 +274,9 @@ def test_create_expense_group_report_id_debit_card_expense(db):
     expenses = data["expense_refund_single_ccc"]
     expense_objects = Expense.create_expense_objects([expenses], 1)
     assert len(expense_objects) == 1
-    ExpenseGroup.create_expense_groups_by_report_id_fund_source(expense_objects, 1)
-    expense_group = (
-        ExpenseGroup.objects.filter(workspace=workspace).order_by("-created_at").first()
-    )
-    assert expense_group.expenses.count() == 1
+    expense_groups, skipped_expense_ids = ExpenseGroup.create_expense_groups_by_report_id_fund_source(expense_objects, 1)
+    assert len(expense_groups) == 0
+    assert len(skipped_expense_ids) == 1
 
 
 def test_create_expense_groups_by_report_id_fund_source(db):
