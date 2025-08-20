@@ -1211,8 +1211,10 @@ class QBOConnector:
         :return: constructed line items
         """
         lines = []
+        total_amount = 0
 
         for line in qbo_expense_lineitems:
+            total_amount += line.amount
             lineitem = {
                 'Description': line.description,
                 'DetailType': line.detail_type,
@@ -1238,7 +1240,7 @@ class QBOConnector:
 
             lines.append(lineitem)
 
-        return lines
+        return lines, True if total_amount < 0 else False
 
     def __construct_qbo_expense(self, qbo_expense: QBOExpense, qbo_expense_lineitems: List[QBOExpenseLineitem]) -> Dict:
         """
@@ -1248,8 +1250,8 @@ class QBOConnector:
         """
         general_mappings = GeneralMapping.objects.filter(workspace_id=self.workspace_id).first()
 
-        line = self.__construct_qbo_expense_lineitems(qbo_expense_lineitems, general_mappings)
-        qbo_expense_payload = self.purchase_object_payload(qbo_expense, line, account_ref=qbo_expense.expense_account_id, payment_type='Cash')
+        line, credit = self.__construct_qbo_expense_lineitems(qbo_expense_lineitems, general_mappings)
+        qbo_expense_payload = self.purchase_object_payload(qbo_expense, line, account_ref=qbo_expense.expense_account_id, payment_type='Cash', credit=credit)
 
         logger.info("| Payload for Expense creation | Content: {{WORKSPACE_ID: {} EXPENSE_GROUP_ID: {} EXPENSE_PAYLOAD: {}}}".format(self.workspace_id, qbo_expense.expense_group.id, qbo_expense_payload))
         return qbo_expense_payload
