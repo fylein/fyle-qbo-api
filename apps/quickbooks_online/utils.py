@@ -1211,10 +1211,15 @@ class QBOConnector:
         :return: constructed line items
         """
         lines = []
-        total_amount = 0
+        is_credit = None
+        all_amounts_negative = all(line.amount < 0 for line in qbo_expense_lineitems)
+        if all_amounts_negative:
+            is_credit = True
+            for line in qbo_expense_lineitems:
+                line.amount = abs(line.amount)
+                line.tax_amount = abs(line.tax_amount) if line.tax_amount is not None else None
 
         for line in qbo_expense_lineitems:
-            total_amount += line.amount
             lineitem = {
                 'Description': line.description,
                 'DetailType': line.detail_type,
@@ -1240,7 +1245,7 @@ class QBOConnector:
 
             lines.append(lineitem)
 
-        return lines, True if total_amount < 0 else None
+        return lines, is_credit
 
     def __construct_qbo_expense(self, qbo_expense: QBOExpense, qbo_expense_lineitems: List[QBOExpenseLineitem]) -> Dict:
         """

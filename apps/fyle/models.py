@@ -350,7 +350,7 @@ def filter_expense_groups(
             item for item in expenses if item.id in expense_group_expenses_ids
         ]
         if 'expense_id' not in expense_group_fields and (
-            reimbursable_export_type in ('EXPENSE', 'BILL') or ccc_export_type == 'BILL'
+            reimbursable_export_type in ('EXPENSE', 'BILL') or ccc_export_type in ('BILL', 'DEBIT CARD EXPENSE')
         ):
             total_amount = 0
             if "spent_at" in expense_group_fields:
@@ -499,7 +499,7 @@ class ExpenseGroup(models.Model):
                     workspace_id,
                 )
 
-        if general_settings.corporate_credit_card_expenses_object == "BILL":
+        if general_settings.corporate_credit_card_expenses_object in ("BILL", "DEBIT CARD EXPENSE"):
             filtered_corporate_credit_card_expense_groups, corporate_credit_card_skipped_expense_ids = filter_expense_groups(
                 filtered_corporate_credit_card_expense_groups,
                 corporate_credit_card_expenses,
