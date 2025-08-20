@@ -45,7 +45,7 @@
         border-radius: 4px;
         width: 25%;
         font-weight: 300;
-        font-size: 16px;
+        font-size: 14px;
         color: #1a1a1a;
         border: 1px solid #dfdfe2;
       }
@@ -136,13 +136,13 @@
                 </table>
               </td>
             </tr>
-            <tr style="color: #1a1a1a; font-size: 16px">
+            <tr style="color: #1a1a1a; font-size: 14px">
               <td style="padding: 40px 40px 0px 40px">
                 <table width="100%">
                   <tr>
                     <td
                       style="
-                        font-size: 16px;
+                        font-size: 14px;
                         padding-bottom: 40px;
                         font-weight: 700;
                       "
@@ -202,11 +202,11 @@
                             style="
                               padding-top: 15px;
                               line-height: 18px;
-                              color: #5a5d72;
+                              color: #595959;
                             "
                           >
                             <span>Error Type</span> -
-                            <span style="color: #1A1A1A; font-weight: 500"
+                            <span style="color: #1a1a1a; font-weight: 500"
                               >{{ error_type }}</span
                             >
                           </td>
@@ -216,11 +216,11 @@
                             style="
                               padding-top: 15px;
                               line-height: 18px;
-                              color: #5a5d72;
+                              color: #595959;
                             "
                           >
                             <span>Export time</span> -
-                            <span style="color: #1A1A1A; font-weight: 500"
+                            <span style="color: #1a1a1a; font-weight: 500"
                               >{{ export_time }}</span
                             >
                           </td>
@@ -260,11 +260,63 @@
                   border-radius: 2px !important;
                 "
               >
-                <table id="task-logs" width="100%">
-                  <tr id="header">
-                    <th>Error Type</th>
-                    <th>Error</th>
-                    <th>Error value / Message</th>
+                <table
+                  id="task-logs"
+                  width="100%"
+                  style="
+                    border-collapse: collapse;
+                    table-layout: fixed;
+                    width: 100%;
+                    margin-bottom: 24px;
+                  "
+                >
+                  <tr
+                    id="header"
+                    style="
+                      background-color: #f2f5f6;
+                      border: 1px solid #dfdfe2;
+                      border-radius: 8px;
+                    "
+                  >
+                    <th
+                      style="
+                        padding: 13px 0px 12px 23px;
+                        text-align: left;
+                        border: 1px solid #dfdfe2;
+                        width: 25%;
+                        font-weight: 500;
+                        font-size: 14px;
+                        color: #1a1a1a;
+                      "
+                    >
+                      Error Type
+                    </th>
+                    <th
+                      style="
+                        padding: 13px 0px 12px 23px;
+                        text-align: left;
+                        border: 1px solid #dfdfe2;
+                        width: 25%;
+                        font-weight: 500;
+                        font-size: 14px;
+                        color: #1a1a1a;
+                      "
+                    >
+                      Error
+                    </th>
+                    <th
+                      style="
+                        padding: 13px 0px 12px 23px;
+                        text-align: left;
+                        border: 1px solid #dfdfe2;
+                        width: 25%;
+                        font-weight: 500;
+                        font-size: 14px;
+                        color: #1a1a1a;
+                      "
+                    >
+                      Error value / Message
+                    </th>
                   </tr>
                   {{ task_logs }}
                 </table>
@@ -300,7 +352,7 @@
             <tr>
               <td
                 style="
-                  font-size: 16px;
+                  font-size: 14px;
                   line-height: 22px;
                   padding: 40px 40px 0 40px;
                   color: #1a1a1a;
@@ -319,7 +371,7 @@
             <tr>
               <td
                 style="
-                  font-size: 16px;
+                  font-size: 14px;
                   line-height: 22px;
                   padding: 40px;
                   color: #1a1a1a;
