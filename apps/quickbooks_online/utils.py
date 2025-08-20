@@ -1240,7 +1240,7 @@ class QBOConnector:
 
             lines.append(lineitem)
 
-        return lines, True if total_amount < 0 else False
+        return lines, True if total_amount < 0 else None
 
     def __construct_qbo_expense(self, qbo_expense: QBOExpense, qbo_expense_lineitems: List[QBOExpenseLineitem]) -> Dict:
         """
