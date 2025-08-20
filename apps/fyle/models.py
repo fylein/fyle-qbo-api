@@ -374,7 +374,7 @@ def filter_expense_groups(
                 all_expenses_negative = all(expense.amount < 0 for expense in filtered_expenses)
 
                 if all_expenses_negative:
-                    pass
+                    continue
                 elif total_amount < 0 and not all_expenses_negative:
                     skipped_expense_ids.extend([expense.id for expense in filtered_expenses if expense.amount < 0])
                     filtered_expenses = list(
