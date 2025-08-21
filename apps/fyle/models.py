@@ -349,7 +349,38 @@ def filter_expense_groups(
         filtered_expenses = [
             item for item in expenses if item.id in expense_group_expenses_ids
         ]
-        if 'expense_id' not in expense_group_fields and (
+        if ccc_export_type == 'DEBIT CARD EXPENSE':
+            if "spent_at" in expense_group_fields:
+                grouped_data = defaultdict(list)
+                for expense in filtered_expenses:
+                    spent_at = expense.spent_at
+                    grouped_data[spent_at].append(expense)
+                grouped_expenses = list(grouped_data.values())
+                filtered_expenses = []
+
+                for group_expense in grouped_expenses:
+                    total_amount = sum(expense.amount for expense in group_expense)
+                    all_expenses_negative = all(expense.amount < 0 for expense in group_expense)
+
+                    if all_expenses_negative:
+                        filtered_expenses.extend(group_expense)
+                    elif total_amount < 0 and not all_expenses_negative:
+                        skipped_expense_ids.extend([expense.id for expense in group_expense if expense.amount < 0])
+                        filtered_expenses.extend([expense for expense in group_expense if expense.amount >= 0])
+                    else:
+                        filtered_expenses.extend(group_expense)
+            else:
+                total_amount = sum(expense.amount for expense in filtered_expenses)
+                all_expenses_negative = all(expense.amount < 0 for expense in filtered_expenses)
+
+                if all_expenses_negative:
+                    pass
+                elif total_amount < 0 and not all_expenses_negative:
+                    skipped_expense_ids.extend([expense.id for expense in filtered_expenses if expense.amount < 0])
+                    filtered_expenses = list(
+                        filter(lambda expense: expense.amount >= 0, filtered_expenses)
+                    )
+        elif 'expense_id' not in expense_group_fields and (
             reimbursable_export_type in ('EXPENSE', 'BILL') or ccc_export_type == 'BILL'
         ):
             total_amount = 0
@@ -378,7 +409,7 @@ def filter_expense_groups(
                     filtered_expenses = list(
                         filter(lambda expense: expense.amount > 0, filtered_expenses)
                     )
-        elif reimbursable_export_type != 'JOURNAL ENTRY' or ccc_export_type == 'BILL':
+        elif (reimbursable_export_type != 'JOURNAL ENTRY' or ccc_export_type == 'BILL') and ccc_export_type != 'DEBIT CARD EXPENSE':
             skipped_expense_ids.extend([expense.id for expense in filtered_expenses if expense.amount < 0])
             filtered_expenses = list(
                 filter(lambda expense: expense.amount > 0, filtered_expenses)
@@ -499,7 +530,7 @@ class ExpenseGroup(models.Model):
                     workspace_id,
                 )
 
-        if general_settings.corporate_credit_card_expenses_object == "BILL":
+        if general_settings.corporate_credit_card_expenses_object in ("BILL", "DEBIT CARD EXPENSE"):
             filtered_corporate_credit_card_expense_groups, corporate_credit_card_skipped_expense_ids = filter_expense_groups(
                 filtered_corporate_credit_card_expense_groups,
                 corporate_credit_card_expenses,
