@@ -568,16 +568,19 @@ class QBOConnector:
             for inactive_tax_codes in inactive_tax_codes_generator:
                 inactive_tax_attributes = []
                 for inactive_tax_code in inactive_tax_codes:
-                    display_name = inactive_tax_code['Name'].replace(" (deleted)", "").rstrip()
-                    effective_tax_rate, tax_rates = self.get_effective_tax_rates(inactive_tax_code['PurchaseTaxRateList']['TaxRateDetail'])
-                    if effective_tax_rate >= 0:
-                        inactive_tax_attributes.append({
-                            'attribute_type': 'TAX_CODE',
-                            'display_name': 'Tax Code',
-                            'value': '{0} @{1}%'.format(display_name, effective_tax_rate),
-                            'destination_id': inactive_tax_code['Id'],
-                            'active': False
-                        })
+                    if 'PurchaseTaxRateList' in inactive_tax_code.keys():
+                        if inactive_tax_code['PurchaseTaxRateList']['TaxRateDetail']:
+                            display_name = inactive_tax_code['Name'].replace(" (deleted)", "").rstrip()
+                            effective_tax_rate, tax_rates = self.get_effective_tax_rates(inactive_tax_code['PurchaseTaxRateList']['TaxRateDetail'])
+                            if effective_tax_rate >= 0:
+                                inactive_tax_attributes.append({
+                                    'attribute_type': 'TAX_CODE',
+                                    'display_name': 'Tax Code',
+                                    'value': '{0} @{1}%'.format(display_name, effective_tax_rate),
+                                    'destination_id': inactive_tax_code['Id'],
+                                    'active': False,
+                                    'detail': {'tax_rate': effective_tax_rate, 'tax_refs': tax_rates}
+                                })
 
                 DestinationAttribute.bulk_create_or_update_destination_attributes(inactive_tax_attributes, 'TAX_CODE', self.workspace_id, True)
 
@@ -632,7 +635,11 @@ class QBOConnector:
             inactive_vendor_attributes = []
             for inactive_vendor in inactive_vendors:
                 vendor_display_name = inactive_vendor['DisplayName'].replace(" (deleted)", "").rstrip()
-                inactive_vendor_attributes.append({'attribute_type': 'VENDOR', 'display_name': 'vendor', 'value': vendor_display_name, 'destination_id': inactive_vendor['Id'], 'active': False})
+                detail = {
+                    'email': inactive_vendor['PrimaryEmailAddr']['Address'] if ('PrimaryEmailAddr' in inactive_vendor and inactive_vendor['PrimaryEmailAddr'] and 'Address' in inactive_vendor['PrimaryEmailAddr'] and inactive_vendor['PrimaryEmailAddr']['Address']) else None,
+                    'currency': inactive_vendor['CurrencyRef']['value'] if 'CurrencyRef' in inactive_vendor else None,
+                }
+                inactive_vendor_attributes.append({'attribute_type': 'VENDOR', 'display_name': 'vendor', 'value': vendor_display_name, 'destination_id': inactive_vendor['Id'], 'active': False, 'detail': detail})
 
             DestinationAttribute.bulk_create_or_update_destination_attributes(
                 inactive_vendor_attributes, 'VENDOR', self.workspace_id, True,
@@ -698,7 +705,9 @@ class QBOConnector:
         for employees in employees_generator:
             employee_attributes = []
             for employee in employees:
-                detail = {'email': employee['PrimaryEmailAddr']['Address'] if ('PrimaryEmailAddr' in employee and employee['PrimaryEmailAddr'] and 'Address' in employee['PrimaryEmailAddr'] and employee['PrimaryEmailAddr']['Address']) else None}
+                detail = {
+                    'email': employee['PrimaryEmailAddr']['Address'] if ('PrimaryEmailAddr' in employee and employee['PrimaryEmailAddr'] and 'Address' in employee['PrimaryEmailAddr'] and employee['PrimaryEmailAddr']['Address']) else None
+                }
                 employee_attributes.append({'attribute_type': 'EMPLOYEE', 'display_name': 'employee', 'value': employee['DisplayName'], 'destination_id': employee['Id'], 'detail': detail, 'active': True})
 
             DestinationAttribute.bulk_create_or_update_destination_attributes(employee_attributes, 'EMPLOYEE', self.workspace_id, True)
@@ -712,7 +721,10 @@ class QBOConnector:
                 inactive_employee_attributes = []
                 for inactive_employee in inactive_employees:
                     employee_display_name = inactive_employee['DisplayName'].replace(" (deleted)", "").rstrip()
-                    inactive_employee_attributes.append({'attribute_type': 'EMPLOYEE', 'display_name': 'employee', 'value': employee_display_name, 'destination_id': inactive_employee['Id'], 'active': False})
+                    detail = {
+                        'email': inactive_employee['PrimaryEmailAddr']['Address'] if ('PrimaryEmailAddr' in inactive_employee and inactive_employee['PrimaryEmailAddr'] and 'Address' in inactive_employee['PrimaryEmailAddr'] and inactive_employee['PrimaryEmailAddr']['Address']) else None
+                    }
+                    inactive_employee_attributes.append({'attribute_type': 'EMPLOYEE', 'display_name': 'employee', 'value': employee_display_name, 'destination_id': inactive_employee['Id'], 'active': False, 'detail': detail})
 
                 DestinationAttribute.bulk_create_or_update_destination_attributes(inactive_employee_attributes, 'EMPLOYEE', self.workspace_id, True)
 
