@@ -26,17 +26,9 @@ class ExportSettingsTrigger:
             workspace_general_settings.save()
             new_schedule_or_delete_fyle_import_tasks(workspace_general_settings)
 
-        # Delete all the errors and task logs for disabled export type
-        fund_source = []
-
-        if self.__workspace_general_settings['reimbursable_expenses_object']:
-            fund_source.append('PERSONAL')
-        if self.__workspace_general_settings['corporate_credit_card_expenses_object']:
-            fund_source.append('CCC')
-
         if self.__old_configurations and self.__workspace_general_settings:
             clear_workspace_errors_on_export_type_change(self.__workspace_id, self.__old_configurations, self.__workspace_general_settings)
 
-        last_export_detail = LastExportDetail.objects.filter(workspace_id=self.__workspace_id).first()
-        if last_export_detail.last_exported_at:
-            update_last_export_details(self.__workspace_id)
+            last_export_detail = LastExportDetail.objects.filter(workspace_id=self.__workspace_id).first()
+            if last_export_detail.last_exported_at:
+                update_last_export_details(self.__workspace_id)
