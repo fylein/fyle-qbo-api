@@ -14,7 +14,7 @@ def test_post_save_workspace_general_settings_export_trigger(mocker, db):
     workspace_general_settings_payload = {'reimbursable_expenses_object': 'JOURNAL ENTRY', 'corporate_credit_card_expenses_object': 'JOURNAL ENTRY'}
     workspace_id = 5
 
-    export_trigger = ExportSettingsTrigger(workspace_general_settings=workspace_general_settings_payload, workspace_id=workspace_id)
+    export_trigger = ExportSettingsTrigger(workspace_general_settings=workspace_general_settings_payload, workspace_id=workspace_id, old_configurations={})
     export_trigger.post_save_workspace_general_settings()
 
     workspace_general_setting = WorkspaceGeneralSettings.objects.filter(workspace_id=5).first()
@@ -40,7 +40,7 @@ def test_post_save_workspace_general_settings_export_trigger_2(mocker, db):
         status__in=['FAILED', 'FATAL']
     ).count()
 
-    export_trigger = ExportSettingsTrigger(workspace_general_settings=workspace_general_settings_payload, workspace_id=workspace_id)
+    export_trigger = ExportSettingsTrigger(workspace_general_settings=workspace_general_settings_payload, workspace_id=workspace_id, old_configurations={})
     export_trigger.post_save_workspace_general_settings()
 
     after_delete_count = TaskLog.objects.filter(
@@ -59,6 +59,11 @@ def test_post_save_workspace_general_settings_export_trigger_2(mocker, db):
 
 def test_post_save_workspace_general_settings_export_trigger_3(mocker, db):
     workspace_id = 5
+    old_configurations = {
+        'reimbursable_expenses_object': 'BILL',
+        'corporate_credit_card_expenses_object': 'JOURNAL ENTRY'
+    }
+
     workspace_general_settings_payload = {
         'reimbursable_expenses_object': None,
         'corporate_credit_card_expenses_object': 'JOURNAL ENTRY'
@@ -76,7 +81,7 @@ def test_post_save_workspace_general_settings_export_trigger_3(mocker, db):
         status__in=['FAILED', 'FATAL']
     ).count()
 
-    export_trigger = ExportSettingsTrigger(workspace_general_settings=workspace_general_settings_payload, workspace_id=workspace_id)
+    export_trigger = ExportSettingsTrigger(workspace_general_settings=workspace_general_settings_payload, workspace_id=workspace_id, old_configurations=old_configurations)
     export_trigger.post_save_workspace_general_settings()
 
     after_delete_count = TaskLog.objects.filter(

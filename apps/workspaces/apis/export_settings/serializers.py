@@ -100,6 +100,12 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
         general_mappings = validated.pop('general_mappings')
 
         workspace_general_settings_instance = WorkspaceGeneralSettings.objects.filter(workspace_id=instance.id).first()
+        old_configurations = {}
+        if workspace_general_settings_instance:
+            old_configurations = {
+                'reimbursable_expenses_object': workspace_general_settings_instance.reimbursable_expenses_object,
+                'corporate_credit_card_expenses_object': workspace_general_settings_instance.corporate_credit_card_expenses_object,
+            }
 
         map_merchant_to_vendor = True
         category_sync_version = 'v2'
@@ -124,7 +130,7 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
             user=user
         )
 
-        export_trigger = ExportSettingsTrigger(workspace_general_settings, instance.id)
+        export_trigger = ExportSettingsTrigger(workspace_general_settings, instance.id, old_configurations)
 
         export_trigger.post_save_workspace_general_settings()
 
