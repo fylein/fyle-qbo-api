@@ -30,5 +30,5 @@ class ExportSettingsTrigger:
             clear_workspace_errors_on_export_type_change(self.__workspace_id, self.__old_configurations, self.__workspace_general_settings)
 
             last_export_detail = LastExportDetail.objects.filter(workspace_id=self.__workspace_id).first()
-            if last_export_detail.last_exported_at:
+            if last_export_detail and last_export_detail.last_exported_at:
                 update_last_export_details(self.__workspace_id)
