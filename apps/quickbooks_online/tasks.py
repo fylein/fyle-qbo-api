@@ -9,7 +9,7 @@ from django.db import transaction
 from django.utils import timezone as django_timezone
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping
 from fyle_integrations_platform_connector import PlatformConnector
-from qbosdk.exceptions import InvalidTokenError, WrongParamsError
+from qbosdk.exceptions import InvalidTokenError, UnauthorizedClientError, WrongParamsError
 
 from apps.fyle.actions import post_accounting_export_summary, update_expenses_in_progress
 from apps.fyle.helpers import get_filter_credit_expenses
@@ -815,7 +815,7 @@ def check_qbo_object_status(workspace_id):
     except WrongParamsError as exception:
         logger.info('Wrong parameters passed in workspace_id - %s %s', workspace_id, {'error': exception.response})
 
-    except InvalidTokenError as exception:
+    except (InvalidTokenError, UnauthorizedClientError) as exception:
         logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
         invalidate_qbo_credentials(workspace_id, qbo_credentials)
 
@@ -894,7 +894,7 @@ def async_sync_accounts(workspace_id):
     except WrongParamsError as exception:
         logger.info('Something went wrong while syncing accounts workspace_id - %s %s', workspace_id, {'error': exception.response})
 
-    except InvalidTokenError as exception:
+    except (InvalidTokenError, UnauthorizedClientError) as exception:
         logger.info('QBO token expired workspace_id - %s %s', workspace_id, {'error': exception.response})
         invalidate_qbo_credentials(workspace_id, qbo_credentials)
 

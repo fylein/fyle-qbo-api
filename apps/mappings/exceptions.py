@@ -3,6 +3,7 @@ import traceback
 
 from fyle.platform.exceptions import InternalServerError, InvalidTokenError, RetryException, WrongParamsError
 from qbosdk.exceptions import InvalidTokenError as QBOInvalidTokenError
+from qbosdk.exceptions import UnauthorizedClientError
 from qbosdk.exceptions import WrongParamsError as QBOWrongParamsError
 
 from apps.workspaces.models import QBOCredential
@@ -41,7 +42,7 @@ def handle_import_exceptions(task_name):
                 error['message'] = 'Something went wrong while importing to QBO workspace_id - {0}'.format(workspace_id)
                 error['response'] = exception.__dict__
 
-            except QBOInvalidTokenError as exception:
+            except (QBOInvalidTokenError, UnauthorizedClientError) as exception:
                 error['message'] = 'QBO token expired'
                 error['response'] = exception.__dict__
                 invalidate_qbo_credentials(workspace_id)
@@ -97,7 +98,7 @@ def handle_import_exceptions_v2(func):
             error['response'] = exception.__dict__
             import_log.status = 'FAILED'
 
-        except (QBOInvalidTokenError, QBOCredential.DoesNotExist) as exception:
+        except (QBOInvalidTokenError, QBOCredential.DoesNotExist, UnauthorizedClientError) as exception:
             error['message'] = 'Invalid Token or QBO credentials does not exist workspace_id - {0}'.format(workspace_id)
             error['alert'] = False
             error['response'] = exception.__dict__
