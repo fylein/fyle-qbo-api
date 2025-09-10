@@ -6,13 +6,13 @@ from django.conf import settings
 from django.db.models import Q
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
-from apps.fyle.models import ExpenseGroup
 from django_q.models import Schedule
 from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from fyle_accounting_mappings.models import ExpenseAttribute
 from fyle_integrations_platform_connector import PlatformConnector
 from fyle_rest_auth.helpers import get_fyle_admin
 
+from apps.fyle.models import ExpenseGroup
 from apps.fyle.tasks import create_expense_groups
 from apps.tasks.models import Error, TaskLog
 from apps.users.models import User
@@ -241,7 +241,20 @@ def async_create_admin_subcriptions(workspace_id: int) -> None:
     platform = PlatformConnector(fyle_credentials)
     payload = {
         'is_enabled': True,
-        'webhook_url': '{}/workspaces/{}/fyle/exports/'.format(settings.API_URL, workspace_id)
+        'webhook_url': '{}/workspaces/{}/fyle/exports/'.format(settings.API_URL, workspace_id),
+        'subscribed_resources': [
+            'EXPENSE',
+            'REPORT',
+            'CATEGORY',
+            'PROJECT',
+            'COST_CENTER',
+            'EXPENSE_FIELD',
+            'DEPENDENT_EXPENSE_FIELD',
+            'CORPORATE_CARD',
+            'EMPLOYEE',
+            'TAX_GROUP',
+            'ORG_SETTING'
+        ]
     }
     platform.subscriptions.post(payload)
 
