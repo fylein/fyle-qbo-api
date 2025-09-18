@@ -21,4 +21,6 @@ do
 done
 
 # creating a dump of the new fixture
-PGPASSWORD=postgres pg_dump -U postgres -h db -d test_qbo_db > tests/sql_fixtures/reset_db_fixtures/reset_db.sql
+PGPASSWORD=postgres pg_dump -U postgres -h db -d test_qbo_db \
+  | sed -e '/^\\restrict/d' -e '/^\\unrestrict/d' -e '/SET transaction_timeout/d' \
+  > tests/sql_fixtures/reset_db_fixtures/reset_db.sql
