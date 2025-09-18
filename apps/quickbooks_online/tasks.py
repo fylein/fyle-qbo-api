@@ -123,9 +123,12 @@ def load_attachments(qbo_connection: QBOConnector, ref_id: str, ref_type: str, e
 
         qbo_connection.post_attachments(ref_id, ref_type, attachments)
 
-    except Exception:
+    except Exception as e:
         error = traceback.format_exc()
-        logger.info('Attachment failed for expense group id %s / workspace id %s \n Error: %s', expense_group.id, expense_group.workspace_id, {'error': error})
+        logger.info('Attachment failed for expense group id %s / workspace id %s \n Error: %s Expeption Response: %s', expense_group.id, expense_group.workspace_id, {'error': error}, e.response)
+        task_log = TaskLog.objects.get(workspace_id=expense_group.workspace_id, expense_group=expense_group)
+        task_log.is_attachment_upload_failed = True
+        task_log.save()
 
 
 def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connection: QBOConnector, auto_map_employees_preference: str):
