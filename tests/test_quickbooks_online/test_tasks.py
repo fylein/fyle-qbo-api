@@ -14,7 +14,6 @@ from qbosdk.exceptions import WrongParamsError
 from apps.fyle.models import Expense, ExpenseGroup, Reimbursement
 from apps.mappings.queues import schedule_bill_payment_creation
 from apps.quickbooks_online.exceptions import handle_qbo_invalid_token_error, handle_quickbooks_error
-
 from apps.quickbooks_online.queue import (
     handle_skipped_exports,
     schedule_bills_creation,
@@ -54,7 +53,6 @@ from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings
 from fyle_qbo_api.exceptions import BulkError
-
 from tests.test_quickbooks_online.fixtures import data
 
 logger = logging.getLogger(__name__)
@@ -130,15 +128,16 @@ def test_create_or_update_employee_mapping(mocker, db):
 def test_post_bill_success(mocker, create_task_logs, db):
     mocker.patch('qbosdk.apis.Bills.post', return_value=data['post_bill'])
 
-    task_log = TaskLog.objects.filter(workspace_id=3).first()
-    task_log.status = 'READY'
-    task_log.save()
-
     expense_group = ExpenseGroup.objects.get(id=14)
     expenses = expense_group.expenses.all()
-
+    expense_group.workspace_id = 3
     expense_group.id = random.randint(100, 1500000)
     expense_group.save()
+
+    task_log = TaskLog.objects.filter(workspace_id=3).first()
+    task_log.status = 'READY'
+    task_log.expense_group_id = expense_group.id
+    task_log.save()
 
     for expense in expenses:
         expense.expense_group_id = expense_group.id
@@ -220,16 +219,17 @@ def test_create_bill_exceptions(db, create_task_logs):
 def test_changing_accounting_period(mocker, db, create_task_logs):
     workspace_id = 3
 
+    expense_group = ExpenseGroup.objects.get(id=14)
+    expenses = expense_group.expenses.all()
+    expense_group.workspace_id = workspace_id
+    expense_group.id = random.randint(100, 1500000)
+    expense_group.save()
+
     task_log = TaskLog.objects.filter(workspace_id=workspace_id).first()
     task_log.status = 'READY'
     task_log.type = 'CREATING_BILL'
+    task_log.expense_group_id = expense_group.id
     task_log.save()
-
-    expense_group = ExpenseGroup.objects.get(id=14)
-    expenses = expense_group.expenses.all()
-
-    expense_group.id = random.randint(100, 1500000)
-    expense_group.save()
 
     for expense in expenses:
         expense.expense_group_id = expense_group.id
@@ -454,15 +454,17 @@ def test_post_qbo_expenses_exceptions(create_task_logs, db):
 def test_post_credit_card_purchase_success(mocker, create_task_logs, db):
     mocker.patch('qbosdk.apis.Purchases.post', return_value=data['post_purchase'])
     mocker.patch('apps.quickbooks_online.utils.QBOConnector.get_or_create_vendor', return_value=[])
-    task_log = TaskLog.objects.filter(workspace_id=3).first()
-    task_log.status = 'READY'
-    task_log.save()
 
     expense_group = ExpenseGroup.objects.get(id=9)
+    expense_group.workspace_id = 3
     expenses = expense_group.expenses.all()
-
     expense_group.id = random.randint(100, 1500000)
     expense_group.save()
+
+    task_log = TaskLog.objects.filter(workspace_id=3).first()
+    task_log.status = 'READY'
+    task_log.expense_group_id = expense_group.id
+    task_log.save()
 
     for expense in expenses:
         expense.expense_group_id = expense_group.id
