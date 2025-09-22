@@ -104,7 +104,7 @@ class AdvancedConfigurationsSerializer(serializers.ModelSerializer):
             instance.onboarding_state = 'COMPLETE'
             instance.save()
             AdvancedConfigurationsTriggers.post_to_integration_settings(instance.id, True)
-            async_task('apps.workspaces.tasks.async_create_admin_subcriptions', instance.id)
+            async_task('apps.workspaces.tasks.async_create_admin_subscriptions', instance.id)
 
         return instance
 

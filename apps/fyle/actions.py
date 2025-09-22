@@ -8,12 +8,12 @@ from django.utils.module_loading import import_string
 from fyle.platform.exceptions import InternalServerError, RetryException
 from fyle.platform.internals.decorators import retry
 from fyle_accounting_mappings.models import ExpenseAttribute
-from fyle_integrations_platform_connector import PlatformConnector
 
 from apps.fyle.constants import DEFAULT_FYLE_CONDITIONS
 from apps.fyle.helpers import get_batched_expenses, get_updated_accounting_export_summary
 from apps.fyle.models import Expense, ExpenseGroup
 from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
+from fyle_integrations_platform_connector import PlatformConnector
 from fyle_qbo_api.logging_middleware import get_caller_info, get_logger
 
 logger = logging.getLogger(__name__)
@@ -213,7 +213,7 @@ def update_failed_expenses(failed_expenses: List[Expense], is_mapping_error: boo
 
         # Update if token expired regardless of current state
         # Otherwise, skip dummy updates (if it is already in error state with the same error type)
-        if is_token_expired or not (expense.accounting_export_summary.get('state') == 'ERROR' and \
+        if is_token_expired or not (expense.accounting_export_summary.get('state') in ['ERROR', 'DELETED'] and \
             expense.accounting_export_summary.get('error_type') == error_type):
             expense_to_be_updated.append(
                 Expense(
@@ -240,18 +240,19 @@ def update_complete_expenses(exported_expenses: List[Expense], url: str) -> None
     """
     expense_to_be_updated = []
     for expense in exported_expenses:
-        expense_to_be_updated.append(
-            Expense(
-                id=expense.id,
-                accounting_export_summary=get_updated_accounting_export_summary(
-                    expense.expense_id,
-                    'COMPLETE',
-                    None,
-                    url,
-                    False
+        if not expense.accounting_export_summary.get('state') == 'DELETED':
+            expense_to_be_updated.append(
+                Expense(
+                    id=expense.id,
+                    accounting_export_summary=get_updated_accounting_export_summary(
+                        expense.expense_id,
+                        'COMPLETE',
+                        None,
+                        url,
+                        False
+                    )
                 )
             )
-        )
 
     __bulk_update_expenses(expense_to_be_updated)
 
@@ -284,18 +285,22 @@ def __handle_post_accounting_export_summary_exception(exception: Exception, work
         for expense in error_response['response']['data']:
             if expense['message'] == 'Permission denied to perform this action.':
                 expense_instance = Expense.objects.get(expense_id=expense['key'], workspace_id=workspace_id)
-                expense_to_be_updated.append(
-                    Expense(
-                        id=expense_instance.id,
-                        accounting_export_summary=get_updated_accounting_export_summary(
-                            expense_instance.expense_id,
-                            'DELETED',
-                            None,
-                            '{}/main/dashboard'.format(settings.QBO_INTEGRATION_APP_URL),
-                            True
+                fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+                platform = PlatformConnector(fyle_credentials)
+                platform_expense = platform.expenses.get(source_account_type=['PERSONAL_CASH_ACCOUNT', 'PERSONAL_CORPORATE_CREDIT_CARD_ACCOUNT'], expense_id=expense['key'])
+                if not platform_expense:
+                    expense_to_be_updated.append(
+                        Expense(
+                            id=expense_instance.id,
+                            accounting_export_summary=get_updated_accounting_export_summary(
+                                expense_instance.expense_id,
+                                'DELETED',
+                                None,
+                                '{}/main/dashboard'.format(settings.QBO_INTEGRATION_APP_URL),
+                                True
+                            )
                         )
                     )
-                )
         if expense_to_be_updated:
             Expense.objects.bulk_update(expense_to_be_updated, ['accounting_export_summary'], batch_size=50)
     else:
