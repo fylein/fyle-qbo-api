@@ -123,7 +123,7 @@ def test_update_workspace_name(db, mocker):
         return_value={'data': {'org': {'name': 'Test Org'}}}
     )
     workspace = Workspace.objects.get(id=1)
-    update_workspace_name(workspace, 'Bearer access_token')
+    update_workspace_name(workspace.id, 'Bearer access_token')
 
     workspace = Workspace.objects.get(id=1)
     assert workspace.name == 'Test Org'
