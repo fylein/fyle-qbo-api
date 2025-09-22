@@ -145,7 +145,7 @@ def test_handle_post_accounting_export_summary_exception(db):
     expense_id = expense.expense_id
 
     with mock.patch('fyle.platform.apis.v1.admin.Expenses.post_bulk_accounting_export_summary') as mock_call:
-        with mock.patch('fyle.platform.apis.v1.admin.Expenses.get') as mock_expense_get:
+        with mock.patch('fyle_integrations_platform_connector.apis.expenses.Expenses.get') as mock_expense_get:
             mock_call.side_effect = WrongParamsError('Some of the parameters are wrong', {
                 'data': [
                     {
@@ -180,7 +180,7 @@ def test_handle_post_accounting_export_summary_exception(db):
     expense.save()
 
     with mock.patch('fyle.platform.apis.v1.admin.Expenses.post_bulk_accounting_export_summary') as mock_call:
-        with mock.patch('fyle.platform.apis.v1.admin.Expenses.get') as mock_expense_get:
+        with mock.patch('fyle_integrations_platform_connector.apis.expenses.Expenses.get') as mock_expense_get:
             mock_call.side_effect = WrongParamsError('Some of the parameters are wrong', {
                 'data': [
                     {
