@@ -123,18 +123,19 @@ def update_expenses_in_progress(in_progress_expenses: List[Expense]) -> None:
     """
     expense_to_be_updated = []
     for expense in in_progress_expenses:
-        expense_to_be_updated.append(
-            Expense(
-                id=expense.id,
-                accounting_export_summary=get_updated_accounting_export_summary(
-                    expense.expense_id,
-                    'IN_PROGRESS',
-                    None,
-                    '{}/main/dashboard'.format(settings.QBO_INTEGRATION_APP_URL),
-                    False
+        if expense.accounting_export_summary.get('state') != 'DELETED':
+            expense_to_be_updated.append(
+                Expense(
+                    id=expense.id,
+                    accounting_export_summary=get_updated_accounting_export_summary(
+                        expense.expense_id,
+                        'IN_PROGRESS',
+                        None,
+                        '{}/main/dashboard'.format(settings.QBO_INTEGRATION_APP_URL),
+                        False
+                    )
                 )
             )
-        )
 
     __bulk_update_expenses(expense_to_be_updated)
 
@@ -156,19 +157,20 @@ def mark_expenses_as_skipped(final_query: Q, expenses_object_ids: List, workspac
     skipped_expenses_list = list(expenses_to_be_skipped)
     expense_to_be_updated = []
     for expense in expenses_to_be_skipped:
-        expense_to_be_updated.append(
-            Expense(
-                id=expense.id,
-                is_skipped=True,
-                accounting_export_summary=get_updated_accounting_export_summary(
-                    expense.expense_id,
-                    'SKIPPED',
-                    None,
-                    '{}/main/export_log'.format(settings.QBO_INTEGRATION_APP_URL),
-                    False
+        if expense.accounting_export_summary.get('state') != 'DELETED':
+            expense_to_be_updated.append(
+                Expense(
+                    id=expense.id,
+                    is_skipped=True,
+                    accounting_export_summary=get_updated_accounting_export_summary(
+                        expense.expense_id,
+                        'SKIPPED',
+                        None,
+                        '{}/main/export_log'.format(settings.QBO_INTEGRATION_APP_URL),
+                        False
+                    )
                 )
             )
-        )
 
     if expense_to_be_updated:
         __bulk_update_expenses(expense_to_be_updated)
@@ -213,8 +215,8 @@ def update_failed_expenses(failed_expenses: List[Expense], is_mapping_error: boo
 
         # Update if token expired regardless of current state
         # Otherwise, skip dummy updates (if it is already in error state with the same error type)
-        if is_token_expired or not (expense.accounting_export_summary.get('state') in ['ERROR', 'DELETED'] and \
-            expense.accounting_export_summary.get('error_type') == error_type):
+        if is_token_expired or (expense.accounting_export_summary.get('state') not in ['ERROR', 'DELETED'] and \
+            expense.accounting_export_summary.get('error_type') != error_type):
             expense_to_be_updated.append(
                 Expense(
                     id=expense.id,
@@ -240,7 +242,7 @@ def update_complete_expenses(exported_expenses: List[Expense], url: str) -> None
     """
     expense_to_be_updated = []
     for expense in exported_expenses:
-        if not expense.accounting_export_summary.get('state') == 'DELETED':
+        if expense.accounting_export_summary.get('state') != 'DELETED':
             expense_to_be_updated.append(
                 Expense(
                     id=expense.id,
