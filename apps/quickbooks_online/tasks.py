@@ -885,7 +885,7 @@ def mark_paid_on_fyle(platform, payloads:dict, reports_to_be_marked, workspace_i
         logger.exception(error)
 
 
-def async_sync_accounts(workspace_id):
+def sync_accounts(workspace_id):
     try:
         qbo_credentials: QBOCredential = QBOCredential.get_active_qbo_credentials(workspace_id)
 

@@ -4,7 +4,7 @@ from typing import List
 
 from django.db.models import Q
 from django_q.models import Schedule
-from django_q.tasks import Chain, async_task
+from django_q.tasks import Chain
 from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from fyle_accounting_library.rabbitmq.data_class import Task
 from fyle_accounting_library.rabbitmq.helpers import TaskChainRunner
@@ -14,13 +14,21 @@ from apps.fyle.models import ExpenseGroup
 from apps.quickbooks_online.actions import update_last_export_details
 from apps.tasks.models import Error, TaskLog
 from apps.workspaces.models import WorkspaceGeneralSettings
+from workers.helpers import RoutingKeyEnum, WorkerActionEnum, publish_to_rabbitmq
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
 
 
 def async_run_post_configration_triggers(workspace_general_settings: WorkspaceGeneralSettings):
-    async_task('apps.quickbooks_online.tasks.async_sync_accounts', int(workspace_general_settings.workspace_id), q_options={'cluster': 'import'})
+    payload = {
+        'workspace_id': workspace_general_settings.workspace.id,
+        'action': WorkerActionEnum.SYNC_ACCOUNTS.value,
+        'data': {
+            'workspace_id': workspace_general_settings.workspace.id
+        }
+    }
+    publish_to_rabbitmq(payload=payload, routing_key=RoutingKeyEnum.IMPORT.value)
 
 
 def handle_skipped_exports(expense_groups: List[ExpenseGroup], index: int, skip_export_count: int, error: Error = None, expense_group: ExpenseGroup = None, triggered_by: ExpenseImportSourceEnum = None):

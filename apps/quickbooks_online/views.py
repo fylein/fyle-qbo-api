@@ -2,7 +2,6 @@ import logging
 
 from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
-from django_q.tasks import async_task
 from fyle_accounting_mappings.models import DestinationAttribute
 from fyle_accounting_mappings.serializers import DestinationAttributeSerializer
 from rest_framework import generics
@@ -14,6 +13,7 @@ from apps.quickbooks_online.serializers import QBOWebhookIncomingSerializer, Qui
 from apps.workspaces.models import QBOCredential, Workspace
 from apps.workspaces.permissions import IsAuthenticatedForQuickbooksWebhook
 from fyle_qbo_api.utils import LookupFieldMixin
+from workers.helpers import RoutingKeyEnum, WorkerActionEnum, publish_to_rabbitmq
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -65,12 +65,18 @@ class SyncQuickbooksDimensionView(generics.ListCreateAPIView):
 
     @handle_view_exceptions()
     def post(self, request, *args, **kwargs):
-
         # Check for a valid workspace and qbo creds and respond with 400 if not found
-        Workspace.objects.get(id=kwargs['workspace_id'])
+        workspace = Workspace.objects.get(id=kwargs['workspace_id'])
         QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
 
-        async_task('apps.quickbooks_online.actions.sync_quickbooks_dimensions', kwargs['workspace_id'])
+        payload = {
+            'workspace_id': workspace.id,
+            'action': WorkerActionEnum.CHECK_INTERVAL_AND_SYNC_QUICKBOOKS_DIMENSION.value,
+            'data': {
+                'workspace_id': workspace.id
+            }
+        }
+        publish_to_rabbitmq(payload=payload, routing_key=RoutingKeyEnum.IMPORT.value)
 
         return Response(status=status.HTTP_200_OK)
 
@@ -87,10 +93,17 @@ class RefreshQuickbooksDimensionView(generics.ListCreateAPIView):
         """
 
         # Check for a valid workspace and qbo creds and respond with 400 if not found
-        Workspace.objects.get(id=kwargs['workspace_id'])
+        workspace = Workspace.objects.get(id=kwargs['workspace_id'])
         QBOCredential.get_active_qbo_credentials(kwargs['workspace_id'])
 
-        async_task('apps.quickbooks_online.actions.refresh_quickbooks_dimensions', kwargs['workspace_id'])
+        payload = {
+            'workspace_id': workspace.id,
+            'action': WorkerActionEnum.SYNC_QUICKBOOKS_DIMENSION.value,
+            'data': {
+                'workspace_id': workspace.id
+            }
+        }
+        publish_to_rabbitmq(payload=payload, routing_key=RoutingKeyEnum.IMPORT.value)
 
         return Response(status=status.HTTP_200_OK)
 
