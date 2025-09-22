@@ -6,7 +6,7 @@ from apps.users.models import User
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings, WorkspaceSchedule
 from apps.workspaces.tasks import (
     async_add_admins_to_workspace,
-    async_create_admin_subcriptions,
+    async_create_admin_subscriptions,
     async_update_workspace_name,
     run_email_notification,
     run_sync_schedule,
@@ -109,12 +109,12 @@ def test_email_notification(db):
     run_email_notification(workspace_id=workspace_id)
 
 
-def test_async_create_admin_subcriptions(db, mocker):
+def test_async_create_admin_subscriptions(db, mocker):
     mocker.patch(
         'fyle.platform.apis.v1.admin.Subscriptions.post',
         return_value={}
     )
-    async_create_admin_subcriptions(3)
+    async_create_admin_subscriptions(3)
 
 
 def test_async_update_workspace_name(db, mocker):
