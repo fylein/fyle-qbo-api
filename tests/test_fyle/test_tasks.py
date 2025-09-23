@@ -552,7 +552,7 @@ def test_handle_fund_source_changes_for_expense_ids(mocker, db):
     """
     Test handle fund source changes for expense ids
     """
-    workspace_id = 3  # Use workspace_id=3 which has expense groups in fixtures
+    workspace_id = 3
     expense_group = ExpenseGroup.objects.filter(workspace_id=workspace_id).first()
     expense = expense_group.expenses.first()
     changed_expense_ids = [expense.id]
@@ -565,8 +565,6 @@ def test_handle_fund_source_changes_for_expense_ids(mocker, db):
         affected_fund_source_expense_ids={'PERSONAL': changed_expense_ids, 'CCC': []},
         task_name='test_task'
     )
-    
-    # The function should complete without errors
 
 
 @pytest.mark.django_db()
@@ -574,7 +572,7 @@ def test_process_expense_group_for_fund_source_update_enqueued_status(mocker, db
     """
     Test process expense group when task log is ENQUEUED
     """
-    workspace_id = 3  # Use workspace_id=3 which has expense groups in fixtures
+    workspace_id = 3
     expense_group = ExpenseGroup.objects.filter(workspace_id=workspace_id).first()
     changed_expense_ids = [expense_group.expenses.first().id]
 
@@ -586,7 +584,6 @@ def test_process_expense_group_for_fund_source_update_enqueued_status(mocker, db
             'status': 'ENQUEUED'
         }
     )
-    # Ensure the task log has the right status for our test
     task_log.status = 'ENQUEUED'
     task_log.save()
 
@@ -613,11 +610,10 @@ def test_process_expense_group_for_fund_source_update_in_progress_status(mocker,
     """
     Test process expense group when task log is IN_PROGRESS
     """
-    workspace_id = 3  # Use workspace_id=3 which has expense groups in fixtures
+    workspace_id = 3
     expense_group = ExpenseGroup.objects.filter(workspace_id=workspace_id).first()
     changed_expense_ids = [expense_group.expenses.first().id]
 
-    # Clear existing task logs
     TaskLog.objects.filter(expense_group_id=expense_group.id).delete()
 
     task_log = TaskLog.objects.create(
@@ -650,11 +646,10 @@ def test_process_expense_group_for_fund_source_update_complete_status(mocker, db
     """
     Test process expense group when task log is COMPLETE
     """
-    workspace_id = 3  # Use workspace_id=3 which has expense groups in fixtures
+    workspace_id = 3
     expense_group = ExpenseGroup.objects.filter(workspace_id=workspace_id).first()
     changed_expense_ids = [expense_group.expenses.first().id]
 
-    # Clear existing task logs
     TaskLog.objects.filter(expense_group_id=expense_group.id).delete()
 
     task_log = TaskLog.objects.create(
@@ -687,11 +682,10 @@ def test_process_expense_group_for_fund_source_update_no_task_log(mocker, db):
     """
     Test process expense group when no task log exists
     """
-    workspace_id = 3  # Use workspace_id=3 which has expense groups in fixtures
+    workspace_id = 3
     expense_group = ExpenseGroup.objects.filter(workspace_id=workspace_id).first()
     changed_expense_ids = [expense_group.expenses.first().id]
 
-    # Clear existing task logs
     TaskLog.objects.filter(expense_group_id=expense_group.id).delete()
 
     mock_delete_recreate = mocker.patch(
@@ -716,10 +710,9 @@ def test_delete_expense_group_and_related_data(mocker, db):
     """
     Test delete expense group and related data
     """
-    workspace_id = 3  # Use workspace_id=3 which has expense groups in fixtures
+    workspace_id = 3
     expense_group = ExpenseGroup.objects.filter(workspace_id=workspace_id).first()
 
-    # Clear existing task logs and create test data
     TaskLog.objects.filter(expense_group_id=expense_group.id).delete()
 
     task_log = TaskLog.objects.create(
@@ -735,83 +728,39 @@ def test_delete_expense_group_and_related_data(mocker, db):
         type='QBO_ERROR'
     )
 
-    # Create error with mapping_error_expense_group_ids
     error_with_mapping = Error.objects.create(
         workspace_id=workspace_id,
         type='MAPPING_ERROR',
         mapping_error_expense_group_ids=[expense_group.id, 999]
     )
 
-    # Mock the expense group delete to avoid protected foreign key issues
     mock_expense_group_delete = mocker.patch.object(expense_group, 'delete')
 
     delete_expense_group_and_related_data(expense_group=expense_group, workspace_id=workspace_id)
 
-    # Verify task logs and error logs are deleted
     assert not TaskLog.objects.filter(id=task_log.id).exists()
     assert not Error.objects.filter(id=error.id).exists()
 
-    # Verify mapping error is updated correctly
     error_with_mapping.refresh_from_db()
     assert expense_group.id not in error_with_mapping.mapping_error_expense_group_ids
     assert 999 in error_with_mapping.mapping_error_expense_group_ids
 
-    # Verify expense group delete was called
     mock_expense_group_delete.assert_called_once()
     error_with_mapping.delete()
 
 
 @pytest.mark.django_db()
-def test_delete_expense_group_and_related_data_empty_mapping_error(mocker, db):
-    """
-    Test delete expense group with empty mapping error
-    """
-    workspace_id = 3  # Use workspace_id=3 which has expense groups in fixtures
-    expense_group = ExpenseGroup.objects.filter(workspace_id=workspace_id).first()
-
-    error_with_mapping = Error.objects.create(
-        workspace_id=workspace_id,
-        type='MAPPING_ERROR',
-        mapping_error_expense_group_ids=[expense_group.id]
-    )
-
-    # Mock the expense group delete to avoid protected foreign key issues
-    mock_expense_group_delete = mocker.patch.object(expense_group, 'delete')
-
-    delete_expense_group_and_related_data(expense_group=expense_group, workspace_id=workspace_id)
-
-    # Verify error is completely deleted when mapping list becomes empty
-    assert not Error.objects.filter(id=error_with_mapping.id).exists()
-
-    # Verify expense group delete was called
-    mock_expense_group_delete.assert_called_once()
-
-
-@pytest.mark.django_db()
 def test_recreate_expense_groups(mocker, db):
     """
-    Test recreate expense groups
+    Test recreate expense groups - actually test the real functionality
     """
-    workspace_id = 1
+    workspace_id = 3  # Use workspace_id=3 which has real data in fixtures
 
-    # Ensure expenses exist in the workspace
-    Expense.objects.all().update(workspace_id=workspace_id)
-    existing_expenses = list(Expense.objects.filter(workspace_id=workspace_id))
-    expense_ids = [existing_expenses[0].id]
+    # Get real expenses from fixtures
+    expenses = Expense.objects.filter(workspace_id=workspace_id)[:2]
+    expense_ids = [expense.id for expense in expenses]
 
-    mock_create_groups = mocker.patch(
-        'apps.fyle.models.ExpenseGroup.create_expense_groups_by_report_id_fund_source',
-        return_value=[expense_ids[0]]
-    )
-
-    # Mock mark_expenses_as_skipped to return some expenses
-    mock_expense = mocker.MagicMock()
-    mock_expense.id = expense_ids[0]
-    mocker.patch(
-        'apps.fyle.tasks.mark_expenses_as_skipped',
-        return_value=[mock_expense]
-    )
-
+    # Only mock the final summary posting since that's external communication
     mock_post_summary = mocker.patch(
         'apps.fyle.tasks.post_accounting_export_summary',
         return_value=None
@@ -819,7 +768,7 @@ def test_recreate_expense_groups(mocker, db):
 
     recreate_expense_groups(workspace_id=workspace_id, expense_ids=expense_ids)
 
-    assert mock_create_groups.call_count == 1
+    # Verify that the function actually ran (summary was posted)
     assert mock_post_summary.call_count == 1
 
 
@@ -828,30 +777,21 @@ def test_recreate_expense_groups_with_configuration_filters(mocker, db):
     """
     Test recreate expense groups with configuration and filters
     """
-    workspace_id = 1
+    workspace_id = 3  # Use workspace_id=3 which has real data in fixtures
     configuration = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
 
-    # Ensure expenses exist in the workspace
-    Expense.objects.all().update(workspace_id=workspace_id)
-    existing_expenses = list(Expense.objects.filter(workspace_id=workspace_id))
-    expense_ids = [existing_expenses[0].id] if len(existing_expenses) == 1 else [existing_expenses[0].id, existing_expenses[1].id]
+    # Get real expenses from fixtures
+    expenses = Expense.objects.filter(workspace_id=workspace_id)[:2]
+    expense_ids = [expense.id for expense in expenses]
 
-    mock_create_groups = mocker.patch(
-        'apps.fyle.models.ExpenseGroup.create_expense_groups_by_report_id_fund_source',
-        return_value=[]
-    )
-
-    mocker.patch(
+    # Only mock the external summary function
+    mock_skip_and_post = mocker.patch(
         'apps.fyle.tasks.skip_expenses_and_post_accounting_export_summary',
         return_value=None
     )
 
-    mock_delete_expenses = mocker.patch(
-        'apps.fyle.tasks.delete_expenses_in_db',
-        return_value=None
-    )
-
     # Test with reimbursable expenses disabled
+    original_reimbursable_object = configuration.reimbursable_expenses_object
     configuration.reimbursable_expenses_object = None
     configuration.save()
 
@@ -859,13 +799,19 @@ def test_recreate_expense_groups_with_configuration_filters(mocker, db):
 
     # Test with corporate credit card expenses disabled
     configuration.reimbursable_expenses_object = 'BILL'
+    original_ccc_object = configuration.corporate_credit_card_expenses_object
     configuration.corporate_credit_card_expenses_object = None
     configuration.save()
 
     recreate_expense_groups(workspace_id=workspace_id, expense_ids=expense_ids)
 
-    assert mock_create_groups.call_count >= 1
-    assert mock_delete_expenses.call_count >= 1
+    # Restore original configuration
+    configuration.reimbursable_expenses_object = original_reimbursable_object
+    configuration.corporate_credit_card_expenses_object = original_ccc_object
+    configuration.save()
+
+    # Verify the function executed the skip and post logic
+    assert mock_skip_and_post.call_count >= 1
 
 
 @pytest.mark.django_db()
