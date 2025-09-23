@@ -9,7 +9,6 @@ from django.utils.safestring import mark_safe
 from django_q.models import Schedule
 from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from fyle_accounting_mappings.models import ExpenseAttribute
-from fyle_integrations_platform_connector import PlatformConnector
 from fyle_rest_auth.helpers import get_fyle_admin
 
 from apps.fyle.models import ExpenseGroup
@@ -20,6 +19,7 @@ from apps.workspaces.actions import export_to_qbo
 from apps.workspaces.models import FyleCredential, QBOCredential, Workspace, WorkspaceGeneralSettings, WorkspaceSchedule
 from apps.workspaces.queue import schedule_email_notification
 from apps.workspaces.utils import send_email
+from fyle_integrations_platform_connector import PlatformConnector
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -231,7 +231,7 @@ def async_update_fyle_credentials(fyle_org_id: str, refresh_token: str):
         fyle_credentials.save()
 
 
-def async_create_admin_subcriptions(workspace_id: int) -> None:
+def async_create_admin_subscriptions(workspace_id: int) -> None:
     """
     Create admin subscriptions
     :param workspace_id: workspace id
