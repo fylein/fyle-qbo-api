@@ -21,7 +21,6 @@ from apps.fyle.tasks import (
     post_accounting_export_summary,
     process_expense_group_for_fund_source_update,
     re_run_skip_export_rule,
-    recreate_expense_groups,
     schedule_expense_group_creation,
     schedule_task_for_expense_group_fund_source_change,
     skip_expenses_and_post_accounting_export_summary,
@@ -747,71 +746,6 @@ def test_delete_expense_group_and_related_data(mocker, db):
 
     mock_expense_group_delete.assert_called_once()
     error_with_mapping.delete()
-
-
-@pytest.mark.django_db()
-def test_recreate_expense_groups(mocker, db):
-    """
-    Test recreate expense groups - actually test the real functionality
-    """
-    workspace_id = 3  # Use workspace_id=3 which has real data in fixtures
-
-    # Get real expenses from fixtures
-    expenses = Expense.objects.filter(workspace_id=workspace_id)[:2]
-    expense_ids = [expense.id for expense in expenses]
-
-    # Only mock the final summary posting since that's external communication
-    mock_post_summary = mocker.patch(
-        'apps.fyle.tasks.post_accounting_export_summary',
-        return_value=None
-    )
-
-    recreate_expense_groups(workspace_id=workspace_id, expense_ids=expense_ids)
-
-    # Verify that the function actually ran (summary was posted)
-    assert mock_post_summary.call_count == 1
-
-
-@pytest.mark.django_db()
-def test_recreate_expense_groups_with_configuration_filters(mocker, db):
-    """
-    Test recreate expense groups with configuration and filters
-    """
-    workspace_id = 3  # Use workspace_id=3 which has real data in fixtures
-    configuration = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
-
-    # Get real expenses from fixtures
-    expenses = Expense.objects.filter(workspace_id=workspace_id)[:2]
-    expense_ids = [expense.id for expense in expenses]
-
-    # Only mock the external summary function
-    mock_skip_and_post = mocker.patch(
-        'apps.fyle.tasks.skip_expenses_and_post_accounting_export_summary',
-        return_value=None
-    )
-
-    # Test with reimbursable expenses disabled
-    original_reimbursable_object = configuration.reimbursable_expenses_object
-    configuration.reimbursable_expenses_object = None
-    configuration.save()
-
-    recreate_expense_groups(workspace_id=workspace_id, expense_ids=expense_ids)
-
-    # Test with corporate credit card expenses disabled
-    configuration.reimbursable_expenses_object = 'BILL'
-    original_ccc_object = configuration.corporate_credit_card_expenses_object
-    configuration.corporate_credit_card_expenses_object = None
-    configuration.save()
-
-    recreate_expense_groups(workspace_id=workspace_id, expense_ids=expense_ids)
-
-    # Restore original configuration
-    configuration.reimbursable_expenses_object = original_reimbursable_object
-    configuration.corporate_credit_card_expenses_object = original_ccc_object
-    configuration.save()
-
-    # Verify the function executed the skip and post logic
-    assert mock_skip_and_post.call_count >= 1
 
 
 @pytest.mark.django_db()
