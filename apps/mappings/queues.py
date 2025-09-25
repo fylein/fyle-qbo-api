@@ -5,9 +5,10 @@ from fyle_accounting_mappings.models import MappingSetting
 
 from apps.mappings.constants import SYNC_METHODS
 from apps.mappings.models import GeneralMapping
-from apps.workspaces.models import QBOCredential, WorkspaceGeneralSettings
+from apps.workspaces.models import FeatureConfig, QBOCredential, WorkspaceGeneralSettings
 from fyle_integrations_imports.dataclasses import TaskSetting
 from fyle_integrations_imports.queues import chain_import_fields_to_fyle
+from workers.helpers import RoutingKeyEnum, WorkerActionEnum, publish_to_rabbitmq
 
 
 def schedule_bill_payment_creation(sync_fyle_to_qbo_payments, workspace_id):
@@ -49,10 +50,35 @@ def schedule_auto_map_employees(employee_mapping_preference: str, workspace_id: 
             schedule.delete()
 
 
-def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
+def construct_tasks_and_chain_import_fields_to_fyle(workspace_id: int) -> None:
     """
-    Chain import fields to Fyle
+    Initiate the Import of dimensions to Fyle
     :param workspace_id: Workspace Id
+    :return: None
+
+    Schedule will hit this func, if we want to process things via worker,
+    we can publish to rabbitmq else chain it as usual.
+    """
+    feature_configs = FeatureConfig.objects.get(workspace_id=workspace_id)
+    if feature_configs.import_via_rabbitmq:
+        payload = {
+            'workspace_id': workspace_id,
+            'action': WorkerActionEnum.IMPORT_DIMENSIONS_TO_FYLE.value,
+            'data': {
+                'workspace_id': workspace_id,
+                'run_in_rabbitmq_worker': True
+            }
+        }
+        publish_to_rabbitmq(payload=payload, routing_key=RoutingKeyEnum.IMPORT.value)
+    else:
+        initiate_import_to_fyle(workspace_id=workspace_id)
+
+
+def initiate_import_to_fyle(workspace_id: int, run_in_rabbitmq_worker: bool = False) -> None:
+    """
+    Initiate import fields to Fyle
+    :param workspace_id: Workspace Id
+    :return: None
     """
     mapping_settings = MappingSetting.objects.filter(workspace_id=workspace_id, import_to_fyle=True)
     workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
@@ -100,12 +126,8 @@ def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
             'is_3d_mapping': False,
         }
 
-    # if not workspace_general_settings.import_items:
-    #     task_settings['import_items'] = False
-
     task_settings['import_items'] = workspace_general_settings.import_items
 
-    # For now we are only adding PROJECTS support that is why we are hardcoding it
     if mapping_settings:
         for mapping_setting in mapping_settings:
             if mapping_setting.source_field in ['PROJECT', 'COST_CENTER'] or mapping_setting.is_custom:
@@ -117,4 +139,8 @@ def construct_tasks_and_chain_import_fields_to_fyle(workspace_id):
                     'is_custom': mapping_setting.is_custom
                 })
 
-    chain_import_fields_to_fyle(workspace_id, task_settings)
+    chain_import_fields_to_fyle(
+        workspace_id=workspace_id,
+        task_settings=task_settings,
+        run_in_rabbitmq_worker=run_in_rabbitmq_worker
+    )

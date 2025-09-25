@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from unittest import mock
 
+from django.db.models.functions import Lower
 from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute, Mapping
 
 from apps.quickbooks_online.utils import QBOConnector
@@ -62,11 +63,11 @@ def test_construct_attributes_filter(db):
 
     filters = base.construct_attributes_filter('COST_CENTER', False,  paginated_destination_attribute_values)
 
-    assert filters == {'active': True, 'attribute_type': 'COST_CENTER', 'workspace_id': 1, 'value__in': paginated_destination_attribute_values}
+    assert filters == {'active': True, 'attribute_type': 'COST_CENTER', 'workspace_id': 1, 'value_lower__in': [val.lower() for val in paginated_destination_attribute_values]}
 
     filters = base.construct_attributes_filter('CUSTOMER', True,  paginated_destination_attribute_values)
 
-    assert filters == {'active': True, 'attribute_type': 'CUSTOMER', 'workspace_id': 1, 'updated_at__gte': sync_after, 'value__in': paginated_destination_attribute_values}
+    assert filters == {'active': True, 'attribute_type': 'CUSTOMER', 'workspace_id': 1, 'updated_at__gte': sync_after, 'value_lower__in': [val.lower() for val in paginated_destination_attribute_values]}
 
 
 def test_expense_attributes_sync_after(db):
@@ -89,7 +90,7 @@ def test_expense_attributes_sync_after(db):
 
     filters = project.construct_attributes_filter('PROJECT', False, paginated_expense_attribute_values, is_auto_sync_enabled=True)
 
-    expense_attributes = ExpenseAttribute.objects.filter(**filters)
+    expense_attributes = ExpenseAttribute.objects.annotate(value_lower=Lower('value')).filter(**filters)
 
     assert expense_attributes.count() == 100
 

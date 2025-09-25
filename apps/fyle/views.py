@@ -1,7 +1,6 @@
 import logging
 
 from django_filters.rest_framework import DjangoFilterBackend
-from django_q.tasks import async_task
 from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from rest_framework import generics
 from rest_framework.response import Response
@@ -22,6 +21,7 @@ from apps.fyle.serializers import (
 from apps.fyle.tasks import create_expense_groups, get_task_log_and_fund_source
 from apps.workspaces.models import FyleCredential, Workspace
 from fyle_qbo_api.utils import LookupFieldMixin
+from workers.helpers import RoutingKeyEnum, WorkerActionEnum, publish_to_rabbitmq
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -117,12 +117,18 @@ class SyncFyleDimensionView(generics.ListCreateAPIView):
         """
         Sync Data From Fyle
         """
-
         # Check for a valid workspace and fyle creds and respond with 400 if not found
-        Workspace.objects.get(id=kwargs['workspace_id'])
+        workspace = Workspace.objects.get(id=kwargs['workspace_id'])
         FyleCredential.objects.get(workspace_id=kwargs['workspace_id'])
 
-        async_task('apps.fyle.actions.sync_fyle_dimensions', kwargs['workspace_id'])
+        payload = {
+            'workspace_id': workspace.id,
+            'action': WorkerActionEnum.CHECK_INTERVAL_AND_SYNC_FYLE_DIMENSION.value,
+            'data': {
+                'workspace_id': workspace.id,
+            }
+        }
+        publish_to_rabbitmq(payload=payload, routing_key=RoutingKeyEnum.IMPORT.value)
 
         return Response(status=status.HTTP_200_OK)
 
@@ -137,12 +143,17 @@ class RefreshFyleDimensionView(generics.ListCreateAPIView):
         """
         Sync data from Fyle
         """
-
-        # Check for a valid workspace and fyle creds and respond with 400 if not found
-        Workspace.objects.get(id=kwargs['workspace_id'])
+        workspace = Workspace.objects.get(id=kwargs['workspace_id'])
         FyleCredential.objects.get(workspace_id=kwargs['workspace_id'])
 
-        async_task('apps.fyle.actions.refresh_fyle_dimension', kwargs['workspace_id'])
+        payload = {
+            'workspace_id': workspace.id,
+            'action': WorkerActionEnum.HANDLE_FYLE_REFRESH_DIMENSION.value,
+            'data': {
+                'workspace_id': workspace.id,
+            }
+        }
+        publish_to_rabbitmq(payload=payload, routing_key=RoutingKeyEnum.IMPORT.value)
 
         return Response(status=status.HTTP_200_OK)
 

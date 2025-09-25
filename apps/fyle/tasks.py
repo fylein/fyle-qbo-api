@@ -9,6 +9,9 @@ from fyle.platform.exceptions import InternalServerError, InvalidTokenError, Ret
 from fyle_accounting_library.fyle_platform.branding import feature_configuration
 from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from fyle_accounting_library.fyle_platform.helpers import filter_expenses_based_on_state, get_expense_import_states
+from fyle_accounting_mappings.models import ExpenseAttribute
+from fyle_integrations_platform_connector import PlatformConnector
+from fyle_integrations_platform_connector.apis.expenses import Expenses as FyleExpenses
 
 from apps.fyle.actions import mark_expenses_as_skipped, post_accounting_export_summary
 from apps.fyle.helpers import (
@@ -23,9 +26,6 @@ from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupS
 from apps.tasks.models import Error, TaskLog
 from apps.workspaces.actions import export_to_qbo
 from apps.workspaces.models import FyleCredential, LastExportDetail, Workspace, WorkspaceGeneralSettings, WorkspaceSchedule
-from fyle_accounting_mappings.models import ExpenseAttribute
-from fyle_integrations_platform_connector import PlatformConnector
-from fyle_integrations_platform_connector.apis.expenses import Expenses as FyleExpenses
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -325,7 +325,8 @@ def import_and_export_expenses(report_id: str, org_id: str, is_state_change_even
                 workspace_id=workspace.id,
                 expense_group_ids=expense_group_ids,
                 is_direct_export=True if not is_state_change_event else False,
-                triggered_by=imported_from
+                triggered_by=imported_from,
+                run_in_rabbitmq_worker=True
             )
 
     except WorkspaceGeneralSettings.DoesNotExist:

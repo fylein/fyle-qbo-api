@@ -2,13 +2,13 @@ from datetime import datetime, timezone
 from typing import Dict, List
 
 from django.db.models import Q
-from django_q.tasks import async_task
 from fyle_accounting_mappings.models import ExpenseAttribute, MappingSetting
 
 from apps.fyle.models import ExpenseGroupSettings
 from apps.mappings.schedules import schedule_or_delete_fyle_import_tasks as new_schedule_or_delete_fyle_import_tasks
 from apps.workspaces.models import WorkspaceGeneralSettings
 from fyle_integrations_imports.models import ImportLog
+from workers.helpers import RoutingKeyEnum, WorkerActionEnum, publish_to_rabbitmq
 
 
 class ImportSettingsTrigger:
@@ -78,7 +78,16 @@ class ImportSettingsTrigger:
         Post save action for workspace general settings
         """
         if not workspace_general_settings_instance.import_items and old_workspace_general_settings.import_items:
-            async_task('fyle_integrations_imports.tasks.disable_items', workspace_id=self.__workspace_id, is_import_enabled=False)
+            payload = {
+                'workspace_id': self.__workspace_id,
+                'action': WorkerActionEnum.DISABLE_ITEMS.value,
+                'data': {
+                    'workspace_id': self.__workspace_id,
+                    'is_import_enabled': False
+                }
+            }
+            publish_to_rabbitmq(payload=payload, routing_key=RoutingKeyEnum.IMPORT.value)
+
         new_schedule_or_delete_fyle_import_tasks(workspace_general_settings_instance)
 
     def __remove_old_department_source_field(self, current_mappings_settings: List[MappingSetting], new_mappings_settings: List[Dict]):

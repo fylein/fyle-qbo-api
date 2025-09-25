@@ -4,7 +4,6 @@ import traceback
 from django.contrib.auth import get_user_model
 from django.db import connection
 from django.db.models import Q
-from django_q.tasks import async_task
 from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from fyle_rest_auth.utils import AuthUtils
 from qbosdk import exceptions as qbo_exc
@@ -24,7 +23,7 @@ from apps.workspaces.actions import (
     setup_e2e_tests,
     update_or_create_workspace,
 )
-from apps.workspaces.models import LastExportDetail, QBOCredential, Workspace, WorkspaceGeneralSettings
+from apps.workspaces.models import FeatureConfig, LastExportDetail, QBOCredential, Workspace, WorkspaceGeneralSettings
 from apps.workspaces.permissions import IsAuthenticatedForInternalAPI
 from apps.workspaces.serializers import (
     LastExportDetailSerializer,
@@ -34,6 +33,7 @@ from apps.workspaces.serializers import (
 )
 from apps.workspaces.utils import generate_qbo_refresh_token
 from fyle_qbo_api.utils import invalidate_qbo_credentials
+from workers.helpers import RoutingKeyEnum, WorkerActionEnum, publish_to_rabbitmq
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -107,12 +107,15 @@ class WorkspaceView(generics.CreateAPIView, generics.RetrieveUpdateAPIView):
         logger.info('User id %s', request.user)
         if workspaces:
             logger.info('Workspace detail %s', workspaces)
-            async_task(
-                "apps.workspaces.tasks.async_update_workspace_name",
-                workspaces[0],
-                request.META.get("HTTP_AUTHORIZATION"),
-                q_options={'cluster': 'import'}
-            )
+            payload = {
+                'workspace_id': workspaces[0].id,
+                'action': WorkerActionEnum.UPDATE_WORKSPACE_NAME.value,
+                'data': {
+                    'workspace_id': workspaces[0].id,
+                    'access_token': request.META.get('HTTP_AUTHORIZATION'),
+                }
+            }
+            publish_to_rabbitmq(payload=payload, routing_key=RoutingKeyEnum.UTILITY.value)
         else:
             logger.info('No workspace found for user %s with org_id %s', request.user, org_id)
 
@@ -194,7 +197,23 @@ class ExportToQBOView(generics.CreateAPIView):
     """
 
     def post(self, request, *args, **kwargs):
-        export_to_qbo(workspace_id=kwargs['workspace_id'], triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC)
+        feature_config = FeatureConfig.objects.get(workspace_id=kwargs['workspace_id'])
+        if feature_config.export_via_rabbitmq:
+            payload = {
+                'workspace_id': kwargs['workspace_id'],
+                'action': WorkerActionEnum.DASHBOARD_SYNC.value,
+                'data': {
+                    'workspace_id': kwargs['workspace_id'],
+                    'triggered_by': ExpenseImportSourceEnum.DASHBOARD_SYNC,
+                    'run_in_rabbitmq_worker': True
+                }
+            }
+            publish_to_rabbitmq(payload=payload, routing_key=RoutingKeyEnum.EXPORT_P0.value)
+        else:
+            export_to_qbo(
+                workspace_id=kwargs['workspace_id'],
+                triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC
+            )
 
         return Response(status=status.HTTP_200_OK)
 
