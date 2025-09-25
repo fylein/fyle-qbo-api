@@ -33,7 +33,7 @@ from apps.fyle.tasks import (
     update_non_exported_expenses,
 )
 from apps.tasks.models import Error, TaskLog
-from apps.workspaces.models import FyleCredential, LastExportDetail, Workspace, WorkspaceGeneralSettings, WorkspaceSchedule
+from apps.workspaces.models import FyleCredential, LastExportDetail, Workspace, WorkspaceGeneralSettings
 from tests.helper import dict_compare_keys
 from tests.test_fyle.fixtures import data
 
@@ -978,8 +978,6 @@ def test_import_and_export_expenses_fund_source_change_exception(mocker, db):
     )
 
 
-
-
 def test_handle_expense_fund_source_change_complete_flow(mocker, db):
     workspace_id = 1
     report_id = 'rp1s1L3QtMpF'
@@ -1053,12 +1051,6 @@ def test_handle_fund_source_changes_no_affected_groups(mocker, db):
     )
 
 
-
-
-
-
-
-
 def test_recreate_expense_groups_no_expenses_found(mocker, db):
 
     workspace_id = 1
@@ -1113,10 +1105,6 @@ def test_recreate_expense_groups_no_ccc_config(mocker, db):
 
     remaining_expenses = Expense.objects.filter(id__in=expense_ids, workspace_id=workspace_id)
     assert remaining_expenses.count() == 0
-
-
-
-
 
 
 def test_delete_expenses_in_db(mocker, db):
@@ -1404,8 +1392,6 @@ def test_import_and_export_expenses_general_exception(mocker, db):
     assert mock_handle_import_exception.call_count == 1
 
 
-
-
 def test_re_run_skip_export_rule_exception_in_post_summary(mocker, db):
     workspace = Workspace.objects.get(id=1)
 
@@ -1417,11 +1403,7 @@ def test_re_run_skip_export_rule_exception_in_post_summary(mocker, db):
         rank=1
     )
 
-    expense_data = data['expenses'][0].copy()
-    expense_data['org_id'] = workspace.fyle_org_id
-    expense_data['category'] = 'Test'
-    
-    expense = Expense.objects.create(
+    Expense.objects.create(
         employee_email='test@example.com',
         employee_name='Test Employee',
         category='Test',
