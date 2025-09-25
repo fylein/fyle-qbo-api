@@ -14,12 +14,17 @@ from apps.fyle.actions import mark_expenses_as_skipped
 from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings
 from apps.fyle.tasks import (
     cleanup_scheduled_task,
+    construct_filter_for_affected_expense_groups,
     create_expense_groups,
     delete_expense_group_and_related_data,
+    delete_expenses_in_db,
+    group_expenses_and_save,
+    handle_expense_fund_source_change,
     handle_fund_source_changes_for_expense_ids,
     import_and_export_expenses,
     post_accounting_export_summary,
     process_expense_group_for_fund_source_update,
+    recreate_expense_groups,
     re_run_skip_export_rule,
     schedule_expense_group_creation,
     schedule_task_for_expense_group_fund_source_change,
@@ -28,7 +33,7 @@ from apps.fyle.tasks import (
     update_non_exported_expenses,
 )
 from apps.tasks.models import Error, TaskLog
-from apps.workspaces.models import FyleCredential, LastExportDetail, Workspace, WorkspaceGeneralSettings
+from apps.workspaces.models import FyleCredential, LastExportDetail, Workspace, WorkspaceGeneralSettings, WorkspaceSchedule
 from tests.helper import dict_compare_keys
 from tests.test_fyle.fixtures import data
 
@@ -895,3 +900,728 @@ def test_update_non_exported_expenses_fund_source_change(mocker, db):
     assert kwargs['changed_expense_ids'] == [expense_created.id]
     assert kwargs['report_id'] == expense_created.report_id
     assert kwargs['affected_fund_source_expense_ids'] == {'PERSONAL': [expense_created.id]}
+
+
+def test_group_expenses_and_save_with_skipped_expense_ids_exception(mocker, db):
+    workspace = Workspace.objects.get(id=1)
+    task_log = TaskLog.objects.create(workspace_id=workspace.id, type='FETCHING_EXPENSES', status='IN_PROGRESS')
+
+    expenses = data['expenses'][:1]
+
+    mocker.patch(
+        'apps.fyle.models.ExpenseGroup.create_expense_groups_by_report_id_fund_source',
+        return_value=([], [1, 2])
+    )
+
+    mock_expense = mocker.MagicMock()
+    mock_expense.id = 1
+    mock_mark_skipped = mocker.patch(
+        'apps.fyle.tasks.mark_expenses_as_skipped',
+        return_value=[mock_expense]
+    )
+
+    mock_post_summary = mocker.patch(
+        'apps.fyle.tasks.post_accounting_export_summary',
+        side_effect=Exception("Test exception")
+    )
+
+    mock_logger = mocker.patch('apps.fyle.tasks.logger')
+
+    group_expenses_and_save(
+        expenses=expenses,
+        task_log=task_log,
+        workspace=workspace,
+        imported_from=ExpenseImportSourceEnum.DASHBOARD_SYNC,
+        filter_credit_expenses=False
+    )
+
+    assert mock_mark_skipped.call_count == 1
+    assert mock_post_summary.call_count == 1
+    assert mock_logger.error.call_count == 1
+    mock_logger.error.assert_called_with('Error posting accounting export summary for workspace_id: %s', workspace.id)
+
+
+def test_import_and_export_expenses_fund_source_change_exception(mocker, db):
+    workspace_id = 1
+    workspace = Workspace.objects.get(id=workspace_id)
+    report_id = 'rp1s1L3QtMpF'
+
+    expense_data = data['expenses'][0].copy()
+    expense_data['report_id'] = report_id
+    expense_data['org_id'] = workspace.fyle_org_id
+    Expense.create_expense_objects([expense_data], workspace_id)
+
+    mock_platform = mocker.patch('apps.fyle.tasks.PlatformConnector')
+    mock_platform_instance = mock_platform.return_value
+    mock_platform_instance.expenses.get.return_value = []
+
+    mock_handle_fund_source = mocker.patch(
+        'apps.fyle.tasks.handle_expense_fund_source_change',
+        side_effect=Exception("Fund source change error")
+    )
+
+    mock_logger = mocker.patch('apps.fyle.tasks.logger')
+
+    import_and_export_expenses(
+        report_id=report_id,
+        org_id=workspace.fyle_org_id,
+        is_state_change_event=False,
+        report_state='APPROVED',
+        imported_from=ExpenseImportSourceEnum.DASHBOARD_SYNC
+    )
+
+    assert mock_handle_fund_source.call_count == 1
+    assert mock_logger.exception.call_count == 1
+    mock_logger.exception.assert_called_with(
+        "Error handling expense fund source change for workspace_id: %s, report_id: %s | ERROR: %s",
+        workspace.id, report_id, mock_handle_fund_source.side_effect
+    )
+
+
+def test_import_and_export_expenses_export_flow_with_logging(mocker, db):
+    workspace_id = 3
+    workspace = Workspace.objects.get(id=workspace_id)
+    report_id = 'rp1s1L3QtMpF'
+
+    WorkspaceSchedule.objects.update_or_create(
+        workspace_id=workspace_id,
+        defaults={'is_real_time_export_enabled': True}
+    )
+
+    expense_group = ExpenseGroup.objects.filter(workspace_id=workspace_id).first()
+    expense = expense_group.expenses.first()
+    expense.report_id = report_id
+    expense.org_id = workspace.fyle_org_id
+    expense.save()
+
+    mock_platform = mocker.patch('apps.fyle.tasks.PlatformConnector')
+    mock_platform_instance = mock_platform.return_value
+    mock_platform_instance.expenses.get.return_value = []
+
+    mock_feature_config = mocker.patch('apps.fyle.tasks.feature_configuration')
+    mock_feature_config.feature.real_time_export_1hr_orgs = True
+
+    mock_export = mocker.patch('apps.fyle.tasks.export_to_qbo')
+
+    mock_logger = mocker.patch('apps.fyle.tasks.logger')
+
+    import_and_export_expenses(
+        report_id=report_id,
+        org_id=workspace.fyle_org_id,
+        is_state_change_event=True,
+        report_state='APPROVED',
+        imported_from=ExpenseImportSourceEnum.WEBHOOK
+    )
+
+    assert mock_export.call_count == 1
+    mock_logger.info.assert_called_with(
+        'Exporting expenses for workspace %s with expense group ids %s, triggered by %s',
+        workspace.id, [expense_group.id], ExpenseImportSourceEnum.WEBHOOK
+    )
+
+
+def test_handle_expense_fund_source_change_complete_flow(mocker, db):
+    workspace_id = 1
+    report_id = 'rp1s1L3QtMpF'
+
+    expense_data_1 = data['expenses'][0].copy()
+    expense_data_1['id'] = 'tx1'
+    expense_data_1['report_id'] = report_id
+    expense_data_1['source_account_type'] = 'PERSONAL_CASH_ACCOUNT'
+
+    expense_data_2 = data['expenses'][0].copy()
+    expense_data_2['id'] = 'tx2'
+    expense_data_2['report_id'] = report_id
+    expense_data_2['source_account_type'] = 'PERSONAL_CORPORATE_CREDIT_CARD_ACCOUNT'
+
+    Expense.create_expense_objects([expense_data_1, expense_data_2], workspace_id)
+
+    mock_expenses = [
+        {
+            'id': 'tx1',
+            'source_account_type': 'PERSONAL_CORPORATE_CREDIT_CARD_ACCOUNT'
+        },
+        {
+            'id': 'tx2',
+            'source_account_type': 'PERSONAL_CASH_ACCOUNT'
+        }
+    ]
+
+    mock_platform = mocker.MagicMock()
+    mock_platform.expenses.get.return_value = mock_expenses
+
+    mock_create_objects = mocker.patch('apps.fyle.tasks.Expense.create_expense_objects')
+    mock_handle_changes = mocker.patch('apps.fyle.tasks.handle_fund_source_changes_for_expense_ids')
+    mock_logger = mocker.patch('apps.fyle.tasks.logger')
+
+    handle_expense_fund_source_change(workspace_id, report_id, mock_platform)
+
+    mock_platform.expenses.get.assert_called_once_with(
+        source_account_type=['PERSONAL_CASH_ACCOUNT', 'PERSONAL_CORPORATE_CREDIT_CARD_ACCOUNT'],
+        report_id=report_id,
+        filter_credit_expenses=False
+    )
+
+    assert mock_logger.info.call_count >= 2
+    assert mock_create_objects.call_count == 1
+    assert mock_handle_changes.call_count == 1
+
+
+def test_handle_fund_source_changes_no_affected_groups(mocker, db):
+    workspace_id = 3
+    changed_expense_ids = [999]
+    report_id = 'rp1s1L3QtMpF'
+    affected_fund_source_expense_ids = {'PERSONAL': [999]}
+
+    mock_logger = mocker.patch('apps.fyle.tasks.logger')
+
+    mocker.patch(
+        'apps.fyle.tasks.construct_filter_for_affected_expense_groups',
+        return_value=Q(id__in=[999])
+    )
+
+    handle_fund_source_changes_for_expense_ids(
+        workspace_id=workspace_id,
+        changed_expense_ids=changed_expense_ids,
+        report_id=report_id,
+        affected_fund_source_expense_ids=affected_fund_source_expense_ids
+    )
+
+    mock_logger.info.assert_called_with(
+        "No expense groups found for changed expenses: %s in workspace %s",
+        changed_expense_ids, workspace_id
+    )
+
+
+def test_handle_fund_source_changes_not_all_exported(mocker, db):
+    workspace_id = 3
+    expense_group = ExpenseGroup.objects.filter(workspace_id=workspace_id).first()
+    changed_expense_ids = [expense_group.expenses.first().id]
+    report_id = expense_group.expenses.first().report_id
+    affected_fund_source_expense_ids = {'PERSONAL': changed_expense_ids}
+
+    mock_process_group = mocker.patch(
+        'apps.fyle.tasks.process_expense_group_for_fund_source_update',
+        return_value=False
+    )
+
+    mock_logger = mocker.patch('apps.fyle.tasks.logger')
+
+    handle_fund_source_changes_for_expense_ids(
+        workspace_id=workspace_id,
+        changed_expense_ids=changed_expense_ids,
+        report_id=report_id,
+        affected_fund_source_expense_ids=affected_fund_source_expense_ids
+    )
+
+    assert mock_process_group.call_count == 1
+    mock_logger.info.assert_called_with(
+        "Not all expense groups are exported, skipping recreation of expense groups for changed expense ids %s in workspace %s",
+        changed_expense_ids, workspace_id
+    )
+
+
+def test_handle_fund_source_changes_all_exported(mocker, db):
+    workspace_id = 3
+    expense_group = ExpenseGroup.objects.filter(workspace_id=workspace_id).first()
+    changed_expense_ids = [expense_group.expenses.first().id]
+    report_id = expense_group.expenses.first().report_id
+    affected_fund_source_expense_ids = {'PERSONAL': changed_expense_ids}
+    task_name = 'test_task'
+
+    mock_process_group = mocker.patch(
+        'apps.fyle.tasks.process_expense_group_for_fund_source_update',
+        return_value=True
+    )
+
+    mock_recreate = mocker.patch('apps.fyle.tasks.recreate_expense_groups')
+    mock_cleanup = mocker.patch('apps.fyle.tasks.cleanup_scheduled_task')
+    mock_logger = mocker.patch('apps.fyle.tasks.logger')
+
+    handle_fund_source_changes_for_expense_ids(
+        workspace_id=workspace_id,
+        changed_expense_ids=changed_expense_ids,
+        report_id=report_id,
+        affected_fund_source_expense_ids=affected_fund_source_expense_ids,
+        task_name=task_name
+    )
+
+    assert mock_process_group.call_count == 1
+    assert mock_recreate.call_count == 1
+    assert mock_cleanup.call_count == 1
+    mock_logger.info.assert_called_with(
+        "All expense groups are exported or are not initiated, proceeding with recreation of expense groups for changed expense ids %s in workspace %s",
+        changed_expense_ids, workspace_id
+    )
+
+
+def test_delete_expense_group_error_with_mapping_ids_empty_list(mocker, db):
+    workspace_id = 3
+    expense_group = ExpenseGroup.objects.filter(workspace_id=workspace_id).first()
+
+    error_with_mapping = Error.objects.create(
+        workspace_id=workspace_id,
+        type='MAPPING_ERROR',
+        mapping_error_expense_group_ids=[expense_group.id]
+    )
+
+    mock_expense_group_delete = mocker.patch.object(expense_group, 'delete')
+    mock_logger = mocker.patch('apps.fyle.tasks.logger')
+
+    delete_expense_group_and_related_data(expense_group=expense_group, workspace_id=workspace_id)
+
+    assert not Error.objects.filter(id=error_with_mapping.id).exists()
+    mock_logger.info.assert_called_with(
+        "Removing expensegroup %s from mapping_error_expense_group_ids for error %s in workspace %s",
+        expense_group.id, error_with_mapping.id, workspace_id
+    )
+
+    mock_expense_group_delete.assert_called_once()
+
+
+def test_recreate_expense_groups_no_expenses_found(mocker, db):
+
+    workspace_id = 1
+    expense_ids = [999]
+
+    mock_logger = mocker.patch('apps.fyle.tasks.logger')
+
+    recreate_expense_groups(workspace_id=workspace_id, expense_ids=expense_ids)
+
+    mock_logger.warning.assert_called_with(
+        "No expenses found for recreation: %s in workspace %s", expense_ids, workspace_id
+    )
+
+
+def test_recreate_expense_groups_no_reimbursable_config(mocker, db):
+
+    workspace_id = 1
+    workspace = Workspace.objects.get(id=workspace_id)
+
+    expense_data = data['expenses'][0].copy()
+    expense_data['org_id'] = workspace.fyle_org_id
+    expense_data['source_account_type'] = 'PERSONAL_CASH_ACCOUNT'
+    expense_objects = Expense.create_expense_objects([expense_data], workspace_id)
+    expense_ids = [obj.id for obj in expense_objects]
+
+    config = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+    config.reimbursable_expenses_object = None
+    config.save()
+
+    mock_delete = mocker.patch('apps.fyle.tasks.delete_expenses_in_db')
+    mock_logger = mocker.patch('apps.fyle.tasks.logger')
+
+    recreate_expense_groups(workspace_id=workspace_id, expense_ids=expense_ids)
+
+    assert mock_delete.call_count == 1
+    mock_logger.info.assert_called_with("Recreating expense groups for %s expenses in workspace %s", len(expense_ids), workspace_id)
+
+
+def test_recreate_expense_groups_no_ccc_config(mocker, db):
+
+    workspace_id = 1
+    workspace = Workspace.objects.get(id=workspace_id)
+
+    expense_data = data['expenses'][0].copy()
+    expense_data['org_id'] = workspace.fyle_org_id
+    expense_data['source_account_type'] = 'PERSONAL_CORPORATE_CREDIT_CARD_ACCOUNT'
+    expense_objects = Expense.create_expense_objects([expense_data], workspace_id)
+    expense_ids = [obj.id for obj in expense_objects]
+
+    config = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+    config.corporate_credit_card_expenses_object = None
+    config.save()
+
+    mock_delete = mocker.patch('apps.fyle.tasks.delete_expenses_in_db')
+
+    recreate_expense_groups(workspace_id=workspace_id, expense_ids=expense_ids)
+
+    assert mock_delete.call_count == 1
+
+
+def test_recreate_expense_groups_with_filters(mocker, db):
+    workspace_id = 1
+    workspace = Workspace.objects.get(id=workspace_id)
+
+    expense_data = data['expenses'][0].copy()
+    expense_data['org_id'] = workspace.fyle_org_id
+    expense_objects = Expense.create_expense_objects([expense_data], workspace_id)
+    expense_ids = [obj.id for obj in expense_objects]
+
+    ExpenseFilter.objects.create(
+        workspace_id=workspace_id,
+        condition='category',
+        operator='in',
+        values=['Test'],
+        rank=1
+    )
+
+    mock_skip = mocker.patch('apps.fyle.tasks.skip_expenses_and_post_accounting_export_summary')
+    mocker.patch('apps.fyle.tasks.construct_expense_filter_query', return_value=Q())
+
+    recreate_expense_groups(workspace_id=workspace_id, expense_ids=expense_ids)
+
+    assert mock_skip.call_count == 1
+
+
+def test_recreate_expense_groups_with_skipped_expense_ids(mocker, db):
+    workspace_id = 1
+    workspace = Workspace.objects.get(id=workspace_id)
+
+    expense_data = data['expenses'][0].copy()
+    expense_data['org_id'] = workspace.fyle_org_id
+    expense_objects = Expense.create_expense_objects([expense_data], workspace_id)
+    expense_ids = [obj.id for obj in expense_objects]
+
+    mocker.patch(
+        'apps.fyle.models.ExpenseGroup.create_expense_groups_by_report_id_fund_source',
+        return_value=[1, 2]
+    )
+
+    mock_skip = mocker.patch('apps.fyle.tasks.skip_expenses_and_post_accounting_export_summary')
+    mock_logger = mocker.patch('apps.fyle.tasks.logger')
+
+    recreate_expense_groups(workspace_id=workspace_id, expense_ids=expense_ids)
+
+    assert mock_skip.call_count == 1
+    mock_logger.info.assert_called_with(
+        "Some expenses were skipped during expense group re-creation: %s in workspace %s", [1, 2], workspace_id
+    )
+    mock_logger.info.assert_called_with("Successfully recreated expense groups for %s expenses in workspace %s", len(expense_ids), workspace_id)
+
+
+def test_delete_expenses_in_db(mocker, db):
+    workspace_id = 1
+    workspace = Workspace.objects.get(id=workspace_id)
+
+    expense_data = data['expenses'][:2]
+    for expense in expense_data:
+        expense['org_id'] = workspace.fyle_org_id
+
+    expense_objects = Expense.create_expense_objects(expense_data, workspace_id)
+    expense_ids = [obj.id for obj in expense_objects]
+
+    mock_logger = mocker.patch('apps.fyle.tasks.logger')
+
+    delete_expenses_in_db(expense_ids=expense_ids, workspace_id=workspace_id)
+
+    assert not Expense.objects.filter(id__in=expense_ids).exists()
+    mock_logger.info.assert_called_with("Deleted %s expenses in workspace %s", len(expense_ids), workspace_id)
+
+
+def test_construct_filter_both_report_grouping(mocker, db):
+    workspace_id = 1
+    report_id = 'rp1s1L3QtMpF'
+    changed_expense_ids = [1, 2]
+    affected_fund_source_expense_ids = {'PERSONAL': [1], 'CCC': [2]}
+
+    mocker.patch(
+        'apps.fyle.tasks.get_grouping_types',
+        return_value={'PERSONAL': 'report', 'CCC': 'report'}
+    )
+
+    result = construct_filter_for_affected_expense_groups(
+        workspace_id=workspace_id,
+        report_id=report_id,
+        changed_expense_ids=changed_expense_ids,
+        affected_fund_source_expense_ids=affected_fund_source_expense_ids
+    )
+
+    assert 'expenses__report_id' in str(result)
+
+
+def test_construct_filter_both_expense_grouping(mocker, db):
+    workspace_id = 1
+    report_id = 'rp1s1L3QtMpF'
+    changed_expense_ids = [1, 2]
+    affected_fund_source_expense_ids = {'PERSONAL': [1], 'CCC': [2]}
+
+    mocker.patch(
+        'apps.fyle.tasks.get_grouping_types',
+        return_value={'PERSONAL': 'expense', 'CCC': 'expense'}
+    )
+
+    result = construct_filter_for_affected_expense_groups(
+        workspace_id=workspace_id,
+        report_id=report_id,
+        changed_expense_ids=changed_expense_ids,
+        affected_fund_source_expense_ids=affected_fund_source_expense_ids
+    )
+
+    assert 'expenses__id__in' in str(result)
+
+
+def test_construct_filter_mixed_grouping_personal_report_ccc_expense(mocker, db):
+    workspace_id = 1
+    report_id = 'rp1s1L3QtMpF'
+    changed_expense_ids = [1, 2]
+    affected_fund_source_expense_ids = {'PERSONAL': [1], 'CCC': [2]}
+
+    mocker.patch(
+        'apps.fyle.tasks.get_grouping_types',
+        return_value={'PERSONAL': 'report', 'CCC': 'expense'}
+    )
+
+    result = construct_filter_for_affected_expense_groups(
+        workspace_id=workspace_id,
+        report_id=report_id,
+        changed_expense_ids=changed_expense_ids,
+        affected_fund_source_expense_ids=affected_fund_source_expense_ids
+    )
+
+    result_str = str(result)
+    assert 'expenses__report_id' in result_str
+    assert 'expenses__id__in' in result_str
+
+
+def test_construct_filter_mixed_grouping_personal_expense_ccc_report(mocker, db):
+    workspace_id = 1
+    report_id = 'rp1s1L3QtMpF'
+    changed_expense_ids = [1, 2]
+    affected_fund_source_expense_ids = {'PERSONAL': [1], 'CCC': [2]}
+
+    mocker.patch(
+        'apps.fyle.tasks.get_grouping_types',
+        return_value={'PERSONAL': 'expense', 'CCC': 'report'}
+    )
+
+    result = construct_filter_for_affected_expense_groups(
+        workspace_id=workspace_id,
+        report_id=report_id,
+        changed_expense_ids=changed_expense_ids,
+        affected_fund_source_expense_ids=affected_fund_source_expense_ids
+    )
+
+    result_str = str(result)
+    assert 'expenses__report_id' in result_str
+    assert 'expenses__id__in' in result_str
+
+
+def test_skip_expenses_and_post_accounting_export_summary_exception(mocker, db):
+    workspace = Workspace.objects.get(id=1)
+    expense_ids = [1, 2]
+
+    mocker.patch(
+        'apps.fyle.tasks.mark_expenses_as_skipped',
+        return_value=[mocker.MagicMock(id=1)]
+    )
+    mocker.patch(
+        'apps.fyle.tasks.post_accounting_export_summary',
+        side_effect=Exception("Test exception")
+    )
+    mock_logger = mocker.patch('apps.fyle.tasks.logger')
+
+    skip_expenses_and_post_accounting_export_summary(expense_ids, workspace)
+
+    mock_logger.exception.assert_called_with('Error posting accounting export summary for workspace_id: %s', workspace.id)
+
+
+def test_group_expenses_and_save_with_expense_filters_exception(mocker, db):
+    workspace = Workspace.objects.get(id=1)
+    task_log = TaskLog.objects.create(workspace_id=workspace.id, type='FETCHING_EXPENSES', status='IN_PROGRESS')
+    expenses = data['expenses'][:1]
+
+    ExpenseFilter.objects.create(
+        workspace_id=workspace.id,
+        condition='category',
+        operator='in',
+        values=['Test'],
+        rank=1
+    )
+
+    mock_expense = mocker.MagicMock()
+    mock_expense.id = 1
+    mocker.patch(
+        'apps.fyle.tasks.mark_expenses_as_skipped',
+        return_value=[mock_expense]
+    )
+    mocker.patch(
+        'apps.fyle.tasks.post_accounting_export_summary',
+        side_effect=Exception("Test exception")
+    )
+    mock_logger = mocker.patch('apps.fyle.tasks.logger')
+
+    group_expenses_and_save(
+        expenses=expenses,
+        task_log=task_log,
+        workspace=workspace,
+        imported_from=ExpenseImportSourceEnum.DASHBOARD_SYNC,
+        filter_credit_expenses=False
+    )
+
+    mock_logger.error.assert_called_with('Error posting accounting export summary for workspace_id: %s', workspace.id)
+
+
+def test_create_expense_groups_paid_state(mocker, db):
+    workspace_id = 1
+
+    expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
+    expense_group_settings.expense_state = 'PAID'
+    expense_group_settings.save()
+
+    mocker.patch('fyle_integrations_platform_connector.apis.Expenses.get', return_value=[])
+
+    task_log = TaskLog.objects.create(workspace_id=workspace_id, type='FETCHING_EXPENSES', status='IN_PROGRESS')
+
+    create_expense_groups(workspace_id, ['PERSONAL'], task_log, ExpenseImportSourceEnum.DASHBOARD_SYNC)
+
+    assert task_log.status == 'COMPLETE'
+
+
+def test_create_expense_groups_ccc_payment_processing_state(mocker, db):
+    workspace_id = 1
+
+    expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
+    expense_group_settings.ccc_expense_state = 'PAYMENT_PROCESSING'
+    expense_group_settings.save()
+
+    mocker.patch('fyle_integrations_platform_connector.apis.Expenses.get', return_value=[])
+
+    task_log = TaskLog.objects.create(workspace_id=workspace_id, type='FETCHING_EXPENSES', status='IN_PROGRESS')
+
+    create_expense_groups(workspace_id, ['CCC'], task_log, ExpenseImportSourceEnum.DASHBOARD_SYNC)
+
+    assert task_log.status == 'COMPLETE'
+
+
+def test_create_expense_groups_ccc_approved_state(mocker, db):
+    workspace_id = 1
+
+    expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
+    expense_group_settings.ccc_expense_state = 'APPROVED'
+    expense_group_settings.save()
+
+    mocker.patch('fyle_integrations_platform_connector.apis.Expenses.get', return_value=[])
+
+    task_log = TaskLog.objects.create(workspace_id=workspace_id, type='FETCHING_EXPENSES', status='IN_PROGRESS')
+
+    create_expense_groups(workspace_id, ['CCC'], task_log, ExpenseImportSourceEnum.DASHBOARD_SYNC)
+
+    assert task_log.status == 'COMPLETE'
+
+
+def test_create_expense_groups_invalid_token_error(mocker, db):
+    workspace_id = 1
+
+    mocker.patch('apps.fyle.tasks.PlatformConnector', side_effect=InvalidTokenError('Invalid token'))
+    mock_update_task_log = mocker.patch('apps.fyle.tasks.update_task_log_post_import')
+    mock_logger = mocker.patch('apps.fyle.tasks.logger')
+
+    task_log = TaskLog.objects.create(workspace_id=workspace_id, type='FETCHING_EXPENSES', status='IN_PROGRESS')
+
+    create_expense_groups(workspace_id, ['PERSONAL'], task_log, ExpenseImportSourceEnum.DASHBOARD_SYNC)
+
+    mock_logger.info.assert_called_with("Invalid Token for Fyle")
+    mock_update_task_log.assert_called_with(task_log, 'FAILED', "Invalid Fyle credentials")
+
+
+def test_import_and_export_expenses_state_change_filter(mocker, db):
+    workspace_id = 1
+    workspace = Workspace.objects.get(id=workspace_id)
+    report_id = 'rp1s1L3QtMpF'
+
+    mock_platform = mocker.patch('apps.fyle.tasks.PlatformConnector')
+    mock_platform_instance = mock_platform.return_value
+    mock_platform_instance.expenses.get.return_value = data['expenses'][:1]
+
+    mocker.patch('apps.fyle.tasks.filter_expenses_based_on_state', return_value=data['expenses'][:1])
+
+    import_and_export_expenses(
+        report_id=report_id,
+        org_id=workspace.fyle_org_id,
+        is_state_change_event=True,
+        report_state='APPROVED',
+        imported_from=ExpenseImportSourceEnum.WEBHOOK
+    )
+
+
+def test_import_and_export_expenses_workspace_general_settings_not_found(mocker, db):
+    workspace_id = 1
+    workspace = Workspace.objects.get(id=workspace_id)
+    report_id = 'rp1s1L3QtMpF'
+
+    mocker.patch('apps.workspaces.models.WorkspaceGeneralSettings.objects.get', side_effect=WorkspaceGeneralSettings.DoesNotExist())
+    mock_logger = mocker.patch('apps.fyle.tasks.logger')
+
+    import_and_export_expenses(
+        report_id=report_id,
+        org_id=workspace.fyle_org_id,
+        is_state_change_event=False,
+        imported_from=ExpenseImportSourceEnum.DASHBOARD_SYNC
+    )
+
+    mock_logger.info.assert_called_with('Workspace general settings not found %s', workspace.id)
+
+    task_log = TaskLog.objects.filter(workspace_id=workspace_id, type='FETCHING_EXPENSES').first()
+    assert task_log.status == 'FAILED'
+    assert task_log.detail == {'message': 'Workspace general settings do not exist in workspace'}
+
+
+def test_import_and_export_expenses_general_exception(mocker, db):
+    workspace_id = 1
+    workspace = Workspace.objects.get(id=workspace_id)
+    report_id = 'rp1s1L3QtMpF'
+
+    mocker.patch('apps.fyle.helpers.get_fund_source', side_effect=Exception('General error'))
+    mock_handle_import_exception = mocker.patch('apps.fyle.tasks.handle_import_exception')
+
+    import_and_export_expenses(
+        report_id=report_id,
+        org_id=workspace.fyle_org_id,
+        is_state_change_event=False,
+        imported_from=ExpenseImportSourceEnum.DASHBOARD_SYNC
+    )
+
+    assert mock_handle_import_exception.call_count == 1
+
+
+def test_import_and_export_expenses_exception_without_task_log(mocker, db):
+    workspace_id = 1
+    workspace = Workspace.objects.get(id=workspace_id)
+    report_id = 'rp1s1L3QtMpF'
+
+    mocker.patch('apps.fyle.helpers.get_fund_source', side_effect=Exception('General error'))
+    mock_handle_import_exception = mocker.patch('apps.fyle.tasks.handle_import_exception')
+
+    import_and_export_expenses(
+        report_id=report_id,
+        org_id=workspace.fyle_org_id,
+        is_state_change_event=False,
+        imported_from=ExpenseImportSourceEnum.DASHBOARD_SYNC
+    )
+
+    assert mock_handle_import_exception.call_count == 1
+
+    task_log = TaskLog.objects.filter(workspace_id=workspace_id, type='FETCHING_EXPENSES').first()
+    assert task_log is not None
+
+
+def test_re_run_skip_export_rule_exception_in_post_summary(mocker, db):
+    workspace = Workspace.objects.get(id=1)
+
+    ExpenseFilter.objects.create(
+        workspace_id=workspace.id,
+        condition='category',
+        operator='in',
+        values=['Test'],
+        rank=1
+    )
+
+    expense_data = data['expenses'][0].copy()
+    expense_data['org_id'] = workspace.fyle_org_id
+    expense_data['category'] = 'Test'
+    expense_objects = Expense.create_expense_objects([expense_data], workspace.id)
+
+    expense = expense_objects[0]
+    expense.accounting_export_summary = {}
+    expense.save()
+
+    mocker.patch(
+        'apps.fyle.tasks.post_accounting_export_summary',
+        side_effect=Exception("Post summary error")
+    )
+    mock_logger = mocker.patch('apps.fyle.tasks.logger')
+
+    re_run_skip_export_rule(workspace)
+
+    mock_logger.error.assert_called_with('Error posting accounting export summary for workspace_id: %s', workspace.id)
