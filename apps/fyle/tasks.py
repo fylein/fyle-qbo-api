@@ -603,7 +603,7 @@ def recreate_expense_groups(workspace_id: int, expense_ids: List[int]) -> None:
             workspace_id=workspace_id
         )
 
-    skipped_expense_ids = ExpenseGroup.create_expense_groups_by_report_id_fund_source(
+    expense_group_objects, skipped_expense_ids = ExpenseGroup.create_expense_groups_by_report_id_fund_source(
         expense_objects, workspace_id
     )
 
