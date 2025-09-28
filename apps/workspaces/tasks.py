@@ -9,6 +9,7 @@ from django.utils.safestring import mark_safe
 from django_q.models import Schedule
 from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from fyle_accounting_mappings.models import ExpenseAttribute
+from fyle_integrations_platform_connector import PlatformConnector
 from fyle_rest_auth.helpers import get_fyle_admin
 
 from apps.fyle.models import ExpenseGroup
@@ -16,10 +17,17 @@ from apps.fyle.tasks import create_expense_groups
 from apps.tasks.models import Error, TaskLog
 from apps.users.models import User
 from apps.workspaces.actions import export_to_qbo
-from apps.workspaces.models import FyleCredential, QBOCredential, Workspace, WorkspaceGeneralSettings, WorkspaceSchedule
+from apps.workspaces.models import (
+    FeatureConfig,
+    FyleCredential,
+    QBOCredential,
+    Workspace,
+    WorkspaceGeneralSettings,
+    WorkspaceSchedule,
+)
 from apps.workspaces.queue import schedule_email_notification
 from apps.workspaces.utils import send_email
-from fyle_integrations_platform_connector import PlatformConnector
+from workers.helpers import RoutingKeyEnum, WorkerActionEnum, publish_to_rabbitmq
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -131,7 +139,26 @@ def run_sync_schedule(workspace_id):
         ).values_list('id', flat=True).distinct()
 
         if eligible_expense_group_ids.exists():
-            export_to_qbo(workspace_id, expense_group_ids=list(eligible_expense_group_ids), triggered_by=ExpenseImportSourceEnum.BACKGROUND_SCHEDULE)
+            feature_config = FeatureConfig.objects.get(workspace_id=workspace_id)
+            if feature_config.export_via_rabbitmq:
+                logger.info(f"Exporting expenses via RabbitMQ for workspace id {workspace_id} triggered by {ExpenseImportSourceEnum.BACKGROUND_SCHEDULE}")
+                payload = {
+                    'workspace_id': workspace_id,
+                    'action': WorkerActionEnum.BACKGROUND_SCHEDULE_EXPORT.value,
+                    'data': {
+                        'workspace_id': workspace_id,
+                        'expense_group_ids': list(eligible_expense_group_ids),
+                        'triggered_by': ExpenseImportSourceEnum.BACKGROUND_SCHEDULE,
+                        'run_in_rabbitmq_worker': True
+                    }
+                }
+                publish_to_rabbitmq(payload=payload, routing_key=RoutingKeyEnum.EXPORT_P1.value)
+            else:
+                export_to_qbo(
+                    workspace_id,
+                    expense_group_ids=list(eligible_expense_group_ids),
+                    triggered_by=ExpenseImportSourceEnum.BACKGROUND_SCHEDULE
+                )
 
 
 def run_email_notification(workspace_id):
@@ -231,7 +258,7 @@ def async_update_fyle_credentials(fyle_org_id: str, refresh_token: str):
         fyle_credentials.save()
 
 
-def async_create_admin_subscriptions(workspace_id: int) -> None:
+def create_admin_subscriptions(workspace_id: int) -> None:
     """
     Create admin subscriptions
     :param workspace_id: workspace id
@@ -259,10 +286,11 @@ def async_create_admin_subscriptions(workspace_id: int) -> None:
     platform.subscriptions.post(payload)
 
 
-def async_update_workspace_name(workspace: Workspace, access_token: str):
+def update_workspace_name(workspace_id: int, access_token: str):
     fyle_user = get_fyle_admin(access_token.split(' ')[1], None)
     org_name = fyle_user['data']['org']['name']
 
+    workspace = Workspace.objects.get(id=workspace_id)
     workspace.name = org_name
     workspace.save()
 

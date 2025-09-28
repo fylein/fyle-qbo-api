@@ -35,7 +35,6 @@ from apps.quickbooks_online.tasks import (
     QBOExpense,
     QBOExpenseLineitem,
     __validate_expense_group,
-    async_sync_accounts,
     check_qbo_object_status,
     create_bill,
     create_bill_payment,
@@ -46,6 +45,7 @@ from apps.quickbooks_online.tasks import (
     create_qbo_expense,
     get_or_create_credit_card_or_debit_card_vendor,
     process_reimbursements,
+    sync_accounts,
     update_last_export_details,
     validate_for_skipping_payment,
 )
@@ -1001,12 +1001,12 @@ def test_process_reimbursements(db, mocker):
     assert reimbursement == 1
 
 
-def test_async_sync_accounts(mocker, db):
+def test_sync_accounts(mocker, db):
     mocker.patch('apps.quickbooks_online.utils.QBOConnector.sync_accounts', return_value=None)
     old_accounts = DestinationAttribute.objects.filter(attribute_type='ACCOUNT', workspace_id=3).count()
     assert old_accounts == 63
 
-    async_sync_accounts(3)
+    sync_accounts(3)
     new_accounts = DestinationAttribute.objects.filter(attribute_type='ACCOUNT', workspace_id=3).count()
     assert new_accounts == 63
 

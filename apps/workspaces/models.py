@@ -201,3 +201,18 @@ class LastExportDetail(models.Model):
 
     class Meta:
         db_table = 'last_export_details'
+
+
+class FeatureConfig(models.Model):
+    """
+    Table to store Feature configs
+    """
+    id = models.AutoField(primary_key=True)
+    workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
+    export_via_rabbitmq = models.BooleanField(default=True, help_text='Enable export via rabbitmq')
+    import_via_rabbitmq = models.BooleanField(default=True, help_text='Enable import via rabbitmq')
+    created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
+    updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')
+
+    class Meta:
+        db_table = 'feature_configs'
