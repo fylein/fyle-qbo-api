@@ -3,7 +3,7 @@ from fyle_accounting_mappings.models import ExpenseAttribute
 from apps.fyle.models import ExpenseGroup, ExpenseGroupSettings
 from apps.tasks.models import TaskLog
 from apps.users.models import User
-from apps.workspaces.models import Workspace, WorkspaceGeneralSettings, WorkspaceSchedule
+from apps.workspaces.models import FeatureConfig, Workspace, WorkspaceGeneralSettings, WorkspaceSchedule
 from apps.workspaces.tasks import (
     async_add_admins_to_workspace,
     create_admin_subscriptions,
@@ -298,6 +298,49 @@ def test_run_sync_schedule_includes_expense_groups_with_non_failed_task_logs(moc
         exported_ids = set(eligible_calls[-1].kwargs['expense_group_ids'])
         assert ready_expense_group.id in exported_ids, f"Expense group {ready_expense_group.id} with READY status should be included"
         assert in_progress_expense_group.id in exported_ids, f"Expense group {in_progress_expense_group.id} with IN_PROGRESS status should be included"
+
+    task_log = TaskLog.objects.filter(workspace_id=workspace_id, type='FETCHING_EXPENSES').first()
+    assert task_log.status == 'COMPLETE'
+
+
+def test_run_sync_schedule_with_rabbitmq_export(mocker, db):
+    """
+    Test run_sync_schedule with RabbitMQ export enabled
+    This covers lines 144-145 and 155 in apps/workspaces/tasks.py
+    """
+    workspace_id = 3
+
+    # Enable RabbitMQ for export
+    feature_config = FeatureConfig.objects.get(workspace_id=workspace_id)
+    feature_config.export_via_rabbitmq = True
+    feature_config.save()
+
+    WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+    expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=workspace_id)
+    expense_group_settings.import_card_credits = True
+    expense_group_settings.save()
+
+    # Mock the expenses API call
+    mocker.patch('fyle_integrations_platform_connector.apis.Expenses.get', return_value=data['expenses'])
+
+    # Mock the RabbitMQ publish function
+    mock_publish = mocker.patch('apps.workspaces.tasks.publish_to_rabbitmq')
+
+    # Create some expense groups to export
+    ExpenseGroup.objects.create(
+        workspace_id=workspace_id,
+        fund_source='PERSONAL',
+        exported_at=None
+    )
+
+    run_sync_schedule(workspace_id)
+
+    # Verify RabbitMQ publish was called
+    mock_publish.assert_called_once()
+    call_args = mock_publish.call_args
+    assert call_args[1]['payload']['workspace_id'] == workspace_id
+    assert call_args[1]['payload']['action'] == 'EXPORT.P1.BACKGROUND_SCHEDULE_EXPORT'
+    assert call_args[1]['routing_key'] == 'EXPORT.P1.*'
 
     task_log = TaskLog.objects.filter(workspace_id=workspace_id, type='FETCHING_EXPENSES').first()
     assert task_log.status == 'COMPLETE'
