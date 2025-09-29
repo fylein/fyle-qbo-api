@@ -100,3 +100,44 @@ def test__reset_import_log_timestamp_case_2(db):
 
     assert ImportLog.objects.filter(workspace_id=workspace_id, attribute_type='PROJECT').first().last_successful_run_at is None
     assert ImportLog.objects.filter(workspace_id=workspace_id, attribute_type='COST_CENTER').first().last_successful_run_at is None
+
+
+def test_post_save_workspace_general_settings_with_rabbitmq(mocker, db):
+    """
+    Test post_save_workspace_general_settings with RabbitMQ publishing
+    This covers lines 81 and 89 in apps/workspaces/apis/import_settings/triggers.py
+    """
+    workspace_id = 1
+    general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
+
+    # Create old settings with import_items enabled
+    old_general_settings = WorkspaceGeneralSettings(
+        workspace_id=workspace_id,
+        import_items=True
+    )
+
+    # Create new settings with import_items disabled
+    new_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+    new_general_settings.import_items = False
+    new_general_settings.save()
+
+    # Mock the RabbitMQ publish function
+    mock_publish = mocker.patch('apps.workspaces.apis.import_settings.triggers.publish_to_rabbitmq')
+
+    import_settings_trigger = ImportSettingsTrigger(
+        workspace_general_settings=general_settings.__dict__,
+        mapping_settings=[],
+        workspace_id=workspace_id
+    )
+
+    import_settings_trigger.post_save_workspace_general_settings(
+        workspace_general_settings_instance=new_general_settings,
+        old_workspace_general_settings=old_general_settings
+    )
+
+    # Verify RabbitMQ publish was called
+    mock_publish.assert_called_once()
+    call_args = mock_publish.call_args
+    assert call_args[1]['payload']['workspace_id'] == workspace_id
+    assert call_args[1]['payload']['action'] == 'IMPORT.DISABLE_ITEMS'
+    assert call_args[1]['routing_key'] == 'IMPORT.*'

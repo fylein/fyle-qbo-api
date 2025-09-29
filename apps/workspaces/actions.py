@@ -5,12 +5,12 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.db import transaction
-from django_q.tasks import async_task
 from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute
 from fyle_integrations_platform_connector import PlatformConnector
 from fyle_rest_auth.helpers import get_fyle_admin
 from fyle_rest_auth.models import AuthToken
+from qbosdk import revoke_refresh_token
 from rest_framework.response import Response
 from rest_framework.views import status
 
@@ -27,6 +27,7 @@ from apps.quickbooks_online.queue import (
 )
 from apps.quickbooks_online.utils import QBOConnector
 from apps.workspaces.models import (
+    FeatureConfig,
     FyleCredential,
     LastExportDetail,
     QBOCredential,
@@ -37,7 +38,7 @@ from apps.workspaces.models import (
 from apps.workspaces.serializers import QBOCredentialSerializer
 from apps.workspaces.signals import post_delete_qbo_connection
 from fyle_qbo_api.utils import assert_valid, patch_integration_settings
-from qbosdk import revoke_refresh_token
+from workers.helpers import RoutingKeyEnum, WorkerActionEnum, publish_to_rabbitmq
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -72,7 +73,18 @@ def update_or_create_workspace(user, access_token):
         cluster_domain = get_cluster_domain(auth_tokens.refresh_token)
 
         FyleCredential.objects.update_or_create(refresh_token=auth_tokens.refresh_token, workspace_id=workspace.id, cluster_domain=cluster_domain)
-        async_task('apps.workspaces.tasks.async_add_admins_to_workspace', workspace.id, user.user_id)
+
+        FeatureConfig.objects.create(workspace_id=workspace.id)
+
+        payload = {
+            'workspace_id': workspace.id,
+            'action': WorkerActionEnum.ADD_ADMINS_TO_WORKSPACE.value,
+            'data': {
+                'workspace_id': workspace.id,
+                'current_user_id': user.user_id
+            }
+        }
+        publish_to_rabbitmq(payload=payload, routing_key=RoutingKeyEnum.UTILITY.value)
 
     return workspace
 
@@ -254,7 +266,21 @@ def post_to_integration_settings(workspace_id: int, active: bool):
         logger.error(error)
 
 
-def export_to_qbo(workspace_id, expense_group_ids=[], is_direct_export:bool = False, triggered_by: ExpenseImportSourceEnum = None):
+def export_to_qbo(
+    workspace_id,
+    expense_group_ids=[],
+    is_direct_export:bool = False,
+    triggered_by: ExpenseImportSourceEnum = None,
+    run_in_rabbitmq_worker: bool = False
+):
+    """
+    Export expenses to Quickbooks
+    :param workspace_id: Workspace ID
+    :param expense_group_ids: Expense group IDs
+    :param triggered_by: Triggered by
+    :param run_in_rabbitmq_worker: Run in rabbitmq worker
+    :return: None
+    """
     logger.info(f"Exporting to QBO for workspace {workspace_id} with expense group ids {expense_group_ids}, triggered by {triggered_by}")
     active_qbo_credentials = QBOCredential.objects.filter(
         workspace_id=workspace_id,
@@ -279,13 +305,19 @@ def export_to_qbo(workspace_id, expense_group_ids=[], is_direct_export:bool = Fa
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
     last_export_detail = LastExportDetail.objects.get(workspace_id=workspace_id)
     workspace_schedule = WorkspaceSchedule.objects.filter(workspace_id=workspace_id, interval_hours__gt=0, enabled=True).first()
+
     last_exported_at = datetime.now()
     is_expenses_exported = False
-    export_mode = 'MANUAL' if triggered_by in (ExpenseImportSourceEnum.DASHBOARD_SYNC, ExpenseImportSourceEnum.DIRECT_EXPORT, ExpenseImportSourceEnum.CONFIGURATION_UPDATE) else 'AUTO'
+    export_mode = 'MANUAL' if triggered_by in (
+        ExpenseImportSourceEnum.DASHBOARD_SYNC,
+        ExpenseImportSourceEnum.DIRECT_EXPORT,
+        ExpenseImportSourceEnum.CONFIGURATION_UPDATE
+    ) else 'AUTO'
     expense_group_filters = {
         'exported_at__isnull': True,
         'workspace_id': workspace_id
     }
+
     if expense_group_ids:
         expense_group_filters['id__in'] = expense_group_ids
 
@@ -302,7 +334,7 @@ def export_to_qbo(workspace_id, expense_group_ids=[], is_direct_export:bool = Fa
                 is_auto_export=export_mode == 'AUTO',
                 interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0,
                 triggered_by=triggered_by,
-                run_in_rabbitmq_worker=True if triggered_by == ExpenseImportSourceEnum.WEBHOOK else False
+                run_in_rabbitmq_worker=run_in_rabbitmq_worker
             )
 
         elif general_settings.reimbursable_expenses_object == 'EXPENSE':
@@ -312,7 +344,7 @@ def export_to_qbo(workspace_id, expense_group_ids=[], is_direct_export:bool = Fa
                 is_auto_export=export_mode == 'AUTO',
                 interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0,
                 triggered_by=triggered_by,
-                run_in_rabbitmq_worker=True if triggered_by == ExpenseImportSourceEnum.WEBHOOK else False
+                run_in_rabbitmq_worker=run_in_rabbitmq_worker
             )
 
         elif general_settings.reimbursable_expenses_object == 'CHECK':
@@ -322,7 +354,7 @@ def export_to_qbo(workspace_id, expense_group_ids=[], is_direct_export:bool = Fa
                 is_auto_export=export_mode == 'AUTO',
                 interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0,
                 triggered_by=triggered_by,
-                run_in_rabbitmq_worker=True if triggered_by == ExpenseImportSourceEnum.WEBHOOK else False
+                run_in_rabbitmq_worker=run_in_rabbitmq_worker
             )
 
         elif general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY':
@@ -332,7 +364,7 @@ def export_to_qbo(workspace_id, expense_group_ids=[], is_direct_export:bool = Fa
                 is_auto_export=export_mode == 'AUTO',
                 interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0,
                 triggered_by=triggered_by,
-                run_in_rabbitmq_worker=True if triggered_by == ExpenseImportSourceEnum.WEBHOOK else False
+                run_in_rabbitmq_worker=run_in_rabbitmq_worker
             )
 
     if general_settings.corporate_credit_card_expenses_object:
@@ -348,7 +380,7 @@ def export_to_qbo(workspace_id, expense_group_ids=[], is_direct_export:bool = Fa
                 is_auto_export=export_mode == 'AUTO',
                 interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0,
                 triggered_by=triggered_by,
-                run_in_rabbitmq_worker=True if triggered_by == ExpenseImportSourceEnum.WEBHOOK else False
+                run_in_rabbitmq_worker=run_in_rabbitmq_worker
             )
 
         elif general_settings.corporate_credit_card_expenses_object == 'CREDIT CARD PURCHASE':
@@ -358,7 +390,7 @@ def export_to_qbo(workspace_id, expense_group_ids=[], is_direct_export:bool = Fa
                 is_auto_export=export_mode == 'AUTO',
                 interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0,
                 triggered_by=triggered_by,
-                run_in_rabbitmq_worker=True if triggered_by == ExpenseImportSourceEnum.WEBHOOK else False
+                run_in_rabbitmq_worker=run_in_rabbitmq_worker
             )
 
         elif general_settings.corporate_credit_card_expenses_object == 'DEBIT CARD EXPENSE':
@@ -368,7 +400,7 @@ def export_to_qbo(workspace_id, expense_group_ids=[], is_direct_export:bool = Fa
                 is_auto_export=export_mode == 'AUTO',
                 interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0,
                 triggered_by=triggered_by,
-                run_in_rabbitmq_worker=True if triggered_by == ExpenseImportSourceEnum.WEBHOOK else False
+                run_in_rabbitmq_worker=run_in_rabbitmq_worker
             )
 
         elif general_settings.corporate_credit_card_expenses_object == 'BILL':
@@ -378,7 +410,7 @@ def export_to_qbo(workspace_id, expense_group_ids=[], is_direct_export:bool = Fa
                 is_auto_export=export_mode == 'AUTO',
                 interval_hours=workspace_schedule.interval_hours if workspace_schedule else 0,
                 triggered_by=triggered_by,
-                run_in_rabbitmq_worker=True if triggered_by == ExpenseImportSourceEnum.WEBHOOK else False
+                run_in_rabbitmq_worker=run_in_rabbitmq_worker
             )
     if is_expenses_exported:
         last_export_detail.last_exported_at = last_exported_at

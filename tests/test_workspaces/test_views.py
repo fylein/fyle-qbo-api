@@ -10,7 +10,7 @@ from apps.fyle.models import ExpenseGroup
 from apps.quickbooks_online.models import QBOSyncTimestamp
 from apps.tasks.models import TaskLog
 from apps.workspaces.actions import export_to_qbo
-from apps.workspaces.models import LastExportDetail, QBOCredential, Workspace, WorkspaceGeneralSettings
+from apps.workspaces.models import FeatureConfig, LastExportDetail, QBOCredential, Workspace, WorkspaceGeneralSettings
 from fyle_qbo_api.tests import settings
 from tests.helper import dict_compare_keys
 from tests.test_workspaces.fixtures import data
@@ -330,3 +330,54 @@ def test_workspace_admin_view(mocker, db, api_client, test_connection):
 
     response = api_client.get(url)
     assert response.status_code == 200
+
+
+def test_workspace_view_get_with_rabbitmq(mocker, api_client, test_connection):
+    """
+    Test WorkspaceView GET method with RabbitMQ publishing
+    This covers lines 110 and 118 in apps/workspaces/views.py
+    """
+    url = reverse('workspace')
+
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
+
+    # Mock the RabbitMQ publish function
+    mock_publish = mocker.patch('apps.workspaces.views.publish_to_rabbitmq')
+
+    response = api_client.get(url, {'org_id': 'or79Cob97KSh'})
+    assert response.status_code == 200
+
+    # Verify RabbitMQ publish was called
+    mock_publish.assert_called_once()
+    call_args = mock_publish.call_args
+    assert call_args[1]['payload']['action'] == 'UTILITY.UPDATE_WORKSPACE_NAME'
+    assert call_args[1]['routing_key'] == 'UTILITY.*'
+
+
+def test_export_to_qbo_view_with_rabbitmq(mocker, api_client, test_connection):
+    """
+    Test ExportToQBOView with RabbitMQ export enabled
+    This covers lines 202 and 211 in apps/workspaces/views.py
+    """
+    workspace_id = 3
+
+    # Enable RabbitMQ for export
+    feature_config = FeatureConfig.objects.get(workspace_id=workspace_id)
+    feature_config.export_via_rabbitmq = True
+    feature_config.save()
+
+    url = '/api/workspaces/{}/exports/trigger/'.format(workspace_id)
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(test_connection.access_token))
+
+    # Mock the RabbitMQ publish function
+    mock_publish = mocker.patch('apps.workspaces.views.publish_to_rabbitmq')
+
+    response = api_client.post(url)
+    assert response.status_code == 200
+
+    # Verify RabbitMQ publish was called
+    mock_publish.assert_called_once()
+    call_args = mock_publish.call_args
+    assert call_args[1]['payload']['workspace_id'] == workspace_id
+    assert call_args[1]['payload']['action'] == 'EXPORT.P0.DASHBOARD_SYNC'
+    assert call_args[1]['routing_key'] == 'EXPORT.P0.*'
