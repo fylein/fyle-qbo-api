@@ -727,6 +727,150 @@ def update_non_exported_expenses(data: Dict) -> None:
                 )
 
 
+def handle_expense_report_change(expense_data: Dict, action_type: str) -> None:
+    """
+    Handle expense report changes (EJECTED_FROM_REPORT, ADDED_TO_REPORT)
+    :param expense_data: Expense data from webhook
+    :param action_type: Type of action (EJECTED_FROM_REPORT or ADDED_TO_REPORT)
+    :return: None
+    """
+    org_id = expense_data['org_id']
+    expense_id = expense_data['id']
+    workspace = Workspace.objects.get(fyle_org_id=org_id)
+    expense = Expense.objects.filter(workspace_id=workspace.id, expense_id=expense_id).first()
+
+    if not expense:
+        logger.warning("Expense %s not found in workspace %s for action %s", expense_id, workspace.id, action_type)
+        return
+
+    expense_state = expense.accounting_export_summary.get('state', '')
+
+    # Don't process expenses that are already completed or in progress
+    if expense_state == 'COMPLETE':
+        logger.info("Skipping %s for expense %s as it's in %s state", action_type, expense_id, expense_state)
+        return
+
+    logger.info("Processing %s for expense %s in workspace %s", action_type, expense_id, workspace.id)
+
+    if action_type == 'EJECTED_FROM_REPORT':
+        _handle_expense_ejected_from_report(expense, expense_data, workspace)
+    elif action_type == 'ADDED_TO_REPORT':
+        _handle_expense_added_to_report(expense, expense_data, workspace)
+
+
+def _handle_expense_ejected_from_report(expense: Expense, expense_data: Dict, workspace: Workspace) -> None:
+    """
+    Handle expense ejected from report
+    :param expense: Expense object
+    :param expense_data: Expense data from webhook
+    :param workspace: Workspace object
+    :return: None
+    """
+    logger.info("Handling expense %s ejected from report in workspace %s", expense.expense_id, workspace.id)
+    
+    # Find the expense group (guaranteed to be only one)
+    expense_group = ExpenseGroup.objects.filter(
+        expenses=expense,
+        workspace_id=workspace.id,
+        exported_at__isnull=True
+    ).first()
+
+    if not expense_group:
+        logger.info("No expense group found for expense %s in workspace %s - expense is already ungrouped", expense.expense_id, workspace.id)
+        # Update the expense with latest data from Fyle but don't create any groups
+        _update_expense_from_webhook_data(expense, expense_data, workspace)
+        return
+
+    logger.info("Removing expense %s from expense group %s", expense.expense_id, expense_group.id)
+    
+    # Check if there are any active task logs for this expense group
+    active_task_logs = TaskLog.objects.filter(
+        expense_group_id=expense_group.id,
+        workspace_id=workspace.id,
+        status__in=['ENQUEUED', 'IN_PROGRESS']
+    ).exists()
+
+    if active_task_logs:
+        logger.warning("Cannot remove expense %s from group %s - active task logs exist", expense.expense_id, expense_group.id)
+        # Update the expense with latest data from Fyle
+        _update_expense_from_webhook_data(expense, expense_data, workspace)
+        return
+
+    # Remove expense from the group
+    expense_group.expenses.remove(expense)
+
+    # If the group becomes empty, delete it and related data
+    if not expense_group.expenses.exists():
+        logger.info("Deleting empty expense group %s after removing expense %s", expense_group.id, expense.expense_id)
+        delete_expense_group_and_related_data(expense_group, workspace.id)
+    else:
+        logger.info("Expense group %s still has expenses after removing %s", expense_group.id, expense.expense_id)
+
+    # Update the expense with latest data from Fyle
+    _update_expense_from_webhook_data(expense, expense_data, workspace)
+
+
+def _handle_expense_added_to_report(expense: Expense, expense_data: Dict, workspace: Workspace) -> None:
+    """
+    Handle expense added to report
+    :param expense: Expense object
+    :param expense_data: Expense data from webhook
+    :param workspace: Workspace object
+    :return: None
+    """
+    logger.info("Handling expense %s added to report in workspace %s", expense.expense_id, workspace.id)
+    
+    # Update the expense with latest data from Fyle
+    _update_expense_from_webhook_data(expense, expense_data, workspace)
+    
+    # Check if the expense is already part of an expense group (guaranteed to be only one)
+    existing_expense_group = ExpenseGroup.objects.filter(
+        expenses=expense,
+        workspace_id=workspace.id,
+        exported_at__isnull=True
+    ).first()
+
+    if existing_expense_group:
+        logger.info("Expense %s is already part of expense group %s, checking for regrouping", expense.expense_id, existing_expense_group.id)
+
+        # Handle potential regrouping if report_id or fund_source changed
+        old_fund_source = expense.fund_source
+        new_fund_source = EXPENSE_SOURCE_ACCOUNT_MAP.get(expense_data.get('source_account_type', ''), old_fund_source)
+        
+        if old_fund_source != new_fund_source:
+            logger.info("Fund source changed for expense %s, handling regrouping", expense.expense_id)
+            handle_fund_source_changes_for_expense_ids(
+                workspace_id=workspace.id,
+                changed_expense_ids=[expense.id],
+                report_id=expense.report_id,
+                affected_fund_source_expense_ids={old_fund_source: [expense.id]}
+            )
+    else:
+        # Create new expense groups for the updated expense
+        logger.info("Creating new expense groups for expense %s added to report", expense.expense_id)
+        recreate_expense_groups(workspace.id, [expense.id])
+
+
+def _update_expense_from_webhook_data(expense: Expense, expense_data: Dict, workspace: Workspace) -> None:
+    """
+    Update expense object with data from webhook
+    :param expense: Expense object to update
+    :param expense_data: Data from webhook
+    :param workspace: Workspace object
+    :return: None
+    """
+    try:
+        # Construct expense object from webhook data
+        expense_objects = FyleExpenses().construct_expense_object([expense_data], workspace.id)
+        
+        if expense_objects:
+            # Update the expense with new data
+            Expense.create_expense_objects(expense_objects, workspace.id, skip_update=False)
+            logger.info("Updated expense %s with latest data from webhook", expense.expense_id)
+    except Exception as e:
+        logger.exception("Error updating expense %s from webhook data: %s", expense.expense_id, e)
+
+
 def re_run_skip_export_rule(workspace: Workspace) -> None:
     """
     Skip expenses before export
