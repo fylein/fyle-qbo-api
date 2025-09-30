@@ -6,11 +6,11 @@ from typing import Dict, List
 
 from django.conf import settings
 from django.db import models
-from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping, MappingSetting
 
 from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings
 from apps.mappings.models import GeneralMapping
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
+from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping, MappingSetting
 
 
 def get_transaction_date(expense_group: ExpenseGroup) -> str:
@@ -523,7 +523,7 @@ class QBOExpense(models.Model):
                 destination_attribute = DestinationAttribute.objects.filter(destination_id=account_id, workspace_id=expense_group.workspace_id).first()
                 payee_type = 'Debit Card Misc' if destination_attribute.attribute_type == 'BANK_ACCOUNT' else 'Credit Card Misc'
                 # In case credit card account is selected, we need to create credit card misc vendor
-                entity_id = DestinationAttribute.objects.filter(value=payee_type, workspace_id=expense_group.workspace_id).first()
+                entity_id = DestinationAttribute.objects.filter(value=payee_type, workspace_id=expense_group.workspace_id, attribute_type='VENDOR').first()
                 if not entity_id:
                     entity_id = qbo_connection.get_or_create_vendor(payee_type, create=True).destination_id
                 else:
@@ -664,7 +664,7 @@ class CreditCardPurchase(models.Model):
             entity = DestinationAttribute.objects.filter(value__iexact=merchant, attribute_type='VENDOR', workspace_id=expense_group.workspace_id, active=True).order_by('-updated_at').first()
 
             if not entity:
-                entity_id = DestinationAttribute.objects.filter(value='Credit Card Misc', workspace_id=expense_group.workspace_id).first().destination_id
+                entity_id = DestinationAttribute.objects.filter(value='Credit Card Misc', workspace_id=expense_group.workspace_id, attribute_type='VENDOR').first().destination_id
             else:
                 entity_id = entity.destination_id
 
