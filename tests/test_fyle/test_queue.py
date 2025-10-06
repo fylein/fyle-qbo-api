@@ -1,8 +1,7 @@
-from fyle_accounting_library.rabbitmq.data_class import Task
-
-from apps.fyle.queue import async_import_and_export_expenses
+from apps.fyle.queue import handle_webhook_callback
 from apps.quickbooks_online.queue import __create_chain_and_run
 from apps.workspaces.models import Workspace
+from fyle_accounting_library.rabbitmq.data_class import Task
 
 
 # This test is just for cov :D
@@ -20,7 +19,7 @@ def test_create_chain_and_run(db):
 
 
 # This test is just for cov :D
-def test_async_import_and_export_expenses(db):
+def test_handle_webhook_callback(db):
     body = {
         'action': 'ACCOUNTING_EXPORT_INITIATED',
         'data': {
@@ -29,11 +28,11 @@ def test_async_import_and_export_expenses(db):
         }
     }
 
-    async_import_and_export_expenses(body, 3)
+    handle_webhook_callback(body, 3)
 
 
 # This test is just for cov :D (2)
-def test_async_import_and_export_expenses_2(db):
+def test_handle_webhook_callback_2(db):
     body = {
         'action': 'STATE_CHANGE_PAYMENT_PROCESSING',
         'data': {
@@ -47,4 +46,4 @@ def test_async_import_and_export_expenses_2(db):
         fyle_org_id = 'or79Cob97KSh'
     )
 
-    async_import_and_export_expenses(body, worksapce.id)
+    handle_webhook_callback(body, worksapce.id)

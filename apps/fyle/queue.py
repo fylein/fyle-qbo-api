@@ -1,24 +1,30 @@
 import logging
 
-from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
-
 from apps.fyle.helpers import assert_valid_request
+from apps.workspaces.models import FeatureConfig
+from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
+from fyle_integrations_imports.modules.webhook_attributes import WebhookAttributeProcessor
 from workers.helpers import RoutingKeyEnum, WorkerActionEnum, publish_to_rabbitmq
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
 
 
-def async_import_and_export_expenses(body: dict, workspace_id: int) -> None:
+def handle_webhook_callback(body: dict, workspace_id: int) -> None:
     """
-    Async'ly import and export expenses
-    :param body: body
+    Handle webhook callbacks for expenses and attributes
+    :param body: webhook payload
+    :param workspace_id: workspace id
     :return: None
     """
-    if body.get('action') in ('ADMIN_APPROVED', 'APPROVED', 'STATE_CHANGE_PAYMENT_PROCESSING', 'PAID') and body.get('data'):
-        report_id = body['data']['id']
-        org_id = body['data']['org_id']
-        state = body['data']['state']
+    action = body.get('action')
+    resource = body.get('resource')
+    data = body.get('data')
+
+    if action in ('ADMIN_APPROVED', 'APPROVED', 'STATE_CHANGE_PAYMENT_PROCESSING', 'PAID') and data:
+        report_id = data['id']
+        org_id = data['org_id']
+        state = data['state']
         assert_valid_request(workspace_id=workspace_id, fyle_org_id=org_id)
         payload = {
             'workspace_id': workspace_id,
@@ -32,9 +38,9 @@ def async_import_and_export_expenses(body: dict, workspace_id: int) -> None:
             }
         }
         publish_to_rabbitmq(payload=payload, routing_key=RoutingKeyEnum.EXPORT_P0.value)
-    elif body.get('action') == 'ACCOUNTING_EXPORT_INITIATED' and body.get('data'):
-        report_id = body['data']['id']
-        org_id = body['data']['org_id']
+    elif action == 'ACCOUNTING_EXPORT_INITIATED' and data:
+        report_id = data['id']
+        org_id = data['org_id']
         assert_valid_request(workspace_id=workspace_id, fyle_org_id=org_id)
         payload = {
             'workspace_id': workspace_id,
@@ -49,15 +55,24 @@ def async_import_and_export_expenses(body: dict, workspace_id: int) -> None:
         }
         publish_to_rabbitmq(payload=payload, routing_key=RoutingKeyEnum.EXPORT_P0.value)
 
-    elif body.get('action') == 'UPDATED_AFTER_APPROVAL' and body.get('data') and body.get('resource') == 'EXPENSE':
-        org_id = body['data']['org_id']
-        logger.info("| Updating non-exported expenses through webhook | Content: {{WORKSPACE_ID: {} Payload: {}}}".format(workspace_id, body.get('data')))
+    elif action == 'UPDATED_AFTER_APPROVAL' and data and resource == 'EXPENSE':
+        org_id = data['org_id']
+        logger.info("| Updating non-exported expenses through webhook | Content: {{WORKSPACE_ID: {} Payload: {}}}".format(workspace_id, data))
         assert_valid_request(workspace_id=workspace_id, fyle_org_id=org_id)
         payload = {
             'workspace_id': workspace_id,
             'action': WorkerActionEnum.EXPENSE_UPDATED_AFTER_APPROVAL.value,
             'data': {
-                'data': body['data']
+                'data': data
             }
         }
         publish_to_rabbitmq(payload=payload, routing_key=RoutingKeyEnum.UTILITY.value)
+
+    elif action in ('CREATED', 'UPDATED', 'DELETED') and resource and data:
+        try:
+            feature_config = FeatureConfig.objects.get(workspace_id=workspace_id)
+            if feature_config.fyle_webhook_sync_enabled:
+                processor = WebhookAttributeProcessor(workspace_id)
+                processor.process_webhook(body)
+        except Exception as e:
+            logger.error(f"Error processing attribute webhook for workspace {workspace_id}: {str(e)}")
