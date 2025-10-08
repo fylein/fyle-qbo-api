@@ -3,6 +3,8 @@ import logging
 import os
 import signal
 
+from fyle_accounting_library.common_resources.helpers import mask_sensitive_data
+
 # isort: off
 from workers.actions import handle_tasks
 # isort: on
@@ -36,7 +38,8 @@ class Worker(EventConsumer):
         """
         payload_dict = event.new
         try:
-            logger.info('Processing task for workspace - %s with routing key - %s and payload - %s with delivery tag - %s', payload_dict['workspace_id'], routing_key, payload_dict, delivery_tag)
+            masked_payload = mask_sensitive_data(payload_dict)
+            logger.info('Processing task for workspace - %s with routing key - %s and payload - %s with delivery tag - %s', payload_dict['workspace_id'], routing_key, masked_payload, delivery_tag)
 
             handle_tasks(payload_dict)
             self.qconnector.acknowledge_message(delivery_tag)
@@ -49,7 +52,8 @@ class Worker(EventConsumer):
         """
         Handle exception
         """
-        logger.error('Error while handling exports for workspace - %s, error: %s', payload_dict, str(error))
+        masked_payload = mask_sensitive_data(payload_dict)
+        logger.error('Error while handling exports for workspace - %s, error: %s', masked_payload, str(error))
 
         payload_dict['retry_count'] = payload_dict.get('retry_count', 0) + 1
 
