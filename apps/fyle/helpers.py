@@ -13,6 +13,7 @@ from rest_framework.exceptions import ValidationError
 
 from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings
 from apps.tasks.models import TaskLog
+from apps.workspaces.enums import CacheKeyEnum
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 
 logger = logging.getLogger(__name__)
@@ -298,7 +299,7 @@ def assert_valid_request(workspace_id: int, fyle_org_id: str):
     the url_workspace_id and fyle_org_id workspace
     Only cache valid requests for 3 days to improve performance
     """
-    cache_key = f"workspace_validation_{workspace_id}_{fyle_org_id}"
+    cache_key = CacheKeyEnum.WORKSPACE_VALIDATION.value.format(workspace_id=workspace_id, fyle_org_id=fyle_org_id)
 
     cached_result = cache.get(cache_key)
     if cached_result == "valid":
