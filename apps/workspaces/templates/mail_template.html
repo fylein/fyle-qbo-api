@@ -32,22 +32,25 @@
         padding: 13px 0px 12px 23px;
         text-align: left;
         border: 1px solid #dfdfe2;
-        width: 25%;
         font-weight: 500;
         font-size: 16px;
         color: #1A1A1A;
+        vertical-align: top;
       }
 
       #task-logs td {
-        padding: 24px 0px 26px 23px;
+        padding: 24px 23px 26px 23px;
         text-align: left;
         border-bottom: 1px solid #dfdfe2;
         border-radius: 4px;
-        width: 25%;
         font-weight: 300;
         font-size: 14px;
         color: #1a1a1a;
         border: 1px solid #dfdfe2;
+        vertical-align: top;
+        word-wrap: break-word;
+        word-break: break-word;
+        overflow-wrap: break-word;
       }
     </style>
   </head>
@@ -168,8 +171,8 @@
                             letter-spacing: 0.02em;
                           "
                         >
-                          <td style="width: 50%">{{ brand_name }} Organization</td>
-                          <td style="width: 50%">QuickBooks Online Company</td>
+                          <td style="width: 50%; vertical-align: top;">{{ brand_name }} Organization</td>
+                          <td style="width: 50%; vertical-align: top;">QuickBooks Online Company</td>
                         </tr>
                         <tr
                           style="
@@ -178,8 +181,8 @@
                             line-height: 20px;
                           "
                         >
-                          <td style="width: 50%">{{ fyle_company }}</td>
-                          <td style="width: 50%">{{ qbo_company }}</td>
+                          <td style="width: 50%; vertical-align: top;">{{ fyle_company }}</td>
+                          <td style="width: 50%; vertical-align: top;">{{ qbo_company }}</td>
                         </tr>
                       </table>
                     </td>
@@ -283,7 +286,7 @@
                         padding: 13px 0px 12px 23px;
                         text-align: left;
                         border: 1px solid #dfdfe2;
-                        width: 25%;
+                        width: 24%;
                         font-weight: 500;
                         font-size: 14px;
                         color: #1a1a1a;
@@ -296,7 +299,7 @@
                         padding: 13px 0px 12px 23px;
                         text-align: left;
                         border: 1px solid #dfdfe2;
-                        width: 25%;
+                        width: 24%;
                         font-weight: 500;
                         font-size: 14px;
                         color: #1a1a1a;
@@ -313,6 +316,7 @@
                         font-weight: 500;
                         font-size: 14px;
                         color: #1a1a1a;
+                        word-break: break-word;
                       "
                     >
                       Error value / Message
