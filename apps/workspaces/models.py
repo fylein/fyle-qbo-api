@@ -3,10 +3,12 @@ Workspace Models
 """
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import ArrayField
+from django.core.cache import cache
 from django.db import models
 from django.db.models import JSONField
 from django_q.models import Schedule
 
+from apps.workspaces.enums import CacheKeyEnum
 from fyle_accounting_mappings.mixins import AutoAddCreateUpdateInfoMixin
 
 User = get_user_model()
@@ -215,6 +217,24 @@ class FeatureConfig(models.Model):
     fyle_webhook_sync_enabled = models.BooleanField(default=False, help_text='Enable fyle attribute webhook sync')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')
+
+    @classmethod
+    def get_cached_response(cls, workspace_id: int):
+        """
+        Get cached feature config for workspace
+        Cache for 48 hours (172800 seconds)
+        :param workspace_id: workspace id
+        :return: FeatureConfig instance
+        """
+        cache_key = CacheKeyEnum.FEATURE_CONFIG.value.format(workspace_id=workspace_id)
+        cached_feature_config = cache.get(cache_key)
+
+        if cached_feature_config:
+            return cached_feature_config
+
+        feature_config = cls.objects.get(workspace_id=workspace_id)
+        cache.set(cache_key, feature_config, 172800)
+        return feature_config
 
     class Meta:
         db_table = 'feature_configs'

@@ -2,7 +2,7 @@ import logging
 
 from apps.fyle.helpers import assert_valid_request
 from apps.workspaces.models import FeatureConfig
-from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
+from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum, WebhookAttributeActionEnum
 from fyle_integrations_imports.modules.webhook_attributes import WebhookAttributeProcessor
 from workers.helpers import RoutingKeyEnum, WorkerActionEnum, publish_to_rabbitmq
 
@@ -68,9 +68,9 @@ def handle_webhook_callback(body: dict, workspace_id: int) -> None:
         }
         publish_to_rabbitmq(payload=payload, routing_key=RoutingKeyEnum.UTILITY.value)
 
-    elif action in ('CREATED', 'UPDATED', 'DELETED') and resource and data:
+    elif action in (WebhookAttributeActionEnum.CREATED, WebhookAttributeActionEnum.UPDATED, WebhookAttributeActionEnum.DELETED):
         try:
-            feature_config = FeatureConfig.objects.get(workspace_id=workspace_id)
+            feature_config = FeatureConfig.get_cached_response(workspace_id=workspace_id)
             if feature_config.fyle_webhook_sync_enabled:
                 processor = WebhookAttributeProcessor(workspace_id)
                 processor.process_webhook(body)

@@ -1,11 +1,11 @@
 from datetime import datetime
 
 from django_q.models import Schedule
-from fyle_accounting_mappings.models import MappingSetting
 
 from apps.mappings.constants import SYNC_METHODS
 from apps.mappings.models import GeneralMapping
 from apps.workspaces.models import FeatureConfig, QBOCredential, WorkspaceGeneralSettings
+from fyle_accounting_mappings.models import MappingSetting
 from fyle_integrations_imports.dataclasses import TaskSetting
 from fyle_integrations_imports.queues import chain_import_fields_to_fyle
 from workers.helpers import RoutingKeyEnum, WorkerActionEnum, publish_to_rabbitmq
@@ -59,7 +59,7 @@ def construct_tasks_and_chain_import_fields_to_fyle(workspace_id: int) -> None:
     Schedule will hit this func, if we want to process things via worker,
     we can publish to rabbitmq else chain it as usual.
     """
-    feature_configs = FeatureConfig.objects.get(workspace_id=workspace_id)
+    feature_configs = FeatureConfig.get_cached_response(workspace_id=workspace_id)
     if feature_configs.import_via_rabbitmq:
         payload = {
             'workspace_id': workspace_id,

@@ -5,4 +5,4 @@ class CacheKeyEnum(CacheKeyEnum):
     """
     Cache key enum
     """
-    pass
+    FEATURE_CONFIG = 'feature_config_{workspace_id}'

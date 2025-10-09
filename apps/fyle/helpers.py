@@ -297,7 +297,7 @@ def assert_valid_request(workspace_id: int, fyle_org_id: str):
     """
     Assert if the request is valid by checking
     the url_workspace_id and fyle_org_id workspace
-    Only cache valid requests for 3 days to improve performance
+    Only cache valid requests for 30 days to improve performance
     """
     cache_key = CacheKeyEnum.WORKSPACE_VALIDATION.value.format(workspace_id=workspace_id, fyle_org_id=fyle_org_id)
 
@@ -308,7 +308,7 @@ def assert_valid_request(workspace_id: int, fyle_org_id: str):
     try:
         workspace = Workspace.objects.get(fyle_org_id=fyle_org_id)
         if workspace.id == workspace_id:
-            cache.set(cache_key, True, 259200)
+            cache.set(cache_key, True, 2592000)
             return
         else:
             raise ValidationError('Workspace mismatch')
