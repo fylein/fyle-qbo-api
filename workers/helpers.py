@@ -55,7 +55,7 @@ ACTION_METHOD_MAP = {
     WorkerActionEnum.EXPENSE_STATE_CHANGE: 'apps.fyle.tasks.import_and_export_expenses',
     WorkerActionEnum.BACKGROUND_SCHEDULE_EXPORT: 'apps.workspaces.actions.export_to_qbo',
     WorkerActionEnum.UPDATE_WORKSPACE_NAME: 'apps.workspaces.tasks.update_workspace_name',
-    WorkerActionEnum.HANDLE_FYLE_REFRESH_DIMENSION: 'apps.fyle.actions.sync_fyle_dimensions',
+    WorkerActionEnum.HANDLE_FYLE_REFRESH_DIMENSION: 'apps.fyle.actions.refresh_fyle_dimension',
     WorkerActionEnum.IMPORT_DIMENSIONS_TO_FYLE: 'apps.mappings.queues.initiate_import_to_fyle',
     WorkerActionEnum.CREATE_ADMIN_SUBSCRIPTION: 'apps.workspaces.tasks.create_admin_subscriptions',
     WorkerActionEnum.TRIGGER_AUTO_MAP_EMPLOYEES: 'apps.mappings.actions.trigger_auto_map_employees',
