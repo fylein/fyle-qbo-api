@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunSQL(
             sql="""
-                update django_q_schedule set cluster = null where cluster = 'import;
+                update django_q_schedule set cluster = null where cluster = 'import';
             """,
             reverse_sql="""
             """
