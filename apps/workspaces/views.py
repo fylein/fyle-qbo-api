@@ -4,7 +4,6 @@ import traceback
 from django.contrib.auth import get_user_model
 from django.db import connection
 from django.db.models import Q
-from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from fyle_rest_auth.utils import AuthUtils
 from qbosdk import exceptions as qbo_exc
 from rest_framework import generics
@@ -32,6 +31,7 @@ from apps.workspaces.serializers import (
     WorkspaceSerializer,
 )
 from apps.workspaces.utils import generate_qbo_refresh_token
+from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from fyle_qbo_api.utils import invalidate_qbo_credentials
 from workers.helpers import RoutingKeyEnum, WorkerActionEnum, publish_to_rabbitmq
 
@@ -197,7 +197,7 @@ class ExportToQBOView(generics.CreateAPIView):
     """
 
     def post(self, request, *args, **kwargs):
-        feature_config = FeatureConfig.objects.get(workspace_id=kwargs['workspace_id'])
+        feature_config = FeatureConfig.get_cached_response(workspace_id=kwargs['workspace_id'])
         if feature_config.export_via_rabbitmq:
             payload = {
                 'workspace_id': kwargs['workspace_id'],

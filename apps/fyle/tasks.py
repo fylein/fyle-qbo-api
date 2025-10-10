@@ -9,12 +9,6 @@ from django.db.models import Count, Q
 from django_q.models import Schedule
 from django_q.tasks import async_task, schedule
 from fyle.platform.exceptions import InternalServerError, InvalidTokenError, RetryException
-from fyle_accounting_library.fyle_platform.branding import feature_configuration
-from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
-from fyle_accounting_library.fyle_platform.helpers import filter_expenses_based_on_state, get_expense_import_states
-from fyle_accounting_mappings.models import ExpenseAttribute
-from fyle_integrations_platform_connector import PlatformConnector
-from fyle_integrations_platform_connector.apis.expenses import Expenses as FyleExpenses
 
 from apps.fyle.actions import mark_expenses_as_skipped, post_accounting_export_summary
 from apps.fyle.helpers import (
@@ -25,10 +19,24 @@ from apps.fyle.helpers import (
     handle_import_exception,
     update_task_log_post_import,
 )
-from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings, SOURCE_ACCOUNT_MAP as EXPENSE_SOURCE_ACCOUNT_MAP
+from apps.fyle.models import SOURCE_ACCOUNT_MAP as EXPENSE_SOURCE_ACCOUNT_MAP
+from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings
 from apps.tasks.models import Error, TaskLog
 from apps.workspaces.actions import export_to_qbo
-from apps.workspaces.models import FyleCredential, LastExportDetail, Workspace, WorkspaceGeneralSettings, WorkspaceSchedule
+from apps.workspaces.models import (
+    FeatureConfig,
+    FyleCredential,
+    LastExportDetail,
+    Workspace,
+    WorkspaceGeneralSettings,
+    WorkspaceSchedule,
+)
+from fyle_accounting_library.fyle_platform.branding import feature_configuration
+from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
+from fyle_accounting_library.fyle_platform.helpers import filter_expenses_based_on_state, get_expense_import_states
+from fyle_accounting_mappings.models import ExpenseAttribute
+from fyle_integrations_platform_connector import PlatformConnector
+from fyle_integrations_platform_connector.apis.expenses import Expenses as FyleExpenses
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -263,6 +271,12 @@ def create_expense_groups(workspace_id: int, fund_source: List[str], task_log: T
 
 
 def sync_dimensions(workspace_id: int, is_export: bool = False):
+    feature_config = FeatureConfig.get_cached_response(workspace_id=workspace_id)
+
+    if feature_config.fyle_webhook_sync_enabled:
+        logger.info(f'Skipping sync_dimensions for workspace {workspace_id} as webhook sync is enabled')
+        return
+
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
     platform = PlatformConnector(fyle_credentials)
     platform.import_fyle_dimensions(is_export=is_export)
