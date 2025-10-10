@@ -109,12 +109,6 @@ Q_CLUSTER = {
     # The maximum resident set size in kilobytes before a worker will recycle and release resources.
     # Useful for limiting memory usage.
     'max_rss': 100000,  # 100mb
-    'ALT_CLUSTERS': {
-        'import': {
-            'retry': 14400,
-            'timeout': 3600
-        },
-    }
 }
 
 SERVICE_NAME = os.environ.get('SERVICE_NAME')
