@@ -797,25 +797,24 @@ def _delete_expense_groups_for_report(report_id: str, workspace: Workspace) -> N
     deleted_count = 0
     skipped_count = 0
 
-    with transaction.atomic():
-        for expense_group in expense_groups:
-            active_task_logs = TaskLog.objects.filter(
-                expense_group_id=expense_group.id,
-                workspace_id=workspace.id,
-                status__in=['ENQUEUED', 'IN_PROGRESS']
-            ).exists()
+    for expense_group in expense_groups:
+        active_task_logs = TaskLog.objects.filter(
+            expense_group_id=expense_group.id,
+            workspace_id=workspace.id,
+            status__in=['ENQUEUED', 'IN_PROGRESS']
+        ).exists()
 
-            if active_task_logs:
-                logger.warning("Skipping deletion of expense group %s - active task logs exist", expense_group.id)
-                skipped_count += 1
-                continue
+        if active_task_logs:
+            logger.warning("Skipping deletion of expense group %s - active task logs exist", expense_group.id)
+            skipped_count += 1
+            continue
 
-            logger.info("Deleting expense group %s for report %s", expense_group.id, report_id)
+        logger.info("Deleting expense group %s for report %s", expense_group.id, report_id)
 
-            with transaction.atomic():
-                delete_expense_group_and_related_data(expense_group, workspace.id)
+        with transaction.atomic():
+            delete_expense_group_and_related_data(expense_group, workspace.id)
 
-            deleted_count += 1
+        deleted_count += 1
 
     logger.info("Completed deletion for report %s in workspace %s - deleted: %s, skipped: %s",
                 report_id, workspace.id, deleted_count, skipped_count)
