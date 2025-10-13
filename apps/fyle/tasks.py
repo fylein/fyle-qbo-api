@@ -740,18 +740,18 @@ def handle_expense_report_change(expense_data: Dict, action_type: str) -> None:
 
     if action_type == 'ADDED_TO_REPORT':
         report_id = expense_data.get('report_id')
-        
+
         logger.info("Processing ADDED_TO_REPORT for expense %s in workspace %s, report_id: %s", expense_id, workspace.id, report_id)
         _delete_expense_groups_for_report(report_id, workspace)
         return
-        
+
     elif action_type == 'EJECTED_FROM_REPORT':
         expense = Expense.objects.filter(workspace_id=workspace.id, expense_id=expense_id).first()
-        
+
         if not expense:
             logger.warning("Expense %s not found in workspace %s for action %s", expense_id, workspace.id, action_type)
             return
-        
+
         expense_group = ExpenseGroup.objects.filter(
             expenses=expense,
             workspace_id=workspace.id,
@@ -772,7 +772,7 @@ def _delete_expense_groups_for_report(report_id: str, workspace: Workspace) -> N
     When expenses are added to a report, the report goes to SUBMITTED state which is not importable.
     This function deletes all expense groups for the report so they can be recreated when the report
     changes to an importable state (APPROVED/PAYMENT_PROCESSING/PAID) via state change webhook.
-    
+
     :param report_id: Report ID
     :param workspace: Workspace object
     :return: None
@@ -804,20 +804,20 @@ def _delete_expense_groups_for_report(report_id: str, workspace: Workspace) -> N
                 workspace_id=workspace.id,
                 status__in=['ENQUEUED', 'IN_PROGRESS']
             ).exists()
-            
+
             if active_task_logs:
                 logger.warning("Skipping deletion of expense group %s - active task logs exist", expense_group.id)
                 skipped_count += 1
                 continue
-            
+
             logger.info("Deleting expense group %s for report %s", expense_group.id, report_id)
-            
+
             with transaction.atomic():
                 delete_expense_group_and_related_data(expense_group, workspace.id)
-            
+
             deleted_count += 1
-    
-    logger.info("Completed deletion for report %s in workspace %s - deleted: %s, skipped: %s", 
+
+    logger.info("Completed deletion for report %s in workspace %s - deleted: %s, skipped: %s",
                 report_id, workspace.id, deleted_count, skipped_count)
 
 
@@ -839,7 +839,6 @@ def _handle_expense_ejected_from_report(expense: Expense, expense_data: Dict, wo
 
     if not expense_group:
         logger.info("No expense group found for expense %s in workspace %s", expense.expense_id, workspace.id)
-        _update_expense_from_webhook_data(expense, expense_data, workspace)
         return
 
     logger.info("Removing expense %s from expense group %s", expense.expense_id, expense_group.id)
@@ -852,7 +851,6 @@ def _handle_expense_ejected_from_report(expense: Expense, expense_data: Dict, wo
 
     if active_task_logs:
         logger.warning("Cannot remove expense %s from group %s - active task logs exist", expense.expense_id, expense_group.id)
-        _update_expense_from_webhook_data(expense, expense_data, workspace)
         return
 
     with transaction.atomic():
@@ -863,34 +861,6 @@ def _handle_expense_ejected_from_report(expense: Expense, expense_data: Dict, wo
             delete_expense_group_and_related_data(expense_group, workspace.id)
         else:
             logger.info("Expense group %s still has expenses after removing %s", expense_group.id, expense.expense_id)
-
-        _update_expense_from_webhook_data(expense, expense_data, workspace)
-
-
-def _update_expense_from_webhook_data(expense: Expense, expense_data: Dict, workspace: Workspace) -> None:
-    """
-    Update expense object with data from webhook
-    :param expense: Expense object to update
-    :param expense_data: Data from webhook
-    :param workspace: Workspace object
-    :return: None
-    """
-    try:
-        if expense_data.get('report_id') is None:
-            logger.info("Skipping expense update for %s as report_id is None (expense ejected from report)", expense.expense_id)
-            return
-
-        if expense_data.get('created_at') is None or expense_data.get('updated_at') is None:
-            logger.info("Skipping expense update for %s as created_at or updated_at is None in webhook data", expense.expense_id)
-            return
-        
-        expense_objects = FyleExpenses().construct_expense_object([expense_data], workspace.id)
-
-        if expense_objects:
-            Expense.create_expense_objects(expense_objects, workspace.id, skip_update=False)
-            logger.info("Updated expense %s with latest data from webhook", expense.expense_id)
-    except Exception as e:
-        logger.exception("Error updating expense %s from webhook data: %s", expense.expense_id, e)
 
 
 def re_run_skip_export_rule(workspace: Workspace) -> None:
