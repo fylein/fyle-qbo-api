@@ -69,7 +69,7 @@ def async_import_and_export_expenses(body: dict, workspace_id: int) -> None:
         assert_valid_request(workspace_id=workspace_id, fyle_org_id=org_id)
         payload = {
             'workspace_id': workspace_id,
-            'action': WorkerActionEnum.EXPENSE_EJECTED_FROM_REPORT.value,
+            'action': WorkerActionEnum.EXPENSE_ADDED_EJECTED_FROM_REPORT.value,
             'data': {
                 'expense_data': body['data'],
                 'action_type': 'EJECTED_FROM_REPORT'
@@ -84,7 +84,7 @@ def async_import_and_export_expenses(body: dict, workspace_id: int) -> None:
         assert_valid_request(workspace_id=workspace_id, fyle_org_id=org_id)
         payload = {
             'workspace_id': workspace_id,
-            'action': WorkerActionEnum.EXPENSE_ADDED_TO_REPORT.value,
+            'action': WorkerActionEnum.EXPENSE_ADDED_EJECTED_FROM_REPORT.value,
             'data': {
                 'expense_data': body['data'],
                 'action_type': 'ADDED_TO_REPORT'
