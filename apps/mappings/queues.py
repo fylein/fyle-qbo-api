@@ -30,7 +30,7 @@ def schedule_auto_map_ccc_employees(workspace_id: int):
     if general_settings.auto_map_employees and general_settings.corporate_credit_card_expenses_object != 'BILL':
         start_datetime = datetime.now()
 
-        schedule, _ = Schedule.objects.update_or_create(func='apps.mappings.tasks.async_auto_map_ccc_account', cluster='import', args='{0}'.format(workspace_id), defaults={'schedule_type': Schedule.MINUTES, 'minutes': 24 * 60, 'next_run': start_datetime})
+        schedule, _ = Schedule.objects.update_or_create(func='apps.mappings.tasks.async_auto_map_ccc_account', args='{0}'.format(workspace_id), defaults={'schedule_type': Schedule.MINUTES, 'minutes': 24 * 60, 'next_run': start_datetime})
     else:
         schedule: Schedule = Schedule.objects.filter(func='apps.mappings.tasks.async_auto_map_ccc_account', args='{}'.format(workspace_id)).first()
 
@@ -42,7 +42,7 @@ def schedule_auto_map_employees(employee_mapping_preference: str, workspace_id: 
     if employee_mapping_preference:
         start_datetime = datetime.now()
 
-        schedule, _ = Schedule.objects.update_or_create(func='apps.mappings.tasks.async_auto_map_employees', cluster='import', args='{0}'.format(workspace_id), defaults={'schedule_type': Schedule.MINUTES, 'minutes': 24 * 60, 'next_run': start_datetime})
+        schedule, _ = Schedule.objects.update_or_create(func='apps.mappings.tasks.async_auto_map_employees', args='{0}'.format(workspace_id), defaults={'schedule_type': Schedule.MINUTES, 'minutes': 24 * 60, 'next_run': start_datetime})
     else:
         schedule: Schedule = Schedule.objects.filter(func='apps.mappings.tasks.async_auto_map_employees', args='{}'.format(workspace_id)).first()
 

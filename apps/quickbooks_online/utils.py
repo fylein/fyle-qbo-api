@@ -3,7 +3,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
-import unidecode
+import text_unidecode
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Max
@@ -53,7 +53,7 @@ def format_special_characters(value: str) -> str:
     :param value: string to be formatted
     :return: formatted string
     """
-    formatted_string = unidecode.unidecode(u'{}'.format(value))
+    formatted_string = text_unidecode.unidecode(u'{}'.format(value))
     if not formatted_string.strip():
         return ''
 
