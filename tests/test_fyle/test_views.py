@@ -245,7 +245,7 @@ def test_expenses(mocker, api_client, test_connection):
     access_token = test_connection.access_token
 
     url = reverse('expenses', kwargs={'workspace_id': 1})
-    url = url + "?org_id=orHVw3ikkCxJ&updated_at__gte=2021-01-01T00:00:00Z&updated_at__lte=2021-01-01T00:00:00Z"
+    url = url + "&org_id=orHVw3ikkCxJ&updated_at__gte=2021-01-01T00:00:00Z&updated_at__lte=2021-01-01T00:00:00Z"
 
     api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
 
