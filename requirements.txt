@@ -28,7 +28,6 @@ redis==3.3.11
 requests==2.32.4
 sentry-sdk==2.19.2
 six==1.13.0
-Unidecode==1.1.2
 pytest==8.3.4
 pytest-cov==6.0.0
 pytest-django==4.9.0
