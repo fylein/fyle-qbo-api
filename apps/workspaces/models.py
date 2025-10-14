@@ -8,7 +8,7 @@ from django.db import models
 from django.db.models import JSONField
 from django_q.models import Schedule
 
-from apps.workspaces.enums import CacheKeyEnum
+from fyle_accounting_library.fyle_platform.enums import CacheKeyEnum
 from fyle_accounting_mappings.mixins import AutoAddCreateUpdateInfoMixin
 
 User = get_user_model()

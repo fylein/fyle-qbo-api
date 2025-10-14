@@ -13,8 +13,8 @@ from rest_framework.exceptions import ValidationError
 
 from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings
 from apps.tasks.models import TaskLog
-from apps.workspaces.enums import CacheKeyEnum
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
+from fyle_accounting_library.fyle_platform.enums import CacheKeyEnum
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
