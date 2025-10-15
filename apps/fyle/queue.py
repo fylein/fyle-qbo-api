@@ -69,10 +69,10 @@ def handle_webhook_callback(body: dict, workspace_id: int) -> None:
         publish_to_rabbitmq(payload=payload, routing_key=RoutingKeyEnum.UTILITY.value)
 
     elif action in (WebhookAttributeActionEnum.CREATED, WebhookAttributeActionEnum.UPDATED, WebhookAttributeActionEnum.DELETED):
-        logger.info("| Processing attribute webhook | Content: {{WORKSPACE_ID: {} Payload: {}}}".format(workspace_id, body))
         try:
             fyle_webhook_sync_enabled = FeatureConfig.get_feature_config(workspace_id=workspace_id, key='fyle_webhook_sync_enabled')
             if fyle_webhook_sync_enabled:
+                logger.info("| Processing attribute webhook | Content: {{WORKSPACE_ID: {} Payload: {}}}".format(workspace_id, body))
                 processor = WebhookAttributeProcessor(workspace_id)
                 processor.process_webhook(body)
         except Exception as e:
