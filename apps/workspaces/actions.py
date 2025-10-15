@@ -5,9 +5,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.db import transaction
-from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
-from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute
-from fyle_integrations_platform_connector import PlatformConnector
 from fyle_rest_auth.helpers import get_fyle_admin
 from fyle_rest_auth.models import AuthToken
 from qbosdk import revoke_refresh_token
@@ -37,6 +34,9 @@ from apps.workspaces.models import (
 )
 from apps.workspaces.serializers import QBOCredentialSerializer
 from apps.workspaces.signals import post_delete_qbo_connection
+from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
+from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute, FyleSyncTimestamp
+from fyle_integrations_platform_connector import PlatformConnector
 from fyle_qbo_api.utils import assert_valid, patch_integration_settings
 from workers.helpers import RoutingKeyEnum, WorkerActionEnum, publish_to_rabbitmq
 
@@ -75,6 +75,8 @@ def update_or_create_workspace(user, access_token):
         FyleCredential.objects.update_or_create(refresh_token=auth_tokens.refresh_token, workspace_id=workspace.id, cluster_domain=cluster_domain)
 
         FeatureConfig.objects.create(workspace_id=workspace.id)
+
+        FyleSyncTimestamp.objects.create(workspace_id=workspace.id)
 
         payload = {
             'workspace_id': workspace.id,
