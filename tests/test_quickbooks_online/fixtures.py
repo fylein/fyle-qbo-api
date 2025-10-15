@@ -8,7 +8,7 @@ data = {
         "PrivateNote": "Reimbursable expense by ashwin.t@fyle.in on 2022-01-21 ",
         "Line": [
             {
-                "Description": "ashwin.t@fyle.in - Travel - 2022-01-21 - C/2022/01/R/8 -  - https://staging.fyle.tech/app/admin/#/enterprise/view_expense/txlPjmNxssq1?org_id=orGcBCVPijjO",
+                "Description": "ashwin.t@fyle.in - Travel - 2022-01-21 - C/2022/01/R/8 -  - https://staging.fyle.tech/app/admin/#/company_expenses?txnId=txlPjmNxssq1&org_id=orGcBCVPijjO",
                 "DetailType": "AccountBasedExpenseLineDetail",
                 "Amount": 60.0,
                 "AccountBasedExpenseLineDetail": {"AccountRef": {"value": "57"},"CustomerRef": {"value": "None"},"ClassRef": {"value": "None"},"TaxCodeRef": {"value": "None"},"TaxAmount": 0.0,"BillableStatus": "NotBillable"},
@@ -27,7 +27,7 @@ data = {
         'PrivateNote': 'Credit card expense by sravan.kumar@fyle.in on 2022-05-23 ',
         'Line': [
             {
-                'Description': 'sravan.kumar@fyle.in - WIP - 2022-05-23 - C/2022/05/R/8 -  - None/app/admin/#/enterprise/view_expense/tx3i1mrGprDs?org_id=orPJvXuoLqvJ',
+                'Description': 'sravan.kumar@fyle.in - WIP - 2022-05-23 - C/2022/05/R/8 -  - None/app/admin/#/company_expenses?txnId=tx3i1mrGprDs&org_id=orPJvXuoLqvJ',
                 'DetailType': 'AccountBasedExpenseLineDetail',
                 'Amount': 0.89,
                 'AccountBasedExpenseLineDetail': {
@@ -68,7 +68,7 @@ data = {
         'GlobalTaxCalculation': 'TaxInclusive',
         "Line": [
             {
-                "Description": "ashwin.t@fyle.in - Travel - 2022-01-21 - C/2022/01/R/8 -  - https://staging.fyle.tech/app/admin/#/enterprise/view_expense/txlPjmNxssq1?org_id=orGcBCVPijjO",
+                "Description": "ashwin.t@fyle.in - Travel - 2022-01-21 - C/2022/01/R/8 -  - https://staging.fyle.tech/app/admin/#/company_expenses?txnId=txlPjmNxssq1&org_id=orGcBCVPijjO",
                 "DetailType": "ItemBasedExpenseLineDetail",
                 "Amount": 60.0,
                 "ItemBasedExpenseLineDetail": {"ItemRef": {"value": "125"},"Qty": 1,"CustomerRef": {"value": "None"},"ClassRef": {"value": "None"},"TaxCodeRef": {"value": "None"},"BillableStatus": "NotBillable"},
@@ -85,7 +85,7 @@ data = {
         "PrivateNote": "Credit card expense by sravan.kumar@fyle.in on 2024-06-24 ",
         "Line": [
             {
-                "Description": "sravan.kumar@fyle.in - Concrete - 2024-06-24 - C/2023/04/R/1 -  - None/app/admin/#/enterprise/view_expense/txT4kpMbHdKn?org_id=orPJvXuoLqvJ",
+                "Description": "sravan.kumar@fyle.in - Concrete - 2024-06-24 - C/2023/04/R/1 -  - None/app/admin/#/company_expenses?txnId=txT4kpMbHdKn&org_id=orPJvXuoLqvJ",
                 "DetailType": "ItemBasedExpenseLineDetail",
                 "Amount": 0.89,
                 "ItemBasedExpenseLineDetail": {
@@ -133,13 +133,13 @@ data = {
         'GlobalTaxCalculation': 'TaxInclusive',
         'Line': [
             {
-                'Description': 'sravan.kumar@fyle.in - Concrete - 2023-07-06 - C/2023/04/R/2 -  - None/app/admin/#/enterprise/view_expense/txybL0Dw709h?org_id=orPJvXuoLqvJ',
+                'Description': 'sravan.kumar@fyle.in - Concrete - 2023-07-06 - C/2023/04/R/2 -  - None/app/admin/#/company_expenses?txnId=txybL0Dw709h&org_id=orPJvXuoLqvJ',
                 'DetailType': 'ItemBasedExpenseLineDetail',
                 'Amount': 1.0,
                 'ItemBasedExpenseLineDetail': {'CustomerRef': {'value': None},'ClassRef': {'value': '5000000000000142238'},'TaxCodeRef': {'value': None},'BillableStatus': 'NotBillable','ItemRef': {'value': '3'},'Qty': 1},
             },
             {
-                'Description': 'sravan.kumar@fyle.in - WIP - 2023-07-06 - C/2023/04/R/2 -  - None/app/admin/#/enterprise/view_expense/txoF0nqv6cG3?org_id=orPJvXuoLqvJ',
+                'Description': 'sravan.kumar@fyle.in - WIP - 2023-07-06 - C/2023/04/R/2 -  - None/app/admin/#/company_expenses?txnId=txoF0nqv6cG3&org_id=orPJvXuoLqvJ',
                 'DetailType': 'AccountBasedExpenseLineDetail',
                 'Amount': 10.0,
                 'AccountBasedExpenseLineDetail': {'CustomerRef': {'value': None},'ClassRef': {'value': '5000000000000142238'},'TaxCodeRef': {'value': None},'BillableStatus': 'NotBillable','AccountRef': {'value': '69'},'TaxAmount': 0.0},
@@ -156,7 +156,7 @@ data = {
         "PrivateNote": "Credit card expense by sravan.kumar@fyle.in",
         "Line": [
             {
-                "Description": "sravan.kumar@fyle.in - Concrete - 2024-06-24 - C/2023/04/R/2 -  - None/app/admin/#/enterprise/view_expense/txybL0Dw709h?org_id=orPJvXuoLqvJ",
+                "Description": "sravan.kumar@fyle.in - Concrete - 2024-06-24 - C/2023/04/R/2 -  - None/app/admin/#/company_expenses?txnId=txybL0Dw709h&org_id=orPJvXuoLqvJ",
                 "DetailType": "ItemBasedExpenseLineDetail",
                 "Amount": 0.89,
                 "ItemBasedExpenseLineDetail": {
@@ -169,7 +169,7 @@ data = {
                 },
             },
             {
-                "Description": "sravan.kumar@fyle.in - WIP - 2024-06-24 - C/2023/04/R/2 -  - None/app/admin/#/enterprise/view_expense/txoF0nqv6cG3?org_id=orPJvXuoLqvJ",
+                "Description": "sravan.kumar@fyle.in - WIP - 2024-06-24 - C/2023/04/R/2 -  - None/app/admin/#/company_expenses?txnId=txoF0nqv6cG3&org_id=orPJvXuoLqvJ",
                 "DetailType": "AccountBasedExpenseLineDetail",
                 "Amount": 8.93,
                 "AccountBasedExpenseLineDetail": {
@@ -218,7 +218,7 @@ data = {
         "Credit": False,
         "Line": [
             {
-                "Description": "ashwin.t@fyle.in - Travel - 2022-01-21 - C/2022/01/R/8 -  - https://staging.fyle.tech/app/admin/#/enterprise/view_expense/txvh8qm7RTRI?org_id=orGcBCVPijjO",
+                "Description": "ashwin.t@fyle.in - Travel - 2022-01-21 - C/2022/01/R/8 -  - https://staging.fyle.tech/app/admin/#/company_expenses?txnId=txvh8qm7RTRI&org_id=orGcBCVPijjO",
                 "DetailType": "AccountBasedExpenseLineDetail",
                 "Amount": 30.0,
                 "AccountBasedExpenseLineDetail": {"AccountRef": {"value": "57"},"CustomerRef": {"value": "None"},"ClassRef": {"value": "None"},"TaxCodeRef": {"value": "None"},"TaxAmount": 0.0,"BillableStatus": "NotBillable"},
@@ -238,7 +238,7 @@ data = {
         'Credit': False,
         'Line': [
             {
-                'Description': 'ashwin.t@fyle.in - Food - 2022-05-17 - C/2022/05/R/5 -  - None/app/admin/#/enterprise/view_expense/txj8kWkDTyog?org_id=or79Cob97KSh',
+                'Description': 'ashwin.t@fyle.in - Food - 2022-05-17 - C/2022/05/R/5 -  - None/app/admin/#/company_expenses?txnId=txj8kWkDTyog&org_id=or79Cob97KSh',
                 'DetailType': 'AccountBasedExpenseLineDetail',
                 'Amount': 0.89,
                 'AccountBasedExpenseLineDetail': {'CustomerRef': {'value': None},'ClassRef': {'value': None},'TaxCodeRef': {'value': '17'},'BillableStatus': 'NotBillable','AccountRef': {'value': '13'},'TaxAmount': 0.11}
@@ -272,7 +272,7 @@ data = {
         "Credit": False,
         "Line": [
             {
-                "Description": "sravan.kumar@fyle.in - Concrete - 2023-04-19 - C/2023/04/R/3 -  - None/app/admin/#/enterprise/view_expense/txT4kpMbHdLm?org_id=or79Cob97KSh",
+                "Description": "sravan.kumar@fyle.in - Concrete - 2023-04-19 - C/2023/04/R/3 -  - None/app/admin/#/company_expenses?txnId=txT4kpMbHdLm&org_id=or79Cob97KSh",
                 "DetailType": "ItemBasedExpenseLineDetail",
                 "Amount": 1.0,
                 "ItemBasedExpenseLineDetail": {"ItemRef": {"value": "3"},"Qty": 1,"CustomerRef": {"value": "None"},"ClassRef": {"value": "None"},"TaxCodeRef": {"value": "None"},"BillableStatus": "NotBillable"},
@@ -292,7 +292,7 @@ data = {
         "Credit": False,
         "Line": [
             {
-                "Description": "sravan.kumar@fyle.in - Concrete - 2023-04-19 - C/2023/04/R/3 -  - None/app/admin/#/enterprise/view_expense/txT4kpMbHdLm?org_id=or79Cob97KSh",
+                "Description": "sravan.kumar@fyle.in - Concrete - 2023-04-19 - C/2023/04/R/3 -  - None/app/admin/#/company_expenses?txnId=txT4kpMbHdLm&org_id=or79Cob97KSh",
                 "DetailType": "ItemBasedExpenseLineDetail",
                 "Amount": 1.0,
                 "ItemBasedExpenseLineDetail": {"ItemRef": {"value": "3"},"Qty": 1,"CustomerRef": {"value": "None"},"ClassRef": {"value": "None"},'TaxCodeRef': {'value': '17'},"BillableStatus": "NotBillable"},
@@ -326,13 +326,13 @@ data = {
         'Credit': False,
         'Line': [
             {
-                'Description': 'sravan.kumar@fyle.in - Concrete - 2023-07-06 - C/2023/04/R/3 -  - None/app/admin/#/enterprise/view_expense/txT4kpMbHdLg8?org_id=or79Cob97KSh',
+                'Description': 'sravan.kumar@fyle.in - Concrete - 2023-07-06 - C/2023/04/R/3 -  - None/app/admin/#/company_expenses?txnId=txT4kpMbHdLg8&org_id=or79Cob97KSh',
                 'DetailType': 'ItemBasedExpenseLineDetail',
                 'Amount': 1.0,
                 'ItemBasedExpenseLineDetail': {'CustomerRef': {'value': None},'ClassRef': {'value': None},'TaxCodeRef': {'value': None},'BillableStatus': 'NotBillable','ItemRef': {'value': '3'},'Qty': 1},
             },
             {
-                'Description': 'sravan.kumar@fyle.in - Food - 2023-07-06 - C/2023/04/R/2 -  - None/app/admin/#/enterprise/view_expense/txoF0nqv6cG89?org_id=or79Cob97KSh',
+                'Description': 'sravan.kumar@fyle.in - Food - 2023-07-06 - C/2023/04/R/2 -  - None/app/admin/#/company_expenses?txnId=txoF0nqv6cG89&org_id=or79Cob97KSh',
                 'DetailType': 'AccountBasedExpenseLineDetail',
                 'Amount': 10.0,
                 'AccountBasedExpenseLineDetail': {'CustomerRef': {'value': None},'ClassRef': {'value': None},'TaxCodeRef': {'value': None},'BillableStatus': 'NotBillable','AccountRef': {'value': '13'},'TaxAmount': 0.0},
@@ -352,7 +352,7 @@ data = {
         "Credit": False,
         "Line": [
             {
-                "Description": "sravan.kumar@fyle.in - Concrete - 2024-06-24 - C/2023/04/R/3 -  - None/app/admin/#/enterprise/view_expense/txT4kpMbHdLg8?org_id=or79Cob97KSh",
+                "Description": "sravan.kumar@fyle.in - Concrete - 2024-06-24 - C/2023/04/R/3 -  - None/app/admin/#/company_expenses?txnId=txT4kpMbHdLg8&org_id=or79Cob97KSh",
                 "DetailType": "ItemBasedExpenseLineDetail",
                 "Amount": 0.89,
                 "ItemBasedExpenseLineDetail": {
@@ -365,7 +365,7 @@ data = {
                 },
             },
             {
-                "Description": "sravan.kumar@fyle.in - Food - 2024-06-24 - C/2023/04/R/2 -  - None/app/admin/#/enterprise/view_expense/txoF0nqv6cG89?org_id=or79Cob97KSh",
+                "Description": "sravan.kumar@fyle.in - Food - 2024-06-24 - C/2023/04/R/2 -  - None/app/admin/#/company_expenses?txnId=txoF0nqv6cG89&org_id=or79Cob97KSh",
                 "DetailType": "AccountBasedExpenseLineDetail",
                 "Amount": 8.93,
                 "AccountBasedExpenseLineDetail": {
@@ -414,7 +414,7 @@ data = {
         'Credit': None,
         'Line': [
             {
-                'Description': 'sravan.kumar@fyle.in - Concrete - 2023-04-19 - C/2023/04/R/6 -  - None/app/admin/#/enterprise/view_expense/txT4kpMbHdIp?org_id=or79Cob97KSh',
+                'Description': 'sravan.kumar@fyle.in - Concrete - 2023-04-19 - C/2023/04/R/6 -  - None/app/admin/#/company_expenses?txnId=txT4kpMbHdIp&org_id=or79Cob97KSh',
                 'DetailType': 'ItemBasedExpenseLineDetail',
                 'Amount': 1.0,
                 'ItemBasedExpenseLineDetail': {'ItemRef': {'value': '3'},'Qty': 1,'CustomerRef': {'value': None},'ClassRef': {'value': None},'TaxCodeRef': {'value': None},'BillableStatus': 'NotBillable'},
@@ -434,7 +434,7 @@ data = {
         "Credit": None,
         "Line": [
             {
-                "Description": "sravan.kumar@fyle.in - Concrete - 2024-06-24 - C/2023/04/R/6 -  - None/app/admin/#/enterprise/view_expense/txT4kpMbHdIp?org_id=or79Cob97KSh",
+                "Description": "sravan.kumar@fyle.in - Concrete - 2024-06-24 - C/2023/04/R/6 -  - None/app/admin/#/company_expenses?txnId=txT4kpMbHdIp&org_id=or79Cob97KSh",
                 "DetailType": "ItemBasedExpenseLineDetail",
                 "Amount": 0.89,
                 "ItemBasedExpenseLineDetail": {
@@ -483,13 +483,13 @@ data = {
         'Credit': None,
         'Line': [
             {
-                'Description': 'sravan.kumar@fyle.in - Food - 2023-07-06 - C/2023/04/R/6 -  - None/app/admin/#/enterprise/view_expense/txoF0nqv6cG78?org_id=or79Cob97KSh',
+                'Description': 'sravan.kumar@fyle.in - Food - 2023-07-06 - C/2023/04/R/6 -  - None/app/admin/#/company_expenses?txnId=txoF0nqv6cG78&org_id=or79Cob97KSh',
                 'DetailType': 'AccountBasedExpenseLineDetail',
                 'Amount': 10.0,
                 'AccountBasedExpenseLineDetail': {'CustomerRef': {'value': None},'ClassRef': {'value': None},'TaxCodeRef': {'value': None},'BillableStatus': 'NotBillable','AccountRef': {'value': '13'},'TaxAmount': 0.0},
             },
             {
-                'Description': 'sravan.kumar@fyle.in - Concrete - 2023-07-06 - C/2023/04/R/6 -  - None/app/admin/#/enterprise/view_expense/txT4kpMbHdLg87L?org_id=or79Cob97KSh',
+                'Description': 'sravan.kumar@fyle.in - Concrete - 2023-07-06 - C/2023/04/R/6 -  - None/app/admin/#/company_expenses?txnId=txT4kpMbHdLg87L&org_id=or79Cob97KSh',
                 'DetailType': 'ItemBasedExpenseLineDetail',
                 'Amount': 1.0,
                 'ItemBasedExpenseLineDetail': {'CustomerRef': {'value': None},'ClassRef': {'value': None},'TaxCodeRef': {'value': None},'BillableStatus': 'NotBillable','ItemRef': {'value': '3'},'Qty': 1},
@@ -509,7 +509,7 @@ data = {
         "Credit": None,
         "Line": [
             {
-                "Description": "sravan.kumar@fyle.in - Concrete - 2024-06-24 - C/2023/04/R/6 -  - None/app/admin/#/enterprise/view_expense/txT4kpMbHdLg87L?org_id=or79Cob97KSh",
+                "Description": "sravan.kumar@fyle.in - Concrete - 2024-06-24 - C/2023/04/R/6 -  - None/app/admin/#/company_expenses?txnId=txT4kpMbHdLg87L&org_id=or79Cob97KSh",
                 "DetailType": "ItemBasedExpenseLineDetail",
                 "Amount": 0.89,
                 "ItemBasedExpenseLineDetail": {
@@ -522,7 +522,7 @@ data = {
                 },
             },
             {
-                "Description": "sravan.kumar@fyle.in - Food - 2024-06-24 - C/2023/04/R/6 -  - None/app/admin/#/enterprise/view_expense/txoF0nqv6cG78?org_id=or79Cob97KSh",
+                "Description": "sravan.kumar@fyle.in - Food - 2024-06-24 - C/2023/04/R/6 -  - None/app/admin/#/company_expenses?txnId=txoF0nqv6cG78&org_id=or79Cob97KSh",
                 "DetailType": "AccountBasedExpenseLineDetail",
                 "Amount": 8.93,
                 "AccountBasedExpenseLineDetail": {
@@ -571,7 +571,7 @@ data = {
         "Credit": "None",
         "Line": [
             {
-                "Description": "ashwin.t@fyle.in - Food - 2022-01-23 - C/2022/01/R/16 -  - https://staging.fyle.tech/app/admin/#/enterprise/view_expense/txRJYVMgMaH6?org_id=or79Cob97KSh",
+                "Description": "ashwin.t@fyle.in - Food - 2022-01-23 - C/2022/01/R/16 -  - https://staging.fyle.tech/app/admin/#/company_expenses?txnId=txRJYVMgMaH6&org_id=or79Cob97KSh",
                 "DetailType": "AccountBasedExpenseLineDetail",
                 "Amount": 60.0,
                 "AccountBasedExpenseLineDetail": {"AccountRef": {"value": "56"},"CustomerRef": {"value": "None"},"ClassRef": {"value": "None"},"TaxCodeRef": {"value": "None"},"TaxAmount": 0.0,"BillableStatus": "NotBillable"},
@@ -591,7 +591,7 @@ data = {
         'Credit': None,
         'Line': [
             {
-                'Description': 'user9@fyleforgotham.in - Office Party - 2020-05-13 - C/2021/04/R/42 -  - None/app/admin/#/enterprise/view_expense/txU2qpKmrUR9?org_id=or79Cob97KSh',
+                'Description': 'user9@fyleforgotham.in - Office Party - 2020-05-13 - C/2021/04/R/42 -  - None/app/admin/#/company_expenses?txnId=txU2qpKmrUR9&org_id=or79Cob97KSh',
                 'DetailType': 'AccountBasedExpenseLineDetail',
                 'Amount': 1060.71,
                 'AccountBasedExpenseLineDetail': {
@@ -627,7 +627,7 @@ data = {
         "Line": [
             {
                 "DetailType": "JournalEntryLineDetail",
-                "Description": "ashwin.t@fyle.in - Food - 2022-01-23 - C/2022/01/R/14 -  - https://staging.fyle.tech/app/admin/#/enterprise/view_expense/txMFjDHNxEPt?org_id=or79Cob97KSh",
+                "Description": "ashwin.t@fyle.in - Food - 2022-01-23 - C/2022/01/R/14 -  - https://staging.fyle.tech/app/admin/#/company_expenses?txnId=txMFjDHNxEPt&org_id=or79Cob97KSh",
                 "Amount": 90.0,
                 "JournalEntryLineDetail": {
                     "PostingType": "Credit",
@@ -643,7 +643,7 @@ data = {
             },
             {
                 "DetailType": "JournalEntryLineDetail",
-                "Description": "ashwin.t@fyle.in - Food - 2022-01-23 - C/2022/01/R/14 -  - https://staging.fyle.tech/app/admin/#/enterprise/view_expense/txMFjDHNxEPt?org_id=or79Cob97KSh",
+                "Description": "ashwin.t@fyle.in - Food - 2022-01-23 - C/2022/01/R/14 -  - https://staging.fyle.tech/app/admin/#/company_expenses?txnId=txMFjDHNxEPt&org_id=or79Cob97KSh",
                 "Amount": 90.0,
                 "JournalEntryLineDetail": {
                     "PostingType": "Debit",
@@ -673,7 +673,7 @@ data = {
         "Credit": "None",
         "Line": [
             {
-                "Description": "ashwin.t@fyle.in - Food - 2022-01-23 - C/2022/01/R/14 -  - https://staging.fyle.tech/app/admin/#/enterprise/view_expense/txMFjDHNxEPt?org_id=or79Cob97KSh",
+                "Description": "ashwin.t@fyle.in - Food - 2022-01-23 - C/2022/01/R/14 -  - https://staging.fyle.tech/app/admin/#/company_expenses?txnId=txMFjDHNxEPt&org_id=or79Cob97KSh",
                 "DetailType": "AccountBasedExpenseLineDetail",
                 "Amount": 90.0,
                 "AccountBasedExpenseLineDetail": {"AccountRef": {"value": "56"},"ClassRef": {"value": "None"},"CustomerRef": {"value": "None"},"TaxCodeRef": {"value": "None"},"TaxAmount": 0.0,"BillableStatus": "NotBillable"},
@@ -693,7 +693,7 @@ data = {
         "Credit": None,
         "Line": [
             {
-                "Description": "user9@fyleforgotham.in - Food - 2020-05-10 - C/2021/04/R/42 -  - None/app/admin/#/enterprise/view_expense/txHmoggWDQZs?org_id=or79Cob97KSh",
+                "Description": "user9@fyleforgotham.in - Food - 2020-05-10 - C/2021/04/R/42 -  - None/app/admin/#/company_expenses?txnId=txHmoggWDQZs&org_id=or79Cob97KSh",
                 "DetailType": "AccountBasedExpenseLineDetail",
                 "Amount": 715.18,
                 "AccountBasedExpenseLineDetail": {
@@ -706,7 +706,7 @@ data = {
                 },
             },
             {
-                "Description": "user9@fyleforgotham.in - Office Party - 2020-05-01 - C/2021/04/R/42 -  - None/app/admin/#/enterprise/view_expense/txqy5WraeWt6?org_id=or79Cob97KSh",
+                "Description": "user9@fyleforgotham.in - Office Party - 2020-05-01 - C/2021/04/R/42 -  - None/app/admin/#/company_expenses?txnId=txqy5WraeWt6&org_id=or79Cob97KSh",
                 "DetailType": "AccountBasedExpenseLineDetail",
                 "Amount": 1609.82,
                 "AccountBasedExpenseLineDetail": {
@@ -719,7 +719,7 @@ data = {
                 },
             },
             {
-                "Description": "user9@fyleforgotham.in - Others - 2020-05-01 - C/2021/04/R/42 -  - None/app/admin/#/enterprise/view_expense/tx5PXU8lacAv?org_id=or79Cob97KSh",
+                "Description": "user9@fyleforgotham.in - Others - 2020-05-01 - C/2021/04/R/42 -  - None/app/admin/#/company_expenses?txnId=tx5PXU8lacAv&org_id=or79Cob97KSh",
                 "DetailType": "AccountBasedExpenseLineDetail",
                 "Amount": 528.57,
                 "AccountBasedExpenseLineDetail": {
@@ -768,7 +768,7 @@ data = {
         "Credit": "None",
         "Line": [
             {
-                "Description": "user9@fyleforgotham.in - Concrete - 2023-04-19 - C/2023/04/R/13 -  - None/app/admin/#/enterprise/view_expense/txT4kpMbiPlHdLm?org_id=or79Cob97KSh",
+                "Description": "user9@fyleforgotham.in - Concrete - 2023-04-19 - C/2023/04/R/13 -  - None/app/admin/#/company_expenses?txnId=txT4kpMbiPlHdLm&org_id=or79Cob97KSh",
                 "DetailType": "ItemBasedExpenseLineDetail",
                 "Amount": 1.0,
                 "ItemBasedExpenseLineDetail": {"ItemRef": {"value": "3"},"Qty": 1,"CustomerRef": {"value": "None"},"ClassRef": {"value": "None"},"TaxCodeRef": {"value": "None"},"BillableStatus": "NotBillable"},
@@ -788,7 +788,7 @@ data = {
         "Credit": None,
         "Line": [
             {
-                "Description": "user9@fyleforgotham.in - Concrete - 2024-06-24 - C/2023/04/R/7 -  - None/app/admin/#/enterprise/view_expense/txT4kpMbiPlHdLm?org_id=or79Cob97KSh",
+                "Description": "user9@fyleforgotham.in - Concrete - 2024-06-24 - C/2023/04/R/7 -  - None/app/admin/#/company_expenses?txnId=txT4kpMbiPlHdLm&org_id=or79Cob97KSh",
                 "DetailType": "ItemBasedExpenseLineDetail",
                 "Amount": 0.89,
                 "ItemBasedExpenseLineDetail": {
@@ -837,13 +837,13 @@ data = {
         "Credit": "None",
         "Line": [
             {
-                "Description": "user9@fyleforgotham.in - Concrete - 2023-04-19 - C/2023/04/R/13 -  - None/app/admin/#/enterprise/view_expense/txT4kpKidaAdLm?org_id=or79Cob97KSh",
+                "Description": "user9@fyleforgotham.in - Concrete - 2023-04-19 - C/2023/04/R/13 -  - None/app/admin/#/company_expenses?txnId=txT4kpKidaAdLm&org_id=or79Cob97KSh",
                 "DetailType": "ItemBasedExpenseLineDetail",
                 "Amount": 1.0,
                 "ItemBasedExpenseLineDetail": {"ItemRef": {"value": "3"},"Qty": 1,"CustomerRef": {"value": "None"},"ClassRef": {"value": "None"},"TaxCodeRef": {"value": "None"},"BillableStatus": "NotBillable"},
             },
             {
-                "Description": "user9@fyleforgotham.in - Food - 2023-04-19 - C/2023/04/R/13 -  - None/app/admin/#/enterprise/view_expense/txT4kpMbiadw?org_id=or79Cob97KSh",
+                "Description": "user9@fyleforgotham.in - Food - 2023-04-19 - C/2023/04/R/13 -  - None/app/admin/#/company_expenses?txnId=txT4kpMbiadw&org_id=or79Cob97KSh",
                 "DetailType": "AccountBasedExpenseLineDetail",
                 "Amount": 1.0,
                 "AccountBasedExpenseLineDetail": {"AccountRef": {"value": "13"},"ClassRef": {"value": "None"},"CustomerRef": {"value": "None"},"TaxCodeRef": {"value": "None"},"TaxAmount": 0.0,"BillableStatus": "NotBillable"},
@@ -863,7 +863,7 @@ data = {
         "Credit": None,
         "Line": [
             {
-                "Description": "user9@fyleforgotham.in - Concrete - 2024-06-24 - C/2023/04/R/13 -  - None/app/admin/#/enterprise/view_expense/txT4kpKidaAdLm?org_id=or79Cob97KSh",
+                "Description": "user9@fyleforgotham.in - Concrete - 2024-06-24 - C/2023/04/R/13 -  - None/app/admin/#/company_expenses?txnId=txT4kpKidaAdLm&org_id=or79Cob97KSh",
                 "DetailType": "ItemBasedExpenseLineDetail",
                 "Amount": 0.89,
                 "ItemBasedExpenseLineDetail": {
@@ -876,7 +876,7 @@ data = {
                 },
             },
             {
-                "Description": "user9@fyleforgotham.in - Food - 2024-06-24 - C/2023/04/R/13 -  - None/app/admin/#/enterprise/view_expense/txT4kpMbiadw?org_id=or79Cob97KSh",
+                "Description": "user9@fyleforgotham.in - Food - 2024-06-24 - C/2023/04/R/13 -  - None/app/admin/#/company_expenses?txnId=txT4kpMbiadw&org_id=or79Cob97KSh",
                 "DetailType": "AccountBasedExpenseLineDetail",
                 "Amount": 0.89,
                 "AccountBasedExpenseLineDetail": {
@@ -1190,7 +1190,7 @@ data = {
         "PrivateNote": "Credit card expense by sravan.kumar@fyle.in on 2022-05-23 ",
         "Line": [
             {
-                "Description": "sravan.kumar@fyle.in - WIP - 2022-05-23 - C/2022/05/R/8 -  - https://staging.fyle.tech/app/admin/#/enterprise/view_expense/tx3i1mrGprDs?org_id=orPJvXuoLqvJ",
+                "Description": "sravan.kumar@fyle.in - WIP - 2022-05-23 - C/2022/05/R/8 -  - https://staging.fyle.tech/app/admin/#/company_expenses?txnId=tx3i1mrGprDs&org_id=orPJvXuoLqvJ",
                 "DetailType": "AccountBasedExpenseLineDetail",
                 "Amount": 1.0,
                 "AccountBasedExpenseLineDetail": {"AccountRef": {"value": "69"},"CustomerRef": {"value": "None"},"ClassRef": {"value": "5000000000000142238"},"TaxCodeRef": {"value": "None"},"TaxAmount": 0.0,"BillableStatus": "NotBillable"},
