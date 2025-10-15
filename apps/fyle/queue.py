@@ -15,7 +15,6 @@ def async_import_and_export_expenses(body: dict, workspace_id: int) -> None:
     :param body: body
     :return: None
     """
-    
     if body.get('data') and body['data'].get('org_id'):
         org_id = body['data']['org_id']
         assert_valid_request(workspace_id=workspace_id, fyle_org_id=org_id)
