@@ -18,7 +18,7 @@ from apps.fyle.serializers import (
     ExpenseSerializer,
 )
 from apps.fyle.tasks import create_expense_groups, get_task_log_and_fund_source
-from apps.workspaces.models import FyleCredential, Workspace
+from apps.workspaces.models import FeatureConfig, FyleCredential, Workspace
 from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from fyle_qbo_api.utils import LookupFieldMixin
 from workers.helpers import RoutingKeyEnum, WorkerActionEnum, publish_to_rabbitmq
@@ -120,6 +120,10 @@ class SyncFyleDimensionView(generics.ListCreateAPIView):
         # Check for a valid workspace and fyle creds and respond with 400 if not found
         workspace = Workspace.objects.get(id=kwargs['workspace_id'])
         FyleCredential.objects.get(workspace_id=kwargs['workspace_id'])
+        feature_config = FeatureConfig.get_cached_response(workspace_id=kwargs['workspace_id'])
+        if feature_config.fyle_webhook_sync_enabled:
+            logger.info(f"Skipping sync_dimensions for workspace {kwargs['workspace_id']} as webhook sync is enabled")
+            return Response(status=status.HTTP_200_OK)
 
         payload = {
             'workspace_id': workspace.id,
