@@ -197,8 +197,8 @@ class ExportToQBOView(generics.CreateAPIView):
     """
 
     def post(self, request, *args, **kwargs):
-        feature_config = FeatureConfig.get_cached_response(workspace_id=kwargs['workspace_id'])
-        if feature_config.export_via_rabbitmq:
+        export_via_rabbitmq = FeatureConfig.get_feature_config(workspace_id=kwargs['workspace_id'], key='export_via_rabbitmq')
+        if export_via_rabbitmq:
             payload = {
                 'workspace_id': kwargs['workspace_id'],
                 'action': WorkerActionEnum.DASHBOARD_SYNC.value,

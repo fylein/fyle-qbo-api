@@ -121,18 +121,18 @@ def __create_chain_and_run(workspace_id: int, chain_tasks: List[Task], run_in_ra
     :param fund_source: Fund source
     :return: None
     """
-    feature_config = FeatureConfig.get_cached_response(workspace_id=workspace_id)
+    fyle_webhook_sync_enabled = FeatureConfig.get_feature_config(workspace_id=workspace_id, key='fyle_webhook_sync_enabled')
 
     if run_in_rabbitmq_worker:
         # This function checks intervals and triggers sync if needed, syncing dimension for all exports is overkill
-        if not feature_config.fyle_webhook_sync_enabled:
+        if not fyle_webhook_sync_enabled:
             sync_fyle_dimensions(workspace_id)
 
         task_executor = TaskChainRunner()
         task_executor.run(chain_tasks, workspace_id)
     else:
         chain = Chain()
-        if not feature_config.fyle_webhook_sync_enabled:
+        if not fyle_webhook_sync_enabled:
             chain.append('apps.fyle.tasks.sync_dimensions', workspace_id, True)
 
         for task in chain_tasks:

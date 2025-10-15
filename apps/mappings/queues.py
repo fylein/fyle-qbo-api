@@ -59,8 +59,8 @@ def construct_tasks_and_chain_import_fields_to_fyle(workspace_id: int) -> None:
     Schedule will hit this func, if we want to process things via worker,
     we can publish to rabbitmq else chain it as usual.
     """
-    feature_configs = FeatureConfig.get_cached_response(workspace_id=workspace_id)
-    if feature_configs.import_via_rabbitmq:
+    import_via_rabbitmq = FeatureConfig.get_feature_config(workspace_id=workspace_id, key='import_via_rabbitmq')
+    if import_via_rabbitmq:
         payload = {
             'workspace_id': workspace_id,
             'action': WorkerActionEnum.IMPORT_DIMENSIONS_TO_FYLE.value,

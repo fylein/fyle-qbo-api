@@ -23,14 +23,7 @@ from apps.fyle.models import SOURCE_ACCOUNT_MAP as EXPENSE_SOURCE_ACCOUNT_MAP
 from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings
 from apps.tasks.models import Error, TaskLog
 from apps.workspaces.actions import export_to_qbo
-from apps.workspaces.models import (
-    FeatureConfig,
-    FyleCredential,
-    LastExportDetail,
-    Workspace,
-    WorkspaceGeneralSettings,
-    WorkspaceSchedule,
-)
+from apps.workspaces.models import FyleCredential, LastExportDetail, Workspace, WorkspaceGeneralSettings, WorkspaceSchedule
 from fyle_accounting_library.fyle_platform.branding import feature_configuration
 from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from fyle_accounting_library.fyle_platform.helpers import filter_expenses_based_on_state, get_expense_import_states
@@ -271,12 +264,6 @@ def create_expense_groups(workspace_id: int, fund_source: List[str], task_log: T
 
 
 def sync_dimensions(workspace_id: int, is_export: bool = False):
-    feature_config = FeatureConfig.get_cached_response(workspace_id=workspace_id)
-
-    if feature_config.fyle_webhook_sync_enabled:
-        logger.info(f'Skipping sync_dimensions for workspace {workspace_id} as webhook sync is enabled')
-        return
-
     fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
     platform = PlatformConnector(fyle_credentials)
     platform.import_fyle_dimensions(is_export=is_export)

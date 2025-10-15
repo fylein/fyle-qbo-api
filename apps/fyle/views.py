@@ -120,8 +120,8 @@ class SyncFyleDimensionView(generics.ListCreateAPIView):
         # Check for a valid workspace and fyle creds and respond with 400 if not found
         workspace = Workspace.objects.get(id=kwargs['workspace_id'])
         FyleCredential.objects.get(workspace_id=kwargs['workspace_id'])
-        feature_config = FeatureConfig.get_cached_response(workspace_id=kwargs['workspace_id'])
-        if feature_config.fyle_webhook_sync_enabled:
+        fyle_webhook_sync_enabled = FeatureConfig.get_feature_config(workspace_id=kwargs['workspace_id'], key='fyle_webhook_sync_enabled')
+        if fyle_webhook_sync_enabled and workspace.source_synced_at is not None:
             logger.info(f"Skipping sync_dimensions for workspace {kwargs['workspace_id']} as webhook sync is enabled")
             return Response(status=status.HTTP_200_OK)
 

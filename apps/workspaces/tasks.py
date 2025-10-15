@@ -139,8 +139,8 @@ def run_sync_schedule(workspace_id):
         ).values_list('id', flat=True).distinct()
 
         if eligible_expense_group_ids.exists():
-            feature_config = FeatureConfig.get_cached_response(workspace_id=workspace_id)
-            if feature_config.export_via_rabbitmq:
+            export_via_rabbitmq = FeatureConfig.get_feature_config(workspace_id=workspace_id, key='export_via_rabbitmq')
+            if export_via_rabbitmq:
                 logger.info(f"Exporting expenses via RabbitMQ for workspace id {workspace_id} triggered by {ExpenseImportSourceEnum.BACKGROUND_SCHEDULE}")
                 payload = {
                     'workspace_id': workspace_id,

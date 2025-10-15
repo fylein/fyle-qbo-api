@@ -219,22 +219,31 @@ class FeatureConfig(models.Model):
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')
 
     @classmethod
-    def get_cached_response(cls, workspace_id: int):
+    def get_feature_config(cls, workspace_id: int, key: str):
         """
-        Get cached feature config for workspace
+        Get cached feature config value for workspace
         Cache for 48 hours (172800 seconds)
         :param workspace_id: workspace id
-        :return: FeatureConfig instance
+        :param key: feature config key (export_via_rabbitmq, import_via_rabbitmq, fyle_webhook_sync_enabled)
+        :return: Boolean value for the requested feature
         """
-        cache_key = CacheKeyEnum.FEATURE_CONFIG.value.format(workspace_id=workspace_id)
-        cached_feature_config = cache.get(cache_key)
+        cache_key_map = {
+            'export_via_rabbitmq': CacheKeyEnum.FEATURE_CONFIG_EXPORT_VIA_RABBITMQ,
+            'import_via_rabbitmq': CacheKeyEnum.FEATURE_CONFIG_IMPORT_VIA_RABBITMQ,
+            'fyle_webhook_sync_enabled': CacheKeyEnum.FEATURE_CONFIG_FYLE_WEBHOOK_SYNC_ENABLED
+        }
 
-        if cached_feature_config:
-            return cached_feature_config
+        cache_key_enum = cache_key_map.get(key)
+        cache_key = cache_key_enum.value.format(workspace_id=workspace_id)
+        cached_value = cache.get(cache_key)
+
+        if cached_value is not None:
+            return cached_value
 
         feature_config = cls.objects.get(workspace_id=workspace_id)
-        cache.set(cache_key, feature_config, 172800)
-        return feature_config
+        value = getattr(feature_config, key)
+        cache.set(cache_key, value, 172800)
+        return value
 
     class Meta:
         db_table = 'feature_configs'
