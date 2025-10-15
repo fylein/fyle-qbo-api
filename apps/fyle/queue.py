@@ -44,7 +44,7 @@ def async_import_and_export_expenses(body: dict, workspace_id: int) -> None:
                 'org_id': org_id,
                 'is_state_change_event': False,
                 'report_state': None,
-                'imported_from': ExpenseImportSourceEnum.WEBHOOK
+                'imported_from': ExpenseImportSourceEnum.DIRECT_EXPORT
             }
         }
         publish_to_rabbitmq(payload=payload, routing_key=RoutingKeyEnum.EXPORT_P0.value)
