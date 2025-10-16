@@ -102,9 +102,11 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
         workspace_general_settings_instance = WorkspaceGeneralSettings.objects.filter(workspace_id=instance.id).first()
         old_configurations = {}
         if workspace_general_settings_instance:
+            existing_expense_group_settings = ExpenseGroupSettings.objects.get(workspace_id=instance.id)
             old_configurations = {
                 'reimbursable_expenses_object': workspace_general_settings_instance.reimbursable_expenses_object,
                 'corporate_credit_card_expenses_object': workspace_general_settings_instance.corporate_credit_card_expenses_object,
+                'expense_group_settings': existing_expense_group_settings
             }
 
         map_merchant_to_vendor = True
@@ -158,7 +160,9 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
         ):
             expense_group_settings['import_card_credits'] = True
 
-        ExpenseGroupSettings.update_expense_group_settings(expense_group_settings, instance.id, user)
+        expense_group_settings_instance, _ = ExpenseGroupSettings.update_expense_group_settings(expense_group_settings, instance.id, user)
+
+        export_trigger.post_save_expense_group_settings(expense_group_settings_instance)
 
         GeneralMapping.objects.update_or_create(
             workspace=instance,
