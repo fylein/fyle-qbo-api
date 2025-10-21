@@ -706,9 +706,12 @@ def update_non_exported_expenses(data: Dict) -> None:
             expense_state = 'NOT_EXPORTED'
 
         if expense_state and expense_state not in ['COMPLETE', 'IN_PROGRESS']:
+            fyle_credentials = FyleCredential.objects.get(workspace_id=expense.workspace_id)
+            platform = PlatformConnector(fyle_credentials)
+            
             expense_obj = []
             expense_obj.append(data)
-            expense_objects = FyleExpenses().construct_expense_object(expense_obj, expense.workspace_id)
+            expense_objects = platform.expenses.construct_expense_object(expense_obj, expense.workspace_id)
 
             old_fund_source = expense.fund_source
             new_fund_source = EXPENSE_SOURCE_ACCOUNT_MAP[expense_objects[0]['source_account_type']]
