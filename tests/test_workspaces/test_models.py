@@ -1,9 +1,16 @@
 from datetime import datetime, timezone
 
 import pytest
+from django.core.cache import cache
 from fyle_rest_auth.models import User
 
-from apps.workspaces.models import LastExportDetail, Workspace, get_default_chart_of_accounts, get_default_memo_fields
+from apps.workspaces.models import (
+    FeatureConfig,
+    LastExportDetail,
+    Workspace,
+    get_default_chart_of_accounts,
+    get_default_memo_fields,
+)
 
 
 @pytest.mark.django_db
@@ -58,3 +65,27 @@ def test_get_default_memo_fields():
     expected_fields = ['employee_email', 'category', 'spent_on', 'report_number', 'purpose', 'expense_link']
     actual_fields = get_default_memo_fields()
     assert actual_fields == expected_fields
+
+
+@pytest.mark.django_db
+def test_feature_config_get_feature_config():
+    """Test FeatureConfig.get_feature_config() method with caching"""
+    workspace = Workspace.objects.create(
+        name='Test Workspace',
+        fyle_org_id='test_org_fc'
+    )
+    FeatureConfig.objects.create(
+        workspace_id=workspace.id,
+        export_via_rabbitmq=True,
+        import_via_rabbitmq=False,
+        fyle_webhook_sync_enabled=True
+    )
+    result = FeatureConfig.get_feature_config(workspace.id, 'export_via_rabbitmq')
+    assert result is True
+    result = FeatureConfig.get_feature_config(workspace.id, 'export_via_rabbitmq')
+    assert result is True
+    result = FeatureConfig.get_feature_config(workspace.id, 'import_via_rabbitmq')
+    assert result is False
+    result = FeatureConfig.get_feature_config(workspace.id, 'fyle_webhook_sync_enabled')
+    assert result is True
+    cache.clear()

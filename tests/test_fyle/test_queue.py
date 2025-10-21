@@ -1,11 +1,14 @@
+from django.core.cache import cache
+from fyle_accounting_library.rabbitmq.data_class import Task
+
 from apps.fyle.queue import handle_webhook_callback
 from apps.quickbooks_online.queue import __create_chain_and_run
-from apps.workspaces.models import Workspace
-from fyle_accounting_library.rabbitmq.data_class import Task
+from apps.workspaces.models import FeatureConfig, Workspace
 
 
 # This test is just for cov :D
-def test_create_chain_and_run(db):
+def test_create_chain_and_run(mocker, db):
+    mocker.patch('apps.quickbooks_online.queue.sync_fyle_dimensions')
     workspace_id = 3
     chain_tasks = [
         Task(
@@ -16,6 +19,33 @@ def test_create_chain_and_run(db):
 
     __create_chain_and_run(workspace_id, chain_tasks, True)
     assert True
+
+
+def test_create_chain_and_run_with_webhook_sync(mocker, db):
+    """Test __create_chain_and_run skips dimension sync when webhook sync is enabled"""
+    workspace = Workspace.objects.get(id=3)
+    cache.clear()
+    FeatureConfig.objects.update_or_create(
+        workspace_id=workspace.id,
+        defaults={'fyle_webhook_sync_enabled': True}
+    )
+
+    mock_sync = mocker.patch('apps.quickbooks_online.queue.sync_fyle_dimensions')
+    chain_tasks = [
+        Task(
+            target='apps.quickbooks_online.tasks.create_cheque',
+            args=[1, 1, True, False]
+        )
+    ]
+    __create_chain_and_run(workspace.id, chain_tasks, True)
+    mock_sync.assert_not_called()
+    cache.clear()
+    feature_config = FeatureConfig.objects.get(workspace_id=workspace.id)
+    feature_config.fyle_webhook_sync_enabled = False
+    feature_config.save()
+    __create_chain_and_run(workspace.id, chain_tasks, True)
+    mock_sync.assert_called_once_with(workspace.id)
+    cache.clear()
 
 
 # This test is just for cov :D
@@ -78,3 +108,40 @@ def test_async_import_and_export_expenses_added_to_report(db):
     workspace = Workspace.objects.get(id=3)
 
     handle_webhook_callback(body, workspace.id)
+    handle_webhook_callback(body, workspace.id)
+
+
+def test_handle_webhook_callback_attribute_webhooks(mocker, db):
+    """Test attribute webhook processing with feature flag enabled and exception handling"""
+    workspace = Workspace.objects.get(id=3)
+    cache.clear()
+    FeatureConfig.objects.update_or_create(
+        workspace_id=workspace.id,
+        defaults={'fyle_webhook_sync_enabled': True}
+    )
+    mock_processor = mocker.patch('apps.fyle.queue.WebhookAttributeProcessor')
+    mock_processor_instance = mock_processor.return_value
+    body = {
+        'action': 'CREATED',
+        'resource': 'CATEGORY',
+        'data': {
+            'id': 'cat123',
+            'name': 'Travel',
+            'org_id': 'or79Cob97KSh'
+        }
+    }
+    handle_webhook_callback(body, workspace.id)
+    mock_processor.assert_called_once_with(workspace.id)
+    mock_processor_instance.process_webhook.assert_called_once_with(body)
+    mock_processor_instance.process_webhook.side_effect = Exception('Test exception')
+    body['action'] = 'UPDATED'
+    handle_webhook_callback(body, workspace.id)
+    assert mock_processor.call_count == 2
+    cache.clear()
+    feature_config = FeatureConfig.objects.get(workspace_id=workspace.id)
+    feature_config.fyle_webhook_sync_enabled = False
+    feature_config.save()
+    body['action'] = 'DELETED'
+    handle_webhook_callback(body, workspace.id)
+    assert mock_processor.call_count == 2
+    cache.clear()

@@ -2,12 +2,15 @@ from asyncio.log import logger
 
 import pytest
 from django.conf import settings
+from django.core.cache import cache
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import status
 
 from apps.fyle.actions import __bulk_update_expenses
 from apps.fyle.helpers import (
     Q,
+    assert_valid_request,
     construct_expense_filter,
     construct_expense_filter_query,
     get_cluster_domain,
@@ -17,6 +20,7 @@ from apps.fyle.helpers import (
     post_request,
 )
 from apps.fyle.models import Expense, ExpenseFilter
+from apps.workspaces.models import Workspace
 
 
 def test_post_request(mocker):
@@ -440,3 +444,27 @@ def test_get_source_account_type():
     source_account = get_source_account_type(['PERSONAL', 'CCC'])
 
     assert source_account == ['PERSONAL_CASH_ACCOUNT', 'PERSONAL_CORPORATE_CREDIT_CARD_ACCOUNT']
+
+
+@pytest.mark.django_db()
+def test_assert_valid_request():
+    """Test assert_valid_request with caching"""
+    workspace = Workspace.objects.create(
+        name='Test Workspace',
+        fyle_org_id='test_org_123'
+    )
+    assert_valid_request(workspace.id, 'test_org_123')
+    assert_valid_request(workspace.id, 'test_org_123')
+
+    try:
+        assert_valid_request(999, 'test_org_123')
+        assert False, "Should have raised ValidationError"
+    except ValidationError as e:
+        assert str(e.detail[0]) == 'Workspace mismatch'
+
+    try:
+        assert_valid_request(workspace.id, 'nonexistent_org')
+        assert False, "Should have raised ValidationError"
+    except ValidationError as e:
+        assert str(e.detail[0]) == 'Workspace not found'
+    cache.clear()
