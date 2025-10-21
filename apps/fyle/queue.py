@@ -50,7 +50,7 @@ def handle_webhook_callback(body: dict, workspace_id: int) -> None:
                 'org_id': org_id,
                 'is_state_change_event': False,
                 'report_state': None,
-                'imported_from': ExpenseImportSourceEnum.WEBHOOK
+                'imported_from': ExpenseImportSourceEnum.DIRECT_EXPORT
             }
         }
         publish_to_rabbitmq(payload=payload, routing_key=RoutingKeyEnum.EXPORT_P0.value)
@@ -64,6 +64,32 @@ def handle_webhook_callback(body: dict, workspace_id: int) -> None:
             'action': WorkerActionEnum.EXPENSE_UPDATED_AFTER_APPROVAL.value,
             'data': {
                 'data': data
+            }
+        }
+        publish_to_rabbitmq(payload=payload, routing_key=RoutingKeyEnum.UTILITY.value)
+
+    elif action == 'EJECTED_FROM_REPORT' and data and resource == 'EXPENSE':
+        expense_id = body['data']['id']
+        logger.info("| Handling expense ejected from report | Content: {WORKSPACE_ID: %s EXPENSE_ID: %s Payload: %s}", workspace_id, expense_id, body.get('data'))
+        payload = {
+            'workspace_id': workspace_id,
+            'action': WorkerActionEnum.EXPENSE_ADDED_EJECTED_FROM_REPORT.value,
+            'data': {
+                'expense_data': body['data'],
+                'action_type': 'EJECTED_FROM_REPORT'
+            }
+        }
+        publish_to_rabbitmq(payload=payload, routing_key=RoutingKeyEnum.UTILITY.value)
+
+    elif action == 'ADDED_TO_REPORT' and data and resource == 'EXPENSE':
+        expense_id = body['data']['id']
+        logger.info("| Handling expense added to report | Content: {WORKSPACE_ID: %s EXPENSE_ID: %s Payload: %s}", workspace_id, expense_id, body.get('data'))
+        payload = {
+            'workspace_id': workspace_id,
+            'action': WorkerActionEnum.EXPENSE_ADDED_EJECTED_FROM_REPORT.value,
+            'data': {
+                'expense_data': body['data'],
+                'action_type': 'ADDED_TO_REPORT'
             }
         }
         publish_to_rabbitmq(payload=payload, routing_key=RoutingKeyEnum.UTILITY.value)

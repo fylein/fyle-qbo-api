@@ -34,6 +34,7 @@ class WorkerActionEnum(str, Enum):
     BACKGROUND_SCHEDULE_EXPORT = 'EXPORT.P1.BACKGROUND_SCHEDULE_EXPORT'
     HANDLE_FYLE_REFRESH_DIMENSION = 'IMPORT.HANDLE_FYLE_REFRESH_DIMENSION'
     EXPENSE_UPDATED_AFTER_APPROVAL = 'UTILITY.EXPENSE_UPDATED_AFTER_APPROVAL'
+    EXPENSE_ADDED_EJECTED_FROM_REPORT = 'UTILITY.EXPENSE_ADDED_EJECTED_FROM_REPORT'
     CHECK_INTERVAL_AND_SYNC_FYLE_DIMENSION = 'IMPORT.CHECK_INTERVAL_AND_SYNC_FYLE_DIMENSION'
     CHECK_INTERVAL_AND_SYNC_QUICKBOOKS_DIMENSION = 'IMPORT.CHECK_INTERVAL_AND_SYNC_QUICKBOOKS_DIMENSION'
 
@@ -60,6 +61,7 @@ ACTION_METHOD_MAP = {
     WorkerActionEnum.CREATE_ADMIN_SUBSCRIPTION: 'apps.workspaces.tasks.create_admin_subscriptions',
     WorkerActionEnum.TRIGGER_AUTO_MAP_EMPLOYEES: 'apps.mappings.actions.trigger_auto_map_employees',
     WorkerActionEnum.EXPENSE_UPDATED_AFTER_APPROVAL: 'apps.fyle.tasks.update_non_exported_expenses',
+    WorkerActionEnum.EXPENSE_ADDED_EJECTED_FROM_REPORT: 'apps.fyle.tasks.handle_expense_report_change',
     WorkerActionEnum.ADD_ADMINS_TO_WORKSPACE: 'apps.workspaces.tasks.async_add_admins_to_workspace',
     WorkerActionEnum.CHECK_INTERVAL_AND_SYNC_FYLE_DIMENSION: 'apps.fyle.actions.sync_fyle_dimensions',
     WorkerActionEnum.SYNC_QUICKBOOKS_DIMENSION: 'apps.quickbooks_online.actions.refresh_quickbooks_dimensions',

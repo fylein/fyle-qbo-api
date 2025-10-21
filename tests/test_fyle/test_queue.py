@@ -42,8 +42,39 @@ def test_handle_webhook_callback_2(db):
         }
     }
 
-    worksapce, _ = Workspace.objects.update_or_create(
+    workspace, _ = Workspace.objects.update_or_create(
         fyle_org_id = 'or79Cob97KSh'
     )
 
-    handle_webhook_callback(body, worksapce.id)
+    handle_webhook_callback(body, workspace.id)
+
+
+def test_async_import_and_export_expenses_ejected_from_report(db):
+    body = {
+        'action': 'EJECTED_FROM_REPORT',
+        'resource': 'EXPENSE',
+        'data': {
+            'id': 'txExpense123',
+            'org_id': 'or79Cob97KSh'
+        }
+    }
+
+    workspace = Workspace.objects.get(id=3)
+
+    handle_webhook_callback(body, workspace.id)
+
+
+def test_async_import_and_export_expenses_added_to_report(db):
+    body = {
+        'action': 'ADDED_TO_REPORT',
+        'resource': 'EXPENSE',
+        'data': {
+            'id': 'txExpense456',
+            'org_id': 'or79Cob97KSh',
+            'report_id': 'rpReport123'
+        }
+    }
+
+    workspace = Workspace.objects.get(id=3)
+
+    handle_webhook_callback(body, workspace.id)
