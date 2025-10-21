@@ -17,15 +17,17 @@ def handle_webhook_callback(body: dict, workspace_id: int) -> None:
     :param workspace_id: workspace id
     :return: None
     """
-    action = body.get('action')
-    resource = body.get('resource')
-    data = body.get('data')
+    if body.get('data'):
+        action = body.get('action') if body.get('action') else None
+        resource = body.get('resource') if body.get('resource') else None
+        data = body.get('data') if body.get('data') else None
+        org_id = data.get('org_id') if data and data.get('org_id') else None
+        if org_id:
+            assert_valid_request(workspace_id=workspace_id, fyle_org_id=org_id)
 
     if action in ('ADMIN_APPROVED', 'APPROVED', 'STATE_CHANGE_PAYMENT_PROCESSING', 'PAID') and data:
         report_id = data['id']
-        org_id = data['org_id']
         state = data['state']
-        assert_valid_request(workspace_id=workspace_id, fyle_org_id=org_id)
         payload = {
             'workspace_id': workspace_id,
             'action': WorkerActionEnum.EXPENSE_STATE_CHANGE.value,
@@ -40,8 +42,6 @@ def handle_webhook_callback(body: dict, workspace_id: int) -> None:
         publish_to_rabbitmq(payload=payload, routing_key=RoutingKeyEnum.EXPORT_P0.value)
     elif action == 'ACCOUNTING_EXPORT_INITIATED' and data:
         report_id = data['id']
-        org_id = data['org_id']
-        assert_valid_request(workspace_id=workspace_id, fyle_org_id=org_id)
         payload = {
             'workspace_id': workspace_id,
             'action': WorkerActionEnum.DIRECT_EXPORT.value,
@@ -56,9 +56,7 @@ def handle_webhook_callback(body: dict, workspace_id: int) -> None:
         publish_to_rabbitmq(payload=payload, routing_key=RoutingKeyEnum.EXPORT_P0.value)
 
     elif action == 'UPDATED_AFTER_APPROVAL' and data and resource == 'EXPENSE':
-        org_id = data['org_id']
         logger.info("| Updating non-exported expenses through webhook | Content: {{WORKSPACE_ID: {} Payload: {}}}".format(workspace_id, data))
-        assert_valid_request(workspace_id=workspace_id, fyle_org_id=org_id)
         payload = {
             'workspace_id': workspace_id,
             'action': WorkerActionEnum.EXPENSE_UPDATED_AFTER_APPROVAL.value,
