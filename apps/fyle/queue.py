@@ -1,8 +1,9 @@
 import logging
 
+from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum, WebhookAttributeActionEnum
+
 from apps.fyle.helpers import assert_valid_request
 from apps.workspaces.models import FeatureConfig
-from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum, WebhookAttributeActionEnum
 from fyle_integrations_imports.modules.webhook_attributes import WebhookAttributeProcessor
 from workers.helpers import RoutingKeyEnum, WorkerActionEnum, publish_to_rabbitmq
 
@@ -17,13 +18,11 @@ def handle_webhook_callback(body: dict, workspace_id: int) -> None:
     :param workspace_id: workspace id
     :return: None
     """
-    if body.get('data'):
-        action = body.get('action') if body.get('action') else None
-        resource = body.get('resource') if body.get('resource') else None
-        data = body.get('data') if body.get('data') else None
-        org_id = data.get('org_id') if data and data.get('org_id') else None
-        if org_id:
-            assert_valid_request(workspace_id=workspace_id, fyle_org_id=org_id)
+    action = body.get('action')
+    resource = body.get('resource')
+    data = body.get('data')
+    org_id = data.get('org_id') if data else None
+    assert_valid_request(workspace_id=workspace_id, fyle_org_id=org_id)
 
     if action in ('ADMIN_APPROVED', 'APPROVED', 'STATE_CHANGE_PAYMENT_PROCESSING', 'PAID') and data:
         report_id = data['id']
