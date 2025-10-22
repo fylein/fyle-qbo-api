@@ -1,11 +1,12 @@
 import json
+from datetime import datetime, timezone
 from unittest import mock
 
 import pytest
 from django.urls import reverse
 
 from apps.tasks.models import TaskLog
-from apps.workspaces.models import FyleCredential, Workspace
+from apps.workspaces.models import FeatureConfig, FyleCredential, Workspace
 from tests.helper import dict_compare_keys
 from tests.test_fyle.fixtures import data
 
@@ -143,6 +144,27 @@ def test_fyle_sync_dimension(mocker, api_client, test_connection, db):
     workspace.source_synced_at = None
     workspace.save()
 
+    response = api_client.post(url)
+    assert response.status_code == 200
+
+
+def test_fyle_sync_dimension_with_webhook_sync_enabled(mocker, api_client, test_connection, db):
+    """Test sync_fyle_dimension skips when webhook sync is enabled"""
+    access_token = test_connection.access_token
+    workspace = Workspace.objects.get(id=1)
+    workspace.source_synced_at = datetime.now(tz=timezone.utc)
+    workspace.save()
+    FeatureConfig.objects.update_or_create(
+        workspace_id=workspace.id,
+        defaults={'fyle_webhook_sync_enabled': True}
+    )
+    url = reverse('sync-fyle-dimensions', kwargs={'workspace_id': 1})
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(access_token))
+    response = api_client.post(url)
+    assert response.status_code == 200
+    workspace.source_synced_at = None
+    workspace.save()
+    mocker.patch('fyle_integrations_platform_connector.fyle_integrations_platform_connector.PlatformConnector.import_fyle_dimensions', return_value=[])
     response = api_client.post(url)
     assert response.status_code == 200
 

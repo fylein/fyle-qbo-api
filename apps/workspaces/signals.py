@@ -6,12 +6,12 @@ from datetime import datetime, timezone
 
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
-from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute
 
 from apps.quickbooks_online.queue import async_run_post_configration_triggers
 from apps.workspaces.helpers import enable_multi_currency_support
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from apps.workspaces.utils import delete_cards_mapping_settings
+from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute
 from fyle_qbo_api.utils import patch_integration_settings_for_unmapped_cards
 
 
