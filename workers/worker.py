@@ -46,7 +46,6 @@ class Worker(EventConsumer):
             logger.info('Task processed successfully for workspace - %s with routing key - %s and delivery tag - %s', payload_dict['workspace_id'], routing_key, delivery_tag)
         except Exception as e:
             self.handle_exception(routing_key, payload_dict, e, delivery_tag)
-            raise e
 
     def handle_exception(self, routing_key: str, payload_dict: dict, error: Exception, delivery_tag: int) -> None:
         """
