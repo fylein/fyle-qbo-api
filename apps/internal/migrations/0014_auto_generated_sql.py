@@ -3,7 +3,7 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-    dependencies = [('internal', '0013_auto_generated_sql')]
+    dependencies = [('internal', '0013_auto_generated_sql'), ('fyle_accounting_mappings', '0031_fylesynctimestamp')]
 
     operations = [
         migrations.RunSQL(
