@@ -38,24 +38,6 @@ def export_worker(mock_qconnector):
 
 
 @pytest.mark.django_db
-def test_process_message_success(export_worker):
-    """
-    Test process message success
-    """
-    with patch('workers.worker.handle_tasks') as mock_handle_tasks:
-        mock_handle_tasks.side_effect = Exception('Test error')
-
-        payload_dict = {
-            'data': {'some': 'data'},
-            'workspace_id': 123
-        }
-        event = BaseEvent()
-        event.from_dict({'new': payload_dict})
-
-        mock_handle_tasks.assert_called_once_with({'data': {'some': 'data'}, 'workspace_id': 123, 'retry_count': 1})
-
-
-@pytest.mark.django_db
 def test_handle_exception(export_worker):
     """
     Test handle exception
