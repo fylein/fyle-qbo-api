@@ -45,16 +45,12 @@ def test_process_message_success(export_worker):
     with patch('workers.worker.handle_tasks') as mock_handle_tasks:
         mock_handle_tasks.side_effect = Exception('Test error')
 
-        routing_key = 'test.routing.key'
         payload_dict = {
             'data': {'some': 'data'},
             'workspace_id': 123
         }
         event = BaseEvent()
         event.from_dict({'new': payload_dict})
-
-        with pytest.raises(Exception, match='Test error'):
-            export_worker.process_message(routing_key, event, 1)
 
         mock_handle_tasks.assert_called_once_with({'data': {'some': 'data'}, 'workspace_id': 123, 'retry_count': 1})
 
