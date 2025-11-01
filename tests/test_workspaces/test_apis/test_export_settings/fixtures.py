@@ -9,7 +9,7 @@ data = {
             'ccc_export_date_type': '',
             'split_expense_grouping': 'SINGLE_LINE_ITEM'
         },
-        'workspace_general_settings': {'reimbursable_expenses_object': 'EXPENSE', 'corporate_credit_card_expenses_object': 'BILL','name_in_journal_entry': 'MERCHANT'},
+        'workspace_general_settings': {'reimbursable_expenses_object': 'EXPENSE', 'corporate_credit_card_expenses_object': 'BILL','name_in_journal_entry': 'MERCHANT', 'employee_field_mapping': 'VENDOR'},
         'general_mappings': {
             'bank_account': {'id': '', 'name': ''},
             'default_ccc_account': {'id': '', 'name': ''},
@@ -40,7 +40,7 @@ data = {
         },
     },
     'response': {
-        'workspace_general_settings': {'reimbursable_expenses_object': 'EXPENSE', 'corporate_credit_card_expenses_object': 'BILL', 'name_in_journal_entry': 'MERCHANT'},
+        'workspace_general_settings': {'reimbursable_expenses_object': 'EXPENSE', 'corporate_credit_card_expenses_object': 'BILL', 'name_in_journal_entry': 'MERCHANT', 'employee_field_mapping': 'VENDOR'},
         'expense_group_settings': {
             'reimbursable_expense_group_fields': ['fund_source', 'claim_number', 'employee_email', 'report_id'],
             'corporate_credit_card_expense_group_fields': ['fund_source', 'claim_number', 'employee_email', 'report_id'],
