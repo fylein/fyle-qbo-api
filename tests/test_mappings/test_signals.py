@@ -1,8 +1,8 @@
 import pytest
-from fyle_accounting_mappings.models import EmployeeMapping, ExpenseAttribute, Mapping, MappingSetting
 
 from apps.fyle.models import ExpenseGroupSettings
 from apps.tasks.models import Error
+from fyle_accounting_mappings.models import EmployeeMapping, ExpenseAttribute, Mapping, MappingSetting
 from tests.test_fyle.fixtures import data as fyle_data
 
 
@@ -84,3 +84,23 @@ def test_run_pre_mapping_settings_triggers(db, mocker, test_connection):
 
     custom_mappings = Mapping.objects.filter(workspace_id=workspace_id, source_type='CUSTOM_INTENTs').count()
     assert custom_mappings == 0
+
+
+@pytest.mark.django_db()
+def test_patch_integration_settings_on_card_mapping(test_connection, mocker):
+    """
+    Test patch_corporate_card_integration_settings is called when corporate card mapping is created
+    """
+    workspace_id = 3
+
+    mock_patch = mocker.patch('apps.mappings.signals.patch_corporate_card_integration_settings')
+    mapping = Mapping(source_type='CORPORATE_CARD', destination_type='CREDIT_CARD_ACCOUNT',
+                     source_id=7775, destination_id=123, workspace_id=workspace_id)
+    mapping.save()
+    mock_patch.assert_called_once_with(workspace_id=workspace_id)
+
+    mock_patch.reset_mock()
+    mapping = Mapping(source_type='CATEGORY', destination_type='ACCOUNT',
+                     source_id=5322, destination_id=585, workspace_id=workspace_id)
+    mapping.save()
+    mock_patch.assert_not_called()
