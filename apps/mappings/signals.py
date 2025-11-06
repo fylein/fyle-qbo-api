@@ -7,16 +7,17 @@ from datetime import datetime, timedelta, timezone
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 from fyle.platform.exceptions import WrongParamsError
-from fyle_accounting_mappings.models import EmployeeMapping, Mapping, MappingSetting
 from fyle_integrations_platform_connector import PlatformConnector
 from rest_framework.exceptions import ValidationError
 
 from apps.mappings.constants import SYNC_METHODS
+from apps.mappings.helpers import patch_corporate_card_integration_settings
 from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import Error
 from apps.workspaces.apis.import_settings.triggers import ImportSettingsTrigger
 from apps.workspaces.models import FyleCredential, QBOCredential, WorkspaceGeneralSettings
 from apps.workspaces.utils import delete_cards_mapping_settings
+from fyle_accounting_mappings.models import EmployeeMapping, Mapping, MappingSetting
 from fyle_integrations_imports.models import ImportLog
 from fyle_integrations_imports.modules.expense_custom_fields import ExpenseCustomField
 
@@ -33,6 +34,15 @@ def resolve_post_mapping_errors(sender, instance: Mapping, **kwargs):
         if error:
             error.is_resolved = True
             error.save()
+
+
+@receiver(post_save, sender=Mapping)
+def patch_integration_settings_on_card_mapping(sender, instance: Mapping, created: bool, **kwargs):
+    """
+    Patch integration settings when corporate card mapping is created
+    """
+    if instance.source_type == 'CORPORATE_CARD' and created:
+        patch_corporate_card_integration_settings(workspace_id=instance.workspace_id)
 
 
 @receiver(post_save, sender=EmployeeMapping)
