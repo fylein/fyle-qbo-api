@@ -368,7 +368,6 @@ class QBOConnector:
                     )
 
                 elif account['AccountType'] in ('Bank', 'Other Current Liability') and value:
-                    print('coming here', account)
                     account_attributes['bank_account'].append(
                         {
                             'attribute_type': 'BANK_ACCOUNT',
