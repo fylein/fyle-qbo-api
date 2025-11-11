@@ -355,7 +355,7 @@ class QBOConnector:
                         }
                     )
 
-                elif account['AccountType'] == 'Credit Card' and value:
+                if account['AccountType'] == 'Credit Card' and value:
                     account_attributes['credit_card_account'].append(
                         {
                             'attribute_type': 'CREDIT_CARD_ACCOUNT',
@@ -367,7 +367,8 @@ class QBOConnector:
                         }
                     )
 
-                elif account['AccountType'] == 'Bank' and value:
+                elif account['AccountType'] in ('Bank', 'Other Current Liability') and value:
+                    print('coming here', account)
                     account_attributes['bank_account'].append(
                         {
                             'attribute_type': 'BANK_ACCOUNT',
