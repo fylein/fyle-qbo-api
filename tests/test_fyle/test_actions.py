@@ -2,8 +2,10 @@ from unittest import mock
 
 from django.conf import settings
 from django.db.models import Q
-from fyle.platform.exceptions import InternalServerError, RetryException, WrongParamsError
-from fyle_accounting_mappings.models import ExpenseAttribute
+from fyle.platform.exceptions import InternalServerError
+from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
+from fyle.platform.exceptions import RetryException, WrongParamsError
+from fyle_integrations_platform_connector import PlatformConnector
 
 from apps.fyle.actions import (
     bulk_post_accounting_export_summary,
@@ -19,7 +21,7 @@ from apps.fyle.actions import (
 from apps.fyle.helpers import get_updated_accounting_export_summary
 from apps.fyle.models import Expense, ExpenseGroup
 from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
-from fyle_integrations_platform_connector import PlatformConnector
+from fyle_accounting_mappings.models import ExpenseAttribute
 
 
 def test_update_expenses_in_progress(db):
@@ -300,3 +302,16 @@ def test_refresh_fyle_dimension(db):
 
         refresh_fyle_dimension(3)
         assert workspace.source_synced_at is not None
+
+
+def test_refresh_fyle_dimension_exception_handling(db):
+    """
+    Test refresh_fyle_dimension with FyleInvalidTokenError exception
+    """
+    with mock.patch('fyle_integrations_platform_connector.fyle_integrations_platform_connector.PlatformConnector.import_fyle_dimensions') as mock_call:
+        mock_call.side_effect = FyleInvalidTokenError('Invalid token')
+        refresh_fyle_dimension(3)
+
+        mock_call.reset_mock()
+        mock_call.side_effect = Exception('Some error')
+        refresh_fyle_dimension(3)
