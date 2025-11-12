@@ -63,7 +63,7 @@ def refresh_quickbooks_dimensions(workspace_id: int):
         workspace.destination_synced_at = datetime.now()
         workspace.save(update_fields=['destination_synced_at'])
     except Exception as e:
-        logger.error(f"Error refreshing quickbooks dimensions: {e} for workspace id {workspace_id}")
+        logger.info("Error refreshing quickbooks dimensions: %s for workspace id %s", e, workspace_id)
 
 
 def sync_quickbooks_dimensions(workspace_id: int):

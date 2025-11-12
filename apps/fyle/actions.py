@@ -90,9 +90,9 @@ def refresh_fyle_dimension(workspace_id: int):
         workspace.source_synced_at = datetime.now()
         workspace.save(update_fields=['source_synced_at'])
     except (FyleInvalidTokenError, FyleExpiredTokenError) as exception:
-        logger.error('Fyle token expired, workspace_id: %s %s', workspace_id, str(exception))
+        logger.info('Fyle token expired, workspace_id: %s %s', workspace_id, str(exception))
     except Exception as exception:
-        logger.error('Error while refreshing Fyle dimensions, workspace_id: %s %s', workspace_id, str(exception))
+        logger.info('Error while refreshing Fyle dimensions, workspace_id: %s %s', workspace_id, str(exception))
 
 
 def get_custom_fields(workspace_id: int):
