@@ -34,6 +34,17 @@ def test_refresh_quickbooks_dimensions(db):
         assert workspace.destination_synced_at is not None
 
 
+def test_refresh_quickbooks_dimensions_with_error(db):
+    """
+    Test refresh_quickbooks_dimensions with generic Exception
+    """
+    workspace_id = 1
+
+    with mock.patch('apps.quickbooks_online.utils.QBOConnector.sync_dimensions') as mock_call:
+        mock_call.side_effect = Exception('Some error')
+        refresh_quickbooks_dimensions(workspace_id)
+
+
 def test_sync_quickbooks_dimensions(db):
     workspace = Workspace.objects.get(id=3)
 

@@ -5,15 +5,18 @@ from typing import List
 from django.conf import settings
 from django.db.models import Q
 from django.utils.module_loading import import_string
-from fyle.platform.exceptions import InternalServerError, RetryException
+from fyle.platform.exceptions import ExpiredTokenError as FyleExpiredTokenError
+from fyle.platform.exceptions import InternalServerError
+from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
+from fyle.platform.exceptions import RetryException
 from fyle.platform.internals.decorators import retry
+from fyle_integrations_platform_connector import PlatformConnector
 
 from apps.fyle.constants import DEFAULT_FYLE_CONDITIONS
 from apps.fyle.helpers import get_batched_expenses, get_updated_accounting_export_summary
 from apps.fyle.models import Expense, ExpenseGroup
 from apps.workspaces.models import FyleCredential, Workspace, WorkspaceGeneralSettings
 from fyle_accounting_mappings.models import ExpenseAttribute
-from fyle_integrations_platform_connector import PlatformConnector
 from fyle_qbo_api.logging_middleware import get_caller_info, get_logger
 
 logger = logging.getLogger(__name__)
@@ -70,21 +73,26 @@ def sync_fyle_dimensions(workspace_id: int):
 
 
 def refresh_fyle_dimension(workspace_id: int):
-    fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
-    workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
-    platform = PlatformConnector(fyle_credentials)
+    try:
+        fyle_credentials = FyleCredential.objects.get(workspace_id=workspace_id)
+        workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
+        platform = PlatformConnector(fyle_credentials)
 
-    platform.import_fyle_dimensions(import_taxes=True)
+        platform.import_fyle_dimensions(import_taxes=True)
 
-    unmapped_card_count = ExpenseAttribute.objects.filter(
-        attribute_type="CORPORATE_CARD", workspace_id=workspace_id, active=True, mapping__isnull=True
-    ).count()
-    if workspace_general_settings and workspace_general_settings.corporate_credit_card_expenses_object in ('CREDIT CARD PURCHASE', 'DEBIT CARD EXPENSE'):
-        import_string('fyle_qbo_api.utils.patch_integration_settings_for_unmapped_cards')(workspace_id=workspace_id, unmapped_card_count=unmapped_card_count)
+        unmapped_card_count = ExpenseAttribute.objects.filter(
+            attribute_type="CORPORATE_CARD", workspace_id=workspace_id, active=True, mapping__isnull=True
+        ).count()
+        if workspace_general_settings and workspace_general_settings.corporate_credit_card_expenses_object in ('CREDIT CARD PURCHASE', 'DEBIT CARD EXPENSE'):
+            import_string('fyle_qbo_api.utils.patch_integration_settings_for_unmapped_cards')(workspace_id=workspace_id, unmapped_card_count=unmapped_card_count)
 
-    workspace = Workspace.objects.get(id=workspace_id)
-    workspace.source_synced_at = datetime.now()
-    workspace.save(update_fields=['source_synced_at'])
+        workspace = Workspace.objects.get(id=workspace_id)
+        workspace.source_synced_at = datetime.now()
+        workspace.save(update_fields=['source_synced_at'])
+    except (FyleInvalidTokenError, FyleExpiredTokenError) as exception:
+        logger.info('Fyle token expired, workspace_id: %s %s', workspace_id, str(exception))
+    except Exception as exception:
+        logger.info('Error while refreshing Fyle dimensions, workspace_id: %s %s', workspace_id, str(exception))
 
 
 def get_custom_fields(workspace_id: int):
