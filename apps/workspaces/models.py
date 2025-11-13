@@ -7,8 +7,8 @@ from django.core.cache import cache
 from django.db import models
 from django.db.models import JSONField
 from django_q.models import Schedule
-
 from fyle_accounting_library.fyle_platform.enums import CacheKeyEnum
+
 from fyle_accounting_mappings.mixins import AutoAddCreateUpdateInfoMixin
 
 User = get_user_model()
@@ -214,7 +214,7 @@ class FeatureConfig(models.Model):
     workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
     export_via_rabbitmq = models.BooleanField(default=True, help_text='Enable export via rabbitmq')
     import_via_rabbitmq = models.BooleanField(default=True, help_text='Enable import via rabbitmq')
-    fyle_webhook_sync_enabled = models.BooleanField(default=False, help_text='Enable fyle attribute webhook sync')
+    fyle_webhook_sync_enabled = models.BooleanField(default=True, help_text='Enable fyle attribute webhook sync')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')
 
