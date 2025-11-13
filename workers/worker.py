@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 import signal
+import traceback
 
 from fyle_accounting_library.common_resources.helpers import mask_sensitive_data
 
@@ -59,7 +60,7 @@ class Worker(EventConsumer):
         FailedEvent.objects.create(
             routing_key=routing_key,
             payload=payload_dict,
-            error_traceback=str(error),
+            error_traceback=traceback.format_exc(),
             workspace_id=payload_dict['workspace_id'] if payload_dict.get('workspace_id') else None
         )
 
