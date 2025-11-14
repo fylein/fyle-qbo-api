@@ -1185,6 +1185,37 @@ def test_schedule_journal_entry_creation(db):
     assert task_log.type == 'CREATING_JOURNAL_ENTRY'
 
 
+def test_schedule_creation_with_no_expense_groups(db):
+    workspace_id_4 = 4
+    workspace_id_3 = 3
+
+    expense_group_23 = ExpenseGroup.objects.get(id=23)
+    expense_group_23.exported_at = django_timezone.now()
+    expense_group_23.save()
+
+    expense_group_17 = ExpenseGroup.objects.get(id=17)
+    expense_group_17.exported_at = django_timezone.now()
+    expense_group_17.save()
+
+    initial_task_log_count_ws4 = TaskLog.objects.filter(workspace_id=workspace_id_4).count()
+    initial_task_log_count_ws3 = TaskLog.objects.filter(workspace_id=workspace_id_3).count()
+
+    schedule_bills_creation(workspace_id_4, [23], False, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
+    assert TaskLog.objects.filter(workspace_id=workspace_id_4).count() == initial_task_log_count_ws4
+
+    schedule_cheques_creation(workspace_id_4, [23], False, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
+    assert TaskLog.objects.filter(workspace_id=workspace_id_4).count() == initial_task_log_count_ws4
+
+    schedule_journal_entry_creation(workspace_id_4, [23], False, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
+    assert TaskLog.objects.filter(workspace_id=workspace_id_4).count() == initial_task_log_count_ws4
+
+    schedule_credit_card_purchase_creation(workspace_id_3, [17], False, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
+    assert TaskLog.objects.filter(workspace_id=workspace_id_3).count() == initial_task_log_count_ws3
+
+    schedule_qbo_expense_creation(workspace_id_4, [23], False, 1, triggered_by=ExpenseImportSourceEnum.DASHBOARD_SYNC, run_in_rabbitmq_worker=False)
+    assert TaskLog.objects.filter(workspace_id=workspace_id_4).count() == initial_task_log_count_ws4
+
+
 def test_skipping_bill_payment(mocker, db):
     mocker.patch('apps.quickbooks_online.tasks.load_attachments', return_value=[])
     mocker.patch('fyle_integrations_platform_connector.apis.Reimbursements.sync', return_value=None)
