@@ -53,7 +53,11 @@ class Worker(EventConsumer):
         Handle exception
         """
         masked_payload = mask_sensitive_data(payload_dict)
-        logger.error('Error while handling exports for workspace - %s, error: %s', masked_payload, str(error))
+        logger.error(
+            'Error while handling exports for workspace - %s, traceback: %s',
+            masked_payload,
+            traceback.format_exc()
+        )
 
         payload_dict['retry_count'] = payload_dict.get('retry_count', 0) + 1
 
