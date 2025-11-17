@@ -83,7 +83,7 @@ def test_qbo_expense(db):
 
     for qbo_expense_lineitem in qbo_expense_lineitems:
         assert qbo_expense_lineitem.amount == 1.0
-        assert qbo_expense_lineitem.description == 'ashwin.t@fyle.in - Food - 2022-05-17 - C/2022/05/R/5 -  - None/app/admin/#/company_expenses?txnId=txj8kWkDTyog&org_id=or79Cob97KSh'
+        assert qbo_expense_lineitem.description == 'ashwin.t@fyle.in - Food - 2022-05-17 - C/2022/05/R/5 - None/app/admin/#/company_expenses?txnId=txj8kWkDTyog&org_id=or79Cob97KSh'
         assert qbo_expense_lineitem.billable == None
 
     assert qbo_expense.currency == 'USD'
@@ -123,7 +123,7 @@ def test_create_journal_entry(mocker,db):
     for journal_entry_lineitem in journal_entry_lineitems:
         assert journal_entry_lineitem.amount == 1.0
         assert journal_entry_lineitem.entity_id == '58'
-        assert journal_entry_lineitem.description == 'ashwin.t@fyle.in - Food - 2022-05-17 - C/2022/05/R/5 -  - None/app/admin/#/company_expenses?txnId=txj8kWkDTyog&org_id=or79Cob97KSh'
+        assert journal_entry_lineitem.description == 'ashwin.t@fyle.in - Food - 2022-05-17 - C/2022/05/R/5 - None/app/admin/#/company_expenses?txnId=txj8kWkDTyog&org_id=or79Cob97KSh'
 
     assert journal_entry.currency == 'USD'
     assert journal_entry.transaction_date == '2022-05-17'
