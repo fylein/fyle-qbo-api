@@ -9,12 +9,12 @@ import requests
 from django.conf import settings
 from django.core.cache import cache
 from django.db.models import Q
+from fyle_accounting_library.fyle_platform.enums import CacheKeyEnum
 from rest_framework.exceptions import ValidationError
 
 from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupSettings
 from apps.tasks.models import TaskLog
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
-from fyle_accounting_library.fyle_platform.enums import CacheKeyEnum
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -96,15 +96,6 @@ def get_access_token(refresh_token: str) -> str:
     """
     api_data = {'grant_type': 'refresh_token', 'refresh_token': refresh_token, 'client_id': settings.FYLE_CLIENT_ID, 'client_secret': settings.FYLE_CLIENT_SECRET}
     return post_request(settings.FYLE_TOKEN_URI, body=api_data)['access_token']
-
-
-def get_fyle_orgs(refresh_token: str, cluster_domain: str):
-    """
-    Get fyle orgs of a user
-    """
-    api_url = '{0}/api/orgs/'.format(cluster_domain)
-
-    return get_request(api_url, {}, refresh_token)
 
 
 def get_cluster_domain(refresh_token: str) -> str:
