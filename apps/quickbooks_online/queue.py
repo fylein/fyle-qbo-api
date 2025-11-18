@@ -97,7 +97,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_
                 continue
 
             task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_BILL', 'triggered_by': triggered_by})
-            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
+            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED', 'COMPLETE']:
                 task_log.type = 'CREATING_BILL'
                 task_log.status = 'ENQUEUED'
                 if triggered_by and task_log.triggered_by != triggered_by:
@@ -174,7 +174,7 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], i
                 continue
 
             task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_CHECK', 'triggered_by': triggered_by})
-            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
+            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED', 'COMPLETE']:
                 task_log.type = 'CREATING_CHECK'
                 task_log.status = 'ENQUEUED'
                 if triggered_by and task_log.triggered_by != triggered_by:
@@ -220,7 +220,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
                 continue
 
             task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_JOURNAL_ENTRY', 'triggered_by': triggered_by})
-            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
+            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED', 'COMPLETE']:
                 task_log.type = 'CREATING_JOURNAL_ENTRY'
                 task_log.status = 'ENQUEUED'
                 if triggered_by and task_log.triggered_by != triggered_by:
@@ -269,7 +269,7 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
                 continue
 
             task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_CREDIT_CARD_PURCHASE', 'triggered_by': triggered_by})
-            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
+            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED', 'COMPLETE']:
                 task_log.type = 'CREATING_CREDIT_CARD_PURCHASE'
                 task_log.status = 'ENQUEUED'
                 if triggered_by and task_log.triggered_by != triggered_by:
@@ -317,7 +317,7 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
             task_log, _ = TaskLog.objects.get_or_create(
                 workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_EXPENSE' if expense_group.fund_source == 'PERSONAL' else 'CREATING_DEBIT_CARD_EXPENSE', 'triggered_by': triggered_by}
             )
-            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
+            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED', 'COMPLETE']:
                 task_log.type = 'CREATING_EXPENSE' if expense_group.fund_source == 'PERSONAL' else 'CREATING_DEBIT_CARD_EXPENSE'
                 task_log.status = 'ENQUEUED'
                 if triggered_by and task_log.triggered_by != triggered_by:
