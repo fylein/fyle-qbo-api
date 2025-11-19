@@ -746,9 +746,8 @@ def handle_category_changes_for_expense(expense: Expense, new_category: str) -> 
         error = Error.objects.filter(workspace_id=expense.workspace_id, is_resolved=False, type='CATEGORY_MAPPING', mapping_error_expense_group_ids__contains=[expense_group.id]).first()
         if error:
             logger.info('Removing expense group: %s from errors for workspace_id: %s as a result of category update for expense %s', expense_group.id, expense.workspace_id, expense.id)
-            updated_errored_ids = [eg_id for eg_id in error.mapping_error_expense_group_ids if eg_id != expense_group.id]
-            if updated_errored_ids:
-                error.mapping_error_expense_group_ids = updated_errored_ids
+            error.mapping_error_expense_group_ids.remove(expense_group.id)
+            if error.mapping_error_expense_group_ids:
                 error.updated_at = datetime.now(timezone.utc)
                 error.save(update_fields=['mapping_error_expense_group_ids', 'updated_at'])
             else:
@@ -758,7 +757,7 @@ def handle_category_changes_for_expense(expense: Expense, new_category: str) -> 
         if new_category_expense_attribute:
             updated_category_error = Error.objects.filter(workspace_id=expense.workspace_id, is_resolved=False, type='CATEGORY_MAPPING', expense_attribute=new_category_expense_attribute).first()
             if updated_category_error:
-                updated_category_error.mapping_error_expense_group_ids = updated_category_error.mapping_error_expense_group_ids.append(expense_group.id)
+                updated_category_error.mapping_error_expense_group_ids.append(expense_group.id)
                 updated_category_error.updated_at = datetime.now(timezone.utc)
                 updated_category_error.save(update_fields=['mapping_error_expense_group_ids', 'updated_at'])
             else:
