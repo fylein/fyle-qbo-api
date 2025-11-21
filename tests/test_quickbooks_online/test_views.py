@@ -8,11 +8,11 @@ from unittest.mock import patch
 import pytest
 from django.test import override_settings
 from django.urls import resolve, reverse
-from fyle_accounting_mappings.models import DestinationAttribute
 from rest_framework import status
 
-from apps.quickbooks_online.models import QBOWebhookIncoming
-from apps.workspaces.models import QBOCredential
+from apps.quickbooks_online.models import QBOAttributesCount, QBOWebhookIncoming
+from apps.workspaces.models import QBOCredential, Workspace
+from fyle_accounting_mappings.models import DestinationAttribute
 from tests.test_quickbooks_online.fixtures import data
 
 
@@ -93,6 +93,35 @@ def test_qbo_field_view(mocker, api_client, test_connection):
 
     response = json.loads(response.content)
     assert len(response) == 1
+
+
+def test_qbo_attributes_count_view(api_client, test_connection):
+    workspace_id = 3
+    workspace = Workspace.objects.get(id=workspace_id)
+
+    QBOAttributesCount.objects.filter(workspace_id=workspace_id).delete()
+    access_token = test_connection.access_token
+    url = f'/api/workspaces/{workspace_id}/qbo/attributes_count/'
+    api_client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
+
+    response = api_client.get(url)
+    assert response.status_code == 404
+
+    QBOAttributesCount.objects.create(
+        workspace=workspace,
+        accounts_count=150,
+        items_count=75,
+        vendors_count=300
+    )
+
+    response = api_client.get(url)
+    assert response.status_code == 200
+
+    response_data = json.loads(response.content)
+    assert response_data['workspace'] == workspace_id
+    assert response_data['accounts_count'] == 150
+    assert response_data['items_count'] == 75
+    assert response_data['vendors_count'] == 300
 
 
 def test_employee_view(mocker, api_client, test_connection):

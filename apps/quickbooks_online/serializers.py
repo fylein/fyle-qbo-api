@@ -1,6 +1,5 @@
 import logging
 
-from fyle_accounting_mappings.models import DestinationAttribute
 from rest_framework import serializers
 
 from apps.quickbooks_online.models import (
@@ -12,9 +11,11 @@ from apps.quickbooks_online.models import (
     CreditCardPurchaseLineitem,
     JournalEntry,
     JournalEntryLineitem,
+    QBOAttributesCount,
     QBOWebhookIncoming,
 )
 from apps.workspaces.models import QBOCredential
+from fyle_accounting_mappings.models import DestinationAttribute
 
 logger = logging.getLogger(__name__)
 
@@ -107,6 +108,15 @@ class QuickbooksFieldSerializer(serializers.ModelSerializer):
     class Meta:
         model = DestinationAttribute
         fields = ['attribute_type', 'display_name']
+
+
+class QBOAttributesCountSerializer(serializers.ModelSerializer):
+    """
+    Serializer for QBO Attributes Count
+    """
+    class Meta:
+        model = QBOAttributesCount
+        fields = '__all__'
 
 
 class QBOWebhookIncomingSerializer(serializers.Serializer):

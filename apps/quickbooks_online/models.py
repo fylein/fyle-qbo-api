@@ -1084,3 +1084,42 @@ class QBOSyncTimestamp(models.Model):
         qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=workspace_id)
         setattr(qbo_sync_timestamp, f'{entity_type}_synced_at', datetime.now())
         qbo_sync_timestamp.save(update_fields=[f'{entity_type}_synced_at', 'updated_at'])
+
+
+class QBOAttributesCount(models.Model):
+    """
+    Store QBO attribute counts for each workspace
+    """
+    id = models.AutoField(primary_key=True)
+    workspace = models.OneToOneField(
+        Workspace,
+        on_delete=models.PROTECT,
+        help_text='Reference to workspace',
+        related_name='qbo_attributes_count'
+    )
+    accounts_count = models.IntegerField(default=0, help_text='Number of accounts in QBO')
+    items_count = models.IntegerField(default=0, help_text='Number of items in QBO')
+    vendors_count = models.IntegerField(default=0, help_text='Number of vendors in QBO')
+    employees_count = models.IntegerField(default=0, help_text='Number of employees in QBO')
+    departments_count = models.IntegerField(default=0, help_text='Number of departments in QBO')
+    classes_count = models.IntegerField(default=0, help_text='Number of classes in QBO')
+    customers_count = models.IntegerField(default=0, help_text='Number of customers in QBO')
+    tax_codes_count = models.IntegerField(default=0, help_text='Number of tax codes in QBO')
+    created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
+    updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime', db_index=True)
+
+    class Meta:
+        db_table = 'qbo_attributes_count'
+
+    @staticmethod
+    def update_attribute_count(workspace_id: int, attribute_type: str, count: int):
+        """
+        Update attribute count for a workspace
+        :param workspace_id: Workspace ID
+        :param attribute_type: Type of attribute (e.g., 'accounts', 'vendors')
+        :param count: Count value from QBO
+        """
+        qbo_count, _ = QBOAttributesCount.objects.get_or_create(workspace_id=workspace_id)
+        field_name = f'{attribute_type}_count'
+        setattr(qbo_count, field_name, count)
+        qbo_count.save(update_fields=[field_name, 'updated_at'])

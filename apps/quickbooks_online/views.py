@@ -2,16 +2,21 @@ import logging
 
 from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
-from fyle_accounting_mappings.models import DestinationAttribute
-from fyle_accounting_mappings.serializers import DestinationAttributeSerializer
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import status
 
 from apps.exceptions import handle_view_exceptions
-from apps.quickbooks_online.serializers import QBOWebhookIncomingSerializer, QuickbooksFieldSerializer
+from apps.quickbooks_online.models import QBOAttributesCount
+from apps.quickbooks_online.serializers import (
+    QBOAttributesCountSerializer,
+    QBOWebhookIncomingSerializer,
+    QuickbooksFieldSerializer,
+)
 from apps.workspaces.models import QBOCredential, Workspace
 from apps.workspaces.permissions import IsAuthenticatedForQuickbooksWebhook
+from fyle_accounting_mappings.models import DestinationAttribute
+from fyle_accounting_mappings.serializers import DestinationAttributeSerializer
 from fyle_qbo_api.utils import LookupFieldMixin
 from workers.helpers import RoutingKeyEnum, WorkerActionEnum, publish_to_rabbitmq
 
@@ -143,6 +148,16 @@ class QBOAttributesView(LookupFieldMixin, generics.ListAPIView):
     pagination_class = None
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = {'attribute_type': {'exact', 'in'}}
+
+
+class QBOAttributesCountView(LookupFieldMixin, generics.RetrieveAPIView):
+    """
+    GET QBO Attributes Count for a workspace view
+    """
+    queryset = QBOAttributesCount.objects.all()
+    serializer_class = QBOAttributesCountSerializer
+    lookup_field = 'workspace_id'
+    lookup_url_kwarg = 'workspace_id'
 
 
 class QBOWebhookIncomingView(generics.CreateAPIView):

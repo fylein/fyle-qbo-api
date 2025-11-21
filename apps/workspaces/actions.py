@@ -5,6 +5,8 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.db import transaction
+from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
+from fyle_integrations_platform_connector import PlatformConnector
 from fyle_rest_auth.helpers import get_fyle_admin
 from fyle_rest_auth.models import AuthToken
 from qbosdk import revoke_refresh_token
@@ -14,7 +16,7 @@ from rest_framework.views import status
 from apps.fyle.actions import post_accounting_export_summary, update_expenses_in_progress, update_failed_expenses
 from apps.fyle.helpers import get_cluster_domain, post_request
 from apps.fyle.models import ExpenseGroup, ExpenseGroupSettings
-from apps.quickbooks_online.models import QBOSyncTimestamp
+from apps.quickbooks_online.models import QBOAttributesCount, QBOSyncTimestamp
 from apps.quickbooks_online.queue import (
     schedule_bills_creation,
     schedule_cheques_creation,
@@ -34,9 +36,7 @@ from apps.workspaces.models import (
 )
 from apps.workspaces.serializers import QBOCredentialSerializer
 from apps.workspaces.signals import post_delete_qbo_connection
-from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute, FyleSyncTimestamp
-from fyle_integrations_platform_connector import PlatformConnector
 from fyle_qbo_api.utils import assert_valid, patch_integration_settings
 from workers.helpers import RoutingKeyEnum, WorkerActionEnum, publish_to_rabbitmq
 
@@ -65,6 +65,8 @@ def update_or_create_workspace(user, access_token):
         LastExportDetail.objects.create(workspace_id=workspace.id)
 
         QBOSyncTimestamp.objects.create(workspace_id=workspace.id)
+
+        QBOAttributesCount.objects.create(workspace_id=workspace.id)
 
         workspace.user.add(User.objects.get(user_id=user))
 

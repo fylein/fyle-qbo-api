@@ -18,6 +18,7 @@ from django.urls import path
 from apps.quickbooks_online.views import (
     DestinationAttributesView,
     EmployeeView,
+    QBOAttributesCountView,
     QBOAttributesView,
     QBOFieldView,
     QBOWebhookIncomingView,
@@ -35,7 +36,8 @@ urlpatterns = [
     path('destination_attributes/', DestinationAttributesView.as_view(), name='destination-attributes'),
     path('mapping_options/', SearchedDestinationAttributesView.as_view(), name='searching-destination-attributes'),
     path('qbo_attributes/', QBOAttributesView.as_view(), name='qbo-attributes'),
-    path('fields/', QBOFieldView.as_view())
+    path('fields/', QBOFieldView.as_view()),
+    path('attributes_count/', QBOAttributesCountView.as_view(), name='qbo-attributes-count'),
 ]
 
 webhook_patterns = [
