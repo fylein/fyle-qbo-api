@@ -8,8 +8,8 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunSQL(
             sql="""
-                INSERT INTO qbo_attributes_count (workspace_id, created_at, updated_at)
-                SELECT id, now(), now()
+                INSERT INTO qbo_attributes_count (workspace_id, accounts_count, items_count, vendors_count, employees_count, departments_count, classes_count, customers_count, tax_codes_count, created_at, updated_at)
+                SELECT id, 0, 0, 0, 0, 0, 0, 0, 0, now(), now()
                 FROM workspaces
                 WHERE NOT EXISTS (
                     SELECT 1
