@@ -506,7 +506,6 @@ def test_journal_number_with_count(db):
 @pytest.mark.django_db(databases=['default'])
 def test_qbo_attributes_count_model():
     workspace = Workspace.objects.get(id=3)
-    QBOAttributesCount.objects.filter(workspace_id=workspace.id).delete()
 
     QBOAttributesCount.update_attribute_count(
         workspace_id=workspace.id,
