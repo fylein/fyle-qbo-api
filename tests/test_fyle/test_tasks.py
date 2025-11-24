@@ -1,6 +1,6 @@
 import json
-from unittest import mock
 from datetime import datetime, timezone
+from unittest import mock
 
 import pytest
 from django.db.models import Q
@@ -30,8 +30,8 @@ from apps.fyle.tasks import (
     import_and_export_expenses,
     post_accounting_export_summary,
     process_expense_group_for_fund_source_update,
-    recreate_expense_groups,
     re_run_skip_export_rule,
+    recreate_expense_groups,
     schedule_expense_group_creation,
     schedule_task_for_expense_group_fund_source_change,
     skip_expenses_and_post_accounting_export_summary,
@@ -887,7 +887,10 @@ def test_update_non_exported_expenses_fund_source_change(mocker, db):
 
     # Mock the FyleExpenses construct_expense_object method
     mock_fyle_expenses = mocker.patch('apps.fyle.tasks.FyleExpenses')
-    mock_fyle_expenses.return_value.construct_expense_object.return_value = [expense_data]
+    constructed_expense = expense_data.copy()
+    constructed_expense['category'] = expense_data['category']['name']
+    constructed_expense['sub_category'] = expense_data['category']['sub_category']
+    mock_fyle_expenses.return_value.construct_expense_object.return_value = [constructed_expense]
 
     # Mock create_expense_objects to avoid complex data structure requirements
     mocker.patch('apps.fyle.tasks.Expense.create_expense_objects', return_value=None)
