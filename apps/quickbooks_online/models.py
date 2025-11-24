@@ -1119,7 +1119,7 @@ class QBOAttributesCount(models.Model):
         :param attribute_type: Type of attribute (e.g., 'accounts', 'vendors')
         :param count: Count value from QBO
         """
-        qbo_count, _ = QBOAttributesCount.objects.get(workspace_id=workspace_id)
+        qbo_count = QBOAttributesCount.objects.get(workspace_id=workspace_id)
         field_name = f'{attribute_type}_count'
         setattr(qbo_count, field_name, count)
         qbo_count.save(update_fields=[field_name, 'updated_at'])
