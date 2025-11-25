@@ -8,7 +8,6 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models import Max
 from django.utils import timezone
-from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, MappingSetting
 from qbosdk import QuickbooksOnlineSDK
 from qbosdk.exceptions import WrongParamsError
 
@@ -25,26 +24,20 @@ from apps.quickbooks_online.models import (
     CreditCardPurchaseLineitem,
     JournalEntry,
     JournalEntryLineitem,
+    QBOAttributesCount,
     QBOExpense,
     QBOExpenseLineitem,
     QBOSyncTimestamp,
 )
 from apps.workspaces.helpers import get_app_name
 from apps.workspaces.models import QBOCredential, Workspace, WorkspaceGeneralSettings
+from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, MappingSetting
 from fyle_integrations_imports.models import ImportLog
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
 
-SYNC_UPPER_LIMIT = {
-    'customers': 30000,
-    'classes': 5000,
-    'accounts': 3000,
-    'departments': 2000,
-    'vendors': 20000,
-    'tax_codes': 200,
-    'items': 3000
-}
+SYNC_UPPER_LIMIT = 30000
 
 
 def format_special_characters(value: str) -> str:
@@ -235,16 +228,13 @@ class QBOConnector:
 
         return tax_inclusive_amount
 
-    def is_sync_allowed(self, attribute_type: str, attribute_count: int):
+    def is_sync_allowed(self, attribute_count: int):
         """
         Checks if the sync is allowed
-
-        Returns:
-            bool: True
         """
-        if attribute_count > SYNC_UPPER_LIMIT[attribute_type]:
-            workspace_created_at = Workspace.objects.get(id=self.workspace_id).created_at
-            if workspace_created_at > timezone.make_aware(datetime(2024, 10, 1), timezone.get_current_timezone()):
+        if attribute_count > SYNC_UPPER_LIMIT:
+            workspace = Workspace.objects.get(id=self.workspace_id)
+            if workspace.created_at > timezone.make_aware(datetime(2024, 10, 1), timezone.get_current_timezone()):
                 return False
             else:
                 return True
@@ -256,8 +246,14 @@ class QBOConnector:
         Get items
         """
         attribute_count = self.connection.items.count()
-        if not self.is_sync_allowed(attribute_type = 'items', attribute_count = attribute_count):
-            logger.info('Skipping sync of items for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
+        QBOAttributesCount.update_attribute_count(
+            workspace_id=self.workspace_id,
+            attribute_type='items',
+            count=attribute_count
+        )
+        if not self.is_sync_allowed(attribute_count=attribute_count):
+            logger.info('Skipping sync of items for workspace %s as it has %s counts which is over the limit of %s',
+                        self.workspace_id, attribute_count, SYNC_UPPER_LIMIT)
             return
 
         sync_after = None
@@ -314,8 +310,14 @@ class QBOConnector:
         Get accounts
         """
         attribute_count = self.connection.accounts.count()
-        if not self.is_sync_allowed(attribute_type = 'accounts', attribute_count=attribute_count):
-            logger.info('Skipping sync of accounts for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
+        QBOAttributesCount.update_attribute_count(
+            workspace_id=self.workspace_id,
+            attribute_type='accounts',
+            count=attribute_count
+        )
+        if not self.is_sync_allowed(attribute_count=attribute_count):
+            logger.info('Skipping sync of accounts for workspace %s as it has %s counts which is over the limit of %s',
+                        self.workspace_id, attribute_count, SYNC_UPPER_LIMIT)
             return
 
         sync_after = None
@@ -457,8 +459,14 @@ class QBOConnector:
         Get departments
         """
         attribute_count = self.connection.departments.count()
-        if not self.is_sync_allowed(attribute_type = 'departments', attribute_count = attribute_count):
-            logger.info('Skipping sync of department for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
+        QBOAttributesCount.update_attribute_count(
+            workspace_id=self.workspace_id,
+            attribute_type='departments',
+            count=attribute_count
+        )
+        if not self.is_sync_allowed(attribute_count=attribute_count):
+            logger.info('Skipping sync of department for workspace %s as it has %s counts which is over the limit of %s',
+                        self.workspace_id, attribute_count, SYNC_UPPER_LIMIT)
             return
 
         sync_after = None
@@ -528,8 +536,14 @@ class QBOConnector:
         Get Tax Codes
         """
         attribute_count = self.connection.tax_codes.count()
-        if not self.is_sync_allowed(attribute_type = 'tax_codes', attribute_count = attribute_count):
-            logger.info('Skipping sync of tax_codes for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
+        QBOAttributesCount.update_attribute_count(
+            workspace_id=self.workspace_id,
+            attribute_type='tax_codes',
+            count=attribute_count
+        )
+        if not self.is_sync_allowed(attribute_count=attribute_count):
+            logger.info('Skipping sync of tax_codes for workspace %s as it has %s counts which is over the limit of %s',
+                        self.workspace_id, attribute_count, SYNC_UPPER_LIMIT)
             return
 
         sync_after = None
@@ -593,8 +607,14 @@ class QBOConnector:
         Get vendors
         """
         attribute_count = self.connection.vendors.count()
-        if not self.is_sync_allowed(attribute_type = 'vendors', attribute_count = attribute_count):
-            logger.info('Skipping sync of vendors for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
+        QBOAttributesCount.update_attribute_count(
+            workspace_id=self.workspace_id,
+            attribute_type='vendors',
+            count=attribute_count
+        )
+        if not self.is_sync_allowed(attribute_count=attribute_count):
+            logger.info('Skipping sync of vendors for workspace %s as it has %s counts which is over the limit of %s',
+                        self.workspace_id, attribute_count, SYNC_UPPER_LIMIT)
             return
 
         sync_after = None
@@ -694,6 +714,12 @@ class QBOConnector:
         """
         Get employees
         """
+        attribute_count = self.connection.employees.count()
+        QBOAttributesCount.update_attribute_count(
+            workspace_id=self.workspace_id,
+            attribute_type='employees',
+            count=attribute_count
+        )
         sync_after = None
         workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=self.workspace_id).first()
         is_sync_after_timestamp_enabled = workspace_general_settings.is_sync_after_timestamp_enabled if workspace_general_settings else False
@@ -737,8 +763,14 @@ class QBOConnector:
         Get classes
         """
         attribute_count = self.connection.classes.count()
-        if not self.is_sync_allowed(attribute_type = 'classes', attribute_count = attribute_count):
-            logger.info('Skipping sync of classes for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
+        QBOAttributesCount.update_attribute_count(
+            workspace_id=self.workspace_id,
+            attribute_type='classes',
+            count=attribute_count
+        )
+        if not self.is_sync_allowed(attribute_count=attribute_count):
+            logger.info('Skipping sync of classes for workspace %s as it has %s counts which is over the limit of %s',
+                        self.workspace_id, attribute_count, SYNC_UPPER_LIMIT)
             return
 
         sync_after = None
@@ -825,8 +857,14 @@ class QBOConnector:
         Get customers
         """
         attribute_count = self.connection.customers.count()
-        if not self.is_sync_allowed(attribute_type = 'customers', attribute_count = attribute_count):
-            logger.info('Skipping sync of customers for workspace %s as it has %s counts which is over the limit', self.workspace_id, attribute_count)
+        QBOAttributesCount.update_attribute_count(
+            workspace_id=self.workspace_id,
+            attribute_type='customers',
+            count=attribute_count
+        )
+        if not self.is_sync_allowed(attribute_count=attribute_count):
+            logger.info('Skipping sync of customers for workspace %s as it has %s counts which is over the limit of %s',
+                        self.workspace_id, attribute_count, SYNC_UPPER_LIMIT)
             return
 
         sync_after = None

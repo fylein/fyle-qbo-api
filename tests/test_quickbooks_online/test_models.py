@@ -13,6 +13,7 @@ from apps.quickbooks_online.models import (
     CreditCardPurchaseLineitem,
     JournalEntry,
     JournalEntryLineitem,
+    QBOAttributesCount,
     get_bill_number,
     get_ccc_account_id,
     get_class_id_or_none,
@@ -26,7 +27,7 @@ from apps.quickbooks_online.models import (
 from apps.quickbooks_online.tasks import create_bill
 from apps.quickbooks_online.utils import Bill, BillLineitem, QBOConnector, QBOCredential, QBOExpense, QBOExpenseLineitem
 from apps.tasks.models import TaskLog
-from apps.workspaces.models import WorkspaceGeneralSettings
+from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute, Mapping, MappingSetting
 from tests.test_fyle.fixtures import data
 from tests.test_quickbooks_online.fixtures import data as vendor
@@ -500,3 +501,39 @@ def test_journal_number_with_count(db):
 
     journal_number = get_journal_number(expense_group)
     assert journal_number == 'C/2021/04/R/42 - 1'
+
+
+@pytest.mark.django_db(databases=['default'])
+def test_qbo_attributes_count_model():
+    workspace = Workspace.objects.get(id=3)
+
+    QBOAttributesCount.update_attribute_count(
+        workspace_id=workspace.id,
+        attribute_type='accounts',
+        count=150
+    )
+
+    qbo_count = QBOAttributesCount.objects.get(workspace_id=workspace.id)
+    assert qbo_count.accounts_count == 150
+    assert qbo_count.items_count == 0
+
+    QBOAttributesCount.update_attribute_count(
+        workspace_id=workspace.id,
+        attribute_type='accounts',
+        count=250
+    )
+
+    qbo_count.refresh_from_db()
+    assert qbo_count.accounts_count == 250
+
+    for attribute_type, count in [('items', 50), ('vendors', 200), ('employees', 30)]:
+        QBOAttributesCount.update_attribute_count(
+            workspace_id=workspace.id,
+            attribute_type=attribute_type,
+            count=count
+        )
+
+    qbo_count.refresh_from_db()
+    assert qbo_count.items_count == 50
+    assert qbo_count.vendors_count == 200
+    assert qbo_count.employees_count == 30
