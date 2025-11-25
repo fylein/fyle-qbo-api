@@ -42,7 +42,7 @@ def test_create_bill(db):
 
     for bill_lineitem in bill_lineitems:
         assert bill_lineitem.amount == 1.0
-        assert bill_lineitem.description == 'sravan.kumar@fyle.in - WIP - 2022-05-23 - C/2022/05/R/8 -  - None/app/admin/#/company_expenses?txnId=tx3i1mrGprDs&org_id=orPJvXuoLqvJ'
+        assert bill_lineitem.description == 'sravan.kumar@fyle.in - WIP - 2022-05-23 - C/2022/05/R/8 - None/app/admin/#/company_expenses?txnId=tx3i1mrGprDs&org_id=orPJvXuoLqvJ'
         assert bill_lineitem.billable == None
 
     assert bill.currency == 'USD'
@@ -61,7 +61,7 @@ def test_qbo_expense(db):
 
     for qbo_expense_lineitem in qbo_expense_lineitems:
         assert qbo_expense_lineitem.amount == 1188.0
-        assert qbo_expense_lineitem.description == 'user9@fyleforgotham.in - Office Party - 2020-05-13 - C/2021/04/R/42 -  - None/app/admin/#/company_expenses?txnId=txU2qpKmrUR9&org_id=or79Cob97KSh'
+        assert qbo_expense_lineitem.description == 'user9@fyleforgotham.in - Office Party - 2020-05-13 - C/2021/04/R/42 - None/app/admin/#/company_expenses?txnId=txU2qpKmrUR9&org_id=or79Cob97KSh'
         assert qbo_expense_lineitem.billable == None
 
     assert qbo_expense.currency == 'USD'
@@ -84,7 +84,7 @@ def test_qbo_expense(db):
 
     for qbo_expense_lineitem in qbo_expense_lineitems:
         assert qbo_expense_lineitem.amount == 1.0
-        assert qbo_expense_lineitem.description == 'ashwin.t@fyle.in - Food - 2022-05-17 - C/2022/05/R/5 -  - None/app/admin/#/company_expenses?txnId=txj8kWkDTyog&org_id=or79Cob97KSh'
+        assert qbo_expense_lineitem.description == 'ashwin.t@fyle.in - Food - 2022-05-17 - C/2022/05/R/5 - None/app/admin/#/company_expenses?txnId=txj8kWkDTyog&org_id=or79Cob97KSh'
         assert qbo_expense_lineitem.billable == None
 
     assert qbo_expense.currency == 'USD'
@@ -109,7 +109,7 @@ def test_create_journal_entry(mocker,db):
 
     for journal_entry_lineitem in journal_entry_lineitems:
         assert journal_entry_lineitem.amount == 1188.0
-        assert journal_entry_lineitem.description == 'user9@fyleforgotham.in - Office Party - 2020-05-13 - C/2021/04/R/42 -  - None/app/admin/#/company_expenses?txnId=txU2qpKmrUR9&org_id=or79Cob97KSh'
+        assert journal_entry_lineitem.description == 'user9@fyleforgotham.in - Office Party - 2020-05-13 - C/2021/04/R/42 - None/app/admin/#/company_expenses?txnId=txU2qpKmrUR9&org_id=or79Cob97KSh'
         assert journal_entry_lineitem.entity_id == '55'
 
     assert journal_entry.currency == 'USD'
@@ -124,7 +124,7 @@ def test_create_journal_entry(mocker,db):
     for journal_entry_lineitem in journal_entry_lineitems:
         assert journal_entry_lineitem.amount == 1.0
         assert journal_entry_lineitem.entity_id == '58'
-        assert journal_entry_lineitem.description == 'ashwin.t@fyle.in - Food - 2022-05-17 - C/2022/05/R/5 -  - None/app/admin/#/company_expenses?txnId=txj8kWkDTyog&org_id=or79Cob97KSh'
+        assert journal_entry_lineitem.description == 'ashwin.t@fyle.in - Food - 2022-05-17 - C/2022/05/R/5 - None/app/admin/#/company_expenses?txnId=txj8kWkDTyog&org_id=or79Cob97KSh'
 
     assert journal_entry.currency == 'USD'
     assert journal_entry.transaction_date == '2022-05-17'
@@ -285,7 +285,7 @@ def test_get_expense_purpose():
 
         expense_purpose = get_expense_purpose(3, lineitem, category, workspace_general_settings)
 
-        assert expense_purpose == 'ashwin.t@fyle.in - Taxi / None - 2022-05-13 - C/2022/05/R/4 -  - None/app/admin/#/company_expenses?txnId=txgUAIXUPQ8r&org_id=or79Cob97KSh'
+        assert expense_purpose == 'ashwin.t@fyle.in - Taxi / None - 2022-05-13 - C/2022/05/R/4 - None/app/admin/#/company_expenses?txnId=txgUAIXUPQ8r&org_id=or79Cob97KSh'
 
 
 @pytest.mark.django_db(databases=['default'])
