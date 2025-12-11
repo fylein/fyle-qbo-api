@@ -1,3 +1,4 @@
+from fyle.platform.exceptions import InvalidTokenError
 from fyle_accounting_mappings.models import ExpenseAttribute
 
 from apps.fyle.models import ExpenseGroup, ExpenseGroupSettings
@@ -344,3 +345,45 @@ def test_run_sync_schedule_with_rabbitmq_export(mocker, db):
 
     task_log = TaskLog.objects.filter(workspace_id=workspace_id, type='FETCHING_EXPENSES').first()
     assert task_log.status == 'COMPLETE'
+
+
+def test_async_add_admins_to_workspace_invalid_token(db, mocker):
+    mocker.patch(
+        'fyle_integrations_platform_connector.PlatformConnector.__init__',
+        side_effect=InvalidTokenError('Invalid Token')
+    )
+    async_add_admins_to_workspace(1, 'usqywo0f3nBY')
+
+    mocker.patch(
+        'fyle_integrations_platform_connector.PlatformConnector.__init__',
+        side_effect=Exception('General error')
+    )
+    async_add_admins_to_workspace(1, 'usqywo0f3nBY')
+
+
+def test_create_admin_subscriptions_invalid_token(db, mocker):
+    mocker.patch(
+        'fyle_integrations_platform_connector.PlatformConnector.__init__',
+        side_effect=InvalidTokenError('Invalid Token')
+    )
+    create_admin_subscriptions(3)
+
+    mocker.patch(
+        'fyle_integrations_platform_connector.PlatformConnector.__init__',
+        side_effect=Exception('General error')
+    )
+    create_admin_subscriptions(3)
+
+
+def test_update_workspace_name_invalid_token(db, mocker):
+    mocker.patch(
+        'apps.workspaces.tasks.get_fyle_admin',
+        side_effect=InvalidTokenError('Invalid Token')
+    )
+    update_workspace_name(1, 'Bearer access_token')
+
+    mocker.patch(
+        'apps.workspaces.tasks.get_fyle_admin',
+        side_effect=Exception('General error')
+    )
+    update_workspace_name(1, 'Bearer access_token')
