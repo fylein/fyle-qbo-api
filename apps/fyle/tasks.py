@@ -1,7 +1,7 @@
 import hashlib
 import logging
 import traceback
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List
 
 from django.db import transaction
@@ -9,6 +9,11 @@ from django.db.models import Count, Q
 from django_q.models import Schedule
 from django_q.tasks import async_task, schedule
 from fyle.platform.exceptions import InternalServerError, InvalidTokenError, RetryException
+from fyle_accounting_library.fyle_platform.branding import feature_configuration
+from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
+from fyle_accounting_library.fyle_platform.helpers import filter_expenses_based_on_state, get_expense_import_states
+from fyle_integrations_platform_connector import PlatformConnector
+from fyle_integrations_platform_connector.apis.expenses import Expenses as FyleExpenses
 
 from apps.fyle.actions import mark_expenses_as_skipped, post_accounting_export_summary
 from apps.fyle.helpers import (
@@ -24,12 +29,7 @@ from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupS
 from apps.tasks.models import Error, TaskLog
 from apps.workspaces.actions import export_to_qbo
 from apps.workspaces.models import FyleCredential, LastExportDetail, Workspace, WorkspaceGeneralSettings, WorkspaceSchedule
-from fyle_accounting_library.fyle_platform.branding import feature_configuration
-from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
-from fyle_accounting_library.fyle_platform.helpers import filter_expenses_based_on_state, get_expense_import_states
-from fyle_accounting_mappings.models import ExpenseAttribute
-from fyle_integrations_platform_connector import PlatformConnector
-from fyle_integrations_platform_connector.apis.expenses import Expenses as FyleExpenses
+from fyle_accounting_mappings.models import ExpenseAttribute, Mapping
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -712,7 +712,9 @@ def update_non_exported_expenses(data: Dict) -> None:
             expense_objects = FyleExpenses().construct_expense_object(expense_obj, expense.workspace_id)
 
             old_fund_source = expense.fund_source
+            old_category = expense.category if (expense.category == expense.sub_category or expense.sub_category == None) else '{0} / {1}'.format(expense.category, expense.sub_category)
             new_fund_source = EXPENSE_SOURCE_ACCOUNT_MAP[expense_objects[0]['source_account_type']]
+            new_category = expense_objects[0]['category'] if (expense_objects[0]['category'] == expense_objects[0]['sub_category'] or expense_objects[0]['sub_category'] == None) else '{0} / {1}'.format(expense_objects[0]['category'], expense_objects[0]['sub_category'])
 
             Expense.create_expense_objects(
                 expense_objects, expense.workspace_id, skip_update=True
@@ -726,6 +728,56 @@ def update_non_exported_expenses(data: Dict) -> None:
                     report_id=expense.report_id,
                     affected_fund_source_expense_ids={old_fund_source: [expense.id]}
                 )
+
+            if old_category != new_category:
+                logger.info("Category changed for expense %s from %s to %s in workspace %s", expense.id, old_category, new_category, expense.workspace_id)
+                handle_category_changes_for_expense(expense=expense, new_category=new_category)
+
+
+def handle_category_changes_for_expense(expense: Expense, new_category: str) -> None:
+    """
+    Handle category changes for expense
+    :param expense: Expense object
+    :param new_category: New category
+    :return: None
+    """
+    with transaction.atomic():
+        expense_group = ExpenseGroup.objects.filter(expenses__id=expense.id, workspace_id=expense.workspace_id).first()
+        if expense_group:
+            error = Error.objects.filter(workspace_id=expense.workspace_id, is_resolved=False, type='CATEGORY_MAPPING', mapping_error_expense_group_ids__contains=[expense_group.id]).first()
+            if error:
+                logger.info('Removing expense group: %s from errors for workspace_id: %s as a result of category update for expense %s', expense_group.id, expense.workspace_id, expense.id)
+                error.mapping_error_expense_group_ids.remove(expense_group.id)
+                if error.mapping_error_expense_group_ids:
+                    error.updated_at = datetime.now(timezone.utc)
+                    error.save(update_fields=['mapping_error_expense_group_ids', 'updated_at'])
+                else:
+                    error.delete()
+
+            new_category_expense_attribute = ExpenseAttribute.objects.filter(workspace_id=expense.workspace_id, attribute_type='CATEGORY', value=new_category).first()
+            if new_category_expense_attribute:
+                updated_category_error = Error.objects.filter(workspace_id=expense.workspace_id, is_resolved=False, type='CATEGORY_MAPPING', expense_attribute=new_category_expense_attribute).first()
+                if updated_category_error:
+                    updated_category_error.mapping_error_expense_group_ids.append(expense_group.id)
+                    updated_category_error.updated_at = datetime.now(timezone.utc)
+                    updated_category_error.save(update_fields=['mapping_error_expense_group_ids', 'updated_at'])
+                else:
+                    mapping = Mapping.objects.filter(
+                        source_type='CATEGORY',
+                        destination_type='ACCOUNT',
+                        source=new_category_expense_attribute,
+                        workspace_id=expense_group.workspace_id
+                    ).first()
+                    if not mapping:
+                        Error.objects.create(
+                            workspace_id=expense.workspace_id,
+                            type='CATEGORY_MAPPING',
+                            expense_attribute=new_category_expense_attribute,
+                            mapping_error_expense_group_ids=[expense_group.id],
+                            updated_at=datetime.now(timezone.utc),
+                            error_detail=f"{new_category_expense_attribute.display_name} mapping is missing",
+                            error_title=new_category_expense_attribute.value
+                        )
 
 
 def handle_expense_report_change(expense_data: Dict, action_type: str) -> None:
