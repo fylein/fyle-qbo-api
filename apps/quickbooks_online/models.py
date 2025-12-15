@@ -220,7 +220,7 @@ class Bill(models.Model):
 
     id = models.AutoField(primary_key=True)
     expense_group = models.OneToOneField(ExpenseGroup, on_delete=models.PROTECT, help_text='Expense group reference')
-    accounts_payable_id = models.CharField(max_length=255, help_text='QBO Accounts Payable account id')
+    accounts_payable_id = models.CharField(max_length=255, help_text='QBO Accounts Payable account id', null=True)
     vendor_id = models.CharField(max_length=255, help_text='QBO vendor id')
     department_id = models.CharField(max_length=255, help_text='QBO department id', null=True)
     transaction_date = models.DateField(help_text='Bill transaction date')
@@ -906,7 +906,7 @@ class BillPayment(models.Model):
     amount = models.FloatField(help_text='Bill amount')
     currency = models.CharField(max_length=255, help_text='Bill Currency')
     payment_account = models.CharField(max_length=255, help_text='Payment Account')
-    accounts_payable_id = models.CharField(max_length=255, help_text='QBO Accounts Payable account id')
+    accounts_payable_id = models.CharField(max_length=255, help_text='QBO Accounts Payable account id', null=True)
     department_id = models.CharField(max_length=255, help_text='QBO department id', null=True)
     transaction_date = models.DateField(help_text='Bill transaction date')
     bill_payment_number = models.CharField(max_length=255)
