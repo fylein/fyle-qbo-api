@@ -396,8 +396,8 @@ def filter_expense_groups(
                     total_amount = 0
                     for expense in group_expense:
                         total_amount += expense.amount
-                    if total_amount < 0:
-                        skipped_expense_ids.extend([expense.id for expense in filtered_expenses if expense.amount < 0])
+                    if total_amount <= 0:
+                        skipped_expense_ids.extend([expense.id for expense in filtered_expenses if expense.amount <= 0])
                         filtered_expenses = list(
                             filter(lambda expense: expense.amount > 0, group_expense)
                         )
@@ -405,13 +405,13 @@ def filter_expense_groups(
                 for expense in filtered_expenses:
                     total_amount += expense.amount
 
-                if total_amount < 0:
-                    skipped_expense_ids.extend([expense.id for expense in filtered_expenses if expense.amount < 0])
+                if total_amount <= 0:
+                    skipped_expense_ids.extend([expense.id for expense in filtered_expenses if expense.amount <= 0])
                     filtered_expenses = list(
                         filter(lambda expense: expense.amount > 0, filtered_expenses)
                     )
         elif (reimbursable_export_type != 'JOURNAL ENTRY' or ccc_export_type == 'BILL') and ccc_export_type != 'DEBIT CARD EXPENSE':
-            skipped_expense_ids.extend([expense.id for expense in filtered_expenses if expense.amount < 0])
+            skipped_expense_ids.extend([expense.id for expense in filtered_expenses if expense.amount <= 0])
             filtered_expenses = list(
                 filter(lambda expense: expense.amount > 0, filtered_expenses)
             )

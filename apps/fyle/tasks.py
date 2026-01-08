@@ -12,6 +12,7 @@ from fyle.platform.exceptions import InternalServerError, InvalidTokenError, Ret
 from fyle_accounting_library.fyle_platform.branding import feature_configuration
 from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from fyle_accounting_library.fyle_platform.helpers import filter_expenses_based_on_state, get_expense_import_states
+from fyle_accounting_mappings.models import ExpenseAttribute, Mapping
 from fyle_integrations_platform_connector import PlatformConnector
 from fyle_integrations_platform_connector.apis.expenses import Expenses as FyleExpenses
 
@@ -29,7 +30,6 @@ from apps.fyle.models import Expense, ExpenseFilter, ExpenseGroup, ExpenseGroupS
 from apps.tasks.models import Error, TaskLog
 from apps.workspaces.actions import export_to_qbo
 from apps.workspaces.models import FyleCredential, LastExportDetail, Workspace, WorkspaceGeneralSettings, WorkspaceSchedule
-from fyle_accounting_mappings.models import ExpenseAttribute, Mapping
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -103,7 +103,7 @@ def group_expenses_and_save(
 
     # Step 1: Mark negative expenses as skipped if filter_credit_expenses is True
     if filter_credit_expenses:
-        negative_expense_ids = [e.id for e in expense_objects if e.amount < 0 and not e.is_skipped]
+        negative_expense_ids = [e.id for e in expense_objects if e.amount <= 0 and not e.is_skipped]
         if negative_expense_ids:
             expense_objects = [e for e in expense_objects if e.id not in negative_expense_ids]
             skip_expenses_and_post_accounting_export_summary(negative_expense_ids, workspace)
