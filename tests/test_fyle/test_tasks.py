@@ -28,6 +28,7 @@ from apps.fyle.tasks import (
     handle_expense_fund_source_change,
     handle_expense_report_change,
     handle_fund_source_changes_for_expense_ids,
+    handle_org_setting_updated,
     import_and_export_expenses,
     post_accounting_export_summary,
     process_expense_group_for_fund_source_update,
@@ -2561,3 +2562,59 @@ def test_update_non_exported_expenses_category_change(mocker, db):
     assert mock_handle_category_changes.call_count == 3
     _, kwargs = mock_handle_category_changes.call_args
     assert kwargs['new_category'] == 'New Cat'
+
+
+def test_handle_org_setting_updated(db):
+    """
+    Test handle_org_setting_updated stores regional_settings in org_settings field
+    """
+    workspace_id = 1
+    workspace = Workspace.objects.get(id=workspace_id)
+
+    workspace.org_settings = {}
+    workspace.save()
+
+    handle_org_setting_updated(
+        workspace_id=workspace_id,
+        org_settings=data['org_settings']['org_settings_payload']
+    )
+
+    workspace.refresh_from_db()
+
+    assert workspace.org_settings == data['org_settings']['expected_org_settings']
+    assert 'other_setting' not in workspace.org_settings
+
+
+def test_handle_org_setting_updated_empty_regional_settings(db):
+    """
+    Test handle_org_setting_updated when regional_settings is empty or missing
+    """
+    workspace_id = 1
+    workspace = Workspace.objects.get(id=workspace_id)
+
+    handle_org_setting_updated(
+        workspace_id=workspace_id,
+        org_settings=data['org_settings']['org_settings_payload_without_regional']
+    )
+
+    workspace.refresh_from_db()
+    assert workspace.org_settings == data['org_settings']['expected_org_settings_empty']
+
+
+def test_handle_org_setting_updated_overwrites_existing(db):
+    """
+    Test handle_org_setting_updated overwrites existing org_settings
+    """
+    workspace_id = 1
+    workspace = Workspace.objects.get(id=workspace_id)
+
+    workspace.org_settings = data['org_settings']['expected_org_settings']
+    workspace.save()
+
+    handle_org_setting_updated(
+        workspace_id=workspace_id,
+        org_settings=data['org_settings']['org_settings_payload_updated']
+    )
+
+    workspace.refresh_from_db()
+    assert workspace.org_settings == data['org_settings']['expected_org_settings_updated']

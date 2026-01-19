@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.db import transaction
+from django.utils.module_loading import import_string
 from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from fyle_integrations_platform_connector import PlatformConnector
 from fyle_rest_auth.helpers import get_fyle_admin
@@ -89,6 +90,8 @@ def update_or_create_workspace(user, access_token):
             }
         }
         publish_to_rabbitmq(payload=payload, routing_key=RoutingKeyEnum.UTILITY.value)
+
+        import_string('apps.workspaces.tasks.sync_org_settings')(workspace_id=workspace.id)
 
     return workspace
 
