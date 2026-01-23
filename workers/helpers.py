@@ -37,6 +37,7 @@ class WorkerActionEnum(str, Enum):
     EXPENSE_ADDED_EJECTED_FROM_REPORT = 'UTILITY.EXPENSE_ADDED_EJECTED_FROM_REPORT'
     CHECK_INTERVAL_AND_SYNC_FYLE_DIMENSION = 'IMPORT.CHECK_INTERVAL_AND_SYNC_FYLE_DIMENSION'
     CHECK_INTERVAL_AND_SYNC_QUICKBOOKS_DIMENSION = 'IMPORT.CHECK_INTERVAL_AND_SYNC_QUICKBOOKS_DIMENSION'
+    ORG_SETTING_UPDATED = 'UTILITY.ORG_SETTING_UPDATED'
 
 
 QUEUE_BINDKEY_MAP = {
@@ -65,7 +66,8 @@ ACTION_METHOD_MAP = {
     WorkerActionEnum.ADD_ADMINS_TO_WORKSPACE: 'apps.workspaces.tasks.async_add_admins_to_workspace',
     WorkerActionEnum.CHECK_INTERVAL_AND_SYNC_FYLE_DIMENSION: 'apps.fyle.actions.sync_fyle_dimensions',
     WorkerActionEnum.SYNC_QUICKBOOKS_DIMENSION: 'apps.quickbooks_online.actions.refresh_quickbooks_dimensions',
-    WorkerActionEnum.CHECK_INTERVAL_AND_SYNC_QUICKBOOKS_DIMENSION: 'apps.quickbooks_online.actions.sync_quickbooks_dimensions'
+    WorkerActionEnum.CHECK_INTERVAL_AND_SYNC_QUICKBOOKS_DIMENSION: 'apps.quickbooks_online.actions.sync_quickbooks_dimensions',
+    WorkerActionEnum.ORG_SETTING_UPDATED: 'apps.fyle.tasks.handle_org_setting_updated'
 }
 
 

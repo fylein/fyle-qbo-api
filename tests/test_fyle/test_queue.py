@@ -145,3 +145,34 @@ def test_handle_webhook_callback_attribute_webhooks(mocker, db):
     handle_webhook_callback(body, workspace.id)
     assert mock_processor.call_count == 2
     cache.clear()
+
+
+def test_handle_webhook_callback_org_setting_updated(mocker, db):
+    """
+    Test handle_webhook_callback for ORG_SETTING UPDATED action
+    """
+    workspace = Workspace.objects.get(id=3)
+
+    mock_publish_to_rabbitmq = mocker.patch('apps.fyle.queue.publish_to_rabbitmq')
+
+    webhook_body = {
+        'action': 'UPDATED',
+        'resource': 'ORG_SETTING',
+        'data': {
+            'org_id': workspace.fyle_org_id,
+            'regional_settings': {
+                'locale': {
+                    'date_format': 'DD/MM/YYYY',
+                    'timezone': 'Asia/Kolkata'
+                }
+            }
+        }
+    }
+
+    handle_webhook_callback(webhook_body, workspace.id)
+
+    mock_publish_to_rabbitmq.assert_called_once()
+    call_kwargs = mock_publish_to_rabbitmq.call_args[1]
+    assert call_kwargs['payload']['workspace_id'] == workspace.id
+    assert call_kwargs['payload']['action'] == 'UTILITY.ORG_SETTING_UPDATED'
+    assert call_kwargs['payload']['data']['org_settings'] == webhook_body['data']

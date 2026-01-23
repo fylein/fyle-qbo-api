@@ -1,6 +1,6 @@
 import logging
 
-from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum, WebhookAttributeActionEnum
+from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum, WebhookAttributeActionEnum, WebhookCallbackActionEnum
 
 from apps.fyle.helpers import assert_valid_request
 from apps.workspaces.models import FeatureConfig
@@ -87,6 +87,20 @@ def handle_webhook_callback(body: dict, workspace_id: int) -> None:
             'data': {
                 'expense_data': body['data'],
                 'action_type': 'ADDED_TO_REPORT'
+            }
+        }
+        publish_to_rabbitmq(payload=payload, routing_key=RoutingKeyEnum.UTILITY.value)
+
+    elif (
+        action == WebhookCallbackActionEnum.UPDATED.value
+        and resource == 'ORG_SETTING'
+    ):
+        payload = {
+            'workspace_id': workspace_id,
+            'action': WorkerActionEnum.ORG_SETTING_UPDATED.value,
+            'data': {
+                'workspace_id': workspace_id,
+                'org_settings': data
             }
         }
         publish_to_rabbitmq(payload=payload, routing_key=RoutingKeyEnum.UTILITY.value)
