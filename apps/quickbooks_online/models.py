@@ -9,7 +9,9 @@ from django.db import models
 
 from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings
 from apps.mappings.models import GeneralMapping
+from apps.workspaces.enums import SystemCommentEntityTypeEnum, SystemCommentIntentEnum, SystemCommentReasonEnum, SystemCommentSourceEnum
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
+from apps.workspaces.system_comments import add_system_comment
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping, MappingSetting
 
 
@@ -68,18 +70,52 @@ def construct_private_note(expense_group: ExpenseGroup):
     return private_note
 
 
-def get_ccc_account_id(workspace_general_settings, general_mappings, expense, description, export_type='CREDIT_CARD_EXPENSE'):
+def get_ccc_account_id(workspace_general_settings, general_mappings, expense, description, export_type='CREDIT_CARD_EXPENSE', system_comments: list = None):
     if workspace_general_settings.map_fyle_cards_qbo_account:
         ccc_account = Mapping.objects.filter(source_type='CORPORATE_CARD', source__source_id=expense.corporate_card_id, workspace_id=workspace_general_settings.workspace_id).first()
         if export_type == 'DEBIT_CARD_EXPENSE' and not ccc_account:
             return None
 
-        return ccc_account.destination.destination_id if ccc_account else general_mappings.default_ccc_account_id
+        if ccc_account:
+            return ccc_account.destination.destination_id
+        else:
+            add_system_comment(
+                system_comments=system_comments,
+                source=SystemCommentSourceEnum.GET_CCC_ACCOUNT_ID,
+                intent=SystemCommentIntentEnum.DEFAULT_VALUE_APPLIED,
+                entity_type=SystemCommentEntityTypeEnum.EXPENSE,
+                workspace_id=workspace_general_settings.workspace_id,
+                entity_id=expense.id,
+                reason=SystemCommentReasonEnum.DEFAULT_CCC_ACCOUNT_APPLIED,
+                info={'default_ccc_account_id': general_mappings.default_ccc_account_id, 'default_ccc_account_name': general_mappings.default_ccc_account_name}
+            )
+            return general_mappings.default_ccc_account_id
     else:
         ccc_account_mapping: EmployeeMapping = EmployeeMapping.objects.filter(source_employee__value=description.get('employee_email'), workspace_id=workspace_general_settings.workspace_id).first()
-        ccc_account_id = ccc_account_mapping.destination_card_account.destination_id if ccc_account_mapping and ccc_account_mapping.destination_card_account else general_mappings.default_ccc_account_id
-
-    return ccc_account_id
+        if ccc_account_mapping and ccc_account_mapping.destination_card_account:
+            add_system_comment(
+                system_comments=system_comments,
+                source=SystemCommentSourceEnum.GET_CCC_ACCOUNT_ID,
+                intent=SystemCommentIntentEnum.EMPLOYEE_DEFAULT_VALUE_APPLIED,
+                entity_type=SystemCommentEntityTypeEnum.EXPENSE,
+                workspace_id=workspace_general_settings.workspace_id,
+                entity_id=expense.id,
+                reason=SystemCommentReasonEnum.EMPLOYEE_CCC_ACCOUNT_APPLIED,
+                info={'employee_ccc_account_id': ccc_account_mapping.destination_card_account.destination_id, 'employee_ccc_account_name': ccc_account_mapping.destination_card_account.display_name}
+            )
+            return ccc_account_mapping.destination_card_account.destination_id
+        else:
+            add_system_comment(
+                system_comments=system_comments,
+                source=SystemCommentSourceEnum.GET_CCC_ACCOUNT_ID,
+                intent=SystemCommentIntentEnum.DEFAULT_VALUE_APPLIED,
+                entity_type=SystemCommentEntityTypeEnum.EXPENSE,
+                workspace_id=workspace_general_settings.workspace_id,
+                entity_id=expense.id,
+                reason=SystemCommentReasonEnum.DEFAULT_CCC_ACCOUNT_APPLIED,
+                info={'default_ccc_account_id': general_mappings.default_ccc_account_id, 'default_ccc_account_name': general_mappings.default_ccc_account_name}
+            )
+            return general_mappings.default_ccc_account_id
 
 
 def get_class_id_or_none(expense_group: ExpenseGroup, lineitem: Expense):
@@ -238,10 +274,11 @@ class Bill(models.Model):
         db_table = 'bills'
 
     @staticmethod
-    def create_bill(expense_group: ExpenseGroup):
+    def create_bill(expense_group: ExpenseGroup, system_comments: list = None):
         """
         Create bill
         :param expense_group: expense group
+        :param system_comments: Optional list to collect system comment data
         :return: bill object
         """
         description = expense_group.description
@@ -257,6 +294,16 @@ class Bill(models.Model):
             vendor_id = EmployeeMapping.objects.get(source_employee__value=description.get('employee_email'), workspace_id=expense_group.workspace_id).destination_vendor.destination_id
         elif expense_group.fund_source == 'CCC':
             vendor_id = general_mappings.default_ccc_vendor_id
+            add_system_comment(
+                system_comments=system_comments,
+                source=SystemCommentSourceEnum.CREATE_BILL,
+                intent=SystemCommentIntentEnum.DEFAULT_VALUE_APPLIED,
+                entity_type=SystemCommentEntityTypeEnum.EXPENSE_GROUP,
+                workspace_id=expense_group.workspace_id,
+                entity_id=expense_group.id,
+                reason=SystemCommentReasonEnum.DEFAULT_CCC_VENDOR_APPLIED,
+                info={'default_ccc_vendor_id': general_mappings.default_ccc_vendor_id, 'default_ccc_vendor_name': general_mappings.default_ccc_vendor_name}
+            )
 
         general_mappings = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
 
@@ -483,11 +530,12 @@ class QBOExpense(models.Model):
         db_table = 'qbo_expenses'
 
     @staticmethod
-    def create_qbo_expense(expense_group: ExpenseGroup, qbo_connection):
+    def create_qbo_expense(expense_group: ExpenseGroup, qbo_connection, system_comments: list = None):
         """
         Create QBO Expense
         :param expense_group: expense group
         :param qbo_connection: QBO Connection object
+        :param system_comments: Optional list to collect system comment data
         :return: QBO Expense object
         """
         description = expense_group.description
@@ -506,7 +554,7 @@ class QBOExpense(models.Model):
         if expense_group.fund_source == 'PERSONAL':
             account_id = general_mappings.qbo_expense_account_id
         else:
-            ccc_account_id = get_ccc_account_id(workspace_general_settings, general_mappings, expense, description, 'DEBIT_CARD_EXPENSE')
+            ccc_account_id = get_ccc_account_id(workspace_general_settings, general_mappings, expense, description, 'DEBIT_CARD_EXPENSE', system_comments=system_comments)
             if ccc_account_id:
                 account_id = ccc_account_id
             else:
@@ -525,6 +573,18 @@ class QBOExpense(models.Model):
                     entity_id = qbo_connection.get_or_create_vendor(payee_type, create=True).destination_id
                 else:
                     entity_id = entity_id.destination_id
+
+                reason = SystemCommentReasonEnum.DEBIT_CARD_MISC_VENDOR_APPLIED if payee_type == 'Debit Card Misc' else SystemCommentReasonEnum.CREDIT_CARD_MISC_VENDOR_APPLIED
+                add_system_comment(
+                    system_comments=system_comments,
+                    source=SystemCommentSourceEnum.CREATE_QBO_EXPENSE,
+                    intent=SystemCommentIntentEnum.VENDOR_NOT_FOUND,
+                    entity_type=SystemCommentEntityTypeEnum.EXPENSE_GROUP,
+                    workspace_id=expense_group.workspace_id,
+                    entity_id=expense_group.id,
+                    reason=reason,
+                    info={'merchant': merchant, 'fallback_vendor': payee_type}
+                )
             else:
                 entity_id = entity.destination_id
 
@@ -636,11 +696,12 @@ class CreditCardPurchase(models.Model):
         db_table = 'credit_card_purchases'
 
     @staticmethod
-    def create_credit_card_purchase(expense_group: ExpenseGroup, map_merchant_to_vendor: bool):
+    def create_credit_card_purchase(expense_group: ExpenseGroup, map_merchant_to_vendor: bool, system_comments: list = None):
         """
         Create CreditCardPurchase
         :param map_merchant_to_vendor: Map merchant to vendor for credit card purchases
         :param expense_group: expense group
+        :param system_comments: Optional list to collect system comment data
         :return: CreditCardPurchase object
         """
         description = expense_group.description
@@ -662,6 +723,17 @@ class CreditCardPurchase(models.Model):
 
             if not entity:
                 entity_id = DestinationAttribute.objects.filter(value='Credit Card Misc', workspace_id=expense_group.workspace_id, attribute_type='VENDOR').first().destination_id
+
+                add_system_comment(
+                    system_comments=system_comments,
+                    source=SystemCommentSourceEnum.CREATE_CREDIT_CARD_PURCHASE,
+                    intent=SystemCommentIntentEnum.VENDOR_NOT_FOUND,
+                    entity_type=SystemCommentEntityTypeEnum.EXPENSE_GROUP,
+                    workspace_id=expense_group.workspace_id,
+                    entity_id=expense_group.id,
+                    reason=SystemCommentReasonEnum.CREDIT_CARD_MISC_VENDOR_APPLIED,
+                    info={'merchant': merchant, 'fallback_vendor': 'Credit Card Misc'}
+                )
             else:
                 entity_id = entity.destination_id
 
@@ -669,7 +741,7 @@ class CreditCardPurchase(models.Model):
             entity = EmployeeMapping.objects.get(source_employee__value=description.get('employee_email'), workspace_id=expense_group.workspace_id)
             entity_id = entity.destination_employee.destination_id if employee_field_mapping == 'EMPLOYEE' else entity.destination_vendor.destination_id
 
-        ccc_account_id = get_ccc_account_id(workspace_general_settings, general_mappings, expense, description)
+        ccc_account_id = get_ccc_account_id(workspace_general_settings, general_mappings, expense, description, system_comments=system_comments)
 
         credit_card_purchase_object, _ = CreditCardPurchase.objects.update_or_create(
             expense_group=expense_group,

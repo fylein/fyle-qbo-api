@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
+from typing import Callable, Optional
 
-from apps.fyle.models import ExpenseGroup, ExpenseGroupSettings
+from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings
 import pytest
 from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute
 
@@ -223,3 +224,117 @@ def create_task_logs():
         return task_logs
 
     return _create_logs
+
+
+@pytest.fixture
+def add_category_test_expense(db):
+    """
+    Create expense for category change tests
+    """
+    workspace = Workspace.objects.get(id=1)
+    expense = Expense.objects.create(
+        workspace_id=workspace.id,
+        expense_id='txCategoryTest',
+        employee_email='category.test@test.com',
+        employee_name='Category Test User',
+        category='Test Category',
+        amount=100,
+        currency='USD',
+        org_id=workspace.fyle_org_id,
+        settlement_id='setlCat',
+        report_id='rpCat',
+        spent_at='2024-01-01T00:00:00Z',
+        expense_created_at='2024-01-01T00:00:00Z',
+        expense_updated_at='2024-01-01T00:00:00Z',
+        fund_source='PERSONAL'
+    )
+    return expense
+
+
+@pytest.fixture
+def add_category_test_expense_group(db, add_category_test_expense):
+    """
+    Create expense group for category change tests
+    """
+    workspace = Workspace.objects.get(id=1)
+    expense = add_category_test_expense
+    expense_group = ExpenseGroup.objects.create(
+        workspace_id=workspace.id,
+        fund_source='PERSONAL',
+        description={'employee_email': expense.employee_email},
+        employee_name=expense.employee_name
+    )
+    expense_group.expenses.add(expense)
+    return expense_group
+
+
+@pytest.fixture
+def get_or_create_task_log(db) -> Callable:
+    """
+    Fixture to get or create a TaskLog for an expense group
+    Returns a function that can be called with expense_group and optional parameters
+    """
+    def _get_or_create_task_log(
+        expense_group: ExpenseGroup,
+        task_type: str = 'FETCHING_EXPENSES',
+        status: str = 'COMPLETE',
+        updated_at: Optional[datetime] = None
+    ) -> TaskLog:
+        task_log = TaskLog.objects.filter(expense_group_id=expense_group.id).first()
+        if not task_log:
+            task_log = TaskLog.objects.create(
+                expense_group_id=expense_group.id,
+                workspace_id=expense_group.workspace_id,
+                type=task_type,
+                status=status,
+                updated_at=updated_at
+            )
+        return task_log
+    return _get_or_create_task_log
+
+
+@pytest.fixture
+def create_expense_group_expense(db):
+    """
+    Create expense group and expense for system comments tests
+    """
+    workspace = Workspace.objects.get(id=3)
+
+    expense_group = ExpenseGroup.objects.create(
+        workspace_id=3,
+        fund_source='PERSONAL',
+        description={'employee_email': 'test@fyle.in'}
+    )
+
+    expense, _ = Expense.objects.update_or_create(
+        expense_id='tx_sys_comment_test',
+        defaults={
+            'workspace_id': workspace.id,
+            'employee_email': 'test@fyle.in',
+            'category': 'category',
+            'sub_category': 'sub_category',
+            'project': 'project',
+            'expense_number': 'E/2024/01/T/1',
+            'org_id': workspace.fyle_org_id,
+            'claim_number': 'C/2024/01/R/1',
+            'amount': 100.0,
+            'currency': 'USD',
+            'foreign_amount': 100.0,
+            'foreign_currency': 'USD',
+            'settlement_id': 'setl_test',
+            'reimbursable': True,
+            'billable': True,
+            'state': 'APPROVED',
+            'vendor': 'vendor',
+            'cost_center': 'cost_center',
+            'report_id': 'rp_test',
+            'spent_at': datetime.now(tz=timezone.utc),
+            'expense_created_at': datetime.now(tz=timezone.utc),
+            'expense_updated_at': datetime.now(tz=timezone.utc),
+            'fund_source': 'PERSONAL'
+        }
+    )
+
+    expense_group.expenses.add(expense)
+
+    return expense_group, expense

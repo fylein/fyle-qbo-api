@@ -58,7 +58,8 @@ INSTALLED_APPS = [
     'apps.tasks',
     'apps.internal',
     'fyle_accounting_library.fyle_platform',
-    'fyle_accounting_library.rabbitmq'
+    'fyle_accounting_library.rabbitmq',
+    'fyle_accounting_library.system_comments'
 ]
 
 MIDDLEWARE = [
@@ -189,6 +190,7 @@ Q_CLUSTER = {
     # The maximum resident set size in kilobytes before a worker will recycle and release resources.
     # Useful for limiting memory usage.
     'max_rss': 100000,  # 100mb
+    'ALT_CLUSTERS': {},
 }
 
 # Database

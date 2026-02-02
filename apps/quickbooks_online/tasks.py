@@ -31,9 +31,12 @@ from apps.quickbooks_online.models import (
     QBOExpense,
     QBOExpenseLineitem,
 )
+
 from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import Error, TaskLog
+from apps.workspaces.enums import ExportTypeEnum
 from apps.workspaces.models import FyleCredential, QBOCredential, WorkspaceGeneralSettings
+from apps.workspaces.system_comments import create_filtered_system_comments
 from fyle_qbo_api.exceptions import BulkError
 from fyle_qbo_api.logging_middleware import get_caller_info, get_logger
 from fyle_qbo_api.utils import invalidate_qbo_credentials
@@ -67,14 +70,17 @@ def get_or_create_misc_vendor(debit_card_expense: bool, qbo_connection: QBOConne
 
 def get_or_create_credit_card_or_debit_card_vendor(workspace_id: int, merchant: str, debit_card_expense: bool, general_settings: WorkspaceGeneralSettings):
     """
-    Get or create car default vendor
+    Get or create card default vendor
     :param workspace_id: Workspace Id
     :param merchant: Fyle Expense Merchant
-    :return:
+    :param debit_card_expense: Boolean indicating if it's a debit card expense
+    :param general_settings: WorkspaceGeneralSettings object
+    :return: Tuple of (vendor, is_fallback) - is_fallback is True when using Credit Card Misc or Debit Card Misc
     """
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
     vendor = None
+    is_fallback = False
 
     if merchant:
         try:
@@ -90,11 +96,13 @@ def get_or_create_credit_card_or_debit_card_vendor(workspace_id: int, merchant: 
                     logger.error(bad_request.response)
             if not vendor:
                 vendor = get_or_create_misc_vendor(debit_card_expense, qbo_connection)
+                is_fallback = True
 
     else:
         vendor = get_or_create_misc_vendor(debit_card_expense, qbo_connection)
+        is_fallback = True
 
-    return vendor
+    return vendor, is_fallback
 
 
 def load_attachments(qbo_connection: QBOConnector, ref_id: str, ref_type: str, expense_group: ExpenseGroup):
@@ -221,8 +229,11 @@ def create_bill(expense_group_id: int, task_log_id: int, last_export: bool, is_a
     __validate_expense_group(expense_group, general_settings)
     logger.info('Validated Expense Group %s successfully', expense_group.id)
 
+    system_comments = []
+    is_exported = False
+
     with transaction.atomic():
-        bill_object = Bill.create_bill(expense_group)
+        bill_object = Bill.create_bill(expense_group, system_comments=system_comments)
 
         bill_lineitems_objects = BillLineitem.create_bill_lineitems(expense_group, general_settings)
 
@@ -240,6 +251,14 @@ def create_bill(expense_group_id: int, task_log_id: int, last_export: bool, is_a
         expense_group.save()
 
         resolve_errors_for_exported_expense_group(expense_group)
+        is_exported = True
+
+    create_filtered_system_comments(
+        system_comments=system_comments,
+        workspace_id=expense_group.workspace_id,
+        export_type=ExportTypeEnum.BILL,
+        is_exported_to_qbo=is_exported
+    )
 
     if last_export:
         update_last_export_details(expense_group.workspace_id)
@@ -490,8 +509,11 @@ def create_qbo_expense(expense_group_id: int, task_log_id: int, last_export: boo
     __validate_expense_group(expense_group, general_settings)
     worker_logger.info('Validated Expense Group %s successfully', expense_group.id)
 
+    system_comments = []
+    is_exported = False
+
     with transaction.atomic():
-        qbo_expense_object = QBOExpense.create_qbo_expense(expense_group, qbo_connection)
+        qbo_expense_object = QBOExpense.create_qbo_expense(expense_group, qbo_connection, system_comments=system_comments)
 
         qbo_expense_line_item_objects = QBOExpenseLineitem.create_qbo_expense_lineitems(expense_group, general_settings)
 
@@ -510,6 +532,14 @@ def create_qbo_expense(expense_group_id: int, task_log_id: int, last_export: boo
         expense_group.save()
 
         resolve_errors_for_exported_expense_group(expense_group)
+        is_exported = True
+
+    create_filtered_system_comments(
+        system_comments=system_comments,
+        workspace_id=expense_group.workspace_id,
+        export_type=ExportTypeEnum.DEBIT_CARD_EXPENSE if expense_group.fund_source == 'CCC' else ExportTypeEnum.EXPENSE,
+        is_exported_to_qbo=is_exported
+    )
 
     if last_export:
         update_last_export_details(expense_group.workspace_id)
@@ -568,8 +598,11 @@ def create_credit_card_purchase(expense_group_id: int, task_log_id: int, last_ex
     __validate_expense_group(expense_group, general_settings)
     worker_logger.info('Validated Expense Group %s successfully', expense_group.id)
 
+    system_comments = []
+    is_exported = False
+
     with transaction.atomic():
-        credit_card_purchase_object = CreditCardPurchase.create_credit_card_purchase(expense_group, general_settings.map_merchant_to_vendor)
+        credit_card_purchase_object = CreditCardPurchase.create_credit_card_purchase(expense_group, general_settings.map_merchant_to_vendor, system_comments=system_comments)
 
         credit_card_purchase_lineitems_objects = CreditCardPurchaseLineitem.create_credit_card_purchase_lineitems(expense_group, general_settings)
 
@@ -588,6 +621,14 @@ def create_credit_card_purchase(expense_group_id: int, task_log_id: int, last_ex
         expense_group.save()
 
         resolve_errors_for_exported_expense_group(expense_group)
+        is_exported = True
+
+    create_filtered_system_comments(
+        system_comments=system_comments,
+        workspace_id=expense_group.workspace_id,
+        export_type=ExportTypeEnum.CREDIT_CARD_PURCHASE,
+        is_exported_to_qbo=is_exported
+    )
 
     if last_export:
         update_last_export_details(expense_group.workspace_id)

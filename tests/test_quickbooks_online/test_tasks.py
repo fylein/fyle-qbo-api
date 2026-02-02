@@ -65,13 +65,13 @@ def test_get_or_create_credit_card_or_debit_card_vendor(mocker, db):
 
     general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
 
-    contact = get_or_create_credit_card_or_debit_card_vendor(workspace_id, 'samp_merchant', False, general_settings)
+    contact, _ = get_or_create_credit_card_or_debit_card_vendor(workspace_id, 'samp_merchant', False, general_settings)
     assert contact.value == 'samp_merchant'
 
     try:
         with mock.patch('apps.quickbooks_online.utils.QBOConnector.get_or_create_vendor') as mock_call:
             mock_call.side_effect = [None, WrongParamsError(msg='wrong parameters', response='wrong parameters')]
-            contact = get_or_create_credit_card_or_debit_card_vendor(workspace_id, 'samp_merchant', False, general_settings)
+            contact, _ = get_or_create_credit_card_or_debit_card_vendor(workspace_id, 'samp_merchant', False, general_settings)
     except Exception:
         logger.info('wrong parameters')
 
@@ -80,18 +80,18 @@ def test_get_or_create_credit_card_or_debit_card_vendor(mocker, db):
 
     DestinationAttribute.objects.filter(workspace_id=workspace_id, attribute_type='VENDOR', value='Debit Card Misc').delete()
 
-    contact = get_or_create_credit_card_or_debit_card_vendor(workspace_id, '', True, general_settings)
+    contact, _ = get_or_create_credit_card_or_debit_card_vendor(workspace_id, '', True, general_settings)
     assert contact.value == 'samp_merchant'
 
     mocker.patch('qbosdk.apis.Vendors.search_vendor_by_display_name', return_value=data['vendor_response'][0])
 
-    contact = get_or_create_credit_card_or_debit_card_vendor(workspace_id, 'Books by Bessie', True, general_settings)
+    contact, _ = get_or_create_credit_card_or_debit_card_vendor(workspace_id, 'Books by Bessie', True, general_settings)
     assert contact.value == 'Books by Bessie'
 
     try:
         with mock.patch('apps.quickbooks_online.utils.QBOConnector.get_or_create_vendor') as mock_call:
             mock_call.side_effect = WrongParamsError(msg='wrong parameters', response='wrong parameters')
-            contact = get_or_create_credit_card_or_debit_card_vendor(workspace_id, 'samp_merchant', False, general_settings)
+            contact, _ = get_or_create_credit_card_or_debit_card_vendor(workspace_id, 'samp_merchant', False, general_settings)
     except Exception:
         logger.info('wrong parameters')
 
