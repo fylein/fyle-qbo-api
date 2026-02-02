@@ -8,13 +8,14 @@ from django.db import transaction
 from django.db.models import Count, Q
 from django_q.models import Schedule
 from django_q.tasks import async_task, schedule
+from fyle.platform.exceptions import ExpiredTokenError as FyleExpiredTokenError
+from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
 from fyle.platform.exceptions import InternalServerError, InvalidTokenError, RetryException
 from fyle_accounting_library.fyle_platform.branding import feature_configuration
 from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from fyle_accounting_library.fyle_platform.helpers import filter_expenses_based_on_state, get_expense_import_states
 from fyle_accounting_mappings.models import ExpenseAttribute, Mapping
 from fyle_integrations_platform_connector import PlatformConnector
-from fyle_integrations_platform_connector.apis.expenses import Expenses as FyleExpenses
 
 from apps.fyle.actions import mark_expenses_as_skipped, post_accounting_export_summary
 from apps.fyle.helpers import (
@@ -694,44 +695,53 @@ def update_non_exported_expenses(data: Dict) -> None:
     """
     To update expenses not in COMPLETE, IN_PROGRESS state
     """
-    expense_state = None
-    org_id = data['org_id']
-    expense_id = data['id']
-    workspace = Workspace.objects.get(fyle_org_id=org_id)
-    expense = Expense.objects.filter(workspace_id=workspace.id, expense_id=expense_id).first()
+    try:
+        expense_state = None
+        org_id = data['org_id']
+        expense_id = data['id']
+        workspace = Workspace.objects.get(fyle_org_id=org_id)
+        expense = Expense.objects.filter(workspace_id=workspace.id, expense_id=expense_id).first()
 
-    if expense:
-        if 'state' in expense.accounting_export_summary:
-            expense_state = expense.accounting_export_summary['state']
-        else:
-            expense_state = 'NOT_EXPORTED'
+        if expense:
+            if 'state' in expense.accounting_export_summary:
+                expense_state = expense.accounting_export_summary['state']
+            else:
+                expense_state = 'NOT_EXPORTED'
 
-        if expense_state and expense_state not in ['COMPLETE', 'IN_PROGRESS']:
-            expense_obj = []
-            expense_obj.append(data)
-            expense_objects = FyleExpenses().construct_expense_object(expense_obj, expense.workspace_id)
+            if expense_state and expense_state not in ['COMPLETE', 'IN_PROGRESS']:
+                fyle_credentials = FyleCredential.objects.get(workspace_id=expense.workspace_id)
+                platform = PlatformConnector(fyle_credentials)
 
-            old_fund_source = expense.fund_source
-            old_category = expense.category if (expense.category == expense.sub_category or expense.sub_category == None) else '{0} / {1}'.format(expense.category, expense.sub_category)
-            new_fund_source = EXPENSE_SOURCE_ACCOUNT_MAP[expense_objects[0]['source_account_type']]
-            new_category = expense_objects[0]['category'] if (expense_objects[0]['category'] == expense_objects[0]['sub_category'] or expense_objects[0]['sub_category'] == None) else '{0} / {1}'.format(expense_objects[0]['category'], expense_objects[0]['sub_category'])
+                expense_obj = []
+                expense_obj.append(data)
+                expense_objects = platform.expenses.construct_expense_object(expense_obj, expense.workspace_id)
 
-            Expense.create_expense_objects(
-                expense_objects, expense.workspace_id, skip_update=True
-            )
+                old_fund_source = expense.fund_source
+                old_category = expense.category if (expense.category == expense.sub_category or expense.sub_category == None) else '{0} / {1}'.format(expense.category, expense.sub_category)
+                new_fund_source = EXPENSE_SOURCE_ACCOUNT_MAP[expense_objects[0]['source_account_type']]
+                new_category = expense_objects[0]['category'] if (expense_objects[0]['category'] == expense_objects[0]['sub_category'] or expense_objects[0]['sub_category'] == None) else '{0} / {1}'.format(expense_objects[0]['category'], expense_objects[0]['sub_category'])
 
-            if old_fund_source != new_fund_source:
-                logger.info("Fund source changed for expense %s from %s to %s in workspace %s", expense.id, old_fund_source, new_fund_source, expense.workspace_id)
-                handle_fund_source_changes_for_expense_ids(
-                    workspace_id=expense.workspace_id,
-                    changed_expense_ids=[expense.id],
-                    report_id=expense.report_id,
-                    affected_fund_source_expense_ids={old_fund_source: [expense.id]}
+                Expense.create_expense_objects(
+                    expense_objects, expense.workspace_id, skip_update=True
                 )
 
-            if old_category != new_category:
-                logger.info("Category changed for expense %s from %s to %s in workspace %s", expense.id, old_category, new_category, expense.workspace_id)
-                handle_category_changes_for_expense(expense=expense, new_category=new_category)
+                if old_fund_source != new_fund_source:
+                    logger.info("Fund source changed for expense %s from %s to %s in workspace %s", expense.id, old_fund_source, new_fund_source, expense.workspace_id)
+                    handle_fund_source_changes_for_expense_ids(
+                        workspace_id=expense.workspace_id,
+                        changed_expense_ids=[expense.id],
+                        report_id=expense.report_id,
+                        affected_fund_source_expense_ids={old_fund_source: [expense.id]}
+                    )
+
+                if old_category != new_category:
+                    logger.info("Category changed for expense %s from %s to %s in workspace %s", expense.id, old_category, new_category, expense.workspace_id)
+                    handle_category_changes_for_expense(expense=expense, new_category=new_category)
+
+    except (FyleInvalidTokenError, FyleExpiredTokenError) as exception:
+        logger.info('Fyle token expired, workspace_id: %s %s', expense.workspace_id, str(exception))
+    except Exception as exception:
+        logger.info('Error while refreshing Fyle dimensions, workspace_id: %s %s', expense.workspace_id, str(exception))
 
 
 def handle_category_changes_for_expense(expense: Expense, new_category: str) -> None:

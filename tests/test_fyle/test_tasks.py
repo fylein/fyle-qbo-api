@@ -6,7 +6,9 @@ import pytest
 from django.db.models import Q
 from django.urls import reverse
 from django_q.models import Schedule
+from fyle.platform.exceptions import ExpiredTokenError as FyleExpiredTokenError
 from fyle.platform.exceptions import InternalServerError, InvalidTokenError, RetryException
+from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
 from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
@@ -887,12 +889,15 @@ def test_update_non_exported_expenses_fund_source_change(mocker, db):
     workspace.fyle_org_id = org_id
     workspace.save()
 
-    # Mock the FyleExpenses construct_expense_object method
-    mock_fyle_expenses = mocker.patch('apps.fyle.tasks.FyleExpenses')
+    # Mock FyleCredential
+    mocker.patch('apps.fyle.tasks.FyleCredential.objects.get')
+
+    # Mock the PlatformConnector and expenses.construct_expense_object method
+    mock_platform = mocker.patch('apps.fyle.tasks.PlatformConnector')
     constructed_expense = expense_data.copy()
     constructed_expense['category'] = expense_data['category']['name']
     constructed_expense['sub_category'] = expense_data['category']['sub_category']
-    mock_fyle_expenses.return_value.construct_expense_object.return_value = [constructed_expense]
+    mock_platform.return_value.expenses.construct_expense_object.return_value = [constructed_expense]
 
     # Mock create_expense_objects to avoid complex data structure requirements
     mocker.patch('apps.fyle.tasks.Expense.create_expense_objects', return_value=None)
@@ -2502,12 +2507,15 @@ def test_update_non_exported_expenses_category_change(mocker, db):
     workspace.fyle_org_id = org_id
     workspace.save()
 
-    mock_fyle_expenses = mocker.patch('apps.fyle.tasks.FyleExpenses')
+    # Mock FyleCredential
+    mocker.patch('apps.fyle.tasks.FyleCredential.objects.get')
+
+    mock_platform = mocker.patch('apps.fyle.tasks.PlatformConnector')
     constructed_expense = expense_data.copy()
     constructed_expense['category'] = expense_data['category']['name']
     constructed_expense['sub_category'] = expense_data['category']['sub_category']
     constructed_expense['source_account_type'] = 'PERSONAL_CASH_ACCOUNT'
-    mock_fyle_expenses.return_value.construct_expense_object.return_value = [constructed_expense]
+    mock_platform.return_value.expenses.construct_expense_object.return_value = [constructed_expense]
 
     mocker.patch('apps.fyle.tasks.Expense.create_expense_objects', return_value=None)
 
@@ -2535,7 +2543,7 @@ def test_update_non_exported_expenses_category_change(mocker, db):
     constructed_expense_2['category'] = 'Changed'
     constructed_expense_2['sub_category'] = 'Changed'
     constructed_expense_2['source_account_type'] = 'PERSONAL_CASH_ACCOUNT'
-    mock_fyle_expenses.return_value.construct_expense_object.return_value = [constructed_expense_2]
+    mock_platform.return_value.expenses.construct_expense_object.return_value = [constructed_expense_2]
 
     update_non_exported_expenses(expense_data_2)
 
@@ -2555,13 +2563,44 @@ def test_update_non_exported_expenses_category_change(mocker, db):
     constructed_expense_3['category'] = 'New Cat'
     constructed_expense_3['sub_category'] = None
     constructed_expense_3['source_account_type'] = 'PERSONAL_CASH_ACCOUNT'
-    mock_fyle_expenses.return_value.construct_expense_object.return_value = [constructed_expense_3]
+    mock_platform.return_value.expenses.construct_expense_object.return_value = [constructed_expense_3]
 
     update_non_exported_expenses(expense_data_3)
 
     assert mock_handle_category_changes.call_count == 3
     _, kwargs = mock_handle_category_changes.call_args
     assert kwargs['new_category'] == 'New Cat'
+
+
+def test_update_non_exported_expenses_exception_handling(mocker, db):
+    expense_data = data['raw_expense'].copy()
+    org_id = expense_data['org_id']
+    default_raw_expense = data['default_raw_expense'].copy()
+
+    expense_created, _ = Expense.objects.update_or_create(
+        org_id=org_id,
+        expense_id='txhJLOSKs1iN',
+        workspace_id=1,
+        defaults=default_raw_expense
+    )
+    expense_created.accounting_export_summary = {}
+    expense_created.save()
+
+    workspace = Workspace.objects.filter(id=1).first()
+    workspace.fyle_org_id = org_id
+    workspace.save()
+
+    mocker.patch('apps.fyle.tasks.FyleCredential.objects.get')
+
+    mock_platform = mocker.patch('apps.fyle.tasks.PlatformConnector')
+    mock_platform.side_effect = FyleInvalidTokenError('Invalid token')
+    update_non_exported_expenses(expense_data)
+
+    mock_platform.side_effect = FyleExpiredTokenError('Token expired')
+    update_non_exported_expenses(expense_data)
+
+    mock_platform.side_effect = Exception('Generic error')
+    update_non_exported_expenses(expense_data)
 
 
 def test_handle_org_setting_updated(db):
