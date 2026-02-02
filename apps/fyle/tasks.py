@@ -8,9 +8,11 @@ from django.db import transaction
 from django.db.models import Count, Q
 from django_q.models import Schedule
 from django_q.tasks import async_task, schedule
+from fyle.platform.exceptions import ExpiredTokenError as FyleExpiredTokenError
+from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
 from fyle.platform.exceptions import InternalServerError, InvalidTokenError, RetryException
 from fyle_accounting_library.fyle_platform.branding import feature_configuration
-from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum 
+from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from fyle_accounting_library.fyle_platform.helpers import filter_expenses_based_on_state, get_expense_import_states
 from fyle_accounting_mappings.models import ExpenseAttribute, Mapping
 from fyle_integrations_platform_connector import PlatformConnector
@@ -737,9 +739,9 @@ def update_non_exported_expenses(data: Dict) -> None:
                     handle_category_changes_for_expense(expense=expense, new_category=new_category)
 
     except (FyleInvalidTokenError, FyleExpiredTokenError) as exception:
-        logger.info('Fyle token expired, workspace_id: %s %s', workspace_id, str(exception))
+        logger.info('Fyle token expired, workspace_id: %s %s', expense.workspace_id, str(exception))
     except Exception as exception:
-        logger.info('Error while refreshing Fyle dimensions, workspace_id: %s %s', workspace_id, str(exception))            
+        logger.info('Error while refreshing Fyle dimensions, workspace_id: %s %s', expense.workspace_id, str(exception))
 
 
 def handle_category_changes_for_expense(expense: Expense, new_category: str) -> None:

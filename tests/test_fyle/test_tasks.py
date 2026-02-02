@@ -887,12 +887,15 @@ def test_update_non_exported_expenses_fund_source_change(mocker, db):
     workspace.fyle_org_id = org_id
     workspace.save()
 
-    # Mock the FyleExpenses construct_expense_object method
-    mock_fyle_expenses = mocker.patch('apps.fyle.tasks.FyleExpenses')
+    # Mock FyleCredential
+    mocker.patch('apps.fyle.tasks.FyleCredential.objects.get')
+
+    # Mock the PlatformConnector and expenses.construct_expense_object method
+    mock_platform = mocker.patch('apps.fyle.tasks.PlatformConnector')
     constructed_expense = expense_data.copy()
     constructed_expense['category'] = expense_data['category']['name']
     constructed_expense['sub_category'] = expense_data['category']['sub_category']
-    mock_fyle_expenses.return_value.construct_expense_object.return_value = [constructed_expense]
+    mock_platform.return_value.expenses.construct_expense_object.return_value = [constructed_expense]
 
     # Mock create_expense_objects to avoid complex data structure requirements
     mocker.patch('apps.fyle.tasks.Expense.create_expense_objects', return_value=None)
@@ -2502,12 +2505,15 @@ def test_update_non_exported_expenses_category_change(mocker, db):
     workspace.fyle_org_id = org_id
     workspace.save()
 
-    mock_fyle_expenses = mocker.patch('apps.fyle.tasks.FyleExpenses')
+    # Mock FyleCredential
+    mocker.patch('apps.fyle.tasks.FyleCredential.objects.get')
+
+    mock_platform = mocker.patch('apps.fyle.tasks.PlatformConnector')
     constructed_expense = expense_data.copy()
     constructed_expense['category'] = expense_data['category']['name']
     constructed_expense['sub_category'] = expense_data['category']['sub_category']
     constructed_expense['source_account_type'] = 'PERSONAL_CASH_ACCOUNT'
-    mock_fyle_expenses.return_value.construct_expense_object.return_value = [constructed_expense]
+    mock_platform.return_value.expenses.construct_expense_object.return_value = [constructed_expense]
 
     mocker.patch('apps.fyle.tasks.Expense.create_expense_objects', return_value=None)
 
@@ -2535,7 +2541,7 @@ def test_update_non_exported_expenses_category_change(mocker, db):
     constructed_expense_2['category'] = 'Changed'
     constructed_expense_2['sub_category'] = 'Changed'
     constructed_expense_2['source_account_type'] = 'PERSONAL_CASH_ACCOUNT'
-    mock_fyle_expenses.return_value.construct_expense_object.return_value = [constructed_expense_2]
+    mock_platform.return_value.expenses.construct_expense_object.return_value = [constructed_expense_2]
 
     update_non_exported_expenses(expense_data_2)
 
@@ -2555,7 +2561,7 @@ def test_update_non_exported_expenses_category_change(mocker, db):
     constructed_expense_3['category'] = 'New Cat'
     constructed_expense_3['sub_category'] = None
     constructed_expense_3['source_account_type'] = 'PERSONAL_CASH_ACCOUNT'
-    mock_fyle_expenses.return_value.construct_expense_object.return_value = [constructed_expense_3]
+    mock_platform.return_value.expenses.construct_expense_object.return_value = [constructed_expense_3]
 
     update_non_exported_expenses(expense_data_3)
 
