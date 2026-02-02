@@ -14,7 +14,6 @@ from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from fyle_accounting_library.fyle_platform.helpers import filter_expenses_based_on_state, get_expense_import_states
 from fyle_accounting_mappings.models import ExpenseAttribute, Mapping
 from fyle_integrations_platform_connector import PlatformConnector
-from fyle_integrations_platform_connector.apis.expenses import Expenses as FyleExpenses
 
 from apps.fyle.actions import mark_expenses_as_skipped, post_accounting_export_summary
 from apps.fyle.helpers import (
@@ -709,7 +708,7 @@ def update_non_exported_expenses(data: Dict) -> None:
         if expense_state and expense_state not in ['COMPLETE', 'IN_PROGRESS']:
             fyle_credentials = FyleCredential.objects.get(workspace_id=expense.workspace_id)
             platform = PlatformConnector(fyle_credentials)
-            
+
             expense_obj = []
             expense_obj.append(data)
             expense_objects = platform.expenses.construct_expense_object(expense_obj, expense.workspace_id)
