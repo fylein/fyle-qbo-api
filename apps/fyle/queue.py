@@ -1,6 +1,10 @@
 import logging
 
-from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum, WebhookAttributeActionEnum, WebhookCallbackActionEnum
+from fyle_accounting_library.fyle_platform.enums import (
+    ExpenseImportSourceEnum,
+    WebhookAttributeActionEnum,
+    WebhookCallbackActionEnum,
+)
 
 from apps.fyle.helpers import assert_valid_request
 from apps.workspaces.models import FeatureConfig
