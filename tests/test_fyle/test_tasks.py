@@ -6,7 +6,9 @@ import pytest
 from django.db.models import Q
 from django.urls import reverse
 from django_q.models import Schedule
+from fyle.platform.exceptions import ExpiredTokenError as FyleExpiredTokenError
 from fyle.platform.exceptions import InternalServerError, InvalidTokenError, RetryException
+from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
 from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
@@ -2568,6 +2570,37 @@ def test_update_non_exported_expenses_category_change(mocker, db):
     assert mock_handle_category_changes.call_count == 3
     _, kwargs = mock_handle_category_changes.call_args
     assert kwargs['new_category'] == 'New Cat'
+
+
+def test_update_non_exported_expenses_exception_handling(mocker, db):
+    expense_data = data['raw_expense'].copy()
+    org_id = expense_data['org_id']
+    default_raw_expense = data['default_raw_expense'].copy()
+
+    expense_created, _ = Expense.objects.update_or_create(
+        org_id=org_id,
+        expense_id='txhJLOSKs1iN',
+        workspace_id=1,
+        defaults=default_raw_expense
+    )
+    expense_created.accounting_export_summary = {}
+    expense_created.save()
+
+    workspace = Workspace.objects.filter(id=1).first()
+    workspace.fyle_org_id = org_id
+    workspace.save()
+
+    mocker.patch('apps.fyle.tasks.FyleCredential.objects.get')
+
+    mock_platform = mocker.patch('apps.fyle.tasks.PlatformConnector')
+    mock_platform.side_effect = FyleInvalidTokenError('Invalid token')
+    update_non_exported_expenses(expense_data)
+
+    mock_platform.side_effect = FyleExpiredTokenError('Token expired')
+    update_non_exported_expenses(expense_data)
+
+    mock_platform.side_effect = Exception('Generic error')
+    update_non_exported_expenses(expense_data)
 
 
 def test_handle_org_setting_updated(db):
