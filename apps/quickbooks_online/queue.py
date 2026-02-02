@@ -13,7 +13,7 @@ from apps.fyle.actions import post_accounting_export_summary_for_skipped_exports
 from apps.fyle.models import ExpenseGroup
 from apps.quickbooks_online.actions import update_last_export_details
 from apps.tasks.models import Error, TaskLog
-from apps.workspaces.models import WorkspaceGeneralSettings
+from apps.workspaces.models import FeatureConfig, WorkspaceGeneralSettings
 from workers.helpers import RoutingKeyEnum, WorkerActionEnum, publish_to_rabbitmq
 
 logger = logging.getLogger(__name__)
@@ -78,6 +78,8 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_
     """
     if expense_group_ids:
         expense_groups = ExpenseGroup.objects.filter(Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']), workspace_id=workspace_id, id__in=expense_group_ids, bill__id__isnull=True, exported_at__isnull=True).all()
+        if not expense_groups:
+            return
 
         errors = Error.objects.filter(workspace_id=workspace_id, is_resolved=False, expense_group_id__in=expense_group_ids).all()
 
@@ -95,7 +97,7 @@ def schedule_bills_creation(workspace_id: int, expense_group_ids: List[str], is_
                 continue
 
             task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_BILL', 'triggered_by': triggered_by})
-            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
+            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED', 'COMPLETE']:
                 task_log.type = 'CREATING_BILL'
                 task_log.status = 'ENQUEUED'
                 if triggered_by and task_log.triggered_by != triggered_by:
@@ -121,16 +123,19 @@ def __create_chain_and_run(workspace_id: int, chain_tasks: List[Task], run_in_ra
     :param fund_source: Fund source
     :return: None
     """
+    fyle_webhook_sync_enabled = FeatureConfig.get_feature_config(workspace_id=workspace_id, key='fyle_webhook_sync_enabled')
+
     if run_in_rabbitmq_worker:
         # This function checks intervals and triggers sync if needed, syncing dimension for all exports is overkill
-        sync_fyle_dimensions(workspace_id)
+        if not fyle_webhook_sync_enabled:
+            sync_fyle_dimensions(workspace_id)
 
         task_executor = TaskChainRunner()
         task_executor.run(chain_tasks, workspace_id)
     else:
         chain = Chain()
-
-        chain.append('apps.fyle.tasks.sync_dimensions', workspace_id, True)
+        if not fyle_webhook_sync_enabled:
+            chain.append('apps.fyle.tasks.sync_dimensions', workspace_id, True)
 
         for task in chain_tasks:
             logger.info(f"Executing {task.target} with args {task.args} and kwargs {task.kwargs}")
@@ -150,6 +155,8 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], i
     """
     if expense_group_ids:
         expense_groups = ExpenseGroup.objects.filter(Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']), workspace_id=workspace_id, id__in=expense_group_ids, cheque__id__isnull=True, exported_at__isnull=True).all()
+        if not expense_groups:
+            return
 
         errors = Error.objects.filter(workspace_id=workspace_id, is_resolved=False, expense_group_id__in=expense_group_ids).all()
 
@@ -167,7 +174,7 @@ def schedule_cheques_creation(workspace_id: int, expense_group_ids: List[str], i
                 continue
 
             task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_CHECK', 'triggered_by': triggered_by})
-            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
+            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED', 'COMPLETE']:
                 task_log.type = 'CREATING_CHECK'
                 task_log.status = 'ENQUEUED'
                 if triggered_by and task_log.triggered_by != triggered_by:
@@ -194,6 +201,8 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
         expense_groups = ExpenseGroup.objects.filter(
             Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']), workspace_id=workspace_id, id__in=expense_group_ids, journalentry__id__isnull=True, exported_at__isnull=True
         ).all()
+        if not expense_groups:
+            return
 
         errors = Error.objects.filter(workspace_id=workspace_id, is_resolved=False, expense_group_id__in=expense_group_ids).all()
 
@@ -211,7 +220,7 @@ def schedule_journal_entry_creation(workspace_id: int, expense_group_ids: List[s
                 continue
 
             task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_JOURNAL_ENTRY', 'triggered_by': triggered_by})
-            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
+            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED', 'COMPLETE']:
                 task_log.type = 'CREATING_JOURNAL_ENTRY'
                 task_log.status = 'ENQUEUED'
                 if triggered_by and task_log.triggered_by != triggered_by:
@@ -241,6 +250,9 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
             Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']), workspace_id=workspace_id, id__in=expense_group_ids, creditcardpurchase__id__isnull=True, exported_at__isnull=True
         ).all()
 
+        if not expense_groups:
+            return
+
         errors = Error.objects.filter(workspace_id=workspace_id, is_resolved=False, expense_group_id__in=expense_group_ids).all()
 
         chain_tasks = []
@@ -257,7 +269,7 @@ def schedule_credit_card_purchase_creation(workspace_id: int, expense_group_ids:
                 continue
 
             task_log, _ = TaskLog.objects.get_or_create(workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_CREDIT_CARD_PURCHASE', 'triggered_by': triggered_by})
-            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
+            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED', 'COMPLETE']:
                 task_log.type = 'CREATING_CREDIT_CARD_PURCHASE'
                 task_log.status = 'ENQUEUED'
                 if triggered_by and task_log.triggered_by != triggered_by:
@@ -284,6 +296,9 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
     """
     if expense_group_ids:
         expense_groups = ExpenseGroup.objects.filter(Q(tasklog__id__isnull=True) | ~Q(tasklog__status__in=['IN_PROGRESS', 'COMPLETE']), workspace_id=workspace_id, id__in=expense_group_ids, qboexpense__id__isnull=True, exported_at__isnull=True).all()
+        if not expense_groups:
+            return
+
         errors = Error.objects.filter(workspace_id=workspace_id, is_resolved=False, expense_group_id__in=expense_group_ids).all()
 
         chain_tasks = []
@@ -302,7 +317,7 @@ def schedule_qbo_expense_creation(workspace_id: int, expense_group_ids: List[str
             task_log, _ = TaskLog.objects.get_or_create(
                 workspace_id=expense_group.workspace_id, expense_group=expense_group, defaults={'status': 'ENQUEUED', 'type': 'CREATING_EXPENSE' if expense_group.fund_source == 'PERSONAL' else 'CREATING_DEBIT_CARD_EXPENSE', 'triggered_by': triggered_by}
             )
-            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED']:
+            if task_log.status not in ['IN_PROGRESS', 'ENQUEUED', 'COMPLETE']:
                 task_log.type = 'CREATING_EXPENSE' if expense_group.fund_source == 'PERSONAL' else 'CREATING_DEBIT_CARD_EXPENSE'
                 task_log.status = 'ENQUEUED'
                 if triggered_by and task_log.triggered_by != triggered_by:

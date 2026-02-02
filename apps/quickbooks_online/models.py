@@ -44,15 +44,12 @@ def get_expense_purpose(workspace_id, lineitem, category, workspace_general_sett
         'expense_link': '{0}/app/admin/#/company_expenses?txnId={1}&org_id={2}'.format(settings.FYLE_EXPENSE_URL, lineitem.expense_id, org_id),
     }
 
-    memo = ''
+    memo_parts = []
+    for field in memo_structure:
+        if field in details and details[field]:
+            memo_parts.append(details[field])
 
-    for id, field in enumerate(memo_structure):
-        if field in details:
-            memo += details[field]
-            if id + 1 != len(memo_structure):
-                memo = '{0} - '.format(memo)
-
-    return memo
+    return ' - '.join(memo_parts)
 
 
 def construct_private_note(expense_group: ExpenseGroup):
@@ -96,7 +93,7 @@ def get_class_id_or_none(expense_group: ExpenseGroup, lineitem: Expense):
         elif class_setting.source_field == 'COST_CENTER':
             source_value = lineitem.cost_center
         else:
-            attribute = ExpenseAttribute.objects.filter(attribute_type=class_setting.source_field).first()
+            attribute = ExpenseAttribute.objects.filter(attribute_type=class_setting.source_field, workspace_id=expense_group.workspace_id).first()
             source_value = lineitem.custom_properties.get(attribute.display_name, None)
 
         mapping: Mapping = Mapping.objects.filter(source_type=class_setting.source_field, destination_type='CLASS', source__value=source_value, workspace_id=expense_group.workspace_id).first()
@@ -117,7 +114,7 @@ def get_customer_id_or_none(expense_group: ExpenseGroup, lineitem: Expense):
         elif customer_setting.source_field == 'COST_CENTER':
             source_value = lineitem.cost_center
         else:
-            attribute = ExpenseAttribute.objects.filter(attribute_type=customer_setting.source_field).first()
+            attribute = ExpenseAttribute.objects.filter(attribute_type=customer_setting.source_field, workspace_id=expense_group.workspace_id).first()
             source_value = lineitem.custom_properties.get(attribute.display_name, None)
 
         mapping: Mapping = Mapping.objects.filter(source_type=customer_setting.source_field, destination_type='CUSTOMER', source__value=source_value, workspace_id=expense_group.workspace_id).first()
@@ -148,7 +145,7 @@ def get_department_id_or_none(expense_group: ExpenseGroup, lineitem: Expense = N
             elif department_setting.source_field == 'COST_CENTER':
                 source_value = lineitem.cost_center
             else:
-                attribute = ExpenseAttribute.objects.filter(attribute_type=department_setting.source_field).first()
+                attribute = ExpenseAttribute.objects.filter(attribute_type=department_setting.source_field, workspace_id=expense_group.workspace_id).first()
                 source_value = lineitem.custom_properties.get(attribute.display_name, None)
         else:
             source_value = expense_group.description[department_setting.source_field.lower()] if department_setting.source_field.lower() in expense_group.description else None
@@ -223,7 +220,7 @@ class Bill(models.Model):
 
     id = models.AutoField(primary_key=True)
     expense_group = models.OneToOneField(ExpenseGroup, on_delete=models.PROTECT, help_text='Expense group reference')
-    accounts_payable_id = models.CharField(max_length=255, help_text='QBO Accounts Payable account id')
+    accounts_payable_id = models.CharField(max_length=255, help_text='QBO Accounts Payable account id', null=True)
     vendor_id = models.CharField(max_length=255, help_text='QBO vendor id')
     department_id = models.CharField(max_length=255, help_text='QBO department id', null=True)
     transaction_date = models.DateField(help_text='Bill transaction date')
@@ -909,7 +906,7 @@ class BillPayment(models.Model):
     amount = models.FloatField(help_text='Bill amount')
     currency = models.CharField(max_length=255, help_text='Bill Currency')
     payment_account = models.CharField(max_length=255, help_text='Payment Account')
-    accounts_payable_id = models.CharField(max_length=255, help_text='QBO Accounts Payable account id')
+    accounts_payable_id = models.CharField(max_length=255, help_text='QBO Accounts Payable account id', null=True)
     department_id = models.CharField(max_length=255, help_text='QBO department id', null=True)
     transaction_date = models.DateField(help_text='Bill transaction date')
     bill_payment_number = models.CharField(max_length=255)
@@ -1084,3 +1081,42 @@ class QBOSyncTimestamp(models.Model):
         qbo_sync_timestamp = QBOSyncTimestamp.objects.get(workspace_id=workspace_id)
         setattr(qbo_sync_timestamp, f'{entity_type}_synced_at', datetime.now())
         qbo_sync_timestamp.save(update_fields=[f'{entity_type}_synced_at', 'updated_at'])
+
+
+class QBOAttributesCount(models.Model):
+    """
+    Store QBO attribute counts for each workspace
+    """
+    id = models.AutoField(primary_key=True)
+    workspace = models.OneToOneField(
+        Workspace,
+        on_delete=models.PROTECT,
+        help_text='Reference to workspace',
+        related_name='qbo_attributes_count'
+    )
+    accounts_count = models.IntegerField(default=0, help_text='Number of accounts in QBO')
+    items_count = models.IntegerField(default=0, help_text='Number of items in QBO')
+    vendors_count = models.IntegerField(default=0, help_text='Number of vendors in QBO')
+    employees_count = models.IntegerField(default=0, help_text='Number of employees in QBO')
+    departments_count = models.IntegerField(default=0, help_text='Number of departments in QBO')
+    classes_count = models.IntegerField(default=0, help_text='Number of classes in QBO')
+    customers_count = models.IntegerField(default=0, help_text='Number of customers in QBO')
+    tax_codes_count = models.IntegerField(default=0, help_text='Number of tax codes in QBO')
+    created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
+    updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime', db_index=True)
+
+    class Meta:
+        db_table = 'qbo_attributes_count'
+
+    @staticmethod
+    def update_attribute_count(workspace_id: int, attribute_type: str, count: int):
+        """
+        Update attribute count for a workspace
+        :param workspace_id: Workspace ID
+        :param attribute_type: Type of attribute (e.g., 'accounts', 'vendors')
+        :param count: Count value from QBO
+        """
+        qbo_count = QBOAttributesCount.objects.get(workspace_id=workspace_id)
+        field_name = f'{attribute_type}_count'
+        setattr(qbo_count, field_name, count)
+        qbo_count.save(update_fields=[field_name, 'updated_at'])

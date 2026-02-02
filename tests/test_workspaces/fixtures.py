@@ -41,6 +41,7 @@ data = {
         'created_at': '2022-05-23T11:09:25.690652Z',
         'updated_at': '2022-05-23T17:35:13.675764Z',
         'user': [1],
+        'org_settings': {},
     },
     'general_settings': {
         'id': 4,

@@ -270,9 +270,7 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
                 bulk_errors.append({'row': None, 'expense_group_id': expense_group.id, 'value': expense_group.description.get('employee_email'), 'type': 'General Mapping', 'message': 'Default Credit Card Vendor not found'})
 
     if general_mapping and not (general_mapping.accounts_payable_id or general_mapping.accounts_payable_name):
-        if (general_settings.reimbursable_expenses_object == 'BILL' or general_settings.corporate_credit_card_expenses_object == 'BILL') or (
-            general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY' and general_settings.employee_field_mapping == 'VENDOR' and expense_group.fund_source == 'PERSONAL'
-        ):
+        if general_settings.reimbursable_expenses_object == 'JOURNAL ENTRY' and general_settings.employee_field_mapping == 'VENDOR' and expense_group.fund_source == 'PERSONAL':
             bulk_errors.append({'row': None, 'expense_group_id': expense_group.id, 'value': 'Accounts Payable', 'type': 'General Mapping', 'message': 'Accounts Payable not found'})
 
     if (

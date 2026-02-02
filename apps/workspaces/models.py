@@ -3,9 +3,12 @@ Workspace Models
 """
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import ArrayField
+from django.core.cache import cache
 from django.db import models
 from django.db.models import JSONField
 from django_q.models import Schedule
+from fyle_accounting_library.fyle_platform.enums import CacheKeyEnum
+
 from fyle_accounting_mappings.mixins import AutoAddCreateUpdateInfoMixin
 
 User = get_user_model()
@@ -55,6 +58,7 @@ class Workspace(models.Model):
     source_synced_at = models.DateTimeField(help_text='Datetime when source dimensions were pulled', null=True)
     destination_synced_at = models.DateTimeField(help_text='Datetime when destination dimensions were pulled', null=True)
     onboarding_state = models.CharField(max_length=50, choices=ONBOARDING_STATE_CHOICES, default=get_default_onboarding_state, help_text='Onboarding status of the workspace', null=True)
+    org_settings = JSONField(help_text='Org Settings', default=dict)
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')
 
@@ -211,8 +215,36 @@ class FeatureConfig(models.Model):
     workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, help_text='Reference to Workspace model')
     export_via_rabbitmq = models.BooleanField(default=True, help_text='Enable export via rabbitmq')
     import_via_rabbitmq = models.BooleanField(default=True, help_text='Enable import via rabbitmq')
+    fyle_webhook_sync_enabled = models.BooleanField(default=True, help_text='Enable fyle attribute webhook sync')
     created_at = models.DateTimeField(auto_now_add=True, help_text='Created at datetime')
     updated_at = models.DateTimeField(auto_now=True, help_text='Updated at datetime')
+
+    @classmethod
+    def get_feature_config(cls, workspace_id: int, key: str):
+        """
+        Get cached feature config value for workspace
+        Cache for 48 hours (172800 seconds)
+        :param workspace_id: workspace id
+        :param key: feature config key (export_via_rabbitmq, import_via_rabbitmq, fyle_webhook_sync_enabled)
+        :return: Boolean value for the requested feature
+        """
+        cache_key_map = {
+            'export_via_rabbitmq': CacheKeyEnum.FEATURE_CONFIG_EXPORT_VIA_RABBITMQ,
+            'import_via_rabbitmq': CacheKeyEnum.FEATURE_CONFIG_IMPORT_VIA_RABBITMQ,
+            'fyle_webhook_sync_enabled': CacheKeyEnum.FEATURE_CONFIG_FYLE_WEBHOOK_SYNC_ENABLED
+        }
+
+        cache_key_enum = cache_key_map.get(key)
+        cache_key = cache_key_enum.value.format(workspace_id=workspace_id)
+        cached_value = cache.get(cache_key)
+
+        if cached_value is not None:
+            return cached_value
+
+        feature_config = cls.objects.get(workspace_id=workspace_id)
+        value = getattr(feature_config, key)
+        cache.set(cache_key, value, 172800)
+        return value
 
     class Meta:
         db_table = 'feature_configs'

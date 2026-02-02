@@ -6,13 +6,13 @@ from unittest import mock
 import pytest
 from django.utils import timezone
 from fyle.platform.exceptions import NoPrivilegeError
-from fyle_accounting_mappings.models import CategoryMapping, DestinationAttribute, EmployeeMapping, Mapping, MappingSetting
 from qbosdk.exceptions import WrongParamsError
 
 from apps.fyle.models import ExpenseGroup
 from apps.mappings.models import GeneralMapping
-from apps.quickbooks_online.models import QBOSyncTimestamp
+from apps.quickbooks_online.models import QBOAttributesCount, QBOSyncTimestamp
 from apps.quickbooks_online.utils import QBOConnector, QBOCredential, Workspace, WorkspaceGeneralSettings
+from fyle_accounting_mappings.models import CategoryMapping, DestinationAttribute, EmployeeMapping, Mapping, MappingSetting
 from tests.helper import dict_compare_keys
 from tests.test_quickbooks_online.fixtures import data
 
@@ -35,6 +35,7 @@ def test_sync_employees(mocker, db):
     qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
 
+    mocker.patch('qbosdk.apis.Employees.count', return_value=10)
     mock_get_all_generator = mocker.patch('qbosdk.apis.Employees.get_all_generator', return_value=[data['employee_response']])
     mocker.patch('qbosdk.apis.Employees.get_inactive', return_value=[])
 
@@ -796,13 +797,22 @@ def tests_sync_accounts(mocker, db):
 
 
 def test_sync_dimensions(mocker, db):
+    mocker.patch('qbosdk.apis.Accounts.count', return_value=10)
     mocker.patch('qbosdk.apis.Accounts.get_all_generator')
+    mocker.patch('qbosdk.apis.Employees.count', return_value=10)
     mocker.patch('qbosdk.apis.Employees.get_all_generator')
+    mocker.patch('qbosdk.apis.Vendors.count', return_value=10)
     mocker.patch('qbosdk.apis.Vendors.get_all_generator')
-    mocker.patch('qbosdk.apis.Customers.count')
+    mocker.patch('qbosdk.apis.Customers.count', return_value=10)
+    mocker.patch('qbosdk.apis.Customers.get_all_generator')
+    mocker.patch('qbosdk.apis.Classes.count', return_value=10)
     mocker.patch('qbosdk.apis.Classes.get_all_generator')
+    mocker.patch('qbosdk.apis.Departments.count', return_value=10)
     mocker.patch('qbosdk.apis.Departments.get_all_generator')
+    mocker.patch('qbosdk.apis.TaxCodes.count', return_value=10)
     mocker.patch('qbosdk.apis.TaxCodes.get_all_generator')
+    mocker.patch('qbosdk.apis.Items.count', return_value=10)
+    mocker.patch('qbosdk.apis.Items.get_all_generator')
 
     employee_count = DestinationAttribute.objects.filter(attribute_type='EMPLOYEE', workspace_id=1).count()
     accounts_count = DestinationAttribute.objects.filter(attribute_type='ACCOUNT', workspace_id=1).count()
@@ -1275,35 +1285,35 @@ def test_get_override_tax_details(db, mocker):
 def test_skip_sync_attributes(mocker, db):
     mocker.patch(
         'qbosdk.apis.Classes.count',
-        return_value=5001
+        return_value=35000
     )
     mocker.patch(
         'qbosdk.apis.Accounts.count',
-        return_value=3001
+        return_value=35000
     )
     mocker.patch(
         'qbosdk.apis.Items.count',
-        return_value=3001
+        return_value=35000
     )
     mocker.patch(
         'qbosdk.apis.Departments.count',
-        return_value=2001
+        return_value=35000
     )
     mocker.patch(
         'qbosdk.apis.Customers.count',
-        return_value=30001
+        return_value=35000
     )
     mocker.patch(
         'qbosdk.apis.Vendors.count',
-        return_value=20001
+        return_value=35000
     )
 
     mocker.patch(
         'qbosdk.apis.TaxCodes.count',
-        return_value=201
+        return_value=35000
     )
 
-    today = datetime.today()
+    today = timezone.now()
     Workspace.objects.filter(id=1).update(created_at=today)
     qbo_credentials = QBOCredential.get_active_qbo_credentials(1)
     qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=1)
@@ -1450,3 +1460,84 @@ def test_get_attribute_disable_callback_path(db, mocker):
         mock_filter.return_value.first.return_value = None
         result = connector.get_attribute_disable_callback_path('CUSTOMER')
         assert result is None
+
+
+def test_is_sync_allowed(db):
+    workspace_id = 3
+    workspace = Workspace.objects.get(id=workspace_id)
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
+
+    assert qbo_connection.is_sync_allowed(attribute_count=15000) is True
+    assert qbo_connection.is_sync_allowed(attribute_count=30000) is True
+
+    workspace.created_at = timezone.make_aware(datetime(2024, 9, 15))
+    workspace.save()
+    assert qbo_connection.is_sync_allowed(attribute_count=35000) is True
+
+    workspace.created_at = timezone.make_aware(datetime(2024, 10, 15))
+    workspace.save()
+    assert qbo_connection.is_sync_allowed(attribute_count=35000) is False
+
+
+def test_sync_methods_persist_attribute_counts(mocker, db):
+    workspace_id = 3
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
+
+    QBOAttributesCount.objects.get_or_create(workspace_id=workspace_id)
+
+    mocker.patch('qbosdk.apis.Accounts.count', return_value=250)
+    mocker.patch('qbosdk.apis.Accounts.get_all_generator', return_value=[data['account_response']])
+    mocker.patch('qbosdk.apis.Accounts.get_inactive', return_value=[])
+    qbo_connection.sync_accounts()
+
+    qbo_count = QBOAttributesCount.objects.get(workspace_id=workspace_id)
+    assert qbo_count.accounts_count == 250
+
+    mocker.patch('qbosdk.apis.Items.count', return_value=150)
+    mocker.patch('qbosdk.apis.Items.get_all_generator', return_value=[data['items_response']])
+    mocker.patch('qbosdk.apis.Items.get_inactive', return_value=[])
+    qbo_connection.sync_items()
+
+    qbo_count.refresh_from_db()
+    assert qbo_count.items_count == 150
+
+
+def test_sync_skips_when_over_limit_new_workspace(mocker, db):
+    workspace_id = 3
+    workspace = Workspace.objects.get(id=workspace_id)
+    workspace.created_at = timezone.make_aware(datetime(2024, 11, 1))
+    workspace.save()
+
+    qbo_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
+    qbo_connection = QBOConnector(credentials_object=qbo_credentials, workspace_id=workspace_id)
+
+    QBOAttributesCount.objects.get_or_create(workspace_id=workspace_id)
+
+    mocker.patch('qbosdk.apis.Accounts.count', return_value=35000)
+    mock_get_all = mocker.patch('qbosdk.apis.Accounts.get_all_generator')
+
+    qbo_connection.sync_accounts()
+
+    qbo_count = QBOAttributesCount.objects.get(workspace_id=workspace_id)
+    assert qbo_count.accounts_count == 35000
+    mock_get_all.assert_not_called()
+
+    mocker.patch('qbosdk.apis.Items.count', return_value=35000)
+    mock_items_get_all = mocker.patch('qbosdk.apis.Items.get_all_generator')
+
+    qbo_connection.sync_items()
+
+    qbo_count.refresh_from_db()
+    assert qbo_count.items_count == 35000
+    mock_items_get_all.assert_not_called()
+
+    mocker.patch('qbosdk.apis.Vendors.count', return_value=35000)
+    mock_vendors_get_all = mocker.patch('qbosdk.apis.Vendors.get_all_generator')
+
+    qbo_connection.sync_vendors()
+
+    qbo_count.refresh_from_db()
+    assert qbo_count.vendors_count == 35000
+    mock_vendors_get_all.assert_not_called()

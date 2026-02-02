@@ -5,8 +5,8 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.db import transaction
+from django.utils.module_loading import import_string
 from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
-from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute
 from fyle_integrations_platform_connector import PlatformConnector
 from fyle_rest_auth.helpers import get_fyle_admin
 from fyle_rest_auth.models import AuthToken
@@ -17,7 +17,7 @@ from rest_framework.views import status
 from apps.fyle.actions import post_accounting_export_summary, update_expenses_in_progress, update_failed_expenses
 from apps.fyle.helpers import get_cluster_domain, post_request
 from apps.fyle.models import ExpenseGroup, ExpenseGroupSettings
-from apps.quickbooks_online.models import QBOSyncTimestamp
+from apps.quickbooks_online.models import QBOAttributesCount, QBOSyncTimestamp
 from apps.quickbooks_online.queue import (
     schedule_bills_creation,
     schedule_cheques_creation,
@@ -37,6 +37,7 @@ from apps.workspaces.models import (
 )
 from apps.workspaces.serializers import QBOCredentialSerializer
 from apps.workspaces.signals import post_delete_qbo_connection
+from fyle_accounting_mappings.models import DestinationAttribute, ExpenseAttribute, FyleSyncTimestamp
 from fyle_qbo_api.utils import assert_valid, patch_integration_settings
 from workers.helpers import RoutingKeyEnum, WorkerActionEnum, publish_to_rabbitmq
 
@@ -66,6 +67,8 @@ def update_or_create_workspace(user, access_token):
 
         QBOSyncTimestamp.objects.create(workspace_id=workspace.id)
 
+        QBOAttributesCount.objects.create(workspace_id=workspace.id)
+
         workspace.user.add(User.objects.get(user_id=user))
 
         auth_tokens = AuthToken.objects.get(user__user_id=user)
@@ -76,6 +79,8 @@ def update_or_create_workspace(user, access_token):
 
         FeatureConfig.objects.create(workspace_id=workspace.id)
 
+        FyleSyncTimestamp.objects.create(workspace_id=workspace.id)
+
         payload = {
             'workspace_id': workspace.id,
             'action': WorkerActionEnum.ADD_ADMINS_TO_WORKSPACE.value,
@@ -85,6 +90,8 @@ def update_or_create_workspace(user, access_token):
             }
         }
         publish_to_rabbitmq(payload=payload, routing_key=RoutingKeyEnum.UTILITY.value)
+
+        import_string('apps.workspaces.tasks.sync_org_settings')(workspace_id=workspace.id)
 
     return workspace
 

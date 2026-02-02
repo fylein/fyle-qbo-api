@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 import signal
+import traceback
 
 from fyle_accounting_library.common_resources.helpers import mask_sensitive_data
 
@@ -46,21 +47,24 @@ class Worker(EventConsumer):
             logger.info('Task processed successfully for workspace - %s with routing key - %s and delivery tag - %s', payload_dict['workspace_id'], routing_key, delivery_tag)
         except Exception as e:
             self.handle_exception(routing_key, payload_dict, e, delivery_tag)
-            raise e
 
     def handle_exception(self, routing_key: str, payload_dict: dict, error: Exception, delivery_tag: int) -> None:
         """
         Handle exception
         """
         masked_payload = mask_sensitive_data(payload_dict)
-        logger.error('Error while handling exports for workspace - %s, error: %s', masked_payload, str(error))
+        logger.error(
+            'Error while handling exports for workspace - %s, traceback: %s',
+            masked_payload,
+            traceback.format_exc()
+        )
 
         payload_dict['retry_count'] = payload_dict.get('retry_count', 0) + 1
 
         FailedEvent.objects.create(
             routing_key=routing_key,
             payload=payload_dict,
-            error_traceback=str(error),
+            error_traceback=traceback.format_exc(),
             workspace_id=payload_dict['workspace_id'] if payload_dict.get('workspace_id') else None
         )
 

@@ -1,3 +1,4 @@
+from fyle.platform.exceptions import InvalidTokenError
 from fyle_accounting_mappings.models import ExpenseAttribute
 
 from apps.fyle.models import ExpenseGroup, ExpenseGroupSettings
@@ -10,6 +11,7 @@ from apps.workspaces.tasks import (
     run_email_notification,
     run_sync_schedule,
     schedule_sync,
+    sync_org_settings,
     update_workspace_name,
 )
 from tests.test_fyle.fixtures import data as fyle_data
@@ -344,3 +346,77 @@ def test_run_sync_schedule_with_rabbitmq_export(mocker, db):
 
     task_log = TaskLog.objects.filter(workspace_id=workspace_id, type='FETCHING_EXPENSES').first()
     assert task_log.status == 'COMPLETE'
+
+
+def test_async_add_admins_to_workspace_invalid_token(db, mocker):
+    mocker.patch(
+        'fyle_integrations_platform_connector.PlatformConnector.__init__',
+        side_effect=InvalidTokenError('Invalid Token')
+    )
+    async_add_admins_to_workspace(1, 'usqywo0f3nBY')
+
+    mocker.patch(
+        'fyle_integrations_platform_connector.PlatformConnector.__init__',
+        side_effect=Exception('General error')
+    )
+    async_add_admins_to_workspace(1, 'usqywo0f3nBY')
+
+
+def test_create_admin_subscriptions_invalid_token(db, mocker):
+    mocker.patch(
+        'fyle_integrations_platform_connector.PlatformConnector.__init__',
+        side_effect=InvalidTokenError('Invalid Token')
+    )
+    create_admin_subscriptions(3)
+
+    mocker.patch(
+        'fyle_integrations_platform_connector.PlatformConnector.__init__',
+        side_effect=Exception('General error')
+    )
+    create_admin_subscriptions(3)
+
+
+def test_update_workspace_name_invalid_token(db, mocker):
+    mocker.patch(
+        'apps.workspaces.tasks.get_fyle_admin',
+        side_effect=InvalidTokenError('Invalid Token')
+    )
+    update_workspace_name(1, 'Bearer access_token')
+
+    mocker.patch(
+        'apps.workspaces.tasks.get_fyle_admin',
+        side_effect=Exception('General error')
+    )
+    update_workspace_name(1, 'Bearer access_token')
+
+
+def test_sync_org_settings(db, mocker):
+    """
+    Test sync org settings
+    """
+    workspace_id = 1
+    workspace = Workspace.objects.get(id=workspace_id)
+    workspace.org_settings = {}
+    workspace.save()
+
+    mock_platform = mocker.patch('apps.workspaces.tasks.PlatformConnector')
+    mock_platform.return_value.org_settings.get.return_value = {
+        'regional_settings': {
+            'locale': {
+                'date_format': 'DD/MM/YYYY',
+                'timezone': 'Asia/Kolkata'
+            }
+        }
+    }
+
+    sync_org_settings(workspace_id=workspace_id)
+
+    workspace.refresh_from_db()
+    assert workspace.org_settings == {
+        'regional_settings': {
+            'locale': {
+                'date_format': 'DD/MM/YYYY',
+                'timezone': 'Asia/Kolkata'
+            }
+        }
+    }

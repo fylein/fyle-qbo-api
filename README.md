@@ -1,7 +1,6 @@
 # Fyle QBO API
 Django Rest Framework API for Fyle Quickbooks Online Integration
 
-
 ### Setup
 
 * Add and update the `fyle_integrations_imports` submodule

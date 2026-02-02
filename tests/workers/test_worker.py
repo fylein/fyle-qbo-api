@@ -38,28 +38,6 @@ def export_worker(mock_qconnector):
 
 
 @pytest.mark.django_db
-def test_process_message_success(export_worker):
-    """
-    Test process message success
-    """
-    with patch('workers.worker.handle_tasks') as mock_handle_tasks:
-        mock_handle_tasks.side_effect = Exception('Test error')
-
-        routing_key = 'test.routing.key'
-        payload_dict = {
-            'data': {'some': 'data'},
-            'workspace_id': 123
-        }
-        event = BaseEvent()
-        event.from_dict({'new': payload_dict})
-
-        with pytest.raises(Exception, match='Test error'):
-            export_worker.process_message(routing_key, event, 1)
-
-        mock_handle_tasks.assert_called_once_with({'data': {'some': 'data'}, 'workspace_id': 123, 'retry_count': 1})
-
-
-@pytest.mark.django_db
 def test_handle_exception(export_worker):
     """
     Test handle exception
@@ -69,16 +47,18 @@ def test_handle_exception(export_worker):
         'data': {'some': 'data'},
         'workspace_id': 123
     }
-    error = Exception('Test error')
-
-    export_worker.handle_exception(routing_key, payload_dict, error, 1)
+    try:
+        raise Exception('Test error')
+    except Exception as error:
+        export_worker.handle_exception(routing_key, payload_dict, error, 1)
 
     failed_event = FailedEvent.objects.get(
         routing_key=routing_key,
         workspace_id=123
     )
     assert failed_event.payload == payload_dict
-    assert failed_event.error_traceback == 'Test error'
+    assert 'Test error' in failed_event.error_traceback
+    assert 'Exception: Test error' in failed_event.error_traceback
 
 
 def test_shutdown(export_worker):

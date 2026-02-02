@@ -48,19 +48,22 @@ def update_last_export_details(workspace_id):
 
 
 def refresh_quickbooks_dimensions(workspace_id: int):
-    quickbooks_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
-    quickbooks_connector = QBOConnector(quickbooks_credentials, workspace_id=workspace_id)
+    try:
+        quickbooks_credentials = QBOCredential.get_active_qbo_credentials(workspace_id)
+        quickbooks_connector = QBOConnector(quickbooks_credentials, workspace_id=workspace_id)
 
-    workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
+        workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
 
-    if workspace_general_settings:
-        construct_tasks_and_chain_import_fields_to_fyle(workspace_id)
+        if workspace_general_settings:
+            construct_tasks_and_chain_import_fields_to_fyle(workspace_id)
 
-    quickbooks_connector.sync_dimensions()
+        quickbooks_connector.sync_dimensions()
 
-    workspace = Workspace.objects.get(id=workspace_id)
-    workspace.destination_synced_at = datetime.now()
-    workspace.save(update_fields=['destination_synced_at'])
+        workspace = Workspace.objects.get(id=workspace_id)
+        workspace.destination_synced_at = datetime.now()
+        workspace.save(update_fields=['destination_synced_at'])
+    except Exception as e:
+        logger.info("Error refreshing quickbooks dimensions: %s for workspace id %s", e, workspace_id)
 
 
 def sync_quickbooks_dimensions(workspace_id: int):

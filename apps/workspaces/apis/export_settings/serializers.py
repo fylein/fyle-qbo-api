@@ -43,7 +43,7 @@ class ExpenseGroupSettingsSerializer(serializers.ModelSerializer):
 
 
 class GeneralMappingsSerializer(serializers.ModelSerializer):
-    accounts_payable = ReadWriteSerializerMethodField()
+    accounts_payable = ReadWriteSerializerMethodField(allow_null=True)
     qbo_expense_account = ReadWriteSerializerMethodField()
     bank_account = ReadWriteSerializerMethodField()
     default_ccc_account = ReadWriteSerializerMethodField()
@@ -167,8 +167,8 @@ class ExportSettingsSerializer(serializers.ModelSerializer):
         GeneralMapping.objects.update_or_create(
             workspace=instance,
             defaults={
-                'accounts_payable_name': general_mappings.get('accounts_payable').get('name'),
-                'accounts_payable_id': general_mappings.get('accounts_payable').get('id'),
+                'accounts_payable_name': general_mappings.get('accounts_payable').get('name') if general_mappings.get('accounts_payable') else None,
+                'accounts_payable_id': general_mappings.get('accounts_payable').get('id') if general_mappings.get('accounts_payable') else None,
                 'qbo_expense_account_name': general_mappings.get('qbo_expense_account').get('name'),
                 'qbo_expense_account_id': general_mappings.get('qbo_expense_account').get('id'),
                 'bank_account_name': general_mappings.get('bank_account').get('name'),
