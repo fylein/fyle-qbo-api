@@ -491,7 +491,6 @@ def handle_expense_fund_source_change(workspace_id: int, report_id: str, platfor
             old_fund_source = expense_id_fund_source_map[expense['id']]['fund_source']
             new_fund_source = EXPENSE_SOURCE_ACCOUNT_MAP[expense['source_account_type']]
 
-            reason = SystemCommentReasonEnum.FUND_SOURCE_CHANGED.value.format(old=old_fund_source, new=new_fund_source)
             add_system_comment(
                 system_comments=system_comments,
                 source=SystemCommentSourceEnum.HANDLE_FUND_SOURCE_CHANGE,
@@ -499,7 +498,7 @@ def handle_expense_fund_source_change(workspace_id: int, report_id: str, platfor
                 entity_type=SystemCommentEntityTypeEnum.EXPENSE,
                 workspace_id=workspace_id,
                 entity_id=expense_db_id,
-                reason=reason,
+                reason=SystemCommentReasonEnum.FUND_SOURCE_CHANGED.value.format(old=old_fund_source, new=new_fund_source),
                 info={'old_fund_source': old_fund_source, 'new_fund_source': new_fund_source}
             )
 
@@ -852,7 +851,6 @@ def update_non_exported_expenses(data: Dict) -> None:
                         system_comments=system_comments
                     )
 
-                    reason = SystemCommentReasonEnum.FUND_SOURCE_CHANGED.value.format(old=old_fund_source, new=new_fund_source)
                     add_system_comment(
                         system_comments=system_comments,
                         source=SystemCommentSourceEnum.HANDLE_FUND_SOURCE_CHANGE,
@@ -860,7 +858,7 @@ def update_non_exported_expenses(data: Dict) -> None:
                         workspace_id=expense.workspace_id,
                         entity_type=SystemCommentEntityTypeEnum.EXPENSE,
                         entity_id=expense.id,
-                        reason=reason,
+                        reason=SystemCommentReasonEnum.FUND_SOURCE_CHANGED.value.format(old=old_fund_source, new=new_fund_source),
                         info={'old_fund_source': old_fund_source, 'new_fund_source': new_fund_source}
                     )
 
@@ -924,7 +922,6 @@ def handle_category_changes_for_expense(expense: Expense, new_category: str, sys
                             error_title=new_category_expense_attribute.value
                         )
 
-        reason = SystemCommentReasonEnum.CATEGORY_CHANGED.value.format(old=old_category, new=new_category)
         add_system_comment(
             system_comments=system_comments,
             source=SystemCommentSourceEnum.HANDLE_EXPENSE_CATEGORY_CHANGE,
@@ -932,7 +929,7 @@ def handle_category_changes_for_expense(expense: Expense, new_category: str, sys
             entity_type=SystemCommentEntityTypeEnum.EXPENSE,
             workspace_id=expense.workspace_id,
             entity_id=expense.id,
-            reason=reason,
+            reason=SystemCommentReasonEnum.CATEGORY_CHANGED.value.format(old=old_category, new=new_category),
             info={'old_category': old_category, 'new_category': new_category}
         )
 
