@@ -8,7 +8,7 @@ from fyle_rest_auth.models import AuthToken, User
 from rest_framework.test import APIClient
 
 from apps.fyle.helpers import get_access_token
-from apps.fyle.models import ExpenseGroupSettings
+from apps.fyle.models import ExpenseFilter, ExpenseGroupSettings
 from apps.workspaces.models import LastExportDetail, Workspace, WorkspaceGeneralSettings
 from fyle_qbo_api.tests import settings
 from tests.test_workspaces.fixtures import data as fyle_data
@@ -142,3 +142,20 @@ def add_expense_destination_attributes_3():
         active=True,
         code='123'
     )
+
+
+@pytest.fixture()
+def add_expense_filter(db):
+    """
+    Fixture to create an ExpenseFilter for testing skip export rules
+    """
+    expense_filter, _ = ExpenseFilter.objects.get_or_create(
+        workspace_id=1,
+        rank=1,
+        defaults={
+            'condition': 'employee_email',
+            'operator': 'iexact',
+            'values': ['test@test.com']
+        }
+    )
+    return expense_filter

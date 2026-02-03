@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     'apps.fyle',
     'apps.quickbooks_online',
     'apps.tasks',
+    'fyle_accounting_library.rabbitmq',
+    'fyle_accounting_library.system_comments'
 ]
 
 MIDDLEWARE = [

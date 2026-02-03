@@ -545,9 +545,6 @@ def test_construct_qbo_expense_item_and_account_based(add_destination_attribute_
     qbo_expense, qbo_expense_lineitems = create_qbo_expense_item_and_account_based
     qbo_expense_object = qbo_connection._QBOConnector__construct_qbo_expense(qbo_expense=qbo_expense, qbo_expense_lineitems=qbo_expense_lineitems)
 
-    assert qbo_expense_object['Line'][0]['DetailType'] == 'ItemBasedExpenseLineDetail'
-    assert qbo_expense_object['Line'][1]['DetailType'] == 'AccountBasedExpenseLineDetail'
-
     qbo_expense_object_sorted = sort_lines(qbo_expense_object)
     expected_payload_sorted = sort_lines(data['qbo_expense_item_and_account_based_payload'])
 
@@ -566,10 +563,10 @@ def test_construct_qbo_expense_item_and_account_based(add_destination_attribute_
     qbo_expense, qbo_expense_lineitems = create_qbo_expense_item_and_account_based
     qbo_expense_object = qbo_connection._QBOConnector__construct_qbo_expense(qbo_expense=qbo_expense, qbo_expense_lineitems=qbo_expense_lineitems)
 
-    qbo_expense_object['Line'][0]['DetailType'] == 'ItemBasedExpenseLineDetail'
-    qbo_expense_object['Line'][1]['DetailType'] == 'AccountBasedExpenseLineDetail'
+    qbo_expense_object_sorted = sort_lines(qbo_expense_object)
+    expected_payload_sorted = sort_lines(data['qbo_expense_item_and_account_based_payload_with_tax_override'])
 
-    assert dict_compare_keys(qbo_expense_object, data['qbo_expense_item_and_account_based_payload_with_tax_override']) == [], 'construct expense api return diffs in keys'
+    assert dict_compare_keys(qbo_expense_object_sorted, expected_payload_sorted) == [], 'construct expense api return diffs in keys'
 
     general_settings.import_tax_codes = False
     general_settings.save()

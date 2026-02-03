@@ -1765,7 +1765,7 @@ def test_recreate_expense_groups_delete_reimbursable_expenses(mocker, db):
     recreate_expense_groups(workspace_id=workspace_id, expense_ids=[123])
 
     # Verify lines 574, 577-582: delete_expenses_in_db was called for reimbursable expenses
-    mock_delete_expenses.assert_called_once_with(expense_ids=[123], workspace_id=workspace_id)
+    mock_delete_expenses.assert_called_once_with(expense_ids=[123], workspace_id=workspace_id, system_comments=None)
 
 
 @pytest.mark.django_db()
@@ -1797,7 +1797,7 @@ def test_recreate_expense_groups_delete_ccc_expenses(mocker, db):
     recreate_expense_groups(workspace_id=workspace_id, expense_ids=[456])
 
     # Verify lines 585-590: delete_expenses_in_db was called for CCC expenses
-    mock_delete_expenses.assert_called_once_with(expense_ids=[456], workspace_id=workspace_id)
+    mock_delete_expenses.assert_called_once_with(expense_ids=[456], workspace_id=workspace_id, system_comments=None)
 
 
 @pytest.mark.django_db()
@@ -2085,7 +2085,7 @@ def test_handle_fund_source_changes_with_actual_expense_groups_simple(mocker, db
         "All expense groups are exported or are not initiated, proceeding with recreation of expense groups for changed expense ids %s in workspace %s",
         changed_expense_ids, workspace_id
     )
-    mock_recreate.assert_called_once_with(workspace_id=workspace_id, expense_ids=[123])
+    mock_recreate.assert_called_once_with(workspace_id=workspace_id, expense_ids=[123], system_comments=None)
     mock_cleanup.assert_called_once_with(task_name='test_task', workspace_id=workspace_id)
 
 
