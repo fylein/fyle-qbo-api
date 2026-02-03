@@ -41,7 +41,7 @@ services:
       RABBITMQ_URL: amqp://admin:password@rabbitmq:5673/?heartbeat=0
       STRICT_MODE: "false"
   db:
-    image: "postgres:15"
+    image: "postgres:17"
     environment:
       POSTGRES_DB: dummy
       POSTGRES_USER: postgres
