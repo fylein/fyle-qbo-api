@@ -13,6 +13,12 @@ class SystemCommentSourceEnum(str, Enum):
     CREATE_QBO_EXPENSE = 'CREATE_QBO_EXPENSE'
     CREATE_CREDIT_CARD_PURCHASE = 'CREATE_CREDIT_CARD_PURCHASE'
 
+    # Lineitem creation functions
+    CREATE_BILL_LINEITEMS = 'CREATE_BILL_LINEITEMS'
+    CREATE_CHEQUE_LINEITEMS = 'CREATE_CHEQUE_LINEITEMS'
+    CREATE_QBO_EXPENSE_LINEITEMS = 'CREATE_QBO_EXPENSE_LINEITEMS'
+    CREATE_CREDIT_CARD_PURCHASE_LINEITEMS = 'CREATE_CREDIT_CARD_PURCHASE_LINEITEMS'
+
     # Import/sync functions
     HANDLE_EXPENSE_CATEGORY_CHANGE = 'HANDLE_EXPENSE_CATEGORY_CHANGE'
     HANDLE_FUND_SOURCE_CHANGE = 'HANDLE_FUND_SOURCE_CHANGE'
@@ -23,6 +29,10 @@ class SystemCommentSourceEnum(str, Enum):
 
     # Expense filtering functions
     GROUP_EXPENSES_AND_SAVE = 'GROUP_EXPENSES_AND_SAVE'
+
+    # Export retry & error handling
+    RETRIGGER_STUCK_EXPORTS = 'RETRIGGER_STUCK_EXPORTS'
+    VALIDATE_SKIPPING_PAYMENT = 'VALIDATE_SKIPPING_PAYMENT'
 
 
 class SystemCommentIntentEnum(str, Enum):
@@ -39,6 +49,9 @@ class SystemCommentIntentEnum(str, Enum):
     DELETE_EXPENSES = 'DELETE_EXPENSES'
     VENDOR_NOT_FOUND = 'VENDOR_NOT_FOUND'
     SKIP_EXPENSE = 'SKIP_EXPENSE'
+    EXPORT_RETRIGGERED = 'EXPORT_RETRIGGERED'
+    PAYMENT_SKIPPED = 'PAYMENT_SKIPPED'
+    BILLABLE_DISABLED = 'BILLABLE_DISABLED'
 
 
 class SystemCommentReasonEnum(str, Enum):
@@ -70,6 +83,14 @@ class SystemCommentReasonEnum(str, Enum):
     EXPENSE_SKIPPED_AFTER_IMPORT = 'Expense skipped after import due to expense filter rules configured in workspace settings.'
     REIMBURSABLE_EXPENSE_NOT_CONFIGURED = 'Reimbursable expense skipped because reimbursable expense export is not configured.'
     CCC_EXPENSE_NOT_CONFIGURED = 'Corporate card expense skipped because corporate card expense export is not configured.'
+
+    # Export retry & error handling
+    EXPORT_RETRIGGERED_STUCK = 'Export was re-triggered because it was stuck in ENQUEUED or IN_PROGRESS state for more than 60 minutes.'
+    PAYMENT_SKIPPED_TASK_LOG_RETIRED = 'Payment was skipped because task log is older than 2 months.'
+    PAYMENT_SKIPPED_TASK_LOG_RECENT_UPDATE = 'Payment was skipped because task log was recently updated.'
+
+    # Billable handling
+    BILLABLE_SET_TO_FALSE_MISSING_CUSTOMER = 'Billable was set to false because customer mapping is missing.'
 
 
 class SystemCommentEntityTypeEnum(str, Enum):

@@ -34,9 +34,15 @@ from apps.quickbooks_online.models import (
 
 from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import Error, TaskLog
-from apps.workspaces.enums import ExportTypeEnum
+from apps.workspaces.enums import (
+    ExportTypeEnum,
+    SystemCommentIntentEnum,
+    SystemCommentReasonEnum,
+    SystemCommentSourceEnum,
+    SystemCommentEntityTypeEnum,
+)
 from apps.workspaces.models import FyleCredential, QBOCredential, WorkspaceGeneralSettings
-from apps.workspaces.system_comments import create_filtered_system_comments
+from apps.workspaces.system_comments import add_system_comment, create_filtered_system_comments
 from fyle_qbo_api.exceptions import BulkError
 from fyle_qbo_api.logging_middleware import get_caller_info, get_logger
 from fyle_qbo_api.utils import invalidate_qbo_credentials
@@ -770,26 +776,46 @@ def process_bill_payments(bill: Bill, workspace_id: int, task_log: TaskLog):
         task_log.save()
 
 
-def validate_for_skipping_payment(bill: Bill, workspace_id: int):
+def validate_for_skipping_payment(bill: Bill, workspace_id: int, system_comments: list = None) -> bool:
+    """
+    Validate if payment should be skipped based on task log age.
+    If system_comments list is provided, adds system comments for skipped payments.
+    """
     task_log = TaskLog.objects.filter(task_id='PAYMENT_{}'.format(bill.expense_group.id), workspace_id=workspace_id, type='CREATING_BILL_PAYMENT').first()
     if task_log:
         now = django_timezone.now()
+        reason_enum = None
 
         if now - relativedelta(months=2) > task_log.created_at:
             bill.is_retired = True
             bill.save()
-            return True
+            reason_enum = SystemCommentReasonEnum.PAYMENT_SKIPPED_TASK_LOG_RETIRED
 
         elif now - relativedelta(months=1) > task_log.created_at and now - relativedelta(months=2) < task_log.created_at:
-            # if updated_at is within 1 months will be skipped
             if task_log.updated_at > now - relativedelta(months=1):
-                return True
+                reason_enum = SystemCommentReasonEnum.PAYMENT_SKIPPED_TASK_LOG_RECENT_UPDATE
 
-        # If created is within 1 month
         elif now - relativedelta(months=1) < task_log.created_at:
-            # Skip if updated within the last week
             if task_log.updated_at > now - relativedelta(weeks=1):
-                return True
+                reason_enum = SystemCommentReasonEnum.PAYMENT_SKIPPED_TASK_LOG_RECENT_UPDATE
+
+        if reason_enum:
+            if system_comments is not None:
+                for expense in bill.expense_group.expenses.all():
+                    add_system_comment(
+                        system_comments=system_comments,
+                        source=SystemCommentSourceEnum.VALIDATE_SKIPPING_PAYMENT,
+                        intent=SystemCommentIntentEnum.PAYMENT_SKIPPED,
+                        entity_type=SystemCommentEntityTypeEnum.EXPENSE,
+                        workspace_id=workspace_id,
+                        entity_id=expense.id,
+                        reason=reason_enum,
+                        info={
+                            'expense_group_id': bill.expense_group.id,
+                            'bill_id': bill.id
+                        }
+                    )
+            return True
 
     return False
 
@@ -807,8 +833,15 @@ def create_bill_payment(workspace_id):
         for bill in bills:
             expense_group_reimbursement_status = check_expenses_reimbursement_status(bill.expense_group.expenses.all(), workspace_id=workspace_id, platform=platform, filter_credit_expenses=filter_credit_expenses)
             if expense_group_reimbursement_status:
-                skip_payment = validate_for_skipping_payment(bill=bill, workspace_id=workspace_id)
+                system_comments = []
+                skip_payment = validate_for_skipping_payment(bill=bill, workspace_id=workspace_id, system_comments=system_comments)
                 if skip_payment:
+                    if system_comments:
+                        create_filtered_system_comments(
+                            system_comments=system_comments,
+                            is_exported=True,
+                            persist_without_export=True
+                        )
                     continue
                 task_log, _ = TaskLog.objects.update_or_create(workspace_id=workspace_id, task_id='PAYMENT_{}'.format(bill.expense_group.id), defaults={'status': 'IN_PROGRESS', 'type': 'CREATING_BILL_PAYMENT'})
                 process_bill_payments(bill, workspace_id, task_log)
