@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from django.db.models import F, Q
 from django_q.models import OrmQ, Schedule
 from fyle_accounting_library.fyle_platform.enums import ExpenseImportSourceEnum
-from fyle_accounting_library.models import SystemComment
+from fyle_accounting_library.system_comments.models import SystemComment
 
 from apps.fyle.actions import post_accounting_export_summary, update_failed_expenses
 from apps.fyle.models import ExpenseGroup
