@@ -263,7 +263,7 @@ def create_bill(expense_group_id: int, task_log_id: int, last_export: bool, is_a
         system_comments=system_comments,
         workspace_id=expense_group.workspace_id,
         export_type=ExportTypeEnum.BILL,
-        is_exported_to_qbo=is_exported
+        persist_without_export=is_exported
     )
 
     if last_export:
@@ -544,7 +544,7 @@ def create_qbo_expense(expense_group_id: int, task_log_id: int, last_export: boo
         system_comments=system_comments,
         workspace_id=expense_group.workspace_id,
         export_type=ExportTypeEnum.DEBIT_CARD_EXPENSE if expense_group.fund_source == 'CCC' else ExportTypeEnum.EXPENSE,
-        is_exported_to_qbo=is_exported
+        persist_without_export=is_exported
     )
 
     if last_export:
@@ -633,7 +633,7 @@ def create_credit_card_purchase(expense_group_id: int, task_log_id: int, last_ex
         system_comments=system_comments,
         workspace_id=expense_group.workspace_id,
         export_type=ExportTypeEnum.CREDIT_CARD_PURCHASE,
-        is_exported_to_qbo=is_exported
+        persist_without_export=is_exported
     )
 
     if last_export:
@@ -839,7 +839,8 @@ def create_bill_payment(workspace_id):
                     if system_comments:
                         create_filtered_system_comments(
                             system_comments=system_comments,
-                            is_exported=True,
+                            workspace_id=workspace_id,
+                            export_type=ExportTypeEnum.BILL,
                             persist_without_export=True
                         )
                     continue
