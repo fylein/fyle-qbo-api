@@ -1,10 +1,26 @@
-from apps.fyle.models import ExpenseGroup
+from datetime import timedelta
+
+from django.utils import timezone as django_timezone
+
+from apps.fyle.models import Expense, ExpenseGroup
 from apps.fyle.tasks import (
     handle_category_changes_for_expense,
     delete_expense_group_and_related_data,
 )
 from apps.mappings.models import GeneralMapping
-from apps.quickbooks_online.models import get_ccc_account_id
+from apps.quickbooks_online.models import (
+    Bill,
+    BillLineitem,
+    Cheque,
+    ChequeLineitem,
+    QBOExpense,
+    QBOExpenseLineitem,
+    CreditCardPurchase,
+    CreditCardPurchaseLineitem,
+    get_ccc_account_id,
+)
+from apps.quickbooks_online.tasks import validate_for_skipping_payment
+from apps.tasks.models import TaskLog
 from apps.workspaces.enums import (
     SystemCommentEntityTypeEnum,
     SystemCommentIntentEnum,
@@ -13,7 +29,7 @@ from apps.workspaces.enums import (
 )
 from apps.workspaces.models import WorkspaceGeneralSettings
 from apps.workspaces.system_comments import add_system_comment
-from fyle_accounting_mappings.models import Mapping
+from fyle_accounting_mappings.models import Mapping, MappingSetting
 
 
 def test_add_system_comment():
@@ -160,3 +176,308 @@ def test_no_comment_when_system_comments_is_none(db):
         export_type='CREDIT_CARD_EXPENSE',
         system_comments=None
     )
+
+
+def test_ccc_account_comment_has_persist_without_export_false(db, create_expense_group_expense):
+    """
+    Test get_ccc_account_id sets persist_without_export=False for export-time decisions
+    """
+    expense_group, expense = create_expense_group_expense
+    workspace_id = expense_group.workspace_id
+
+    workspace_general_settings = WorkspaceGeneralSettings.objects.filter(workspace_id=workspace_id).first()
+    general_mappings = GeneralMapping.objects.filter(workspace_id=workspace_id).first()
+
+    workspace_general_settings.map_fyle_cards_qbo_account = True
+    workspace_general_settings.save()
+
+    expense.corporate_card_id = 'card_persist_test'
+    expense.save()
+
+    Mapping.objects.filter(
+        source_type='CORPORATE_CARD',
+        destination_type='CREDIT_CARD_ACCOUNT',
+        workspace_id=workspace_id
+    ).delete()
+
+    system_comments = []
+
+    get_ccc_account_id(
+        workspace_general_settings=workspace_general_settings,
+        general_mappings=general_mappings,
+        expense=expense,
+        description=expense_group.description,
+        export_type='CREDIT_CARD_EXPENSE',
+        system_comments=system_comments
+    )
+
+    assert len(system_comments) >= 1
+    comment = system_comments[0]
+    assert comment['persist_without_export'] is False
+
+
+def test_validate_for_skipping_payment_generates_system_comment(db):
+    """
+    Test validate_for_skipping_payment generates system comment when payment is skipped (P1)
+    """
+    workspace_id = 3
+    expense_group = ExpenseGroup.objects.create(workspace_id=workspace_id, fund_source='PERSONAL')
+
+    expense = Expense.objects.create(
+        workspace_id=workspace_id,
+        expense_id='tx_payment_skip_test',
+        employee_email='test@fyle.in',
+        category='Test Category',
+        amount=100,
+        currency='USD',
+        org_id='or79Cob97KSh',
+        settlement_id='setl_test',
+        report_id='rp_test',
+        spent_at=django_timezone.now(),
+        expense_created_at=django_timezone.now(),
+        expense_updated_at=django_timezone.now(),
+        fund_source='PERSONAL'
+    )
+    expense_group.expenses.add(expense)
+
+    bill = Bill.objects.create(
+        expense_group=expense_group,
+        accounts_payable_id='ap_test',
+        vendor_id='vendor_test',
+        transaction_date=django_timezone.now().date(),
+        currency='USD',
+        private_note='test note'
+    )
+
+    now = django_timezone.now()
+    task_id = f'PAYMENT_{expense_group.id}'
+    task_log = TaskLog.objects.create(
+        workspace_id=workspace_id,
+        type='CREATING_BILL_PAYMENT',
+        task_id=task_id,
+        expense_group=expense_group,
+        status='READY'
+    )
+    TaskLog.objects.filter(id=task_log.id).update(
+        created_at=now - timedelta(days=70),
+        updated_at=now - timedelta(days=70)
+    )
+
+    system_comments = []
+    result = validate_for_skipping_payment(bill=bill, workspace_id=workspace_id, system_comments=system_comments)
+
+    assert result is True
+    assert len(system_comments) >= 1
+
+    comment = system_comments[0]
+    assert comment['source'] == 'VALIDATE_SKIPPING_PAYMENT'
+    assert comment['intent'] == 'PAYMENT_SKIPPED'
+    assert comment['entity_type'] == 'EXPENSE'
+    assert comment['entity_id'] == expense.id
+    assert comment['detail']['reason'] == SystemCommentReasonEnum.PAYMENT_SKIPPED_TASK_LOG_RETIRED.value
+    assert comment['detail']['info']['expense_group_id'] == expense_group.id
+    assert comment['detail']['info']['bill_id'] == bill.id
+
+
+def test_bill_lineitem_billable_disabled_generates_comment(db):
+    """
+    Test BillLineitem.create_bill_lineitems generates system comment when billable is disabled (P2)
+    """
+    expense_group = ExpenseGroup.objects.get(id=25)
+    workspace_id = expense_group.workspace_id
+
+    expense = expense_group.expenses.first()
+    expense.billable = True
+    expense.save()
+
+    MappingSetting.objects.filter(
+        workspace_id=workspace_id,
+        destination_field='CUSTOMER'
+    ).delete()
+
+    Bill.objects.filter(expense_group=expense_group).delete()
+    Bill.objects.create(
+        expense_group=expense_group,
+        accounts_payable_id='ap_test',
+        vendor_id='vendor_test',
+        transaction_date=django_timezone.now().date(),
+        currency='USD',
+        private_note='test'
+    )
+
+    workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+
+    system_comments = []
+    BillLineitem.create_bill_lineitems(expense_group, workspace_general_settings, system_comments=system_comments)
+
+    billable_comments = [c for c in system_comments if c['intent'] == 'BILLABLE_DISABLED']
+    assert len(billable_comments) >= 1
+
+    comment = billable_comments[0]
+    assert comment['source'] == 'CREATE_BILL_LINEITEMS'
+    assert comment['intent'] == 'BILLABLE_DISABLED'
+    assert comment['entity_type'] == 'EXPENSE'
+    assert comment['export_type'] == 'BILL'
+    assert comment['persist_without_export'] is False
+    assert comment['detail']['reason'] == SystemCommentReasonEnum.BILLABLE_SET_TO_FALSE_MISSING_CUSTOMER.value
+
+
+def test_cheque_lineitem_billable_disabled_generates_comment(db):
+    """
+    Test ChequeLineitem.create_cheque_lineitems generates system comment when billable is disabled (P2)
+    """
+    expense_group = ExpenseGroup.objects.get(id=8)
+    workspace_id = expense_group.workspace_id
+
+    expense = expense_group.expenses.first()
+    expense.billable = True
+    expense.save()
+
+    MappingSetting.objects.filter(
+        workspace_id=workspace_id,
+        destination_field='CUSTOMER'
+    ).delete()
+
+    Cheque.objects.filter(expense_group=expense_group).delete()
+    Cheque.objects.create(
+        expense_group=expense_group,
+        bank_account_id='bank_test',
+        entity_id='entity_test',
+        transaction_date=django_timezone.now().date(),
+        currency='USD',
+        private_note='test'
+    )
+
+    workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+
+    system_comments = []
+    ChequeLineitem.create_cheque_lineitems(expense_group, workspace_general_settings, system_comments=system_comments)
+
+    billable_comments = [c for c in system_comments if c['intent'] == 'BILLABLE_DISABLED']
+    assert len(billable_comments) >= 1
+
+    comment = billable_comments[0]
+    assert comment['source'] == 'CREATE_CHEQUE_LINEITEMS'
+    assert comment['intent'] == 'BILLABLE_DISABLED'
+    assert comment['entity_type'] == 'EXPENSE'
+    assert comment['export_type'] == 'CHECK'
+    assert comment['persist_without_export'] is False
+
+
+def test_qbo_expense_lineitem_billable_disabled_generates_comment(db):
+    """
+    Test QBOExpenseLineitem.create_qbo_expense_lineitems generates system comment when billable is disabled (P2)
+    """
+    workspace_id = 3
+
+    existing_expense = Expense.objects.filter(workspace_id=workspace_id).first()
+    category = existing_expense.category if existing_expense else 'Food'
+
+    expense_group = ExpenseGroup.objects.create(workspace_id=workspace_id, fund_source='CCC')
+
+    expense = Expense.objects.create(
+        workspace_id=workspace_id,
+        expense_id='tx_qbo_expense_billable_test',
+        employee_email='test@fyle.in',
+        category=category,
+        amount=100,
+        currency='USD',
+        org_id='or79Cob97KSh',
+        settlement_id='setl_test',
+        report_id='rp_test',
+        spent_at=django_timezone.now(),
+        expense_created_at=django_timezone.now(),
+        expense_updated_at=django_timezone.now(),
+        fund_source='CCC',
+        billable=True
+    )
+    expense_group.expenses.add(expense)
+
+    MappingSetting.objects.filter(
+        workspace_id=workspace_id,
+        destination_field='CUSTOMER'
+    ).delete()
+
+    QBOExpense.objects.create(
+        expense_group=expense_group,
+        expense_account_id='exp_acc_test',
+        entity_id='entity_test',
+        transaction_date=django_timezone.now().date(),
+        currency='USD',
+        private_note='test'
+    )
+
+    workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+
+    system_comments = []
+    QBOExpenseLineitem.create_qbo_expense_lineitems(expense_group, workspace_general_settings, system_comments=system_comments)
+
+    billable_comments = [c for c in system_comments if c['intent'] == 'BILLABLE_DISABLED']
+    assert len(billable_comments) >= 1
+
+    comment = billable_comments[0]
+    assert comment['source'] == 'CREATE_QBO_EXPENSE_LINEITEMS'
+    assert comment['intent'] == 'BILLABLE_DISABLED'
+    assert comment['entity_type'] == 'EXPENSE'
+    assert comment['export_type'] == 'EXPENSE'
+    assert comment['persist_without_export'] is False
+
+
+def test_credit_card_purchase_lineitem_billable_disabled_generates_comment(db):
+    """
+    Test CreditCardPurchaseLineitem.create_credit_card_purchase_lineitems generates system comment when billable is disabled (P2)
+    """
+    workspace_id = 3
+
+    existing_expense = Expense.objects.filter(workspace_id=workspace_id).first()
+    category = existing_expense.category if existing_expense else 'Food'
+
+    expense_group = ExpenseGroup.objects.create(workspace_id=workspace_id, fund_source='CCC')
+
+    expense = Expense.objects.create(
+        workspace_id=workspace_id,
+        expense_id='tx_ccp_billable_test',
+        employee_email='test@fyle.in',
+        category=category,
+        amount=100,
+        currency='USD',
+        org_id='or79Cob97KSh',
+        settlement_id='setl_test',
+        report_id='rp_test',
+        spent_at=django_timezone.now(),
+        expense_created_at=django_timezone.now(),
+        expense_updated_at=django_timezone.now(),
+        fund_source='CCC',
+        billable=True
+    )
+    expense_group.expenses.add(expense)
+
+    MappingSetting.objects.filter(
+        workspace_id=workspace_id,
+        destination_field='CUSTOMER'
+    ).delete()
+
+    CreditCardPurchase.objects.create(
+        expense_group=expense_group,
+        ccc_account_id='ccc_test',
+        entity_id='entity_test',
+        transaction_date=django_timezone.now().date(),
+        currency='USD',
+        private_note='test',
+        credit_card_purchase_number='CCP001'
+    )
+
+    workspace_general_settings = WorkspaceGeneralSettings.objects.get(workspace_id=workspace_id)
+
+    system_comments = []
+    CreditCardPurchaseLineitem.create_credit_card_purchase_lineitems(expense_group, workspace_general_settings, system_comments=system_comments)
+
+    billable_comments = [c for c in system_comments if c['intent'] == 'BILLABLE_DISABLED']
+    assert len(billable_comments) >= 1
+
+    comment = billable_comments[0]
+    assert comment['source'] == 'CREATE_CREDIT_CARD_PURCHASE_LINEITEMS'
+    assert comment['intent'] == 'BILLABLE_DISABLED'
+    assert comment['entity_type'] == 'EXPENSE'
+    assert comment['export_type'] == 'CREDIT_CARD_PURCHASE'
+    assert comment['persist_without_export'] is False
