@@ -56,15 +56,15 @@ def create_filtered_system_comments(
     system_comments: list | None,
     workspace_id: int,
     export_type: Union[Enum, str],
-    is_exported_to_qbo: bool
+    persist_without_export: bool = True
 ) -> None:
     """
-    Filter and create system comments based on export status and persist_without_export flag
+    Filter and create system comments based on persist_without_export flag
 
     :param system_comments: list of system comments to create
     :param workspace_id: workspace id
     :param export_type: export type enum or string
-    :param is_exported_to_qbo: whether the export was successful
+    :param persist_without_export: default persist_without_export value if not set in comment (default True)
     :return: None
     """
     if not system_comments:
@@ -76,7 +76,7 @@ def create_filtered_system_comments(
     for comment in system_comments:
         comment['workspace_id'] = workspace_id
         comment['export_type'] = export_type_value
-        if is_exported_to_qbo or comment.get('persist_without_export', True):
+        if comment.get('persist_without_export', persist_without_export):
             comments_to_flush.append(comment)
 
     if comments_to_flush:

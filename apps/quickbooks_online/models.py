@@ -9,7 +9,7 @@ from django.db import models
 
 from apps.fyle.models import Expense, ExpenseGroup, ExpenseGroupSettings
 from apps.mappings.models import GeneralMapping
-from apps.workspaces.enums import SystemCommentEntityTypeEnum, SystemCommentIntentEnum, SystemCommentReasonEnum, SystemCommentSourceEnum
+from apps.workspaces.enums import ExportTypeEnum, SystemCommentEntityTypeEnum, SystemCommentIntentEnum, SystemCommentReasonEnum, SystemCommentSourceEnum
 from apps.workspaces.models import Workspace, WorkspaceGeneralSettings
 from apps.workspaces.system_comments import add_system_comment
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping, MappingSetting
@@ -87,7 +87,8 @@ def get_ccc_account_id(workspace_general_settings, general_mappings, expense, de
                 workspace_id=workspace_general_settings.workspace_id,
                 entity_id=expense.id,
                 reason=SystemCommentReasonEnum.DEFAULT_CCC_ACCOUNT_APPLIED,
-                info={'default_ccc_account_id': general_mappings.default_ccc_account_id, 'default_ccc_account_name': general_mappings.default_ccc_account_name}
+                info={'default_ccc_account_id': general_mappings.default_ccc_account_id, 'default_ccc_account_name': general_mappings.default_ccc_account_name},
+                persist_without_export=False
             )
             return general_mappings.default_ccc_account_id
     else:
@@ -101,7 +102,8 @@ def get_ccc_account_id(workspace_general_settings, general_mappings, expense, de
                 workspace_id=workspace_general_settings.workspace_id,
                 entity_id=expense.id,
                 reason=SystemCommentReasonEnum.EMPLOYEE_CCC_ACCOUNT_APPLIED,
-                info={'employee_ccc_account_id': ccc_account_mapping.destination_card_account.destination_id, 'employee_ccc_account_name': ccc_account_mapping.destination_card_account.display_name}
+                info={'employee_ccc_account_id': ccc_account_mapping.destination_card_account.destination_id, 'employee_ccc_account_name': ccc_account_mapping.destination_card_account.display_name},
+                persist_without_export=False
             )
             return ccc_account_mapping.destination_card_account.destination_id
         else:
@@ -113,7 +115,8 @@ def get_ccc_account_id(workspace_general_settings, general_mappings, expense, de
                 workspace_id=workspace_general_settings.workspace_id,
                 entity_id=expense.id,
                 reason=SystemCommentReasonEnum.DEFAULT_CCC_ACCOUNT_APPLIED,
-                info={'default_ccc_account_id': general_mappings.default_ccc_account_id, 'default_ccc_account_name': general_mappings.default_ccc_account_name}
+                info={'default_ccc_account_id': general_mappings.default_ccc_account_id, 'default_ccc_account_name': general_mappings.default_ccc_account_name},
+                persist_without_export=False
             )
             return general_mappings.default_ccc_account_id
 
@@ -302,7 +305,8 @@ class Bill(models.Model):
                 workspace_id=expense_group.workspace_id,
                 entity_id=expense_group.id,
                 reason=SystemCommentReasonEnum.DEFAULT_CCC_VENDOR_APPLIED,
-                info={'default_ccc_vendor_id': general_mappings.default_ccc_vendor_id, 'default_ccc_vendor_name': general_mappings.default_ccc_vendor_name}
+                info={'default_ccc_vendor_id': general_mappings.default_ccc_vendor_id, 'default_ccc_vendor_name': general_mappings.default_ccc_vendor_name},
+                persist_without_export=False
             )
 
         general_mappings = GeneralMapping.objects.get(workspace_id=expense_group.workspace_id)
@@ -349,11 +353,12 @@ class BillLineitem(models.Model):
         db_table = 'bill_lineitems'
 
     @staticmethod
-    def create_bill_lineitems(expense_group: ExpenseGroup, workspace_general_settings: WorkspaceGeneralSettings):
+    def create_bill_lineitems(expense_group: ExpenseGroup, workspace_general_settings: WorkspaceGeneralSettings, system_comments: list = None):
         """
         Create bill lineitems
         :param expense_group: expense group
         :param workspace_general_settings: Workspace General Settings
+        :param system_comments: Optional list to collect system comment data
         :return: lineitems objects
         """
         expenses = expense_group.expenses.all()
@@ -369,6 +374,23 @@ class BillLineitem(models.Model):
             class_id = get_class_id_or_none(expense_group, lineitem)
 
             customer_id = get_customer_id_or_none(expense_group, lineitem)
+
+            billable = lineitem.billable
+            if billable and not customer_id:
+                billable = False
+                if system_comments is not None:
+                    add_system_comment(
+                        system_comments=system_comments,
+                        source=SystemCommentSourceEnum.CREATE_BILL_LINEITEMS,
+                        intent=SystemCommentIntentEnum.BILLABLE_DISABLED,
+                        entity_type=SystemCommentEntityTypeEnum.EXPENSE,
+                        workspace_id=expense_group.workspace_id,
+                        entity_id=lineitem.id,
+                        reason=SystemCommentReasonEnum.BILLABLE_SET_TO_FALSE_MISSING_CUSTOMER,
+                        info={'original_billable': lineitem.billable, 'customer_id': customer_id},
+                        export_type=ExportTypeEnum.BILL,
+                        persist_without_export=False
+                    )
 
             bill_lineitem_object, _ = BillLineitem.objects.update_or_create(
                 bill=bill,
@@ -467,11 +489,12 @@ class ChequeLineitem(models.Model):
         db_table = 'cheque_lineitems'
 
     @staticmethod
-    def create_cheque_lineitems(expense_group: ExpenseGroup, workspace_general_settings: WorkspaceGeneralSettings):
+    def create_cheque_lineitems(expense_group: ExpenseGroup, workspace_general_settings: WorkspaceGeneralSettings, system_comments: list = None):
         """
         Create cheque lineitems
         :param expense_group: expense group
         :param workspace_general_settings: Workspace General Settings
+        :param system_comments: Optional list to collect system comment data
         :return: lineitems objects
         """
         expenses: List[Expense] = expense_group.expenses.all()
@@ -487,6 +510,23 @@ class ChequeLineitem(models.Model):
             class_id = get_class_id_or_none(expense_group, lineitem)
 
             customer_id = get_customer_id_or_none(expense_group, lineitem)
+
+            billable = lineitem.billable
+            if billable and not customer_id:
+                billable = False
+                if system_comments is not None:
+                    add_system_comment(
+                        system_comments=system_comments,
+                        source=SystemCommentSourceEnum.CREATE_CHEQUE_LINEITEMS,
+                        intent=SystemCommentIntentEnum.BILLABLE_DISABLED,
+                        entity_type=SystemCommentEntityTypeEnum.EXPENSE,
+                        workspace_id=expense_group.workspace_id,
+                        entity_id=lineitem.id,
+                        reason=SystemCommentReasonEnum.BILLABLE_SET_TO_FALSE_MISSING_CUSTOMER,
+                        info={'original_billable': lineitem.billable, 'customer_id': customer_id},
+                        export_type=ExportTypeEnum.CHECK,
+                        persist_without_export=False
+                    )
 
             cheque_lineitem_object, _ = ChequeLineitem.objects.update_or_create(
                 cheque=cheque,
@@ -583,7 +623,8 @@ class QBOExpense(models.Model):
                     workspace_id=expense_group.workspace_id,
                     entity_id=expense_group.id,
                     reason=reason,
-                    info={'merchant': merchant, 'fallback_vendor': payee_type}
+                    info={'merchant': merchant, 'fallback_vendor': payee_type},
+                    persist_without_export=False
                 )
             else:
                 entity_id = entity.destination_id
@@ -631,11 +672,12 @@ class QBOExpenseLineitem(models.Model):
         db_table = 'qbo_expense_lineitems'
 
     @staticmethod
-    def create_qbo_expense_lineitems(expense_group: ExpenseGroup, workspace_general_settings: WorkspaceGeneralSettings):
+    def create_qbo_expense_lineitems(expense_group: ExpenseGroup, workspace_general_settings: WorkspaceGeneralSettings, system_comments: list = None):
         """
         Create QBO Expense lineitems
         :param expense_group: expense group
         :param workspace_general_settings: Workspace General Settings
+        :param system_comments: Optional list to collect system comment data
         :return: lineitems objects
         """
         expenses: List[Expense] = expense_group.expenses.all()
@@ -652,6 +694,23 @@ class QBOExpenseLineitem(models.Model):
 
             customer_id = get_customer_id_or_none(expense_group, lineitem)
 
+            billable = lineitem.billable
+            if billable and not customer_id:
+                billable = False
+                if system_comments is not None:
+                    add_system_comment(
+                        system_comments=system_comments,
+                        source=SystemCommentSourceEnum.CREATE_QBO_EXPENSE_LINEITEMS,
+                        intent=SystemCommentIntentEnum.BILLABLE_DISABLED,
+                        entity_type=SystemCommentEntityTypeEnum.EXPENSE,
+                        workspace_id=expense_group.workspace_id,
+                        entity_id=lineitem.id,
+                        reason=SystemCommentReasonEnum.BILLABLE_SET_TO_FALSE_MISSING_CUSTOMER,
+                        info={'original_billable': lineitem.billable, 'customer_id': customer_id},
+                        export_type=ExportTypeEnum.EXPENSE,
+                        persist_without_export=False
+                    )
+
             qbo_expense_lineitem_object, _ = QBOExpenseLineitem.objects.update_or_create(
                 qbo_expense=qbo_expense,
                 expense_id=lineitem.id,
@@ -662,7 +721,7 @@ class QBOExpenseLineitem(models.Model):
                     'amount': lineitem.amount,
                     'tax_amount': lineitem.tax_amount,
                     'tax_code': get_tax_code_id_or_none(expense_group, lineitem),
-                    'billable': lineitem.billable,
+                    'billable': billable,
                     'detail_type': detail_type,
                     'item_id': account.destination.destination_id if detail_type == 'ItemBasedExpenseLineDetail' else None,
                     'description': get_expense_purpose(expense_group.workspace_id, lineitem, category, workspace_general_settings),
@@ -732,7 +791,8 @@ class CreditCardPurchase(models.Model):
                     workspace_id=expense_group.workspace_id,
                     entity_id=expense_group.id,
                     reason=SystemCommentReasonEnum.CREDIT_CARD_MISC_VENDOR_APPLIED,
-                    info={'merchant': merchant, 'fallback_vendor': 'Credit Card Misc'}
+                    info={'merchant': merchant, 'fallback_vendor': 'Credit Card Misc'},
+                    persist_without_export=False
                 )
             else:
                 entity_id = entity.destination_id
@@ -787,11 +847,12 @@ class CreditCardPurchaseLineitem(models.Model):
         db_table = 'credit_card_purchase_lineitems'
 
     @staticmethod
-    def create_credit_card_purchase_lineitems(expense_group: ExpenseGroup, workspace_general_settings: WorkspaceGeneralSettings):
+    def create_credit_card_purchase_lineitems(expense_group: ExpenseGroup, workspace_general_settings: WorkspaceGeneralSettings, system_comments: list = None):
         """
         Create credit card purchase lineitems
         :param expense_group: expense group
         :param workspace_general_settings: Workspace General Settings
+        :param system_comments: Optional list to collect system comment data
         :return: lineitems objects
         """
         expenses: List[Expense] = expense_group.expenses.all()
@@ -808,6 +869,23 @@ class CreditCardPurchaseLineitem(models.Model):
 
             customer_id = get_customer_id_or_none(expense_group, lineitem)
 
+            billable = lineitem.billable
+            if billable and not customer_id:
+                billable = False
+                if system_comments is not None:
+                    add_system_comment(
+                        system_comments=system_comments,
+                        source=SystemCommentSourceEnum.CREATE_CREDIT_CARD_PURCHASE_LINEITEMS,
+                        intent=SystemCommentIntentEnum.BILLABLE_DISABLED,
+                        entity_type=SystemCommentEntityTypeEnum.EXPENSE,
+                        workspace_id=expense_group.workspace_id,
+                        entity_id=lineitem.id,
+                        reason=SystemCommentReasonEnum.BILLABLE_SET_TO_FALSE_MISSING_CUSTOMER,
+                        info={'original_billable': lineitem.billable, 'customer_id': customer_id},
+                        export_type=ExportTypeEnum.CREDIT_CARD_PURCHASE,
+                        persist_without_export=False
+                    )
+
             credit_card_purchase_lineitem_object, _ = CreditCardPurchaseLineitem.objects.update_or_create(
                 credit_card_purchase=credit_card_purchase,
                 expense_id=lineitem.id,
@@ -820,7 +898,7 @@ class CreditCardPurchaseLineitem(models.Model):
                     'tax_code': get_tax_code_id_or_none(expense_group, lineitem),
                     'detail_type': detail_type,
                     'item_id': account.destination.destination_id if detail_type == 'ItemBasedExpenseLineDetail' else None,
-                    'billable': lineitem.billable,
+                    'billable': billable,
                     'description': get_expense_purpose(expense_group.workspace_id, lineitem, category, workspace_general_settings),
                 },
             )
