@@ -226,7 +226,7 @@ QBO_TOKEN_URI = os.environ.get('QBO_TOKEN_URI')
 QBO_ENVIRONMENT = os.environ.get('QBO_ENVIRONMENT')
 # Fallback to a valid test key for CI environments without secrets (e.g., Dependabot)
 # This is a valid Fernet key (32 url-safe base64-encoded bytes) for testing only
-ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY') or 'BnPoT7xyQiTFLvnGPvpFQJPkkk0wAJ_UL65K_KaK3nY='
+ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY') or 'FYlxOzTn_-SUwtM_y_3oS8sdYCb-01rZudh5L990VoA='
 E2E_TESTS_CLIENT_SECRET = os.environ.get('E2E_TESTS_CLIENT_SECRET')
 E2E_TESTS_REALM_ID = os.environ.get('E2E_TESTS_REALM_ID')
 INTEGRATIONS_SETTINGS_API = os.environ.get('INTEGRATIONS_SETTINGS_API')
