@@ -9,7 +9,7 @@ RUN apt-get update && apt-get -y install libpq-dev gcc && apt-get install git po
 
 # Installing requirements
 COPY requirements.txt /tmp/requirements.txt
-RUN pip install --upgrade pip && pip install -U pip wheel setuptools &&  pip install -r /tmp/requirements.txt
+RUN pip install --upgrade pip && pip install -U pip wheel "setuptools==81.0.0" &&  pip install -r /tmp/requirements.txt
 
 # Copy Project to the container
 RUN mkdir -p /fyle-qbo-api
