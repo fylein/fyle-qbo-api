@@ -7,6 +7,8 @@ from typing import List
 from dateutil.relativedelta import relativedelta
 from django.db import transaction
 from django.utils import timezone as django_timezone
+from fyle.platform.exceptions import InternalServerError as FyleInternalServerError
+from fyle.platform.exceptions import InvalidTokenError as FyleInvalidTokenError
 from fyle_accounting_mappings.models import DestinationAttribute, EmployeeMapping, ExpenseAttribute, Mapping
 from fyle_integrations_platform_connector import PlatformConnector
 from qbosdk.exceptions import InvalidTokenError, UnauthorizedClientError, WrongParamsError
@@ -31,15 +33,14 @@ from apps.quickbooks_online.models import (
     QBOExpense,
     QBOExpenseLineitem,
 )
-
 from apps.quickbooks_online.utils import QBOConnector
 from apps.tasks.models import Error, TaskLog
 from apps.workspaces.enums import (
     ExportTypeEnum,
+    SystemCommentEntityTypeEnum,
     SystemCommentIntentEnum,
     SystemCommentReasonEnum,
     SystemCommentSourceEnum,
-    SystemCommentEntityTypeEnum,
 )
 from apps.workspaces.models import FyleCredential, QBOCredential, WorkspaceGeneralSettings
 from apps.workspaces.system_comments import add_system_comment, create_filtered_system_comments
@@ -146,13 +147,67 @@ def load_attachments(qbo_connection: QBOConnector, ref_id: str, ref_type: str, e
         ).update(is_attachment_upload_failed=True, updated_at=datetime.now(timezone.utc))
 
 
+def get_employee_expense_attribute(value: str, workspace_id: int) -> ExpenseAttribute:
+    """
+    Get employee expense attribute
+    :param value: value
+    :param workspace_id: workspace id
+    """
+    return ExpenseAttribute.objects.filter(
+        attribute_type='EMPLOYEE',
+        value=value,
+        workspace_id=workspace_id
+    ).first()
+
+
+def sync_inactive_employee(expense_group: ExpenseGroup) -> ExpenseAttribute:
+    try:
+        fyle_credentials = FyleCredential.objects.get(workspace_id=expense_group.workspace_id)
+        platform = PlatformConnector(fyle_credentials=fyle_credentials)
+
+        fyle_employee = platform.employees.get_employee_by_email(expense_group.description.get('employee_email'))
+        if len(fyle_employee):
+            fyle_employee = fyle_employee[0]
+            attribute = {
+                'attribute_type': 'EMPLOYEE',
+                'display_name': 'Employee',
+                'value': fyle_employee['user']['email'],
+                'source_id': fyle_employee['id'],
+                'active': True if fyle_employee['is_enabled'] and fyle_employee['has_accepted_invite'] else False,
+                'detail': {
+                    'user_id': fyle_employee['user_id'],
+                    'employee_code': fyle_employee['code'],
+                    'full_name': fyle_employee['user']['full_name'],
+                    'location': fyle_employee['location'],
+                    'department': fyle_employee['department']['name'] if fyle_employee['department'] else None,
+                    'department_id': fyle_employee['department_id'],
+                    'department_code': fyle_employee['department']['code'] if fyle_employee['department'] else None
+                }
+            }
+            ExpenseAttribute.bulk_create_or_update_expense_attributes([attribute], 'EMPLOYEE', expense_group.workspace_id, True)
+            return get_employee_expense_attribute(expense_group.description.get('employee_email'), expense_group.workspace_id)
+    except (FyleInvalidTokenError, FyleInternalServerError) as e:
+        logger.info('Invalid Fyle refresh token or internal server error for workspace %s: %s', expense_group.workspace_id, str(e))
+        return None
+
+    except Exception as e:
+        logger.error('Error syncing inactive employee for workspace_id %s: %s', expense_group.workspace_id, str(e))
+        return None
+
+
 def create_or_update_employee_mapping(expense_group: ExpenseGroup, qbo_connection: QBOConnector, auto_map_employees_preference: str):
     try:
         vendor_mapping = EmployeeMapping.objects.get(source_employee__value=expense_group.description.get('employee_email'), workspace_id=expense_group.workspace_id).destination_vendor
         if not vendor_mapping:
             raise EmployeeMapping.DoesNotExist
     except EmployeeMapping.DoesNotExist:
-        source_employee = ExpenseAttribute.objects.get(workspace_id=expense_group.workspace_id, attribute_type='EMPLOYEE', value=expense_group.description.get('employee_email'))
+        source_employee = get_employee_expense_attribute(expense_group.description.get('employee_email'), expense_group.workspace_id)
+
+        if not source_employee:
+            source_employee = sync_inactive_employee(expense_group)
+
+        if not source_employee:
+            raise BulkError('Mappings are missing', [{'row': None, 'expense_group_id': expense_group.id, 'value': expense_group.description.get('employee_email'), 'type': 'Employee Mapping', 'message': 'Employee mapping not found'}])
 
         try:
             if auto_map_employees_preference == 'EMAIL':
@@ -342,6 +397,9 @@ def __validate_expense_group(expense_group: ExpenseGroup, general_settings: Work
 
     if not (is_fund_source_ccc and ((is_credit_or_debit_purchase and is_mapped_to_vendor) or is_bill or (is_journal_entry and is_name_in_je_merchant))):
         employee_attribute = ExpenseAttribute.objects.filter(value=expense_group.description.get('employee_email'), workspace_id=expense_group.workspace_id, attribute_type='EMPLOYEE').first()
+
+        if not employee_attribute:
+            employee_attribute = sync_inactive_employee(expense_group)
 
         try:
             entity = EmployeeMapping.objects.get(source_employee=employee_attribute, workspace_id=expense_group.workspace_id)
